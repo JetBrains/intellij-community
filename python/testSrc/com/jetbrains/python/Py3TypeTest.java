@@ -301,22 +301,22 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("BinaryIO",
+    doTest("BufferedReader",
            "expr = open('foo', 'rb')\n");
   }
 
   public void testIoOpenDefault() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              import io
              expr = io.open('foo')
@@ -324,7 +324,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenText() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              import io
              expr = io.open('foo', 'r')
@@ -332,7 +332,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenBinary() {
-    doTest("BinaryIO",
+    doTest("BufferedReader",
            """
              import io
              expr = io.open('foo', 'rb')
@@ -547,6 +547,118 @@ public class Py3TypeTest extends PyTestCase {
                  x = 1 if c else None
                  if None is x:
                      expr = x
+             """);
+  }
+
+  public void testIsEnumMember() {
+    doTest("Literal[Answer.No, Answer.Yes]",
+           """
+             from enum import Enum
+             
+             class Answer(Enum):
+                 Yes = 1
+                 No = 2
+             
+             def foo(v: object):
+                 if v is Answer.Yes or v is Answer.No:
+                     expr = v
+             """);
+    doTest("Literal[Answer.No, Answer.Yes]",
+           """
+             from enum import Enum
+             
+             class Answer(Enum):
+                 Yes = 1
+                 No = 2
+
+             def foo(v: object):
+                 if v is not Answer.Yes and v is not Answer.No:
+                     raise ValueError("Invalid value")
+                 expr = v
+             """);
+    doTest("Literal[Answer.No, Answer.Yes]",
+           """
+             from enum import Enum
+
+             class Answer(Enum):
+                 Yes = 1
+                 No = 2
+             
+             def foo(v: object):
+                 assert v is Answer.Yes or v is Answer.No
+                 expr = v
+             """);
+  }
+
+  public void testLiteralTypeNarrowingEquals() {
+    doTest("Literal[\"abba\"]",
+           """
+             from typing import Literal
+             def foo(v: str):
+                 if (v == "abba"):
+                     expr = v
+             """);
+    doTest("Literal[\"ab\"]",
+           """
+             from typing import Literal
+             def foo(v: Literal["abba", "ab"]):
+                 if (v != "abba"):
+                     expr = v
+             """);
+    doTest("Literal[\"abc\"]",
+           """
+             from typing import Literal
+             abc: Literal["abc"] = "abc"
+             def foo(v: str):
+                 if (v == abc):
+                     expr = v
+             """);
+  }
+
+  public void testLiteralTypeNarrowingIn() {
+    doTest("Literal[1, 2]",
+           """
+             def f(a: int):
+                 if a in (1, 2, ""):
+                     expr = a
+             """);
+    doTest("Literal[-10, \"a\"]",
+           """
+             from enum import Enum
+             class E(Enum):
+                 A = 1
+             def f(a: int | str):
+                 if a in (-10, E.A, "a"):
+                     expr = a
+             """);
+    doTest("Literal[\"abb\"]",
+           """
+             from typing import Literal
+             def f(a: Literal[3, "abb", "ab", False]):
+                 if a in ("abb", True):
+                     expr = a
+             """);
+    doTest("Literal[3, \"ab\"]",
+           """
+             from typing import Literal
+             def f(a: Literal[3, "abb", "ab", False]):
+                 if a not in ("abb", False):
+                     expr = a
+             """);
+    doTest("Literal[\"abb\", False]",
+           """
+             from typing import Literal
+             def f(a: Literal[10, "abb", "ab", False]):
+                 if a not in ("abb", False):
+                     pass
+                 else:
+                     expr = a
+             """);
+    doTest("Literal[-1] | None",
+           """
+             def f(v: object):
+                 if v in (-1, None):
+                     expr = v
              """);
   }
 
@@ -1029,6 +1141,52 @@ public class Py3TypeTest extends PyTestCase {
                      expr = d""");
   }
 
+  // PY-78006
+  public void testDataclassPostInitParameters() {
+    doTest("tuple[A1, A4, A2, A3, A5, A6]",
+           """
+             from dataclasses import dataclass, InitVar
+             
+             class A1:
+                 pass
+             class A2:
+                 pass
+             class A3:
+                 pass
+             class A4:
+                 pass
+             class A5:
+                 pass
+             class A6:
+                 pass
+             
+             @dataclass
+             class BaseDC:
+                 b1: str
+                 a1: InitVar[A1]
+             
+             @dataclass
+             class DC1(BaseDC):
+                 a2: InitVar[A2]
+                 b2: int
+                 a3: InitVar[A3]
+             
+             @dataclass
+             class DC2(BaseDC):
+                 a4: InitVar[A4]
+                 b3 = 2
+             
+             @dataclass
+             class DC(DC1, DC2):
+                 b4: bool
+                 a5: InitVar[A5]
+                 a6: InitVar[A6]
+             
+                 def __post_init__(self, p1, p2, p3, p4, p5, p6):
+                     expr = (p1, p2, p3, p4, p5, p6)
+             """);
+  }
+
   // PY-27398
   public void testDataclassPostInitParameterNoInit() {
     doTest("Any",
@@ -1121,7 +1279,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-28506
   public void testMixedDataclassPostInitInheritedParameter() {
-    doTest("Any",
+    doTest("str",
            """
              from dataclasses import dataclass, InitVar
 
@@ -1276,7 +1434,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInAnnotations() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1289,7 +1447,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInTypeComments() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1306,7 +1464,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInFunctionTypeComment() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1320,7 +1478,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInImportedFile() {
-    doMultiFileTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doMultiFileTest("(c: (**P) -> int, **P, **P) -> None", """
       from mod import func
             
       expr = func
@@ -1350,7 +1508,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecUserGenericClass() {
-    doTest("Y[int, [int, str, bool]]",
+    doTest("Y[int, [q: int, p: str, r: bool]]",
            """
              from typing import TypeVar, Generic, Callable, ParamSpec
 
@@ -1679,6 +1837,41 @@ public class Py3TypeTest extends PyTestCase {
                  pass""");
   }
 
+  // PY-76816
+  public void testEnumDefinitionUsingEnumSubclass() {
+    doTest("Literal[Color.RED]",
+           """
+             from enum import Enum
+
+             class CustomEnum(Enum):
+                 pass
+             
+             class Color(CustomEnum):
+                 RED = 1
+
+             expr = Color.RED
+             """);
+  }
+
+  // PY-76816
+  public void testEnumDefinitionUsingEnumTypeMetaclass() {
+    doTest("Literal[Color.RED]",
+           """
+             from enum import EnumType
+
+             class CustomEnumType(EnumType):
+                 pass
+
+             class CustomEnum(metaclass=CustomEnumType):
+                 pass
+
+             class Color(CustomEnum):
+                 RED = 1
+
+             expr = Color.RED
+             """);
+  }
+
   // PY-55734
   public void testEnumValueType() {
     doTest("int",
@@ -1727,6 +1920,154 @@ public class Py3TypeTest extends PyTestCase {
              res = f()
              expr = res.value
              """);
+  }
+
+  public void testEnumMembers() {
+    doTest(
+      "tuple[() -> int, (x: int) -> None, Literal[Example.A], Literal[Example.B]]",
+      """
+        from enum import Enum
+        
+        def func(x: int) -> None: ...
+        
+        val = 2
+
+        class Example(Enum):
+            foo = lambda: 1
+            bar = staticmethod(func)
+            A = 1
+            B = val
+
+        expr = Example.foo, Example.bar, Example.A, Example.B
+        """);
+  }
+
+  public void testFlagEnumNotExpanded() {
+    doTest(
+      "MyFlag",
+      """
+        from enum import Flag
+        
+        class MyFlag(Flag):
+            FLAG1 = 1
+            FLAG2 = 2
+        
+        def foo(f: MyFlag):
+            if f is MyFlag.FLAG1:
+                pass
+            else:
+                expr = f
+        """
+    );
+  }
+
+  public void testUnionWithEnumMembers() {
+    doTest(
+      "Color",
+      """
+        from enum import Enum
+        
+        class Color(Enum):
+            R = 1
+            G = 2
+            B = 3
+        
+        def f(v: str | Color):
+            if isinstance(v, str):
+                pass
+            else:
+                expr = v
+        """
+    );
+  }
+
+  public void testEnumMemberNonmember() {
+    doTest(
+      "tuple[int, Literal[Example.A], Literal[Example.B], Literal[Example.method]]",
+           """
+             from enum import Enum, member, nonmember
+             
+             def func(x: int) -> None: ...
+             
+             class Example(Enum):
+                 a = nonmember(1)
+                 A = member(lambda: 1)
+                 B = member(staticmethod(func))
+             
+                 @member
+                 def method() -> None: ...
+
+             expr = Example.a, Example.A, Example.B, Example.method
+             """);
+  }
+
+  public void testEnumMemberNonmemberMultiFile() {
+    doMultiFileTest("tuple[int, Literal[Example.A], Literal[Example.B], Literal[Example.method]]",
+                    """
+                      from enum_members import Example
+                      
+                      expr = Example.a, Example.A, Example.B, Example.method
+                      """);
+  }
+
+  public void testEnumAuto() {
+    doTest("tuple[Literal[Color.RED], Literal[Color.BLUE]]",
+           """
+             from enum import Enum, auto
+             
+             class Color(Enum):
+                 RED = auto()
+                 BLUE = auto()
+             
+             expr = Color.RED, Color.BLUE
+             """);
+  }
+
+  public void testEnumAutoMultiFile() {
+    doMultiFileTest("tuple[Literal[Color.RED], Literal[Color.BLUE]]",
+                    """
+                      from color import Color
+                      
+                      expr = Color.RED, Color.BLUE
+                      """);
+  }
+
+  public void testEnumMemberAlias() {
+    doTest("tuple[Literal[Color.RED], Literal[Color.RED], Literal[Color.RED]]",
+           """
+             from enum import EnumMeta, member
+             
+             class Color(metaclass=EnumMeta):
+                 RED = 1
+             
+                 R = RED
+                 r = R
+             
+             expr = Color.RED, Color.R, Color.r
+             """);
+    doTest("tuple[Literal[Color.foo], Literal[Color.foo], Literal[Color.foo]]",
+           """
+             from enum import EnumMeta, member
+             
+             class Color(metaclass=EnumMeta):
+                 @member
+                 def foo(x: int) -> int:
+                     pass
+             
+                 bar = foo
+                 buz = bar
+             
+             expr = Color.foo, Color.bar, Color.buz
+             """);
+  }
+
+  public void testEnumMemberAliasMultiFile() {
+    doMultiFileTest(
+      "tuple[Literal[Color.RED], Literal[Color.RED], Literal[Color.RED], Literal[Color.foo], Literal[Color.foo], Literal[Color.foo]]",
+                    """
+                      from color import *
+                      expr = Color.RED, Color.R, Color.r, Color.foo, Color.bar, Color.buz
+                      """);
   }
 
   // PY-54336
@@ -1802,43 +2143,32 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
-  // PY-59795
-  public void testDictTypeFromValueModificationsConsidersOnlyRelevantAssignments() {
-    doTest("dict[str, int]",
+  // PY-77796
+  public void testTypedDictReadOnlyItemType() {
+    doTest("str",
            """
-             d = {}
-             d['foo'] = 1
-             unrelated = {}
-             unrelated[2] = 'bar'
-             expr = d
+             from typing import TypedDict, ReadOnly
+             class A(TypedDict):
+                 x: ReadOnly[str]
+             def f(a: A):
+                 expr = a['x']
              """);
-  }
-
-  // PY-59795
-  public void testNestedTypedDictFromValueModifications() {
-    myFixture.configureByText(PythonFileType.INSTANCE,
-                              """
-                                d = {}
-                                d['foo'] = {'key': 'value'}
-                                d['bar'] = {'key': 'value'}
-                                expr = d
-                                """);
-    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    TypeEvalContext context = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
-    PyTypedDictType topLevelTypedDict = assertInstanceOf(context.getType(expr), PyTypedDictType.class);
-    assertSize(2, topLevelTypedDict.getFields().entrySet());
-
-    PyTypedDictType.FieldTypeAndTotality fooField = topLevelTypedDict.getFields().get("foo");
-    assertNotNull(fooField);
-    PyTypedDictType fooFieldTypedDict = assertInstanceOf(fooField.getType(), PyTypedDictType.class);
-    assertEquals("key", assertOneElement(fooFieldTypedDict.getFields().keySet()));
-
-    PyTypedDictType.FieldTypeAndTotality barField = topLevelTypedDict.getFields().get("bar");
-    assertNotNull(barField);
-    PyTypedDictType barFieldTypedDict = assertInstanceOf(barField.getType(), PyTypedDictType.class);
-    assertEquals("key", assertOneElement(barFieldTypedDict.getFields().keySet()));
-
-    assertProjectFilesNotParsed(expr.getContainingFile());
+    doTest("int",
+           """
+             from typing import TypedDict, Required, ReadOnly
+             class A(TypedDict):
+                 x: Required[ReadOnly[int]]
+             def f(a: A):
+                 expr = a['x']
+             """);
+    doTest("str",
+           """
+             from typing import TypedDict, Required, Annotated, ReadOnly
+             class A(TypedDict):
+                 x: Required[Annotated[ReadOnly[str], 1]]
+             def f(a: A):
+                 expr = a['x']
+             """);
   }
 
   // PY-53612
@@ -1996,7 +2326,7 @@ public class Py3TypeTest extends PyTestCase {
 
 
   public void testTypeGuardResultIsAssignedButValIsReassignedSometimes() {
-    doTest("int | list[str]",
+    doTest("list[str] | int",
            """
              from typing import List
              from typing import TypeGuard
@@ -2525,7 +2855,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-61883
   public void testParamSpecUserGenericClassWithPEP695Syntax() {
-    doTest("Y[int, [int, str, bool]]",
+    doTest("Y[int, [q: int, p: str, r: bool]]",
            """
              from typing import Callable
 
@@ -2890,6 +3220,210 @@ public class Py3TypeTest extends PyTestCase {
           with open("file.csv") as f:
               reader = csv.DictReader(f)
               expr = [line for line in reader]
+      """);
+  }
+
+  public void testLiteralAssignmentInImportedFile() {
+    doMultiFileTest("int", """
+      from m import *
+      expr = foo
+      """);
+  }
+
+  // PY-77937
+  public void testListOfLiterals() {
+    doTest("list[int]", """
+      from typing import Literal
+      
+      num1: Literal[1] = 1
+      num2: Literal[2] = 2
+      expr = [num1, num2]
+      """);
+
+    doTest("list[int | str]", """
+      from typing import Literal
+      
+      e1: Literal[1] = 1
+      e2: Literal["abc"] = "abc"
+      expr = [e1, e2]
+      """);
+
+    doTest("list[int | str]", """
+      from typing import Literal, LiteralString
+      
+      e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
+      expr = [e]
+      """);
+
+    doTest("list[Direction]", """
+      from enum import Enum
+      
+      class Direction(Enum):
+          NORTH = "N"
+          SOUTH = "S"
+          EAST = "E"
+          WEST = "W"
+      
+      expr = [Direction.NORTH, Direction.WEST]
+      """);
+  }
+
+  // PY-77937
+  public void testSetOfLiterals() {
+    doTest("set[int]", """
+      from typing import Literal
+      
+      num1: Literal[1] = 1
+      num2: Literal[2] = 2
+      expr = {num1, num2}
+      """);
+
+    doTest("set[int | str]", """
+      from typing import Literal
+      
+      e1: Literal[1] = 1
+      e2: Literal["abc"] = "abc"
+      expr = {e1, e2}
+      """);
+
+    doTest("set[int | str]", """
+      from typing import Literal, LiteralString
+      
+      e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
+      expr = {e}
+      """);
+
+    doTest("set[Direction]", """
+      from enum import Enum
+      
+      class Direction(Enum):
+          NORTH = "N"
+          SOUTH = "S"
+          EAST = "E"
+          WEST = "W"
+      
+      expr = {Direction.NORTH, Direction.WEST}
+      """);
+  }
+
+  // PY-77937
+  public void testDictOfLiterals() {
+    doTest("dict[int, str]", """
+      from typing import Literal
+      
+      k1: Literal[1] = 1
+      v1: Literal["2"] = "1"
+      k2: Literal[2] = 2
+      v2: Literal["2"] = "2"
+      expr = {k1: v1, k2: v2}
+      """);
+
+    doTest("dict[int | str, str | bool]", """
+      from typing import Literal, LiteralString
+      
+      k1: Literal[1] = 1
+      v1: Literal["ab"] = "ab"
+      k2: LiteralString = "k2"
+      v2: Literal[True] = True
+      expr = { k1: v1, k2: v2 }
+      """);
+
+    doTest("dict[int | str, int | str]", """
+      from typing import Literal, LiteralString
+      
+      k: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
+      v: Literal[1, "ab"] | LiteralString | Literal["x"] = 1
+      expr = {k: v}
+      """);
+
+    doTest("dict[Direction, Direction]", """
+      from enum import Enum
+      
+      class Direction(Enum):
+          NORTH = "N"
+          SOUTH = "S"
+          EAST = "E"
+          WEST = "W"
+      
+      expr = {Direction.NORTH: Direction.SOUTH, Direction.WEST: Direction.EAST}
+      """);
+  }
+
+  // PY-78125
+  public void testDictOfLiteralsWithStringOnlyKeys() {
+    doTest("dict[str, int | str]", """
+      from typing import Literal
+
+      v: Literal[1, "ab"] = 1
+      expr = {"abb": v}
+      """);
+
+    doTest("dict[str, int | str]", """
+      from typing import Literal
+
+      k = "abb"
+      v: Literal[1, "ab"] = 1
+      expr = {k: v}
+      """);
+
+    doTest("dict[str, int | str]", """
+      from typing import Literal
+
+      k: Literal["abb"] = "abb"
+      v: Literal[1, "ab"] = 1
+      expr = {k: v}
+      """);
+
+    doTest("dict[str, int | str]", """
+      from typing import Literal, LiteralString
+
+      k: LiteralString = "k"
+      v: Literal[1, "ab"] = 1
+      expr = {k: v}
+      """);
+  }
+
+  public void testFunctionReturnsNone() {
+    doTest("(p: Any) -> None", """
+      def foo(p):
+          assert p
+      expr = foo
+      """);
+  }
+
+  // PY-78044
+  public void testPathlibIterdir() {
+    doTest("Generator[Path, None, None]", """
+      import pathlib
+      expr = pathlib.Path("").iterdir()
+      """);
+  }
+
+  // PY-78653
+  public void testTypeVarConstraints() {
+    doTest("tuple[str, str]", """
+      from typing import TypeVar
+      
+      AnyStr = TypeVar('AnyStr', str, bytes)
+      
+      def concat(x: AnyStr, y: AnyStr) -> AnyStr:
+          return x + y
+      
+      class MyStr(str): ...
+      
+      s1 = concat(MyStr('apple'), MyStr('pie'))
+      s2 = concat(MyStr('apple'), 'pie')
+      expr = (s1, s2)
+      """);
+    doTest("tuple[str, str]", """
+      def concat[AnyStr: (str, bytes)](x: AnyStr, y: AnyStr) -> AnyStr:
+          return x + y
+      
+      class MyStr(str): ...
+      
+      s1 = concat(MyStr('apple'), MyStr('pie'))
+      s2 = concat(MyStr('apple'), 'pie')
+      expr = (s1, s2)
       """);
   }
 

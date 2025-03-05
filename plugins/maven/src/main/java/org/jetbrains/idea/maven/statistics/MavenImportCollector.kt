@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object MavenImportCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("maven.import", 10)
+  val GROUP = EventLogGroup("maven.import", 11)
 
   @JvmField
   val HAS_USER_ADDED_LIBRARY_DEP = GROUP.registerEvent("hasUserAddedLibraryDependency")
@@ -73,6 +73,9 @@ object MavenImportCollector : CounterUsagesCollector() {
 
   @JvmField
   val WORKSPACE_LEGACY_IMPORTERS_PHASE = GROUP.registerIdeActivity("legacy_importers", parentActivity = WORKSPACE_IMPORT)
+
+  @JvmField
+  val WORKSPACE_DEPENDENCY_SUBSTITUTION_PHASE = GROUP.registerIdeActivity("dependency_substitution", parentActivity = WORKSPACE_IMPORT)
   // <<< Workspace import phases
 
   @JvmField

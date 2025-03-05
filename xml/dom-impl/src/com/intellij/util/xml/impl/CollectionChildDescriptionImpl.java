@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -13,6 +13,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -33,6 +34,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return "CollectionChildDescription:" + getXmlName();
   }
 
+  @Unmodifiable
   List<XmlTag> getCollectionSubTags(DomInvocationHandler handler, @NotNull XmlTag tag, boolean processIncludes) {
     return DomImplUtil.findSubTags(tag, handler.createEvaluatedXmlName(getXmlName()), handler.getFile(), processIncludes);
   }
@@ -76,7 +78,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @Override
-  public @NotNull List<? extends DomElement> getValues(final @NotNull DomElement element) {
+  public @Unmodifiable @NotNull List<? extends DomElement> getValues(final @NotNull DomElement element) {
     final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
     if (handler != null) {
       return handler.getCollectionChildren(this);
@@ -113,7 +115,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   }
 
   @Override
-  public List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
+  public @Unmodifiable List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     return DomImplUtil.findSubTags(subTags, handler.createEvaluatedXmlName(getXmlName()), file);
   }
 

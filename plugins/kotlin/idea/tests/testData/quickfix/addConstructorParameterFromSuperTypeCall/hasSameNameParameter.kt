@@ -1,5 +1,5 @@
 // "Add constructor parameter 'y'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Add 'x =' to argument
 // ACTION: Create secondary constructor
 // ACTION: Remove parameter 'y'

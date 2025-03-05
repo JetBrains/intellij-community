@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +18,7 @@ public class PyValueModifier extends XValueModifier {
   }
 
   @Override
-  public void setValue(@NotNull final XExpression expression, @NotNull final XModificationCallback callback) {
+  public void setValue(final @NotNull XExpression expression, final @NotNull XModificationCallback callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         myDebugProcess.changeVariable(myVariable, expression.getExpression());

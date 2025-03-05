@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -30,9 +30,8 @@ public final class JavaDebuggerSettings extends XDebuggerSettings<Element> {
     super("java");
   }
 
-  @NotNull
   @Override
-  public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
+  public @NotNull Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
     return switch (category) {
       case GENERAL ->
         singletonList(SimpleConfigurable.create("reference.idesettings.debugger.launching", JavaBundle.message("options.java.display.name"),
@@ -49,8 +48,7 @@ public final class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   }
 
   @SuppressWarnings("SpellCheckingInspection")
-  @NotNull
-  public static List<Configurable> createDataViewsConfigurable() {
+  public static @NotNull List<Configurable> createDataViewsConfigurable() {
     return Arrays.asList(new DebuggerDataViewsConfigurable(null),
                          SimpleConfigurable.create("reference.idesettings.debugger.typerenderers", JavaDebuggerBundle
                                                      .message("user.renderers.configurable.display.name"),
@@ -64,9 +62,8 @@ public final class JavaDebuggerSettings extends XDebuggerSettings<Element> {
     }
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @Nullable Element getState() {
     return null;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.appendonlylog;
 
 import com.intellij.openapi.util.IntRef;
@@ -225,7 +225,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
   }
 
 
-  private static final class RecordLayout {
+  @ApiStatus.Internal
+  public static final class RecordLayout {
     // Record = (header) + (payload)
     // Header = 32 bit, 32-bit-aligned (so it could be read/write as volatile, and not all CPU arch allow memory sync
     //          ops on non-aligned offsets)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
@@ -20,6 +20,7 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Type;
 import java.util.HashSet;
@@ -118,11 +119,11 @@ public final class DomApplicationComponent {
     return allMetas().filter(m -> m.lazyInstance == description).findFirst().orElse(null);
   }
 
-  public synchronized Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
+  public synchronized @Unmodifiable Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
     return ContainerUtil.map2Set(myRootTagName2FileDescription.get(rootTagName), DomFileMetaData::getDescription);
   }
 
-  public synchronized Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {
+  public synchronized @Unmodifiable Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {
     return ContainerUtil.map2Set(myAcceptingOtherRootTagNamesDescriptions, DomFileMetaData::getDescription);
   }
 

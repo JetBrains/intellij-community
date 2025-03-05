@@ -161,7 +161,7 @@ class MockProjectAware(
     }
   }
 
-  val LOG = Logger.getInstance(MockProjectAware::class.java)
+  private val LOG = Logger.getInstance(MockProjectAware::class.java)
 
   fun <R> waitForAllProjectActivities(action: () -> R): R {
     return project.trackActivityBlocking(MockProjectReloadActivityKey, action)

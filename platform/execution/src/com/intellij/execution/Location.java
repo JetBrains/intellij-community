@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -19,12 +19,11 @@ public abstract class Location<E extends PsiElement> {
   public static final DataKey<Location<?>> DATA_KEY = DataKey.create("Location");
   public static final DataKey<Location<?>[]> DATA_KEYS = DataKey.create("LocationArray");
 
-  @NotNull public abstract E getPsiElement();
-  @NotNull public abstract Project getProject();
-  @NotNull public abstract <T extends PsiElement> Iterator<Location<T>> getAncestors(Class<T> ancestorClass, boolean strict);
+  public abstract @NotNull E getPsiElement();
+  public abstract @NotNull Project getProject();
+  public abstract @NotNull <T extends PsiElement> Iterator<Location<T>> getAncestors(Class<T> ancestorClass, boolean strict);
 
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     E psiElement = getPsiElement();
     if (psiElement.isValid()) {
       if (psiElement instanceof PsiFileSystemItem) {
@@ -45,14 +44,12 @@ public abstract class Location<E extends PsiElement> {
     return getOpenFileDescriptor();
   }
   
-  @Nullable
-  public OpenFileDescriptor getOpenFileDescriptor() {
+  public @Nullable OpenFileDescriptor getOpenFileDescriptor() {
     VirtualFile file = getVirtualFile();
     return file != null ? new OpenFileDescriptor(getProject(), file, getPsiElement().getTextOffset()) : null;
   }
 
-  @Nullable
-  public <Ancestor extends PsiElement> Location<Ancestor> getParent(Class<Ancestor> parentClass) {
+  public @Nullable <Ancestor extends PsiElement> Location<Ancestor> getParent(Class<Ancestor> parentClass) {
     Iterator<Location<PsiElement>> ancestors = getAncestors(PsiElement.class, true);
     if (ancestors.hasNext()) {
       Location<? extends PsiElement> parent = ancestors.next();
@@ -64,18 +61,15 @@ public abstract class Location<E extends PsiElement> {
     return null;
   }
 
-  @Nullable
-  public <Ancestor extends PsiElement> Ancestor getParentElement(Class<Ancestor> parentClass) {
+  public @Nullable <Ancestor extends PsiElement> Ancestor getParentElement(Class<Ancestor> parentClass) {
     return safeGetPsiElement(getParent(parentClass));
   }
 
-  @Nullable
-  public static <T extends PsiElement> T safeGetPsiElement(Location<T> location) {
+  public static @Nullable <T extends PsiElement> T safeGetPsiElement(Location<T> location) {
     return location != null ? location.getPsiElement() : null;
   }
 
-  @Nullable
-  public static <T> T safeCast(Object obj, Class<T> expectedClass) {
+  public static @Nullable <T> T safeCast(Object obj, Class<T> expectedClass) {
     if (expectedClass.isInstance(obj)) {
       @SuppressWarnings("unchecked") T t = (T)obj;
       return t;
@@ -83,11 +77,9 @@ public abstract class Location<E extends PsiElement> {
     return null;
   }
 
-  @NotNull
-  public PsiLocation<E> toPsiLocation() {
+  public @NotNull PsiLocation<E> toPsiLocation() {
     return new PsiLocation<>(getProject(), getPsiElement());
   }
 
-  @Nullable
-  public abstract Module getModule();
+  public abstract @Nullable Module getModule();
 }

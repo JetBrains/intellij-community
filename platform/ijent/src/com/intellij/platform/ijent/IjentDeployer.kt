@@ -46,10 +46,11 @@ suspend fun IjentDeployingStrategy.Windows.deploy(): DeployedIjent.Windows {
 private suspend fun IjentDeployingStrategy.doDeploy(): Pair<String, IjentApi> =
   try {
     val targetPlatform = getTargetPlatform()
+    val targetDescriptor = getTargetDescriptor()
     val remotePathToBinary = copyFile(IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform))
     val mediator = createProcess(remotePathToBinary)
 
-    val ijentApi = connectToRunningIjent(getConnectionStrategy(), targetPlatform, mediator)
+    val ijentApi = connectToRunningIjent(getConnectionStrategy(), targetPlatform, targetDescriptor, mediator)
     remotePathToBinary to ijentApi
   }
   finally {

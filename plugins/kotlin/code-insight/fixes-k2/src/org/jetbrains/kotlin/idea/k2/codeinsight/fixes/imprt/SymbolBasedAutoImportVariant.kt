@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.name.FqName
 import javax.swing.Icon
 
 internal data class SymbolBasedAutoImportVariant(
+    val candidatePointer: ImportCandidatePointer,
     override val fqName: FqName,
     override val declarationToImport: PsiElement?,
     override val icon: Icon?,

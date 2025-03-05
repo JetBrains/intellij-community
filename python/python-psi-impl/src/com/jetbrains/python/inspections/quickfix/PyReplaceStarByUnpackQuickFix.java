@@ -11,9 +11,8 @@ import com.jetbrains.python.psi.PyStarExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class PyReplaceStarByUnpackQuickFix extends PsiUpdateModCommandQuickFix {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.replace.star.by.unpack");
   }
 

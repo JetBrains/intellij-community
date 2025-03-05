@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.intellij.lang.LanguageNamesValidation;
@@ -25,6 +25,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMembersUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.BadDataException;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenterNoPreviewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +36,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author Ilya.Kazakevich
- */
-class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImpl<PyExtractSuperclassView,
+@ApiStatus.Internal
+public final class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImpl<PyExtractSuperclassView,
   MemberInfoModel<PyElement, PyMemberInfo<PyElement>>>
   implements PyExtractSuperclassPresenter {
   private final NamesValidator myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());

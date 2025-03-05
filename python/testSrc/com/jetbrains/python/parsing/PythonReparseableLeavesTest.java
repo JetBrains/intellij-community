@@ -133,4 +133,37 @@ public class PythonReparseableLeavesTest extends PythonIncrementalParsingTestCas
   public void testMultilineTripleQuotedStringReparsedInsideFString() {
     doTest();
   }
+
+  public void testNewQuoteBeforeSingleQuotedString() {
+    doTest(true, false);
+  }
+
+  public void testNewQuoteBeforeDoubleQuotedString() {
+    doTest(true, false);
+  }
+
+  public void testNewQuoteBeforeSingleQuotedStringRecovery() {
+    doTest(false, true);
+  }
+
+  public void testNewQuoteBeforeDoubleQuotedStringRecovery() {
+    doTest(false, true);
+  }
+
+  public void testTripleQuotedStringChangedToThreeQuotesSingleQuotationMarks() {
+    doTest(true, false);
+  }
+
+  public void testStringWithTwoQuotationMarksInTheBeginningChangedToTripleQuoted() {
+    doTest(false, true);
+  }
+
+  // Checks if the identifier (e.g. `Noe`) correctly re-highlighted into the None keyword and transformed into the Py:NONE_KEYWORD
+  public void testNoneKeyWordHighlighted() {
+    doTest();
+  }
+
+  public void testTrueKeyWordHighlighted() {
+    doTest();
+  }
 }

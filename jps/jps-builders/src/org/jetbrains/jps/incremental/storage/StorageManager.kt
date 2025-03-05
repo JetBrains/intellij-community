@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -19,17 +18,28 @@ private val MV_STORE_CACHE_SIZE_IN_MB = System.getProperty("jps.new.storage.cach
 private val LOG = logger<StorageManager>()
 
 @ApiStatus.Internal
-class StorageManager constructor(@JvmField val file: Path) {
+class StorageManager(@JvmField val file: Path)  {
+  constructor(file: Path, store: MVStore) : this(file) {
+    storeValue.value = store
+  }
+
   private val storeValue = SynchronizedClearableLazy {
     LOG.debug { "Opening storage $file" }
-    createOrResetMvStore(file = file, readOnly = false, logSupplier = { LOG })
+    createOrResetMvStore(file = file, readOnly = false, logger = { m, e, isWarn ->
+      if (isWarn) {
+        LOG.warn(m, e)
+      }
+      else {
+        LOG.error(m, e)
+      }
+    })
   }
 
   fun open() {
     storeValue.value
   }
 
-  fun <K : Any, V : Any> openMap(name: String, keyType: DataType<K>, valueType: DataType<V>): MapHandle<K, V> {
+  fun <K : Any, V : Any> openMap(name: String, keyType: DataType<K>, valueType: DataType<V>): MVMap<K, V> {
     LOG.debug { "Open map $name" }
 
     val mapBuilder = MVMap.Builder<K, V>()
@@ -38,37 +48,39 @@ class StorageManager constructor(@JvmField val file: Path) {
     return openMap(name, mapBuilder)
   }
 
-  fun <K : Any, V : Any> openMap(name: String, mapBuilder: MVMap.Builder<K, V>): MapHandle<K, V> {
-    return MapHandle(openOrResetMap(store = storeValue.value, name = name, mapBuilder = mapBuilder, logSupplier = { LOG }))
+  fun <K : Any, V : Any> openMap(name: String, mapBuilder: MVMap.Builder<K, V>): MVMap<K, V> {
+    return openOrResetMap(
+      store = storeValue.value,
+      name = name,
+      mapBuilder = mapBuilder,
+      logger = { m, e, isWarn -> LOG.warn(m, e) },
+    )
   }
 
   /** Only if error occurred */
   fun forceClose() {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Force closing storage $file", Throwable())
-    }
-
-    storeValue.valueIfInitialized?.let {
-      storeValue.drop()
+    storeValue.drop()?.let {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Force closing storage $file", Throwable())
+      }
       it.closeImmediately()
     }
   }
 
   fun close() {
+    val store = storeValue.drop() ?: return
+
     if (LOG.isDebugEnabled) {
       LOG.debug("Closing storage $file", Throwable())
     }
 
-    storeValue.valueIfInitialized?.let {
-      storeValue.drop()
-      val isCompactOnClose = System.getProperty("jps.new.storage.compact.on.close", "false").toBoolean()
-      it.close()
-      if (isCompactOnClose && Files.exists(file)) {
-        val time = measureTime {
-          MVStoreTool.compact(file.toString(), false)
-        }
-        LOG.info("Compacted storage in $time")
+    val isCompactOnClose = System.getProperty("jps.new.storage.compact.on.close", "false").toBoolean()
+    store.close()
+    if (isCompactOnClose && Files.exists(file)) {
+      val time = measureTime {
+        MVStoreTool.compact(file.toString(), false)
       }
+      LOG.info("Compacted storage in $time")
     }
   }
 
@@ -106,20 +118,17 @@ class StorageManager constructor(@JvmField val file: Path) {
   fun getMapName(targetId: String, targetTypeId: String, suffix: String): String = "$targetId|$targetTypeId|$suffix"
 }
 
-@ApiStatus.Internal
-class MapHandle<K : Any, V: Any> internal constructor(@JvmField val map: MVMap<K, V>)
-
 private fun <K : Any, V: Any> openOrResetMap(
   store: MVStore,
   name: String,
   mapBuilder: MVMap.Builder<K, V>,
-  logSupplier: () -> Logger,
+  logger: StoreLogger,
 ): MVMap<K, V> {
   try {
     return store.openMap(name, mapBuilder)
   }
   catch (e: Throwable) {
-    logSupplier().error("Cannot open map $name, map will be removed", e)
+    logger("Cannot open map $name, map will be removed", e, true)
     try {
       store.removeMap(name)
     }
@@ -133,12 +142,13 @@ private fun <K : Any, V: Any> openOrResetMap(
 private fun createOrResetMvStore(
   file: Path?,
   @Suppress("SameParameterValue") readOnly: Boolean = false,
-  logSupplier: () -> Logger,
+  logger: StoreLogger,
+  autoCommitDelay: Int = 60_000,
 ): MVStore {
   // If read-only and DB does not yet exist, create an in-memory DB
   if (file == null || (readOnly && Files.notExists(file))) {
     // in-memory
-    return tryOpenMvStore(file = null, readOnly = readOnly, logSupplier = logSupplier)
+    return tryOpenMvStore(file = null, readOnly = readOnly, autoCommitDelay = autoCommitDelay, logger = logger)
   }
 
   val markerFile = getInvalidateMarkerFile(file)
@@ -149,33 +159,41 @@ private fun createOrResetMvStore(
 
   file.parent?.let { Files.createDirectories(it) }
   try {
-    return tryOpenMvStore(file, readOnly, logSupplier)
+    return tryOpenMvStore(file = file, readOnly = readOnly, autoCommitDelay = autoCommitDelay, logger = logger)
   }
   catch (e: Throwable) {
-    logSupplier().warn("Cannot open cache state storage, will be recreated", e)
+    logger("Cannot open cache storage, will be recreated", e, true)
   }
 
   Files.deleteIfExists(file)
-  return tryOpenMvStore(file, readOnly, logSupplier)
+  return tryOpenMvStore(file = file, readOnly = readOnly, autoCommitDelay = autoCommitDelay, logger = logger)
 }
 
 private fun getInvalidateMarkerFile(file: Path): Path = file.resolveSibling("${file.fileName}.invalidated")
 
-private fun tryOpenMvStore(file: Path?, readOnly: Boolean, logSupplier: () -> Logger): MVStore {
-  val storeErrorHandler = StoreErrorHandler(file, logSupplier)
+@ApiStatus.Internal
+fun tryOpenMvStore(
+  file: Path?,
+  readOnly: Boolean,
+  autoCommitDelay: Int,
+  logger: StoreLogger,
+): MVStore {
+  val storeErrorHandler = StoreErrorHandler(file, logger)
   val store = MVStore.Builder()
     .fileName(file?.toAbsolutePath()?.toString())
     .backgroundExceptionHandler(storeErrorHandler)
     .cacheSize(MV_STORE_CACHE_SIZE_IN_MB)
-    .let {
-      if (readOnly) it.readOnly() else it
+    .also {
+      if (readOnly) {
+        it.readOnly()
+      }
+      if (autoCommitDelay == 0) {
+        it.autoCommitDisabled()
+      }
+
+      it
     }
-    // We do not disable auto-commit as JPS doesn't use Kotlin coroutines, so it's okay to use a separate daemon thread.
-    // Additionally, we ensure that the write operation will not slow down any tasks,
-    // as the actual save will be done in a background thread.
-    // Use a 16MB BUFFER for auto-commit instead of the default 1MB -
-    // if writes are performed too often, do not save intermediate B-Tree pages to disk.
-    // Or... just disable auto-commit based on the size of unsaved data and save once in 1 minute
+    // disable auto-commit based on the size of unsaved data and save once in 1 minute
     .autoCommitBufferSize(0)
     .open()
   storeErrorHandler.isStoreOpened = true
@@ -187,22 +205,27 @@ private fun tryOpenMvStore(file: Path?, readOnly: Boolean, logSupplier: () -> Lo
   // as the actual save will be done in a background thread.
   // Use a 16MB BUFFER for auto-commit instead of the default 1MB -
   // if writes are performed too often, do not save intermediate B-Tree pages to disk.
-  // Or... just disable auto-commit based on the size of unsaved data and save once in 1 minute
-  store.autoCommitDelay = 60_000
+  if (autoCommitDelay != 0) {
+    store.autoCommitDelay = autoCommitDelay
+  }
   return store
 }
 
-private class StoreErrorHandler(private val dbFile: Path?, private val logSupplier: () -> Logger) : Thread.UncaughtExceptionHandler {
+typealias StoreLogger = (message: String, error: Throwable, isWarn: Boolean) -> Unit
+
+private class StoreErrorHandler(
+  private val dbFile: Path?,
+  private val logger: StoreLogger,
+) : Thread.UncaughtExceptionHandler {
   @JvmField
   var isStoreOpened: Boolean = false
 
   override fun uncaughtException(t: Thread, e: Throwable) {
-    val log = logSupplier()
     if (isStoreOpened) {
-      log.error("Store error (db=$dbFile)", e)
+      logger("Store error (db=$dbFile)", e, false)
     }
     else {
-      log.warn("Store will be recreated (db=$dbFile)", e)
+      logger("Store will be recreated (db=$dbFile)", e, true)
     }
   }
 }

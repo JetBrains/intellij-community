@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.*;
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.KeysGenerator;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.InputData;
@@ -13,6 +13,7 @@ import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -37,7 +38,8 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
@@ -50,7 +52,7 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
  */
 @TestApplication//SingleEntry indexes need application
 public abstract class IndexStorageLayoutProviderTestBase {
-
+  private static boolean wasInStressTest;
 
   protected final int inputsCountToTestWith;
 
@@ -60,21 +62,6 @@ public abstract class IndexStorageLayoutProviderTestBase {
                                                int inputsCountToTestWith) {
     this.storageLayoutProviderToTest = providerToTest;
     this.inputsCountToTestWith = inputsCountToTestWith;
-  }
-
-  private static boolean wasInStressTest;
-
-  @BeforeAll
-  static void disableExpensiveChecks() {
-    //disable expensive checks in ValueContainerImpl, since those checks cost too too much memory, and
-    // leads to OoM in TeamCity
-    wasInStressTest = IndexDebugProperties.IS_IN_STRESS_TESTS;
-    IndexDebugProperties.IS_IN_STRESS_TESTS = true;
-  }
-
-  @AfterAll
-  static void reEnableExpensiveChecks() {
-    IndexDebugProperties.IS_IN_STRESS_TESTS = wasInStressTest;
   }
 
   @ParameterizedTest
@@ -87,7 +74,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     try (IndexStorage<K, V> indexStorage = storageLayout.openIndexStorage()) {
@@ -110,11 +97,17 @@ public abstract class IndexStorageLayoutProviderTestBase {
         for (Map.Entry<K, V> e : inputData.entrySet()) {
           K expectedKey = e.getKey();
           V expectedValue = e.getValue();
-          ValueContainer<V> container = indexStorage.read(expectedKey);
-          if (!contains(container, expectedValue, expectedInputId)) {
+          boolean[] foundRef = {false};
+          indexStorage.read(expectedKey, container -> {
+            if (contains(container, expectedValue, expectedInputId)) {
+              foundRef[0] = true;
+              return false;
+            }
+            return true;
+          });
+          if (!foundRef[0]) {
             inconsistencies.add(
-              "container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + "), " +
-              "but " + dump(container)
+              "container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + ")"
             );
           }
         }
@@ -140,7 +133,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     try (IndexStorage<K, V> indexStorage = storageLayout.openIndexStorage()) {
@@ -166,12 +159,17 @@ public abstract class IndexStorageLayoutProviderTestBase {
         for (Map.Entry<K, V> e : inputData.entrySet()) {
           K expectedKey = e.getKey();
           V expectedValue = e.getValue();
-          ValueContainer<V> container = indexStorage.read(expectedKey);
-          if (!contains(container, expectedValue, expectedInputId)) {
+          boolean[] foundRef = {false};
+          indexStorage.read(expectedKey, container -> {
+            if (contains(container, expectedValue, expectedInputId)) {
+              foundRef[0] = true;
+              return false;
+            }
+            return true;
+          });
+          if (!foundRef[0]) {
             inconsistencies.add(
-              "container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + "), " +
-              "but " + dump(container)
-            );
+              "container(" + expectedKey + ") must contain inputId(=" + expectedInputId + ") with value(=" + expectedValue + ")");
           }
         }
       }
@@ -196,7 +194,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     try (IndexStorage<K, V> indexStorage = storageLayout.openIndexStorage()) {
@@ -228,10 +226,12 @@ public abstract class IndexStorageLayoutProviderTestBase {
         var input = inputDataGenerator.unpackSubstrate(substrate);
         for (Map.Entry<K, V> e : input.inputData.entrySet()) {
           K key = e.getKey();
-          ValueContainer<V> container = indexStorage.read(key);
-          if (container.size() > 0) {
-            inconsistencies.add("It must be no entries in container(" + key + "), but: " + dump(container));
-          }
+          indexStorage.read(key, container -> {
+            if (container.size() > 0) {
+              inconsistencies.add("It must be no entries in container(" + key + "), but: " + dump(container));
+            }
+            return true;
+          });
         }
       }
 
@@ -261,7 +261,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     ForwardIndexAccessor<K, V> forwardIndexAccessor = storageLayout.getForwardIndexAccessor();
@@ -316,7 +316,7 @@ public abstract class IndexStorageLayoutProviderTestBase {
       .limit(inputsCountToTestWith)
       .toArray();
 
-    var storageLayout = storageLayoutProviderToTest.getLayout(extension);
+    var storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     storageLayout.clearIndexData();
 
     ForwardIndexAccessor<K, V> forwardIndexAccessor = storageLayout.getForwardIndexAccessor();
@@ -362,6 +362,18 @@ public abstract class IndexStorageLayoutProviderTestBase {
     }
   }
 
+  @BeforeAll
+  static void disableExpensiveChecks() {
+    //disable expensive checks in ValueContainerImpl, since those checks cost too too much memory, and
+    // leads to OoM in TeamCity
+    wasInStressTest = IndexDebugProperties.IS_IN_STRESS_TESTS;
+    IndexDebugProperties.IS_IN_STRESS_TESTS = true;
+  }
+
+  @AfterAll
+  static void reEnableExpensiveChecks() {
+    IndexDebugProperties.IS_IN_STRESS_TESTS = wasInStressTest;
+  }
 
   /** @return true if (expectedValue, expectedInputId) tuple is in the container */
   protected static <V> boolean contains(@NotNull ValueContainer<V> container,
@@ -413,23 +425,21 @@ public abstract class IndexStorageLayoutProviderTestBase {
 
     /** deterministic function of a substrate -- repeated call with the same substrate must produce same Input */
     @NotNull Input<K, V> unpackSubstrate(long substrate);
+  }
 
-    record Input<K, V>(int inputId,
-                       @NotNull Map<K, V> inputData) {
-      public Input {
-        if (inputId <= 0) {
-          throw new IllegalArgumentException("inputId(=" + inputId + ") must be >0");
-        }
+  public record Input<K, V>(int inputId, @NotNull Map<K, V> inputData) {
+    public Input {
+      if (inputId <= 0) {
+        throw new IllegalArgumentException("inputId(=" + inputId + ") must be >0");
       }
+    }
 
-      InputData<K, V> asInputData() {
-        return new InputData<>(inputData());
-      }
+    InputData<K, V> asInputData() {
+      return new InputData<>(inputData());
     }
   }
 
-
-  public static class MocksBuildingBlocks {
+  public static final class MocksBuildingBlocks {
     private MocksBuildingBlocks() {
       throw new AssertionError("Not for instantiation, just a namespace");
     }
@@ -437,311 +447,387 @@ public abstract class IndexStorageLayoutProviderTestBase {
     public interface KeysGenerator {
       @NotNull IntStream keys(int seed);
     }
+  }
 
-    /** Copied from IdIndex, simplified for testing */
-    public static class ManyKeysIntegerToIntegerIndexExtension extends FileBasedIndexExtension<Integer, Integer> {
-      public static final @NonNls ID<Integer, Integer> INDEX_ID = ID.create("ManyKeysIntegerToIntegerIndexExtension");
+  /** Copied from IdIndex, simplified for testing */
+  public static class ManyKeysIntegerToIntegerIndexExtension extends FileBasedIndexExtension<Integer, Integer> {
+    public static final @NonNls ID<Integer, Integer> INDEX_ID = ID.create("ManyKeysIntegerToIntegerIndexExtension");
 
-      public static final int VERSION = 42;
+    public static final int VERSION = 42;
 
-      private final int cacheSize;
+    private final int cacheSize;
 
-      public ManyKeysIntegerToIntegerIndexExtension() { this(-1); }
+    public ManyKeysIntegerToIntegerIndexExtension() { this(-1); }
 
-      public ManyKeysIntegerToIntegerIndexExtension(int size) { cacheSize = size; }
+    public ManyKeysIntegerToIntegerIndexExtension(int size) { cacheSize = size; }
 
-      @Override
-      public int getVersion() {
-        return VERSION;
-      }
-
-      @Override
-      public int getCacheSize() {
-        if (cacheSize > 0) {
-          return cacheSize;
-        }
-        return super.getCacheSize();
-      }
-
-      @Override
-      public boolean dependsOnFileContent() {
-        return true;
-      }
-
-      @Override
-      public @NotNull ID<Integer, Integer> getName() {
-        return INDEX_ID;
-      }
-
-      @Override
-      public @NotNull DataExternalizer<Integer> getValueExternalizer() {
-        return EnumeratorIntegerDescriptor.INSTANCE;
-      }
-
-      @Override
-      public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
-        return EnumeratorIntegerDescriptor.INSTANCE;
-      }
-
-      @Override
-      public @NotNull DataIndexer<Integer, Integer, FileContent> getIndexer() {
-        throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
-      }
-
-      @Override
-      public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-        throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
-      }
-
-      @Override
-      public boolean hasSnapshotMapping() {
-        return true;
-      }
-
-      @Override
-      public boolean needsForwardIndexWhenSharing() {
-        return false;
-      }
-
-      @Override
-      public String toString() {
-        return "ManyKeysIntegerToIntegerIndexExtension";
-      }
+    @Override
+    public int getVersion() {
+      return VERSION;
     }
 
-
-    /** Generates input data with >=1 key per file */
-    public static class ManyEntriesPerFileInputGenerator implements InputDataGenerator<Integer, Integer> {
-      public static final int DEFAULT_MAX_FILE_ID = 2_000_000;
-      public static final int DEFAULT_KEYS_PER_FILE = 512;
-      public static final int DEFAULT_MIN_FILE_ID = PersistentFSRecordsStorage.MIN_VALID_ID;
-
-      private final int minFileId;
-      private final int maxFileId;
-
-      private final int maxKeysPerFile;
-      private final KeysGenerator keyGenerator;
-
-      /**
-       * If null, {@link ThreadLocalRandom} is used (default option).
-       * Non-null value is mostly not for alternative Random implementations (standard one is good enough), but to be
-       * able to set up {@code Random(fixedSeed)} during debugging
-       */
-      private final @Nullable Random rnd;
-
-      public ManyEntriesPerFileInputGenerator() {
-        this(DEFAULT_MIN_FILE_ID, DEFAULT_MAX_FILE_ID, DEFAULT_KEYS_PER_FILE);
+    @Override
+    public int getCacheSize() {
+      if (cacheSize > 0) {
+        return cacheSize;
       }
-
-      public ManyEntriesPerFileInputGenerator(int minFileId,
-                                              int maxFileId,
-                                              int maxKeysPerFile) {
-        this(null, minFileId, maxFileId, maxKeysPerFile, new RealisticKeysGenerator());
-      }
-
-
-      public ManyEntriesPerFileInputGenerator(@Nullable Random rnd,
-                                              int minFileId,
-                                              int maxFileId,
-                                              int maxKeysPerFile,
-                                              @NotNull KeysGenerator keysGenerator) {
-        this.rnd = rnd;
-        this.minFileId = minFileId;
-        this.maxFileId = maxFileId;
-        this.maxKeysPerFile = maxKeysPerFile;
-        keyGenerator = keysGenerator;
-      }
-
-      @Override
-      public @NotNull LongStream generateInputSubstrate() {
-        Random rnd = (this.rnd != null) ? this.rnd : ThreadLocalRandom.current();
-
-        return rnd.ints(minFileId, maxFileId)
-          .distinct()
-          .mapToLong(
-            inputId -> {
-              int keysCount = rnd.nextInt(maxKeysPerFile) & 0xFFFF;
-              return ((long)inputId) << 32
-                     | keysCount;
-            }
-          );
-      }
-
-      @Override
-      public @NotNull Input<Integer, Integer> unpackSubstrate(long substrate) {
-        int inputId = (int)(substrate >> 32);
-        int keysCount = (int)(substrate & 0xFFFF);
-        Map<Integer, Integer> keyValues = new Int2IntOpenHashMap();
-        keyGenerator.keys(/*seed: */ inputId)
-          .limit(keysCount)
-          .forEach(key -> keyValues.put(key, key));
-        return new Input<>(inputId, keyValues);
-      }
-
-      @Override
-      public String toString() {
-        return "ManyEntriesPerFileInputGenerator[" +
-               "inputIds:[" + minFileId + ".." + maxFileId + "], " +
-               "maxKeysPerFile=" + maxKeysPerFile + ", " +
-               "rnd=" + rnd +
-               ']';
-      }
+      return super.getCacheSize();
     }
 
-
-    public static class SingleEntryIntegerValueIndexExtension extends SingleEntryFileBasedIndexExtension<Integer> {
-      private static final ID<Integer, Integer> INDEX_ID = ID.create("SingleEntryIntegerValueIndexExtension");
-
-      @Override
-      public int getVersion() {
-        return 42;
-      }
-
-      @Override
-      public @NotNull ID<Integer, Integer> getName() {
-        return INDEX_ID;
-      }
-
-      @Override
-      public @NotNull SingleEntryIndexer<Integer> getIndexer() {
-        throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
-      }
-
-      @Override
-      public @NotNull DataExternalizer<Integer> getValueExternalizer() {
-        return EnumeratorIntegerDescriptor.INSTANCE;
-      }
-
-      @Override
-      public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-        throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
-      }
-
-      @Override
-      public boolean hasSnapshotMapping() {
-        return true;
-      }
-
-      @Override
-      public String toString() {
-        return "SingleEntryIntegerValueIndexExtension";
-      }
+    @Override
+    public boolean dependsOnFileContent() {
+      return true;
     }
 
-    /** Generates input data with <=1 key per file */
-    public static class SingleEntryPerFileInputGenerator implements InputDataGenerator<Integer, Integer> {
-      private final int minFileId;
-      private final int maxFileId;
-
-      /**
-       * If null, {@link ThreadLocalRandom} is used (default option).
-       * Non-null value is mostly not for alternative Random implementations (standard one is good enough), but to be
-       * able to set up {@code Random(fixedSeed)} during debugging
-       */
-      private final @Nullable Random rnd;
-      private final int differentValuesToGenerate;
-
-      public SingleEntryPerFileInputGenerator() {
-        this(null, 1, 10_000_000, 1024);
-      }
-
-      public SingleEntryPerFileInputGenerator(@Nullable Random rnd,
-                                              int minFileId,
-                                              int maxFileId,
-                                              int differentValuesToGenerate) {
-        this.rnd = rnd;
-        this.minFileId = minFileId;
-        this.maxFileId = maxFileId;
-        this.differentValuesToGenerate = differentValuesToGenerate;
-      }
-
-      @Override
-      public @NotNull LongStream generateInputSubstrate() {
-        Random rnd = (this.rnd != null) ? this.rnd : ThreadLocalRandom.current();
-
-        return rnd.ints(minFileId, maxFileId)
-          .distinct()
-          .mapToLong(
-            inputId -> {
-              int value = rnd.nextInt(differentValuesToGenerate);
-              return ((long)inputId) << 32
-                     | (long)value;
-            }
-          );
-      }
-
-      @Override
-      public @NotNull Input<Integer, Integer> unpackSubstrate(long substrate) {
-        int inputId = (int)(substrate >> 32);
-        int value = (int)(substrate);
-        return new Input<>(inputId, Map.of(inputId, value));
-      }
-
-      @Override
-      public String toString() {
-        return "SingleKeyPerFileInputGenerator[" +
-               "inputIds=[" + minFileId + ".." + maxFileId + "], " +
-               "differentValuesToGenerate=" + differentValuesToGenerate + ", " +
-               "rnd=" + rnd +
-               ']';
-      }
+    @Override
+    public @NotNull ID<Integer, Integer> getName() {
+      return INDEX_ID;
     }
 
-    /**
-     * Generates keys with some similarity to real-life keys distribution, to test-cover apt branches in code.
-     * Real-life keys distribution for many indexes are heavy-tailed, i.e. there are many rare keys, with only
-     * a few inputIds associated with them, and there are very frequent keys, with very long inputIds associated
-     * with them. Generator tries to emulate this property (not very precisely, though)
-     */
-    public static class RealisticKeysGenerator implements KeysGenerator {
-      @Override
-      public @NotNull IntStream keys(int seed) {
-        Random rnd = new Random(seed);
-        // Ideally, we should sample from something like Zipf-distribution, which seems to be a good approximation
-        // of real-life words/symbols/trigrams distribution, but for now I decided to use simplest piecewise approximation:
-        //MAYBE RC: implement sampling from real Zipf keys distribution?
-
-        return rnd.ints(0, 1000)
-          .map(random -> {
-            if (random < 10) {               //1%,  10 keys,  ~0.1%/key
-              return rnd.nextInt(0, 10);
-            }
-            else if (random < 200) {          //10%, 990 keys, ~0.01%/key
-              return rnd.nextInt(10, 1000);
-            }
-            else {                            //80%, 999_000 keys, ~0.0001%/key
-              return rnd.nextInt(1000, 1_000_000);
-            }
-          })
-          .distinct();
-      }
+    @Override
+    public @NotNull DataExternalizer<Integer> getValueExternalizer() {
+      return EnumeratorIntegerDescriptor.INSTANCE;
     }
 
-    /** Generates keys from U[0..maxKey) -- i.e. all the keys from [0...maxKey) are generated with equal probability */
-    public static class UniformKeysGenerator implements KeysGenerator {
+    @Override
+    public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
+      return EnumeratorIntegerDescriptor.INSTANCE;
+    }
 
-      private final int maxKey;
+    @Override
+    public @NotNull DataIndexer<Integer, Integer, FileContent> getIndexer() {
+      throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
+    }
 
-      public UniformKeysGenerator() {
-        this(Integer.MAX_VALUE);
-      }
+    @Override
+    public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+      throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
+    }
 
-      public UniformKeysGenerator(int maxKey) {
-        if (maxKey <= 0) {
-          throw new IllegalArgumentException("maxKey(=" + maxKey + ") must be >0");
-        }
-        this.maxKey = maxKey;
-      }
+    @Override
+    public boolean hasSnapshotMapping() {
+      return true;
+    }
 
-      @Override
-      public @NotNull IntStream keys(int seed) {
-        Random rnd = new Random(seed);
-        return rnd.ints(0, maxKey).distinct();
-      }
+    @Override
+    public boolean needsForwardIndexWhenSharing() {
+      return false;
+    }
+
+    @Override
+    public String toString() {
+      return "ManyKeysIntegerToIntegerIndexExtension";
     }
   }
 
-  static final class Setups {
+  /** Copied from IdIndex, simplified for testing */
+  public static class ShardableManyKeysIntegerToIntegerIndexExtension extends FileBasedIndexExtension<Integer, Integer>
+    implements ShardableIndexExtension {
+    public static final @NonNls ID<Integer, Integer> INDEX_ID = ID.create("ShardableManyKeysIntegerToIntegerIndexExtension");
+
+    public static final int VERSION = 42;
+
+    private final int cacheSize;
+
+    public ShardableManyKeysIntegerToIntegerIndexExtension() { this(-1); }
+
+    public ShardableManyKeysIntegerToIntegerIndexExtension(int size) { cacheSize = size; }
+
+    @Override
+    public int getVersion() {
+      return VERSION;
+    }
+
+    @Override
+    public int shardsCount() {
+      return 3;
+    }
+
+    @Override
+    public int getCacheSize() {
+      if (cacheSize > 0) {
+        return cacheSize;
+      }
+      return super.getCacheSize();
+    }
+
+    @Override
+    public boolean dependsOnFileContent() {
+      return true;
+    }
+
+    @Override
+    public @NotNull ID<Integer, Integer> getName() {
+      return INDEX_ID;
+    }
+
+    @Override
+    public @NotNull DataExternalizer<Integer> getValueExternalizer() {
+      return EnumeratorIntegerDescriptor.INSTANCE;
+    }
+
+    @Override
+    public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
+      return EnumeratorIntegerDescriptor.INSTANCE;
+    }
+
+    @Override
+    public @NotNull DataIndexer<Integer, Integer, FileContent> getIndexer() {
+      throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
+    }
+
+    @Override
+    public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+      throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
+    }
+
+    @Override
+    public boolean hasSnapshotMapping() {
+      return true;
+    }
+
+    @Override
+    public boolean needsForwardIndexWhenSharing() {
+      return false;
+    }
+
+    @Override
+    public String toString() {
+      return "ShardableManyKeysIntegerToIntegerIndexExtension";
+    }
+  }
+
+  /** Generates input data with >=1 key per file */
+  public static class ManyEntriesPerFileInputGenerator implements InputDataGenerator<Integer, Integer> {
+    public static final int DEFAULT_MAX_FILE_ID = 2_000_000;
+    public static final int DEFAULT_KEYS_PER_FILE = 512;
+    public static final int DEFAULT_MIN_FILE_ID = PersistentFSRecordsStorage.MIN_VALID_ID;
+
+    private final int minFileId;
+    private final int maxFileId;
+
+    private final int maxKeysPerFile;
+    private final KeysGenerator keyGenerator;
+
+    /**
+     * If null, {@link ThreadLocalRandom} is used (default option).
+     * Non-null value is mostly not for alternative Random implementations (standard one is good enough), but to be
+     * able to set up {@code Random(fixedSeed)} during debugging
+     */
+    private final @Nullable Random rnd;
+
+    public ManyEntriesPerFileInputGenerator() {
+      this(DEFAULT_MIN_FILE_ID, DEFAULT_MAX_FILE_ID, DEFAULT_KEYS_PER_FILE);
+    }
+
+    public ManyEntriesPerFileInputGenerator(int minFileId,
+                                            int maxFileId,
+                                            int maxKeysPerFile) {
+      this(null, minFileId, maxFileId, maxKeysPerFile, new RealisticKeysGenerator());
+    }
+
+
+    public ManyEntriesPerFileInputGenerator(@Nullable Random rnd,
+                                            int minFileId,
+                                            int maxFileId,
+                                            int maxKeysPerFile,
+                                            @NotNull KeysGenerator keysGenerator) {
+      this.rnd = rnd;
+      this.minFileId = minFileId;
+      this.maxFileId = maxFileId;
+      this.maxKeysPerFile = maxKeysPerFile;
+      keyGenerator = keysGenerator;
+    }
+
+    @Override
+    public @NotNull LongStream generateInputSubstrate() {
+      Random rnd = (this.rnd != null) ? this.rnd : ThreadLocalRandom.current();
+
+      return rnd.ints(minFileId, maxFileId)
+        .distinct()
+        .mapToLong(
+          inputId -> {
+            int keysCount = rnd.nextInt(maxKeysPerFile) & 0xFFFF;
+            return ((long)inputId) << 32
+                   | keysCount;
+          }
+        );
+    }
+
+    @Override
+    public @NotNull Input<Integer, Integer> unpackSubstrate(long substrate) {
+      int inputId = (int)(substrate >> 32);
+      int keysCount = (int)(substrate & 0xFFFF);
+      Map<Integer, Integer> keyValues = new Int2IntOpenHashMap();
+      keyGenerator.keys(/*seed: */ inputId)
+        .limit(keysCount)
+        .forEach(key -> keyValues.put(key, key));
+      return new Input<>(inputId, keyValues);
+    }
+
+    @Override
+    public String toString() {
+      return "ManyEntriesPerFileInputGenerator[" +
+             "inputIds:[" + minFileId + ".." + maxFileId + "], " +
+             "maxKeysPerFile=" + maxKeysPerFile + ", " +
+             "rnd=" + rnd +
+             ']';
+    }
+  }
+
+
+  public static class SingleEntryIntegerValueIndexExtension extends SingleEntryFileBasedIndexExtension<Integer> {
+    private static final ID<Integer, Integer> INDEX_ID = ID.create("SingleEntryIntegerValueIndexExtension");
+
+    @Override
+    public int getVersion() {
+      return 42;
+    }
+
+    @Override
+    public @NotNull ID<Integer, Integer> getName() {
+      return INDEX_ID;
+    }
+
+    @Override
+    public @NotNull SingleEntryIndexer<Integer> getIndexer() {
+      throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
+    }
+
+    @Override
+    public @NotNull DataExternalizer<Integer> getValueExternalizer() {
+      return EnumeratorIntegerDescriptor.INSTANCE;
+    }
+
+    @Override
+    public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+      throw new UnsupportedOperationException("Method not implemented: indexation is not tested by this test");
+    }
+
+    @Override
+    public boolean hasSnapshotMapping() {
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return "SingleEntryIntegerValueIndexExtension";
+    }
+  }
+
+  /** Generates input data with <=1 key per file */
+  public static class SingleEntryPerFileInputGenerator implements InputDataGenerator<Integer, Integer> {
+    private final int minFileId;
+    private final int maxFileId;
+
+    /**
+     * If null, {@link ThreadLocalRandom} is used (default option).
+     * Non-null value is mostly not for alternative Random implementations (standard one is good enough), but to be
+     * able to set up {@code Random(fixedSeed)} during debugging
+     */
+    private final @Nullable Random rnd;
+    private final int differentValuesToGenerate;
+
+    public SingleEntryPerFileInputGenerator() {
+      this(null, 1, 10_000_000, 1024);
+    }
+
+    public SingleEntryPerFileInputGenerator(@Nullable Random rnd,
+                                            int minFileId,
+                                            int maxFileId,
+                                            int differentValuesToGenerate) {
+      this.rnd = rnd;
+      this.minFileId = minFileId;
+      this.maxFileId = maxFileId;
+      this.differentValuesToGenerate = differentValuesToGenerate;
+    }
+
+    @Override
+    public @NotNull LongStream generateInputSubstrate() {
+      Random rnd = (this.rnd != null) ? this.rnd : ThreadLocalRandom.current();
+
+      return rnd.ints(minFileId, maxFileId)
+        .distinct()
+        .mapToLong(
+          inputId -> {
+            int value = rnd.nextInt(differentValuesToGenerate);
+            return ((long)inputId) << 32
+                   | (long)value;
+          }
+        );
+    }
+
+    @Override
+    public @NotNull Input<Integer, Integer> unpackSubstrate(long substrate) {
+      int inputId = (int)(substrate >> 32);
+      int value = (int)(substrate);
+      return new Input<>(inputId, Map.of(inputId, value));
+    }
+
+    @Override
+    public String toString() {
+      return "SingleKeyPerFileInputGenerator[" +
+             "inputIds=[" + minFileId + ".." + maxFileId + "], " +
+             "differentValuesToGenerate=" + differentValuesToGenerate + ", " +
+             "rnd=" + rnd +
+             ']';
+    }
+  }
+
+  /**
+   * Generates keys with some similarity to real-life keys distribution, to test-cover apt branches in code.
+   * Real-life keys distribution for many indexes are heavy-tailed, i.e. there are many rare keys, with only
+   * a few inputIds associated with them, and there are very frequent keys, with very long inputIds associated
+   * with them. Generator tries to emulate this property (not very precisely, though)
+   */
+  public static class RealisticKeysGenerator implements KeysGenerator {
+    @Override
+    public @NotNull IntStream keys(int seed) {
+      Random rnd = new Random(seed);
+      // Ideally, we should sample from something like Zipf-distribution, which seems to be a good approximation
+      // of real-life words/symbols/trigrams distribution, but for now I decided to use simplest piecewise approximation:
+      //MAYBE RC: implement sampling from real Zipf keys distribution?
+
+      return rnd.ints(0, 1000)
+        .map(random -> {
+          if (random < 10) {               //1%,  10 keys,  ~0.1%/key
+            return rnd.nextInt(0, 10);
+          }
+          else if (random < 200) {          //10%, 990 keys, ~0.01%/key
+            return rnd.nextInt(10, 1000);
+          }
+          else {                            //80%, 999_000 keys, ~0.0001%/key
+            return rnd.nextInt(1000, 1_000_000);
+          }
+        })
+        .distinct();
+    }
+  }
+
+  /** Generates keys from U[0..maxKey) -- i.e. all the keys from [0...maxKey) are generated with equal probability */
+  public static class UniformKeysGenerator implements KeysGenerator {
+
+    private final int maxKey;
+
+    public UniformKeysGenerator() {
+      this(Integer.MAX_VALUE);
+    }
+
+    public UniformKeysGenerator(int maxKey) {
+      if (maxKey <= 0) {
+        throw new IllegalArgumentException("maxKey(=" + maxKey + ") must be >0");
+      }
+      this.maxKey = maxKey;
+    }
+
+    @Override
+    public @NotNull IntStream keys(int seed) {
+      Random rnd = new Random(seed);
+      return rnd.ints(0, maxKey).distinct();
+    }
+  }
+
+  public static final class Setups {
     private Setups() {
       throw new AssertionError("Not for instantiation, just a namespace");
     }
@@ -750,7 +836,8 @@ public abstract class IndexStorageLayoutProviderTestBase {
     private static Stream<SetupToTest<?, ?>> defaultSetupsToTest() {
       return Stream.of(
         new SetupToTest<>(new ManyKeysIntegerToIntegerIndexExtension(), new ManyEntriesPerFileInputGenerator()),
-        new SetupToTest<>(new SingleEntryIntegerValueIndexExtension(), new SingleEntryPerFileInputGenerator())
+        new SetupToTest<>(new SingleEntryIntegerValueIndexExtension(), new SingleEntryPerFileInputGenerator()),
+        new SetupToTest<>(new ShardableManyKeysIntegerToIntegerIndexExtension(), new ManyEntriesPerFileInputGenerator())
       );
     }
 

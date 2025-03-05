@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -8,6 +8,9 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -30,7 +33,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   private var tmpEntityStorage: EntityStorage? = null
   private val entitySource = LegacyCustomLibraryEntitySource(tableLevel)
   private val libraryTableId = LibraryTableId.GlobalLibraryTableId(tableLevel)
-  private val libraryTableDelegate = GlobalLibraryTableDelegate(this, libraryTableId)
+  private val libraryTableDelegate = GlobalLibraryTableDelegate(this, getDescriptor(), libraryTableId)
 
   override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                                     initialEntityStorage: VersionedEntityStorage): () -> Unit {
@@ -77,7 +80,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   override fun getPresentation(): LibraryTablePresentation = presentation
 
   override fun getModifiableModel(): LibraryTable.ModifiableModel {
-    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, entitySource)
+    return GlobalOrCustomModifiableLibraryTableBridgeImpl(this, getDescriptor(), entitySource)
   }
 
   override fun isEditable(): Boolean = false
@@ -87,8 +90,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
     Disposer.dispose(libraryTableDelegate)
 
     val runnable: () -> Unit = {
-      // We need to remove all related libraries from the [GlobalWorkspaceModel] e.g. extension point and related [CustomLibraryTable] can be unloaded
-      GlobalWorkspaceModel.getInstance().updateModel("Cleanup custom libraries after dispose") { storage ->
+      GlobalWorkspaceModel.getInstance(getDescriptor()).updateModel("Cleanup custom libraries after dispose") { storage ->
         storage.entities(LibraryEntity::class.java).filter { it.entitySource == entitySource }.forEach {
           storage.removeEntity(it)
         }
@@ -110,7 +112,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
 
   @OptIn(EntityStorageInstrumentationApi::class)
   override fun readExternal(libraryTableTag: Element) {
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(getDescriptor())
     val mutableEntityStorage = MutableEntityStorage.create()
 
     libraryTableTag.getChildren(JpsLibraryTableSerializer.LIBRARY_TAG).forEach { libraryTag ->
@@ -136,7 +138,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
 
       val libraryBridge = actualLibraryEntity.findLibraryBridge(entityStorage) ?: LibraryBridgeImpl(
         libraryTable = this,
-        project = null,
+        origin = LibraryOrigin.OfDescriptor(getDescriptor()),
         initialId = libraryEntity.symbolicId,
         initialEntityStorage = storageOnBuilder,
         targetBuilder = null
@@ -168,7 +170,7 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   }
 
   override fun writeExternal(element: Element) {
-    GlobalWorkspaceModel.getInstance().currentSnapshot.entities(LibraryEntity::class.java)
+    GlobalWorkspaceModel.getInstance(LocalEelDescriptor).currentSnapshot.entities(LibraryEntity::class.java)
       .filter { it.tableId == libraryTableId }
       .sortedBy { it.name }
       .forEach { libraryEntity ->
@@ -184,5 +186,12 @@ internal class CustomLibraryTableBridgeImpl(private val level: String, private v
   override fun removeListener(listener: LibraryTable.Listener) = libraryTableDelegate.removeListener(listener)
 }
 
+/**
+ * As for now, we permit custom library tables only for local projects. These tables are internal anyway.
+ */
+private fun getDescriptor(): EelDescriptor {
+  return LocalEelDescriptor
+}
+
 @ApiStatus.Internal
-data class LegacyCustomLibraryEntitySource(private val levelId: String): EntitySource
+data class LegacyCustomLibraryEntitySource(private val levelId: String): GlobalStorageEntitySource

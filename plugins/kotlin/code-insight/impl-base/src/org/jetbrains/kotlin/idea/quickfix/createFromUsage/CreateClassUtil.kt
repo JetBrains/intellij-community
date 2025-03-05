@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
@@ -31,7 +32,6 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.isDotReceiver
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.SmartList
 
 enum class ClassKind(@NonNls val keyword: String, @Nls val description: String) {
     PLAIN_CLASS("class", KotlinBundle.message("text.class")),
@@ -54,7 +54,7 @@ object CreateClassUtil {
         open: Boolean,
         inner: Boolean,
         isInsideInnerOrLocalClass: Boolean,
-        primaryConstructorName: String?
+        primaryConstructorVisibilityModifier: String?
     ): KtClassOrObject {
         val psiFactory = KtPsiFactory(project)
         val classBody = when (kind) {
@@ -80,7 +80,7 @@ object CreateClassUtil {
                     ClassKind.PLAIN_CLASS, ClassKind.INTERFACE -> "<>"
                     else -> ""
                 }
-                val ctor = primaryConstructorName?.let { " $it constructor" } ?: ""
+                val ctor = primaryConstructorVisibilityModifier?.let { " $it constructor" } ?: ""
                 psiFactory.createDeclaration(
                     "$openMod$innerMod${kind.keyword} $safeName$typeParamList$ctor$paramList$returnTypeString $classBody"
                 )
@@ -99,7 +99,7 @@ object CreateClassUtil {
         commandName: String,
         runCreateClassBuilder: (PsiElement) -> Unit
     ) {
-        val applicableParents = SmartList<PsiElement>()
+        val applicableParents = mutableListOf<PsiElement>()
         initialApplicableParents.filterNotTo(applicableParents) { element ->
             element is KtClassOrObject && element.superTypeListEntries.any {
                 when (it) {
@@ -193,6 +193,7 @@ object CreateClassUtil {
     private fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
         val packageFqName = getNonRootFqNameOrNull() ?: return null
         sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
+            @OptIn(K1ModeProjectStructureApi::class)
             val implicitPrefix = PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
             return FqName.fromSegments((implicitPrefix.pathSegments() + packageFqName.pathSegments()).map { it.asString() })
         }
@@ -262,5 +263,17 @@ object CreateClassUtil {
     fun String.checkClassName(): Boolean = isNotEmpty() && Character.isUpperCase(first())
 
 
+    fun KtNamedDeclaration?.getTypeDescription(): String = when (this) {
+        is KtObjectDeclaration -> KotlinBundle.message("text.object")
+        is KtClass -> when {
+            isInterface() -> KotlinBundle.message("text.interface")
+            isEnum() -> KotlinBundle.message("text.enum.class")
+            isAnnotation() -> KotlinBundle.message("text.annotation.class")
+            else -> KotlinBundle.message("text.class")
+        }
 
+        is KtProperty, is KtParameter -> KotlinBundle.message("text.property")
+        is KtFunction -> KotlinBundle.message("text.function")
+        else -> KotlinBundle.message("text.declaration")
+    }
 }

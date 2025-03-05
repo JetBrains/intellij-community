@@ -84,6 +84,6 @@ public abstract class RunAnythingCommandProvider extends RunAnythingProviderBase
 
   @Override
   public @Nullable Icon getIcon(@NotNull String value) {
-    return AllIcons.Actions.Run_anything;
+    return AllIcons.Actions.RunAnything;
   }
 }

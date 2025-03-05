@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl.compiler;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -53,9 +39,8 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
     super(original);
   }
 
-  @NotNull
   @Override
-  public JpsJavaCompilerConfigurationImpl createCopy() {
+  public @NotNull JpsJavaCompilerConfigurationImpl createCopy() {
     return new JpsJavaCompilerConfigurationImpl(this);
   }
 
@@ -89,21 +74,18 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
     myClearOutputDirectoryOnRebuild = clearOutputDirectoryOnRebuild;
   }
 
-  @NotNull
   @Override
-  public JpsCompilerExcludes getCompilerExcludes() {
+  public @NotNull JpsCompilerExcludes getCompilerExcludes() {
     return myCompilerExcludes;
   }
 
-  @NotNull
   @Override
-  public JpsCompilerExcludes getValidationExcludes() {
+  public @NotNull JpsCompilerExcludes getValidationExcludes() {
     return myValidationExcludes;
   }
 
-  @NotNull
   @Override
-  public JpsValidationConfiguration getValidationConfiguration() {
+  public @NotNull JpsValidationConfiguration getValidationConfiguration() {
     return myValidationConfiguration;
   }
 
@@ -112,15 +94,13 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
     myValidationConfiguration = new JpsValidationConfigurationImpl(validateOnBuild, disabledValidators);
   }
 
-  @NotNull
   @Override
-  public ProcessorConfigProfile getDefaultAnnotationProcessingProfile() {
+  public @NotNull ProcessorConfigProfile getDefaultAnnotationProcessingProfile() {
     return myDefaultAnnotationProcessingProfile;
   }
 
-  @NotNull
   @Override
-  public Collection<ProcessorConfigProfile> getAnnotationProcessingProfiles() {
+  public @NotNull Collection<ProcessorConfigProfile> getAnnotationProcessingProfiles() {
     return myAnnotationProcessingProfiles;
   }
 
@@ -144,8 +124,7 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   }
 
   @Override
-  @Nullable
-  public String getByteCodeTargetLevel(String moduleName) {
+  public @Nullable String getByteCodeTargetLevel(String moduleName) {
     String level = myModulesByteCodeTargetLevels.get(moduleName);
     if (level != null) {
       return level.isEmpty() ? null : level;
@@ -158,9 +137,8 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
     myModulesByteCodeTargetLevels.put(moduleName, level);
   }
 
-  @NotNull
   @Override
-  public String getJavaCompilerId() {
+  public @NotNull String getJavaCompilerId() {
     return myJavaCompilerId;
   }
 
@@ -169,9 +147,8 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
     myJavaCompilerId = compiler;
   }
 
-  @NotNull
   @Override
-  public JpsJavaCompilerOptions getCompilerOptions(@NotNull String compilerId) {
+  public @NotNull JpsJavaCompilerOptions getCompilerOptions(@NotNull String compilerId) {
     JpsJavaCompilerOptions options = myCompilerOptions.get(compilerId);
     if (options == null) {
       options = new JpsJavaCompilerOptions();
@@ -185,9 +162,8 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
     myCompilerOptions.put(compilerId, options);
   }
 
-  @NotNull
   @Override
-  public JpsJavaCompilerOptions getCurrentCompilerOptions() {
+  public @NotNull JpsJavaCompilerOptions getCurrentCompilerOptions() {
     return getCompilerOptions(getJavaCompilerId());
   }
 
@@ -214,8 +190,7 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   }
 
   @Override
-  @NotNull
-  public ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module) {
+  public @NotNull ProcessorConfigProfile getAnnotationProcessingProfile(JpsModule module) {
     Map<JpsModule, ProcessorConfigProfile> map = myAnnotationProcessingProfileMap;
     if (map == null) {
       map = new HashMap<>();

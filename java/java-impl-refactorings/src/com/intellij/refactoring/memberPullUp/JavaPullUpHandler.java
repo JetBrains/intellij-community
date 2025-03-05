@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -112,8 +111,7 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
     mySubclass = aClass;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, element -> {
       if (mySubclass.isEnum()) {
-        if (element instanceof PsiMethod method &&
-            HighlightMethodUtil.isEnumSyntheticMethod(method.getSignature(PsiSubstitutor.EMPTY), aClass.getProject())) {
+        if (element instanceof PsiMethod method && PullUpDialog.isEnumSyntheticMethod(method)) {
           return false;
         }
         else if (element instanceof PsiEnumConstant || element instanceof PsiClassInitializer) {

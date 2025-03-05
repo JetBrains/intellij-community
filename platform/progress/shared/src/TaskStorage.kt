@@ -2,12 +2,15 @@
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
-import com.intellij.platform.util.progress.ProgressState
 import com.jetbrains.rhizomedb.ChangeScope
-import fleet.kernel.withEntities
+import com.jetbrains.rhizomedb.exists
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -30,15 +33,36 @@ abstract class TaskStorage {
     project: Project,
     title: String,
     cancellation: TaskCancellation,
-  ): TaskInfoEntity = withKernel {
-    createTaskInfoEntity {
-      TaskInfoEntity.new {
-        it[TaskInfoEntity.ProjectEntityType] = if (!project.isDefault) project.asEntity() else null
-        it[TaskInfoEntity.Title] = title
-        it[TaskInfoEntity.TaskCancellationType] = cancellation
-        it[TaskInfoEntity.ProgressStateType] = null
-        it[TaskInfoEntity.TaskStatusType] = TaskStatus.RUNNING
+    suspendable: TaskSuspension,
+  ): TaskInfoEntity? {
+    var taskInfoEntity: TaskInfoEntity? = null
+    try {
+      return withKernel {
+        val projectEntity = if (!project.isDefault) project.asEntity() else null
+        taskInfoEntity = createTaskInfoEntity {
+          if (projectEntity?.exists() == false) {
+            LOG.warn("The task info entity for \"${title}\" wasn't created, because $project does not exist anymore")
+            return@createTaskInfoEntity null
+          }
+
+          TaskInfoEntity.new {
+            it[TaskInfoEntity.ProjectEntityType] = projectEntity
+            it[TaskInfoEntity.TitleType] = title
+            it[TaskInfoEntity.TaskCancellationType] = cancellation
+            it[TaskInfoEntity.TaskSuspensionType] = suspendable
+            it[TaskInfoEntity.ProgressStateType] = null
+            it[TaskInfoEntity.TaskStatusType] = TaskStatus.Running(source = TaskStatus.Source.SYSTEM)
+          }
+        }
+        return@withKernel taskInfoEntity
       }
+    }
+    catch (ex: Exception) {
+      // Ensure that task is deleted if exception happened during creation (e.g. CancellationException on withContext exit)
+      withContext(NonCancellable) {
+        taskInfoEntity?.let { removeTask(it) }
+      }
+      throw ex
     }
   }
 
@@ -52,7 +76,7 @@ abstract class TaskStorage {
    * @param provider The provider used to create the [TaskInfoEntity].
    * @return The created [TaskInfoEntity].
    */
-  protected abstract suspend fun createTaskInfoEntity(provider: ChangeScope.() -> TaskInfoEntity): TaskInfoEntity
+  protected abstract suspend fun createTaskInfoEntity(provider: ChangeScope.() -> TaskInfoEntity?): TaskInfoEntity?
 
   /**
    * Removes a task from Rhizome DB.
@@ -61,9 +85,7 @@ abstract class TaskStorage {
    * @param taskInfoEntity The task to be removed.
    */
   suspend fun removeTask(taskInfoEntity: TaskInfoEntity): Unit = withKernel {
-    withEntities(taskInfoEntity) {
-      removeTaskInfoEntity(taskInfoEntity)
-    }
+    removeTaskInfoEntity(taskInfoEntity)
   }
 
   /**
@@ -81,18 +103,17 @@ abstract class TaskStorage {
   protected abstract suspend fun removeTaskInfoEntity(taskInfoEntity: TaskInfoEntity)
 
   /**
-   * Updates the progress state of the given task.
-   * Old state is going to be overwritten, to receive all state updates use [updates]
+   * Updates a [TaskInfoEntity] in the storage using provided [updater]
+   * It's guaranteed that [taskInfoEntity] exists when [updater] is invoked
    *
    * @param taskInfoEntity The task to be updated.
-   * @param state The new progress state to set on the task.
+   * @param updater A lambda provided with a [ChangeScope] receiver to modify the task information.
    * @return Unit
    */
-  suspend fun updateTask(taskInfoEntity: TaskInfoEntity, state: ProgressState): Unit = withKernel {
-    withEntities(taskInfoEntity) {
-      updateTaskInfoEntity {
-        taskInfoEntity[TaskInfoEntity.ProgressStateType] = state
-      }
+  suspend fun updateTask(taskInfoEntity: TaskInfoEntity, updater: ChangeScope.() -> Unit): Unit = withKernel {
+    updateTaskInfoEntity {
+      if (!taskInfoEntity.exists()) return@updateTaskInfoEntity
+      updater()
     }
   }
 
@@ -112,5 +133,7 @@ abstract class TaskStorage {
   companion object {
     @JvmStatic
     fun getInstance(): TaskStorage = service()
+
+    private val LOG = logger<TaskStorage>()
   }
 }

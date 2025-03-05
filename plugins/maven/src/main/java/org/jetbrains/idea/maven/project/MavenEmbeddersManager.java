@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
@@ -43,15 +43,13 @@ public class MavenEmbeddersManager {
     releasePooledEmbedders(false);
   }
 
-  @NotNull
   // used in third-party plugins
-  public synchronized MavenEmbedderWrapper getEmbedder(@NotNull MavenProject mavenProject, Key kind) {
+  public synchronized @NotNull MavenEmbedderWrapper getEmbedder(@NotNull MavenProject mavenProject, Key kind) {
     String baseDir = MavenUtil.getBaseDir(mavenProject.getDirectoryFile()).toString();
     return getEmbedder(kind, baseDir);
   }
 
-  @NotNull
-  public synchronized MavenEmbedderWrapper getEmbedder(Key kind, @NotNull String multiModuleProjectDirectory) {
+  public synchronized @NotNull MavenEmbedderWrapper getEmbedder(Key kind, @NotNull String multiModuleProjectDirectory) {
     String embedderDir = guessExistingEmbedderDir(multiModuleProjectDirectory);
 
     Pair<Key, String> key = Pair.create(kind, embedderDir);
@@ -95,18 +93,16 @@ public class MavenEmbeddersManager {
     return path.toString();
   }
 
-  @NotNull
-  private MavenEmbedderWrapper createEmbedder(@NotNull String multiModuleProjectDirectory, boolean alwaysOnline) {
+  private @NotNull MavenEmbedderWrapper createEmbedder(@NotNull String multiModuleProjectDirectory, boolean alwaysOnline) {
     return MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, multiModuleProjectDirectory);
   }
 
   /**
    * @deprecated use {@link MavenEmbeddersManager#getEmbedder(Key, String)} instead
    */
-  @Deprecated(forRemoval = true)
-  @NotNull
   // used in third-party plugins
-  public synchronized MavenEmbedderWrapper getEmbedder(Key kind, String ignoredWorkingDirectory, @NotNull String multiModuleProjectDirectory) {
+  @Deprecated(forRemoval = true)
+  public synchronized @NotNull MavenEmbedderWrapper getEmbedder(Key kind, String ignoredWorkingDirectory, @NotNull String multiModuleProjectDirectory) {
     return getEmbedder(kind, multiModuleProjectDirectory);
   }
 

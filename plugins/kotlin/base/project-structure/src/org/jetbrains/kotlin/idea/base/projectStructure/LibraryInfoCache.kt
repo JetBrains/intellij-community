@@ -12,11 +12,11 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.platform.IdePlatformKind
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 
 @Service(Service.Level.PROJECT)
+@K1ModeProjectStructureApi
 class LibraryInfoCache(project: Project) : Disposable {
 
     private val libraryInfoCache = LibraryInfoInnerCache(project)
@@ -329,7 +331,7 @@ class LibraryInfoCache(project: Project) : Disposable {
 
             val outdatedLibraries: MutableList<Library> = libraryChanges
                 .mapNotNullTo(LinkedHashSet()) {
-                    val oldEntity = it.oldEntity.takeIf { it?.entitySource !is JpsGlobalFileEntitySource }
+                    val oldEntity = it.oldEntity.takeIf { it?.entitySource !is GlobalStorageEntitySource }
                     oldEntity?.findLibraryBridge(storageBefore)
                 }
                 .toMutableList()

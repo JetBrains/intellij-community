@@ -21,6 +21,8 @@ import com.intellij.openapi.ui.validation.WHEN_TEXT_CHANGED
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.ui.EnumComboBoxModel
@@ -37,7 +39,6 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
@@ -48,7 +49,6 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
 import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.i18n.GitBundle.message
-import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
 import git4idea.stash.ui.isStashTabAvailable
@@ -79,7 +79,9 @@ private fun cdHidePushDialogForNonProtectedBranches(project: Project)         = 
 private val cdOverrideCredentialHelper                                  get() = CheckboxDescriptor(message("settings.credential.helper"), { applicationSettings.isUseCredentialHelper }, { applicationSettings.isUseCredentialHelper = it }, groupName = gitOptionGroupName)
 private fun synchronizeBranchProtectionRules(project: Project)                = CheckboxDescriptor(message("settings.synchronize.branch.protection.rules"), {gitSharedSettings(project).isSynchronizeBranchProtectionRules}, { gitSharedSettings(project).isSynchronizeBranchProtectionRules = it }, groupName = gitOptionGroupName, comment = message("settings.synchronize.branch.protection.rules.description"))
 private val cdEnableStagingArea                                         get() = CheckboxDescriptor(message("settings.enable.staging.area"), { applicationSettings.isStagingAreaEnabled }, { enableStagingArea(it) }, groupName = gitOptionGroupName, comment = message("settings.enable.staging.area.comment"))
-private val cdCombineStashesAndShelves                                  get() = CheckboxDescriptor(message("settings.enable.stashes.and.shelves"), { applicationSettings.isCombinedStashesAndShelvesTabEnabled }, { setStashesAndShelvesTabEnabled(it) }, groupName = gitOptionGroupName)// @formatter:on
+private val cdCombineStashesAndShelves                                  get() = CheckboxDescriptor(message("settings.enable.stashes.and.shelves"), { applicationSettings.isCombinedStashesAndShelvesTabEnabled }, { setStashesAndShelvesTabEnabled(it) }, groupName = gitOptionGroupName)
+private fun cdExcludeIgnored(project: Project)                                = CheckboxDescriptor(VcsBundle.message("ignored.file.ignored.to.excluded.label"), { VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED }, { VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = it }, groupName = gitOptionGroupName)
+// @formatter:on
 
 internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
   val list = mutableListOf(
@@ -88,7 +90,8 @@ internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
     cdWarnAboutDetachedHead(project),
     cdWarnAboutLargeFiles(project),
     cdWarnAboutBadFileNames(project),
-    cdEnableStagingArea
+    cdEnableStagingArea,
+    cdExcludeIgnored(project),
   )
   val manager = GitRepositoryManager.getInstance(project)
   if (manager.moreThanOneRoot()) {
@@ -181,11 +184,17 @@ internal class GitVcsPanel(private val project: Project) :
   }
 
   override fun createPanel(): DialogPanel = panel {
+    useNewComboBoxRenderer()
+
     createGitExecutableSelectorRow(project, disposable!!)
+
+    row {
+      checkBox(cdExcludeIgnored(project))
+    }
+
     group(message("settings.commit.group.title")) {
       row {
         checkBox(cdEnableStagingArea)
-          .enabledIf(StagingAreaAvailablePredicate(project, disposable!!))
       }
       row {
         checkBox(cdWarnAboutCrlf(project))
@@ -367,18 +376,6 @@ internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
   }
 
   fun JoinerFunction.join(vararg items: String): String = `fun`(items.toList())
-}
-
-class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
-  override fun addListener(listener: (Boolean) -> Unit) {
-    project.messageBus.connect(disposable).subscribe(CommitModeManager.SETTINGS, object : CommitModeManager.SettingsListener {
-      override fun settingsChanged() {
-        listener(invoke())
-      }
-    })
-  }
-
-  override fun invoke(): Boolean = canEnableStagingArea()
 }
 
 class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {

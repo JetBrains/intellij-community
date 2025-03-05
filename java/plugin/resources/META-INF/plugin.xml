@@ -40,6 +40,8 @@
     <module name="intellij.java.compiler.charts"/>
     <module name="intellij.java.terminal"/>
     <module name="intellij.jvm.analysis.impl"/>
+    <module name="intellij.java.debugger.impl.frontend"/>
+    <module name="intellij.java.debugger.impl.backend"/>
   </content>
 
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>

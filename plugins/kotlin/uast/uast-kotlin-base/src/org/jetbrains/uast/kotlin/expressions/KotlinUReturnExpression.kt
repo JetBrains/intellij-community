@@ -28,6 +28,14 @@ class KotlinUReturnExpression(
                 it is ULabeledExpression && it.label == label ||
                         it is UMethod && it.name == label ||
                         (it is UMethod || it is KotlinLocalFunctionULambdaExpression) && label == null ||
-                        it is ULambdaExpression && it.uastParent.let { parent -> parent is UCallExpression && parent.methodName == label }
+                        it is ULambdaExpression && it.uastParent.let { parent ->
+                            parent is UCallExpression &&
+                                    (
+                                            // Regular function call
+                                            parent.methodName == label ||
+                                            // Constructor (whose `methodName` is `<init>`)
+                                            parent.methodIdentifier?.name == label
+                                    )
+                        }
             }
 }

@@ -7,10 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.jvm.analysis.testFramework" exported="" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.testFramework" />
     <orderEntry type="module" module-name="intellij.junit" exported="" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi" exported="" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
   </component>

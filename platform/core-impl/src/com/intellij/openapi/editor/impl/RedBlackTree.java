@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.util.BitUtil;
@@ -299,11 +299,12 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     static final byte COLOR_MASK = 1;
 
     @Contract(pure = true)
-    boolean isFlagSet(byte mask) {
+    @ApiStatus.Internal
+    public boolean isFlagSet(byte mask) {
       return BitUtil.isSet(myFlags, mask);
     }
 
-    void setFlag(byte mask, boolean value) {
+    public void setFlag(byte mask, boolean value) {
       myFlags = BitUtil.set(myFlags, mask, value);
     }
 

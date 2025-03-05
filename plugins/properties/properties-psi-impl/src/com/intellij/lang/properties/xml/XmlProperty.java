@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.xml;
 
 import com.intellij.lang.properties.IProperty;
@@ -20,8 +21,7 @@ import javax.swing.*;
  */
 public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
 
-  @NotNull
-  private final XmlTag myTag;
+  private final @NotNull XmlTag myTag;
   private final XmlPropertiesFileImpl myPropertiesFile;
 
   public XmlProperty(@NotNull XmlTag tag, XmlPropertiesFileImpl xmlPropertiesFile) {
@@ -79,9 +79,8 @@ public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiElement getPsiElement() {
+  public @NotNull PsiElement getPsiElement() {
     return PomService.convertToPsi(this);
   }
 
@@ -110,9 +109,8 @@ public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
     return myTag.isValid();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return myTag;
   }
 

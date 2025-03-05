@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.platform.experimental.backend"/>
+    <module name="intellij.platform.editor"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <editorFactoryListener implementation="com.intellij.platform.editor.backend.BackendEditorFactoryListener"/>
+    <applicationService serviceImplementation="com.intellij.platform.editor.backend.BackendEditors"
+                        client="remote"/>
+  </extensions>
+</idea-plugin>

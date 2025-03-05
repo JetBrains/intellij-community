@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.ReviseWhenPortedToJDK
@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.BuildContext
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.name
 
 object VmOptionsGenerator {
   private const val DEFAULT_MIN_HEAP = "128m"
@@ -47,7 +48,7 @@ object VmOptionsGenerator {
   private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
     val artifactsServer = context.proprietaryBuildTools.artifactsServer
     if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.applicationInfo.productCode}-plugins/plugins.xml")
+      val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.nonBundledPlugins.name}/plugins.xml")
       if (builtinPluginsRepoUrl != null) {
         if (builtinPluginsRepoUrl.startsWith("http:")) {
           context.messages.error("Insecure artifact server: ${builtinPluginsRepoUrl}")
@@ -70,34 +71,32 @@ object VmOptionsGenerator {
 
     result += COMMON_VM_OPTIONS
 
-    @ReviseWhenPortedToJDK("21", description = "Merge into `COMMON_VM_OPTIONS`")
-    result += if (bundledRuntime.build.startsWith("17.")) {
-      listOf(
-        "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",  // temporary workaround for crashes in С2 (JBR-4509)
-        "-XX:SoftRefLRUPolicyMSPerMB=50",
-      )
-    }
-    else {
-      listOf(
-        "-XX:+UnlockDiagnosticVMOptions",
-        "-XX:TieredOldPercentage=100000",
-      )
-    }
-
     result += additionalVmOptions
 
+    var index = result.indexOf("-ea")
+    if (index < 0) index = result.indexOfFirst { it.startsWith("-D") }
+    if (index < 0) index = result.size
+
+    result.addAll(
+      index,
+      @ReviseWhenPortedToJDK("21", description = "Merge into `COMMON_VM_OPTIONS`")
+      if (bundledRuntime.build.startsWith("17.")) {
+        listOf(
+          "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",  // temporary workaround for crashes in С2 (JBR-4509)
+          "-XX:SoftRefLRUPolicyMSPerMB=50",
+        )
+      }
+      else listOf("-XX:+UnlockDiagnosticVMOptions", "-XX:TieredOldPercentage=100000")
+    )
+
     if (isEAP) {
-      var place = result.indexOf("-ea")
-      if (place < 0) place = result.indexOfFirst { it.startsWith("-D") }
-      if (place < 0) place = result.size
-      // must be consistent with `ConfigImportHelper#updateVMOptions`
-      result.add(place, "-XX:MaxJavaStackTraceDepth=10000")
+      result.add(index, "-XX:MaxJavaStackTraceDepth=10000")  // must be consistent with `ConfigImportHelper#updateVMOptions`
     }
 
     return result
   }
 
   internal fun writeVmOptions(file: Path, vmOptions: Sequence<String>, separator: String) {
-    Files.writeString(file, vmOptions.joinToString(separator = separator, postfix = separator), StandardCharsets.US_ASCII)
+    Files.writeString(file, vmOptions.joinToString(separator, postfix = separator), StandardCharsets.US_ASCII)
   }
 }

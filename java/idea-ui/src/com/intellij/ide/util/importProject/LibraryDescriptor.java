@@ -54,6 +54,7 @@ public final class LibraryDescriptor implements Dependency {
     myJars.removeAll(jars);
   }
 
+  @Override
   public String toString() {
     return "Lib[" + myName + "]";
   }

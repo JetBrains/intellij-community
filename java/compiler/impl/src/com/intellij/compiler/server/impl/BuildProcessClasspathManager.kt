@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -94,7 +95,15 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
    */
   @ApiStatus.Internal
   fun getBuildProcessPluginsClasspath(project: Project): List<String> {
-    val dynamicClasspath = BuildProcessParametersProvider.EP_NAME.getExtensions(project).flatMapTo(ArrayList()) { it.classPath }
+    val dynamicClasspath = BuildProcessParametersProvider.EP_NAME.getExtensions(project).flatMapTo(ArrayList()) { parametersProvider ->
+      val classPath = parametersProvider.classPath
+      if (LOG.isTraceEnabled) {
+        classPath.forEach { path ->
+          LOG.trace("$path added to classpath from ${parametersProvider.javaClass.name}")
+        }
+      }
+      classPath 
+    }
     if (dynamicClasspath.isEmpty()) {
       return staticClasspath
     }
@@ -204,10 +213,15 @@ private fun computeCompileServerPluginsClasspath(): List<String> {
     val baseFile = plugin!!.pluginPath
     if (Files.isRegularFile(baseFile)) {
       classpath.add(baseFile.toString())
+      LOG.trace { "$baseFile added to process classpath from $pluginId" }
     }
     else {
       serverPlugin.classpath.splitToSequence(';').mapNotNullTo(classpath) {
-        findClassesRoot(relativePath = it, plugin = plugin, baseFile = baseFile)
+        val classesRoot = findClassesRoot(relativePath = it, plugin = plugin, baseFile = baseFile)
+        if (classesRoot != null) {
+          LOG.trace { "$classesRoot added to process classpath from $pluginId" }
+        }
+        classesRoot
       }
     }
   }

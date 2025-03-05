@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
@@ -54,7 +55,6 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    DaemonProgressIndicator.setDebug(true);
   }
 
   @Override
@@ -76,6 +76,11 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -266,7 +271,7 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
       return info;
     };
     LineMarkerProviders.getInstance().addExplicitExtension(JavaLanguage.INSTANCE, provider, getTestRootDisposable());
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     try {
       TextRange range = Objects.requireNonNull(FileStatusMap.getDirtyTextRange(myEditor.getDocument(), myFile, Pass.UPDATE_ALL));
       log.append("FileStatusMap.getDirtyTextRange: " + range+"\n");
@@ -321,7 +326,7 @@ public class DaemonLineMarkersRespondToChangesTest extends DaemonAnalyzerTestCas
       return null;
     };
     LineMarkerProviders.getInstance().addExplicitExtension(JavaLanguage.INSTANCE, provider, getTestRootDisposable());
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
 
     {
       assertEmpty(doHighlighting(HighlightSeverity.ERROR));

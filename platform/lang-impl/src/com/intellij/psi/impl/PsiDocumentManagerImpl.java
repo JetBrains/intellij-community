@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -51,7 +52,10 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     project.getMessageBus().connect(this).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
-        PsiFile psiFile = ReadAction.compute(() -> myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile));
+        PsiFile psiFile = ReadAction.compute(() -> {
+          // todo ijpl-339 figure out which psi file to pass here or get rid of psi file at all
+          return myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, CodeInsightContextKt.anyContext());
+        });
         fireDocumentCreated(document, psiFile);
       }
     });
@@ -148,39 +152,54 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
-    final FileViewProvider viewProvider = getCachedViewProvider(doc);
-    return viewProvider != null && PostprocessReformattingAspect.getInstance(myProject).isViewProviderLocked(viewProvider);
+    final List<FileViewProvider> viewProviders = getCachedViewProviders(doc);
+    if (viewProviders.isEmpty()) return false;
+
+    PostprocessReformattingAspect aspect = PostprocessReformattingAspect.getInstance(myProject);
+    for (FileViewProvider viewProvider : viewProviders) {
+      if (aspect.isViewProviderLocked(viewProvider)) {
+        return true;
+      }
+    }
+    return false;
+    // todo ijpl-339 is it correct?
   }
 
   @Override
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
     PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(myProject);
-    FileViewProvider viewProvider;
+    if (component == null) return;
+
+    List<FileViewProvider> viewProviders;
     if (doc instanceof DocumentWindow) {
+      // todo ijpl-339 implement it
       Document topDoc = ((DocumentWindow)doc).getDelegate();
-      FileViewProvider topViewProvider = getCachedViewProvider(topDoc);
-      if (topViewProvider != null && InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider)) {
-        viewProvider = getCachedViewProvider(doc);
-      } else {
-        viewProvider = topViewProvider;
+      List<FileViewProvider> topViewProviders = getCachedViewProviders(topDoc);
+      if (ContainerUtil.exists(topViewProviders, topViewProvider -> InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider))) { // todo is it correct?
+        viewProviders = getCachedViewProviders(doc);
       }
-    } else {
-      viewProvider = getCachedViewProvider(doc);
+      else {
+        viewProviders = topViewProviders;
+      }
+    }
+    else {
+      viewProviders = getCachedViewProviders(doc);
     }
 
-    if (viewProvider != null && component != null) {
+    // todo ijpl-339 is it correct?
+    for (FileViewProvider viewProvider : viewProviders) {
       component.doPostponedFormatting(viewProvider);
     }
   }
 
   @NotNull
   @Override
-  List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
-                                                        @NotNull PsiFile hostPsiFile,
-                                                        @NotNull TextRange hostChangedRange,
-                                                        @NotNull ProgressIndicator indicator,
-                                                        @NotNull ASTNode oldRoot,
-                                                        @NotNull ASTNode newRoot) {
+  protected List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
+                                                                  @NotNull PsiFile hostPsiFile,
+                                                                  @NotNull TextRange hostChangedRange,
+                                                                  @NotNull ProgressIndicator indicator,
+                                                                  @NotNull ASTNode oldRoot,
+                                                                  @NotNull ASTNode newRoot) {
     List<DocumentWindow> changedInjected = InjectedLanguageManager.getInstance(myProject).getCachedInjectedDocumentsInRange(hostPsiFile, hostChangedRange);
     if (changedInjected.isEmpty()) return Collections.emptyList();
     FileViewProvider hostViewProvider = hostPsiFile.getViewProvider();

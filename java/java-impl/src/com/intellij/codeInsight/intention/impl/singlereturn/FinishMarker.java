@@ -2,12 +2,12 @@
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.NULL;
 import static com.intellij.util.ObjectUtils.tryCast;
-import static java.util.Objects.requireNonNull;
+import static java.util.Objects.*;
 
 /**
  * Represents a way to indicate whether method execution is already finished
@@ -141,7 +141,7 @@ public final class FinishMarker {
     List<PsiExpression> nonTerminalReturns = StreamEx.<PsiReturnStatement>of(returns).without(terminalReturn)
       .map(PsiReturnStatement::getReturnValue)
       .map(PsiUtil::skipParenthesizedExprDown).toList();
-    if (nonTerminalReturns.size() == 0) {
+    if (nonTerminalReturns.isEmpty()) {
       return new FinishMarker(FinishMarkerType.SEPARATE_VAR, null);
     }
     Set<Object> nonTerminalReturnValues = StreamEx.of(nonTerminalReturns)
@@ -256,7 +256,7 @@ public final class FinishMarker {
       if (target instanceof PsiLocalVariable) return false;
       if (target instanceof PsiParameter) {
         PsiElement block = ((PsiParameter)target).getDeclarationScope();
-        return block instanceof PsiMethod && HighlightControlFlowUtil.isEffectivelyFinal(target, block, null);
+        return block instanceof PsiMethod && ControlFlowUtil.isEffectivelyFinal(target, block);
       }
     }
     return true;

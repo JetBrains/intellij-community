@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.model.completion.insert;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -19,14 +19,10 @@ import org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction;
 import org.jetbrains.idea.maven.dom.generate.GenerateManagedDependencyAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.model.completion.MavenCoordinateCompletionContributor;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
-import org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInsertionTrackerKt.logMavenDependencyInsertion;
 
@@ -35,7 +31,7 @@ public class MavenTopLevelDependencyInsertionHandler implements InsertHandler<Lo
   public static final InsertHandler<LookupElement> INSTANCE = new MavenTopLevelDependencyInsertionHandler();
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElement item) {
+  public void handleInsert(final @NotNull InsertionContext context, @NotNull LookupElement item) {
     if (TemplateManager.getInstance(context.getProject()).getActiveTemplate(context.getEditor()) != null) {
       return; // Don't brake the template.
     }

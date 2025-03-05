@@ -78,7 +78,7 @@ Fa:org.jetbrains.rpc.CommandProcessor
 - closed():V
 - getUpdatedSequence(org.jetbrains.jsonProtocol.Request):I
 f:org.jetbrains.rpc.CommandProcessorKt
-- sf:getLOG():com.intellij.openapi.diagnostic.Logger
+- bsf:getLOG():com.intellij.openapi.diagnostic.Logger
 a:org.jetbrains.rpc.CommandSenderBase
 - <init>():V
 - f:send(org.jetbrains.jsonProtocol.Request):org.jetbrains.concurrency.Promise

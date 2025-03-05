@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.projectView;
 
@@ -11,8 +11,8 @@ import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.ValidateableNode;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -39,8 +39,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     List<PropertiesFile> propertiesFiles = getResourceBundle().getPropertiesFiles();
     Collection<AbstractTreeNode<?>> children = new ArrayList<>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
@@ -182,21 +181,18 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   public void dropExternalFiles(PsiFileSystemItem[] sourceFileArray, DataContext dataContext) {
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     ResourceBundle rb = getResourceBundle();
     return rb.isValid() ? ContainerUtil.map(rb.getPropertiesFiles(), PropertiesFile::getVirtualFile) : Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public ResourceBundle getResourceBundle() {
+  public @NotNull ResourceBundle getResourceBundle() {
     return Objects.requireNonNull(getValue());
   }
 
-  @Nullable
-  private static PropertiesFile extractPropertiesFileFromNode(TreeNode node) {
+  private static @Nullable PropertiesFile extractPropertiesFileFromNode(TreeNode node) {
     if (!(node instanceof DefaultMutableTreeNode)) return null;
     final Object userObject = ((DefaultMutableTreeNode) node).getUserObject();
     if (!(userObject instanceof PsiFileNode)) return null;

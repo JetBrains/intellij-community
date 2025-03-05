@@ -6,3 +6,9 @@ operator fun <U> T<U>.iterator(): Iterator<U> = listOf<U>().iterator()
 fun test() {
     T<Int>()<caret>
 }
+
+// IGNORE_K2
+// Ignore because of KTIJ-32233 K2 Mode: Support .iter/.for postfix for operator extension fun
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.IterateExpressionIntention
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.intentions.IterateExpressionIntention

@@ -83,7 +83,7 @@ public final class ExtendsClassChecker extends DomCustomAnnotationChecker<Extend
         .collect(Collectors.toSet());
 
     final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
-    if (toExtend.size() > 0) {
+    if (!toExtend.isEmpty()) {
       if (!Arrays.asList(names).contains(value.getQualifiedName())
           && ContainerUtil.find(toExtend, aClass -> value.isInheritor(aClass, true)) == null) {
         String message = JavaBundle.message("class.is.not.a.subclass", value.getQualifiedName(), StringUtil.join(names, ","));

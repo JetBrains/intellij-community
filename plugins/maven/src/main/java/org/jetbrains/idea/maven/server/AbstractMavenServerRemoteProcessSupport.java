@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.process.AnsiEscapeDecoder;
@@ -30,7 +30,7 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
   protected final MavenDistribution myDistribution;
   protected final Project myProject;
   protected final Integer myDebugPort;
-  @Nullable protected Consumer<ProcessEvent> onTerminate;
+  protected @Nullable Consumer<ProcessEvent> onTerminate;
   private final MavenImportEventProcessor myImportEventProcessor;
   private final MavenSpyEventsBuffer myMavenSpyEventsBuffer;
   private final SslDelegateHandlerStateMachine mySslDelegateHandlerStateMachine;

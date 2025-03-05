@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.getCallElement
@@ -82,7 +83,7 @@ object NamedArgumentUtils {
         if (variableSignature == null) {
             val resolvedCallSignatures = argumentMapping.values.map { it.symbol to it }.toMap()
             val name =
-                resolvedCall.symbol.valueParameters.filter<KaValueParameterSymbol> { it !in resolvedCallSignatures }.firstOrNull()?.name
+                resolvedCall.symbol.valueParameters.filter<KaValueParameterSymbol> { it !in resolvedCallSignatures }.firstOrNull()?.nameIfNotSpecial
             return name
         }
         val valueParameterSymbol = variableSignature.symbol
@@ -105,6 +106,9 @@ object NamedArgumentUtils {
             }
         }
 
-        return valueParameterSymbol.name
+        return valueParameterSymbol.nameIfNotSpecial
     }
 }
+
+private val KaNamedSymbol.nameIfNotSpecial: Name?
+    get() = name.takeUnless { it.isSpecial }

@@ -452,8 +452,7 @@ public abstract class Statement implements IMatchable {
     return new ArrayList<>(stats);
   }
 
-  @NotNull
-  public List<? extends IMatchable> getExprentsOrSequentialObjects() {
+  public @NotNull List<? extends IMatchable> getExprentsOrSequentialObjects() {
     List<? extends IMatchable> exprents = getExprents();
     if (exprents != null) {
       return exprents;
@@ -816,8 +815,7 @@ public abstract class Statement implements IMatchable {
    * @return a list of {@link Exprent} objects representing expression statements (can be empty if BlockStatement is empty),
    * or null if it is a SequenceStatement or this Block is not processed
    */
-  @Nullable
-  public List<Exprent> getExprents() {
+  public @Nullable List<Exprent> getExprents() {
     cancellationManager.checkCanceled();
     return exprents;
   }
@@ -835,6 +833,7 @@ public abstract class Statement implements IMatchable {
   }
 
   // helper methods
+  @Override
   public String toString() {
     return toString(0);
   }

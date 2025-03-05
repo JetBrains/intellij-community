@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.ide.util.importProject.RootDetectionProcessor;
@@ -29,8 +29,7 @@ public final class JavaSourceRootDetectionUtil {
 
   private JavaSourceRootDetectionUtil() { }
 
-  @NotNull
-  public static Collection<JavaModuleSourceRoot> suggestRoots(@NotNull File dir) {
+  public static @NotNull Collection<JavaModuleSourceRoot> suggestRoots(@NotNull File dir) {
     final List<JavaSourceRootDetector> detectors = ContainerUtil.findAll(ProjectStructureDetector.EP_NAME.getExtensions(), JavaSourceRootDetector.class);
     final RootDetectionProcessor processor = new RootDetectionProcessor(dir, detectors.toArray(new JavaSourceRootDetector[0]));
     final Map<ProjectStructureDetector,List<DetectedProjectRoot>> rootsMap = processor.runDetectors();
@@ -53,8 +52,7 @@ public final class JavaSourceRootDetectionUtil {
     return result.values();
   }
 
-  @Nullable
-  public static String getPackageName(CharSequence text) {
+  public static @Nullable String getPackageName(CharSequence text) {
     Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.JDK_1_5);
     lexer.start(text);
     skipWhiteSpaceAndComments(lexer);
@@ -81,7 +79,7 @@ public final class JavaSourceRootDetectionUtil {
       skipWhiteSpaceAndComments(lexer);
     }
     String packageName = buffer.toString();
-    if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
+    if (packageName.isEmpty() || StringUtil.endsWithChar(packageName, '.')) return null;
     return packageName;
   }
 

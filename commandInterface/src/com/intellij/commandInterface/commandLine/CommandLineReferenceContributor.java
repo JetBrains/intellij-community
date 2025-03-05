@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.commandInterface.commandLine;
 
+import com.intellij.commandInterface.commandLine.psi.CommandLineArgument;
+import com.intellij.commandInterface.commandLine.psi.CommandLineCommand;
+import com.intellij.commandInterface.commandLine.psi.CommandLineOption;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
-import com.intellij.commandInterface.commandLine.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,15 +18,15 @@ public final class CommandLineReferenceContributor extends PsiReferenceContribut
   private static final ReferenceProvider REFERENCE_PROVIDER = new ReferenceProvider();
 
   @Override
-  public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(final @NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(CommandLineElement.class), REFERENCE_PROVIDER);
   }
 
 
   private static class ReferenceProvider extends PsiReferenceProvider {
     @Override
-    public final PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element,
-                                                                 @NotNull final ProcessingContext context) {
+    public final PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element,
+                                                                 final @NotNull ProcessingContext context) {
       if (element instanceof CommandLineCommand) {
         return new PsiReference[]{new CommandLineCommandReference((CommandLineCommand)element)};
       }

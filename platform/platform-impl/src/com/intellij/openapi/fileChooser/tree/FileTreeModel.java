@@ -29,6 +29,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -293,7 +294,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return jar == null ? VirtualFile.EMPTY_ARRAY : jar.getChildren();
     }
 
-    private List<Root> getRoots() {
+    private @Unmodifiable List<Root> getRoots() {
       if (!model.invoker.isValidThread()) {
         LOG.error(new IllegalStateException(Thread.currentThread().getName()));
       }
@@ -352,7 +353,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       addRoots(model.roots, rootsToAdd);
     }
 
-    private static @NotNull List<VirtualFile> toRootFiles(@NotNull List<Root> roots) {
+    private static @Unmodifiable @NotNull List<VirtualFile> toRootFiles(@NotNull List<Root> roots) {
       return ContainerUtil.map(roots, FileNode::getFile);
     }
 

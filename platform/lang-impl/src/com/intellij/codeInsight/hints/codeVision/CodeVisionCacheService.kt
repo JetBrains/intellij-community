@@ -6,7 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.util.ConcurrencyUtil
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -19,7 +19,7 @@ internal class CodeVisionCacheService {
     private val key = Key<ConcurrentHashMap<String, CodeVisionWithStamp>>("code.vision.cache")
   }
 
-  private fun getOrCreateCache(editor: Editor) = (editor as UserDataHolderEx).putUserDataIfAbsent(key, ConcurrentHashMap())
+  private fun getOrCreateCache(editor: Editor) = ConcurrencyUtil.computeIfAbsent(editor, key) { ConcurrentHashMap() }
 
   fun getVisionDataForEditor(editor: Editor, providerId: String): CodeVisionWithStamp? {
     val cache = getOrCreateCache(editor)

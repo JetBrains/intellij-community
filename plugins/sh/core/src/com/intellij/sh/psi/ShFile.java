@@ -21,9 +21,8 @@ public class ShFile extends PsiFileBase {
     super(viewProvider, ShLanguage.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return ShFileType.INSTANCE;
   }
 
@@ -35,13 +34,11 @@ public class ShFile extends PsiFileBase {
     return ResolveUtil.processChildren(this, processor, state, lastParent, place);
   }
 
-  @Nullable
-  public String findShebang() {
+  public @Nullable String findShebang() {
     return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(findShebangInner(), this));
   }
 
-  @Nullable
-  private String findShebangInner() {
+  private @Nullable String findShebangInner() {
     ASTNode shebang = getNode().findChildByType(ShTypes.SHEBANG);
     return shebang != null ? shebang.getText() : null;
   }

@@ -23,6 +23,7 @@ import git4idea.GitBranch;
 import git4idea.GitCommit;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
@@ -111,8 +112,8 @@ public final class GitHistoryUtils {
    * @throws VcsException if there is a problem with running git
    */
   public static @Nullable List<? extends VcsCommitMetadata> collectCommitsMetadata(@NotNull Project project,
-                                                                         @NotNull VirtualFile root,
-                                                                         String @NotNull ... hashes)
+                                                                                   @NotNull VirtualFile root,
+                                                                                   String @NotNull ... hashes)
     throws VcsException {
     List<? extends VcsCommitMetadata> result = GitLogUtil.collectMetadata(project, root, Arrays.asList(hashes));
     if (result.size() != hashes.length) return null;
@@ -182,7 +183,7 @@ public final class GitHistoryUtils {
    * @throws VcsException if there is a problem with running git
    */
   public static @Nullable VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath,
-                                                     @Nullable String branch) throws VcsException {
+                                                               @Nullable String branch) throws VcsException {
     filePath = VcsUtil.getLastCommitPath(project, filePath);
     GitLineHandler h = new GitLineHandler(project, GitUtil.getRootForFile(project, filePath), GitCommand.LOG);
     GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, HASH, COMMIT_TIME);
@@ -279,6 +280,17 @@ public final class GitHistoryUtils {
     }
     catch (VcsException e) {
       LOG.debug(e.getMessage());
+      return null;
+    }
+  }
+
+  public static @Nullable GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root,
+                                                         @NotNull GitRebaseParams.RebaseUpstream base,
+                                                         @NotNull String branch) throws VcsException {
+    if (base instanceof GitRebaseParams.RebaseUpstream.Reference baseRef) {
+      return getMergeBase(project, root, baseRef.getRef(), branch);
+    }
+    else {
       return null;
     }
   }

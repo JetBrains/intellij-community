@@ -32,6 +32,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
@@ -45,19 +46,19 @@ import java.util.Objects;
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 
 final class MessageBundleReferenceContributor extends PsiReferenceContributor {
-  @NonNls private static final String ACTION = "action.";
-  @NonNls private static final String GROUP = "group.";
-  @NonNls private static final String TEXT = ".text";
-  @NonNls private static final String DESCRIPTION = ".description";
-  @NonNls private static final String TRAILING_LABEL = ".trailingLabel";
-  @NonNls public static final String ADVANCED_SETTING = "advanced.setting.";
-  @NonNls public static final String BUNDLE_PROPERTIES = "Bundle.properties";
+  private static final @NonNls String ACTION = "action.";
+  private static final @NonNls String GROUP = "group.";
+  private static final @NonNls String TEXT = ".text";
+  private static final @NonNls String DESCRIPTION = ".description";
+  private static final @NonNls String TRAILING_LABEL = ".trailingLabel";
+  public static final @NonNls String ADVANCED_SETTING = "advanced.setting.";
+  public static final @NonNls String BUNDLE_PROPERTIES = "Bundle.properties";
 
-  @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
-  @NonNls private static final String EXPORTABLE_PREFIX = "exportable.";
-  @NonNls private static final String EXPORTABLE_SUFFIX = ".presentable.name";
+  private static final @NonNls String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
+  private static final @NonNls String EXPORTABLE_PREFIX = "exportable.";
+  private static final @NonNls String EXPORTABLE_SUFFIX = ".presentable.name";
 
-  @NonNls private static final String PLUGIN = "plugin.";
+  private static final @NonNls String PLUGIN = "plugin.";
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -81,8 +82,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
           ).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
         }
 
-        @Nullable
-        private static PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
+        private static @Nullable PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
           if (!isActionOrGroupKey(text)) return null;
 
           final int dotAfterPrefix = text.indexOf('.');
@@ -100,32 +100,28 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
           return new ActionOrGroupIdReference(element, TextRange.allOf(id).shiftRight(prefix.length()), id, isAction);
         }
 
-        @Nullable
-        private static PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
+        private static @Nullable PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
           if (!isToolwindowKey(text)) return null;
 
           String id = StringUtil.notNullize(StringUtil.substringAfter(text, TOOLWINDOW_STRIPE_PREFIX)).replace('_', ' ');
           return new ToolwindowIdReference(element, id);
         }
 
-        @Nullable
-        private static PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
+        private static @Nullable PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
           if (!isExportableKey(text)) return null;
 
           String id = text.replace(EXPORTABLE_PREFIX, "").replace(EXPORTABLE_SUFFIX, "");
           return new ExportableIdReference(element, id);
         }
 
-        @Nullable
-        private static PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
+        private static @Nullable PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
           if (!isPluginDescriptionKey(text)) return null;
 
           String id = StringUtil.substringAfter(StringUtil.notNullize(StringUtil.substringBefore(text, DESCRIPTION)), PLUGIN);
           return new PluginIdReference(element, id);
         }
 
-        @Nullable
-        private static PsiReference createAdvancedSettingReference(@NotNull PsiElement element, String text) {
+        private static @Nullable PsiReference createAdvancedSettingReference(@NotNull PsiElement element, String text) {
           if (!isAdvancedSettingKey(text)) return null;
 
           String s = StringUtil.notNullize(StringUtil.substringAfter(text, ADVANCED_SETTING));
@@ -198,7 +194,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
                                        .withIcon(ElementPresentationManager.getIcon(plugin)));
     }
 
-    private Collection<IdeaPlugin> getRelevantPlugins() {
+    private @Unmodifiable Collection<IdeaPlugin> getRelevantPlugins() {
       return ContainerUtil.filter(DescriptorUtil.getPlugins(getElement().getProject(), getElement().getResolveScope()),
                                   plugin -> plugin.hasRealPluginId() && Boolean.TRUE != plugin.getImplementationDetail().getValue());
     }
@@ -303,10 +299,10 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  final static class ImplicitUsageProvider implements ImplicitPropertyUsageProvider {
+  static final class ImplicitUsageProvider implements ImplicitPropertyUsageProvider {
 
-    @NonNls private static final String ICON_TOOLTIP_PREFIX = "icon.";
-    @NonNls private static final String ICON_TOOLTIP_SUFFIX = ".tooltip";
+    private static final @NonNls String ICON_TOOLTIP_PREFIX = "icon.";
+    private static final @NonNls String ICON_TOOLTIP_SUFFIX = ".tooltip";
 
     @Override
     public boolean isUsed(@NotNull Property property) {

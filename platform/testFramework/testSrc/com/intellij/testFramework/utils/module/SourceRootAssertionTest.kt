@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.module
 
+import com.intellij.platform.testFramework.assertion.moduleAssertion.SourceRootAssertions.assertSourceRoots
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.io.createDirectory

@@ -31,13 +31,12 @@ public abstract class UsageViewManager {
                                                 Usage @NotNull [] foundUsages,
                                                 @NotNull UsageViewPresentation presentation);
 
-  @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
-  public abstract UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                                @NotNull Supplier<? extends UsageSearcher> searcherFactory,
-                                                boolean showPanelIfOnlyOneUsage,
-                                                boolean showNotFoundMessage,
-                                                @NotNull UsageViewPresentation presentation,
-                                                @Nullable UsageViewStateListener listener);
+  public abstract @Nullable("returns null in case of no usages found or usage view not shown for one usage") UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
+                                                                                                                                           @NotNull Supplier<? extends UsageSearcher> searcherFactory,
+                                                                                                                                           boolean showPanelIfOnlyOneUsage,
+                                                                                                                                           boolean showNotFoundMessage,
+                                                                                                                                           @NotNull UsageViewPresentation presentation,
+                                                                                                                                           @Nullable UsageViewStateListener listener);
 
   public interface UsageViewStateListener {
     void usageViewCreated(@NotNull UsageView usageView);
@@ -50,10 +49,9 @@ public abstract class UsageViewManager {
                                            @NotNull UsageViewPresentation presentation,
                                            @Nullable UsageViewStateListener listener);
 
-  @Nullable
-  public abstract UsageView getSelectedUsageView();
+  public abstract @Nullable UsageView getSelectedUsageView();
 
-  public static boolean isSelfUsage(@NotNull final Usage usage, final UsageTarget @NotNull [] searchForTarget) {
+  public static boolean isSelfUsage(final @NotNull Usage usage, final UsageTarget @NotNull [] searchForTarget) {
     if (!(usage instanceof PsiElementUsage)) return false;
     return ReadAction.compute(() -> {
       final PsiElement element = ((PsiElementUsage)usage).getElement();

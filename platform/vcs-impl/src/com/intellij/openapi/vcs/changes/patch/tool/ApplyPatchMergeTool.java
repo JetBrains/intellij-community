@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.DiffContext;
@@ -21,9 +21,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 final class ApplyPatchMergeTool implements MergeTool {
-  @NotNull
   @Override
-  public MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request) {
+  public @NotNull MergeViewer createComponent(@NotNull MergeContext context, @NotNull MergeRequest request) {
     return new MyApplyPatchViewer(context, (ApplyPatchMergeRequest)request);
   }
 
@@ -33,8 +32,8 @@ final class ApplyPatchMergeTool implements MergeTool {
   }
 
   private static class MyApplyPatchViewer extends ApplyPatchViewer implements MergeViewer {
-    @NotNull private final MergeContext myMergeContext;
-    @NotNull private final ApplyPatchMergeRequest myMergeRequest;
+    private final @NotNull MergeContext myMergeContext;
+    private final @NotNull ApplyPatchMergeRequest myMergeRequest;
 
     MyApplyPatchViewer(@NotNull MergeContext context, @NotNull ApplyPatchMergeRequest request) {
       super(createWrapperDiffContext(context), request);
@@ -44,14 +43,12 @@ final class ApplyPatchMergeTool implements MergeTool {
       getResultEditor().putUserData(DiffUserDataKeys.MERGE_EDITOR_FLAG, true);
     }
 
-    @NotNull
-    private static DiffContext createWrapperDiffContext(@NotNull MergeContext mergeContext) {
+    private static @NotNull DiffContext createWrapperDiffContext(@NotNull MergeContext mergeContext) {
       return new MergeUtil.ProxyDiffContext(mergeContext);
     }
 
-    @NotNull
     @Override
-    public ToolbarComponents init() {
+    public @NotNull ToolbarComponents init() {
       initPatchViewer();
 
       ToolbarComponents components = new ToolbarComponents();
@@ -62,9 +59,8 @@ final class ApplyPatchMergeTool implements MergeTool {
       return components;
     }
 
-    @Nullable
     @Override
-    public Action getResolveAction(@NotNull final MergeResult result) {
+    public @Nullable Action getResolveAction(final @NotNull MergeResult result) {
       if (result == MergeResult.LEFT || result == MergeResult.RIGHT) return null;
 
       String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.style;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -11,15 +11,13 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 
 public class JavaStylePropertiesInvocationFixer extends PsiUpdateModCommandQuickFix {
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return GroovyBundle.message("java.style.properties.invocation.intention.name");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("java.style.properties.invocation.intention.family.name");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.CommonClassNames;
@@ -22,8 +22,7 @@ public final class GrBinaryExpressionUtil {
     return getDefaultNumericResultType(lRank, rRank, e);
   }
 
-  @Nullable
-  public static PsiType getDefaultNumericResultType(int lRank, int rRank, PsiElement context) {
+  public static @Nullable PsiType getDefaultNumericResultType(int lRank, int rRank, PsiElement context) {
     int resultRank = getResultTypeRank(lRank, rRank);
     String fqn = getTypeFqn(resultRank);
     return fqn == null ? null : createTypeByFQClassName(fqn, context);

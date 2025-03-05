@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.codeVision
 import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector.PROVIDER_STORAGE_KEY
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.internal.statistic.eventLog.events.FusHistogramBuilder
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.lang.Language

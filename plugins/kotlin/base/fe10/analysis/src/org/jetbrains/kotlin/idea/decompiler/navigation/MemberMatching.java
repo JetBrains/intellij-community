@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.navigation;
 
@@ -11,16 +11,14 @@ import java.util.List;
 
 public final class MemberMatching {
     /* DECLARATIONS ROUGH MATCHING */
-    @Nullable
-    private static KtTypeReference getReceiverType(@NotNull KtNamedDeclaration propertyOrFunction) {
+    private static @Nullable KtTypeReference getReceiverType(@NotNull KtNamedDeclaration propertyOrFunction) {
         if (propertyOrFunction instanceof KtCallableDeclaration) {
             return ((KtCallableDeclaration) propertyOrFunction).getReceiverTypeReference();
         }
         throw new IllegalArgumentException("Not a callable declaration: " + propertyOrFunction.getClass().getName());
     }
 
-    @NotNull
-    private static List<KtParameter> getValueParameters(@NotNull KtNamedDeclaration propertyOrFunction) {
+    private static @NotNull List<KtParameter> getValueParameters(@NotNull KtNamedDeclaration propertyOrFunction) {
         if (propertyOrFunction instanceof KtCallableDeclaration) {
             return ((KtCallableDeclaration) propertyOrFunction).getValueParameters();
         }

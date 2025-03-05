@@ -3,7 +3,7 @@ package com.intellij.analysis.dialog;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -32,7 +32,7 @@ public final class CustomScopeItem implements ModelScopeItem {
     mySearchInLib = file != null && fileIndex.isInLibrary(file);
 
     myPreselect = StringUtil.isEmptyOrSpaces(options.CUSTOM_SCOPE_NAME)
-                       ? FindSettings.getInstance().getDefaultScopeName()
+                       ? FindUsagesSettings.getInstance().getDefaultScopeName()
                        : options.CUSTOM_SCOPE_NAME;
     if (mySearchInLib && GlobalSearchScope.projectScope(myProject).getDisplayName().equals(myPreselect)) {
       myPreselect = GlobalSearchScope.allScope(myProject).getDisplayName();

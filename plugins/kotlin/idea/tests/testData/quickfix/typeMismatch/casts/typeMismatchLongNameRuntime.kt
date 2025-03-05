@@ -1,5 +1,5 @@
 // "Cast expression 'module' to 'LinkedHashSet<Int>'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 fun foo(): java.util.LinkedHashSet<Int> {
     val module: java.util.HashSet<Int> = java.util.LinkedHashSet<Int>()

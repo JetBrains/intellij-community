@@ -9,9 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 final class ThemeSpellcheckingStrategy extends SpellcheckingStrategy implements DumbAware {
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     return SpellcheckingStrategy.EMPTY_TOKENIZER;
   }
 

@@ -1,0 +1,38 @@
+<idea-plugin>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.completion.command.factory language="kotlin"
+                                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="com.intellij.codeInsight.completion.command.commands.RenameActionCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="com.intellij.codeInsight.completion.command.commands.OptimizeImportCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="com.intellij.codeInsight.completion.command.commands.RecentFilesCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="com.intellij.codeInsight.completion.command.commands.ProjectViewCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="com.intellij.codeInsight.completion.command.commands.LineCommentCompletionCommand"/>
+    <codeInsight.completion.command.provider language="kotlin"
+                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGenerateCommandCompletion"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToDeclarationCommandCompletion"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinGoToImplementationCommandCompletion"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinFormatCodeCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCopyFQNCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinShowUsagesActionCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinDeleteCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinChangeSignatureCompletionCommand"/>
+  </extensions>
+
+</idea-plugin>

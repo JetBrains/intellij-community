@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,6 +14,10 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.serialization.impl.JpsPathVariablesConfigurationImpl;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public class JpsGlobalLoader {
@@ -46,6 +50,15 @@ public class JpsGlobalLoader {
   public static void configurePathMapper(JpsGlobal global) {
     if (System.getProperty("jps.in.wsl") != null) {
       global.setPathMapper(new JpsWslPathMapper());
+      return;
+    }
+    Set<String> pathPrefixes = Optional.ofNullable(System.getProperty("ide.jps.remote.path.prefixes"))
+      .map(s -> s.split(";"))
+      .stream()
+      .flatMap(Arrays::stream)
+      .collect(Collectors.toSet());
+    if (!pathPrefixes.isEmpty()) {
+      global.setPathMapper(new JpsPrefixesCuttingPathMapper(pathPrefixes));
     }
   }
 
@@ -70,7 +83,7 @@ public class JpsGlobalLoader {
         String name = macroTag.getAttributeValue(NAME_ATTRIBUTE);
         String value = macroTag.getAttributeValue(VALUE_ATTRIBUTE);
         if (name != null && value != null) {
-          configuration.addPathVariable(name, StringUtil.trimEnd(FileUtil.toSystemIndependentName(value), "/"));
+          configuration.addPathVariable(name, StringUtil.trimEnd(FileUtilRt.toSystemIndependentName(value), "/"));
         }
       }
     }

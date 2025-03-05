@@ -49,11 +49,14 @@
                   implementationClass="com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereContributorStatistician"/>
 
     <statistics.validation.customValidationRule
-      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider$RunConfigurationTypeValidator"/>
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationTypeValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereMlElementFeatureValidationRule"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector"/>
+
+    <searchEverywhereEssentialContributorsMarker
+      implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker"/>
   </extensions>
 
   <extensionPoints>

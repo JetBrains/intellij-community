@@ -50,7 +50,7 @@ internal class GradleDependencyCollector : DependencyCollector {
 
 internal class GradleDependencyUpdater : ExternalSystemTaskNotificationListener {
 
-  override fun onEnd(id: ExternalSystemTaskId) {
+  override fun onEnd(proojecPath: String, id: ExternalSystemTaskId) {
     if (id.projectSystemId == GradleConstants.SYSTEM_ID
         && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
       id.findProject()?.let {

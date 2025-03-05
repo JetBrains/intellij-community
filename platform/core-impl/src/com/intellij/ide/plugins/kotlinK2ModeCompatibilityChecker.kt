@@ -7,7 +7,7 @@ import java.io.IOException
 
 private val pluginIdsToIgnoreK2KotlinCompatibility: Set<String> = buildSet {
   System.getProperty("idea.kotlin.plugin.plugin.ids.to.ignore.k2.compatibility")?.split(',')?.mapTo(this) { it.trim() }
-  addAll(listOf("fleet.backend.kotlin", "fleet.backend.mercury", "fleet.backend.mercury.kotlin.macos"))
+  addAll(listOf("fleet.backend.kotlin", "fleet.backend.mercury"))
 
   try {
     // KTIJ-30545

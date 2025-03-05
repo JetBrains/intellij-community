@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.server.CompilerConfigurationUtils;
@@ -70,7 +70,7 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
   }
 
   public void testDefaultParallelCompilationOptionIsAutomatic() {
-    assertEquals(getConfiguration().getParallelCompilationOption(), ParallelCompilationOption.AUTOMATIC);
+    assertEquals(ParallelCompilationOption.AUTOMATIC, getConfiguration().getParallelCompilationOption());
   }
 
   public void testDefaultParallelCompilationOptionDoesNotChangeXml() {
@@ -85,7 +85,7 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
 
     configuration.setParallelCompilationEnabled(true);
 
-    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.ENABLED);
+    assertEquals(ParallelCompilationOption.ENABLED, configuration.getParallelCompilationOption());
     assertThat(configuration.getState()).isEqualTo(
      """
      <state>
@@ -95,7 +95,7 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
 
     configuration.setParallelCompilationEnabled(false);
 
-    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.DISABLED);
+    assertEquals(ParallelCompilationOption.DISABLED, configuration.getParallelCompilationOption());
     assertThat(configuration.getState()).isEqualTo(
      """
      <state>
@@ -110,7 +110,7 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
 
     configuration.setParallelCompilationOption(ParallelCompilationOption.ENABLED);
 
-    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.ENABLED);
+    assertEquals(ParallelCompilationOption.ENABLED, configuration.getParallelCompilationOption());
     assertThat(configuration.getState()).isEqualTo(
      """
      <state>
@@ -119,7 +119,7 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
 
     configuration.setParallelCompilationOption(ParallelCompilationOption.AUTOMATIC);
 
-    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.AUTOMATIC);
+    assertEquals(ParallelCompilationOption.AUTOMATIC, configuration.getParallelCompilationOption());
     assertThat(configuration.getState()).isEqualTo(
      """
      <state>
@@ -128,7 +128,7 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
 
     configuration.setParallelCompilationOption(ParallelCompilationOption.DISABLED);
 
-    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.DISABLED);
+    assertEquals(ParallelCompilationOption.DISABLED, configuration.getParallelCompilationOption());
     assertThat(configuration.getState()).isEqualTo(
      """
      <state>

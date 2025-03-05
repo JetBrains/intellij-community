@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiClass;
@@ -21,26 +21,22 @@ public final class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPac
       myScope = scope;
     }
 
-    @NotNull
-    public PsiClass getAnnotationClass() {
+    public @NotNull PsiClass getAnnotationClass() {
       return myAnnotationClass;
     }
 
-    @NotNull
-    public SearchScope getScope() {
+    public @NotNull SearchScope getScope() {
       return myScope;
     }
   }
 
   private AnnotatedPackagesSearch() {}
 
-  @NotNull
-  public static Query<PsiPackage> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  public static @NotNull Query<PsiPackage> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return INSTANCE.createQuery(new Parameters(annotationClass, scope));
   }
 
-  @NotNull
-  public static Query<PsiPackage> search(@NotNull PsiClass annotationClass) {
+  public static @NotNull Query<PsiPackage> search(@NotNull PsiClass annotationClass) {
     return search(annotationClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(annotationClass)));
   }
 }

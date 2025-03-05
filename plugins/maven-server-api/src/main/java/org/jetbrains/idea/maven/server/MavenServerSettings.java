@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -26,19 +12,18 @@ public class MavenServerSettings implements Serializable, Cloneable {
    * do not use debug level {@link MavenServerConsoleIndicator#LEVEL_DEBUG} by default, it can pollute logs
    */
   private int myLoggingLevel = MavenServerConsoleIndicator.LEVEL_INFO;
-  @Nullable private String myMavenHome;
-  @Nullable private String myUserSettingsFile;
-  @Nullable private String myGlobalSettingsFile;
-  @Nullable private String myLocalRepository;
-  @NotNull private Properties myUserProperties = new Properties();
+  private @Nullable String myMavenHome;
+  private @Nullable String myUserSettingsFile;
+  private @Nullable String myGlobalSettingsFile;
+  private @Nullable String myLocalRepository;
+  private @NotNull Properties myUserProperties = new Properties();
 
   private boolean updateSnapshots;
   private boolean isOffline;
 
   private String projectJdk;
 
-  @Nullable
-  public String getProjectJdk() {
+  public @Nullable String getProjectJdk() {
     return projectJdk;
   }
 
@@ -54,8 +39,7 @@ public class MavenServerSettings implements Serializable, Cloneable {
     myLoggingLevel = loggingLevel;
   }
 
-  @NotNull
-  public Properties getUserProperties() {
+  public @NotNull Properties getUserProperties() {
     return myUserProperties;
   }
 
@@ -63,8 +47,7 @@ public class MavenServerSettings implements Serializable, Cloneable {
     myUserProperties = properties;
   }
 
-  @Nullable
-  public String getMavenHomePath() {
+  public @Nullable String getMavenHomePath() {
     return myMavenHome;
   }
 
@@ -72,8 +55,7 @@ public class MavenServerSettings implements Serializable, Cloneable {
     myMavenHome = mavenHome;
   }
 
-  @Nullable
-  public String getUserSettingsPath() {
+  public @Nullable String getUserSettingsPath() {
     return myUserSettingsFile;
   }
 
@@ -81,8 +63,7 @@ public class MavenServerSettings implements Serializable, Cloneable {
     myUserSettingsFile = userSettingsFile;
   }
 
-  @Nullable
-  public String getGlobalSettingsPath() {
+  public @Nullable String getGlobalSettingsPath() {
     return myGlobalSettingsFile;
   }
 
@@ -90,8 +71,7 @@ public class MavenServerSettings implements Serializable, Cloneable {
     myGlobalSettingsFile = globalSettingsFile;
   }
 
-  @Nullable
-  public String getLocalRepositoryPath() {
+  public @Nullable String getLocalRepositoryPath() {
     return myLocalRepository;
   }
 

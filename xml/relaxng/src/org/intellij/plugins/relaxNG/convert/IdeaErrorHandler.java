@@ -24,7 +24,7 @@ import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.validation.MessageViewHelper;
 import org.xml.sax.SAXParseException;
 
-public class IdeaErrorHandler extends ErrorHandlerImpl {
+public final class IdeaErrorHandler extends ErrorHandlerImpl {
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("CONVERSION_ERRORS");
 
   private final MessageViewHelper myMessageViewHelper;

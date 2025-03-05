@@ -20,6 +20,7 @@ import kotlin.text.StringsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -268,7 +269,7 @@ public class TestCaseLoader {
     }
   }
 
-  private static List<String> getTestGroups() {
+  private static @Unmodifiable List<String> getTestGroups() {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
 
@@ -520,7 +521,7 @@ public class TestCaseLoader {
     Comparator<String> classNameComparator = REVERSE_ORDER ? Comparator.reverseOrder() : Comparator.naturalOrder();
     return new TestSorter() {
       @Override
-      public @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
+      public @Unmodifiable @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
         return ContainerUtil.sorted(testClasses,
                                     Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
       }

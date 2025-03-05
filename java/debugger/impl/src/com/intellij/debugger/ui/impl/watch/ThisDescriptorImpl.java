@@ -22,6 +22,7 @@ public class ThisDescriptorImpl extends ValueDescriptorImpl {
     return evaluationContext != null ? evaluationContext.computeThisObject() : null;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   @Override
   public String getName() {
     return "this";

@@ -131,7 +131,7 @@ f:com.intellij.xdebugger.XDebuggerBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-a:com.intellij.xdebugger.XDebuggerManager
+Fa:com.intellij.xdebugger.XDebuggerManager
 - sf:TOPIC:com.intellij.util.messages.Topic
 - <init>():V
 - a:getBreakpointManager():com.intellij.xdebugger.breakpoints.XBreakpointManager
@@ -408,18 +408,20 @@ com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport$ExceptionRe
 e:com.intellij.xdebugger.evaluation.EvaluationMode
 - java.lang.Enum
 - sf:CODE_FRAGMENT:com.intellij.xdebugger.evaluation.EvaluationMode
+- sf:Companion:com.intellij.xdebugger.evaluation.EvaluationMode$Companion
 - sf:EXPRESSION:com.intellij.xdebugger.evaluation.EvaluationMode
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.xdebugger.evaluation.EvaluationMode
 - s:values():com.intellij.xdebugger.evaluation.EvaluationMode[]
+f:com.intellij.xdebugger.evaluation.EvaluationMode$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.xdebugger.evaluation.ExpressionInfo
 - sf:Companion:com.intellij.xdebugger.evaluation.ExpressionInfo$Companion
 - <init>(com.intellij.openapi.util.TextRange):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String):V
-- <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,com.intellij.psi.PsiElement):V
-- b:<init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- b:<init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getDisplayText():java.lang.String
-- f:getElement():com.intellij.psi.PsiElement
 - f:getExpressionText():java.lang.String
 - f:getTextRange():com.intellij.openapi.util.TextRange
 bc:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
@@ -468,6 +470,7 @@ a:com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback
 - com.intellij.xdebugger.frame.XValueCallback
 - a:evaluated(com.intellij.xdebugger.frame.XValue):V
+- invalidExpression(java.lang.String):V
 com.intellij.xdebugger.evaluation.XInstanceEvaluator
 - a:evaluate(com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback,com.intellij.xdebugger.frame.XStackFrame):V
 c:com.intellij.xdebugger.frame.ImmediateFullValueEvaluator
@@ -642,10 +645,14 @@ com.intellij.xdebugger.frame.XValueNode
 - a:setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
 e:com.intellij.xdebugger.frame.XValuePlace
 - java.lang.Enum
+- sf:Companion:com.intellij.xdebugger.frame.XValuePlace$Companion
 - sf:TOOLTIP:com.intellij.xdebugger.frame.XValuePlace
 - sf:TREE:com.intellij.xdebugger.frame.XValuePlace
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.xdebugger.frame.XValuePlace
 - s:values():com.intellij.xdebugger.frame.XValuePlace[]
+f:com.intellij.xdebugger.frame.XValuePlace$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 c:com.intellij.xdebugger.frame.presentation.XErrorValuePresentation
 - com.intellij.xdebugger.frame.presentation.XValuePresentation
 - <init>(java.lang.String):V

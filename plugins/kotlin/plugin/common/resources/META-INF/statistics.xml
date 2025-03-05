@@ -23,8 +23,11 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.KotlinModuleSizeCollector"/>
     <statistics.counterUsagesCollector
             implementationClass="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector"/>
+    <statistics.validation.customValidationRule
+            implementation="org.jetbrains.kotlin.idea.debugger.evaluate.StandardExceptionNameRuleValidator"/>
     <internal.statistic.libraryUsageImportProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLibraryUsageImportProcessor"/>
     <statistics.applicationUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.K2MetricsFUSCollector"/>
   </extensions>

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -12,12 +13,10 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 public interface MavenLogEntryReader {
-
   void pushBack();
 
   @Nullable
   MavenLogEntry readLine();
-
 
   /**
    * Read lines while predicate is true
@@ -53,49 +52,44 @@ public interface MavenLogEntryReader {
     return null;
   }
 
-  class MavenLogEntry {
-    @Nullable final LogMessageType myType;
-    @NotNull final String myLine;
+  @ApiStatus.Internal
+  final class MavenLogEntry {
+    public final @Nullable LogMessageType myType;
+    public final @NotNull String myLine;
 
     @TestOnly
-    MavenLogEntry(@NotNull String line, LogMessageType type) {
+    public MavenLogEntry(@NotNull String line, LogMessageType type) {
       myLine = line;
       myType = type;
     }
 
-    MavenLogEntry(@NotNull String line) {
+    public MavenLogEntry(@NotNull String line) {
       line = clearProgressCarriageReturns(line);
       myType = LogMessageType.determine(line);
       myLine = clearLine(myType, line);
     }
 
-    @NotNull
-    private static String clearProgressCarriageReturns(@NotNull String line) {
+    private static @NotNull String clearProgressCarriageReturns(@NotNull String line) {
       int i = line.lastIndexOf("\r");
       if (i == -1) return line;
       return line.substring(i + 1);
     }
 
-    @NotNull
-    private static String clearLine(@Nullable LogMessageType type, @NotNull String line) {
+    private static @NotNull String clearLine(@Nullable LogMessageType type, @NotNull String line) {
       return type == null ? line : type.clearLine(line);
     }
 
-    @Nullable
-    public LogMessageType getType() {
+    public @Nullable LogMessageType getType() {
       return myType;
     }
 
-    @NotNull
-    @NlsSafe
-    public String getLine() {
+    public @NotNull @NlsSafe String getLine() {
       return myLine;
     }
 
-
     @Override
     public String toString() {
-      return myType == null ? myLine : "[" + myType.toString() + "] " + myLine;
+      return myType == null ? myLine : "[" + myType + "] " + myLine;
     }
 
     @Override

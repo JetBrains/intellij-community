@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.java
 
-import org.jetbrains.uast.UFile
 import com.intellij.platform.uast.testFramework.common.RenderLogTestBase
+import org.jetbrains.uast.UFile
 import org.junit.Test
 
 class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest(), RenderLogTestBase {
@@ -94,4 +94,16 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest(), RenderLogTestBase {
 
   @Test
   fun testSwitchCaseRecordPattern() = doTest("Simple/SwitchCaseRecordPattern.java")
+
+  @Test
+  fun testOldStyleSwitchStatementWithGuard() = doTest("Simple/OldStyleSwitchStatementWithGuard.java")
+
+  @Test
+  fun testNewStyleSwitchStatementWithGuard() = doTest("Simple/NewStyleSwitchStatementWithGuard.java")
+
+  @Test
+  fun testOldStyleSwitchExpressionWithGuard() = doTest("Simple/OldStyleSwitchExpressionWithGuard.java")
+
+  @Test
+  fun testNewStyleSwitchExpressionWithGuard() = doTest("Simple/NewStyleSwitchExpressionWithGuard.java")
 }

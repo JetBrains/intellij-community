@@ -16,10 +16,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CopyOnWriteArrayList
 
-@Internal
+/**
+ * A viewmodel for a diff processor which can show multiple diffs and switch between them
+ */
 interface CodeReviewDiffProcessorViewModel<C : Any> {
   val changes: StateFlow<ComputedResult<State<C>>?>
 
@@ -38,7 +39,6 @@ interface CodeReviewDiffProcessorViewModel<C : Any> {
  * @param C change type
  * @param CVM change view model type
  */
-@Internal
 interface PreLoadingCodeReviewAsyncDiffViewModelDelegate<C : Any, CVM : AsyncDiffViewModel> {
   val changes: Flow<ComputedResult<CodeReviewDiffProcessorViewModel.State<CVM>>?>
 
@@ -50,7 +50,7 @@ interface PreLoadingCodeReviewAsyncDiffViewModelDelegate<C : Any, CVM : AsyncDif
   companion object {
     fun <D : Any, C : Any, CVM : AsyncDiffViewModel> create(
       preloadedDataFlow: Flow<ComputedResult<D>?>,
-      changesPreProcessor: Flow<(List<C>) -> List<C>>,
+      changesPreProcessor: Flow<(List<C>) -> List<C>> = flowOf { it },
       createViewModel: CoroutineScope.(D, C) -> CVM,
     ): PreLoadingCodeReviewAsyncDiffViewModelDelegate<C, CVM> =
       PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl(preloadedDataFlow, changesPreProcessor, createViewModel)
@@ -85,17 +85,22 @@ private class PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl<D : Any, C : An
       var lastList: List<C> = emptyList()
       changesPreProcessor.collectLatest { preProcessor ->
         changesToShow.collectScoped { changesState ->
-          if (changesState.selectedChanges.list != lastList) {
-            emit(ComputedResult.loading())
-            val processedList = preProcessor(changesState.selectedChanges.list)
-            vmsContainer.update(processedList)
-            lastList = changesState.selectedChanges.list
+          try {
+            if (changesState.selectedChanges.list != lastList) {
+              emit(ComputedResult.loading())
+              val processedList = preProcessor(changesState.selectedChanges.list)
+              vmsContainer.update(processedList)
+              lastList = changesState.selectedChanges.list
+            }
+            val mappingState = vmsContainer.mappingState.value
+            val vms = mappingState.values.toList()
+            val selectedVmIdx = mappingState.keys.indexOf(changesState.selectedChanges.selectedItem)
+            val newState = ViewModelsState(ListSelection.createAt(vms, selectedVmIdx), changesState.scrollRequests)
+            emit(ComputedResult.success(newState))
           }
-          val mappingState = vmsContainer.mappingState.value
-          val vms = mappingState.values.toList()
-          val selectedVmIdx = mappingState.keys.indexOf(changesState.selectedChanges.selectedItem)
-          val newState = ViewModelsState(ListSelection.createAt(vms, selectedVmIdx), changesState.scrollRequests)
-          emit(ComputedResult.success(newState))
+          catch (e: Exception) {
+            emit(ComputedResult.failure(e))
+          }
         }
       }
     }

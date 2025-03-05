@@ -27,6 +27,7 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void settingsChanged();
 
+  @ApiStatus.Internal
   public abstract void setUpdateByTimerEnabled(boolean value);
 
   public abstract void disableUpdateByTimer(@NotNull Disposable parentDisposable);
@@ -35,6 +36,8 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void setImportHintsEnabled(@NotNull PsiFile file, boolean value);
 
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public abstract void resetImportHintsEnabledForProject();
 
   public abstract void setHighlightingEnabled(@NotNull PsiFile file, boolean value);
@@ -58,6 +61,11 @@ public abstract class DaemonCodeAnalyzer {
   public abstract void restart(@NotNull PsiFile file);
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
+
+  @ApiStatus.Internal
+  public boolean isRunning() {
+    return false;
+  }
 
   @Topic.ProjectLevel
   public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = new Topic<>(DaemonListener.class, Topic.BroadcastDirection.NONE, true);

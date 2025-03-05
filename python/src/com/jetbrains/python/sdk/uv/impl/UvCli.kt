@@ -93,6 +93,10 @@ fun setUvExecutable(path: Path) {
   PropertiesComponent.getInstance().uvPath = path
 }
 
-fun createUvCli(dispatcher: CoroutineDispatcher = Dispatchers.IO, uv: Path? = null): UvCli {
+fun hasUvExecutable(): Boolean {
+  return getUvExecutable() != null
+}
+
+fun createUvCli(uv: Path? = null, dispatcher: CoroutineDispatcher = Dispatchers.IO): UvCli {
   return UvCliImpl(dispatcher, uv)
 }

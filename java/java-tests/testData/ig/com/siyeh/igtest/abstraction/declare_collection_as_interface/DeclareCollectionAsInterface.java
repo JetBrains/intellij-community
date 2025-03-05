@@ -77,7 +77,7 @@ public class DeclareCollectionAsInterface
 
   void m() {
     stringToProperties("");
-    <error descr="Incompatible types. Found: 'java.util.Properties', required: 'java.lang.String'">String s = stringToProperties2("");</error>
+    String s = <error descr="Incompatible types. Found: 'java.util.Properties', required: 'java.lang.String'">stringToProperties2</error>("");
     <error descr="Incompatible types. Found: 'java.util.Properties', required: 'java.lang.String'">s = stringToProperties3("")</error>;
   }
 

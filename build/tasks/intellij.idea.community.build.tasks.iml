@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-api" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="bouncy-castle-provider" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -61,6 +62,6 @@
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
   </component>
 </module>

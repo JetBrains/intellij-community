@@ -26,7 +26,7 @@ abstract class NoFormalParamTypeInferenceNeeded {
   {
     map(a -> zip(text ->  text));
     zip(a -> zip(text ->  text));
-    Integer zip = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Integer'">zip(a -> zip(text -> text));</error>
+    Integer zip = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Integer'">zip</error>(a -> zip(text -> text));
   }
 
 }

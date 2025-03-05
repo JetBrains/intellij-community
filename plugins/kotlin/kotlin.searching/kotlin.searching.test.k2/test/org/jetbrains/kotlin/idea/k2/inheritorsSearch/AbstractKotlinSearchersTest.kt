@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.inheritorsSearch
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -25,8 +25,8 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    abstract fun searchClass(ktClass: KtClass): Query<PsiElement>
-    abstract fun searchCallable(ktFunction: KtCallableDeclaration): Query<PsiElement>
+    abstract fun searchClass(ktClass: KtClass): Query<out PsiElement>
+    abstract fun searchCallable(ktFunction: KtCallableDeclaration): Query<out PsiElement>
     abstract fun searchJavaClass(psiClass: PsiClass): Query<PsiElement>
     abstract fun searchJavaMethod(psiMethod: PsiMethod): Query<PsiElement>
 
@@ -42,7 +42,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchClass(ktClass).toList()
+                return searchClass(ktClass).asIterable().toList()
             }
         })
         val actual = render(result)
@@ -62,7 +62,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchCallable(ktFunction).toList()
+                return searchCallable(ktFunction).asIterable().toList()
             }
         })
         val actual = render(result)
@@ -79,7 +79,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchJavaClass(psiClass).toList()
+                return searchJavaClass(psiClass).asIterable().toList()
             }
         })
         val actual = render(result)
@@ -95,7 +95,7 @@ abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCa
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {
             override fun compute(indicator: ProgressIndicator): List<PsiElement> {
-                return searchJavaMethod(psiMethod).toList()
+                return searchJavaMethod(psiMethod).asIterable().toList()
             }
         })
         val actual = render(result)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -124,23 +124,23 @@ public final class ImmutableZipFile implements ZipFile {
 
   @Override
   public @Nullable InputStream getInputStream(@NotNull String path) throws IOException {
-    ByteBuffer byteBuffer = ikv.getValue(Xxh3.hash(path));
+    ByteBuffer byteBuffer = ikv.getValue(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
     return byteBuffer == null ? null : new DirectByteBufferBackedInputStream(byteBuffer, false);
   }
 
   @Override
   public byte @Nullable [] getData(@NotNull String path) throws IOException {
-    return ikv.getByteArray(Xxh3.hash(path));
+    return ikv.getByteArray(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
   }
 
   @Override
   public ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
-    return ikv.getValue(Xxh3.hash(path));
+    return ikv.getValue(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
   }
 
   @Override
   public @Nullable ZipResource getResource(String path) {
-    long pair = ikv.getOffsetAndSize(Xxh3.hash(path));
+    long pair = ikv.getOffsetAndSize(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
     return pair == -1 ? null : new MyZipResource(pair, ikv, path);
   }
 
@@ -268,37 +268,5 @@ public final class ImmutableZipFile implements ZipFile {
   @Override
   public void close() throws Exception {
     ikv.close();
-  }
-}
-
-final class EmptyZipFile implements ZipFile {
-  @Override
-  public @Nullable InputStream getInputStream(@NotNull String path) throws IOException {
-    return null;
-  }
-
-  @Override
-  public @Nullable ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
-    return null;
-  }
-
-  @Override
-  public byte @Nullable [] getData(String name) throws IOException {
-    return null;
-  }
-
-  @Override
-  public @Nullable ZipResource getResource(String name) {
-    return null;
-  }
-
-  @Override
-  public void processResources(@NotNull String dir,
-                               @NotNull Predicate<? super String> nameFilter,
-                               @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
-  }
-
-  @Override
-  public void close() throws Exception {
   }
 }

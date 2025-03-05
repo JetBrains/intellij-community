@@ -8,6 +8,8 @@ import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -17,12 +19,15 @@ abstract class AbstractKtInlayHintsProvider: InlayHintsProvider {
     @Suppress("SSBasedInspection")
     private val log = Logger.getInstance(this::class.java)
 
+    open fun shouldShowForFile(ktFile: KtFile, project: Project): Boolean = true
+
     final override fun createCollector(
         file: PsiFile,
         editor: Editor
     ): InlayHintsCollector? {
         val project = editor.project ?: file.project
         if (project.isDefault || file !is KtFile) return null
+        if (!shouldShowForFile(file, project)) return null
 
         return object : SharedBypassCollector {
             override fun collectFromElement(
@@ -32,6 +37,8 @@ abstract class AbstractKtInlayHintsProvider: InlayHintsProvider {
                 try {
                     this@AbstractKtInlayHintsProvider.collectFromElement(element, sink)
                 } catch (e: ProcessCanceledException) {
+                    throw e
+                } catch (e: IndexNotReadyException) {
                     throw e
                 } catch (e: Exception) {
                     log.error(KotlinExceptionWithAttachments("Unable to provide inlay hint for $element", e)

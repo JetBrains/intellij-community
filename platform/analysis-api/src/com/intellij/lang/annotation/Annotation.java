@@ -2,6 +2,7 @@
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixBackedByIntentionAction;
@@ -16,7 +17,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Defines an annotation, which is displayed as a gutter bar mark or an extra highlight in the editor.
@@ -36,8 +37,11 @@ import java.util.List;
 public final class Annotation implements Segment {
   private final int myStartOffset;
   private final int myEndOffset;
+  @NotNull
   private final HighlightSeverity mySeverity;
   private final @NlsContexts.DetailedDescription String myMessage;
+  @NotNull
+  List<@NotNull Consumer<? super QuickFixActionRegistrar>> myLazyQuickFixes = List.of();
 
   private ProblemHighlightType myHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
   private TextAttributesKey myEnforcedAttributesKey;
@@ -51,7 +55,6 @@ public final class Annotation implements Segment {
   private GutterIconRenderer myGutterIconRenderer;
   private @Nullable ProblemGroup myProblemGroup;
   private List<QuickFixInfo> myBatchFixes;
-  private PsiReference unresolvedReference;
 
   public static final class QuickFixInfo {
     public final @NotNull IntentionAction quickFix;
@@ -80,8 +83,6 @@ public final class Annotation implements Segment {
     }
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-
   /**
    * Creates an instance of the annotation.
    * Do not create Annotation manually, please use {@link AnnotationHolder#newAnnotation(HighlightSeverity, String)} builder methods instead,
@@ -99,8 +100,8 @@ public final class Annotation implements Segment {
   public Annotation(int startOffset,
                     int endOffset,
                     @NotNull HighlightSeverity severity,
-                    @NlsContexts.DetailedDescription String message,
-                    @NlsContexts.Tooltip String tooltip) {
+                    @NlsContexts.DetailedDescription @Nullable String message,
+                    @NlsContexts.Tooltip @Nullable String tooltip) {
     assert startOffset <= endOffset : startOffset + ":" + endOffset;
     assert startOffset >= 0 : "Start offset must not be negative: " +startOffset;
     myStartOffset = startOffset;
@@ -224,8 +225,6 @@ public final class Annotation implements Segment {
   public void setNeedsUpdateOnTyping(boolean b) {
     myNeedsUpdateOnTyping = b;
   }
-
-  //</editor-fold>
 
   /**
    * Gets a flag indicating what happens with the annotation when the user starts typing.
@@ -352,8 +351,6 @@ public final class Annotation implements Segment {
     return myTooltip;
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-
   /**
    * Sets the tooltip for the annotation (shown when hovering the mouse in the gutter bar).
    * @deprecated Use {@link AnnotationBuilder#tooltip(String)} instead
@@ -368,7 +365,7 @@ public final class Annotation implements Segment {
   /**
    * If the annotation matches one of commonly encountered problem types, sets the ID of that
    * problem type so that an appropriate color can be used for highlighting the annotation.
-   * @deprecated use {@link AnnotationBuilder#highlightType(ProblemHighlightType)} isntead
+   * @deprecated use {@link AnnotationBuilder#highlightType(ProblemHighlightType)} instead
    *
    * @param highlightType the ID of the problem type.
    */
@@ -387,8 +384,6 @@ public final class Annotation implements Segment {
   public void setTextAttributes(final TextAttributesKey enforcedAttributes) {
     myEnforcedAttributesKey = enforcedAttributes;
   }
-
-  //</editor-fold>
 
   /**
    * Returns the flag indicating whether the annotation is shown after the end of line containing it.
@@ -471,6 +466,7 @@ public final class Annotation implements Segment {
     myProblemGroup = problemGroup;
   }
 
+  @Override
   public @NonNls String toString() {
     return "Annotation(" +
            "message='" + myMessage + "'" +
@@ -479,24 +475,12 @@ public final class Annotation implements Segment {
            ")";
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-
-  /**
-   * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
-   */
   @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public void setUnresolvedReference(PsiReference reference) {
-    unresolvedReference = reference;
+  public @NotNull List<@NotNull Consumer<? super QuickFixActionRegistrar>> getLazyQuickFixes() {
+    return myLazyQuickFixes;
   }
-  /**
-   * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
-   */
   @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public PsiReference getUnresolvedReference() {
-    return unresolvedReference;
+  public void registerLazyQuickFixes(@NotNull List<@NotNull Consumer<? super QuickFixActionRegistrar>> lazyQuickFixes) {
+    myLazyQuickFixes = lazyQuickFixes;
   }
-
-  //</editor-fold>
 }

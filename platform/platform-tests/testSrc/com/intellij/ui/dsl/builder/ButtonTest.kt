@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.*
 import org.junit.Test
 import kotlin.random.Random
 import kotlin.test.assertEquals

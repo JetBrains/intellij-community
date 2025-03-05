@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.psi.PsiElement;
@@ -52,8 +52,7 @@ public interface RegExpLanguageHost {
 
   boolean supportsNamedGroupSyntax(RegExpGroup group);
   boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
-  @NotNull
-  default EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+  default @NotNull EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
     return EMPTY_NAMED_GROUP_TYPES;
   }
   boolean supportsExtendedHexCharacter(RegExpChar regExpChar);
@@ -107,15 +106,14 @@ public interface RegExpLanguageHost {
 
   String[] @NotNull [] getAllKnownProperties();
   @Nullable
-  String getPropertyDescription(@Nullable final String name);
+  String getPropertyDescription(final @Nullable String name);
   String[] @NotNull [] getKnownCharacterClasses();
 
   /**
    * @param number  the number element to extract the value from
    * @return the value, or null when the value is out of range
    */
-  @Nullable
-  default Number getQuantifierValue(@NotNull RegExpNumber number) {
+  default @Nullable Number getQuantifierValue(@NotNull RegExpNumber number) {
     return Double.parseDouble(number.getUnescapedText());
   }
 

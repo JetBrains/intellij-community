@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
@@ -130,7 +131,14 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public boolean hasConflictingOnDemandImport(@NotNull PsiJavaFile file, @NotNull PsiClass psiClass, @NotNull String referenceName) {
-    return ImportHelper.hasConflictingOnDemandImport(file, psiClass, referenceName);
+    return ImportHelper.hasConflictingOnStaticDemandImport(file, psiClass, referenceName);
+  }
+
+  @Override
+  public boolean isStaticAutoImportName(@Nullable String fqn) {
+    if (fqn == null) return false;
+    JavaProjectCodeInsightSettings settings = JavaProjectCodeInsightSettings.getSettings(myProject);
+    return settings.isStaticAutoImportName(fqn);
   }
 
   @Override

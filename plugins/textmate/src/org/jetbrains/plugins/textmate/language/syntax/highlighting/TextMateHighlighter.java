@@ -14,22 +14,23 @@ import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public class TextMateHighlighter extends SyntaxHighlighterBase {
   private static final PlainSyntaxHighlighter PLAIN_SYNTAX_HIGHLIGHTER = new PlainSyntaxHighlighter();
 
-  @Nullable
-  private final Lexer myLexer;
+  private final @Nullable Lexer myLexer;
 
   public TextMateHighlighter(@Nullable Lexer lexer) {
     myLexer = lexer;
   }
 
-  @NotNull
   @Override
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return myLexer == null ? PLAIN_SYNTAX_HIGHLIGHTER.getHighlightingLexer() : myLexer;
   }
 

@@ -51,24 +51,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library name="apache.sshd.osgi" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.sshd:sshd-osgi:2.13.2">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.13.2/sshd-osgi-2.13.2.jar">
-              <sha256sum>65a0f1df8616ae371f19d000514afda9730089ddb7e6b7a03e96adfa17f6bccb</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.13.2/sshd-osgi-2.13.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2.13.2/sshd-osgi-2.13.2-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="library" exported="" name="jzlib" level="project" />
@@ -76,15 +58,19 @@
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.impl" />
+    <orderEntry type="library" exported="" name="apache.sshd.osgi" level="project" />
   </component>
 </module>

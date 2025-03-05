@@ -25,3 +25,7 @@ $Hooks = "$PSScriptRoot/command-block-support.ps1"
 if (Test-Path $Hooks) {
   & $Hooks
 }
+$HooksReworked = "$PSScriptRoot/command-block-support-reworked.ps1"
+if (Test-Path $HooksReworked) {
+  & $HooksReworked
+}

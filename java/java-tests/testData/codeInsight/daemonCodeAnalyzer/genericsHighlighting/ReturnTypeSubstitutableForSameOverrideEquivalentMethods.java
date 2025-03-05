@@ -4,5 +4,5 @@ interface I<T, S extends Throwable> {
 }
 
 class A implements I<Throwable, Throwable>{
-  public <error descr="'foo(Throwable)' in 'A' clashes with 'foo(T)' in 'I'; attempting to use incompatible return type">void</error> foo(Throwable x) { }
+  public <error descr="'foo(Throwable)' in 'A' clashes with 'foo(T)' in 'I'; incompatible return type">void</error> foo(Throwable x) { }
 }

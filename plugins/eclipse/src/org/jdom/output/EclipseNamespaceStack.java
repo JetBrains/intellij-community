@@ -141,6 +141,7 @@ public class EclipseNamespaceStack {
    * most recently added <code>{@link Namespace}</code> to
    * the "oldest," all to <code>System.out</code>.
    */
+  @Override
   public String toString() {
     StringBuilder buf = new StringBuilder();
     String sep = System.lineSeparator();

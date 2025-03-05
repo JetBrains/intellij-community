@@ -1,0 +1,108 @@
+com.intellij.ide.plugins.PluginInfoProvider
+- s:getInstance():com.intellij.ide.plugins.PluginInfoProvider
+- a:loadCachedPlugins():java.util.Set
+- loadPlugins():java.util.concurrent.Future
+- a:loadPlugins(com.intellij.openapi.progress.ProgressIndicator):java.util.concurrent.Future
+com.intellij.ide.plugins.PluginManagerConfigurableService
+- s:getInstance():com.intellij.ide.plugins.PluginManagerConfigurableService
+- a:showPluginConfigurableAndEnable(com.intellij.openapi.project.Project,java.lang.String[]):V
+f:com.intellij.ide.plugins.advertiser.FeaturePluginData
+- sf:Companion:com.intellij.ide.plugins.advertiser.FeaturePluginData$Companion
+- f:displayName:java.lang.String
+- f:pluginData:com.intellij.ide.plugins.advertiser.PluginData
+- <init>():V
+- <init>(java.lang.String,com.intellij.ide.plugins.advertiser.PluginData):V
+- b:<init>(java.lang.String,com.intellij.ide.plugins.advertiser.PluginData,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.ide.plugins.advertiser.PluginData
+- f:copy(java.lang.String,com.intellij.ide.plugins.advertiser.PluginData):com.intellij.ide.plugins.advertiser.FeaturePluginData
+- bs:copy$default(com.intellij.ide.plugins.advertiser.FeaturePluginData,java.lang.String,com.intellij.ide.plugins.advertiser.PluginData,I,java.lang.Object):com.intellij.ide.plugins.advertiser.FeaturePluginData
+- equals(java.lang.Object):Z
+- hashCode():I
+bc:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.FeaturePluginData
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.FeaturePluginData):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.ide.plugins.advertiser.FeaturePluginData$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.plugins.advertiser.PluginData
+- java.lang.Comparable
+- sf:Companion:com.intellij.ide.plugins.advertiser.PluginData$Companion
+- f:isBundled:Z
+- f:isFromCustomRepository:Z
+- f:nullablePluginName:java.lang.String
+- f:pluginIdString:java.lang.String
+- <init>():V
+- <init>(com.intellij.openapi.extensions.PluginDescriptor):V
+- <init>(java.lang.String,java.lang.String,Z,Z):V
+- b:<init>(java.lang.String,java.lang.String,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- compareTo(com.intellij.ide.plugins.advertiser.PluginData):I
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():Z
+- f:component4():Z
+- f:copy(java.lang.String,java.lang.String,Z,Z):com.intellij.ide.plugins.advertiser.PluginData
+- bs:copy$default(com.intellij.ide.plugins.advertiser.PluginData,java.lang.String,java.lang.String,Z,Z,I,java.lang.Object):com.intellij.ide.plugins.advertiser.PluginData
+- equals(java.lang.Object):Z
+- f:getPluginId():com.intellij.openapi.extensions.PluginId
+- f:getPluginName():java.lang.String
+- hashCode():I
+bc:com.intellij.ide.plugins.advertiser.PluginData$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginData$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.PluginData
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.PluginData):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.ide.plugins.advertiser.PluginData$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.plugins.advertiser.PluginDataSet
+- sf:Companion:com.intellij.ide.plugins.advertiser.PluginDataSet$Companion
+- <init>():V
+- <init>(java.util.Set):V
+- b:<init>(java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.Set
+- f:copy(java.util.Set):com.intellij.ide.plugins.advertiser.PluginDataSet
+- bs:copy$default(com.intellij.ide.plugins.advertiser.PluginDataSet,java.util.Set,I,java.lang.Object):com.intellij.ide.plugins.advertiser.PluginDataSet
+- equals(java.lang.Object):Z
+- f:getDataSet():java.util.Set
+- hashCode():I
+bc:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.PluginDataSet
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.PluginDataSet):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.ide.plugins.advertiser.PluginDataSet$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.ide.plugins.advertiser.PluginFeatureMap
+- sf:Companion:com.intellij.ide.plugins.advertiser.PluginFeatureMap$Companion
+- f:featureMap:java.util.Map
+- f:lastUpdateTime:J
+- <init>():V
+- <init>(java.util.Map,J):V
+- b:<init>(java.util.Map,J,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.Map
+- f:component2():J
+- f:copy(java.util.Map,J):com.intellij.ide.plugins.advertiser.PluginFeatureMap
+- bs:copy$default(com.intellij.ide.plugins.advertiser.PluginFeatureMap,java.util.Map,J,I,java.lang.Object):com.intellij.ide.plugins.advertiser.PluginFeatureMap
+- equals(java.lang.Object):Z
+- f:get(java.lang.String):java.util.Set
+- hashCode():I
+bc:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.PluginFeatureMap
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.PluginFeatureMap):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.ide.plugins.advertiser.PluginFeatureMap$Companion
+- f:serializer():kotlinx.serialization.KSerializer

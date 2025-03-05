@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.info;
 
 import com.intellij.execution.Location;
@@ -21,10 +21,10 @@ import java.util.Objects;
 public class MethodLocation extends Location<PsiMethod> {
   private static final Logger LOG = Logger.getInstance(MethodLocation.class);
   private final Project myProject;
-  @NotNull private final PsiMethod myMethod;
+  private final @NotNull PsiMethod myMethod;
   private final Location<? extends PsiClass> myClassLocation;
 
-  public MethodLocation(@NotNull final Project project, @NotNull final PsiMethod method, @NotNull final Location<? extends PsiClass> classLocation) {
+  public MethodLocation(final @NotNull Project project, final @NotNull PsiMethod method, final @NotNull Location<? extends PsiClass> classLocation) {
     myProject = project;
     myMethod = method;
     myClassLocation = classLocation;
@@ -36,30 +36,25 @@ public class MethodLocation extends Location<PsiMethod> {
   }
 
   @Override
-  @NotNull
-  public PsiMethod getPsiElement() {
+  public @NotNull PsiMethod getPsiElement() {
     return myMethod;
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @Nullable
   @Override
-  public Module getModule() {
+  public @Nullable Module getModule() {
     return myClassLocation.getModule();
   }
 
-  @NotNull
-  public PsiClass getContainingClass() {
+  public @NotNull PsiClass getContainingClass() {
     return myClassLocation.getPsiElement();
   }
 
-  @NotNull
-  public String getContainingClassJVMClassName() {
+  public @NotNull String getContainingClassJVMClassName() {
     if (myClassLocation instanceof NestedClassLocation) {
       return ((NestedClassLocation)myClassLocation).getNestedInConcreteInheritor();
     }
@@ -67,8 +62,7 @@ public class MethodLocation extends Location<PsiMethod> {
   }
   
   @Override
-  @NotNull
-  public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
+  public @NotNull <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
     final Iterator<Location<T>> fromClass = myClassLocation.getAncestors(ancestorClass, false);
     if (strict) return fromClass;
     return new Iterator<>() {

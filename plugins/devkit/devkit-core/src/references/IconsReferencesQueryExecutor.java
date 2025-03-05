@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -49,25 +49,18 @@ import java.util.List;
 
 final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
 
-  @NonNls
-  static final String ALL_ICONS_FQN = "com.intellij.icons.AllIcons";
-  @NonNls
-  static final String ALL_ICONS_NAME = "AllIcons";
-  @NonNls
-  static final String PLATFORM_ICONS_MODULE = "intellij.platform.icons";
-  @NonNls
-  static final String ICONS_MODULE = "icons";
+  static final @NonNls String ALL_ICONS_FQN = "com.intellij.icons.AllIcons";
+  static final @NonNls String ALL_ICONS_NAME = "AllIcons";
+  static final @NonNls String PLATFORM_ICONS_MODULE = "intellij.platform.icons";
+  static final @NonNls String ICONS_MODULE = "icons";
 
-  @NonNls
-  static final String ICONS_PACKAGE_PREFIX = "icons.";
-  @NonNls
-  static final String COM_INTELLIJ_ICONS_PREFIX = "com.intellij.icons.";
-  @NonNls
-  static final String ICONS_CLASSNAME_SUFFIX = "Icons";
+  static final @NonNls String ICONS_PACKAGE_PREFIX = "icons.";
+  static final @NonNls String COM_INTELLIJ_ICONS_PREFIX = "com.intellij.icons.";
+  static final @NonNls String ICONS_CLASSNAME_SUFFIX = "Icons";
 
   @Override
   public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters,
-                         @NotNull final Processor<? super PsiReference> consumer) {
+                         final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement file = queryParameters.getElementToSearch();
     if (file instanceof PsiBinaryFile) {
       final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(file));
@@ -110,9 +103,7 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
     return true;
   }
 
-  @NotNull
-  @NonNls
-  private static String getPathToImage(VirtualFile image, Module module) {
+  private static @NotNull @NonNls String getPathToImage(VirtualFile image, Module module) {
     final String path = ModuleRootManager.getInstance(module).getSourceRoots()[0].getPath();
     return "/" + FileUtil.getRelativePath(path, image.getPath(), '/');
   }
@@ -142,8 +133,7 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
    * <li>com.company.MyIcons.InnerClass.IconFieldName</li>
    * </ul>
    */
-  @Nullable
-  public static PsiField resolveIconPath(@NonNls @Nullable String path, PsiElement element) {
+  public static @Nullable PsiField resolveIconPath(@NonNls @Nullable String path, PsiElement element) {
     if (path == null) return null;
 
     @NonNls List<String> pathElements = StringUtil.split(path, ".");
@@ -168,8 +158,7 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
     return iconClass.findFieldByName(pathElements.get(pathElements.size() - 1), false);
   }
 
-  @Nullable
-  private static PsiClass findIconClass(Module module, @NonNls @NotNull String iconClass, boolean isQualifiedFqn) {
+  private static @Nullable PsiClass findIconClass(Module module, @NonNls @NotNull String iconClass, boolean isQualifiedFqn) {
     final String adjustedIconClassFqn;
     if (isQualifiedFqn) {
       adjustedIconClassFqn = iconClass;
@@ -183,7 +172,7 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
     return JavaPsiFacade.getInstance(module.getProject()).findClass(adjustedIconClassFqn, iconSearchScope);
   }
 
-  static abstract class IconPsiReferenceBase extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
+  abstract static class IconPsiReferenceBase extends PsiReferenceBase<PsiElement> implements EmptyResolveMessageProvider {
 
     IconPsiReferenceBase(@NotNull PsiElement element) {
       super(element, true);
@@ -220,7 +209,7 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
       final Query<PsiClass> allIconsSearch =
         AllClassesSearch.search(productionScope.intersectWith(GlobalSearchScope.notScope(notIconsPackageScope)),
                                 project, s -> StringUtil.endsWith(s, ICONS_CLASSNAME_SUFFIX) && !s.equals(ICONS_CLASSNAME_SUFFIX));
-      allIconsSearch.forEach(psiClass -> {
+      allIconsSearch.asIterable().forEach(psiClass -> {
         if (ALL_ICONS_FQN.equals(psiClass.getQualifiedName()) ||
             psiClass.isInterface() ||
             psiClass.getContainingClass() != null ||
@@ -267,9 +256,8 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
 
 
     @SuppressWarnings("UnresolvedPropertyKey")
-    @NotNull
     @Override
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       return DevKitBundle.message("inspections.presentation.cannot.resolve.icon");
     }
 
@@ -299,8 +287,7 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
         }
       }
 
-      @Nullable
-      private static Icon resolveIcon(PsiField field, @NotNull String iconPath) {
+      private static @Nullable Icon resolveIcon(PsiField field, @NotNull String iconPath) {
         UField uField = UastContextKt.toUElement(field, UField.class);
         assert uField != null;
         UExpression expression = uField.getUastInitializer();

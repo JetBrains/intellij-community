@@ -1,4 +1,6 @@
 // PROBLEM: none
+// WITH_STDLIB
+// ERROR: Unresolved reference: KFunction
 class B {
     fun runFunction(func: KFunction<*>) {}
 

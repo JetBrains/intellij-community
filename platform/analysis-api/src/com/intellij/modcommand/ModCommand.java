@@ -254,7 +254,7 @@ public sealed interface ModCommand
    */
   static @NotNull <T extends PsiElement> ModCommandAction psiBasedStep(
     @NotNull T element,
-    @NotNull @IntentionName final String title,
+    final @NotNull @IntentionName String title,
     @NotNull Function<@NotNull T, @NotNull ModCommand> function,
     @NotNull Function<@NotNull T, @NotNull TextRange> range) {
     return new PsiBasedModCommandAction<T>(element) {
@@ -287,7 +287,7 @@ public sealed interface ModCommand
    */
   static @NotNull <T extends PsiElement> ModCommandAction psiUpdateStep(
     @NotNull T element,
-    @NotNull @IntentionName final String title,
+    final @NotNull @IntentionName String title,
     @NotNull BiConsumer<@NotNull T, @NotNull ModPsiUpdater> action,
     @NotNull Function<@NotNull T, @NotNull TextRange> range) {
     return new PsiUpdateModCommandAction<T>(element) {
@@ -324,7 +324,7 @@ public sealed interface ModCommand
    */
   static @NotNull <T extends PsiElement> ModCommandAction psiUpdateStep(
     @NotNull T element,
-    @NotNull @IntentionName final String title,
+    final @NotNull @IntentionName String title,
     @NotNull BiConsumer<@NotNull T, @NotNull ModPsiUpdater> action) {
     return psiUpdateStep(element, title, action, PsiElement::getTextRange);
   }

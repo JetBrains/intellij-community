@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -116,7 +117,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return getValue() != null;
   }
 
-  protected abstract @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file);
+  protected abstract @Unmodifiable @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file);
 
   @Override
   public void update(@NotNull PresentationData presentation) {

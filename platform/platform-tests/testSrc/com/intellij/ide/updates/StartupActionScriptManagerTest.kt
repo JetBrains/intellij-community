@@ -128,4 +128,20 @@ class StartupActionScriptManagerTest {
     assertThat(scriptFile).exists()
     assertThat(StartupActionScriptManager.loadActionScript(scriptFile)).hasSize(3)
   }
+
+  @Test fun `add action command to beginning`() {
+    val source = tempDir.newFile("source.txt").toPath()
+    val destination = File(tempDir.root, "destination.txt").toPath()
+    assertThat(source).exists()
+    assertThat(destination).doesNotExist()
+
+    StartupActionScriptManager.addActionCommands(listOf(StartupActionScriptManager.DeleteCommand(destination)))
+    StartupActionScriptManager.addActionCommands(listOf(StartupActionScriptManager.CopyCommand(source, destination)))
+    StartupActionScriptManager.addActionCommandsToBeginning(listOf(StartupActionScriptManager.DeleteCommand(destination)))
+
+    StartupActionScriptManager.executeActionScript()
+    assertThat(destination).exists()
+    assertThat(source).exists()
+    assertThat(scriptFile).doesNotExist()
+  }
 }

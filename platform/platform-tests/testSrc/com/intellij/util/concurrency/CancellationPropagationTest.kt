@@ -14,7 +14,7 @@ import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
@@ -26,13 +26,10 @@ import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import com.intellij.util.getValue
-import com.intellij.util.io.awaitFor
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCancellablePromise
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
@@ -715,7 +712,7 @@ class CancellationPropagationTest {
     readActionScheduled.timeoutWaitUp()
     assertTrue(job.isActive)
     assertEquals(0, timesCancelled)
-    writeAction {
+    edtWriteAction {
       // immediately return, just to cancel and reschedule read action
     }
     assertEquals(1, timesCancelled)
@@ -914,7 +911,7 @@ class CancellationPropagationTest {
     val entryCounter = AtomicInteger(0)
     launch {
       canProceedWithWa.join()
-      writeAction {
+      edtWriteAction {
       }
     }
     launch {

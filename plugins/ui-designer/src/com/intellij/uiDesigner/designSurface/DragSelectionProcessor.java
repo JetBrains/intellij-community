@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,7 +117,7 @@ public final class DragSelectionProcessor extends EventProcessor {
   private class MyDragSourceListener extends DragSourceAdapter {
     @Override
     public void dropActionChanged(DragSourceDragEvent dsde) {
-      final int shiftDownMask = (dsde.getGestureModifiersEx() & KeyEvent.SHIFT_DOWN_MASK);
+      final int shiftDownMask = (dsde.getGestureModifiersEx() & InputEvent.SHIFT_DOWN_MASK);
       if (shiftDownMask != 0) {
         myEditor.setDesignTimeInsets(12);
       }

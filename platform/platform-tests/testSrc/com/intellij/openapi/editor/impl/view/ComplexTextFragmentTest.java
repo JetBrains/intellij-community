@@ -89,7 +89,7 @@ public class ComplexTextFragmentTest {
       char[] text = new char[length];
       FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
-                                                             fontInfo);
+                                                             fontInfo, null);
       int[] charPositions = new int[length];
       for (int i = 0; i < length; i++) {
         charPositions[i] = (int)fragment.visualColumnToX(0, i + 1);

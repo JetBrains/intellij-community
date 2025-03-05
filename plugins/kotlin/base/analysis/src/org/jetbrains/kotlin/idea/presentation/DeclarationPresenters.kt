@@ -108,11 +108,17 @@ open class KotlinFunctionPresentation(
     }
 
     private fun getTrimmedTypeText(typeReference: KtTypeReference?): String {
-        val typeText = when (typeReference?.typeElement) {
+        val typeElement = typeReference?.typeElement
+        val typeText = when (typeElement) {
             null -> ""
-            is KtFunctionType -> typeReference.getTypeText()
+            is KtFunctionType -> typeReference.getShortTypeText()
             else -> {
-                StringUtil.getShortName(typeReference.getTypeText())
+                val stub = typeReference.stub
+                if (stub != null || typeElement is KtNullableType && typeElement.innerType is KtFunctionType) {
+                    typeReference.getShortTypeText()
+                } else {
+                   StringUtil.getShortName(typeReference.getTypeText())
+                }
             }
         }
         return typeText

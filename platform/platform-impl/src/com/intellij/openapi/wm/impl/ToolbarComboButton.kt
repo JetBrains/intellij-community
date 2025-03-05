@@ -15,6 +15,8 @@ import kotlin.properties.Delegates
 open class ToolbarComboButton(val model: ToolbarComboButtonModel) : AbstractToolbarCombo() {
   var margin: Insets by Delegates.observable(JBInsets.emptyInsets(), this::fireUpdateEvents)
 
+  internal var preferredHeightSupplier: (() -> Int)? = null
+
   override fun getUIClassID(): String = "ToolbarComboButtonUI"
 
   init {

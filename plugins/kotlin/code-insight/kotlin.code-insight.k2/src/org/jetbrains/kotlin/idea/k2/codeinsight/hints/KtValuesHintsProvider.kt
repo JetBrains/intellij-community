@@ -10,16 +10,13 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeLeftAndRightSigns
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
@@ -64,16 +61,14 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
     private fun KtExpression.isComparable(): Boolean =
         when (this) {
             is KtConstantExpression -> true
-            is KtBinaryExpression -> left?.isComparable() == true && right?.isComparable() == true
+            is KtBinaryExpression -> {
+                val leftExpression = left ?: return false
+                val rightExpression = right ?: return false
+                leftExpression.isComparable() && rightExpression.isComparable()
+            }
             else -> {
-                val type = resolveToCall()?.singleFunctionCallOrNull()?.symbol?.returnType
-                    ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaCallableSymbol)?.returnType
-                (type is KaClassType) && (
-                        type.classId in DefaultTypeClassIds.PRIMITIVES ||
-                                type.allSupertypes(true).any {
-                                    val classTypeWithClassId = it.isClassType(StandardClassIds.Comparable)
-                                    classTypeWithClassId
-                                })
+                val type = expressionType as? KaClassType ?: return false
+                type.classId in DefaultTypeClassIds.PRIMITIVES || type.isSubtypeOf(StandardClassIds.Comparable)
             }
         }
 }

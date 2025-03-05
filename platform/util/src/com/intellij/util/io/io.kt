@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.Reader
@@ -50,6 +51,7 @@ fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
   return bytes
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use URLEncoder.encode()")
 @Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
 inline fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
@@ -64,18 +66,23 @@ inline fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)
  * operations may outlive current coroutine context.
  *
  * It's safe to set [java.net.Socket.setSoTimeout] if [InputStream] comes from a socket.
+ *
+ * @throws IOException when write or read failed.
  */
 @ApiStatus.Experimental
 @OptIn(DelicateCoroutinesApi::class)
+@Throws(IOException::class) // Can't use @CheckReturnValue: KTIJ-7061
 suspend fun InputStream.copyToAsync(
   outputStream: OutputStream,
   bufferSize: Int = DEFAULT_BUFFER_SIZE,
   limit: Long = Long.MAX_VALUE,
+  progressNotifier: (suspend (Long) -> Unit)? = null,
 ) {
   computeDetached(context = CoroutineName("copyToAsync: $this => $outputStream")) {
     val buffer = ByteArray(bufferSize)
     var totalRead = 0L
     while (totalRead < limit) {
+      progressNotifier?.invoke(totalRead)
       yield()
       val read =
         try {

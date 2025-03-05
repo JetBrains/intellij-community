@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
@@ -6,7 +6,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,11 +32,6 @@ final class LockFreeCopyOnWriteArrayList<E> extends AtomicReference<Object @NotN
   }
   LockFreeCopyOnWriteArrayList(@NotNull Collection<? extends E> c) {
     set(c.isEmpty() ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : c.toArray());
-  }
-
-  @TestOnly
-  Object @NotNull [] getArray() {
-    return get();
   }
 
   private boolean replaceArray(Object @NotNull [] oldArray, Object @NotNull [] newArray) {

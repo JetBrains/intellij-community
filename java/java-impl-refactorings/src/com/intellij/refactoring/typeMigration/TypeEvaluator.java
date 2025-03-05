@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.project.Project;
@@ -85,8 +85,7 @@ public class TypeEvaluator {
     return false;
   }
 
-  @Nullable
-  public PsiType getType(PsiElement element) {
+  public @Nullable PsiType getType(PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) return null;
     VirtualFile file = psiFile.getVirtualFile();
@@ -103,8 +102,7 @@ public class TypeEvaluator {
     return getType(new TypeMigrationUsageInfo(element));
   }
 
-  @Nullable
-  public PsiType getType(final TypeMigrationUsageInfo usageInfo) {
+  public @Nullable PsiType getType(final TypeMigrationUsageInfo usageInfo) {
     final LinkedList<PsiType> e = myTypeMap.get(usageInfo);
 
     if (e != null) {
@@ -114,8 +112,7 @@ public class TypeEvaluator {
     return TypeMigrationLabeler.getElementType(usageInfo.getElement());
   }
 
-  @Nullable
-  public PsiType evaluateType(final PsiExpression expr) {
+  public @Nullable PsiType evaluateType(final PsiExpression expr) {
     if (expr == null) return null;
     final LinkedList<PsiType> e = myTypeMap.get(new TypeMigrationUsageInfo(expr));
 
@@ -230,8 +227,7 @@ public class TypeEvaluator {
     return getType(expr);
   }
 
-  @Nullable
-  private PsiType evaluateReferenceExpressionType(PsiExpression expr) {
+  private @Nullable PsiType evaluateReferenceExpressionType(PsiExpression expr) {
     final PsiReferenceExpression ref = (PsiReferenceExpression)expr;
     final PsiExpression qualifier = ref.getQualifierExpression();
 
@@ -359,8 +355,7 @@ public class TypeEvaluator {
     return list;
   }
 
-  @Nullable
-  static PsiType substituteType(final PsiClassType migrationType, final PsiClassType originalType, boolean captureWildcard, PsiClass originalClass, final PsiType rawTypeToReplace) {
+  static @Nullable PsiType substituteType(final PsiClassType migrationType, final PsiClassType originalType, boolean captureWildcard, PsiClass originalClass, final PsiType rawTypeToReplace) {
     if (originalClass == null) return null;
     if (!originalType.hasParameters() || !migrationType.hasParameters()) return originalType;
     final PsiResolveHelper psiResolveHelper = JavaPsiFacade.getInstance(originalClass.getProject()).getResolveHelper();
@@ -415,8 +410,7 @@ public class TypeEvaluator {
     return migrationType;
   }
 
-  @Nullable
-  public <T> T getSettings(Class<T> aClass) {
+  public @Nullable <T> T getSettings(Class<T> aClass) {
     return myRules.getConversionSettings(aClass);
   }
 

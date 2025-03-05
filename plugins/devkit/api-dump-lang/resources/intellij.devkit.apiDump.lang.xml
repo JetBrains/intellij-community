@@ -1,0 +1,41 @@
+<idea-plugin package="com.intellij.devkit.apiDump.lang">
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+
+  <resource-bundle>messages.ApiDumpLangBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType language="ADLanguage"
+              name="ADLanguage"
+              extensions=""
+              implementationClass="com.intellij.devkit.apiDump.lang.ADFileType"
+              fieldName="INSTANCE"/>
+
+    <lang.parserDefinition language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.ADParserDefinition"/>
+
+    <methodReferencesSearch implementation="com.intellij.devkit.apiDump.lang.search.ADConstructorReferenceSearcher"/>
+
+    <lang.elementManipulator forClass="com.intellij.devkit.apiDump.lang.psi.impl.ADTypeReferenceImplGen"
+                             implementationClass="com.intellij.devkit.apiDump.lang.reference.ADTypeReferenceManipulator"/>
+
+    <registryKey defaultValue="false" description="Enable find usages for references in api dump" key="intellij.devkit.api.dump.find.usages"/>
+
+    <lang.foldingBuilder language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.folding.ADFoldingBuilder"/>
+    <lang.psiStructureViewFactory language="ADLanguage" implementationClass="com.intellij.devkit.apiDump.lang.structure.ADFileStructureFactory"/>
+    <fileStructureGroupRuleProvider implementation="com.intellij.devkit.apiDump.lang.usages.ADFileStructureGroupRuleProvider"/>
+    <usageTypeProvider implementation="com.intellij.devkit.apiDump.lang.usages.ADUsageTypeProvider"/>
+    <usageFilteringRuleProvider implementation="com.intellij.devkit.apiDump.lang.usages.ADUsageFilteringRuleProvider"/>
+  </extensions>
+
+  <actions resource-bundle="messages.ApiDumpLangBundle">
+    <group id="UsageFilteringActionGroup.ApiDump">
+      <action id="UsageFiltering.ApiDump"
+              icon="com.intellij.devkit.apiDump.DevkitApiDumpIcons.ApiDump"
+              class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <add-to-group group-id="UsageFilteringActionGroup" anchor="last"/>
+    </group>
+  </actions>
+
+</idea-plugin>

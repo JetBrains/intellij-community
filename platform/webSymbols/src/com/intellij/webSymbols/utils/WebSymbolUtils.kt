@@ -15,7 +15,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -28,6 +28,7 @@ import com.intellij.webSymbols.patterns.impl.applyIcons
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.WebSymbolMatchImpl
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.Icon
 import kotlin.contracts.ExperimentalContracts
@@ -37,7 +38,7 @@ import kotlin.contracts.contract
 @OptIn(ExperimentalContracts::class)
 inline fun <T : Any, P : Any> T.applyIfNotNull(param: P?, block: T.(P) -> T): T {
   contract {
-    callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    callsInPlace(block, InvocationKind.AT_MOST_ONCE)
   }
   return if (param != null)
     block(this, param)
@@ -57,17 +58,28 @@ fun List<WebSymbol>.asSingleSymbol(force: Boolean = false): WebSymbol? =
     if (!force && any { it.namespace != first.namespace || it.kind != first.kind })
       null
     else
-      WebSymbolMatch.create(first.name, listOf(WebSymbolNameSegment.create(0, first.name.length, sortSymbolsByPriority())),
-                            first.namespace, first.kind, first.origin)
+      WebSymbolMatch.create(first.name, first.qualifiedKind, first.origin,
+                            WebSymbolNameSegment.create(0, first.name.length, sortSymbolsByPriority()))
   }
 
-fun WebSymbol.withMatchedName(matchedName: String) =
+fun WebSymbol.withMatchedName(matchedName: String): WebSymbol =
   if (matchedName != name) {
     val nameSegment = if (this is WebSymbolMatch && nameSegments.size == 1)
       nameSegments[0].withRange(0, matchedName.length)
     else
       WebSymbolNameSegment.create(0, matchedName.length, this)
-    WebSymbolMatch.create(matchedName, listOf(nameSegment), namespace, kind, origin)
+    WebSymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
+  }
+  else this
+
+fun WebSymbol.withMatchedKind(qualifiedKind: WebSymbolQualifiedKind): WebSymbol =
+  if (qualifiedKind != this.qualifiedKind) {
+    val matchedName = this.asSafely<WebSymbolMatch>()?.matchedName ?: name
+    val nameSegment = if (this is WebSymbolMatch && nameSegments.size == 1)
+      nameSegments[0].withRange(0, matchedName.length)
+    else
+      WebSymbolNameSegment.create(0, matchedName.length, this)
+    WebSymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
   }
   else this
 
@@ -126,9 +138,11 @@ fun WebSymbolNameSegment.withSymbols(symbols: List<WebSymbol>): WebSymbolNameSeg
 fun WebSymbolMatch.withSegments(segments: List<WebSymbolNameSegment>): WebSymbolMatch =
   (this as WebSymbolMatchImpl).withSegments(segments)
 
-fun WebSymbol.match(nameToMatch: String,
-                    params: WebSymbolsNameMatchQueryParams,
-                    context: Stack<WebSymbolsScope>): List<WebSymbol> {
+fun WebSymbol.match(
+  nameToMatch: String,
+  params: WebSymbolsNameMatchQueryParams,
+  context: Stack<WebSymbolsScope>,
+): List<WebSymbol> {
   pattern?.let { pattern ->
     context.push(this)
     try {
@@ -157,9 +171,11 @@ fun WebSymbol.match(nameToMatch: String,
   }
 }
 
-fun WebSymbol.toCodeCompletionItems(name: String,
-                                    params: WebSymbolsCodeCompletionQueryParams,
-                                    context: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+fun WebSymbol.toCodeCompletionItems(
+  name: String,
+  params: WebSymbolsCodeCompletionQueryParams,
+  context: Stack<WebSymbolsScope>,
+): List<WebSymbolCodeCompletionItem> =
   pattern?.let { pattern ->
     context.push(this)
     try {
@@ -254,11 +270,11 @@ val WebSymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment>
 internal val WebSymbol.matchedNameOrName: String
   get() = (this as? WebSymbolMatch)?.matchedName ?: name
 
-val WebSymbol.hideFromCompletion
+val WebSymbol.hideFromCompletion: Boolean
   get() =
     properties[WebSymbol.PROP_HIDE_FROM_COMPLETION] == true
 
-val (WebSymbolNameSegment.MatchProblem?).isCritical
+val (WebSymbolNameSegment.MatchProblem?).isCritical: Boolean
   get() = this == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL
 
 fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegment> =
@@ -275,13 +291,15 @@ fun WebSymbolApiStatus?.coalesceWith(other: WebSymbolApiStatus?): WebSymbolApiSt
     }
     is WebSymbolApiStatus.Experimental -> when (other) {
       is WebSymbolApiStatus.Obsolete,
-      is WebSymbolApiStatus.Deprecated -> other
+      is WebSymbolApiStatus.Deprecated,
+        -> other
       else -> this
     }
     is WebSymbolApiStatus.Stable -> when (other) {
       is WebSymbolApiStatus.Obsolete,
       is WebSymbolApiStatus.Deprecated,
-      is WebSymbolApiStatus.Experimental -> other
+      is WebSymbolApiStatus.Experimental,
+        -> other
       else -> this
     }
   }
@@ -366,9 +384,11 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
   }
 }
 
-fun WebSymbolsScope.getDefaultCodeCompletions(qualifiedName: WebSymbolQualifiedName,
-                                              params: WebSymbolsCodeCompletionQueryParams,
-                                              scope: Stack<WebSymbolsScope>) =
+fun WebSymbolsScope.getDefaultCodeCompletions(
+  qualifiedName: WebSymbolQualifiedName,
+  params: WebSymbolsCodeCompletionQueryParams,
+  scope: Stack<WebSymbolsScope>,
+): List<WebSymbolCodeCompletionItem> =
   getSymbols(qualifiedName.qualifiedKind,
              WebSymbolsListSymbolsQueryParams.create(
                params.queryExecutor,
@@ -380,7 +400,8 @@ fun WebSymbolsScope.getDefaultCodeCompletions(qualifiedName: WebSymbolQualifiedN
 internal val List<WebSymbolsScope>.lastWebSymbol: WebSymbol?
   get() = this.lastOrNull { it is WebSymbol } as? WebSymbol
 
-internal fun createModificationTracker(trackersPointers: List<Pointer<out ModificationTracker>>): ModificationTracker =
+@ApiStatus.Internal
+fun createModificationTracker(trackersPointers: List<Pointer<out ModificationTracker>>): ModificationTracker =
   ModificationTracker {
     var modCount = 0L
     for (tracker in trackersPointers) {

@@ -1257,6 +1257,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/localClass.kt");
         }
 
+        @TestMetadata("localClassAndLocalProperty.kt")
+        public void testLocalClassAndLocalProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/localClassAndLocalProperty.kt");
+        }
+
+        @TestMetadata("localClassInLambdaAndLocalProperty.kt")
+        public void testLocalClassInLambdaAndLocalProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/localClassInLambdaAndLocalProperty.kt");
+        }
+
         @TestMetadata("localClassInSecondTypeParameter.kt")
         public void testLocalClassInSecondTypeParameter() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/localClassInSecondTypeParameter.kt");
@@ -2572,6 +2582,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/basic3.kt");
         }
 
+        @TestMetadata("disableConversionForDoubleDollarPrefix.kt")
+        public void testDisableConversionForDoubleDollarPrefix() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/disableConversionForDoubleDollarPrefix.kt");
+        }
+
         @TestMetadata("empty.kt")
         public void testEmpty() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/empty.kt");
@@ -2582,11 +2597,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/inAnnotation.kt");
         }
 
-        @TestMetadata("KTIJ-30269.kt")
-        public void testKTIJ_30269() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/KTIJ-30269.kt");
-        }
-
         @TestMetadata("raw.kt")
         public void testRaw() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/raw.kt");
@@ -2595,6 +2605,460 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("slashBuck.kt")
         public void testSlashBuck() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertStringTemplateToBuildString/slashBuck.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw")
+    public abstract static class ConvertFilteringFunctionWithDemorgansLaw extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll")
+        public abstract static class AnyToAll extends AbstractK2IntentionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAll")
+            public static class ToAll extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAll/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAny")
+            public static class ToAny extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/toAny/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll")
+            public static class Uncategorized extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn.kt");
+                }
+
+                @TestMetadata("labeledReturn2.kt")
+                public void testLabeledReturn2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn2.kt");
+                }
+
+                @TestMetadata("labeledReturn3.kt")
+                public void testLabeledReturn3() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn3.kt");
+                }
+
+                @TestMetadata("labeledReturn4.kt")
+                public void testLabeledReturn4() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/labeledReturn4.kt");
+                }
+
+                @TestMetadata("nullable.kt")
+                public void testNullable() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/nullable.kt");
+                }
+
+                @TestMetadata("nullable2.kt")
+                public void testNullable2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/nullable2.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone")
+        public abstract static class AnyToNone extends AbstractK2IntentionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toAny")
+            public static class ToAny extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toAny/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone")
+            public static class ToNone extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inReceiver.kt")
+                public void testInReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/inReceiver.kt");
+                }
+
+                @TestMetadata("KTIJ-21370.kt")
+                public void testKTIJ_21370() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/KTIJ-21370.kt");
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/toNone/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone")
+            public static class Uncategorized extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn.kt");
+                }
+
+                @TestMetadata("labeledReturn2.kt")
+                public void testLabeledReturn2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn2.kt");
+                }
+
+                @TestMetadata("labeledReturn3.kt")
+                public void testLabeledReturn3() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn3.kt");
+                }
+
+                @TestMetadata("labeledReturn4.kt")
+                public void testLabeledReturn4() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/labeledReturn4.kt");
+                }
+
+                @TestMetadata("nullable.kt")
+                public void testNullable() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/nullable.kt");
+                }
+
+                @TestMetadata("nullable2.kt")
+                public void testNullable2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/nullable2.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite")
+        public abstract static class CallToOpposite extends AbstractK2IntentionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone")
+            public abstract static class AllToNone extends AbstractK2IntentionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate")
+                public static class Predicate extends AbstractK2IntentionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("isNotEmpty.kt")
+                    public void testIsNotEmpty() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/isNotEmpty.kt");
+                    }
+
+                    @TestMetadata("not.kt")
+                    public void testNot() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/not.kt");
+                    }
+
+                    @TestMetadata("notOr.kt")
+                    public void testNotOr() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/notOr.kt");
+                    }
+
+                    @TestMetadata("or.kt")
+                    public void testOr() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/or.kt");
+                    }
+
+                    @TestMetadata("simple.kt")
+                    public void testSimple() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/predicate/simple.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone")
+                public static class Uncategorized extends AbstractK2IntentionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("array.kt")
+                    public void testArray() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/array.kt");
+                    }
+
+                    @TestMetadata("floatComparison.kt")
+                    public void testFloatComparison() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/floatComparison.kt");
+                    }
+
+                    @TestMetadata("lambdaInParentheses.kt")
+                    public void testLambdaInParentheses() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/lambdaInParentheses.kt");
+                    }
+
+                    @TestMetadata("sequence.kt")
+                    public void testSequence() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/sequence.kt");
+                    }
+
+                    @TestMetadata("simple.kt")
+                    public void testSimple() throws Exception {
+                        runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/allToNone/simple.kt");
+                    }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToFilter")
+            public static class FilterNotToFilter extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToFilter/simple.kt");
+                }
+
+                @TestMetadata("simple2.kt")
+                public void testSimple2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToFilter/simple2.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToToFilterTo")
+            public static class FilterNotToToFilterTo extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterNotToToFilterTo/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToFilterNot")
+            public static class FilterToFilterNot extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToFilterNot/simple.kt");
+                }
+
+                @TestMetadata("simple2.kt")
+                public void testSimple2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToFilterNot/simple2.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToToFilterNotTo")
+            public static class FilterToToFilterNotTo extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/filterToToFilterNotTo/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/noneToAll")
+            public static class NoneToAll extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/noneToAll/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeIfToTakeUnless")
+            public static class TakeIfToTakeUnless extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeIfToTakeUnless/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeUnlessToTakeIf")
+            public static class TakeUnlessToTakeIf extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/takeUnlessToTakeIf/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite")
+            public static class Uncategorized extends AbstractK2IntentionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("labeledReturn.kt")
+                public void testLabeledReturn() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn.kt");
+                }
+
+                @TestMetadata("labeledReturn2.kt")
+                public void testLabeledReturn2() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn2.kt");
+                }
+
+                @TestMetadata("labeledReturn3.kt")
+                public void testLabeledReturn3() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn3.kt");
+                }
+
+                @TestMetadata("labeledReturn4.kt")
+                public void testLabeledReturn4() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/labeledReturn4.kt");
+                }
+
+                @TestMetadata("nullable.kt")
+                public void testNullable() throws Exception {
+                    runTest("../../../idea/tests/testData/intentions/convertFilteringFunctionWithDemorgansLaw/callToOpposite/nullable.kt");
+                }
+            }
         }
     }
 
@@ -2969,11 +3433,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToConcatenatedString/interpolateStringWithInt.kt");
         }
 
-        @TestMetadata("KTIJ-30269.kt")
-        public void testKTIJ_30269() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedString/KTIJ-30269.kt");
-        }
-
         @TestMetadata("lastExprIsNamedExpression.kt")
         public void testLastExprIsNamedExpression() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToConcatenatedString/lastExprIsNamedExpression.kt");
@@ -3007,6 +3466,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("notAvailableForDollarSignLiteral.kt")
         public void testNotAvailableForDollarSignLiteral() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToConcatenatedString/notAvailableForDollarSignLiteral.kt");
+        }
+
+        @TestMetadata("singleDollarPrefixWithInterpolation.kt")
+        public void testSingleDollarPrefixWithInterpolation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToConcatenatedString/singleDollarPrefixWithInterpolation.kt");
         }
 
         @TestMetadata("singleVar.kt")
@@ -4043,6 +4507,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("propertyTypeFromGetter.kt")
         public void testPropertyTypeFromGetter() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/propertyTypeFromGetter.kt");
+        }
+
+        @TestMetadata("recursiveFunNoBody.kt")
+        public void testRecursiveFunNoBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/recursiveFunNoBody.kt");
         }
 
         @TestMetadata("referenceExpressionInitializer.kt")
@@ -5272,9 +5741,9 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/dollar2.kt");
         }
 
-        @TestMetadata("KTIJ-30275.kt")
-        public void testKTIJ_30275() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/KTIJ-30275.kt");
+        @TestMetadata("multiDollarPrefix.kt")
+        public void testMultiDollarPrefix() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/toRawStringLiteral/multiDollarPrefix.kt");
         }
 
         @TestMetadata("quotesAndSlashes.kt")
@@ -5349,6 +5818,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("expectClass.kt")
         public void testExpectClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/expectClass.kt");
+        }
+
+        @TestMetadata("flexibleType.kt")
+        public void testFlexibleType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/flexibleType.kt");
         }
 
         @TestMetadata("functionReference.kt")
@@ -5450,6 +5924,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/variableSubject.kt");
         }
 
+        @TestMetadata("whenGuardsUnsupported.kt")
+        public void testWhenGuardsUnsupported() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenGuardsUnsupported.kt");
+        }
+
         @TestMetadata("whenTrueOrFalse.kt")
         public void testWhenTrueOrFalse() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse.kt");
@@ -5480,6 +5959,36 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithEqualityTests.kt");
         }
 
+        @TestMetadata("whenWithGuardIncorrectTwoConditions.kt")
+        public void testWhenWithGuardIncorrectTwoConditions() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardIncorrectTwoConditions.kt");
+        }
+
+        @TestMetadata("whenWithGuardNoParentheses.kt")
+        public void testWhenWithGuardNoParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardNoParentheses.kt");
+        }
+
+        @TestMetadata("whenWithGuardOrOrNoParentheses.kt")
+        public void testWhenWithGuardOrOrNoParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardOrOrNoParentheses.kt");
+        }
+
+        @TestMetadata("whenWithGuardOrOrParentheses.kt")
+        public void testWhenWithGuardOrOrParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardOrOrParentheses.kt");
+        }
+
+        @TestMetadata("whenWithGuardOrOrParenthesesComments.kt")
+        public void testWhenWithGuardOrOrParenthesesComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardOrOrParenthesesComments.kt");
+        }
+
+        @TestMetadata("whenWithGuardParentheses.kt")
+        public void testWhenWithGuardParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuardParentheses.kt");
+        }
+
         @TestMetadata("whenWithGuards.kt")
         public void testWhenWithGuards() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithGuards.kt");
@@ -5498,6 +6007,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("whenWithMultipleConditionTypes.kt")
         public void testWhenWithMultipleConditionTypes() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithMultipleConditionTypes.kt");
+        }
+
+        @TestMetadata("whenWithMultipleGuards.kt")
+        public void testWhenWithMultipleGuards() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/whenWithMultipleGuards.kt");
         }
 
         @TestMetadata("whenWithNegativePatterns.kt")
@@ -5548,6 +6062,35 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("wrongIsAndInNoSubject.kt")
         public void testWrongIsAndInNoSubject() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/ifWhen/whenToIf/wrongIsAndInNoSubject.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/branched/folding/ifToReturnAsymmetrically")
+    public static class IfToReturnAsymmetrically extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("simpleIf.kt")
+        public void testSimpleIf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/folding/ifToReturnAsymmetrically/simpleIf.kt");
+        }
+
+        @TestMetadata("simpleIfWithBlocks.kt")
+        public void testSimpleIfWithBlocks() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/folding/ifToReturnAsymmetrically/simpleIfWithBlocks.kt");
+        }
+
+        @TestMetadata("simpleIfWithComments.kt")
+        public void testSimpleIfWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/folding/ifToReturnAsymmetrically/simpleIfWithComments.kt");
         }
     }
 
@@ -6207,210 +6750,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("withPackage.kt")
         public void testWithPackage() throws Exception {
             runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/withPackage.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
-    public static class RemoveExplicitTypeArguments extends AbstractK2IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("betweenLambdaArguments.kt")
-        public void testBetweenLambdaArguments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/betweenLambdaArguments.kt");
-        }
-
-        @TestMetadata("blockValue.kt")
-        public void testBlockValue() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/blockValue.kt");
-        }
-
-        @TestMetadata("defaultParamValue.kt")
-        public void testDefaultParamValue() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/defaultParamValue.kt");
-        }
-
-        @TestMetadata("fourLiterals.kt")
-        public void testFourLiterals() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/fourLiterals.kt");
-        }
-
-        @TestMetadata("functionBodyIsCallWithUnnecessaryTypeArgs.kt")
-        public void testFunctionBodyIsCallWithUnnecessaryTypeArgs() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/functionBodyIsCallWithUnnecessaryTypeArgs.kt");
-        }
-
-        @TestMetadata("getterBody.kt")
-        public void testGetterBody() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/getterBody.kt");
-        }
-
-        @TestMetadata("hasAnnotation.kt")
-        public void testHasAnnotation() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/hasAnnotation.kt");
-        }
-
-        @TestMetadata("hasAnnotationOnNestedTypeArgument.kt")
-        public void testHasAnnotationOnNestedTypeArgument() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/hasAnnotationOnNestedTypeArgument.kt");
-        }
-
-        @TestMetadata("inapplicableTypeThatIsAFunItCannotBeInferred.kt")
-        public void testInapplicableTypeThatIsAFunItCannotBeInferred() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/inapplicableTypeThatIsAFunItCannotBeInferred.kt");
-        }
-
-        @TestMetadata("insideDeepOtherCall.kt")
-        public void testInsideDeepOtherCall() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/insideDeepOtherCall.kt");
-        }
-
-        @TestMetadata("insideGenericCall.kt")
-        public void testInsideGenericCall() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/insideGenericCall.kt");
-        }
-
-        @TestMetadata("insideOtherCall.kt")
-        public void testInsideOtherCall() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/insideOtherCall.kt");
-        }
-
-        @TestMetadata("KTIJ-31286.kt")
-        public void testKTIJ_31286() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/KTIJ-31286.kt");
-        }
-
-        @TestMetadata("kt29735.kt")
-        public void testKt29735() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/kt29735.kt");
-        }
-
-        @TestMetadata("kt31441.kt")
-        public void testKt31441() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/kt31441.kt");
-        }
-
-        @TestMetadata("lambdaType.kt")
-        public void testLambdaType() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/lambdaType.kt");
-        }
-
-        @TestMetadata("lambdaValue.kt")
-        public void testLambdaValue() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/lambdaValue.kt");
-        }
-
-        @TestMetadata("literalAny.kt")
-        public void testLiteralAny() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/literalAny.kt");
-        }
-
-        @TestMetadata("literalString.kt")
-        public void testLiteralString() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/literalString.kt");
-        }
-
-        @TestMetadata("literalStringWithClass.kt")
-        public void testLiteralStringWithClass() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/literalStringWithClass.kt");
-        }
-
-        @TestMetadata("literalsWhenTypeArgHasTypeArg.kt")
-        public void testLiteralsWhenTypeArgHasTypeArg() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/literalsWhenTypeArgHasTypeArg.kt");
-        }
-
-        @TestMetadata("mapGet.kt")
-        public void testMapGet() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/mapGet.kt");
-        }
-
-        @TestMetadata("nestedCall-KT-5028.kt")
-        public void testNestedCall_KT_5028() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/nestedCall-KT-5028.kt");
-        }
-
-        @TestMetadata("notApplicableNotEnoughtInfo.kt")
-        public void testNotApplicableNotEnoughtInfo() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/notApplicableNotEnoughtInfo.kt");
-        }
-
-        @TestMetadata("notApplicableSupertypeOfInferred.kt")
-        public void testNotApplicableSupertypeOfInferred() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/notApplicableSupertypeOfInferred.kt");
-        }
-
-        @TestMetadata("notApplicableSupertypeOfInferredClass.kt")
-        public void testNotApplicableSupertypeOfInferredClass() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/notApplicableSupertypeOfInferredClass.kt");
-        }
-
-        @TestMetadata("platforrmType1.kt")
-        public void testPlatforrmType1() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/platforrmType1.kt");
-        }
-
-        @TestMetadata("platforrmType2.kt")
-        public void testPlatforrmType2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/platforrmType2.kt");
-        }
-
-        @TestMetadata("propertyInitializerIsCallWithUnnecessaryTypeArgs.kt")
-        public void testPropertyInitializerIsCallWithUnnecessaryTypeArgs() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/propertyInitializerIsCallWithUnnecessaryTypeArgs.kt");
-        }
-
-        @TestMetadata("qualified.kt")
-        public void testQualified() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/qualified.kt");
-        }
-
-        @TestMetadata("returnCallWithUnnecessaryTypeArgs.kt")
-        public void testReturnCallWithUnnecessaryTypeArgs() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/returnCallWithUnnecessaryTypeArgs.kt");
-        }
-
-        @TestMetadata("twoArguments.kt")
-        public void testTwoArguments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/twoArguments.kt");
-        }
-
-        @TestMetadata("twoLiteralValues.kt")
-        public void testTwoLiteralValues() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/twoLiteralValues.kt");
-        }
-
-        @TestMetadata("unnecessaryDefinitelyNonNullableTypeArg.kt")
-        public void testUnnecessaryDefinitelyNonNullableTypeArg() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/unnecessaryDefinitelyNonNullableTypeArg.kt");
-        }
-
-        @TestMetadata("variableString.kt")
-        public void testVariableString() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/variableString.kt");
-        }
-
-        @TestMetadata("variableString2.kt")
-        public void testVariableString2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/variableString2.kt");
-        }
-
-        @TestMetadata("variableStringFartherScope.kt")
-        public void testVariableStringFartherScope() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/variableStringFartherScope.kt");
-        }
-
-        @TestMetadata("variablesAndLiterals.kt")
-        public void testVariablesAndLiterals() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/variablesAndLiterals.kt");
         }
     }
 
@@ -7110,7 +7449,99 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression")
+    public static class EvaluateCompileTimeExpression extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("boolean.kt")
+        public void testBoolean() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/boolean.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/char.kt");
+        }
+
+        @TestMetadata("char2.kt")
+        public void testChar2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/char2.kt");
+        }
+
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/double.kt");
+        }
+
+        @TestMetadata("doubleNaN.kt")
+        public void testDoubleNaN() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/doubleNaN.kt");
+        }
+
+        @TestMetadata("doubleNegativeInfinity.kt")
+        public void testDoubleNegativeInfinity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/doubleNegativeInfinity.kt");
+        }
+
+        @TestMetadata("doublePositiveInfinity.kt")
+        public void testDoublePositiveInfinity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/doublePositiveInfinity.kt");
+        }
+
+        @TestMetadata("float.kt")
+        public void testFloat() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/float.kt");
+        }
+
+        @TestMetadata("floatNaN.kt")
+        public void testFloatNaN() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/floatNaN.kt");
+        }
+
+        @TestMetadata("floatNegativeInfinity.kt")
+        public void testFloatNegativeInfinity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/floatNegativeInfinity.kt");
+        }
+
+        @TestMetadata("floatPositiveInfinity.kt")
+        public void testFloatPositiveInfinity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/floatPositiveInfinity.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/int.kt");
+        }
+
+        @TestMetadata("long.kt")
+        public void testLong() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/long.kt");
+        }
+
+        @TestMetadata("parens.kt")
+        public void testParens() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/parens.kt");
+        }
+
+        @TestMetadata("string.kt")
+        public void testString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/string.kt");
+        }
+
+        @TestMetadata("variable.kt")
+        public void testVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/variable.kt");
+        }
+    }
 
 
 
@@ -7193,7 +7624,89 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/iterateExpression")
+    public static class IterateExpression extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("collectionIteratorWithComponents.kt")
+        public void testCollectionIteratorWithComponents() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/collectionIteratorWithComponents.kt");
+        }
+
+        @TestMetadata("dataClassCollectionIterator.kt")
+        public void testDataClassCollectionIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/dataClassCollectionIterator.kt");
+        }
+
+        @TestMetadata("extensionIterator.kt")
+        public void testExtensionIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/extensionIterator.kt");
+        }
+
+        @TestMetadata("extensionIteratorWithPartialSubstitution1.kt")
+        public void testExtensionIteratorWithPartialSubstitution1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/extensionIteratorWithPartialSubstitution1.kt");
+        }
+
+        @TestMetadata("extensionIteratorWithPartialSubstitution2.kt")
+        public void testExtensionIteratorWithPartialSubstitution2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/extensionIteratorWithPartialSubstitution2.kt");
+        }
+
+        @TestMetadata("functionCall.kt")
+        public void testFunctionCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/functionCall.kt");
+        }
+
+        @TestMetadata("mapIterator.kt")
+        public void testMapIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/mapIterator.kt");
+        }
+
+        @TestMetadata("nameSuggestion.kt")
+        public void testNameSuggestion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/nameSuggestion.kt");
+        }
+
+        @TestMetadata("noNameConflict.kt")
+        public void testNoNameConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/noNameConflict.kt");
+        }
+
+        @TestMetadata("noNameConflict2.kt")
+        public void testNoNameConflict2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/noNameConflict2.kt");
+        }
+
+        @TestMetadata("nonOperatorIterator.kt")
+        public void testNonOperatorIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/nonOperatorIterator.kt");
+        }
+
+        @TestMetadata("nonOperatotExtensionIterator.kt")
+        public void testNonOperatotExtensionIterator() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/nonOperatotExtensionIterator.kt");
+        }
+
+        @TestMetadata("nothing.kt")
+        public void testNothing() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/nothing.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/iterateExpression/simple.kt");
+        }
+    }
 
 
 
@@ -7274,7 +7787,84 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate")
+    public static class InsertCurlyBracesToTemplate extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("dontInsertBrackets1.kt")
+        public void testDontInsertBrackets1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/dontInsertBrackets1.kt");
+        }
+
+        @TestMetadata("dontInsertBracketsMultiDollar.kt")
+        public void testDontInsertBracketsMultiDollar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/dontInsertBracketsMultiDollar.kt");
+        }
+
+        @TestMetadata("insertBrackets1.kt")
+        public void testInsertBrackets1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets1.kt");
+        }
+
+        @TestMetadata("insertBrackets2.kt")
+        public void testInsertBrackets2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets2.kt");
+        }
+
+        @TestMetadata("insertBrackets3.kt")
+        public void testInsertBrackets3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets3.kt");
+        }
+
+        @TestMetadata("insertBrackets4.kt")
+        public void testInsertBrackets4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets4.kt");
+        }
+
+        @TestMetadata("insertBrackets5.kt")
+        public void testInsertBrackets5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets5.kt");
+        }
+
+        @TestMetadata("insertBracketsEnd.kt")
+        public void testInsertBracketsEnd() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsEnd.kt");
+        }
+
+        @TestMetadata("insertBracketsMiddle.kt")
+        public void testInsertBracketsMiddle() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsMiddle.kt");
+        }
+
+        @TestMetadata("insertBracketsMultidollar1.kt")
+        public void testInsertBracketsMultidollar1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsMultidollar1.kt");
+        }
+
+        @TestMetadata("insertBracketsMultidollar2.kt")
+        public void testInsertBracketsMultidollar2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsMultidollar2.kt");
+        }
+
+        @TestMetadata("insertBracketsMultidollar3.kt")
+        public void testInsertBracketsMultidollar3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsMultidollar3.kt");
+        }
+
+        @TestMetadata("insertBracketsMultidollar4.kt")
+        public void testInsertBracketsMultidollar4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsMultidollar4.kt");
+        }
+    }
 
 
 
@@ -7426,6 +8016,44 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis")
+    public static class NullableBooleanEqualityCheckToElvis extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("eqFalse.kt")
+        public void testEqFalse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/eqFalse.kt");
+        }
+
+        @TestMetadata("eqTrue.kt")
+        public void testEqTrue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/eqTrue.kt");
+        }
+
+        @TestMetadata("flexible.kt")
+        public void testFlexible() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/flexible.kt");
+        }
+
+        @TestMetadata("notEqFalse.kt")
+        public void testNotEqFalse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/notEqFalse.kt");
+        }
+
+        @TestMetadata("notEqTrue.kt")
+        public void testNotEqTrue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/nullableBooleanEqualityCheckToElvis/notEqTrue.kt");
+        }
+    }
 
 
 
@@ -7437,8 +8065,54 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced")
+    public static class ConvertCamelCaseTestFunctionToSpaced extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("letters.kt")
+        public void testLetters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/letters.kt");
+        }
+
+        @TestMetadata("nonFunction.kt")
+        public void testNonFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/nonFunction.kt");
+        }
+
+        @TestMetadata("nonLetters.kt")
+        public void testNonLetters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/nonLetters.kt");
+        }
+
+        @TestMetadata("notAtIdentifier.kt")
+        public void testNotAtIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/notAtIdentifier.kt");
+        }
+
+        @TestMetadata("notTestFunction.kt")
+        public void testNotTestFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/notTestFunction.kt");
+        }
+
+        @TestMetadata("snake.kt")
+        public void testSnake() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/snake.kt");
+        }
+
+        @TestMetadata("unchanged.kt")
+        public void testUnchanged() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertCamelCaseTestFunctionToSpaced/unchanged.kt");
+        }
+    }
 
 
 
@@ -7546,6 +8220,39 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression")
+    public static class ConvertVariableAssignmentToExpression extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("complexLhs.kt")
+        public void testComplexLhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression/complexLhs.kt");
+        }
+
+        @TestMetadata("complexRhs.kt")
+        public void testComplexRhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression/complexRhs.kt");
+        }
+
+        @TestMetadata("noAssignment.kt")
+        public void testNoAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression/noAssignment.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertVariableAssignmentToExpression/simple.kt");
+        }
+    }
 
 
 
@@ -7559,8 +8266,54 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertObjectLiteralToClass")
+    public static class ConvertObjectLiteralToClass extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("inClass.kt")
+        public void testInClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inClass.kt");
+        }
+
+        @TestMetadata("inClassHasMethodReference.kt")
+        public void testInClassHasMethodReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inClassHasMethodReference.kt");
+        }
+
+        @TestMetadata("inClassHasPropertyReference.kt")
+        public void testInClassHasPropertyReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inClassHasPropertyReference.kt");
+        }
+
+        @TestMetadata("inFunction.kt")
+        public void testInFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/inFunction.kt");
+        }
+
+        @TestMetadata("objectLiteralNoCapture.kt")
+        public void testObjectLiteralNoCapture() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectLiteralNoCapture.kt");
+        }
+
+        @TestMetadata("objectLiteralNoSupers.kt")
+        public void testObjectLiteralNoSupers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectLiteralNoSupers.kt");
+        }
+
+        @TestMetadata("objectLiteralWithCapture.kt")
+        public void testObjectLiteralWithCapture() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertObjectLiteralToClass/objectLiteralWithCapture.kt");
+        }
+    }
 
 
 
@@ -7853,7 +8606,74 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertSealedClassToEnum")
+    public static class ConvertSealedClassToEnum extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("dropDefaultConstructorCall.kt")
+        public void testDropDefaultConstructorCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/dropDefaultConstructorCall.kt");
+        }
+
+        @TestMetadata("inheritorsWithMultipleSupertypes.kt")
+        public void testInheritorsWithMultipleSupertypes() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/inheritorsWithMultipleSupertypes.kt");
+        }
+
+        @TestMetadata("instancesAndMembers.kt")
+        public void testInstancesAndMembers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/instancesAndMembers.kt");
+        }
+
+        @TestMetadata("instancesOnly.kt")
+        public void testInstancesOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/instancesOnly.kt");
+        }
+
+        @TestMetadata("membersOnly.kt")
+        public void testMembersOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/membersOnly.kt");
+        }
+
+        @TestMetadata("nonNestedInheritors.kt")
+        public void testNonNestedInheritors() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/nonNestedInheritors.kt");
+        }
+
+        @TestMetadata("notSealedClass.kt")
+        public void testNotSealedClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/notSealedClass.kt");
+        }
+
+        @TestMetadata("outOfRange.kt")
+        public void testOutOfRange() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/outOfRange.kt");
+        }
+
+        @TestMetadata("sealedInterface.kt")
+        public void testSealedInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/sealedInterface.kt");
+        }
+
+        @TestMetadata("withNonObjectInheritors.kt")
+        public void testWithNonObjectInheritors() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/withNonObjectInheritors.kt");
+        }
+
+        @TestMetadata("withSuperclass.kt")
+        public void testWithSuperclass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSealedClassToEnum/withSuperclass.kt");
+        }
+    }
 
 
 
@@ -8712,7 +9532,64 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertEnumToSealedClass")
+    public static class ConvertEnumToSealedClass extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("entriesAndMembers.kt")
+        public void testEntriesAndMembers() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/entriesAndMembers.kt");
+        }
+
+        @TestMetadata("entriesOnly.kt")
+        public void testEntriesOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/entriesOnly.kt");
+        }
+
+        @TestMetadata("hasComments.kt")
+        public void testHasComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/hasComments.kt");
+        }
+
+        @TestMetadata("hasCompanion.kt")
+        public void testHasCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/hasCompanion.kt");
+        }
+
+        @TestMetadata("membersOnly.kt")
+        public void testMembersOnly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/membersOnly.kt");
+        }
+
+        @TestMetadata("noClassKeyword.kt")
+        public void testNoClassKeyword() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/noClassKeyword.kt");
+        }
+
+        @TestMetadata("notEnum.kt")
+        public void testNotEnum() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/notEnum.kt");
+        }
+
+        @TestMetadata("outOfRange.kt")
+        public void testOutOfRange() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/outOfRange.kt");
+        }
+
+        @TestMetadata("useDataObjectSince18.kt")
+        public void testUseDataObjectSince18() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertEnumToSealedClass/useDataObjectSince18.kt");
+        }
+    }
 
 
 
@@ -9025,240 +9902,298 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen")
-    public static class IfToWhen extends AbstractK2IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
+    public abstract static class IfToWhen extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen")
+        public static class Uncategorized extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("combinedIf.kt")
+            public void testCombinedIf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/combinedIf.kt");
+            }
+
+            @TestMetadata("combinedIfWithEmptyLines.kt")
+            public void testCombinedIfWithEmptyLines() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/combinedIfWithEmptyLines.kt");
+            }
+
+            @TestMetadata("comment.kt")
+            public void testComment() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/comment.kt");
+            }
+
+            @TestMetadata("constant.kt")
+            public void testConstant() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/constant.kt");
+            }
+
+            @TestMetadata("doNotSwallowComment.kt")
+            public void testDoNotSwallowComment() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/doNotSwallowComment.kt");
+            }
+
+            @TestMetadata("ifElseSwallowComments.kt")
+            public void testIfElseSwallowComments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifElseSwallowComments.kt");
+            }
+
+            @TestMetadata("ifElseSwallowReturnComment.kt")
+            public void testIfElseSwallowReturnComment() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifElseSwallowReturnComment.kt");
+            }
+
+            @TestMetadata("ifElseSwallowTail.kt")
+            public void testIfElseSwallowTail() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifElseSwallowTail.kt");
+            }
+
+            @TestMetadata("ifThenReturn.kt")
+            public void testIfThenReturn() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifThenReturn.kt");
+            }
+
+            @TestMetadata("ifWithEqualityTests.kt")
+            public void testIfWithEqualityTests() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithEqualityTests.kt");
+            }
+
+            @TestMetadata("ifWithIs.kt")
+            public void testIfWithIs() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithIs.kt");
+            }
+
+            @TestMetadata("ifWithMultiConditions.kt")
+            public void testIfWithMultiConditions() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithMultiConditions.kt");
+            }
+
+            @TestMetadata("ifWithNegativeIs.kt")
+            public void testIfWithNegativeIs() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithNegativeIs.kt");
+            }
+
+            @TestMetadata("ifWithNegativeRangeTests.kt")
+            public void testIfWithNegativeRangeTests() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithNegativeRangeTests.kt");
+            }
+
+            @TestMetadata("ifWithRangeTests.kt")
+            public void testIfWithRangeTests() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithRangeTests.kt");
+            }
+
+            @TestMetadata("ifWithRangeTestsAndMultiConditions.kt")
+            public void testIfWithRangeTestsAndMultiConditions() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithRangeTestsAndMultiConditions.kt");
+            }
+
+            @TestMetadata("ifWithReturnsAndEmptyLines.kt")
+            public void testIfWithReturnsAndEmptyLines() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithReturnsAndEmptyLines.kt");
+            }
+
+            @TestMetadata("ifWithoutElse.kt")
+            public void testIfWithoutElse() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithoutElse.kt");
+            }
+
+            @TestMetadata("lambdaExpression.kt")
+            public void testLambdaExpression() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/lambdaExpression.kt");
+            }
+
+            @TestMetadata("lambdaExpression2.kt")
+            public void testLambdaExpression2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/lambdaExpression2.kt");
+            }
+
+            @TestMetadata("multipleIfFake.kt")
+            public void testMultipleIfFake() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/multipleIfFake.kt");
+            }
+
+            @TestMetadata("multipleIfWithLongBranches.kt")
+            public void testMultipleIfWithLongBranches() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/multipleIfWithLongBranches.kt");
+            }
+
+            @TestMetadata("multipleIfWithReturns.kt")
+            public void testMultipleIfWithReturns() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/multipleIfWithReturns.kt");
+            }
+
+            @TestMetadata("multipleIfWithSingleReturns.kt")
+            public void testMultipleIfWithSingleReturns() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/multipleIfWithSingleReturns.kt");
+            }
+
+            @TestMetadata("onElseIf.kt")
+            public void testOnElseIf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/onElseIf.kt");
+            }
+
+            @TestMetadata("onElseIf2.kt")
+            public void testOnElseIf2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/onElseIf2.kt");
+            }
+
+            @TestMetadata("onElseIf3.kt")
+            public void testOnElseIf3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/onElseIf3.kt");
+            }
+
+            @TestMetadata("samePropertyDifferentObjects.kt")
+            public void testSamePropertyDifferentObjects() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/samePropertyDifferentObjects.kt");
+            }
+
+            @TestMetadata("secondIfNoThen.kt")
+            public void testSecondIfNoThen() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/secondIfNoThen.kt");
+            }
+
+            @TestMetadata("shouldUniteCalls.kt")
+            public void testShouldUniteCalls() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/shouldUniteCalls.kt");
+            }
+
+            @TestMetadata("shouldUniteStringTemplates.kt")
+            public void testShouldUniteStringTemplates() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/shouldUniteStringTemplates.kt");
+            }
+
+            @TestMetadata("whenWithMultipleConditionTypes.kt")
+            public void testWhenWithMultipleConditionTypes() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenWithMultipleConditionTypes.kt");
+            }
+
+            @TestMetadata("withAnnotation.kt")
+            public void testWithAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withAnnotation.kt");
+            }
+
+            @TestMetadata("withInternalLoop.kt")
+            public void testWithInternalLoop() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withInternalLoop.kt");
+            }
+
+            @TestMetadata("withInternalLoopOnly.kt")
+            public void testWithInternalLoopOnly() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withInternalLoopOnly.kt");
+            }
+
+            @TestMetadata("withLoop.kt")
+            public void testWithLoop() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoop.kt");
+            }
+
+            @TestMetadata("withLoopDeep.kt")
+            public void testWithLoopDeep() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeep.kt");
+            }
+
+            @TestMetadata("withLoopDeep13.kt")
+            public void testWithLoopDeep13() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeep13.kt");
+            }
+
+            @TestMetadata("withLoopDeepAndComments.kt")
+            public void testWithLoopDeepAndComments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeepAndComments.kt");
+            }
+
+            @TestMetadata("withLoopDeepAndComments13.kt")
+            public void testWithLoopDeepAndComments13() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeepAndComments13.kt");
+            }
+
+            @TestMetadata("withLoopExistingLabel.kt")
+            public void testWithLoopExistingLabel() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopExistingLabel.kt");
+            }
+
+            @TestMetadata("withLoopNoJumps.kt")
+            public void testWithLoopNoJumps() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopNoJumps.kt");
+            }
+
+            @TestMetadata("withLoopOriginal.kt")
+            public void testWithLoopOriginal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopOriginal.kt");
+            }
+
+            @TestMetadata("withLoopThen.kt")
+            public void testWithLoopThen() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopThen.kt");
+            }
+
+            @TestMetadata("withMatchingOnThisProperty.kt")
+            public void testWithMatchingOnThisProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withMatchingOnThisProperty.kt");
+            }
         }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenGuards")
+        public static class WhenGuards extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
-        @TestMetadata("combinedIf.kt")
-        public void testCombinedIf() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/combinedIf.kt");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("combinedIfWithEmptyLines.kt")
-        public void testCombinedIfWithEmptyLines() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/combinedIfWithEmptyLines.kt");
-        }
+            @TestMetadata("comments.kt")
+            public void testComments() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenGuards/comments.kt");
+            }
 
-        @TestMetadata("comment.kt")
-        public void testComment() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/comment.kt");
-        }
+            @TestMetadata("complexConditions.kt")
+            public void testComplexConditions() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenGuards/complexConditions.kt");
+            }
 
-        @TestMetadata("constant.kt")
-        public void testConstant() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/constant.kt");
-        }
+            @TestMetadata("guardInapplicableAndPlusOr.kt")
+            public void testGuardInapplicableAndPlusOr() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenGuards/guardInapplicableAndPlusOr.kt");
+            }
 
-        @TestMetadata("doNotSwallowComment.kt")
-        public void testDoNotSwallowComment() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/doNotSwallowComment.kt");
-        }
+            @TestMetadata("singleGuardEqualsCheck.kt")
+            public void testSingleGuardEqualsCheck() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenGuards/singleGuardEqualsCheck.kt");
+            }
 
-        @TestMetadata("ifElseSwallowComments.kt")
-        public void testIfElseSwallowComments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifElseSwallowComments.kt");
-        }
+            @TestMetadata("singleIfSingleGuardInCheck.kt")
+            public void testSingleIfSingleGuardInCheck() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenGuards/singleIfSingleGuardInCheck.kt");
+            }
 
-        @TestMetadata("ifElseSwallowReturnComment.kt")
-        public void testIfElseSwallowReturnComment() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifElseSwallowReturnComment.kt");
-        }
+            @TestMetadata("singleIfSingleGuardIsCheck.kt")
+            public void testSingleIfSingleGuardIsCheck() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenGuards/singleIfSingleGuardIsCheck.kt");
+            }
 
-        @TestMetadata("ifElseSwallowTail.kt")
-        public void testIfElseSwallowTail() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifElseSwallowTail.kt");
-        }
+            @TestMetadata("singleIfSingleGuardNotInCheck.kt")
+            public void testSingleIfSingleGuardNotInCheck() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenGuards/singleIfSingleGuardNotInCheck.kt");
+            }
 
-        @TestMetadata("ifThenReturn.kt")
-        public void testIfThenReturn() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifThenReturn.kt");
-        }
-
-        @TestMetadata("ifWithEqualityTests.kt")
-        public void testIfWithEqualityTests() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithEqualityTests.kt");
-        }
-
-        @TestMetadata("ifWithIs.kt")
-        public void testIfWithIs() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithIs.kt");
-        }
-
-        @TestMetadata("ifWithMultiConditions.kt")
-        public void testIfWithMultiConditions() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithMultiConditions.kt");
-        }
-
-        @TestMetadata("ifWithNegativeIs.kt")
-        public void testIfWithNegativeIs() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithNegativeIs.kt");
-        }
-
-        @TestMetadata("ifWithNegativeRangeTests.kt")
-        public void testIfWithNegativeRangeTests() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithNegativeRangeTests.kt");
-        }
-
-        @TestMetadata("ifWithRangeTests.kt")
-        public void testIfWithRangeTests() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithRangeTests.kt");
-        }
-
-        @TestMetadata("ifWithRangeTestsAndMultiConditions.kt")
-        public void testIfWithRangeTestsAndMultiConditions() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithRangeTestsAndMultiConditions.kt");
-        }
-
-        @TestMetadata("ifWithReturnsAndEmptyLines.kt")
-        public void testIfWithReturnsAndEmptyLines() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithReturnsAndEmptyLines.kt");
-        }
-
-        @TestMetadata("ifWithoutElse.kt")
-        public void testIfWithoutElse() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithoutElse.kt");
-        }
-
-        @TestMetadata("lambdaExpression.kt")
-        public void testLambdaExpression() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/lambdaExpression.kt");
-        }
-
-        @TestMetadata("lambdaExpression2.kt")
-        public void testLambdaExpression2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/lambdaExpression2.kt");
-        }
-
-        @TestMetadata("multipleIfFake.kt")
-        public void testMultipleIfFake() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/multipleIfFake.kt");
-        }
-
-        @TestMetadata("multipleIfWithLongBranches.kt")
-        public void testMultipleIfWithLongBranches() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/multipleIfWithLongBranches.kt");
-        }
-
-        @TestMetadata("multipleIfWithReturns.kt")
-        public void testMultipleIfWithReturns() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/multipleIfWithReturns.kt");
-        }
-
-        @TestMetadata("multipleIfWithSingleReturns.kt")
-        public void testMultipleIfWithSingleReturns() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/multipleIfWithSingleReturns.kt");
-        }
-
-        @TestMetadata("onElseIf.kt")
-        public void testOnElseIf() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/onElseIf.kt");
-        }
-
-        @TestMetadata("onElseIf2.kt")
-        public void testOnElseIf2() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/onElseIf2.kt");
-        }
-
-        @TestMetadata("onElseIf3.kt")
-        public void testOnElseIf3() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/onElseIf3.kt");
-        }
-
-        @TestMetadata("samePropertyDifferentObjects.kt")
-        public void testSamePropertyDifferentObjects() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/samePropertyDifferentObjects.kt");
-        }
-
-        @TestMetadata("secondIfNoThen.kt")
-        public void testSecondIfNoThen() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/secondIfNoThen.kt");
-        }
-
-        @TestMetadata("shouldUniteCalls.kt")
-        public void testShouldUniteCalls() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/shouldUniteCalls.kt");
-        }
-
-        @TestMetadata("shouldUniteStringTemplates.kt")
-        public void testShouldUniteStringTemplates() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/shouldUniteStringTemplates.kt");
-        }
-
-        @TestMetadata("whenWithMultipleConditionTypes.kt")
-        public void testWhenWithMultipleConditionTypes() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenWithMultipleConditionTypes.kt");
-        }
-
-        @TestMetadata("withAnnotation.kt")
-        public void testWithAnnotation() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withAnnotation.kt");
-        }
-
-        @TestMetadata("withInternalLoop.kt")
-        public void testWithInternalLoop() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withInternalLoop.kt");
-        }
-
-        @TestMetadata("withInternalLoopOnly.kt")
-        public void testWithInternalLoopOnly() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withInternalLoopOnly.kt");
-        }
-
-        @TestMetadata("withLoop.kt")
-        public void testWithLoop() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoop.kt");
-        }
-
-        @TestMetadata("withLoopDeep.kt")
-        public void testWithLoopDeep() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeep.kt");
-        }
-
-        @TestMetadata("withLoopDeep13.kt")
-        public void testWithLoopDeep13() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeep13.kt");
-        }
-
-        @TestMetadata("withLoopDeepAndComments.kt")
-        public void testWithLoopDeepAndComments() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeepAndComments.kt");
-        }
-
-        @TestMetadata("withLoopDeepAndComments13.kt")
-        public void testWithLoopDeepAndComments13() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopDeepAndComments13.kt");
-        }
-
-        @TestMetadata("withLoopExistingLabel.kt")
-        public void testWithLoopExistingLabel() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopExistingLabel.kt");
-        }
-
-        @TestMetadata("withLoopNoJumps.kt")
-        public void testWithLoopNoJumps() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopNoJumps.kt");
-        }
-
-        @TestMetadata("withLoopOriginal.kt")
-        public void testWithLoopOriginal() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopOriginal.kt");
-        }
-
-        @TestMetadata("withLoopThen.kt")
-        public void testWithLoopThen() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withLoopThen.kt");
-        }
-
-        @TestMetadata("withMatchingOnThisProperty.kt")
-        public void testWithMatchingOnThisProperty() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/withMatchingOnThisProperty.kt");
+            @TestMetadata("singleIfSingleGuardNotIsCheck.kt")
+            public void testSingleIfSingleGuardNotIsCheck() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/whenGuards/singleIfSingleGuardNotIsCheck.kt");
+            }
         }
     }
 
@@ -9317,6 +10252,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("whenWithEqualityTests.kt")
         public void testWhenWithEqualityTests() throws Exception {
             runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithEqualityTests.kt");
+        }
+
+        @TestMetadata("whenWithGuards.kt")
+        public void testWhenWithGuards() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithGuards.kt");
         }
 
         @TestMetadata("whenWithMultipleConditionTypes.kt")
@@ -9797,7 +10737,413 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/branched/unfolding/returnToWhen")
+    public abstract static class ReturnToWhen extends AbstractK2IntentionTest {
 
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection")
+    public abstract static class ConcatenationToBuildCollection extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis")
+        public static class ExplicitThis extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/extensionFunction.kt");
+            }
+
+            @TestMetadata("extensionProperty.kt")
+            public void testExtensionProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/extensionProperty.kt");
+            }
+
+            @TestMetadata("insdeListInheritor.kt")
+            public void testInsdeListInheritor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/insdeListInheritor.kt");
+            }
+
+            @TestMetadata("insideBuilderOtherName.kt")
+            public void testInsideBuilderOtherName() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/insideBuilderOtherName.kt");
+            }
+
+            @TestMetadata("insideBuilderSameName.kt")
+            public void testInsideBuilderSameName() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/explicitThis/insideBuilderSameName.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis")
+        public static class ImplicitThis extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("extensionFunction.kt")
+            public void testExtensionFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/extensionFunction.kt");
+            }
+
+            @TestMetadata("extensionProperty.kt")
+            public void testExtensionProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/extensionProperty.kt");
+            }
+
+            @TestMetadata("insdeListInheritor.kt")
+            public void testInsdeListInheritor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/insdeListInheritor.kt");
+            }
+
+            @TestMetadata("insideBuilderOtherName.kt")
+            public void testInsideBuilderOtherName() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/insideBuilderOtherName.kt");
+            }
+
+            @TestMetadata("insideBuilderSameName.kt")
+            public void testInsideBuilderSameName() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/implicitThis/insideBuilderSameName.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable")
+        public static class Inapplicable extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("caretAtCall.kt")
+            public void testCaretAtCall() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/caretAtCall.kt");
+            }
+
+            @TestMetadata("contextReceiver.kt")
+            public void testContextReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/contextReceiver.kt");
+            }
+
+            @TestMetadata("customList.kt")
+            public void testCustomList() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/customList.kt");
+            }
+
+            @TestMetadata("customOperator.kt")
+            public void testCustomOperator() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/customOperator.kt");
+            }
+
+            @TestMetadata("map.kt")
+            public void testMap() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/map.kt");
+            }
+
+            @TestMetadata("single.kt")
+            public void testSingle() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/inapplicable/single.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list")
+        public static class List extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("complexExpressions.kt")
+            public void testComplexExpressions() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/complexExpressions.kt");
+            }
+
+            @TestMetadata("mapTo.kt")
+            public void testMapTo() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/mapTo.kt");
+            }
+
+            @TestMetadata("mixedSetOfSequenceOf.kt")
+            public void testMixedSetOfSequenceOf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/mixedSetOfSequenceOf.kt");
+            }
+
+            @TestMetadata("multipleListOf.kt")
+            public void testMultipleListOf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/multipleListOf.kt");
+            }
+
+            @TestMetadata("parenthesis.kt")
+            public void testParenthesis() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/parenthesis.kt");
+            }
+
+            @TestMetadata("transformingOperations.kt")
+            public void testTransformingOperations() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/transformingOperations.kt");
+            }
+
+            @TestMetadata("transformingOperationsExplicitTypeArgs.kt")
+            public void testTransformingOperationsExplicitTypeArgs() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/list/transformingOperationsExplicitTypeArgs.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set")
+        public static class Set extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("complexExpressions.kt")
+            public void testComplexExpressions() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/complexExpressions.kt");
+            }
+
+            @TestMetadata("mapTo.kt")
+            public void testMapTo() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/mapTo.kt");
+            }
+
+            @TestMetadata("mixedSetOfSequenceOf.kt")
+            public void testMixedSetOfSequenceOf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/mixedSetOfSequenceOf.kt");
+            }
+
+            @TestMetadata("multipleSetOf.kt")
+            public void testMultipleSetOf() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/multipleSetOf.kt");
+            }
+
+            @TestMetadata("parenthesis.kt")
+            public void testParenthesis() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/parenthesis.kt");
+            }
+
+            @TestMetadata("transformingOperations.kt")
+            public void testTransformingOperations() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/transformingOperations.kt");
+            }
+
+            @TestMetadata("transformingOperationsExplicitTypeArgs.kt")
+            public void testTransformingOperationsExplicitTypeArgs() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/concatenationToBuildCollection/set/transformingOperationsExplicitTypeArgs.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/moveMemberToTopLevel")
+    public static class MoveMemberToTopLevel extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractFunction.kt")
+        public void testAbstractFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/abstractFunction.kt");
+        }
+
+        @TestMetadata("abstractProperty.kt")
+        public void testAbstractProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/abstractProperty.kt");
+        }
+
+        @TestMetadata("avoidNameCapture.kt")
+        public void testAvoidNameCapture() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/avoidNameCapture.kt");
+        }
+
+        @TestMetadata("function.kt")
+        public void testFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/function.kt");
+        }
+
+        @TestMetadata("functionInCompanion.kt")
+        public void testFunctionInCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/functionInCompanion.kt");
+        }
+
+        @TestMetadata("functionInstanceParamWithDefaultValue.kt")
+        public void testFunctionInstanceParamWithDefaultValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/functionInstanceParamWithDefaultValue.kt");
+        }
+
+        @TestMetadata("innerClassExistingArgument.kt")
+        public void testInnerClassExistingArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/innerClassExistingArgument.kt");
+        }
+
+        @TestMetadata("innerClassParamWithDefaultValue.kt")
+        public void testInnerClassParamWithDefaultValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/innerClassParamWithDefaultValue.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/property.kt");
+        }
+
+        @TestMetadata("propertyInCompanion.kt")
+        public void testPropertyInCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/propertyInCompanion.kt");
+        }
+
+        @TestMetadata("redeclarationConflict.kt")
+        public void testRedeclarationConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationConflict.kt");
+        }
+
+        @TestMetadata("redeclarationConflictK2.kt")
+        public void testRedeclarationConflictK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationConflictK2.kt");
+        }
+
+        @TestMetadata("redeclarationConflictWithPackage.kt")
+        public void testRedeclarationConflictWithPackage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationConflictWithPackage.kt");
+        }
+
+        @TestMetadata("redeclarationConflictWithPackageK2.kt")
+        public void testRedeclarationConflictWithPackageK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationConflictWithPackageK2.kt");
+        }
+
+        @TestMetadata("redeclarationPropertyConflict.kt")
+        public void testRedeclarationPropertyConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflict.kt");
+        }
+
+        @TestMetadata("redeclarationPropertyConflictK2.kt")
+        public void testRedeclarationPropertyConflictK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/redeclarationPropertyConflictK2.kt");
+        }
+
+        @TestMetadata("restrictedInstanceName.kt")
+        public void testRestrictedInstanceName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/restrictedInstanceName.kt");
+        }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/script.kts");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/moveOutOfCompanion")
+    public static class MoveOutOfCompanion extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("companionAsImplicitReceiver.kt")
+        public void testCompanionAsImplicitReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/companionAsImplicitReceiver.kt");
+        }
+
+        @TestMetadata("companionAsImplicitReceiverK2.kt")
+        public void testCompanionAsImplicitReceiverK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/companionAsImplicitReceiverK2.kt");
+        }
+
+        @TestMetadata("hasJvmFieldInInterface.kt")
+        public void testHasJvmFieldInInterface() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/hasJvmFieldInInterface.kt");
+        }
+
+        @TestMetadata("moveAndDropCompanion.kt")
+        public void testMoveAndDropCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/moveAndDropCompanion.kt");
+        }
+
+        @TestMetadata("moveFunction.kt")
+        public void testMoveFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/moveFunction.kt");
+        }
+
+        @TestMetadata("moveFunctionWithExternalRefs.kt")
+        public void testMoveFunctionWithExternalRefs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/moveFunctionWithExternalRefs.kt");
+        }
+
+        @TestMetadata("moveProperty.kt")
+        public void testMoveProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/moveProperty.kt");
+        }
+
+        @TestMetadata("movePropertyWithExternalRefs.kt")
+        public void testMovePropertyWithExternalRefs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/movePropertyWithExternalRefs.kt");
+        }
+
+        @TestMetadata("notCompanion1.kt")
+        public void testNotCompanion1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/notCompanion1.kt");
+        }
+
+        @TestMetadata("notCompanion2.kt")
+        public void testNotCompanion2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/notCompanion2.kt");
+        }
+
+        @TestMetadata("redeclarationConflict.kt")
+        public void testRedeclarationConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/redeclarationConflict.kt");
+        }
+
+        @TestMetadata("redeclarationConflictK2.kt")
+        public void testRedeclarationConflictK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/redeclarationConflictK2.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/anonymousFunctionToLambda")
@@ -9830,6 +11176,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("expressionBody.kt")
         public void testExpressionBody() throws Exception {
             runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/expressionBody.kt");
+        }
+
+        @TestMetadata("extensionFunction.kt")
+        public void testExtensionFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/extensionFunction.kt");
         }
 
         @TestMetadata("fullParam.kt")
@@ -10490,6 +11841,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/parameterExpression.kt");
             }
 
+            @TestMetadata("searchForUsages.kt")
+            public void testSearchForUsages() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/searchForUsages.kt");
+            }
+
             @TestMetadata("singleCall.kt")
             public void testSingleCall() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertToScope/convertToWith/singleCall.kt");
@@ -10696,7 +12052,79 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/movePropertyToClassBody")
+    public static class MovePropertyToClassBody extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationClass.kt")
+        public void testAnnotationClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/annotationClass.kt");
+        }
+
+        @TestMetadata("annotationWithUseSite.kt")
+        public void testAnnotationWithUseSite() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/annotationWithUseSite.kt");
+        }
+
+        @TestMetadata("dataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/dataClass.kt");
+        }
+
+        @TestMetadata("inlineClass.kt")
+        public void testInlineClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/inlineClass.kt");
+        }
+
+        @TestMetadata("location1.kt")
+        public void testLocation1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/location1.kt");
+        }
+
+        @TestMetadata("location2.kt")
+        public void testLocation2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/location2.kt");
+        }
+
+        @TestMetadata("parameterAnnotation.kt")
+        public void testParameterAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/parameterAnnotation.kt");
+        }
+
+        @TestMetadata("propertyAnnotation.kt")
+        public void testPropertyAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/propertyAnnotation.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/simple.kt");
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/valueClass.kt");
+        }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/vararg.kt");
+        }
+
+        @TestMetadata("varargWithAnnotation.kt")
+        public void testVarargWithAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToClassBody/varargWithAnnotation.kt");
+        }
+    }
 
 
 
@@ -10715,6 +12143,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("brokenCode.kt")
+        public void testBrokenCode() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/brokenCode.kt");
         }
 
         @TestMetadata("caretAfterParameterName.kt")
@@ -10817,9 +12250,24 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/parameterOfObjectFunction.kt");
         }
 
+        @TestMetadata("recursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/recursiveCall.kt");
+        }
+
+        @TestMetadata("recursiveCall1.kt")
+        public void testRecursiveCall1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/recursiveCall1.kt");
+        }
+
         @TestMetadata("topLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/topLevelFun.kt");
+        }
+
+        @TestMetadata("unresolvedCode.kt")
+        public void testUnresolvedCode() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/unresolvedCode.kt");
         }
 
         @TestMetadata("vararg.kt")
@@ -10843,7 +12291,169 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/moveToCompanion")
+    public static class MoveToCompanion extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstractFunction.kt")
+        public void testAbstractFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/abstractFunction.kt");
+        }
+
+        @TestMetadata("abstractProperty.kt")
+        public void testAbstractProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/abstractProperty.kt");
+        }
+
+        @TestMetadata("avoidNameCapture.kt")
+        public void testAvoidNameCapture() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/avoidNameCapture.kt");
+        }
+
+        @TestMetadata("doNotQualifyThisLabel.kt")
+        public void testDoNotQualifyThisLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/doNotQualifyThisLabel.kt");
+        }
+
+        @TestMetadata("dropFinal.kt")
+        public void testDropFinal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/dropFinal.kt");
+        }
+
+        @TestMetadata("dropOpen.kt")
+        public void testDropOpen() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/dropOpen.kt");
+        }
+
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/enumEntry.kt");
+        }
+
+        @TestMetadata("expectClass.kt")
+        public void testExpectClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/expectClass.kt");
+        }
+
+        @TestMetadata("functionWithOverride.kt")
+        public void testFunctionWithOverride() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/functionWithOverride.kt");
+        }
+
+        @TestMetadata("functionWithoutBody.kt")
+        public void testFunctionWithoutBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/functionWithoutBody.kt");
+        }
+
+        @TestMetadata("genericFunction.kt")
+        public void testGenericFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericFunction.kt");
+        }
+
+        @TestMetadata("genericFunctionK2.kt")
+        public void testGenericFunctionK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericFunctionK2.kt");
+        }
+
+        @TestMetadata("genericProperty.kt")
+        public void testGenericProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericProperty.kt");
+        }
+
+        @TestMetadata("genericPropertyK2.kt")
+        public void testGenericPropertyK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/genericPropertyK2.kt");
+        }
+
+        @TestMetadata("implicitDispatchReceiver.kt")
+        public void testImplicitDispatchReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/implicitDispatchReceiver.kt");
+        }
+
+        @TestMetadata("inInnerClass.kt")
+        public void testInInnerClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/inInnerClass.kt");
+        }
+
+        @TestMetadata("inLocalClass.kt")
+        public void testInLocalClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/inLocalClass.kt");
+        }
+
+        @TestMetadata("inObject.kt")
+        public void testInObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/inObject.kt");
+        }
+
+        @TestMetadata("localFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/localFunction.kt");
+        }
+
+        @TestMetadata("overriddenFunction.kt")
+        public void testOverriddenFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenFunction.kt");
+        }
+
+        @TestMetadata("overriddenFunctionK2.kt")
+        public void testOverriddenFunctionK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenFunctionK2.kt");
+        }
+
+        @TestMetadata("overriddenProperty.kt")
+        public void testOverriddenProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenProperty.kt");
+        }
+
+        @TestMetadata("overriddenPropertyK2.kt")
+        public void testOverriddenPropertyK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/overriddenPropertyK2.kt");
+        }
+
+        @TestMetadata("propertyUsingClassInstance.kt")
+        public void testPropertyUsingClassInstance() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/propertyUsingClassInstance.kt");
+        }
+
+        @TestMetadata("propertyUsingClassInstanceK2.kt")
+        public void testPropertyUsingClassInstanceK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/propertyUsingClassInstanceK2.kt");
+        }
+
+        @TestMetadata("propertyWithOverride.kt")
+        public void testPropertyWithOverride() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/propertyWithOverride.kt");
+        }
+
+        @TestMetadata("redeclarationConflict.kt")
+        public void testRedeclarationConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/redeclarationConflict.kt");
+        }
+
+        @TestMetadata("redeclarationConflictK2.kt")
+        public void testRedeclarationConflictK2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/redeclarationConflictK2.kt");
+        }
+
+        @TestMetadata("restrictedInstanceName.kt")
+        public void testRestrictedInstanceName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/restrictedInstanceName.kt");
+        }
+
+        @TestMetadata("topLevelFunction.kt")
+        public void testTopLevelFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanion/topLevelFunction.kt");
+        }
+    }
 
 
 
@@ -11057,7 +12667,134 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertPropertyToFunction")
+    public static class ConvertPropertyToFunction extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("accessorCallGroovy.kt")
+        public void testAccessorCallGroovy() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/accessorCallGroovy.kt");
+        }
+
+        @TestMetadata("annotationUseSiteTarget.kt")
+        public void testAnnotationUseSiteTarget() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/annotationUseSiteTarget.kt");
+        }
+
+        @TestMetadata("blockBody.kt")
+        public void testBlockBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/blockBody.kt");
+        }
+
+        @TestMetadata("const.kt")
+        public void testConst() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/const.kt");
+        }
+
+        @TestMetadata("delegatingProperty.kt")
+        public void testDelegatingProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/delegatingProperty.kt");
+        }
+
+        @TestMetadata("existingFunConflict.kt")
+        public void testExistingFunConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/existingFunConflict.kt");
+        }
+
+        @TestMetadata("existingFunJavaConflict.kt")
+        public void testExistingFunJavaConflict() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/existingFunJavaConflict.kt");
+        }
+
+        @TestMetadata("expressionBody.kt")
+        public void testExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/expressionBody.kt");
+        }
+
+        @TestMetadata("expressionBodyWithGenericType.kt")
+        public void testExpressionBodyWithGenericType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/expressionBodyWithGenericType.kt");
+        }
+
+        @TestMetadata("initializer.kt")
+        public void testInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/initializer.kt");
+        }
+
+        @TestMetadata("initializerWithGetter.kt")
+        public void testInitializerWithGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/initializerWithGetter.kt");
+        }
+
+        @TestMetadata("javaUsageAsField.kt")
+        public void testJavaUsageAsField() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/javaUsageAsField.kt");
+        }
+
+        @TestMetadata("javaUsages.kt")
+        public void testJavaUsages() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/javaUsages.kt");
+        }
+
+        @TestMetadata("jvmField.kt")
+        public void testJvmField() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/jvmField.kt");
+        }
+
+        @TestMetadata("otherRefs.kt")
+        public void testOtherRefs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/otherRefs.kt");
+        }
+
+        @TestMetadata("overrides.kt")
+        public void testOverrides() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/overrides.kt");
+        }
+
+        @TestMetadata("overrides2.kt")
+        public void testOverrides2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/overrides2.kt");
+        }
+
+        @TestMetadata("propertyCallGroovy.kt")
+        public void testPropertyCallGroovy() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/propertyCallGroovy.kt");
+        }
+
+        @TestMetadata("recursiveAccessor.kt")
+        public void testRecursiveAccessor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/recursiveAccessor.kt");
+        }
+
+        @TestMetadata("sameNameFunAsStdlibFun.kt")
+        public void testSameNameFunAsStdlibFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/sameNameFunAsStdlibFun.kt");
+        }
+
+        @TestMetadata("sameNameFunWithDifferentReceiver.kt")
+        public void testSameNameFunWithDifferentReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/sameNameFunWithDifferentReceiver.kt");
+        }
+
+        @TestMetadata("unchangedElements.kt")
+        public void testUnchangedElements() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/unchangedElements.kt");
+        }
+
+        @TestMetadata("var.kt")
+        public void testVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertPropertyToFunction/var.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/convertReceiverToParameter")
@@ -11127,9 +12864,24 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/notExtension.kt");
         }
 
+        @TestMetadata("recursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/recursiveCall.kt");
+        }
+
+        @TestMetadata("recursiveCall1.kt")
+        public void testRecursiveCall1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/recursiveCall1.kt");
+        }
+
         @TestMetadata("replaceThis.kt")
         public void testReplaceThis() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/replaceThis.kt");
+        }
+
+        @TestMetadata("smartCasts.kt")
+        public void testSmartCasts() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/smartCasts.kt");
         }
 
         @TestMetadata("thisCall.kt")
@@ -11165,7 +12917,29 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertSnakeCaseTestFunctionToSpaced")
+    public static class ConvertSnakeCaseTestFunctionToSpaced extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("camel.kt")
+        public void testCamel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSnakeCaseTestFunctionToSpaced/camel.kt");
+        }
+
+        @TestMetadata("snake.kt")
+        public void testSnake() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertSnakeCaseTestFunctionToSpaced/snake.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/addValOrVar")
@@ -11241,7 +13015,54 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment")
+    public static class ConvertBlockCommentToLineComment extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("afterStatement.kt")
+        public void testAfterStatement() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/afterStatement.kt");
+        }
+
+        @TestMetadata("beforeStatement.kt")
+        public void testBeforeStatement() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/beforeStatement.kt");
+        }
+
+        @TestMetadata("blankLine.kt")
+        public void testBlankLine() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/blankLine.kt");
+        }
+
+        @TestMetadata("docComment.kt")
+        public void testDocComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/docComment.kt");
+        }
+
+        @TestMetadata("endOflineComment.kt")
+        public void testEndOflineComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/endOflineComment.kt");
+        }
+
+        @TestMetadata("newLinesBetweenCommentAndDeclaration.kt")
+        public void testNewLinesBetweenCommentAndDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/newLinesBetweenCommentAndDeclaration.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/simple.kt");
+        }
+    }
 
 
 

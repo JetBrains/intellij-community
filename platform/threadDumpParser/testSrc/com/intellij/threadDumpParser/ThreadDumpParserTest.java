@@ -341,6 +341,306 @@ public class ThreadDumpParserTest extends TestCase {
     assertEquals(4, threads.size());
   }
 
+  public void testJcmdThreadDumpToFilePlainTextFormat() {
+    String text = """
+      81916
+      2025-01-14T19:27:30.373190Z
+      21+35-2513
+      
+      #1 "main"
+            java.base/jdk.internal.misc.Unsafe.park(Native Method)
+            java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+            java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:756)
+            java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer.tryAcquireSharedNanos(AbstractQueuedSynchronizer.java:1126)
+            java.base/java.util.concurrent.CountDownLatch.await(CountDownLatch.java:276)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor.awaitTermination(ThreadPerTaskExecutor.java:181)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor.awaitTermination(ThreadPerTaskExecutor.java:195)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor.close(ThreadPerTaskExecutor.java:212)
+            VTHardWork.main(VTHardWork.java:25)
+      
+      #9 "Reference Handler"
+            java.base/java.lang.ref.Reference.waitForReferencePendingList(Native Method)
+            java.base/java.lang.ref.Reference.processPendingReferences(Reference.java:246)
+            java.base/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)
+      
+      #11 "Signal Dispatcher"
+      
+      #18 "Notification Thread"
+      
+      #23 "" virtual
+            VTHardWork.isPrime2(VTHardWork.java:56)
+            VTHardWork.calculatePrimes(VTHardWork.java:32)
+            VTHardWork.lambda$main$0(VTHardWork.java:21)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor$TaskRunner.run(ThreadPerTaskExecutor.java:314)
+            java.base/java.lang.VirtualThread.run(VirtualThread.java:311)
+      
+      #24 "" virtual
+            java.base/java.util.concurrent.ThreadPerTaskExecutor$TaskRunner.run(ThreadPerTaskExecutor.java:314)
+            java.base/java.lang.VirtualThread.run(VirtualThread.java:311)
+      
+      #25 "" virtual
+            java.base/java.util.Random.next(Random.java:444)
+            java.base/java.util.Random.nextDouble(Random.java:698)
+            java.base/java.lang.Math.random(Math.java:893)
+            VTHardWork.rand(VTHardWork.java:40)
+            VTHardWork.calculatePrimes(VTHardWork.java:32)
+            VTHardWork.lambda$main$0(VTHardWork.java:21)
+            java.base/java.util.concurrent.ThreadPerTaskExecutor$TaskRunner.run(ThreadPerTaskExecutor.java:314)
+            java.base/java.lang.VirtualThread.run(VirtualThread.java:311)
+      """.stripIndent();
+
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(7, threads.size());
+    assertEquals(3, threads.stream().filter(s -> s.isVirtual()).count());
+
+    assertEquals("main", threads.get(0).getName());
+    assertTrue(threads.get(0).getStackTrace().contains("Unsafe.park"));
+    assertTrue(threads.get(0).getStackTrace().contains("VTHardWork.main"));
+    assertFalse(threads.get(0).isEmptyStackTrace());
+    assertFalse(threads.get(0).isVirtual());
+
+    assertEquals("{unnamed}", threads.get(1).getName());
+    assertFalse(threads.get(1).isEmptyStackTrace());
+    assertTrue(threads.get(1).isVirtual());
+
+    // Check sorting of JDK and empty threads:
+    assertTrue(threads.get(2).isVirtual());
+    assertTrue(threads.get(3).isVirtual());
+    assertEquals("Reference Handler", threads.get(4).getName());
+  }
+
+  public void testJcmdThreadDumpToFileJsonFormat() {
+    String text = """
+      {
+        "threadDump": {
+          "processId": "79302",
+          "time": "2025-01-16T20:22:06.085758Z",
+          "runtimeVersion": "21+35-2513",
+          "threadContainers": [
+            {
+              "container": "<root>",
+              "parent": null,
+              "owner": null,
+              "threads": [
+               {
+                 "tid": "157",
+                 "name": "main",
+                 "stack": [
+                    "java.base\\/jdk.internal.misc.Unsafe.park(Native Method)",
+                    "java.base\\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)",
+                    "java.base\\/jdk.internal.misc.ThreadFlock.awaitAll(ThreadFlock.java:315)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope.implJoin(StructuredTaskScope.java:621)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope.join(StructuredTaskScope.java:650)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope$ShutdownOnFailure.join(StructuredTaskScope.java:1241)",
+                    "VirtualThreadsWithScopesExample.runMultipleScopes(VirtualThreadsWithScopesExample.java:25)",
+                    "VirtualThreadsWithScopesExample.main(VirtualThreadsWithScopesExample.java:12)",
+                    "java.base\\/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)",
+                    "java.base\\/java.lang.reflect.Method.invoke(Method.java:580)",
+                    "com.intellij.rt.execution.application.AppMainV2.main(AppMainV2.java:133)"
+                 ]
+               },
+               {
+                 "tid": "9",
+                 "name": "Reference Handler",
+                 "stack": [
+                    "java.base\\/java.lang.ref.Reference.waitForReferencePendingList(Native Method)",
+                    "java.base\\/java.lang.ref.Reference.processPendingReferences(Reference.java:246)",
+                    "java.base\\/java.lang.ref.Reference$ReferenceHandler.run(Reference.java:208)"
+                 ]
+               }
+              ],
+              "threadCount": "2"
+            },
+            {
+              "container": "java.util.concurrent.ThreadPoolExecutor@4d7e1886",
+              "parent": "<root>",
+              "owner": null,
+              "threads": [
+              ],
+              "threadCount": "0"
+            },
+            {
+              "container": "ForkJoinPool-1\\/jdk.internal.vm.SharedThreadContainer@21bcd385",
+              "parent": "<root>",
+              "owner": null,
+              "threads": [
+               {
+                 "tid": "22",
+                 "name": "ForkJoinPool-1-worker-1",
+                 "stack": [
+                    "java.base\\/jdk.internal.misc.Unsafe.park(Native Method)",
+                    "java.base\\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)",
+                    "java.base\\/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:1893)",
+                    "java.base\\/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1809)",
+                    "java.base\\/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)"
+                 ]
+               },
+               {
+                 "tid": "26",
+                 "name": "ForkJoinPool-1-worker-3",
+                 "stack": [
+                    "java.base\\/jdk.internal.misc.Unsafe.park(Native Method)",
+                    "java.base\\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:371)",
+                    "java.base\\/java.util.concurrent.ForkJoinPool.awaitWork(ForkJoinPool.java:1893)",
+                    "java.base\\/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1809)",
+                    "java.base\\/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:188)"
+                 ]
+               }
+              ],
+              "threadCount": "2"
+            },
+            {
+              "container": "java.util.concurrent.ScheduledThreadPoolExecutor@23fc625e",
+              "parent": "<root>",
+              "owner": null,
+              "threads": [
+               {
+                 "tid": "33",
+                 "name": "VirtualThread-unparker",
+                 "stack": [
+                    "java.base\\/jdk.internal.misc.Unsafe.park(Native Method)",
+                    "java.base\\/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)",
+                    "java.base\\/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1758)",
+                    "java.base\\/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:1182)",
+                    "java.base\\/java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:899)",
+                    "java.base\\/java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:1070)",
+                    "java.base\\/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1130)",
+                    "java.base\\/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)",
+                    "java.base\\/java.lang.Thread.run(Thread.java:1583)",
+                    "java.base\\/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:186)"
+                 ]
+               }
+              ],
+              "threadCount": "1"
+            },
+            {
+              "container": "java.util.concurrent.StructuredTaskScope$ShutdownOnFailure@76ed5528",
+              "parent": "<root>",
+              "owner": "1",
+              "threads": [
+               {
+                 "tid": "21",
+                 "name": "",
+                 "stack": [
+                    "java.base\\/java.lang.VirtualThread.park(VirtualThread.java:592)",
+                    "java.base\\/java.lang.System$2.parkVirtualThread(System.java:2639)",
+                    "java.base\\/jdk.internal.misc.VirtualThreads.park(VirtualThreads.java:54)",
+                    "java.base\\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:369)",
+                    "java.base\\/jdk.internal.misc.ThreadFlock.awaitAll(ThreadFlock.java:315)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope.implJoin(StructuredTaskScope.java:621)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope.join(StructuredTaskScope.java:650)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope$ShutdownOnFailure.join(StructuredTaskScope.java:1241)",
+                    "VirtualThreadsWithScopesExample.fetchFromGroup1(VirtualThreadsWithScopesExample.java:41)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope$SubtaskImpl.run(StructuredTaskScope.java:889)",
+                    "java.base\\/java.lang.VirtualThread.run(VirtualThread.java:311)"
+                 ]
+               },
+               {
+                 "tid": "23",
+                 "name": "",
+                 "stack": [
+                    "java.base\\/java.lang.VirtualThread.park(VirtualThread.java:592)",
+                    "java.base\\/java.lang.System$2.parkVirtualThread(System.java:2639)",
+                    "java.base\\/jdk.internal.misc.VirtualThreads.park(VirtualThreads.java:54)",
+                    "java.base\\/java.util.concurrent.locks.LockSupport.park(LockSupport.java:369)",
+                    "java.base\\/jdk.internal.misc.ThreadFlock.awaitAll(ThreadFlock.java:315)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope.implJoin(StructuredTaskScope.java:621)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope.join(StructuredTaskScope.java:650)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope$ShutdownOnFailure.join(StructuredTaskScope.java:1241)",
+                    "VirtualThreadsWithScopesExample.fetchFromGroup2(VirtualThreadsWithScopesExample.java:54)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope$SubtaskImpl.run(StructuredTaskScope.java:889)",
+                    "java.base\\/java.lang.VirtualThread.run(VirtualThread.java:311)"
+                 ]
+               }
+              ],
+              "threadCount": "2"
+            },
+            {
+              "container": "java.util.concurrent.StructuredTaskScope$ShutdownOnFailure@16f50654",
+              "parent": "java.util.concurrent.StructuredTaskScope$ShutdownOnFailure@76ed5528",
+              "owner": "21",
+              "threads": [
+               {
+                 "tid": "25",
+                 "name": "",
+                 "stack": [
+                    "java.base\\/java.lang.VirtualThread.parkNanos(VirtualThread.java:631)",
+                    "java.base\\/java.lang.VirtualThread.sleepNanos(VirtualThread.java:803)",
+                    "java.base\\/java.lang.Thread.sleep(Thread.java:507)",
+                    "VirtualThreadsWithScopesExample.fetchData(VirtualThreadsWithScopesExample.java:63)",
+                    "VirtualThreadsWithScopesExample.lambda$fetchFromGroup1$0(VirtualThreadsWithScopesExample.java:38)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope$SubtaskImpl.run(StructuredTaskScope.java:889)",
+                    "java.base\\/java.lang.VirtualThread.run(VirtualThread.java:311)"
+                 ]
+               },
+               {
+                 "tid": "29",
+                 "name": "",
+                 "stack": [
+                    "java.base\\/java.lang.VirtualThread.parkNanos(VirtualThread.java:631)",
+                    "java.base\\/java.lang.VirtualThread.sleepNanos(VirtualThread.java:803)",
+                    "java.base\\/java.lang.Thread.sleep(Thread.java:507)",
+                    "VirtualThreadsWithScopesExample.fetchData(VirtualThreadsWithScopesExample.java:63)",
+                    "VirtualThreadsWithScopesExample.lambda$fetchFromGroup1$1(VirtualThreadsWithScopesExample.java:39)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope$SubtaskImpl.run(StructuredTaskScope.java:889)",
+                    "java.base\\/java.lang.VirtualThread.run(VirtualThread.java:311)"
+                 ]
+               }
+              ],
+              "threadCount": "2"
+            },
+            {
+              "container": "java.util.concurrent.StructuredTaskScope$ShutdownOnFailure@3785963",
+              "parent": "java.util.concurrent.StructuredTaskScope$ShutdownOnFailure@76ed5528",
+              "owner": "23",
+              "threads": [
+               {
+                 "tid": "27",
+                 "name": "",
+                 "stack": [
+                    "java.base\\/java.lang.VirtualThread.parkNanos(VirtualThread.java:631)",
+                    "java.base\\/java.lang.VirtualThread.sleepNanos(VirtualThread.java:803)",
+                    "java.base\\/java.lang.Thread.sleep(Thread.java:507)",
+                    "VirtualThreadsWithScopesExample.fetchData(VirtualThreadsWithScopesExample.java:63)",
+                    "VirtualThreadsWithScopesExample.lambda$fetchFromGroup2$2(VirtualThreadsWithScopesExample.java:51)",
+                    "java.base\\/java.util.concurrent.StructuredTaskScope$SubtaskImpl.run(StructuredTaskScope.java:889)",
+                    "java.base\\/java.lang.VirtualThread.run(VirtualThread.java:311)"
+                 ]
+               },
+               {
+                 "tid": "43",
+                 "name": "",
+                 "stack": [
+                 ]
+               }
+              ],
+              "threadCount": "2"
+            }
+          ]
+        }
+      }
+      """;
+
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(11, threads.size());
+
+    assertEquals("main", threads.get(0).getName());
+    assertEquals(12, threads.get(0).getStackTrace().lines().count());
+    assertTrue(threads.get(0).getStackTrace().contains("VirtualThreadsWithScopesExample.main"));
+    assertFalse(threads.get(0).isEmptyStackTrace());
+    assertFalse(threads.get(0).isVirtual());
+    assertEquals("#157 \"main\"", threads.get(0).getStackTrace().lines().findFirst().get());
+
+    assertEquals("{unnamed}", threads.get(1).getName());
+    assertFalse(threads.get(1).isEmptyStackTrace());
+    assertTrue(threads.get(1).isVirtual());
+
+    // Check sorting of JDK and empty threads:
+    assertEquals("Reference Handler", threads.get(threads.size() - 2).getName());
+    assertTrue(threads.get(threads.size() - 1).isEmptyStackTrace());
+    assertTrue(threads.get(threads.size() - 1).isVirtual());
+  }
+
   public void testCoroutineDump() {
     String text = """
       "Timer-0" prio=0 tid=0x0 nid=0x0 waiting on condition
@@ -384,6 +684,39 @@ public class ThreadDumpParserTest extends TestCase {
     List<ThreadState> threads = ThreadDumpParser.parse(text);
     assertEquals(1, threads.size());
     assertEquals("0x00000000a7140250", threads.get(0).getOwnableSynchronizers());
+  }
+
+  public void testCarryingVirtualThread() {
+    String text = """
+      "ForkJoinPool-1-worker-1" #24 [25347] daemon prio=5 os_prio=31 cpu=41.39ms elapsed=6.75s tid=0x000000011f00da00  [0x000000017003d000]
+         Carrying virtual thread #21
+      	at jdk.internal.vm.Continuation.run(java.base@21/Continuation.java:251)
+      	at java.lang.VirtualThread.runContinuation(java.base@21/VirtualThread.java:223)
+      	at java.lang.VirtualThread$$Lambda/0x00000070010532a8.run(java.base@21/Unknown Source)
+      	at java.util.concurrent.ForkJoinTask$RunnableExecuteAction.exec(java.base@21/ForkJoinTask.java:1423)
+      	at java.util.concurrent.ForkJoinTask.doExec(java.base@21/ForkJoinTask.java:387)
+      	at java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(java.base@21/ForkJoinPool.java:1312)
+      	at java.util.concurrent.ForkJoinPool.scan(java.base@21/ForkJoinPool.java:1843)
+      	at java.util.concurrent.ForkJoinPool.runWorker(java.base@21/ForkJoinPool.java:1808)
+      	at java.util.concurrent.ForkJoinWorkerThread.run(java.base@21/ForkJoinWorkerThread.java:188)
+
+      "ForkJoinPool-1-worker-2" #22 [25091] daemon prio=5 os_prio=31 cpu=8.12ms elapsed=6.75s tid=0x000000011f00d200 nid=25091 waiting on condition  [0x000000016fe32000]
+         java.lang.Thread.State: WAITING (parking)
+      	at jdk.internal.misc.Unsafe.park(java.base@21/Native Method)
+      	- parking to wait for  <0x000000061fe53b58> (a java.util.concurrent.ForkJoinPool)
+      	at java.util.concurrent.locks.LockSupport.park(java.base@21/LockSupport.java:371)
+      	at java.util.concurrent.ForkJoinPool.awaitWork(java.base@21/ForkJoinPool.java:1893)
+      	at java.util.concurrent.ForkJoinPool.runWorker(java.base@21/ForkJoinPool.java:1809)
+      	at java.util.concurrent.ForkJoinWorkerThread.run(java.base@21/ForkJoinWorkerThread.java:188)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(2, threads.size());
+
+    assertEquals("ForkJoinPool-1-worker-1", threads.get(0).getName());
+    assertEquals(ThreadOperation.CARRYING_VTHREAD, threads.get(0).getOperation());
+
+    assertEquals("ForkJoinPool-1-worker-2", threads.get(1).getName());
+    assertEquals("WAITING", threads.get(1).getJavaThreadState());
   }
 
   public void testVeryLongLineParsingPerformance() {

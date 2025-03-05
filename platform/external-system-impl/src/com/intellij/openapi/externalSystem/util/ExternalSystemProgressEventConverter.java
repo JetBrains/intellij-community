@@ -3,10 +3,6 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
-import com.intellij.build.events.impl.FailureImpl;
-import com.intellij.build.events.impl.FailureResultImpl;
-import com.intellij.build.events.impl.SkippedResultImpl;
-import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.event.*;

@@ -471,8 +471,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       panel.isOpaque = false
       frame.extendActionsGroup(mainPanel)
       mainPanel.add(panel)
-      for (item in visibleActions) {
-        var action = item
+      for (action in visibleActions) {
         val presentation = presentationFactory.getPresentation(action)
         var text = presentation.text
         if (text != null && text.endsWith("...")) {
@@ -483,27 +482,30 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
           icon = if (icon == null) JBUIScale.scaleIcon(EmptyIcon.create(16)) else IconUtil.scale(icon, null, 16f / icon.iconWidth)
           icon = IconUtil.colorize(icon, JBColor(0x6e6e6e, 0xafb1b3))
         }
-        action = ActionGroupPanelWrapper.wrapGroups(action, this)
-        val link = ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN)
+        val wrapper = when {
+          action is ActionGroup && action is ActionsWithPanelProvider -> ActionGroupPanelWrapper.wrapGroups(action, this)
+          else -> action
+        }
+        val link = ActionLink(text, icon, wrapper, null, ActionPlaces.WELCOME_SCREEN)
         link.isFocusable = false // don't allow focus, as the containing panel is going to be focusable
         link.setPaintUnderline(false)
         link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor())
         val button = JActionLinkPanel(link)
         button.border = JBUI.Borders.empty(8, 20)
-        if (action is WelcomePopupAction) {
+        if (wrapper is WelcomePopupAction) {
           button.add(WelcomeScreenComponentFactory.createArrow(link), BorderLayout.EAST)
-          TouchbarActionCustomizations.setComponent(action, link)
+          TouchbarActionCustomizations.setComponent(wrapper, link)
         }
         WelcomeScreenFocusManager.installFocusable(
           frame,
           button,
-          action,
+          wrapper,
           KeyEvent.VK_DOWN,
           KeyEvent.VK_UP,
           UIUtil.findComponentOfType(frame.component, JList::class.java)
         )
         panel.add(button)
-        mainPanel.addAction(action)
+        mainPanel.addAction(wrapper)
       }
       return mainPanel
     }

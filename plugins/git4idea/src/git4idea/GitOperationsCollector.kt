@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import git4idea.commands.GitCommandResult
 import git4idea.push.GitPushRepoResult
-import git4idea.push.GitPushTarget
 import git4idea.push.GitPushTargetType
 
 object GitOperationsCollector : CounterUsagesCollector() {

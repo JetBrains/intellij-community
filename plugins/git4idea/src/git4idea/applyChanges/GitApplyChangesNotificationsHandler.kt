@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 @Service(Service.Level.PROJECT)
 internal class GitApplyChangesNotificationsHandler(private val project: Project) {
-  private var changesSaverAndOperation = AtomicReference<GitChangesSaver?>()
+  private var changesSaver = AtomicReference<GitChangesSaver?>()
 
   init {
     project.messageBus.connect(GitDisposable.Companion.getInstance(project))
@@ -32,7 +32,7 @@ internal class GitApplyChangesNotificationsHandler(private val project: Project)
             LOG.debug("Hiding notifications")
             GitApplyChangesNotification.Companion.expireAll<GitApplyChangesNotification.ExpireAfterRepoStateChanged>(project)
 
-            changesSaverAndOperation.getAndSet(null)?.let { changesSaver ->
+            changesSaver.getAndSet(null)?.let { changesSaver ->
               val operation = when (previousInfo.state) {
                 Repository.State.GRAFTING -> GitBundle.message("cherry.pick.name")
                 Repository.State.REVERTING -> GitBundle.message("revert.operation.name")
@@ -50,13 +50,13 @@ internal class GitApplyChangesNotificationsHandler(private val project: Project)
   }
 
   fun beforeApply() {
-    changesSaverAndOperation.set(null)
+    changesSaver.set(null)
   }
 
   fun operationFailed(operationName: @Nls String, repository: GitRepository, changesSaver: GitChangesSaver?) {
     if (changesSaver != null) {
       if (isCherryPickingOrReverting(repository.info.state)) {
-        changesSaverAndOperation.set(changesSaver)
+        this.changesSaver.set(changesSaver)
       }
       else {
         showRestoreChangesNotification(changesSaver, operationName)

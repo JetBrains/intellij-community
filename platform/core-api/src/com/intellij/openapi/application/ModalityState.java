@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.DumbService;
@@ -83,6 +83,7 @@ public abstract class ModalityState {
    * @return state corresponding to the modal dialog containing the given component.
    * @see Application#getModalityStateForComponent(Component)
    */
+  @RequiresEdt(generateAssertion = false)
   public static @NotNull ModalityState stateForComponent(@NotNull Component component) {
     return ApplicationManager.getApplication().getModalityStateForComponent(component);
   }
@@ -97,10 +98,24 @@ public abstract class ModalityState {
   }
 
   /**
+   * Checks whether a computation with {@code requestedModality} can run during this modality.
+   * Returns {@code true} when {@code requestedModality} is {@link #any()}.
+   *
+   * @return `true` when the computation with {@code requestedModality} can run during this modality,
+   * or `false` when the computation with {@code requestedModality} should be delayed at least
+   * until this modality ends (for instance, by closing of a dialog)
+   */
+  public abstract boolean accepts(@NotNull ModalityState requestedModality);
+
+  /**
    * @return whether {@code this} modality state is strictly more specific than {@code anotherState},
    * so that {@code invokeLater} runnables with {@code anotherState} won't be executed until {@code this} modality state ends.
+   * @deprecated use {@link #accepts}
    */
-  public abstract boolean dominates(@NotNull ModalityState anotherState);
+  @Deprecated
+  public final boolean dominates(@NotNull ModalityState anotherState) {
+    return !accepts(anotherState);
+  }
 
   @Override
   public abstract String toString();

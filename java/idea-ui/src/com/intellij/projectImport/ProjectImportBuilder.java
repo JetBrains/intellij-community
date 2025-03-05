@@ -64,8 +64,7 @@ public abstract class ProjectImportBuilder<T> extends ProjectBuilder {
     return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
   }
 
-  @NlsContexts.DialogTitle
-  protected String getTitle() {
+  protected @NlsContexts.DialogTitle String getTitle() {
     return JavaUiBundle.message("project.import.wizard.title", getName());
   }
 

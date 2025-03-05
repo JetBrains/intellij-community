@@ -7,6 +7,7 @@ import com.intellij.lang.Language
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
+import java.util.*
 
 /**
  * Defines major Python dialects to use in Markdown code fence blocks.
@@ -16,9 +17,9 @@ import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
  * [1]: https://github.com/highlightjs/highlight.js/blob/main/SUPPORTED_LANGUAGES.md
  * [2]: https://github.com/github/linguist/blob/master/lib/linguist/languages.yml
  */
-class PyCodeFenceLanguageProvider : CodeFenceLanguageProvider {
+internal class PyCodeFenceLanguageProvider : CodeFenceLanguageProvider {
   override fun getLanguageByInfoString(infoString: String): Language? =
-    when (infoString.toLowerCase()) {
+    when (infoString.lowercase(Locale.getDefault())) {
       "pycon", "python-repl" -> PyDocstringLanguageDialect.getInstance()
       "py", "python3" -> PythonLanguage.INSTANCE
       else -> null

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -34,7 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
+import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
@@ -43,6 +43,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -78,17 +79,15 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   // backward compatibility (if 3rd-party plugin extends ApplicationConfigurationType but uses own factory without options class)
   @Override
-  @NotNull
-  protected final Class<? extends JvmMainMethodRunConfigurationOptions> getDefaultOptionsClass() {
+  protected final @NotNull Class<? extends JvmMainMethodRunConfigurationOptions> getDefaultOptionsClass() {
     return JvmMainMethodRunConfigurationOptions.class;
   }
 
   /**
    * Because we have to keep backward compatibility, never use `getOptions()` to get or set values - use only designated getters/setters.
    */
-  @NotNull
   @Override
-  protected JvmMainMethodRunConfigurationOptions getOptions() {
+  protected @NotNull JvmMainMethodRunConfigurationOptions getOptions() {
     return (JvmMainMethodRunConfigurationOptions)super.getOptions();
   }
 
@@ -101,7 +100,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) throws ExecutionException {
     final JavaCommandLineState state = new JavaApplicationCommandLineState<>(this, env);
     JavaRunConfigurationModule module = getConfigurationModule();
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject(), module.getSearchScope()));
@@ -109,8 +108,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  @NotNull
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     if (Registry.is("ide.new.run.config", true)) {
       return new JavaApplicationSettingsEditor(this);
     }
@@ -129,20 +127,16 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  @Nullable
-  public PsiClass getMainClass() {
+  public @Nullable PsiClass getMainClass() {
     return getConfigurationModule().findClass(getMainClassName());
   }
 
-  @NlsSafe
-  @Nullable
-  public String getMainClassName() {
+  public @NlsSafe @Nullable String getMainClassName() {
     return MAIN_CLASS_NAME;
   }
 
   @Override
-  @Nullable
-  public String suggestedName() {
+  public @Nullable String suggestedName() {
     String mainClassName = getMainClassName();
     if (mainClassName == null) {
       return null;
@@ -187,16 +181,14 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
-  @NotNull
-  public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
+  public @NotNull JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
     final String mainClass = getMainClassName();
     if (getOptions().isImplicitClassConfiguration()) {
       if (mainClass != null && !DumbService.isDumb(getProject())) {
         try {
-          final boolean matchingClass = !JavaImplicitClassIndex.getInstance()
-            .getElements(mainClass, getProject(), configurationModule.getSearchScope())
-            .isEmpty();
+          final boolean matchingClass = ImplicitClassSearch.search(mainClass, getProject(), configurationModule.getSearchScope())
+                                          .findFirst() != null;
           if (!matchingClass) {
             throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", mainClass));
           }
@@ -252,8 +244,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  @NotNull
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return getOptions().getEnv();
   }
 
@@ -278,14 +269,12 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  @Nullable
-  public String getRunClass() {
+  public @Nullable String getRunClass() {
     return getMainClassName();
   }
 
   @Override
-  @Nullable
-  public String getPackage() {
+  public @Nullable String getPackage() {
     return null;
   }
 
@@ -302,9 +291,8 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     onAlternativeJreChanged(changed, getProject());
   }
 
-  @Nullable
   @Override
-  public String getAlternativeJrePath() {
+  public @Nullable String getAlternativeJrePath() {
     return ALTERNATIVE_JRE_PATH;
   }
 
@@ -321,15 +309,13 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
   }
 
-  @Nullable
   @Override
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+  public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
     return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
   }
 
-  @Nullable
   @Override
-  public String getDefaultTargetName() {
+  public @Nullable String getDefaultTargetName() {
     return getOptions().getRemoteTarget();
   }
 
@@ -344,7 +330,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  public @NotNull List<EventPair<?>> getAdditionalUsageData() {
+  public @Unmodifiable @NotNull List<EventPair<?>> getAdditionalUsageData() {
     PsiClass mainClass = getMainClass();
     List<EventPair<?>> additionalUsageData = super.getAdditionalUsageData();
     if (mainClass == null) {
@@ -377,7 +363,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  public void readExternal(@NotNull final Element element) {
+  public void readExternal(final @NotNull Element element) {
     super.readExternal(element);
 
     syncOldStateFields();
@@ -416,9 +402,8 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
   }
 
-  @Nullable
   @Override
-  public ShortenCommandLine getShortenCommandLine() {
+  public @Nullable ShortenCommandLine getShortenCommandLine() {
     return getOptions().getShortenClasspath();
   }
 
@@ -427,9 +412,8 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     getOptions().setShortenClasspath(mode);
   }
 
-  @NotNull
   @Override
-  public InputRedirectOptions getInputRedirectOptions() {
+  public @NotNull InputRedirectOptions getInputRedirectOptions() {
     return getOptions().getRedirectOptions();
   }
 
@@ -447,7 +431,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends ApplicationCommandLineState<T> {
-    public JavaApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
+    public JavaApplicationCommandLineState(final @NotNull T configuration, final ExecutionEnvironment environment) {
       super(configuration, environment);
     }
     

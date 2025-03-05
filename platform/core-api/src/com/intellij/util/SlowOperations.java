@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -219,7 +218,7 @@ public final class SlowOperations {
 
   /** @noinspection unused */
   @ApiStatus.Internal
-  public static @NotNull AccessToken knownIssue(@NotNull @NonNls String ytIssueId) {
+  public static @NotNull AccessToken knownIssue(@NotNull String ytIssueId) {
     return startSection(KNOWN_ISSUE);
   }
 
@@ -247,7 +246,7 @@ public final class SlowOperations {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public static @NotNull AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
+  public static @NotNull AccessToken allowSlowOperations(@NotNull String activityName) {
     return startSection(activityName);
   }
 
@@ -266,7 +265,7 @@ public final class SlowOperations {
    * @see Registry
    */
   @ApiStatus.Internal
-  public static @NotNull AccessToken startSection(@NotNull @NonNls String sectionName) {
+  public static @NotNull AccessToken startSection(@NotNull String sectionName) {
     if (!EDT.isCurrentThreadEdt()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }

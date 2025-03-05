@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -82,7 +83,7 @@ public interface InlayParameterHintsProvider {
   /**
    * List of supported options, shown in settings dialog.
    */
-  default @NotNull List<Option> getSupportedOptions() {
+  default @Unmodifiable @NotNull List<Option> getSupportedOptions() {
     return ContainerUtil.emptyList();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.DumbAware;
@@ -27,8 +27,7 @@ public final class PackagePrefixElementFinder extends PsiElementFinder implement
     myPackagePrefixIndex = new PackagePrefixIndex(project);
   }
 
-  @NotNull
-  public static PackagePrefixElementFinder getInstance(@NotNull Project project) {
+  public static @NotNull PackagePrefixElementFinder getInstance(@NotNull Project project) {
     return PsiElementFinder.EP.findExtensionOrFail(PackagePrefixElementFinder.class, project);
   }
 

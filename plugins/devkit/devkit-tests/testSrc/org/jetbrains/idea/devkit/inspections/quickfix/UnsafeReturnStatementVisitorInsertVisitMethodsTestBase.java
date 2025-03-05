@@ -1,13 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection;
 
-abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase extends LightDevKitInspectionFixTestBase {
-
-  protected static final String INSERT_LAMBDA_AND_CLASS_VISIT_METHODS = "Insert visitLambdaExpression/visitClass methods";
-  protected static final String INSERT_LAMBDA_VISIT_METHOD = "Insert visitLambdaExpression method";
-  protected static final String INSERT_CLASS_VISIT_METHOD = "Insert visitClass method";
+public abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase extends LightDevKitInspectionFixTestBase {
+  public static final String INSERT_LAMBDA_AND_CLASS_VISIT_METHODS = "Insert visitLambdaExpression/visitClass methods";
+  public static final String INSERT_LAMBDA_VISIT_METHOD = "Insert visitLambdaExpression method";
+  public static final String INSERT_CLASS_VISIT_METHOD = "Insert visitClass method";
 
   @Override
   public void setUp() throws Exception {

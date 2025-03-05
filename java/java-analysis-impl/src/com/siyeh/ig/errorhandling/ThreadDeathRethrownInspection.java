@@ -26,14 +26,12 @@ import org.jetbrains.annotations.NotNull;
 public final class ThreadDeathRethrownInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ThreadDeathNotRethrown";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("thread.death.rethrown.problem.descriptor");
   }
 

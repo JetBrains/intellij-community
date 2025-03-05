@@ -15,7 +15,6 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
-import kotlin.io.path.absolute
 import kotlin.io.path.inputStream
 import kotlin.system.exitProcess
 

@@ -14,6 +14,7 @@ import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.Language
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.*
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
@@ -25,7 +26,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val file = holder.file
-    if (ignoreGrammarChecking(file)) {
+    if (ignoreGrammarChecking(file) || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 

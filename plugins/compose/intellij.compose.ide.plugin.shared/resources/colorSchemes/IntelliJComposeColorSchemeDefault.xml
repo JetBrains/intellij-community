@@ -1,0 +1,15 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<list>
+  <option name="IntelliJComposableCallTextAttributes">
+    <value>
+      <option name="FOREGROUND" value="009900"/>
+    </value>
+  </option>
+  <option name="ComposeStateReadTextAttributes">
+  </option>
+  <option name="ComposeStateReadScopeHighlightingTextAttributes">
+    <value>
+      <option name="BACKGROUND" value="AAAAFF"/>
+    </value>
+  </option>
+</list>

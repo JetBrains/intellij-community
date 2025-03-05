@@ -26,14 +26,12 @@ public final class ThrownExceptionsPerMethodInspection
   extends MethodMetricInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MethodWithTooExceptionsDeclared";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer exceptionCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "thrown.exceptions.per.method.problem.descriptor",

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Author: atotic
@@ -27,10 +27,10 @@ import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport;
 import com.jetbrains.python.debugger.pydev.transport.DebuggerTransport;
 import com.jetbrains.python.debugger.pydev.transport.ServerModeDebuggerTransport;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.ServerSocket;
 import java.security.SecureRandom;
@@ -77,7 +77,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private final DebuggerTransport myDebuggerTransport;
+  private final @NotNull DebuggerTransport myDebuggerTransport;
 
   /**
    * The timeout for {@link VersionCommand}, which is used for handshaking with
@@ -147,21 +147,29 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public PyDebugValue evaluate(final String threadId,
-                               final String frameId,
-                               final String expression, final boolean execute) throws PyDebuggerException {
-    return evaluate(threadId, frameId, expression, execute, true);
+  public PyDebugValue evaluate(
+    final String threadId,
+    final String frameId,
+    final String expression,
+    final boolean execute,
+    final int evaluationTimeout
+  ) throws PyDebuggerException {
+    return evaluate(threadId, frameId, expression, execute, evaluationTimeout, true);
   }
 
 
   @Override
-  public PyDebugValue evaluate(final String threadId,
-                               final String frameId,
-                               final String expression,
-                               final boolean execute,
-                               boolean trimResult)
-    throws PyDebuggerException {
-    return executeCommand(new EvaluateCommand(this, threadId, frameId, expression, execute, trimResult)).getValue();
+  public PyDebugValue evaluate(
+    final String threadId,
+    final String frameId,
+    final String expression,
+    final boolean execute,
+    final int evaluationTimeout,
+    boolean trimResult
+  ) throws PyDebuggerException {
+    return executeCommand(
+      new EvaluateCommand(this, threadId, frameId, expression, execute, trimResult, evaluationTimeout)
+    ).getValue();
   }
 
   @Override
@@ -171,9 +179,8 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  @Nullable
-  public String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType,
-                                 TableCommandParameters tableCommandParameters) throws PyDebuggerException {
+  public @Nullable String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType,
+                                           TableCommandParameters tableCommandParameters) throws PyDebuggerException {
     final TableCommand tableCommand = new TableCommand(this, threadId, frameId, command, commandType, tableCommandParameters);
     tableCommand.execute();
     return tableCommand.getCommandResult();
@@ -211,8 +218,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  @NotNull
-  public DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
+  public @NotNull DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
     builder.setDebugger(this);
     DataViewerCommand command = builder.build();
     command.execute();
@@ -263,8 +269,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  @Nullable
-  public String loadSource(String path) {
+  public @Nullable String loadSource(String path) {
     try {
       return executeCommand(new LoadSourceCommand(this, path)).getContent();
     }
@@ -328,7 +333,7 @@ public class RemoteDebugger implements ProcessDebugger {
       final String expression = "del " + StringUtil.join(frameVars, ",");
       final String wrappedExpression = String.format("try:\n    %s\nexcept:\n    pass", expression);
       try {
-        evaluate(threadId, entry.getKey(), wrappedExpression, true);
+        evaluate(threadId, entry.getKey(), wrappedExpression, true, RESPONSE_TIMEOUT);
       }
       catch (PyDebuggerException e) {
         LOG.error(e);
@@ -396,7 +401,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void execute(@NotNull final AbstractCommand command) {
+  public void execute(final @NotNull AbstractCommand command) {
     CountDownLatch myLatch = new CountDownLatch(1);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (command instanceof ResumeOrStepCommand) {
@@ -549,7 +554,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   // for DebuggerReader only
-  public void processResponse(@NotNull final String line) {
+  public void processResponse(final @NotNull String line) {
     try {
       final ProtocolFrame frame = new ProtocolFrame(line);
       logFrame(frame, false);
@@ -790,7 +795,6 @@ public class RemoteDebugger implements ProcessDebugger {
    * If the command execution throws an exception and the debugger is in
    * "connected" state then the exception is rethrown. If the debugger is not
    * connected at this moment then the exception is ignored.
-   *
    */
   private <T extends AbstractCommand<?>> T executeCommand(@NotNull T command) throws PyDebuggerException {
     try {
@@ -811,7 +815,6 @@ public class RemoteDebugger implements ProcessDebugger {
    * If the command execution throws an exception and the debugger is in
    * "connected" state then the error is logged. If the debugger is not
    * connected at this moment then the exception is ignored.
-   *
    */
   private <T extends AbstractCommand<?>> void executeCommandSafely(@NotNull T command) {
     try {

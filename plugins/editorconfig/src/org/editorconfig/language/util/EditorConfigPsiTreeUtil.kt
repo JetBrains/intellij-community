@@ -149,6 +149,7 @@ object EditorConfigPsiTreeUtil {
     if (honorRoot) return childFiles.keys.filterNotNull()
 
     return childFiles.filter { (_, virtualChildFile) ->
+      // keep the .editorconfig if none of its ancestors (and itself) contain 'root = true'
       childFiles.all { (otherChildFile, virtualOtherChildFile) ->
         when {
           !VfsUtil.isAncestor(virtualOtherChildFile, virtualChildFile, false) -> true

@@ -70,8 +70,7 @@ public class UnhandledExceptions {
    * @param other UnhandledExceptions container to merge with
    * @return merged container
    */
-  @NotNull
-  public UnhandledExceptions merge(@NotNull UnhandledExceptions other) {
+  public @NotNull UnhandledExceptions merge(@NotNull UnhandledExceptions other) {
     boolean unresolvedCalls = hasUnresolvedCalls || other.hasUnresolvedCalls;
     if (exceptions.isEmpty()) return other.withUnresolvedCalls(unresolvedCalls);
     if (other.exceptions.isEmpty()) return this.withUnresolvedCalls(unresolvedCalls);
@@ -215,5 +214,26 @@ public class UnhandledExceptions {
                                                        return method == PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
                                                      };
     return collect(element, topElement, callFilter);
+  }
+
+  /**
+   * @param statement try-statement to collect unhandled exceptions from its body
+   * @return exceptions unhandled in try statement body and resource declarations; they are still could be handled by declared
+   * catch sections on the same try statement. The primary purpose of this method is to check whether catch sections are correct.
+   */
+  public static @NotNull UnhandledExceptions fromTryStatement(@NotNull PsiTryStatement statement) {
+    UnhandledExceptions thrownTypes = EMPTY;
+
+    PsiCodeBlock tryBlock = statement.getTryBlock();
+    if (tryBlock != null) {
+      thrownTypes = thrownTypes.merge(collect(tryBlock));
+    }
+
+    PsiResourceList resources = statement.getResourceList();
+    if (resources != null) {
+      thrownTypes = thrownTypes.merge(collect(resources));
+    }
+
+    return thrownTypes;
   }
 }

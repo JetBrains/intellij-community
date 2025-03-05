@@ -47,8 +47,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   private String m_shortName = null;
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     if (m_shortName == null) {
       final Class<? extends BaseInspection> aClass = getClass();
       final String name = aClass.getSimpleName();
@@ -61,14 +60,11 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   @Override
-  @Nls
-  @NotNull
-  public final String getGroupDisplayName() {
+  public final @Nls @NotNull String getGroupDisplayName() {
     return GroupDisplayNameUtil.getGroupDisplayName(getClass());
   }
 
-  @NotNull
-  protected abstract @InspectionMessage String buildErrorString(Object... infos);
+  protected abstract @NotNull @InspectionMessage String buildErrorString(Object... infos);
 
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return false;
@@ -85,8 +81,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * @param infos additional information which was supplied by {@link BaseInspectionVisitor} during error registration.
    * @return a new fix or null if no fix is available
    */
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return null;
   }
 
@@ -142,8 +137,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
   public abstract BaseInspectionVisitor buildVisitor();
 
   @Override
-  @NotNull
-  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public final @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     final PsiFile file = holder.getFile();
     assert file.isPhysical();
     if (!shouldInspect(file)) {
@@ -168,7 +162,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     return true;
   }
 
-  protected JFormattedTextField prepareNumberEditor(@NonNls final String fieldName) {
+  protected JFormattedTextField prepareNumberEditor(final @NonNls String fieldName) {
     final NumberFormat formatter = NumberFormat.getIntegerInstance();
     formatter.setParseIntegerOnly(true);
     final JFormattedTextField valueField = new JFormattedTextField(formatter);

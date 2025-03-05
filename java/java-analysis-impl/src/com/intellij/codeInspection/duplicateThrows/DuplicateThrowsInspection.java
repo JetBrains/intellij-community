@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateThrows;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
@@ -23,14 +23,12 @@ public final class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspec
   public boolean ignoreSubclassing;
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "DuplicateThrows";
   }
 
@@ -41,8 +39,7 @@ public final class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override public void visitMethod(@NotNull PsiMethod method) {

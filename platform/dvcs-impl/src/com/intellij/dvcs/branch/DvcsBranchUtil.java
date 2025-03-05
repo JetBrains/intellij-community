@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.Repository;
@@ -9,15 +9,15 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
 
 public final class DvcsBranchUtil {
-  @Nullable
-  public static <T extends DvcsBranchInfo> T find(@Nullable final Collection<T> branches,
-                                                  @Nullable Repository repository,
-                                                  @NotNull String sourceBranch) {
+  public static @Nullable <T extends DvcsBranchInfo> T find(final @Nullable Collection<T> branches,
+                                                            @Nullable Repository repository,
+                                                            @NotNull String sourceBranch) {
     if (branches == null) return null;
     return ContainerUtil.find(branches, targetInfo -> repoAndSourceAreEqual(repository, sourceBranch, targetInfo));
   }
@@ -28,13 +28,11 @@ public final class DvcsBranchUtil {
     return StringUtil.equals(targetInfo.sourceName, sourceBranch) && getPathFor(repository).equals(targetInfo.repoPath);
   }
 
-  @NotNull
-  public static String getPathFor(@Nullable Repository repository) {
+  public static @NotNull String getPathFor(@Nullable Repository repository) {
     return repository == null ? "" : repository.getRoot().getPath();
   }
 
-  @NotNull
-  public static List<Change> swapRevisions(@NotNull List<? extends Change> changes) {
+  public static @NotNull @Unmodifiable List<Change> swapRevisions(@NotNull List<? extends Change> changes) {
     return ContainerUtil.map(changes, change -> {
       ContentRevision beforeRevision = change.getBeforeRevision();
       ContentRevision afterRevision = change.getAfterRevision();

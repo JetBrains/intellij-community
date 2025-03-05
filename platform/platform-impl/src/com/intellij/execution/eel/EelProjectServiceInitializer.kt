@@ -2,7 +2,7 @@
 package com.intellij.execution.eel
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.project.impl.ProjectServiceInitializer
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -19,8 +19,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * and not earlier.
  */
 @Internal
-class EelProjectServiceInitializer : ProjectServiceContainerInitializedListener {
-  override suspend fun execute(project: Project, workspaceIndexReady: () -> Unit) {
+class EelProjectServiceInitializer : ProjectServiceInitializer {
+  override suspend fun execute(project: Project) {
     span("eel initialization") {
       EelInitialization.runEelInitialization(project)
     }

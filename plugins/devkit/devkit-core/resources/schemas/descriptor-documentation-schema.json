@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Descriptor Documentation Schema",
+  "type": "object",
+  "properties": {
+    "baseUrl": {
+      "type": "string",
+      "description": "Base URL for the SDK documentation page."
+    },
+    "elements": {
+      "type": "array",
+      "description": "Array of elements defined in the descriptor file.",
+      "items": {
+        "$ref": "#/definitions/ElementWrapper"
+      }
+    }
+  },
+  "definitions": {
+    "ElementWrapper": {
+      "type": "object",
+      "description": "Element object wrapper.",
+      "properties": {
+        "element": {
+          "$ref": "#/definitions/Element"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Element": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the element. For elements with unknown names, it supports wildcard: *. The purpose of wildcard elements is to provide documentation for known sub-children or attributes."
+        },
+        "descriptiveName": {
+          "type": "string",
+          "description": "Descriptive name of the element. Descriptive names are used when the * is too obscure in a given context."
+        },
+        "sdkDocsFixedPath": {
+          "type": "array",
+          "description": "Fixed path to this element used for the section ID on the SDK documentation page. It should be used in cases, when the same element is a child of multiple elements and we want to render it only once.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "since": {
+          "type": "string",
+          "description": "Version since the element is available."
+        },
+        "until": {
+          "type": "string",
+          "description": "Version until the element is available."
+        },
+        "deprecatedSince": {
+          "type": "string",
+          "description": "Version since the element is deprecated."
+        },
+        "deprecationNote": {
+          "type": "string",
+          "description": "Deprecation note for the element. Supports Writerside Markdown format."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the element. Supports Writerside Markdown format."
+        },
+        "sdkDocsSupportDetails": {
+          "type": "string",
+          "description": "Support details. It is rendered only in SDK documentation. Use it when additional information about support is needed. Supports Writerside Markdown format."
+        },
+        "attributes": {
+          "type": "array",
+          "description": "Array of attributes associated with the element.",
+          "items": {
+            "$ref": "#/definitions/AttributeWrapper"
+          }
+        },
+        "containsItself": {
+          "type": "boolean",
+          "description": "Flag indicating whether the element can contain itself."
+        },
+        "childrenDescription": {
+          "type": "string",
+          "description": "Description of child elements. Use it when children elements can't be included in the descriptor documentation (for example, they are dynamic), or additional information is needed. Supports Writerside Markdown format."
+        },
+        "children": {
+          "type": "array",
+          "description": "Array of child elements.",
+          "items": {
+            "$ref": "#/definitions/ElementWrapper"
+          }
+        },
+        "references": {
+          "type": "array",
+          "description": "Array of reference page links associated with the element. Supports Writerside Markdown format.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requirement": {
+          "$ref": "#/definitions/Requirement"
+        },
+        "defaultValue": {
+          "type": "string",
+          "description": "Default value for the element, if applicable. Supports Writerside Markdown format."
+        },
+        "examples": {
+          "type": "array",
+          "description": "Examples for the element. Supports Writerside Markdown format.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "Requirement": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "string",
+          "description": "Element requirement.",
+          "enum": ["yes", "no", "yes_for_paid", "unknown"]
+        },
+        "details": {
+          "type": "array",
+          "description": "Additional details about the requirement. Supports Writerside Markdown format.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "AttributeWrapper": {
+      "type": "object",
+      "properties": {
+        "attribute": {
+          "$ref": "#/definitions/Attribute"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Attribute": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the attribute."
+        },
+        "since": {
+          "type": "string",
+          "description": "Version since the attribute is available."
+        },
+        "until": {
+          "type": "string",
+          "description": "Version until the attribute is available."
+        },
+        "deprecatedSince": {
+          "type": "string",
+          "description": "Version since the attribute is deprecated."
+        },
+        "deprecationNote": {
+          "type": "string",
+          "description": "Deprecation note for the attribute. Supports Writerside Markdown format."
+        },
+        "requirement": {
+          "$ref": "#/definitions/Requirement"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the attribute. Supports Writerside Markdown format."
+        },
+        "defaultValue": {
+          "type": "string",
+          "description": "Default value for the attribute, if applicable. Supports Writerside Markdown format."
+        }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["elements"],
+  "additionalProperties": false
+}

@@ -8,21 +8,20 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.psi.DotEnvKey;
 
 public class LeadingCharacterInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
-    @NotNull
     @Override
-    public String getDisplayName() {
-        return "Invalid leading character";
+    public @NotNull String getDisplayName() {
+        return DotEnvBundle.message("inspection.name.invalid.leading.character");
     }
-
-    @Nullable
+    
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }
@@ -30,8 +29,7 @@ public class LeadingCharacterInspection extends LocalInspectionTool {
         return analyzeFile(file, manager, isOnTheFly).getResultsArray();
     }
 
-    @NotNull
-    private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static @NotNull ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvKey.class).forEach(dotEnvKey -> {
@@ -39,7 +37,7 @@ public class LeadingCharacterInspection extends LocalInspectionTool {
             // same for dash (-> IncorrectDelimiter
             if (!dotEnvKey.getText().matches("[A-Za-z_-].*")){
                 problemsHolder.registerProblem(dotEnvKey,
-                        "Invalid first char for a key. Only A-Z and '_' are allowed.");
+                                               DotEnvBundle.message("inspection.message.invalid.first.char.for.key.only.z.are.allowed"));
             }
         });
 

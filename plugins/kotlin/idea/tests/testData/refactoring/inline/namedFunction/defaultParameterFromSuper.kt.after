@@ -4,7 +4,7 @@ interface I {
 }
 
 abstract class C : I {
-    override fun newFun(p1: String, p2: Int, p3: Int) {}
+    override fun newFun(p1: String, p2: Int, p3: Int) { }
 }
 
 fun foo(c: C) {

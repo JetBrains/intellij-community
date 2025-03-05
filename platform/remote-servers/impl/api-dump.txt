@@ -1,5 +1,4 @@
 f:icons.RemoteServersIcons
 - sf:ResumeScaled:javax.swing.Icon
-- sf:ServersToolWindow:javax.swing.Icon
 - sf:SuspendScaled:javax.swing.Icon
 - <init>():V

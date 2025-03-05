@@ -11,12 +11,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.psi.psiUtil.hasBody
 
 inline fun <reified T : PsiElement> T.copied(): T {
     return copy() as T
@@ -196,4 +199,31 @@ fun KtSecondaryConstructor.getOrCreateBody(): KtBlockExpression {
     val anchor = if (delegationCall.isImplicit) valueParameterList else delegationCall
     val newBody = KtPsiFactory(project).createEmptyBody()
     return addAfter(newBody, anchor) as KtBlockExpression
+}
+
+fun KtDeclaration.predictImplicitModality(): KtModifierKeywordToken {
+    if (this is KtClassOrObject) {
+        if (this is KtClass && this.isInterface()) return KtTokens.ABSTRACT_KEYWORD
+        return KtTokens.FINAL_KEYWORD
+    }
+    val klass = containingClassOrObject ?: return KtTokens.FINAL_KEYWORD
+    if (hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
+        if (klass.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
+            klass.hasModifier(KtTokens.OPEN_KEYWORD) ||
+            klass.hasModifier(KtTokens.SEALED_KEYWORD)
+        ) {
+            return KtTokens.OPEN_KEYWORD
+        }
+    }
+    if (klass is KtClass && klass.isInterface() && !hasModifier(KtTokens.PRIVATE_KEYWORD)) {
+        return if (hasBody()) KtTokens.OPEN_KEYWORD else KtTokens.ABSTRACT_KEYWORD
+    }
+    return KtTokens.FINAL_KEYWORD
+}
+
+
+fun KtCallExpression.getOrCreateValueArgumentList(): KtValueArgumentList {
+    valueArgumentList?.let { return it }
+    val newList = KtPsiFactory(project).createCallArguments("()")
+    return addAfter(newList, typeArgumentList ?: calleeExpression) as KtValueArgumentList
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
@@ -307,7 +307,7 @@ public final class ExtractUtil {
     return factory.createMethodFromText(methodText, helper.getContext());
   }
 
-  public static void appendName(@NotNull final StringBuilder buffer, @NotNull final String name) {
+  public static void appendName(final @NotNull StringBuilder buffer, final @NotNull String name) {
     if (GroovyNamesUtil.isIdentifier(name)) {
       buffer.append(name);
     }
@@ -338,9 +338,8 @@ public final class ExtractUtil {
     for (final GrVariable variable : outside) {
       if (!declaredVars.contains(variable.getName())) {
         genDecl.add(new VariableInfo() {
-          @NotNull
           @Override
-          public String getName() {
+          public @NotNull String getName() {
             return variable.getName();
           }
 
@@ -419,8 +418,7 @@ public final class ExtractUtil {
     return ArrayUtilRt.toStringArray(params);
   }
 
-  @NotNull
-  public static String getTypeString(@NotNull ExtractMethodInfoHelper helper, boolean forPresentation, @NotNull String modifier) {
+  public static @NotNull String getTypeString(@NotNull ExtractMethodInfoHelper helper, boolean forPresentation, @NotNull String modifier) {
     if (!helper.specifyType()) {
       return modifier.isEmpty() ? "def " : "";
     }

@@ -13,7 +13,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
+import com.intellij.openapi.util.io.CanonicalPathPrefixTree
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -22,7 +22,7 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.util.containers.prefix.map.PrefixTreeMap
+import com.intellij.util.containers.prefixTree.map.PrefixTreeMap
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID
@@ -222,7 +222,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
     moduleEntity: ModuleEntity.Builder,
   ): PrefixTreeMap<String, ContentRootEntity.Builder> {
     val entitySource = sourceRootData.entitySource
-    val contentRootEntities = CanonicalPathPrefixTreeFactory.createMap<ContentRootEntity.Builder>()
+    val contentRootEntities = CanonicalPathPrefixTree.createMap<ContentRootEntity.Builder>()
 
     for (contentRootUrl in sourceRootData.contentRootUrls) {
       val contentRootEntity = ContentRootEntity(

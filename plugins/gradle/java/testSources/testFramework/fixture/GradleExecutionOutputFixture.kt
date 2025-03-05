@@ -75,7 +75,7 @@ class GradleExecutionOutputFixture(
   private fun installGradleEventsListener() {
     val listener = object : ExternalSystemTaskNotificationListener {
 
-      override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
+      override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
         output = Output()
       }
 

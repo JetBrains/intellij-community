@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.IjentPosixApi
@@ -60,7 +61,9 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
 
   init {
     scope.coroutineContext.job.invokeOnCompletion {
-      dropCache()
+      Cancellation.executeInNonCancelableSection {
+        dropCache()
+      }
     }
   }
 

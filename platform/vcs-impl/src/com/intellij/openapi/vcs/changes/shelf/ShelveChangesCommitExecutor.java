@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.shelf;
 
@@ -25,16 +25,13 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  @Nls
-  public String getActionText() {
+  public @NotNull @Nls String getActionText() {
     return VcsBundle.message("shelve.changes.action");
   }
 
-  @NotNull
   @Override
-  public CommitSession createCommitSession(@NotNull CommitContext commitContext) {
+  public @NotNull CommitSession createCommitSession(@NotNull CommitContext commitContext) {
     return new ShelveChangesCommitSession();
   }
 
@@ -51,7 +48,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
   private class ShelveChangesCommitSession implements CommitSession {
     @Override
     public void execute(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
-      if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
+      if (!changes.isEmpty() && !ChangesUtil.hasFileChanges(changes)) {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
           .showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action")), null, myProject);
         return;

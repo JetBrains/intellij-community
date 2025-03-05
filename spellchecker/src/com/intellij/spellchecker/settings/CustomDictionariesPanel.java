@@ -86,8 +86,8 @@ public final class CustomDictionariesPanel extends JPanel {
           }
           if (defaultDictionaries.contains(selectedDictionary)) {
             selectedDictionary = selectedDictionary.equals(SpellCheckerBundle.message("app.dictionary"))
-                                 ? myManager.getAppDictionaryPath$intellij_spellchecker()
-                                 : myManager.getProjectDictionaryPath$intellij_spellchecker();
+                                 ? myManager.getAppDictionaryPath()
+                                 : myManager.getProjectDictionaryPath();
           }
           manager.openDictionaryInEditor(selectedDictionary);
         }

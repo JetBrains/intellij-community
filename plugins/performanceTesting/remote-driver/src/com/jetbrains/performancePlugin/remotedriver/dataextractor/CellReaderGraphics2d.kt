@@ -4,6 +4,7 @@ package com.jetbrains.performancePlugin.remotedriver.dataextractor
 
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.font.GlyphVector
 import java.text.AttributedCharacterIterator
 
 internal class CellReaderGraphics2d(private val g: Graphics2D, private val extractionData: MutableList<String>) :
@@ -62,5 +63,9 @@ internal class CellReaderGraphics2d(private val g: Graphics2D, private val extra
 
   override fun rotate(theta: Double, x: Double, y: Double) {
     g.rotate(theta, x, y)
+  }
+
+  override fun drawGlyphVector(g: GlyphVector, x: Float, y: Float) {
+    addTextData(getTextByGlyphVector(g))
   }
 }

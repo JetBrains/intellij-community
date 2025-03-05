@@ -1,30 +1,37 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.ide.konan
 
 import com.intellij.extapi.psi.PsiFileBase
-import com.intellij.lang.*
+import com.intellij.lang.ASTNode
+import com.intellij.lang.Language
+import com.intellij.lang.ParserDefinition
+import com.intellij.lang.PsiParser
 import com.intellij.lexer.FlexAdapter
 import com.intellij.lexer.Lexer
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.psi.tree.*
-import javax.swing.Icon
-import java.io.Reader
-import org.jetbrains.kotlin.ide.konan.psi.*
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.IFileElementType
+import com.intellij.psi.tree.TokenSet
+import org.jetbrains.kotlin.ide.konan.psi.NativeDefinitionsCodeImpl
+import org.jetbrains.kotlin.ide.konan.psi.NativeDefinitionsTypes
 import org.jetbrains.kotlin.idea.KotlinIcons
+import java.io.Reader
+import javax.swing.Icon
 
-const val KOTLIN_NATIVE_DEFINITIONS_FILE_EXTENSION = "def"
-const val KOTLIN_NATIVE_DEFINITIONS_ID = "KND"
+private const val KOTLIN_NATIVE_DEFINITIONS_FILE_EXTENSION = "def"
+private const val KOTLIN_NATIVE_DEFINITIONS_ID = "KND"
 
-val KOTLIN_NATIVE_DEFINITIONS_DESCRIPTION get() = KotlinNativeBundle.message("kotlin.native.definitions.description")
+internal val KOTLIN_NATIVE_DEFINITIONS_DESCRIPTION
+    get() = KotlinNativeBundle.message("kotlin.native.definitions.description")
 
-object NativeDefinitionsFileType : LanguageFileType(NativeDefinitionsLanguage.INSTANCE) {
+internal object NativeDefinitionsFileType : LanguageFileType(NativeDefinitionsLanguage.INSTANCE) {
 
     override fun getName(): String = "Kotlin/Native Def"
 
@@ -35,7 +42,7 @@ object NativeDefinitionsFileType : LanguageFileType(NativeDefinitionsLanguage.IN
     override fun getIcon(): Icon = KotlinIcons.NATIVE
 }
 
-class NativeDefinitionsLanguage private constructor() : Language(KOTLIN_NATIVE_DEFINITIONS_ID) {
+internal class NativeDefinitionsLanguage private constructor() : Language(KOTLIN_NATIVE_DEFINITIONS_ID) {
     companion object {
         val INSTANCE = NativeDefinitionsLanguage()
     }

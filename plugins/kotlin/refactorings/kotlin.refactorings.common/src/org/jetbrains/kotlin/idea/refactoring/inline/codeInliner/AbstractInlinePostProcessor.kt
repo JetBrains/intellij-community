@@ -2,25 +2,14 @@
 package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_CONVERTED_TO_FUNCTION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_FUNCTION_LITERAL_ARGUMENT_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.clearUserData
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtLambdaArgument
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.psi.unpackFunctionLiteral
-import java.util.ArrayList
-import kotlin.collections.first
-import kotlin.collections.forEach
-import kotlin.collections.isNotEmpty
-import kotlin.collections.last
 
 abstract class AbstractInlinePostProcessor {
 
@@ -30,6 +19,7 @@ abstract class AbstractInlinePostProcessor {
     protected abstract fun simplifySpreadArrayOfArguments(pointer: SmartPsiElementPointer<KtElement>)
     protected abstract fun removeExplicitTypeArguments(pointer: SmartPsiElementPointer<KtElement>)
     protected abstract fun shortenReferences(pointers: List<SmartPsiElementPointer<KtElement>>): List<KtElement>
+    protected abstract fun convertFunctionToLambdaAndMoveOutsideParentheses(function: KtNamedFunction)
 
     protected abstract fun introduceNamedArguments(pointer: SmartPsiElementPointer<KtElement>)
     protected abstract fun dropArgumentsForDefaultValues(pointer: SmartPsiElementPointer<KtElement>)
@@ -49,6 +39,8 @@ abstract class AbstractInlinePostProcessor {
             dropArgumentsForDefaultValues(pointer)
 
             removeRedundantLambdasAndAnonymousFunctions(pointer)
+
+            restoreConvertedLambdasFromAnonymousFunctions(pointer)
 
             simplifySpreadArrayOfArguments(pointer)
 
@@ -71,6 +63,14 @@ abstract class AbstractInlinePostProcessor {
             commentSaver.restore(childRange)
         }
         return childRange
+    }
+
+    private fun restoreConvertedLambdasFromAnonymousFunctions(pointer: SmartPsiElementPointer<KtElement>) {
+        pointer.element?.forEachDescendantOfType<KtNamedFunction> { function ->
+            if (function.getCopyableUserData(WAS_CONVERTED_TO_FUNCTION_KEY) != null) {
+                convertFunctionToLambdaAndMoveOutsideParentheses(function)
+            }
+        }
     }
 
     private fun restoreFunctionLiteralArguments(pointer: SmartPsiElementPointer<KtElement>) {

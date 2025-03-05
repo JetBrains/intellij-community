@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexImpl;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
@@ -171,7 +170,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
             try {
               FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
             }
-            catch (AlreadyDisposedException | ProcessCanceledException ignored) {
+            catch (ProcessCanceledException ignored) {
             }
             catch (Exception e) {
               LOG.error(e);

@@ -5,40 +5,59 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import kotlin.apply as applyKt
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-abstract class GroovyDslGradleBuildScriptBuilder<BSB : GroovyDslGradleBuildScriptBuilder<BSB>>(
-  gradleVersion: GradleVersion
-) : AbstractGradleBuildScriptBuilder<BSB>(gradleVersion) {
+abstract class GroovyDslGradleBuildScriptBuilder<Self : GroovyDslGradleBuildScriptBuilder<Self>>(
+  gradleVersion: GradleVersion,
+) : AbstractGradleBuildScriptBuilder<Self>(gradleVersion) {
 
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit) =
+  private val PREDEFINED_TASKS = setOf("test", "compileJava", "compileTestJava")
+
+  override fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self =
     withPostfix {
-      callIfNotEmpty("test", configure)
+      val block = tree(configure)
+      if (!block.isEmpty()) {
+        if (name in PREDEFINED_TASKS) {
+          call(name, argument(block))
+        }
+        else {
+          call("tasks.named", argument(name), argument(code(type)), argument(block))
+        }
+      }
     }
 
-  override fun withKotlinJvmPlugin(version: String?) = apply {
+  override fun withKotlinJvmPlugin(version: String?): Self = apply {
     withMavenCentral()
     withPlugin("org.jetbrains.kotlin.jvm", version)
   }
 
-  override fun withKotlinTest() = apply {
+  override fun withKotlinTest(): Self = apply {
     withMavenCentral()
-    // version is inherited from the Kotlin plugin
+    // The kotlin-test dependency version is inherited from the Kotlin plugin
     addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
     configureTestTask {
       call("useJUnitPlatform")
     }
   }
 
-  override fun ScriptTreeBuilder.mavenRepository(url: String) = applyKt {
+  override fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder = applyKt {
     call("maven") {
-      call("url", url)
+      assign("url", url)
     }
   }
 
-  override fun generate() = GroovyScriptBuilder().generate(generateTree())
+  override fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder = applyKt {
+    call("mavenLocal") {
+      assign("url", url)
+    }
+  }
+
+  override fun generate(): String {
+    return GroovyScriptBuilder().generate(generateTree())
+  }
 
   internal class Impl(gradleVersion: GradleVersion) : GroovyDslGradleBuildScriptBuilder<Impl>(gradleVersion) {
     override fun apply(action: Impl.() -> Unit) = applyKt(action)

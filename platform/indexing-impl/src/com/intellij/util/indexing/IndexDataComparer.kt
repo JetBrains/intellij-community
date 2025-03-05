@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.psi.stubs.ObjectStubBase
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.Stub
+import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.tree.IElementType
 import com.intellij.util.containers.hash.EqualityPolicy
 import org.jetbrains.annotations.ApiStatus
 
@@ -75,11 +77,15 @@ object IndexDataComparer {
     return expectedTree.stubIndicesValueMap == actualTree.stubIndicesValueMap
   }
 
+  private val Stub.elementType: IElementType?
+    get() = (this as? StubElement<*>)?.elementType
+
   private fun areStubsTheSame(expectedStub: Stub, actualStub: Stub): Boolean {
     // Check toString() to not rely on identity equality of [ObjectStubSerializer]s
     // because [ObjectStubSerializer] does not declare equals() / hashCode().
-    if (expectedStub.stubType != actualStub.stubType
-        && expectedStub.stubType?.toString() != actualStub.stubType?.toString()
+    if (expectedStub.stubSerializer != actualStub.stubSerializer
+        && expectedStub.stubSerializer?.toString() != actualStub.stubSerializer?.toString()
+        && expectedStub.elementType != actualStub.elementType
     ) {
       return false
     }

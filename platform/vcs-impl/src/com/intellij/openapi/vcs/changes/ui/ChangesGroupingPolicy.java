@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
@@ -14,16 +14,14 @@ public interface ChangesGroupingPolicy {
    * @deprecated Implement {@link #getParentNodeFor(StaticFilePath, ChangesBrowserNode, ChangesBrowserNode)} instead.
    */
   @Deprecated
-  @Nullable
-  default ChangesBrowserNode<?> getParentNodeFor(@NotNull StaticFilePath nodePath,
+  default @Nullable ChangesBrowserNode<?> getParentNodeFor(@NotNull StaticFilePath nodePath,
                                                  @NotNull ChangesBrowserNode<?> subtreeRoot) {
     return getParentNodeFor(nodePath, new CompatibilityPlaceholderChangesBrowserNode(), subtreeRoot);
   }
 
-  @Nullable
-  default ChangesBrowserNode<?> getParentNodeFor(@NotNull StaticFilePath nodePath,
-                                                 @NotNull ChangesBrowserNode<?> node,
-                                                 @NotNull ChangesBrowserNode<?> subtreeRoot) {
+  default @Nullable ChangesBrowserNode<?> getParentNodeFor(@NotNull StaticFilePath nodePath,
+                                                           @NotNull ChangesBrowserNode<?> node,
+                                                           @NotNull ChangesBrowserNode<?> subtreeRoot) {
     return getParentNodeFor(nodePath, subtreeRoot);
   }
 

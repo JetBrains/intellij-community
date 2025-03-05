@@ -40,6 +40,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
+import com.intellij.util.indexing.ProjectEntityIndexingService
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -261,7 +262,7 @@ open class ProjectRootManagerComponent(
     finally {
       isFiringEvent = false
     }
-    EntityIndexingService.getInstance().indexChanges(project, indexingInfos)
+    ProjectEntityIndexingService.getInstance(project).indexChanges(indexingInfos)
     addRootsToWatch()
   }
 
@@ -273,7 +274,8 @@ open class ProjectRootManagerComponent(
 
     val store = project.stateStore
     val projectFilePath = store.projectFilePath
-    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
+    val directoryStorePath = store.directoryStorePath
+    if (directoryStorePath == null || !projectFilePath.startsWith(directoryStorePath)) {
       flatPaths += projectFilePath.invariantSeparatorsPathString
       flatPaths += store.workspacePath.invariantSeparatorsPathString
       WATCH_ROOTS_LOG.trace { "  project store: ${flatPaths}" }

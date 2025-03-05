@@ -21,6 +21,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
+
     <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.parsing.KotlinParserDefinition"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
@@ -57,6 +61,10 @@
             serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.K1ReferenceImporterFacility"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.imports.KaDefaultImportsProvider"
+            serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.KaFe10DefaultImportsProvider"/>
 
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinShortClassNameFileIndex"/>
     <projectService
@@ -176,10 +184,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.parameterNameHints language="kotlin"
                                     implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayParameterHintsProvider"/>
-
-    <!-- CodeVision is disabled for Kotlin -->
-<!--    <codeInsight.inlayProvider language="kotlin"-->
-<!--                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>-->
 
     <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
                                     handlerId="kotlin.fqn.class"/>
@@ -315,10 +319,6 @@
     <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithGenericsSearcher"/>
 
     <iconProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10KotlinIconProvider"/>
-
-    <applicationService
-            serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
-            serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.fe10.KotlinDeclarationInCompiledFileSearcherFE10Impl"/>
   </extensions>
 
   <!-- dataflow -->

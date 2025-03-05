@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,8 +56,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.*;
 
@@ -96,7 +97,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     setTitle(IdeBundle.message("dialog.title.background.image"));
-    myEditorPreview = createEditorPreview();
+    myEditorPreview = createEditorPreview(getDisposable());
     myIdePreview = createFramePreview();
     myPropertyTmp = getSystemProp() + "#" + project.getLocationHash();
     UiNotifyConnector.doWhenFirstShown(myRoot, () -> createTemporaryBackgroundTransform(myPreviewPanel, myPropertyTmp, getDisposable()));
@@ -138,12 +139,12 @@ public class BackgroundImageDialog extends DialogWrapper {
     System.getProperties().remove(myPropertyTmp);
   }
 
-  @NotNull
-  private static SimpleEditorPreview createEditorPreview() {
+  private static @NotNull SimpleEditorPreview createEditorPreview(@NotNull Disposable disposable) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     ColorAndFontOptions options = new ColorAndFontOptions();
     options.reset();
     options.selectScheme(scheme.getName());
+    Disposer.register(disposable, () -> options.disposeUIResources());
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     int index;
     int attempt = 0;
@@ -154,8 +155,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     return new SimpleEditorPreview(options, pages[index], false);
   }
 
-  @NotNull
-  private static JComponent createFramePreview() {
+  private static @NotNull JComponent createFramePreview() {
     EditorEmptyTextPainter painter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
     JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
       @Override
@@ -178,26 +178,22 @@ public class BackgroundImageDialog extends DialogWrapper {
     return panel;
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  @NotNull
-  private String getRecentItemsKey() {
+  private @NotNull String getRecentItemsKey() {
     return getDimensionServiceKey() + "#recent";
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myRoot;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myPathField;
   }
 
@@ -422,8 +418,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     return getSystemProp(EDITOR.equals(myPreviewTarget));
   }
 
-  @NotNull
-  private static String getSystemProp(boolean forEditor) {
+  private static @NotNull String getSystemProp(boolean forEditor) {
     return forEditor ? EDITOR_PROP : FRAME_PROP;
   }
 
@@ -439,8 +434,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     getOKAction().setEnabled(!clear);
   }
 
-  @NotNull
-  private String calcNewValue() {
+  private @NotNull String calcNewValue() {
     String path = (String)myPathField.getComboBox().getEditor().getItem();
     String type = getFillRbGroup().getSelection().getActionCommand().replace('-', '_');
     String anchor = getAnchorRbGroup().getSelection().getActionCommand().replace('-', '_');
@@ -468,8 +462,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     return myAnchorGroup;
   }
 
-  @NotNull
-  private static Color getSelectionBackground() {
+  private static @NotNull Color getSelectionBackground() {
     return ColorUtil.mix(UIUtil.getListSelectionBackground(true), UIUtil.getLabelBackground(), StartupUiUtil.isUnderDarcula() ? .5 : .75);
   }
 
@@ -521,8 +514,7 @@ public class BackgroundImageDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  private static BufferedImage sampleImage() {
+  private static @NotNull BufferedImage sampleImage() {
     int size = 16;
     BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
     Graphics ig = image.getGraphics();
@@ -536,10 +528,9 @@ public class BackgroundImageDialog extends DialogWrapper {
     return image;
   }
 
-  @NotNull
-  private static JBPanelWithEmptyText addClickablePanel(@NotNull JPanel buttonPanel,
-                                                        @NotNull JToggleButton button,
-                                                        @NotNull Color color) {
+  private static @NotNull JBPanelWithEmptyText addClickablePanel(@NotNull JPanel buttonPanel,
+                                                                 @NotNull JToggleButton button,
+                                                                 @NotNull Color color) {
     JBPanelWithEmptyText panel = new JBPanelWithEmptyText() {
 
       @Override

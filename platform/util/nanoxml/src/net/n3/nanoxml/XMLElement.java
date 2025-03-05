@@ -763,6 +763,7 @@ public final class XMLElement implements IXMLElement, Serializable {
    *
    * @param rawElement the element to compare to
    */
+  @Override
   public boolean equals(Object rawElement) {
     try {
       return equalsXMLElement((IXMLElement)rawElement);

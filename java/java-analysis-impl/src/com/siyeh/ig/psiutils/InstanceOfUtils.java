@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.java.codeserver.core.JavaPsiVariableUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -22,8 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.OptionalInt;
+
+import static java.util.Objects.requireNonNull;
 
 public final class InstanceOfUtils {
 
@@ -106,8 +107,7 @@ public final class InstanceOfUtils {
     return checker.getConflictingInstanceof();
   }
 
-  @Nullable
-  private static PsiElement findInterestingParent(@NotNull PsiElement context) {
+  private static @Nullable PsiElement findInterestingParent(@NotNull PsiElement context) {
     while (true) {
       PsiElement parent = context.getParent();
       if (parent == null) return null;
@@ -168,8 +168,7 @@ public final class InstanceOfUtils {
    * @param cast a cast expression to find parent instanceof for
    * @return a traditional instanceof expression that is a candidate to introduce a pattern that covers given cast.
    */
-  @Nullable
-  public static PsiInstanceOfExpression findPatternCandidate(@NotNull PsiTypeCastExpression cast) {
+  public static @Nullable PsiInstanceOfExpression findPatternCandidate(@NotNull PsiTypeCastExpression cast) {
     return findPatternCandidate(cast, null);
   }
 
@@ -179,8 +178,7 @@ public final class InstanceOfUtils {
    *                 a narrower instanceof that would keep the semantics on the replacement is also could be found
    * @return a traditional instanceof expression that is a candidate to introduce a pattern that covers given cast.
    */
-  @Nullable
-  public static PsiInstanceOfExpression findPatternCandidate(@NotNull PsiTypeCastExpression cast, @Nullable PsiVariable variable) {
+  public static @Nullable PsiInstanceOfExpression findPatternCandidate(@NotNull PsiTypeCastExpression cast, @Nullable PsiVariable variable) {
     if (isUncheckedCast(cast)) return null;
     return findCorrespondingInstanceOf(cast, variable);
   }
@@ -201,8 +199,7 @@ public final class InstanceOfUtils {
    * Unlike {@link #findPatternCandidate(PsiTypeCastExpression)}, this may find a corresponding instanceof,
    * even if the cast is unchecked.
    */
-  @Nullable
-  public static PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast) {
+  public static @Nullable PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast) {
     return findCorrespondingInstanceOf(cast, null);
   }
 
@@ -214,8 +211,7 @@ public final class InstanceOfUtils {
    * Unlike {@link #findPatternCandidate(PsiTypeCastExpression)}, this may find a corresponding instanceof,
    * even if the cast is unchecked.
    */
-  @Nullable
-  public static PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast, @Nullable PsiVariable variable) {
+  public static @Nullable PsiInstanceOfExpression findCorrespondingInstanceOf(@NotNull PsiTypeCastExpression cast, @Nullable PsiVariable variable) {
     PsiElement context = PsiUtil.skipParenthesizedExprUp(cast.getContext());
     if (context instanceof PsiLocalVariable) {
       context = context.getContext();
@@ -250,12 +246,33 @@ public final class InstanceOfUtils {
       }
       if (!(context instanceof PsiStatement)) return null;
     }
-    if (context == null) return null;
     PsiVariable operandVariable = ExpressionUtils.resolveVariable(cast.getOperand());
+    return walkBackAndUpToFindInstanceOf(context, operandVariable, variable, cast);
+  }
+
+  private static @Nullable PsiInstanceOfExpression walkBackAndUpToFindInstanceOf(@Nullable PsiElement context,
+                                                                                 @Nullable PsiVariable operandVariable,
+                                                                                 @Nullable PsiVariable variable,
+                                                                                 @NotNull PsiTypeCastExpression cast) {
+    if (context == null) return null;
+    ResultOfInstanceOf resultOfInstanceOf = processOfPreviousStatements(context, operandVariable, variable, cast);
+    context = resultOfInstanceOf.context;
+    if (context == null) return resultOfInstanceOf.instanceOf;
+    PsiElement parent = context.getContext();
+    PsiInstanceOfExpression expression = processParent(cast, context, parent, variable);
+    if (expression != null) return expression;
+    return walkBackAndUpToFindInstanceOf(parent, operandVariable, variable, cast);
+  }
+
+  private static @NotNull ResultOfInstanceOf processOfPreviousStatements(@Nullable PsiElement context,
+                                                                         @Nullable PsiVariable operandVariable,
+                                                                         @Nullable PsiVariable variable,
+                                                                         @NotNull PsiTypeCastExpression cast) {
+    if (context == null) return new ResultOfInstanceOf(null, null);
     PsiElement parent = context.getContext();
     if (parent instanceof PsiCodeBlock) {
       for (PsiElement stmt = context.getPrevSibling(); stmt != null; stmt = stmt.getPrevSibling()) {
-        if (stmt instanceof PsiIfStatement ifStatement) {
+        if (stmt instanceof PsiIfStatement ifStatement && conditionMayContainCorrespondingInstanceOf(ifStatement.getCondition(), cast)) {
           PsiStatement thenBranch = ifStatement.getThenBranch();
           PsiStatement elseBranch = ifStatement.getElseBranch();
           boolean thenCompletes = canCompleteNormally(parent, thenBranch);
@@ -263,31 +280,71 @@ public final class InstanceOfUtils {
           if (thenCompletes != elseCompletes) {
             PsiInstanceOfExpression instanceOf = findInstanceOf(ifStatement.getCondition(), cast, thenCompletes, variable);
             if (instanceOf != null) {
-              return instanceOf;
+              return new ResultOfInstanceOf(null, instanceOf);
             }
           }
         }
         if (stmt instanceof PsiWhileStatement || stmt instanceof PsiDoWhileStatement || stmt instanceof PsiForStatement) {
           PsiConditionalLoopStatement loop = (PsiConditionalLoopStatement)stmt;
-          if (PsiTreeUtil.processElements(
+          if (conditionMayContainCorrespondingInstanceOf(loop.getCondition(), cast) && PsiTreeUtil.processElements(
             loop, e -> !(e instanceof PsiBreakStatement breakStatement) || breakStatement.findExitedStatement() != loop)) {
             PsiInstanceOfExpression instanceOf = findInstanceOf(loop.getCondition(), cast, false, variable);
             if (instanceOf != null) {
-              return instanceOf;
+              return new ResultOfInstanceOf(null, instanceOf);
             }
           }
         }
         if (stmt instanceof PsiSwitchLabelStatementBase) break;
         if (operandVariable != null && VariableAccessUtils.variableIsAssigned(operandVariable, stmt)) {
-          return null;
+          return new ResultOfInstanceOf(null, null);
         }
       }
       if (parent.getContext() instanceof PsiBlockStatement) {
         context = parent.getContext();
-        parent = context.getContext();
       }
     }
-    return processParent(cast, context, parent, variable);
+    return new ResultOfInstanceOf(context, null);
+  }
+
+  /**
+   * if <code>context</code> is null then use <code>instanceOf</code> result, </br>
+   * if <code>context</code> is not null then continue searching
+   */
+  private record ResultOfInstanceOf(@Nullable PsiElement context, @Nullable PsiInstanceOfExpression instanceOf) {
+  }
+
+
+  /**
+   * Use for fast check if condition may contain instanceOf with similar expression
+   */
+  private static boolean conditionMayContainCorrespondingInstanceOf(@Nullable PsiExpression condition,
+                                                                    @NotNull PsiTypeCastExpression cast) {
+    if (condition == null) return false;
+    PsiExpression castOperand = cast.getOperand();
+    if (castOperand == null) return false;
+    var visitor = new JavaRecursiveElementVisitor() {
+      boolean found = false;
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (found) {
+          return;
+        }
+        super.visitElement(element);
+      }
+
+      @Override
+      public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
+        PsiExpression instanceOperand = expression.getOperand();
+        if (PsiEquivalenceUtil.areElementsEquivalent(instanceOperand, castOperand)) {
+          found = true;
+          return;
+        }
+        super.visitInstanceOfExpression(expression);
+      }
+    };
+    condition.accept(visitor);
+    return visitor.found;
   }
 
   public static @Nullable PsiTypeElement findCheckTypeElement(@NotNull PsiInstanceOfExpression expression) {
@@ -359,8 +416,8 @@ public final class InstanceOfUtils {
       PsiTypeElement typeElement = findCheckTypeElement(instanceOf);
       if (typeElement != null) {
         PsiType type = typeElement.getType();
-        PsiType castType = Objects.requireNonNull(cast.getCastType()).getType();
-        PsiExpression castOperand = Objects.requireNonNull(cast.getOperand());
+        PsiType castType = requireNonNull(cast.getCastType()).getType();
+        PsiExpression castOperand = requireNonNull(cast.getOperand());
         if (PsiEquivalenceUtil.areElementsEquivalent(instanceOf.getOperand(), castOperand)) {
           if (typeCompatible(type, castType, castOperand) ||
               PsiUtil.isJvmLocalVariable(variable) && isSafeToNarrowType(variable, cast, type)) {
@@ -387,7 +444,7 @@ public final class InstanceOfUtils {
    * @param variable a variable, which is used to check if the scope contains variables with the same name
    * @param instanceOf an instanceof expression that is used to calculate declaration scope
    * @return true if other declared variables with the same name are found in the scope of instanceof with variable patterns.
-   * {@link HighlightUtil#checkVariableAlreadyDefined(PsiVariable)} is used on copy files
+   * {@link JavaPsiVariableUtil#findPreviousVariableDeclaration(PsiVariable)} is used on copy files
    */
   public static boolean hasConflictingDeclaredNames(@NotNull PsiLocalVariable variable, @NotNull PsiInstanceOfExpression instanceOf) {
     PsiIdentifier identifier = variable.getNameIdentifier();
@@ -499,7 +556,7 @@ public final class InstanceOfUtils {
       if (name != null &&
           myVariable != variable &&
           myIdentifier.textMatches(name) &&
-          (!myCheckRedeclared || HighlightUtil.checkVariableAlreadyDefined(variable) != null)) {
+          (!myCheckRedeclared || JavaPsiVariableUtil.findPreviousVariableDeclaration(variable) != null)) {
         hasConflict = true;
         stopWalking();
       }

@@ -40,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.*;
@@ -144,7 +145,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       }
       cmdLine.setExePath(tool.getPath());
 
-      if (myConfiguration.HEAP_SIZE != null && myConfiguration.HEAP_SIZE.trim().length() != 0) {
+      if (myConfiguration.HEAP_SIZE != null && !myConfiguration.HEAP_SIZE.trim().isEmpty()) {
         String param = JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_2) ? "-J-Xmx" : "-J-mx";
         cmdLine.getParametersList().prepend(param + myConfiguration.HEAP_SIZE + "m");
       }
@@ -154,7 +155,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private void setParameters(Sdk jdk, GeneralCommandLine cmdLine) throws CantRunException {
       ParametersList parameters = cmdLine.getParametersList();
 
-      if (myConfiguration.LOCALE != null && myConfiguration.LOCALE.length() > 0) {
+      if (myConfiguration.LOCALE != null && !myConfiguration.LOCALE.isEmpty()) {
         parameters.add("-locale");
         parameters.add(myConfiguration.LOCALE);
       }
@@ -329,7 +330,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       return argsFile;
     }
 
-    private @NotNull List<VirtualFile> findSourceRoots(@NotNull Set<Module> modules) {
+    private @Unmodifiable @NotNull List<VirtualFile> findSourceRoots(@NotNull Set<Module> modules) {
       OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
       if (!myConfiguration.OPTION_INCLUDE_LIBS) {
         sourcePathEnumerator = sourcePathEnumerator.withoutSdk().withoutLibraries();
@@ -340,7 +341,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       return sourcePathEnumerator.getSourcePathsList().getRootDirs();
     }
 
-    private @NotNull List<VirtualFile> findClassRoots(@NotNull Set<Module> modules, @NotNull Sdk jdk) {
+    private @Unmodifiable @NotNull List<VirtualFile> findClassRoots(@NotNull Set<Module> modules, @NotNull Sdk jdk) {
       OrderEnumerator classPathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules).withoutModuleSourceEntries();
       if (jdk.getSdkType() instanceof JavaSdk) {
         classPathEnumerator = classPathEnumerator.withoutSdk();

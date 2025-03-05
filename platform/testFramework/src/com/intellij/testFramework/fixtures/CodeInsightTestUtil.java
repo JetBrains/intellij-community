@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.*;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.template.Template;
@@ -77,8 +78,7 @@ import static junit.framework.Assert.assertTrue;
 public final class CodeInsightTestUtil {
   private CodeInsightTestUtil() { }
 
-  @Nullable
-  public static IntentionAction findIntentionByText(@NotNull List<? extends IntentionAction> actions, @NonNls @NotNull String text) {
+  public static @Nullable IntentionAction findIntentionByText(@NotNull List<? extends IntentionAction> actions, @NonNls @NotNull String text) {
     for (IntentionAction action : actions) {
       final String s = action.getText();
       if (s.equals(text)) {
@@ -88,8 +88,7 @@ public final class CodeInsightTestUtil {
     return null;
   }
 
-  @Nullable
-  public static IntentionAction findIntentionByPartialText(@NotNull List<? extends IntentionAction> actions, @NonNls @NotNull String text) {
+  public static @Nullable IntentionAction findIntentionByPartialText(@NotNull List<? extends IntentionAction> actions, @NonNls @NotNull String text) {
     for (IntentionAction action : actions) {
       final String s = action.getText();
       if (s.contains(text)) {
@@ -108,8 +107,8 @@ public final class CodeInsightTestUtil {
   }
 
   @TestOnly
-  public static void doIntentionTest(@NotNull final CodeInsightTestFixture fixture, @NonNls final String action,
-                                     @NotNull final String before, @NotNull final String after) {
+  public static void doIntentionTest(final @NotNull CodeInsightTestFixture fixture, final @NonNls String action,
+                                     final @NotNull String before, final @NotNull String after) {
     fixture.configureByFile(before);
     List<IntentionAction> availableIntentions = fixture.getAvailableIntentions();
     final IntentionAction intentionAction = findIntentionByText(availableIntentions, action);
@@ -122,8 +121,8 @@ public final class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  public static void doWordSelectionTest(@NotNull final CodeInsightTestFixture fixture,
-                                         @TestDataFile @NotNull final String before, @TestDataFile final String... after) {
+  public static void doWordSelectionTest(final @NotNull CodeInsightTestFixture fixture,
+                                         @TestDataFile final @NotNull String before, @TestDataFile final String... after) {
     EdtTestUtil.runInEdtAndWait(() -> {
       assert after != null && after.length > 0;
       fixture.configureByFile(before);
@@ -135,9 +134,9 @@ public final class CodeInsightTestUtil {
     });
   }
 
-  public static void doWordSelectionTestOnDirectory(@NotNull final CodeInsightTestFixture fixture,
-                                                    @TestDataFile @NotNull final String directoryName,
-                                                    @NotNull final String filesExtension) {
+  public static void doWordSelectionTestOnDirectory(final @NotNull CodeInsightTestFixture fixture,
+                                                    @TestDataFile final @NotNull String directoryName,
+                                                    final @NotNull String filesExtension) {
     EdtTestUtil.runInEdtAndWait(() -> {
       fixture.copyDirectoryToProject(directoryName, directoryName);
       fixture.configureByFile(directoryName + "/before." + filesExtension);
@@ -157,16 +156,16 @@ public final class CodeInsightTestUtil {
     });
   }
 
-  public static void doSurroundWithTest(@NotNull final CodeInsightTestFixture fixture, @NotNull final Surrounder surrounder,
-                                        @NotNull final String before, @NotNull final String after) {
+  public static void doSurroundWithTest(final @NotNull CodeInsightTestFixture fixture, final @NotNull Surrounder surrounder,
+                                        final @NotNull String before, final @NotNull String after) {
     fixture.configureByFile(before);
     WriteCommandAction.writeCommandAction(fixture.getProject())
                       .run(() -> SurroundWithHandler.invoke(fixture.getProject(), fixture.getEditor(), fixture.getFile(), surrounder));
     fixture.checkResultByFile(after, false);
   }
 
-  public static void doLiveTemplateTest(@NotNull final CodeInsightTestFixture fixture,
-                                        @NotNull final String before, @NotNull final String after) {
+  public static void doLiveTemplateTest(final @NotNull CodeInsightTestFixture fixture,
+                                        final @NotNull String before, final @NotNull String after) {
     fixture.configureByFile(before);
     new ListTemplatesAction().actionPerformedImpl(fixture.getProject(), fixture.getEditor());
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(fixture.getEditor());
@@ -175,8 +174,8 @@ public final class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  public static void doSmartEnterTest(@NotNull final CodeInsightTestFixture fixture,
-                                      @NotNull final String before, @NotNull final String after) {
+  public static void doSmartEnterTest(final @NotNull CodeInsightTestFixture fixture,
+                                      final @NotNull String before, final @NotNull String after) {
     fixture.configureByFile(before);
     final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.allForLanguage(fixture.getFile().getLanguage());
     WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> {
@@ -188,8 +187,8 @@ public final class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  public static void doFormattingTest(@NotNull final CodeInsightTestFixture fixture,
-                                      @NotNull final String before, @NotNull final String after) {
+  public static void doFormattingTest(final @NotNull CodeInsightTestFixture fixture,
+                                      final @NotNull String before, final @NotNull String after) {
     fixture.configureByFile(before);
     WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile()));
     fixture.checkResultByFile(after, false);
@@ -201,8 +200,7 @@ public final class CodeInsightTestUtil {
     doInlineRename(handler, newName, editorForElement, elementAtCaret);
   }
 
-  @NotNull
-  public static Editor openEditorFor(@NotNull PsiElement elementAtCaret) {
+  public static @NotNull Editor openEditorFor(@NotNull PsiElement elementAtCaret) {
     // sometimes the element found by TargetElementUtil may belong to the other editor, e.g, in case of an injected element
     // but inplace rename requires that both element and the editor must be consistent
     Editor editorForElement = PsiEditorUtil.getInstance().findEditorByPsiElement(elementAtCaret);
@@ -291,9 +289,8 @@ public final class CodeInsightTestUtil {
     });
   }
 
-  @NotNull
   @TestOnly
-  public static GotoTargetHandler.GotoData gotoImplementation(Editor editor, PsiFile file) {
+  public static @NotNull GotoTargetHandler.GotoData gotoImplementation(Editor editor, PsiFile file) {
     GotoTargetHandler.GotoData data = new GotoImplementationHandler().getSourceAndTargetElements(editor, file);
     data.initPresentations();
     if (data.listUpdaterTask != null) {
@@ -317,11 +314,10 @@ public final class CodeInsightTestUtil {
     return data;
   }
 
-  @NotNull
-  public static <In, Out> List<Annotation> runExternalAnnotator(@NotNull ExternalAnnotator<In, Out> annotator,
-                                                                @NotNull PsiFile psiFile,
-                                                                In in,
-                                                                @NotNull Consumer<? super Out> resultChecker) {
+  public static @NotNull <In, Out> List<Annotation> runExternalAnnotator(@NotNull ExternalAnnotator<In, Out> annotator,
+                                                                         @NotNull PsiFile psiFile,
+                                                                         In in,
+                                                                         @NotNull Consumer<? super Out> resultChecker) {
     Out result = annotator.doAnnotate(in);
     resultChecker.accept(result);
     return AnnotationSessionImpl.computeWithSession(psiFile, false, annotator, annotationHolder -> {
@@ -334,8 +330,7 @@ public final class CodeInsightTestUtil {
   /**
    * Create AnnotationHolder, run {@code annotator} in it on passed {@code elements} and return created Annotations
    */
-  @NotNull
-  public static List<Annotation> testAnnotator(@NotNull Annotator annotator, @NotNull PsiElement @NotNull... elements) {
+  public static @NotNull List<Annotation> testAnnotator(@NotNull Annotator annotator, @NotNull PsiElement @NotNull... elements) {
     PsiFile psiFile = elements[0].getContainingFile();
     return AnnotationSessionImpl.computeWithSession(psiFile, false, annotator, annotationHolder -> {
       for (PsiElement element : elements) {
@@ -353,7 +348,8 @@ public final class CodeInsightTestUtil {
       ReadAction.nonBlocking(() -> {
         DaemonProgressIndicator indicator = new DaemonProgressIndicator();
         ProgressManager.getInstance().runProcess(() -> {
-          HighlightingSessionImpl.runInsideHighlightingSession(psiFile, editor.getColorsScheme(), ProperTextRange.create(psiFile.getTextRange()), false, session -> {
+          // todo ijpl-339 figure out what is the correct context here
+          HighlightingSessionImpl.runInsideHighlightingSession(psiFile, FileViewProviderUtil.getCodeInsightContext(psiFile), editor.getColorsScheme(), ProperTextRange.create(psiFile.getTextRange()), false, session -> {
             pass.doCollectInformation(session);
           });
         }, indicator);

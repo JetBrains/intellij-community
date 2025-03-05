@@ -18,24 +18,21 @@ import java.util.List;
 
 final class PluginDescriptorDomFileSearchScopeProvider implements SearchScopeProvider {
 
-  @Nullable
   @Override
-  public String getDisplayName() {
+  public @Nullable String getDisplayName() {
     return DevKitBundle.message("plugin.xml.scopes.display.name");
   }
 
-  @NotNull
   @Override
-  public List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
+  public @NotNull List<SearchScope> getSearchScopes(@NotNull Project project, @NotNull DataContext dataContext) {
     if (!IntelliJProjectUtil.isIntelliJPlatformProject(project)) return Collections.emptyList();
 
     GlobalSearchScope scope = GlobalSearchScope.filesScope(project, () ->
       DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, GlobalSearchScopesCore.projectProductionScope(project))
     );
     return Collections.singletonList(new DelegatingGlobalSearchScope(scope) {
-      @NotNull
       @Override
-      public String getDisplayName() {
+      public @NotNull String getDisplayName() {
         return DevKitBundle.message("plugin.xml.scopes.production.display.name");
       }
 

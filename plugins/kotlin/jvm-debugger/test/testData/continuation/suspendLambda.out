@@ -7,7 +7,6 @@ Thread stack trace:
 		(terms, terms1)
 	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendLambdaKt$fibonacci$1 (continuation)
 		($result, $this$sequence, step, terms, this)
-CoroutineInfo: -1 coroutine UNKNOWN
 	InlineStackFrame lambda 'with' in 'resumeWith':!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
 		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
 	KotlinStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)

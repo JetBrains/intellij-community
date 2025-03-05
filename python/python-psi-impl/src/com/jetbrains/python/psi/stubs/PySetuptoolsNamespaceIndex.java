@@ -38,9 +38,8 @@ public final class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<Strin
   private static final String NAMESPACE_FILE_SUFFIX = "-nspkg.pth";
 
   private final DataIndexer<String, Void, FileContent> myDataIndexer = new DataIndexer<>() {
-    @NotNull
     @Override
-    public Map<String, Void> map(@NotNull FileContent inputData) {
+    public @NotNull Map<String, Void> map(@NotNull FileContent inputData) {
       final CharSequence content = inputData.getContentAsText();
       final Matcher matcher = RE_NAMESPACE.matcher(content);
       final Map<String, Void> results = new HashMap<>();
@@ -55,27 +54,23 @@ public final class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<Strin
   private final FileBasedIndex.InputFilter myInputFilter =
     new FileNameSuffixInputFilter(NAMESPACE_FILE_SUFFIX, false /* don't ignore case */, BinaryFileTypePolicy.NON_BINARY);
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
@@ -89,8 +84,7 @@ public final class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<Strin
     return 0;
   }
 
-  @NotNull
-  public static Collection<VirtualFile> find(@NotNull String name, @NotNull Project project) {
+  public static @NotNull Collection<VirtualFile> find(@NotNull String name, @NotNull Project project) {
     final GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(project);
     return FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
   }

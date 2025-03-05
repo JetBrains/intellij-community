@@ -34,7 +34,7 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor, Fragme
     setFocusable(false);
     add(myEditor, BorderLayout.CENTER);
     setDescriptor(null);
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEditor);
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toUnscaledGaps(myEditor.getInsets()));
   }

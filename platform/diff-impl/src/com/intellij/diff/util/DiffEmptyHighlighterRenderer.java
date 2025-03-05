@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.openapi.editor.Editor;
@@ -15,7 +15,7 @@ import java.awt.*;
 
 @ApiStatus.Internal
 public class DiffEmptyHighlighterRenderer implements CustomHighlighterRenderer {
-  @NotNull private final TextDiffType myDiffType;
+  private final @NotNull TextDiffType myDiffType;
 
   public DiffEmptyHighlighterRenderer(@NotNull TextDiffType diffType) {
     myDiffType = diffType;

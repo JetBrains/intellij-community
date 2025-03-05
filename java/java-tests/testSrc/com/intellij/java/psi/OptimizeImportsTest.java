@@ -5,9 +5,11 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.unusedImport.MissortedImportsInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.formatting.MockCodeStyleSettingsModifier;
 import com.intellij.ide.scratch.ScratchFileService;
@@ -17,10 +19,12 @@ import com.intellij.lang.LanguageImportStatements;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.JavaImportOptimizer;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiDocumentManager;
@@ -56,6 +60,16 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    boolean preserveModuleImports = javaSettings.isPreserveModuleImports();
+    PackageEntryTable table = javaSettings.IMPORT_LAYOUT_TABLE;
+    Disposer.register(getTestRootDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        javaSettings.setPreserveModuleImports(preserveModuleImports);
+        javaSettings.IMPORT_LAYOUT_TABLE = table;
+      }
+    });
     myFixture.enableInspections(new UnusedDeclarationInspection());
   }
 
@@ -182,6 +196,30 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
+  public void testConflictModuleImportImplicitClassDemandOverModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("package p1; public class List {}");
+      myFixture.addClass("package p1; public class A1 {}");
+      myFixture.addClass("package p1; public class A2 {}");
+      myFixture.addClass("package p1; public class A3 {}");
+      myFixture.addClass("package p1; public class A4 {}");
+      myFixture.addClass("package p1; public class A5 {}");
+      doTest();
+    });
+  }
+
+  public void testConflictModuleImportImplicitClassDemandOverModule2() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("package p1; public class List {}");
+      myFixture.addClass("package p1; public class A1 {}");
+      myFixture.addClass("package p1; public class A2 {}");
+      myFixture.addClass("package p1; public class A3 {}");
+      myFixture.addClass("package p1; public class A4 {}");
+      myFixture.addClass("package p1; public class A5 {}");
+      doTest();
+    });
+  }
+
   public void testConflictStaticImport(){
     myFixture.addClass(
       """
@@ -204,6 +242,34 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
         }
         """);
     doTest();
+  }
+
+  public void testConflictStaticImportWithImplicitClassDemandOverModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass(
+        """
+          package p1;
+          public class A1 {
+            public static void print(Object obj) {}
+            public static void foo() {}
+            public static void foo1() {}
+            public static void foo2() {}
+            public static void foo3() {}
+            public static void foo4() {}
+            public static void foo5() {}
+          }
+          """);
+      myFixture.addClass("""
+                         package java.io;
+                         
+                         public final class IO {
+                           public static void print(Object obj) {}
+                         }
+                         """);
+      doTest();
+
+    });
   }
 
   public void testConflictStaticImportWithImplicitClass(){
@@ -262,7 +328,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                          package one;
                          public interface Super {
                            class Result {}
-                           
+                         
                            Result x();
                          }
                          """);
@@ -346,7 +412,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     }
   }
 
-  public void testNoStubPsiMismatchOnRecordInsideImportList() throws Exception {
+  public void testNoStubPsiMismatchOnRecordInsideImportList() {
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.configureByText("a.java", """
       import java.ut<caret>il.List;
@@ -377,6 +443,45 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
 
     // whatever: main thing it didn't throw
     assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+  }
+
+  public void testOptimizeImportNotOnTheFly() {
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImport() {
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImport2() {
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImportNoIntention() {
+    checkOptimizeImportNoIntention();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImportOnDemand() {
+    checkOptimizeImport();
+  }
+
+  public void testOptimizeImportNotOnTheFlyInvalidImportOnDemandNoIntention() {
+    checkOptimizeImportNoIntention();
+  }
+
+  private void checkOptimizeImport() {
+    myFixture.enableInspections(new MissortedImportsInspection(), new UnusedImportInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+    IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("optimize.imports.fix"));
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  private void checkOptimizeImportNoIntention() {
+    myFixture.enableInspections(new MissortedImportsInspection(), new UnusedImportInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+    IntentionAction intention = myFixture.getAvailableIntention(QuickFixBundle.message("optimize.imports.fix"));
+    assertNull(intention);
   }
 
   public void testRemovingAllUnusedImports() throws Exception {
@@ -448,6 +553,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       settings -> {
         JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
         javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+        javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
         javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
         javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
         javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
@@ -474,6 +580,149 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     });
   }
 
+
+  public void testImportModuleLastWithoutSpace() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package aaa; public class AAA {}");
+      myFixture.addClass("package bbb; public class BBB {}");
+      myFixture.addClass("package ccc; public class CCC {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
+
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
+  public void testImportModuleInTheMiddleWithoutSpace() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package aaa; public class AAA {}");
+      myFixture.addClass("package bbb; public class BBB {}");
+      myFixture.addClass("package ccc; public class CCC {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "aaa", false));
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "bbb", false));
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+
+
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
+  public void testImportModuleFirstWithSpace() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("package aaa; public class AAA {}");
+      myFixture.addClass("package aaa; public class BBB {}");
+      myFixture.addClass("package aaa; public class CCC {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+      javaSettings.setPreserveModuleImports(true);
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+
+      doTest();
+    });
+  }
+
+  public void testImportModuleOverOtherImports() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("package aaa; public class AAA {}");
+      myFixture.addClass("package aaa; public class BBB {}");
+      myFixture.addClass("package aaa; public class CCC {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
+  public void testImportModuleConflictWithPackage() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("package aaa; public class AAA {}");
+      myFixture.addClass("package aaa; public class BBB {}");
+      myFixture.addClass("package aaa; public class CCC {}");
+      myFixture.addClass("package aaa; public class DDD {}");
+      myFixture.addClass("package aaa; public class EEE {}");
+      myFixture.addClass("package aaa; public class List {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
+  public void testImportModuleConflictWithSamePackage() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("package aaa; public class AAA {}");
+      myFixture.addClass("package aaa; public class BBB {}");
+      myFixture.addClass("package aaa; public class CCC {}");
+      myFixture.addClass("package aaa; public class DDD {}");
+      myFixture.addClass("package aaa; public class EEE {}");
+      myFixture.addClass("package aaa; public class List {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
+  public void testImportModuleOnDemandConflictWithSamePackage() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+      myFixture.addClass("package aaa; public class AAA {}");
+      myFixture.addClass("package aaa; public class BBB {}");
+      myFixture.addClass("package aaa; public class CCC {}");
+      myFixture.addClass("package aaa; public class DDD {}");
+      myFixture.addClass("package aaa; public class EEE {}");
+      myFixture.addClass("package aaa; public class List {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
+
+  public void testDoNotInsertImportForClassVisibleByInheritanceWithModuleConflict() {
+    myFixture.addClass("""
+                         package one;
+                         public interface Super {
+                           class List {}
+                         
+                           List x();
+                         }
+                         """);
+    myFixture.addClass("""
+                         package two;
+                         public class List {}
+                         public class One {}
+                         public class Two {}
+                         public class Three {}
+                         public class Four {}
+                         public class Five {}
+                         """);
+    myFixture.addClass("""
+                         package three;
+                         public class List {}
+                         public class Six {}
+                         public class Seven {}
+                         public class Eight {}
+                         public class Nine {}
+                         public class Ten {}
+                         """);
+    doTest();
+  }
   private void doTest() {
     doTest(".java");
   }

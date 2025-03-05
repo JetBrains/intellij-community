@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.config.isCompilerSettingPresent
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtParameter
@@ -68,8 +69,8 @@ internal class ElementAnnotator(
         val ranges = diagnostic.textRanges
         val presentationInfo: AnnotationPresentationInfo = when (factory.severity) {
             Severity.ERROR -> {
-                when (factory) {
-                    in Errors.UNRESOLVED_REFERENCE_DIAGNOSTICS -> {
+                when {
+                    factory in Errors.UNRESOLVED_REFERENCE_DIAGNOSTICS -> {
                         val referenceExpression = element as KtReferenceExpression
                         val reference = referenceExpression.mainReference
                         if (reference is MultiRangeReference) {
@@ -82,13 +83,21 @@ internal class ElementAnnotator(
                         }
                     }
 
-                    Errors.ILLEGAL_ESCAPE -> AnnotationPresentationInfo(
+                    factory == Errors.ILLEGAL_ESCAPE -> AnnotationPresentationInfo(
                         ranges, textAttributes = KotlinHighlightingColors.INVALID_STRING_ESCAPE
                     )
 
-                    Errors.REDECLARATION -> AnnotationPresentationInfo(
+                    factory == Errors.REDECLARATION -> AnnotationPresentationInfo(
                         ranges = listOf(diagnostic.textRanges.first()), nonDefaultMessage = ""
                     )
+
+                    factory == Errors.UNSUPPORTED_FEATURE && diagnostic.unsupportedFeatureOrNull() in UNSUPPORTED_K2_BETA_FEATURES ->
+                        AnnotationPresentationInfo(
+                            ranges, nonDefaultMessage = KotlinBaseFe10HighlightingBundle.message(
+                                "the.feature.0.is.not.supported.in.k1.mode",
+                                diagnostic.unsupportedFeatureOrNull()?.quotedPresentableName().orEmpty(),
+                            )
+                        )
 
                     else -> {
                         AnnotationPresentationInfo(

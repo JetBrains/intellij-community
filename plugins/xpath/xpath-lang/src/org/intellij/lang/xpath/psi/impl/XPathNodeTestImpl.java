@@ -30,8 +30,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
     }
 
     @Override
-    @NotNull
-    public XPathStep getStep() {
+    public @NotNull XPathStep getStep() {
         final XPathStep step = PsiTreeUtil.getParentOfType(this, XPathStep.class);
         assert step != null : unexpectedPsiAssertion();
         return step;
@@ -43,8 +42,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
     }
 
     @Override
-    @Nullable
-    public PrefixedName getQName() {
+    public @Nullable PrefixedName getQName() {
         final ASTNode[] nodes = getNode().getChildren(TokenSet.create(XPathTokenTypes.NCNAME));
         if (nodes.length == 0) {
             final ASTNode node = getNode().findChildByType(XPathTokenTypes.STAR);
@@ -76,8 +74,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
     }
 
     @Override
-    @NotNull
-    public PrincipalType getPrincipalType() {
+    public @NotNull PrincipalType getPrincipalType() {
         final XPathStep step = getStep();
 
         final XPathAxisSpecifier axisSpecifier = step.getAxisSpecifier();
@@ -94,8 +91,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
     }
 
     @Override
-    @Nullable
-    public PsiReference getReference() {
+    public @Nullable PsiReference getReference() {
         final ASTNode name = getNode().findChildByType(XPathTokenTypes.NCNAME);
         if (name != null) {
             return new Reference(this, name);

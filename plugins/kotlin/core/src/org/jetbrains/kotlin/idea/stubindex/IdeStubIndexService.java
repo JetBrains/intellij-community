@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.stubindex;
 
@@ -156,8 +156,7 @@ public class IdeStubIndexService extends StubIndexService {
         }
     }
 
-    @Nullable
-    private static KotlinModifierListStub getModifierListStub(@NotNull KotlinStubWithFqName<?> stub) {
+    private static @Nullable KotlinModifierListStub getModifierListStub(@NotNull KotlinStubWithFqName<?> stub) {
         return stub.findChildStubByType(KtStubElementTypes.MODIFIER_LIST);
     }
 
@@ -295,9 +294,8 @@ public class IdeStubIndexService extends StubIndexService {
         sink.occurrence(KotlinScriptFqnIndex.Helper.getIndexKey(), stub.getFqName().asString());
     }
 
-    @NotNull
     @Override
-    public KotlinFileStub createFileStub(@NotNull KtFile file) {
+    public @NotNull KotlinFileStub createFileStub(@NotNull KtFile file) {
         String packageFqName =file.getPackageFqNameByTree().asString();
         boolean isScript = file.isScriptByTree();
         if (file.hasTopLevelCallables()) {
@@ -331,9 +329,8 @@ public class IdeStubIndexService extends StubIndexService {
         }
     }
 
-    @NotNull
     @Override
-    public KotlinFileStub deserializeFileStub(@NotNull StubInputStream dataStream) throws IOException {
+    public @NotNull KotlinFileStub deserializeFileStub(@NotNull StubInputStream dataStream) throws IOException {
         String packageFqNameAsString = dataStream.readNameString();
         if (packageFqNameAsString == null) {
             throw new IllegalStateException("Can't read package fqname from stream");

@@ -499,7 +499,7 @@ public final class HttpRequests {
 
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
     Application app = ApplicationManager.getApplication();
-    LOG.assertTrue(app == null || app.isUnitTestMode() || app.isHeadlessEnvironment() || !app.isReadAccessAllowed(),
+    LOG.assertTrue(app == null || app.isUnitTestMode() || app.isHeadlessEnvironment() || !app.holdsReadLock(),
                    "Network must not be accessed in EDT or inside read action, because this may take considerable amount of time, " +
                    "and write actions will be blocked during that time so user won't be able to perform tasks in the IDE");
 

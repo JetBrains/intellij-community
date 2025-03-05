@@ -78,7 +78,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
   companion object {
 
     private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradleHighlightingPerformanceTest") { gradleVersion ->
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleHighlightingPerformanceTest")
       }
       withBuildFile(gradleVersion) {
@@ -103,7 +103,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
     }
 
     private val COMPLETION_FIXTURE = GradleTestFixtureBuilder.create("GradleCompletionPerformanceTest") { gradleVersion ->
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleCompletionPerformanceTest")
       }
       withBuildFile(gradleVersion) {

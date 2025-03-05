@@ -20,8 +20,8 @@ import javax.swing.*;
 
 @ApiStatus.Internal
 public final class ProxyUndoRedoAction extends DumbAwareAction {
-  @NotNull private final UndoManager myUndoManager;
-  @NotNull private final TextEditor myEditor;
+  private final @NotNull UndoManager myUndoManager;
+  private final @NotNull TextEditor myEditor;
   private final boolean myUndo;
 
   private ProxyUndoRedoAction(@NotNull UndoManager manager, @NotNull TextEditor editor, boolean undo) {

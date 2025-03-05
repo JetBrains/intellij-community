@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.application.options.CodeStyle;
@@ -36,7 +36,7 @@ import java.io.File;
 import java.util.List;
 
 public final class CreateEditorConfigAction extends AnAction implements DumbAware, NewFileActionWithCategory {
-  private final static Logger LOG = Logger.getInstance(CreateEditorConfigAction.class);
+  private static final Logger LOG = Logger.getInstance(CreateEditorConfigAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -83,8 +83,7 @@ public final class CreateEditorConfigAction extends AnAction implements DumbAwar
     return "EditorConfig";
   }
 
-  @Nullable
-  private static PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
+  private static @Nullable PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       return PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -130,25 +129,22 @@ public final class CreateEditorConfigAction extends AnAction implements DumbAwar
     return true;
   }
 
-  @Nullable
-  private static IdeView getIdeView(@NotNull AnActionEvent e) {
+  private static @Nullable IdeView getIdeView(@NotNull AnActionEvent e) {
     return e.getData(LangDataKeys.IDE_VIEW);
   }
 
-  @NotNull
-  private static File getOutputFile(@NotNull VirtualFile dir) {
+  private static @NotNull File getOutputFile(@NotNull VirtualFile dir) {
     return new File(dir.getPath() + File.separator + ".editorconfig");
   }
 
-  @Nullable
-  private VirtualFile export(@NotNull VirtualFile outputDir,
-                             @NotNull File outputFile,
-                             @NotNull Project project,
-                             @NotNull CodeStyleSettings settings,
-                             boolean isRoot,
-                             boolean commentOutProperties,
-                             @NotNull List<Language> languages,
-                             EditorConfigPropertyKind @NotNull ... propertyKinds) {
+  private @Nullable VirtualFile export(@NotNull VirtualFile outputDir,
+                                       @NotNull File outputFile,
+                                       @NotNull Project project,
+                                       @NotNull CodeStyleSettings settings,
+                                       boolean isRoot,
+                                       boolean commentOutProperties,
+                                       @NotNull List<Language> languages,
+                                       EditorConfigPropertyKind @NotNull ... propertyKinds) {
     try {
       VirtualFile target = outputDir.createChildData(this, outputFile.getName());
       try (EditorConfigSettingsWriter settingsWriter =

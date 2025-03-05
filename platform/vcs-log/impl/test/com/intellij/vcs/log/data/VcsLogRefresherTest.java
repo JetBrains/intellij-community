@@ -19,6 +19,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -243,6 +244,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     assertOrderedEquals(convertedActualLog, expectedLog);
   }
 
+  @Unmodifiable
   private @NotNull List<TimedVcsCommit> convert(@NotNull List<? extends GraphCommit<Integer>> actualLog) {
     return ContainerUtil.map(actualLog, commit -> {
       Function<Integer, Hash> convertor = integer -> myLogData.getCommitId(integer).getHash();

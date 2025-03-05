@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun f(n: Int): Int = n
 fun Int.invoke() = this + 1
 

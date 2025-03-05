@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
@@ -11,10 +11,10 @@ import org.jetbrains.annotations.Nullable;
  * A model which represents conditional
  */
 public class ConditionalModel {
-  @NotNull private final PsiExpression myCondition;
-  @NotNull private final PsiExpression myThenExpression;
-  @NotNull private final PsiExpression myElseExpression;
-  @NotNull private final PsiType myType;
+  private final @NotNull PsiExpression myCondition;
+  private final @NotNull PsiExpression myThenExpression;
+  private final @NotNull PsiExpression myElseExpression;
+  private final @NotNull PsiType myType;
 
   ConditionalModel(@NotNull PsiExpression condition,
                           @NotNull PsiExpression thenExpression,
@@ -31,8 +31,7 @@ public class ConditionalModel {
    *
    * @return condition
    */
-  @NotNull
-  public PsiExpression getCondition() {
+  public @NotNull PsiExpression getCondition() {
     return myCondition;
   }
 
@@ -41,8 +40,7 @@ public class ConditionalModel {
    *
    * @return then expression
    */
-  @NotNull
-  public PsiExpression getThenExpression() {
+  public @NotNull PsiExpression getThenExpression() {
     return myThenExpression;
   }
 
@@ -51,8 +49,7 @@ public class ConditionalModel {
    *
    * @return else expression
    */
-  @NotNull
-  public PsiExpression getElseExpression() {
+  public @NotNull PsiExpression getElseExpression() {
     return myElseExpression;
   }
 
@@ -65,8 +62,7 @@ public class ConditionalModel {
    * @return result type
    * @see ConditionalModel#getType(PsiExpression, PsiExpression, PsiExpression)
    */
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return myType;
   }
 
@@ -77,8 +73,7 @@ public class ConditionalModel {
    * @param conditional conditional expression
    * @return null if conditional can't be converted, model otherwise
    */
-  @Nullable
-  public static ConditionalModel from(@NotNull PsiConditionalExpression conditional) {
+  public static @Nullable ConditionalModel from(@NotNull PsiConditionalExpression conditional) {
     PsiExpression condition = PsiUtil.skipParenthesizedExprDown(conditional.getCondition());
     if (condition == null) return null;
     PsiExpression thenExpression = conditional.getThenExpression();
@@ -90,8 +85,7 @@ public class ConditionalModel {
     return new ConditionalModel(condition, thenExpression, elseExpression, type);
   }
 
-  @Nullable
-  static PsiType getType(@NotNull PsiExpression condition,
+  static @Nullable PsiType getType(@NotNull PsiExpression condition,
                                    @NotNull PsiExpression thenExpression,
                                    @NotNull PsiExpression elseExpression) {
     final PsiType thenType = thenExpression.getType();

@@ -2,7 +2,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -131,7 +131,7 @@ public final class DependencyConfigurable implements Configurable, Configurable.
 
     validationManager.setSkipImportStatements(mySkipImports.isSelected());
 
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(myProject).restart("DependencyConfigurable.apply");
   }
 
   private void stopTableEditing() {

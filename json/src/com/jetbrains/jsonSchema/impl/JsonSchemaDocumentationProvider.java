@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.ide.impl.TrustedProjects;
@@ -143,7 +143,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
                                                                 @Nullable String htmlDescription,
                                                                 boolean deprecated,
                                                                 boolean preferShort) {
-    if (position.size() == 0) return htmlDescription;
+    if (position.isEmpty()) return htmlDescription;
 
     String name = position.getLastName();
     if (name == null) return htmlDescription;

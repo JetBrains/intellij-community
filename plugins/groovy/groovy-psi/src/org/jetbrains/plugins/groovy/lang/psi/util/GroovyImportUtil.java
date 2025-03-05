@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,15 +22,15 @@ import java.util.Set;
 import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
 
 public final class GroovyImportUtil {
-  public static void processFile(@NotNull final GroovyFile file,
-                                 @NotNull final Set<? super String> importedClasses,
-                                 @NotNull final Set<? super String> staticallyImportedMembers,
-                                 @NotNull final Set<? super GrImportStatement> usedImports,
-                                 @NotNull final Set<? super GrImportStatement> unresolvedOnDemandImports,
-                                 @NotNull final Set<? super String> implicitlyImported,
-                                 @NotNull final Set<? super String> innerClasses,
-                                 @NotNull final Map<String, String> aliased,
-                                 @NotNull final Map<String, String> annotations) {
+  public static void processFile(final @NotNull GroovyFile file,
+                                 final @NotNull Set<? super String> importedClasses,
+                                 final @NotNull Set<? super String> staticallyImportedMembers,
+                                 final @NotNull Set<? super GrImportStatement> usedImports,
+                                 final @NotNull Set<? super GrImportStatement> unresolvedOnDemandImports,
+                                 final @NotNull Set<? super String> implicitlyImported,
+                                 final @NotNull Set<? super String> innerClasses,
+                                 final @NotNull Map<String, String> aliased,
+                                 final @NotNull Map<String, String> annotations) {
     final Set<String> unresolvedReferenceNames = new LinkedHashSet<>();
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -178,8 +178,7 @@ public final class GroovyImportUtil {
     usedImports.removeAll(unusedImports(file));
   }
 
-  @Nullable
-  private static String getTargetQualifiedName(PsiElement element) {
+  private static @Nullable String getTargetQualifiedName(PsiElement element) {
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getQualifiedName();
     }

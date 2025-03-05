@@ -78,6 +78,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
         }
       }
     });
+    myButton.getAccessibleContext().setAccessibleDescription(OptionsBundle.message("tag.button.accessible.description"));
     add(myButton, JLayeredPane.DEFAULT_LAYER);
     myCloseButton = new InplaceButton(new IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey),
                                       a -> remove(action, null));
@@ -86,6 +87,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
       .setTitle(OptionsBundle.message("tag.button.tooltip"))
       .setShortcut(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), null))
       .installOn(myCloseButton);
+    myCloseButton.getAccessibleContext().setAccessibleName(OptionsBundle.message("tag.button.tooltip"));
     add(myCloseButton, JLayeredPane.POPUP_LAYER);
 
     layoutButtons();

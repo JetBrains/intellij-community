@@ -77,14 +77,12 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
   }
 
   @Override
-  @Nullable
-  public PsiElement getLBrace() {
+  public @Nullable PsiElement getLBrace() {
     return findChildByType(GroovyTokenTypes.mLCURLY);
   }
 
   @Override
-  @Nullable
-  public PsiElement getRBrace() {
+  public @Nullable PsiElement getRBrace() {
     return findChildByType(GroovyTokenTypes.mRCURLY);
   }
 
@@ -165,8 +163,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     }
 
     @Override
-    @Nullable
-    public GrEnumConstantList getEnumConstantList() {
+    public @Nullable GrEnumConstantList getEnumConstantList() {
       return getStubOrPsiChild(GroovyEmptyStubElementTypes.ENUM_CONSTANTS);
     }
 

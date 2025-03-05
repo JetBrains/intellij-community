@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementExtendableSettings;
@@ -22,10 +22,10 @@ import java.util.*;
  * @author Svetlana.Zemlyanskaya
  */
 public final class StdArrangementExtendableSettings extends StdArrangementSettings implements ArrangementExtendableSettings {
-  @NotNull private final Set<StdArrangementRuleAliasToken> myRulesAliases = new HashSet<>();
+  private final @NotNull Set<StdArrangementRuleAliasToken> myRulesAliases = new HashSet<>();
 
   // cached values
-  @NotNull private final List<ArrangementSectionRule> myExtendedSectionRules = Collections.synchronizedList(new ArrayList<>());
+  private final @NotNull List<ArrangementSectionRule> myExtendedSectionRules = Collections.synchronizedList(new ArrayList<>());
 
   public StdArrangementExtendableSettings() {
     super();
@@ -84,9 +84,9 @@ public final class StdArrangementExtendableSettings extends StdArrangementSettin
     return myExtendedSectionRules;
   }
 
-  public void appendExpandedRules(@NotNull final StdArrangementMatchRule rule,
-                                  @NotNull final List<? super StdArrangementMatchRule> rules,
-                                  @NotNull final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition) {
+  public void appendExpandedRules(final @NotNull StdArrangementMatchRule rule,
+                                  final @NotNull List<? super StdArrangementMatchRule> rules,
+                                  final @NotNull Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition) {
     final List<StdArrangementMatchRule> sequence = getRuleSequence(rule, tokenIdToDefinition);
     if (sequence.isEmpty()) {
       rules.add(rule);
@@ -101,9 +101,8 @@ public final class StdArrangementExtendableSettings extends StdArrangementSettin
     }
   }
 
-  @NotNull
-  private List<StdArrangementMatchRule> getRuleSequence(@NotNull final StdArrangementMatchRule rule,
-                                                        @NotNull final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition) {
+  private @NotNull List<StdArrangementMatchRule> getRuleSequence(final @NotNull StdArrangementMatchRule rule,
+                                                                 final @NotNull Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition) {
     final List<StdArrangementMatchRule> seqRule = new SmartList<>();
     rule.getMatcher().getCondition().invite(new ArrangementMatchConditionVisitor() {
       @Override
@@ -127,8 +126,7 @@ public final class StdArrangementExtendableSettings extends StdArrangementSettin
     return seqRule;
   }
 
-  @NotNull
-  private static ArrangementCompositeMatchCondition removeAliasRuleToken(final ArrangementMatchCondition original) {
+  private static @NotNull ArrangementCompositeMatchCondition removeAliasRuleToken(final ArrangementMatchCondition original) {
     final ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition();
     original.invite(new ArrangementMatchConditionVisitor() {
       @Override
@@ -155,9 +153,8 @@ public final class StdArrangementExtendableSettings extends StdArrangementSettin
     myExtendedSectionRules.clear();
   }
 
-  @NotNull
   @Override
-  public List<? extends ArrangementMatchRule> getRulesSortedByPriority() {
+  public @NotNull List<? extends ArrangementMatchRule> getRulesSortedByPriority() {
     synchronized (myExtendedSectionRules) {
       if (myRulesByPriority.isEmpty()) {
         for (ArrangementSectionRule rule : getExtendedSectionRules()) {
@@ -169,9 +166,8 @@ public final class StdArrangementExtendableSettings extends StdArrangementSettin
     return myRulesByPriority;
   }
 
-  @NotNull
   @Override
-  public StdArrangementExtendableSettings clone() {
+  public @NotNull StdArrangementExtendableSettings clone() {
     return new StdArrangementExtendableSettings(cloneGroupings(), cloneSectionRules(), cloneTokenDefinitions());
   }
 

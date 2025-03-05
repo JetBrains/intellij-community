@@ -3,8 +3,9 @@ package ru.adelf.idea.dotenv.psi;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
-import ru.adelf.idea.dotenv.*;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.DotEnvFileType;
+import ru.adelf.idea.dotenv.DotEnvLanguage;
 
 import javax.swing.*;
 
@@ -13,9 +14,8 @@ public class DotEnvFile extends PsiFileBase {
         super(viewProvider, DotEnvLanguage.INSTANCE);
     }
 
-    @NotNull
     @Override
-    public FileType getFileType() {
+    public @NotNull FileType getFileType() {
         return DotEnvFileType.INSTANCE;
     }
 

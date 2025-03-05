@@ -1,4 +1,4 @@
-// "Convert to local" "false"
+// "Convert to local variable" "false"
 class A {
     void foo(int <caret>i) {
         i = 3;

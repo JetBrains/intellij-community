@@ -17,24 +17,28 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
 @Internal
 fun <X> Flow<X>.throttle(timeMs: Long): Flow<X> {
   return throttle(timeMs)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
 @Internal
 suspend fun <X> SharedFlow<X>.collectLatestUndispatched(action: suspend (value: X) -> Unit) {
   collectLatestUndispatched(action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
 @Internal
 fun <T, R> Flow<T>.zipWithNext(transform: suspend (a: T, b: T) -> R): Flow<R> {
   return zipWithNext(transform)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
 @Internal
 fun <T> Flow<T>.zipWithNext(): Flow<Pair<T, T>> {
@@ -47,7 +51,7 @@ fun <T> Flow<T>.debounceBatch(duration: Duration): Flow<List<T>> {
   return debounceBatch(duration)
 }
 
-@ApiStatus.Experimental
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Moved to com.intellij.platform.util.coroutines.flow", level = DeprecationLevel.ERROR)
 @Internal
 fun <T, M> StateFlow<T>.mapStateIn(

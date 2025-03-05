@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -17,9 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -273,7 +271,7 @@ public final class GlobalSearchScopesCore {
       return myWithSubdirectories ? contains(other.myDirectory) : equals(other);
     }
 
-    private static @NotNull Set<VirtualFile> union(boolean addDir1, @NotNull VirtualFile dir1, boolean addDir2, @NotNull VirtualFile dir2) {
+    private static @Unmodifiable @NotNull Set<VirtualFile> union(boolean addDir1, @NotNull VirtualFile dir1, boolean addDir2, @NotNull VirtualFile dir2) {
       if (addDir1 && addDir2) return ContainerUtil.newHashSet(dir1, dir2);
       if (addDir1) return Collections.singleton(dir1);
       if (addDir2) return Collections.singleton(dir2);
@@ -286,7 +284,8 @@ public final class GlobalSearchScopesCore {
     }
   }
 
-  static final class DirectoriesScope extends GlobalSearchScope {
+  @ApiStatus.Internal
+  public static final class DirectoriesScope extends GlobalSearchScope {
     private final Set<? extends VirtualFile> myDirectories;
     private final Set<? extends VirtualFile> myDirectoriesWithSubdirectories;
 

@@ -20,7 +20,7 @@ import java.awt.*;
 import java.util.List;
 
 
-abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
+public abstract class ExpandMenuCommand extends AbstractCallbackBasedCommand {
   public ExpandMenuCommand(@NotNull String text, int line) {
     super(text, line, true);
   }
@@ -42,16 +42,14 @@ abstract public class ExpandMenuCommand extends AbstractCallbackBasedCommand {
         ActionPlaces.isPopupPlace(getPlace()) ? ActionUiKind.POPUP : ActionUiKind.NONE);
       groupSpan.end();
       return actions;
-    }).withRoots(mainMenu.getChildren(null)).traverse().size();
+    }).withRoots(mainMenu).traverse().size();
     totalSpan.end();
     callback.setDone();
   }
 
-  abstract protected  String getSpanName();
+  protected abstract String getSpanName();
 
-  @NotNull
-  abstract protected String getGroupId();
+  protected abstract @NotNull String getGroupId();
 
-  @NotNull
-  abstract protected String getPlace();
+  protected abstract @NotNull String getPlace();
 }

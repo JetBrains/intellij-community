@@ -85,8 +85,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     myLowercaseFirstLetter = lowercaseFirstLetter;
   }
 
-  @NotNull
-  protected MockApplication getApplication() {
+  protected @NotNull MockApplication getApplication() {
     return app;
   }
 
@@ -152,9 +151,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
         return language.getID();
       }
 
-      @NotNull
       @Override
-      public ParserDefinition getInstance() {
+      public @NotNull ParserDefinition getInstance() {
         return definition;
       }
     });
@@ -216,9 +214,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
   }
 
-  @NotNull
   // easy debug of not disposed extension
-  protected PluginDescriptor getPluginDescriptor() {
+  protected @NotNull PluginDescriptor getPluginDescriptor() {
     PluginDescriptor pluginDescriptor = this.pluginDescriptor;
     if (pluginDescriptor == null) {
       pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId(getClass().getName() + "." + getName()), ParsingTestCase.class.getClassLoader());
@@ -227,8 +224,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     return pluginDescriptor;
   }
 
-  @NotNull
-  public MockProjectEx getProject() {
+  public @NotNull MockProjectEx getProject() {
     return project;
   }
 
@@ -249,8 +245,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     return PathManagerEx.getTestDataPath();
   }
 
-  @NotNull
-  public final String getTestName() {
+  public final @NotNull String getTestName() {
     return getTestName(myLowercaseFirstLetter);
   }
 

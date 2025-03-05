@@ -18,9 +18,9 @@ import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.parser.ParserDelegator
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @Service
-class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
+internal class PythonSimpleRepositoryCache : PythonPackageCache<PyPackageRepository> {
 
   @Volatile
   private var cache: Map<PyPackageRepository, List<String>> = emptyMap()

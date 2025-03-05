@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ public enum NodeKind {
   // used in ConflictVersion when node is missing
   @XmlEnumValue("none") NONE("none");
 
-  @NotNull private static final Map<String, NodeKind> ourAllNodeKinds = new HashMap<>();
+  private static final @NotNull Map<String, NodeKind> ourAllNodeKinds = new HashMap<>();
 
   static {
     for (NodeKind kind : NodeKind.values()) {
@@ -27,7 +27,7 @@ public enum NodeKind {
     ourAllNodeKinds.put("", UNKNOWN);
   }
 
-  @NotNull private final String myKey;
+  private final @NotNull String myKey;
 
   NodeKind(@NotNull String key) {
     myKey = key;
@@ -54,8 +54,7 @@ public enum NodeKind {
     ourAllNodeKinds.put(kind.myKey, kind);
   }
 
-  @NotNull
-  public static NodeKind from(@NotNull String nodeKindName) {
+  public static @NotNull NodeKind from(@NotNull String nodeKindName) {
     NodeKind result = ourAllNodeKinds.get(nodeKindName);
 
     if (result == null) {
@@ -65,8 +64,7 @@ public enum NodeKind {
     return result;
   }
 
-  @NotNull
-  public static NodeKind from(boolean isDirectory) {
+  public static @NotNull NodeKind from(boolean isDirectory) {
     return isDirectory ? DIR : FILE;
   }
 }

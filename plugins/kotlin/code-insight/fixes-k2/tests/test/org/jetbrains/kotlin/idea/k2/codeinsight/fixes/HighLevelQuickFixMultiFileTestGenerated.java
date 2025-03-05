@@ -122,6 +122,25 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/callablesDeclaredInClasses")
+        public static class CallablesDeclaredInClasses extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("noImportOfPartiallyPrivateCallables.test")
+            public void testNoImportOfPartiallyPrivateCallables() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/callablesDeclaredInClasses/noImportOfPartiallyPrivateCallables.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/innerClass")
         public static class InnerClass extends AbstractHighLevelQuickFixMultiFileTest {
             @java.lang.Override
@@ -139,14 +158,29 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInCallableReference.test");
             }
 
+            @TestMetadata("innerClassInCallableReference_fromJava.test")
+            public void testInnerClassInCallableReference_fromJava() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInCallableReference_fromJava.test");
+            }
+
             @TestMetadata("innerClassInExpression.test")
             public void testInnerClassInExpression() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInExpression.test");
             }
 
+            @TestMetadata("innerClassInExpression_fromJava.test")
+            public void testInnerClassInExpression_fromJava() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInExpression_fromJava.test");
+            }
+
             @TestMetadata("innerClassInTypeReference.test")
             public void testInnerClassInTypeReference() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInTypeReference.test");
+            }
+
+            @TestMetadata("innerClassInTypeReference_fromJava.test")
+            public void testInnerClassInTypeReference_fromJava() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInTypeReference_fromJava.test");
             }
         }
 
@@ -390,6 +424,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/delegateNoOperator.test");
             }
 
+            @TestMetadata("delegateToBinaryExpression.test")
+            public void testDelegateToBinaryExpression() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/delegateToBinaryExpression.test");
+            }
+
+            @TestMetadata("delegateToStringLiteral.test")
+            public void testDelegateToStringLiteral() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/delegateToStringLiteral.test");
+            }
+
             @TestMetadata("divOperator.before.Main.kt")
             public void testDivOperator() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/divOperator.before.Main.kt");
@@ -403,6 +447,31 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("dslMarkersOnReceiver.before.Main.kt")
             public void testDslMarkersOnReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/dslMarkersOnReceiver.before.Main.kt");
+            }
+
+            @TestMetadata("enumEntries_CallableReference.test")
+            public void testEnumEntries_CallableReference() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/enumEntries_CallableReference.test");
+            }
+
+            @TestMetadata("enumEntries_ExplicitReceiver.test")
+            public void testEnumEntries_ExplicitReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/enumEntries_ExplicitReceiver.test");
+            }
+
+            @TestMetadata("enumEntries_FromJava.test")
+            public void testEnumEntries_FromJava() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/enumEntries_FromJava.test");
+            }
+
+            @TestMetadata("enumEntries_FromJava_private.test")
+            public void testEnumEntries_FromJava_private() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/enumEntries_FromJava_private.test");
+            }
+
+            @TestMetadata("enumEntries_Private.test")
+            public void testEnumEntries_Private() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/enumEntries_Private.test");
             }
 
             @TestMetadata("extensionErroneousReceiver.test")
@@ -653,6 +722,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("infixCall2.before.Main.kt")
             public void testInfixCall2() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/infixCall2.before.Main.kt");
+            }
+
+            @TestMetadata("infixCallK1.before.Main.kt")
+            public void testInfixCallK1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/infixCallK1.before.Main.kt");
             }
 
             @TestMetadata("invokeExtension.test")
@@ -1110,6 +1184,143 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         @TestMetadata("wrongTypeMultiple.before.Main.kt")
         public void testWrongTypeMultiple() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/wrongTypeMultiple.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports")
+    public static class Imports extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("addImportForCompanionObject.before.Main.kt")
+        public void testAddImportForCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportForCompanionObject.before.Main.kt");
+        }
+
+        @TestMetadata("addImportForCompanionObject2.before.Main.kt")
+        public void testAddImportForCompanionObject2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportForCompanionObject2.before.Main.kt");
+        }
+
+        @TestMetadata("addImportForOperator.before.Main.kt")
+        public void testAddImportForOperator() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportForOperator.before.Main.kt");
+        }
+
+        @TestMetadata("addImportFromSamePackage.before.Main.kt")
+        public void testAddImportFromSamePackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage.before.Main.kt");
+        }
+
+        @TestMetadata("addImportFromSamePackage2.before.Main.kt")
+        public void testAddImportFromSamePackage2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage2.before.Main.kt");
+        }
+
+        @TestMetadata("addImportFromSamePackage3.before.Main.kt")
+        public void testAddImportFromSamePackage3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage3.before.Main.kt");
+        }
+
+        @TestMetadata("addImports.before.Main.kt")
+        public void testAddImports() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImports.before.Main.kt");
+        }
+
+        @TestMetadata("addImportsSimple.before.Main.kt")
+        public void testAddImportsSimple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportsSimple.before.Main.kt");
+        }
+
+        @TestMetadata("addImportsWithSameName.before.Main.kt")
+        public void testAddImportsWithSameName() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/addImportsWithSameName.before.Main.kt");
+        }
+
+        @TestMetadata("changeImports.before.Main.kt")
+        public void testChangeImports() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/changeImports.before.Main.kt");
+        }
+
+        @TestMetadata("rootPackage.before.Main.kt")
+        public void testRootPackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/rootPackage.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject")
+    public static class WholeProject extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotation.before.Main.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/annotation.before.Main.kt");
+        }
+
+        @TestMetadata("classUsage.before.Main.kt")
+        public void testClassUsage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/classUsage.before.Main.kt");
+        }
+
+        @TestMetadata("noParenthesesAnnotation.before.Main.kt")
+        public void testNoParenthesesAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/noParenthesesAnnotation.before.Main.kt");
+        }
+
+        @TestMetadata("superTypeCall.before.Main.kt")
+        public void testSuperTypeCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/wholeProject/superTypeCall.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor")
+    public static class OverriddenJavaAccessor extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("getterWithDifferentType.test")
+        public void testGetterWithDifferentType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/getterWithDifferentType.test");
+        }
+
+        @TestMetadata("notAGetterSignature.test")
+        public void testNotAGetterSignature() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/notAGetterSignature.test");
+        }
+
+        @TestMetadata("nothingToOverride.test")
+        public void testNothingToOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/nothingToOverride.test");
+        }
+
+        @TestMetadata("simpleGetter.test")
+        public void testSimpleGetter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/simpleGetter.test");
         }
     }
 }

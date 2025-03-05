@@ -39,6 +39,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.FocusEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,10 +70,12 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
   private final Map<Object, AbstractViewManager.BuildInfo> myBuildsMap;
   private final Map<AbstractViewManager.BuildInfo, BuildView> myViewMap;
   private final AbstractViewManager myViewManager;
+  private final FocusWatcher myFocusWatcher;
   private volatile Content myContent;
   private volatile DefaultActionGroup myToolbarActions;
   private volatile boolean myDisposed;
   private BuildView myActiveView;
+  private boolean myFocused = false;
 
   public MultipleBuildsView(Project project,
                             BuildContentManager buildContentManager,
@@ -79,6 +83,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     myProject = project;
     myBuildContentManager = buildContentManager;
     myViewManager = viewManager;
+    myFocusWatcher = new FocusWatcher();
     isInitializeStarted = new AtomicBoolean();
     myPostponedRunnables = ContainerUtil.createConcurrentList();
     threeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, 0.25f);
@@ -119,6 +124,9 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
   public void dispose() {
     myDisposed = true;
     myProgressWatcher.stopWatching();
+    SwingUtilities.invokeLater(() -> {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myFocusWatcher);
+    });
   }
 
   public Content getContent() {
@@ -256,6 +264,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       if (isInitializeStarted.compareAndSet(false, true)) {
         EdtExecutorService.getInstance().execute(() -> {
           if (myDisposed) return;
+          Toolkit.getDefaultToolkit().addAWTEventListener(myFocusWatcher, AWTEvent.FOCUS_EVENT_MASK);
           myBuildsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
           myBuildsList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -330,6 +339,12 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       myViewManager.configureToolbar(myToolbarActions, this, view);
       viewComponent.setVisible(true);
       viewComponent.repaint();
+      if (myFocused) {
+        var focusedComponent = view.getPreferredFocusableComponent();
+        if (focusedComponent != null) {
+          focusedComponent.requestFocusInWindow();
+        }
+      }
     }
   }
 
@@ -515,6 +530,15 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     public void stopWatching() {
       isStopped = true;
       refreshAlarm.cancel();
+    }
+  }
+
+  private class FocusWatcher implements AWTEventListener {
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      if (event instanceof FocusEvent focusEvent && event.getID() == FocusEvent.FOCUS_GAINED) {
+        myFocused = SwingUtilities.isDescendingFrom(focusEvent.getComponent(), myContent.getComponent());
+      }
     }
   }
 }

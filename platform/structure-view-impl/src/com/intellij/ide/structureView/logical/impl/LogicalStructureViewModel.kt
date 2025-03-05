@@ -3,6 +3,7 @@ package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.structureView.StructureViewEventsCollector
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
@@ -14,7 +15,9 @@ import com.intellij.ide.structureView.logical.PropertyElementProvider
 import com.intellij.ide.structureView.logical.model.LogicalContainerPresentationProvider
 import com.intellij.ide.structureView.logical.model.LogicalModelPresentationProvider
 import com.intellij.ide.structureView.logical.model.ExtendedLogicalObject
+import com.intellij.ide.structureView.logical.model.LogicalContainer
 import com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+import com.intellij.ide.structureView.logical.model.ProvidedLogicalContainer
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
@@ -52,7 +55,11 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
 
   override fun handleClick(element: StructureViewTreeElement, fragmentIndex: Int): Boolean {
     val model = getModel(element) ?: return false
-    return LogicalModelPresentationProvider.getForObject(model)?.handleClick(model, fragmentIndex) ?: false
+    val handled = LogicalModelPresentationProvider.getForObject(model)?.handleClick(model, fragmentIndex) ?: false
+    if (handled) {
+      StructureViewEventsCollector.logCustomClickHandled(model::class.java)
+    }
+    return handled
   }
 
   private fun getModel(element: StructureViewTreeElement): Any? {
@@ -95,42 +102,46 @@ private class ElementsBuilder {
 
   private fun getChildrenNodes(assembledModel: LogicalStructureAssembledModel<*>): Collection<StructureViewTreeElement> {
     if (hasSameModelParent(assembledModel)) return emptyList()
-    val childrenGrouped = assembledModel.getChildrenGrouped()
-    if (childrenGrouped.isEmpty()) {
-      return assembledModel.getChildren().map { createViewTreeElement(it) }
-    }
     val result = mutableListOf<StructureViewTreeElement>()
-    for (pair in childrenGrouped) {
-      val groupingObject = pair.first
-      val childrenProvider = pair.second
-      //if (children.isEmpty()) continue
+    for (child in assembledModel.getChildren()) {
+      val logicalModel = child.model
+      if (logicalModel !is LogicalContainer<*>) {
+        result.add(createViewTreeElement(child))
+        continue
+      }
+      if (logicalModel !is ProvidedLogicalContainer<*>) {
+        result.add(LogicalGroupStructureElement(assembledModel, logicalModel) { child.getChildren() })
+        continue
+      }
 
-      if (groupingObject is PropertyElementProvider<*, *>) {
-        for (child in childrenProvider()) {
-          val psiElement: PsiElement? = getPsiElement(child.model)
+      val provider = logicalModel.provider
+      if (provider is ContainerElementsProvider<*, *>
+          && LogicalContainerPresentationProvider.getForObject(provider)?.isFlatElements(logicalModel) == true) {
+        for (subChild in child.getChildren()) {
+          result.add(createViewTreeElement(subChild))
+        }
+      }
+      else if (provider is PropertyElementProvider<*, *>) {
+        for (subChild in child.getChildren()) {
+          val psiElement: PsiElement? = getPsiElement(subChild.model)
           if (psiElement != null) {
-            result.add(PropertyPsiElementStructureElement(groupingObject, child, psiElement))
+            result.add(PropertyPsiElementStructureElement(provider, subChild, psiElement))
           }
           else {
-            result.add(PropertyStructureElement(groupingObject, child))
+            result.add(PropertyStructureElement(provider, subChild))
           }
         }
       }
-      else if (groupingObject is ContainerElementsProvider<*, *>
-               && LogicalContainerPresentationProvider.getForObject(groupingObject)?.isFlatElements(assembledModel.model) == true) {
-        for (child in childrenProvider()) {
-          result.add(createViewTreeElement(child))
-        }
-      }
-      else if (groupingObject is ExternalElementsProvider<*, *>) {
+      else if (provider is ExternalElementsProvider<*, *>) {
         val groupElement = groupElements.getOrPut(assembledModel) {
-          ConcurrentHashMap(mapOf(groupingObject to LogicalGroupStructureElement (assembledModel, groupingObject, childrenProvider)))
-        }.getOrPut(groupingObject) {
-          LogicalGroupStructureElement(assembledModel, groupingObject, childrenProvider)
+          ConcurrentHashMap(mapOf(provider to LogicalGroupStructureElement (assembledModel, provider) { child.getChildren() } ))
+        }.getOrPut(provider) {
+          LogicalGroupStructureElement(assembledModel, provider) { child.getChildren() }
         }
         result.add(groupElement)
-      } else {
-        result.add(LogicalGroupStructureElement(assembledModel, groupingObject, childrenProvider))
+      }
+      else {
+        result.add(LogicalGroupStructureElement(assembledModel, provider) { child.getChildren() })
       }
 
     }
@@ -181,8 +192,8 @@ private class ElementsBuilder {
     while (parentTmp != null) {
       val first = parentTmp.model
       val second = assembledModel.model
-      if (first is ExtendedLogicalObject && first.logicalEquals(second)
-          || second is ExtendedLogicalObject && second.logicalEquals(first)
+      if (first is ExtendedLogicalObject && first.isTheSameParent(second)
+          || second is ExtendedLogicalObject && second.isTheSameParent(first)
           || first == second) return true
       parentTmp = parentTmp.parent
     }
@@ -206,6 +217,11 @@ private class ElementsBuilder {
     override fun isAllowExtensions(): Boolean = false
 
     override fun getLogicalAssembledModel() = assembledModel
+
+    override fun navigate(requestFocus: Boolean) {
+      StructureViewEventsCollector.logNavigate(assembledModel.model!!::class.java)
+      super<PsiTreeElementBase>.navigate(requestFocus)
+    }
 
     override fun equals(other: Any?): Boolean {
       if (other !is PsiElementStructureElement<*>) return false

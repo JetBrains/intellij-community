@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -31,8 +31,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   }
 
   @Override
-  @NotNull
-  public Collection<StructureViewTreeElement> getChildrenBase() {
+  public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     final List<StructureViewTreeElement> emptyResult = Collections.emptyList();
     final PsiMethod element = getElement();
     if (element == null || element instanceof SyntheticElement || element instanceof LightElement) return emptyResult;
@@ -110,9 +109,8 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     return getElement();
   }
 
-  @NotNull
   @Override
-  public String getAlphaSortKey() {
+  public @NotNull String getAlphaSortKey() {
     final PsiMethod method = getElement();
     if (method != null) {
       return method.getName() + " " + StringUtil.join(method.getParameterList().getParameters(), psiParameter -> {

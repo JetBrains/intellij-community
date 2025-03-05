@@ -1,14 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.impl;
 
-import com.intellij.platform.runtime.product.*;
-import com.intellij.platform.runtime.product.serialization.ResourceFileResolver;
-import com.intellij.platform.runtime.repository.*;
+import com.intellij.platform.runtime.product.IncludedRuntimeModule;
+import com.intellij.platform.runtime.product.PluginModuleGroup;
+import com.intellij.platform.runtime.product.ProductMode;
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.product.serialization.ResourceFileResolver;
 import com.intellij.platform.runtime.product.serialization.impl.PluginXmlReader;
+import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
+import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Describes a group of modules corresponding to a plugin.
@@ -29,9 +37,8 @@ public final class PluginModuleGroupImpl implements PluginModuleGroup {
     myResourceFileResolver = resourceFileResolver;
   }
 
-  @NotNull
   @Override
-  public RuntimeModuleDescriptor getMainModule() {
+  public @NotNull RuntimeModuleDescriptor getMainModule() {
     return myMainModule;
   }
 

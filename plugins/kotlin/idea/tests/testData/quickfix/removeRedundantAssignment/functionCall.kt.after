@@ -6,3 +6,5 @@ fun test() {
     <caret>foo()
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUnusedValueFix
+// IGNORE_K2
+// TODO: Add support for checking side effects in K2

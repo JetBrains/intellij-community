@@ -91,7 +91,7 @@ public class TerminalSshModule extends BaseTerminalModule {
     sendData(answer.get() == AcceptResult.REJECTED ? "no" : "yes");
   }
 
-  private boolean handleAuthPrompt(@NotNull final SimpleCredentialsDialog.Mode mode, @NotNull final String key) {
+  private boolean handleAuthPrompt(final @NotNull SimpleCredentialsDialog.Mode mode, final @NotNull String key) {
     Url repositoryUrl = myExecutor.getCommand().requireRepositoryUrl();
     String auth = myRuntime.getAuthenticationService().requestSshCredentials(repositoryUrl.toDecodedString(), mode, key);
 

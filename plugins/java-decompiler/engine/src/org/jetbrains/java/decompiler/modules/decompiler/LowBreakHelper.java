@@ -7,7 +7,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.SynchronizedStatem
 
 import java.util.List;
 
-public class LowBreakHelper {
+public final class LowBreakHelper {
 
   public static void lowBreakLabels(Statement root) {
 

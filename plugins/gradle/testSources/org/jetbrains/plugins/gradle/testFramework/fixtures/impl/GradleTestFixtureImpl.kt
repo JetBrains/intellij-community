@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -19,6 +19,7 @@ import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
@@ -47,6 +48,8 @@ class GradleTestFixtureImpl(
 
   override lateinit var gradleJvm: String
 
+  override lateinit var gradleJvmInfo: JdkVersionInfo
+
   override fun setUp() {
     reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
     reloadLeakTracker.setUp()
@@ -57,11 +60,12 @@ class GradleTestFixtureImpl(
     gradleJvmFixture.setUp()
     gradleJvmFixture.installProjectSettingsConfigurator()
     gradleJvm = gradleJvmFixture.gradleJvm
+    gradleJvmInfo = gradleJvmFixture.gradleJvmInfo
 
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     fileFixture.setUp()
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot = fileFixture.findOrCreateDir(className)
           .findOrCreateDirectory(methodName)
           .findOrCreateDirectory(gradleVersion.version)

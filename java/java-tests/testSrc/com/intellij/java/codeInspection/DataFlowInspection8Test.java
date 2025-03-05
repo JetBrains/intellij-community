@@ -253,6 +253,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testObjectsEquals() { doTest(); }
   public void testManyObjectEquals() { doTest(); }
+  public void testManyObjectEquals2() { doTest(); }
   public void testLambdaAfterNullCheck() { doTest(); }
   public void testFlatMapSideEffect() { doTest(); }
   public void testOptionalValueTracking() { doTest(); }
@@ -327,6 +328,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testGuavaFunction() {
     setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     doTest();
   }
   public void testMethodReferenceNullableToNotNull() {
@@ -378,4 +380,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
+  public void testFieldWriteInLambda() { doTest(); }
 }

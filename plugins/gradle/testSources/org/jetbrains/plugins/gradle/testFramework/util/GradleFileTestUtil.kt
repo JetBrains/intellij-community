@@ -15,9 +15,10 @@ import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettin
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
 
 private fun settingsScript(
+  gradleVersion: GradleVersion,
   useKotlinDsl: Boolean = false,
   configure: GradleSettingScriptBuilder<*>.() -> Unit
-) = GradleSettingScriptBuilder.create(useKotlinDsl)
+) = GradleSettingScriptBuilder.create(gradleVersion, useKotlinDsl)
   .apply(configure)
   .generate()
 
@@ -31,13 +32,14 @@ private fun buildScript(
 
 @RequiresWriteLock
 fun VirtualFile.createSettingsFile(
+  gradleVersion: GradleVersion,
   relativeModulePath: String = ".",
   useKotlinDsl: Boolean = false,
   configure: GradleSettingScriptBuilder<*>.() -> Unit
 ) = createSettingsFile(
   relativeModulePath = relativeModulePath,
   useKotlinDsl = useKotlinDsl,
-  content = settingsScript(useKotlinDsl, configure)
+  content = settingsScript(gradleVersion, useKotlinDsl, configure)
 )
 
 @RequiresWriteLock
@@ -95,13 +97,14 @@ fun VirtualFile.getBuildFile(
 }
 
 fun TestFilesConfiguration.withSettingsFile(
+  gradleVersion: GradleVersion,
   relativeModulePath: String = ".",
   useKotlinDsl: Boolean = false,
   configure: GradleSettingScriptBuilder<*>.() -> Unit
 ) = withSettingsFile(
   relativeModulePath = relativeModulePath,
   useKotlinDsl = useKotlinDsl,
-  content = settingsScript(useKotlinDsl, configure)
+  content = settingsScript(gradleVersion, useKotlinDsl, configure)
 )
 
 fun TestFilesConfiguration.withBuildFile(

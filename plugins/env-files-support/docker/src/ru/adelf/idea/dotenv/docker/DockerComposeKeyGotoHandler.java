@@ -14,9 +14,8 @@ import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 public class DockerComposeKeyGotoHandler implements GotoDeclarationHandler {
-    @Nullable
     @Override
-    public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+    public @Nullable PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
         if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
         }
@@ -70,9 +69,8 @@ public class DockerComposeKeyGotoHandler implements GotoDeclarationHandler {
         return PsiElement.EMPTY_ARRAY;
     }
 
-    @Nullable
     @Override
-    public String getActionText(@NotNull DataContext dataContext) {
+    public @Nullable String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

@@ -22,7 +22,7 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
       if (elementTypes.size() != 1) {
         throw new IllegalArgumentException("Unbounded unpacked tuple type can have only one type parameter");
       }
-      if (elementTypes.get(0) instanceof PyVariadicType) {
+      if (elementTypes.get(0) instanceof PyPositionalVariadicType) {
         throw new IllegalArgumentException("Unbounded unpacked tuple type of a TypeVarTuple or another unpacked tuple type is now allowed");
       }
     }
@@ -84,5 +84,13 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
     else {
       return PyTupleType.create(anchor, getElementTypes());
     }
+  }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyUnpackedTupleType(this);
+    }
+    return visitor.visitPyType(this);
   }
 }

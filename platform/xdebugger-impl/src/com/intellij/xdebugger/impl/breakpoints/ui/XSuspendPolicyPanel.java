@@ -31,7 +31,7 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
   private ButtonGroup mySuspendPolicyGroup;
 
   public interface Delegate {
-    void showMoreOptionsIfNeeded();
+    void showActionOptionsIfNeeded();
   }
 
   private Delegate myDelegate;
@@ -49,9 +49,7 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
           changeEnableState(selected);
         }
 
-        if (myDelegate != null && !selected) {
-          myDelegate.showMoreOptionsIfNeeded();
-        }
+        showActionOptionsIfNeeded(selected);
       }
     });
 
@@ -85,6 +83,13 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
         myMakeDefaultButton.setEnabled(false);
       }
     });
+  }
+
+  // If the breakpoint is not suspending, it's reasonable to show other available action options.
+  private void showActionOptionsIfNeeded(boolean suspendIsSelected) {
+    if (myDelegate != null && !suspendIsSelected) {
+      myDelegate.showActionOptionsIfNeeded();
+    }
   }
 
   private void updateMakeDefaultEnableState() {
@@ -152,9 +157,7 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
     }
 
     mySuspendCheckBox.setSelected(selected);
-    if (!selected && myDelegate != null) {
-      myDelegate.showMoreOptionsIfNeeded();
-    }
+    showActionOptionsIfNeeded(selected);
   }
 
   private SuspendPolicy getSelectedSuspendPolicy() {

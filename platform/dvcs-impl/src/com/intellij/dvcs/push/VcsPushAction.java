@@ -39,9 +39,8 @@ public class VcsPushAction extends DumbAwareAction {
     new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories), selectedRepo).show();
   }
 
-  @NotNull
-  private static Collection<Repository> collectRepositories(@NotNull VcsRepositoryManager vcsRepositoryManager,
-                                                            VirtualFile @Nullable [] files) {
+  private static @NotNull Collection<Repository> collectRepositories(@NotNull VcsRepositoryManager vcsRepositoryManager,
+                                                                     VirtualFile @Nullable [] files) {
     if (files == null) return Collections.emptyList();
     Collection<Repository> repositories = new HashSet<>();
     for (VirtualFile file : files) {

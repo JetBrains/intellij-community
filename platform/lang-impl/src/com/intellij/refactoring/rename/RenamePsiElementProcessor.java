@@ -20,9 +20,9 @@ public abstract class RenamePsiElementProcessor extends RenamePsiElementProcesso
 
   @Override
   public RenameRefactoringDialog createDialog(@NotNull Project project,
-                                                             @NotNull PsiElement element,
-                                                             @Nullable PsiElement nameSuggestionContext,
-                                                             @Nullable Editor editor) {
+                                              @NotNull PsiElement element,
+                                              @Nullable PsiElement nameSuggestionContext,
+                                              @Nullable Editor editor) {
     return this.createRenameDialog(project, element, nameSuggestionContext, editor);
   }
 

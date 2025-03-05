@@ -1,9 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.test
 
-import com.intellij.debugger.streams.trace.dsl.CodeContext
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.core.trace.dsl.CodeContext
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -295,9 +295,9 @@ abstract class DslTestCase(private val dsl: Dsl) : LightJavaCodeInsightFixtureTe
   fun testMapComputeIfAbsent() {
     doTest {
       val map = map(types.INT, types.ANY, "map")
-      +map.computeIfAbsent("key".expr, lambda("y") {
-        doReturn(map.call("method"))
-      })
+      val target = variable(types.ANY, "target")
+      declare(target, true)
+      add(map.computeIfAbsent(dsl, "key".expr, map.call("method"), target))
     }
   }
 

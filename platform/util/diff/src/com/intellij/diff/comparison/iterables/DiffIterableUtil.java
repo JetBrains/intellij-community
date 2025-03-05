@@ -8,6 +8,7 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +29,7 @@ public final class DiffIterableUtil {
   /*
    * Compare two integer arrays
    */
-  @NotNull
-  public static FairDiffIterable diff(int @NotNull [] data1, int @NotNull [] data2, @NotNull CancellationChecker indicator)
+  public static @NotNull FairDiffIterable diff(int @NotNull [] data1, int @NotNull [] data2, @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 
@@ -46,8 +46,7 @@ public final class DiffIterableUtil {
   /*
    * Compare two arrays, basing on equals() and hashCode() of it's elements
    */
-  @NotNull
-  public static <T> FairDiffIterable diff(T @NotNull [] data1, T @NotNull [] data2, @NotNull CancellationChecker indicator)
+  public static @NotNull <T> FairDiffIterable diff(T @NotNull [] data1, T @NotNull [] data2, @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 
@@ -64,8 +63,7 @@ public final class DiffIterableUtil {
   /*
    * Compare two lists, basing on equals() and hashCode() of it's elements
    */
-  @NotNull
-  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1,
+  public static @NotNull <T> FairDiffIterable diff(@NotNull List<? extends T> objects1,
                                           @NotNull List<? extends T> objects2,
                                           @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
@@ -77,51 +75,44 @@ public final class DiffIterableUtil {
   // Iterable
   //
 
-  @NotNull
-  public static DiffIterable create(@Nullable Diff.Change change, int length1, int length2) {
+  public static @NotNull DiffIterable create(@Nullable Diff.Change change, int length1, int length2) {
     DiffChangeDiffIterable iterable = new DiffChangeDiffIterable(change, length1, length2);
     verify(iterable);
     return iterable;
   }
 
-  @NotNull
-  public static DiffIterable createFragments(@NotNull List<? extends DiffFragment> fragments, int length1, int length2) {
+  public static @NotNull DiffIterable createFragments(@NotNull List<? extends DiffFragment> fragments, int length1, int length2) {
     DiffIterable iterable = new DiffFragmentsDiffIterable(fragments, length1, length2);
     verify(iterable);
     return iterable;
   }
 
-  @NotNull
-  public static DiffIterable create(@NotNull List<? extends Range> ranges, int length1, int length2) {
+  public static @NotNull DiffIterable create(@NotNull List<? extends Range> ranges, int length1, int length2) {
     DiffIterable iterable = new RangesDiffIterable(ranges, length1, length2);
     verify(iterable);
     return iterable;
   }
 
-  @NotNull
-  public static DiffIterable createUnchanged(@NotNull List<? extends Range> ranges, int length1, int length2) {
+  public static @NotNull DiffIterable createUnchanged(@NotNull List<? extends Range> ranges, int length1, int length2) {
     DiffIterable invert = invert(create(ranges, length1, length2));
     verify(invert);
     return invert;
   }
 
-  @NotNull
-  public static DiffIterable invert(@NotNull DiffIterable iterable) {
+  public static @NotNull DiffIterable invert(@NotNull DiffIterable iterable) {
     DiffIterable wrapper = new InvertedDiffIterableWrapper(iterable);
     verify(wrapper);
     return wrapper;
   }
 
-  @NotNull
-  public static FairDiffIterable fair(@NotNull DiffIterable iterable) {
+  public static @NotNull FairDiffIterable fair(@NotNull DiffIterable iterable) {
     if (iterable instanceof FairDiffIterable) return (FairDiffIterable)iterable;
     FairDiffIterable wrapper = new FairDiffIterableWrapper(iterable);
     verifyFair(wrapper);
     return wrapper;
   }
 
-  @NotNull
-  public static DiffIterable expandedIterable(@NotNull DiffIterable iterable, int offset1, int offset2, int length1, int length2) {
+  public static @NotNull DiffIterable expandedIterable(@NotNull DiffIterable iterable, int offset1, int offset2, int length1, int length2) {
     assert offset1 + iterable.getLength1() <= length1 &&
            offset2 + iterable.getLength2() <= length2;
     return new ExpandedDiffIterable(iterable, offset1, offset2, length1, length2);
@@ -134,50 +125,8 @@ public final class DiffIterableUtil {
   /**
    * Iterate both changed and unchanged ranges one-by-one.
    */
-  @NotNull
-  public static Iterable<Pair<Range, /* isUnchanged */ Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
-    return () -> new Iterator<Pair<Range, Boolean>>() {
-      @NotNull private final Iterator<Range> myChanges = iterable.changes();
-      @NotNull private final Iterator<Range> myUnchanged = iterable.unchanged();
-
-      @Nullable private Range lastChanged = myChanges.hasNext() ? myChanges.next() : null;
-      @Nullable private Range lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
-
-      @Override
-      public boolean hasNext() {
-        return lastChanged != null || lastUnchanged != null;
-      }
-
-      @Override
-      public Pair<Range, Boolean> next() {
-        boolean equals;
-        if (lastChanged == null) {
-          equals = true;
-        }
-        else if (lastUnchanged == null) {
-          equals = false;
-        }
-        else {
-          equals = lastUnchanged.start1 < lastChanged.start1 || lastUnchanged.start2 < lastChanged.start2;
-        }
-
-        if (equals) {
-          Range range = lastUnchanged;
-          lastUnchanged = myUnchanged.hasNext() ? myUnchanged.next() : null;
-          return Pair.create(range, true);
-        }
-        else {
-          Range range = lastChanged;
-          lastChanged = myChanges.hasNext() ? myChanges.next() : null;
-          return Pair.create(range, false);
-        }
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
+  public static @NotNull Iterable<Pair<Range, /* isUnchanged */ Boolean>> iterateAll(final @NotNull DiffIterable iterable) {
+    return () -> new AllRangesIterator(iterable);
   }
 
   public static int getRangeDelta(@NotNull Range range) {
@@ -319,8 +268,7 @@ public final class DiffIterableUtil {
   }
 
   public static class ChangeBuilder extends ChangeBuilderBase {
-    @Nullable private Diff.Change myFirstChange;
-    @Nullable private Diff.Change myLastChange;
+    private final List<Range> myChanges = new ArrayList<>();
 
     public ChangeBuilder(int length1, int length2) {
       super(length1, length2);
@@ -328,26 +276,18 @@ public final class DiffIterableUtil {
 
     @Override
     protected void addChange(int start1, int start2, int end1, int end2) {
-      Diff.Change change = new Diff.Change(start1, start2, end1 - start1, end2 - start2, null);
-      if (myLastChange != null) {
-        myLastChange.link = change;
-      }
-      else {
-        myFirstChange = change;
-      }
-      myLastChange = change;
+      myChanges.add(new Range(start1, end1, start2, end2));
     }
 
-    @NotNull
-    public DiffIterable finish() {
+    public @NotNull DiffIterable finish() {
       doFinish();
-      return create(myFirstChange, getLength1(), getLength2());
+      return create(myChanges, getLength1(), getLength2());
     }
   }
 
   public static class ExpandChangeBuilder extends ChangeBuilder {
-    @NotNull private final List<?> myObjects1;
-    @NotNull private final List<?> myObjects2;
+    private final @NotNull List<?> myObjects1;
+    private final @NotNull List<?> myObjects2;
 
     public ExpandChangeBuilder(@NotNull List<?> objects1, @NotNull List<?> objects2) {
       super(objects1.size(), objects2.size());
@@ -367,10 +307,9 @@ public final class DiffIterableUtil {
   //
 
   @SuppressWarnings("unused")
-  @NotNull
-  public static <T> List<LineRangeData> extractDataRanges(@NotNull List<? extends T> objects1,
-                                                          @NotNull List<? extends T> objects2,
-                                                          @NotNull DiffIterable iterable) {
+  public static @NotNull <T> List<LineRangeData> extractDataRanges(@NotNull List<? extends T> objects1,
+                                                                   @NotNull List<? extends T> objects2,
+                                                                   @NotNull DiffIterable iterable) {
     List<LineRangeData> result = new ArrayList<>();
 
     for (Pair<Range, Boolean> pair : iterateAll(iterable)) {
@@ -395,13 +334,59 @@ public final class DiffIterableUtil {
 
   public static class LineRangeData<T> {
     public final boolean equals;
-    @NotNull public final List<T> objects1;
-    @NotNull public final List<T> objects2;
+    public final @NotNull List<T> objects1;
+    public final @NotNull List<T> objects2;
 
     public LineRangeData(@NotNull List<T> objects1, @NotNull List<T> objects2, boolean equals) {
       this.equals = equals;
       this.objects1 = objects1;
       this.objects2 = objects2;
+    }
+  }
+
+  private static class AllRangesIterator implements Iterator<Pair<Range, Boolean>> {
+    private final @NotNull DiffIterable myIterable;
+    private final @NotNull PeekableIteratorWrapper<Range> myChanges;
+
+    private Range myNextUnchanged;
+
+    AllRangesIterator(@NotNull DiffIterable iterable) {
+      myChanges = new PeekableIteratorWrapper<>(iterable.changes());
+      myIterable = iterable;
+
+      myNextUnchanged = peekNextUnchanged(0, 0);
+    }
+
+    private @Nullable Range peekNextUnchanged(int start1, int start2) {
+      Range nextChange = myChanges.hasNext() ? myChanges.peek() : null;
+      Range range = nextChange != null
+                    ? new Range(start1, nextChange.start1, start2, nextChange.start2)
+                    : new Range(start1, myIterable.getLength1(), start2, myIterable.getLength2());
+      if (range.isEmpty()) return null;
+      return range;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myChanges.hasNext() || myNextUnchanged != null;
+    }
+
+    @Override
+    public Pair<Range, Boolean> next() {
+      if (myNextUnchanged != null) {
+        Range result = myNextUnchanged;
+        myNextUnchanged = null;
+        return Pair.create(result, true);
+      }
+
+      Range range = myChanges.next();
+      myNextUnchanged = peekNextUnchanged(range.end1, range.end2);
+      return Pair.create(range, false);
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
     }
   }
 }

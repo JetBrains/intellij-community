@@ -39,7 +39,7 @@ class Test {
 
   String nestedPattern(Object o) {
     return switch (o) {
-       <error descr="Switch expression rule should produce result in all execution paths">default</error> -> {
+       <error descr="Switch expression rule should produce a result in all execution paths">default</error> -> {
         switch (o) {
           case Integer i -> {
             System.out.println(); // completes normally

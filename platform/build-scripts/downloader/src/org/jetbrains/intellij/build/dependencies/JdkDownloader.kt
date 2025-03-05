@@ -22,7 +22,9 @@ object JdkDownloader {
   suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
     val os = OS.current
     val arch = Arch.current
-    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, infoLog = infoLog, jdkBuildNumber = jdkBuildNumber, variation = variation)
+    val isMusl = LinuxLibcImpl.isLinuxMusl
+    val effectiveVariation = if (isMusl) null else variation
+    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, infoLog = infoLog, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
   }
 
   @JvmStatic
@@ -51,11 +53,13 @@ object JdkDownloader {
     communityRoot: BuildDependenciesCommunityRoot,
     os: OS,
     arch: Arch,
+    isMusl: Boolean = false,
     jdkBuildNumber: String? = null,
     variation: String? = null,
     infoLog: (String) -> Unit,
   ): Path {
-    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, jdkBuildNumber = jdkBuildNumber, variation = variation)
+    val effectiveVariation = if (isMusl) null else variation
+    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
     val jdkArchive = downloadFileToCacheLocation(url = jdkUrl.toString(), communityRoot = communityRoot)
     val jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot = communityRoot,
                                                                               archiveFile = jdkArchive,
@@ -76,7 +80,7 @@ object JdkDownloader {
     throw IllegalStateException("No java executables were found under $jdkHome")
   }
 
-  private fun getUrl(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, jdkBuildNumber: String? = null, variation: String? = null): URI {
+  private fun getUrl(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, isMusl: Boolean = false, jdkBuildNumber: String? = null, variation: String? = null): URI {
     val ext = ".tar.gz"
     val osString: String = when (os) {
       OS.WINDOWS -> "windows"
@@ -101,6 +105,7 @@ object JdkDownloader {
     return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/" +
                       (variation ?: "jbrsdk") + "-" +
                       version + "-" + osString + "-" +
+                      (if (isMusl) "musl-" else "") +
                       archString + "-" + build + ext)
   }
 

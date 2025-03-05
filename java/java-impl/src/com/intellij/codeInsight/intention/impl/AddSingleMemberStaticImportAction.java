@@ -221,7 +221,7 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
     if (existingImport == null && resolved instanceof PsiClass) {
       ((PsiImportHolder) file).importClass((PsiClass) resolved);
     }
-    else if (existingImport == null || existingImport.isOnDemand() && resolvedClass != null && ImportHelper.hasConflictingOnDemandImport((PsiJavaFile)file, resolvedClass, referenceName)) {
+    else if (existingImport == null || existingImport.isOnDemand() && resolvedClass != null && ImportHelper.hasConflictingOnStaticDemandImport((PsiJavaFile)file, resolvedClass, referenceName)) {
       PsiReferenceExpressionImpl.bindToElementViaStaticImport(resolvedClass, referenceName, ((PsiJavaFile)file).getImportList());
     }
 

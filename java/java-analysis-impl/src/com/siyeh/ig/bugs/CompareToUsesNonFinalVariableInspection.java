@@ -21,7 +21,6 @@ import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldFinalFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +29,13 @@ import org.jetbrains.annotations.Nullable;
 public final class CompareToUsesNonFinalVariableInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.final.field.compareto.problem.descriptor");
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return MakeFieldFinalFix.buildFix(field);
   }

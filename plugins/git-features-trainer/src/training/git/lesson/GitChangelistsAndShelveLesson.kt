@@ -39,7 +39,6 @@ import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
-import training.git.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.git.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
@@ -73,7 +72,6 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
-    showWarningIfModalCommitEnabled()
     showWarningIfStagingAreaEnabled()
 
     lateinit var highlightLineMarkerTaskId: TaskContext.TaskId
@@ -336,7 +334,8 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       val line = editor.offsetToVisualLine(offset, true)
       editor.visualLineToY(line)
     }
-    return Rectangle(this.x + JBUI.scale(5), y, JBUI.scale(8), editor.lineHeight)
+    val highlightingWidth = JBUI.scale(8)
+    return Rectangle(this.x + this.width - highlightingWidth, y, highlightingWidth, editor.lineHeight)
   }
 
   override val helpLinks: Map<String, String> get() = mapOf(

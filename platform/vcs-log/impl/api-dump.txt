@@ -551,11 +551,12 @@ f:com.intellij.vcs.log.impl.VcsLogNavigationUtil
 - sf:jumpToBranch(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):V
 - sf:jumpToCommit(com.intellij.vcs.log.ui.VcsLogUiEx,I,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToCommit(com.intellij.vcs.log.ui.VcsLogUiEx,com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile,Z,Z):com.google.common.util.concurrent.ListenableFuture
+- sf:jumpToGraphRow(com.intellij.vcs.log.ui.VcsLogUiEx,I,Z,Z):V
 - sf:jumpToHash(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToRefOrHash(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToRevisionAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath):java.util.concurrent.CompletableFuture
+- sf:jumpToRevisionAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath,Z):java.util.concurrent.CompletableFuture
 - bs:jumpToRevisionAsync$default(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath,I,java.lang.Object):java.util.concurrent.CompletableFuture
-- sf:jumpToRow(com.intellij.vcs.log.ui.VcsLogUiEx,I,Z,Z):V
 - f:waitForRefresh(com.intellij.vcs.log.impl.VcsLogManager,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 - com.intellij.openapi.components.PersistentStateComponent
@@ -600,13 +601,19 @@ f:com.intellij.vcs.log.impl.VcsLogProjectTabsProperties$State
 - f:setOpenTabs(java.util.LinkedHashMap):V
 - f:setRecentFilters(java.util.Map):V
 - f:setTabStates(java.util.Map):V
+e:com.intellij.vcs.log.impl.VcsLogTabLocation
+- java.lang.Enum
+- sf:Companion:com.intellij.vcs.log.impl.VcsLogTabLocation$Companion
+- sf:TOOL_WINDOW:com.intellij.vcs.log.impl.VcsLogTabLocation
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.vcs.log.impl.VcsLogTabLocation
+- s:values():com.intellij.vcs.log.impl.VcsLogTabLocation[]
+f:com.intellij.vcs.log.impl.VcsLogTabLocation$Companion
+- f:findLogUi(com.intellij.vcs.log.impl.VcsLogManager,com.intellij.vcs.log.impl.VcsLogTabLocation,java.lang.Class,Z,kotlin.jvm.functions.Function1):com.intellij.vcs.log.VcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
-- sf:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
 - f:openAnotherLogTab(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.impl.VcsLogTabLocation):com.intellij.vcs.log.ui.MainVcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
-- f:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
-- f:getFullName(java.lang.String):java.lang.String
 - f:getTAB_GROUP_ID():com.intellij.ui.content.TabGroupId
 - f:onDisplayNameChange(com.intellij.vcs.log.ui.MainVcsLogUi,kotlin.jvm.functions.Function0):V
 com.intellij.vcs.log.impl.VcsLogTabsProperties
@@ -685,11 +692,11 @@ f:com.intellij.vcs.log.impl.VcsProjectLog
 - f:openLogTab(com.intellij.vcs.log.VcsLogFilterCollection):com.intellij.vcs.log.ui.MainVcsLogUi
 - f:openLogTab(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.impl.VcsLogTabLocation):com.intellij.vcs.log.ui.MainVcsLogUi
 f:com.intellij.vcs.log.impl.VcsProjectLog$Companion
+- f:awaitLogIsReady(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.log.impl.VcsProjectLog
 - f:getLogProviders(com.intellij.openapi.project.Project):java.util.Map
 - f:getSupportedVcs(com.intellij.openapi.project.Project):java.util.Set
 - f:runWhenLogIsReady(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
-- f:waitWhenLogIsReady(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.vcs.log.impl.VcsProjectLog$ProjectLogListener
 - a:logCreated(com.intellij.vcs.log.impl.VcsLogManager):V
 - a:logDisposed(com.intellij.vcs.log.impl.VcsLogManager):V
@@ -865,11 +872,7 @@ f:com.intellij.vcs.log.ui.filter.BranchFilterModel$Companion
 f:com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
 - <init>(com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.ui.filter.BranchFilterModel):V
-- getCurrentText():java.lang.String
-- getEmptyFilterValue():java.lang.String
 - getTargetComponent():java.awt.Component
-- getToolTipText():java.lang.String
-- installChangeListener(java.lang.Runnable):V
 - f:showPopupMenu():V
 a:com.intellij.vcs.log.ui.filter.BranchPopupBuilder
 - pf:myDataPack:com.intellij.vcs.log.VcsLogDataPack
@@ -888,23 +891,12 @@ f:com.intellij.vcs.log.ui.filter.DateFilterModel$Companion
 - f:getDateValues(com.intellij.vcs.log.VcsLogDateFilter):java.util.List
 c:com.intellij.vcs.log.ui.filter.DateFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
-- psf:ALL_ACTION_TEXT:java.util.function.Supplier
-- psf:EMPTY_FILTER_TEXT:java.util.function.Supplier
-- pf:myFilterModel:com.intellij.vcs.log.ui.filter.FilterModel
 - <init>(com.intellij.vcs.log.ui.filter.FilterModel):V
 - p:createActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - p:createPopupMenu():com.intellij.openapi.ui.popup.ListPopup
-- p:createResetAction():java.lang.Runnable
-- getCurrentText():java.lang.String
-- getEmptyFilterValue():java.lang.String
 - getTargetComponent():java.awt.Component
 - p:getText(com.intellij.vcs.log.VcsLogDateFilter):java.lang.String
-- pa:getText(java.lang.Object):java.lang.String
 - p:getToolTip(com.intellij.vcs.log.VcsLogDateFilter):java.lang.String
-- pa:getToolTip(java.lang.Object):java.lang.String
-- getToolTipText():java.lang.String
-- installChangeListener(java.lang.Runnable):V
-- p:isValueSelected():Z
 - f:showPopupMenu():V
 f:com.intellij.vcs.log.ui.filter.FileFilterModel
 - com.intellij.vcs.log.ui.filter.FilterModel$MultipleFilterModel
@@ -953,23 +945,12 @@ a:com.intellij.vcs.log.ui.filter.FilterModel$SingleFilterModel
 - setFilter(com.intellij.vcs.log.VcsLogFilter):V
 c:com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
-- psf:ALL_ACTION_TEXT:java.util.function.Supplier
-- psf:EMPTY_FILTER_TEXT:java.util.function.Supplier
-- pf:myFilterModel:com.intellij.vcs.log.ui.filter.FilterModel
 - <init>(com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.ui.filter.FileFilterModel,com.intellij.vcs.log.ui.VcsLogColorManager):V
 - p:createActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - p:createPopupMenu():com.intellij.openapi.ui.popup.ListPopup
-- p:createResetAction():java.lang.Runnable
-- getCurrentText():java.lang.String
-- getEmptyFilterValue():java.lang.String
 - getTargetComponent():java.awt.Component
 - p:getText(com.intellij.vcs.log.VcsLogFilterCollection):java.lang.String
-- pa:getText(java.lang.Object):java.lang.String
 - p:getToolTip(com.intellij.vcs.log.VcsLogFilterCollection):java.lang.String
-- pa:getToolTip(java.lang.Object):java.lang.String
-- getToolTipText():java.lang.String
-- installChangeListener(java.lang.Runnable):V
-- p:isValueSelected():Z
 - s:path2Text(com.intellij.openapi.vcs.FilePath,Z,java.util.Set):java.lang.String
 - f:showPopupMenu():V
 f:com.intellij.vcs.log.ui.filter.TextFilterModel
@@ -980,35 +961,15 @@ f:com.intellij.vcs.log.ui.filter.TextFilterModel
 f:com.intellij.vcs.log.ui.filter.TextFilterModel$Companion
 c:com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
-- psf:ALL_ACTION_TEXT:java.util.function.Supplier
-- psf:EMPTY_FILTER_TEXT:java.util.function.Supplier
-- pf:myFilterModel:com.intellij.vcs.log.ui.filter.FilterModel
-- pf:myUiProperties:com.intellij.vcs.log.impl.MainVcsLogUiProperties
 - p:createActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - p:createFilter(java.util.List):com.intellij.vcs.log.VcsLogUserFilter
-- pa:createFilter(java.util.List):java.lang.Object
 - p:createPopupMenu():com.intellij.openapi.ui.popup.ListPopup
-- p:createRecentItemsActionGroup():java.util.List
-- p:createResetAction():java.lang.Runnable
-- p:createSelectMultipleValuesAction():com.intellij.openapi.actionSystem.AnAction
 - p:createSpeedSearchActionGroup():com.intellij.openapi.actionSystem.ActionGroup
-- p:getActionName(java.util.List):java.lang.String
 - p:getAllValues():java.util.List
-- getCurrentText():java.lang.String
-- getEmptyFilterValue():java.lang.String
 - p:getFilterValues(com.intellij.vcs.log.VcsLogUserFilter):java.util.List
-- pa:getFilterValues(java.lang.Object):java.util.List
 - p:getLocalizedValues(java.util.Collection):java.util.List
-- p:getRecentValuesFromSettings():java.util.List
 - getTargetComponent():java.awt.Component
-- p:getText(java.lang.Object):java.lang.String
-- p:getToolTip(java.lang.Object):java.lang.String
-- getToolTipText():java.lang.String
-- p:getTooltip(java.util.Collection):java.lang.String
-- installChangeListener(java.lang.Runnable):V
-- p:isValueSelected():Z
 - p:parseLocalizedValues(java.util.Collection):java.util.List
-- p:rememberValuesInSettings(java.util.Collection):V
 - f:showPopupMenu():V
 c:com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 - com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
@@ -1141,26 +1102,25 @@ c:com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener
 f:com.intellij.vcs.log.ui.table.GraphTableModel
 - javax.swing.table.AbstractTableModel
 - com.intellij.vcs.log.ui.table.VcsLogCommitListModel
-- <init>(com.intellij.vcs.log.data.VcsLogData,java.lang.Runnable,com.intellij.vcs.log.impl.VcsLogUiProperties):V
-- createSelection(I[]):com.intellij.vcs.log.VcsLogCommitSelection
-- getBranchesAtRow(I):java.util.List
+- f:createSelection(I[]):com.intellij.vcs.log.VcsLogCommitSelection
+- f:fromGraphToTableRow(I):I
 - getColumnCount():I
 - getColumnName(I):java.lang.String
-- getCommitId(I):com.intellij.vcs.log.CommitId
-- getCommitMetadata(I):com.intellij.vcs.log.VcsCommitMetadata
-- getCommitMetadata(I,Z):com.intellij.vcs.log.VcsCommitMetadata
+- f:getCommitMetadata(I):com.intellij.vcs.log.VcsCommitMetadata
+- f:getCommitMetadata(I,Z):com.intellij.vcs.log.VcsCommitMetadata
+- bs:getCommitMetadata$default(com.intellij.vcs.log.ui.table.GraphTableModel,I,Z,I,java.lang.Object):com.intellij.vcs.log.VcsCommitMetadata
 - getDataProvider():com.intellij.vcs.log.VcsLogDataProvider
-- getFullDetails(I):com.intellij.vcs.log.VcsFullCommitDetails
-- getId(I):I
-- getLogData():com.intellij.vcs.log.data.VcsLogData
-- getProperties():com.intellij.vcs.log.impl.VcsLogUiProperties
-- getRefsAtRow(I):java.util.List
-- getRootAtRow(I):com.intellij.openapi.vfs.VirtualFile
+- getId(I):java.lang.Integer
+- f:getLogData():com.intellij.vcs.log.data.VcsLogData
+- f:getPrintElements(I):java.util.Collection
+- f:getRefsAtRow(I):java.util.List
+- f:getRootAtRow(I):com.intellij.openapi.vfs.VirtualFile
 - getRowCount():I
-- getRowInfo(I):com.intellij.vcs.log.graph.RowInfo
+- f:getRowType(I):com.intellij.vcs.log.graph.RowType
 - getValueAt(I,I):java.lang.Object
-- getValueAt(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):java.lang.Object
-- getVisiblePack():com.intellij.vcs.log.visible.VisiblePack
+- f:getValueAt(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):java.lang.Object
+- f:getVisiblePack():com.intellij.vcs.log.visible.VisiblePack
+- f:setVisiblePack(com.intellij.vcs.log.visible.VisiblePack):V
 com.intellij.vcs.log.ui.table.VcsLogCellController
 - a:performMouseClick(I,java.awt.event.MouseEvent):java.awt.Cursor
 - a:performMouseMove(I,java.awt.event.MouseEvent):com.intellij.vcs.log.ui.table.VcsLogCellController$MouseMoveResult
@@ -1205,7 +1165,6 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.ui.table.JBTable
 - com.intellij.vcs.log.ui.table.VcsLogCommitList
-- <init>(com.intellij.vcs.log.ui.VcsLogUiEx,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.impl.VcsLogUiProperties,com.intellij.vcs.log.ui.VcsLogColorManager,java.lang.Runnable,com.intellij.openapi.Disposable):V
 - addHighlighter(com.intellij.vcs.log.VcsLogHighlighter):V
 - p:appendActionToEmptyText(java.lang.String,java.lang.Runnable):V
 - applyHighlighters(java.awt.Component,I,I,Z,Z):com.intellij.ui.SimpleTextAttributes
@@ -1240,7 +1199,7 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - isCopyEnabled(com.intellij.openapi.actionSystem.DataContext):Z
 - isCopyVisible(com.intellij.openapi.actionSystem.DataContext):Z
 - isResizingColumns():Z
-- jumpToRow(I,Z):V
+- jumpToGraphRow(I,Z):V
 - onColumnDataChanged(com.intellij.vcs.log.ui.table.column.VcsLogColumn):V
 - onColumnOrderSettingChanged():V
 - p:paintFooter(java.awt.Graphics,I,I,I,I):V
@@ -1423,7 +1382,7 @@ c:com.intellij.vcs.log.visible.VisiblePack
 - getFilters():com.intellij.vcs.log.VcsLogFilterCollection
 - getLogProviders():java.util.Map
 - getRefs():com.intellij.vcs.log.VcsLogRefs
-- getRoot(I):com.intellij.openapi.vfs.VirtualFile
+- getRootAtHead(I):com.intellij.openapi.vfs.VirtualFile
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - getVisibleGraph():com.intellij.vcs.log.graph.VisibleGraph
 - isEmpty():Z

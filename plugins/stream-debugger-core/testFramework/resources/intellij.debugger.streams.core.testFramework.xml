@@ -1,0 +1,5 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.platform.debugger.streams"/>
+  </dependencies>
+</idea-plugin>

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.impl.cache.impl.id.IdIndex
+import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.ConcurrencyUtil.newNamedThreadFactory
 import com.intellij.util.SystemProperties.*
@@ -212,14 +213,47 @@ object SameThreadIndexWriter : IndexWriter() {
 
 /* ================ parallelized IndexWriter implementations: ====================================================*/
 
-/** Base writers are for: IdIndex, Stubs and Trigrams  */
-private val BASE_WRITERS_NUMBER = 3
+/** Dedicated writers are for: IdIndex, Stubs and Trigrams. It could be >1 writer per index, if index is sharded */
+private val INDEXES_WITH_DEDICATED_WORKERS: List<IndexId<*, *>> = listOf(
+  (1..IdIndexImpl.SHARDS).map { IdIndex.NAME },
+  (1..TrigramIndex.SHARDS).map { TrigramIndex.INDEX_ID },
+  listOf(StubUpdatingIndex.INDEX_ID)
+).flatten()
+
+private val DEDICATED_WRITERS_NUMBER = INDEXES_WITH_DEDICATED_WORKERS.size
 
 /** Aux writers used to write other indexes in parallel. But each index is 100% written on the same thread.  */
 private val AUX_WRITERS_NUMBER = 1
 
+/**
+ * @return worker index for indexId, in [0..workersCount).
+ * Allow partitioning indexes writing to different threads to avoid concurrency.
+ * We may add aux executors if necessary
+ */
+private fun workerIndexFor(
+  indexId: IndexId<*, *>,
+  shardNo: Int,
+): Int {
+  when {
+    indexId === IdIndex.NAME -> {
+      return shardNo
+    }
+    indexId === TrigramIndex.INDEX_ID -> {
+      return IdIndexImpl.SHARDS + shardNo
+    }
+    indexId === StubUpdatingIndex.INDEX_ID -> {
+      return (IdIndexImpl.SHARDS + TrigramIndex.SHARDS) + shardNo
+    }
+
+    else -> return if (AUX_WRITERS_NUMBER == 1)
+      DEDICATED_WRITERS_NUMBER
+    else
+      DEDICATED_WRITERS_NUMBER + abs(indexId.name.hashCode()) % AUX_WRITERS_NUMBER
+  }
+}
+
 /** Total number of index writing threads  */
-val TOTAL_WRITERS_NUMBER = BASE_WRITERS_NUMBER + AUX_WRITERS_NUMBER
+val TOTAL_WRITERS_NUMBER = DEDICATED_WRITERS_NUMBER + AUX_WRITERS_NUMBER
 
 abstract class ParallelIndexWriter(val workersCount: Int = TOTAL_WRITERS_NUMBER) : IndexWriter() {
 
@@ -246,29 +280,8 @@ abstract class ParallelIndexWriter(val workersCount: Int = TOTAL_WRITERS_NUMBER)
    */
   abstract fun totalTimeIndexersSlept(unit: TimeUnit): Long
 
-  /** @return number of writes queued at this moment. (Contrary to other monitoring methods, this is not an aggregate value) */
-  open fun writesQueued(): Int  = 0
-
-  /**
-   * @return worker index for indexId, in [0..workersCount).
-   * Allow partitioning indexes writing to different threads to avoid concurrency.
-   * We may add aux executors if necessary
-   */
-  protected fun workerIndexFor(indexId: IndexId<*, *>): Int {
-    if (indexId === IdIndex.NAME) {
-      return 0
-    }
-    else if (indexId === StubUpdatingIndex.INDEX_ID) {
-      return 1
-    }
-    else if (indexId === TrigramIndex.INDEX_ID) {
-      return 2
-    }
-    return if (AUX_WRITERS_NUMBER == 1)
-      BASE_WRITERS_NUMBER
-    else
-      BASE_WRITERS_NUMBER + abs(indexId.name.hashCode()) % AUX_WRITERS_NUMBER
-  }
+  /** @return number of writes queued at this moment. (Contrary to other monitoring methods, this is not an aggregate value, but instant value) */
+  open fun writesQueued(): Int = 0
 }
 
 
@@ -304,11 +317,9 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
   private var writers: List<ExecutorService>
 
   init {
-    val pool = mutableListOf(
-      createExecutorForIndexWriting("IdIndex Writer"),
-      createExecutorForIndexWriting("Stubs Writer"),
-      createExecutorForIndexWriting("Trigram Writer")
-    )
+    val pool = INDEXES_WITH_DEDICATED_WORKERS.mapIndexed { workerIndex, indexId ->
+      createExecutorForIndexWriting("$indexId Writer #$workerIndex")
+    }.toMutableList()
     repeat(AUX_WRITERS_NUMBER) { writerNo ->
       pool.add(createExecutorForIndexWriting("Aux Index Writer #${writerNo + 1}"))
     }
@@ -333,13 +344,12 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
     val startedAtNs = System.nanoTime()
 
     val workersToSchedule = BitSet(workersCount)
-
     for (applier in fileIndexingResult.appliers()) {
-      workersToSchedule.set(workerIndexFor(applier.indexId))
+      workersToSchedule.set(workerIndexFor(applier.indexId, applier.shardNo))
     }
 
     for (remover in fileIndexingResult.removers()) {
-      workersToSchedule.set(workerIndexFor(remover.indexId))
+      workersToSchedule.set(workerIndexFor(remover.indexId, remover.shardNo))
     }
 
     fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs) //other parts will be added inside applyModifications()
@@ -369,12 +379,11 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
     updatesLeftCounter: AtomicInteger,
     finishCallback: () -> Unit,
   ) {
-
     val startedAtNs = System.nanoTime()
     var allModificationsSuccessful = true
     try {
       for (applier in fileIndexingResult.appliers()) {
-        if (executorIndex == workerIndexFor(applier.indexId)) {
+        if (executorIndex == workerIndexFor(applier.indexId, applier.shardNo)) {
           val applied = applier.apply()
           allModificationsSuccessful = allModificationsSuccessful && applied
           if (!applied) {
@@ -384,7 +393,7 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
       }
 
       for (remover in fileIndexingResult.removers()) {
-        if (executorIndex == workerIndexFor(remover.indexId)) {
+        if (executorIndex == workerIndexFor(remover.indexId, remover.shardNo)) {
           val removed = remover.remove()
           allModificationsSuccessful = allModificationsSuccessful && removed
           if (!removed) {
@@ -575,11 +584,9 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
   private var writers: List<ExecutorService>
 
   init {
-    val pool = mutableListOf(
-      createWorker("IdIndex Writer"),
-      createWorker("Stubs Writer"),
-      createWorker("Trigram Writer")
-    )
+    val pool = INDEXES_WITH_DEDICATED_WORKERS.mapIndexed { workerIndex, indexId ->
+      createWorker("$indexId Writer #$workerIndex")
+    }.toMutableList()
     repeat(AUX_WRITERS_NUMBER) { writerNo ->
       pool.add(createWorker("Aux Index Writer #${writerNo + 1}"))
     }
@@ -612,13 +619,12 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
     val startedAtNs = System.nanoTime()
 
     val workersToSchedule = BitSet(workersCount)
-
     for (applier in fileIndexingResult.appliers()) {
-      workersToSchedule.set(workerIndexFor(applier.indexId))
+      workersToSchedule.set(workerIndexFor(applier.indexId, applier.shardNo))
     }
 
     for (remover in fileIndexingResult.removers()) {
-      workersToSchedule.set(workerIndexFor(remover.indexId))
+      workersToSchedule.set(workerIndexFor(remover.indexId, remover.shardNo))
     }
 
     fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs) //other parts will be added inside applyModifications()
@@ -649,12 +655,11 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
     updatesLeftCounter: AtomicInteger,
     finishCallback: () -> Unit,
   ) {
-
     val startedAtNs = System.nanoTime()
     var allModificationsSuccessful = true
     try {
       for (applier in fileIndexingResult.appliers()) {
-        if (executorIndex == workerIndexFor(applier.indexId)) {
+        if (executorIndex == workerIndexFor(applier.indexId, applier.shardNo)) {
           val applied = applier.apply()
           allModificationsSuccessful = allModificationsSuccessful && applied
           if (!applied) {
@@ -664,7 +669,7 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
       }
 
       for (remover in fileIndexingResult.removers()) {
-        if (executorIndex == workerIndexFor(remover.indexId)) {
+        if (executorIndex == workerIndexFor(remover.indexId, remover.shardNo)) {
           val removed = remover.remove()
           allModificationsSuccessful = allModificationsSuccessful && removed
           if (!removed) {
@@ -861,9 +866,18 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
   }
 
   init {
-    for ((workerIndex, channel) in channels.withIndex()) {
+    for (workerIndex in 0..<workersCount) {
+      val channel = channels[workerIndex]
+
+      val name = if (workerIndex < DEDICATED_WRITERS_NUMBER) {
+        val id = INDEXES_WITH_DEDICATED_WORKERS[workerIndex]
+        "IndexWriter($id #$workerIndex)"
+      }
+      else {
+        "IndexWriter(* #$workerIndex)"
+      }
       //TODO RC: initialize the Writer in a container, and use supplied scope instead of GlobalScope?
-      GlobalScope.launch(Dispatchers.IO + CoroutineName("IndexWriter(#$workerIndex)")) {
+      GlobalScope.launch(Dispatchers.IO + CoroutineName(name)) {
         channel.consumeEach { task ->
           val startedAtNs = System.nanoTime()
           try {
@@ -887,10 +901,10 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
 
     val workersToSchedule = BitSet(workersCount)
     for (applier in fileIndexingResult.appliers()) {
-      workersToSchedule.set(workerIndexFor(applier.indexId))
+      workersToSchedule.set(workerIndexFor(applier.indexId, applier.shardNo))
     }
     for (remover in fileIndexingResult.removers()) {
-      workersToSchedule.set(workerIndexFor(remover.indexId))
+      workersToSchedule.set(workerIndexFor(remover.indexId, remover.shardNo))
     }
 
     fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs) //other parts will be added inside applyModifications()
@@ -941,13 +955,12 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
     updatesLeftCounter: AtomicInteger,
     finishCallback: () -> Unit,
   ) {
-
     val startedAtNs = System.nanoTime()
 
     var allModificationsSuccessful = true
     try {
       for (applier in fileIndexingResult.appliers()) {
-        if (coroutineIndex == workerIndexFor(applier.indexId)) {
+        if (coroutineIndex == workerIndexFor(applier.indexId, applier.shardNo)) {
           val applied = applier.apply()
           allModificationsSuccessful = allModificationsSuccessful && applied
           if (!applied) {
@@ -957,7 +970,7 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
       }
 
       for (remover in fileIndexingResult.removers()) {
-        if (coroutineIndex == workerIndexFor(remover.indexId)) {
+        if (coroutineIndex == workerIndexFor(remover.indexId, remover.shardNo)) {
           val removed = remover.remove()
           allModificationsSuccessful = allModificationsSuccessful && removed
           if (!removed) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class LightEditActionFactory {
-
   private LightEditActionFactory() {
   }
 
@@ -22,7 +21,7 @@ public final class LightEditActionFactory {
     return new SimpleLightEditCompatibleAction(text, actionPerformed);
   }
 
-  private static class SimpleLightEditCompatibleAction extends DumbAwareAction.SimpleDumbAwareAction implements LightEditCompatible {
+  private static final class SimpleLightEditCompatibleAction extends DumbAwareAction.SimpleDumbAwareAction implements LightEditCompatible {
 
     SimpleLightEditCompatibleAction(Consumer<? super AnActionEvent> actionPerformed) {
       super(actionPerformed);

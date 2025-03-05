@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -321,13 +321,11 @@ public final class JavaGenericsUtil {
    * @return type of elements; the for-each loop {@linkplain PsiForeachStatement#getIterationParameter() iteration parameter} 
    * must be assignable from this type. Returns null if the supplied expression type cannot be used as for-each loop iterated value.  
    */
-  @Nullable
-  public static PsiType getCollectionItemType(@NotNull PsiExpression expression) {
+  public static @Nullable PsiType getCollectionItemType(@NotNull PsiExpression expression) {
     return getCollectionItemType(expression.getType(), expression.getResolveScope());
   }
 
-  @Nullable
-  public static PsiType getCollectionItemType(@Nullable PsiType type, @NotNull GlobalSearchScope scope) {
+  public static @Nullable PsiType getCollectionItemType(@Nullable PsiType type, @NotNull GlobalSearchScope scope) {
     if (type instanceof PsiArrayType) {
       return ((PsiArrayType)type).getComponentType();
     }
@@ -375,8 +373,7 @@ public final class JavaGenericsUtil {
     return null;
   }
 
-  @Nullable
-  private static PsiTypeParameter getIterableTypeParameter(final JavaPsiFacade facade, final PsiClass context) {
+  private static @Nullable PsiTypeParameter getIterableTypeParameter(final JavaPsiFacade facade, final PsiClass context) {
     PsiClass iterable = facade.findClass("java.lang.Iterable", context.getResolveScope());
     if (iterable == null) return null;
     PsiTypeParameter[] typeParameters = iterable.getTypeParameters();

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -20,6 +20,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.projectAndScopeMethodType
 import com.intellij.openapi.project.impl.projectMethodType
+import com.intellij.platform.kernel.util.kernelCoroutineContext
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
@@ -44,7 +46,10 @@ abstract class ClientSessionImpl(
   private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(
   parent = null,
-  parentScope = GlobalScope,
+  parentScope = GlobalScope.childScope(
+    "Client[$clientId] Session scope",
+    context = sharedComponentManager.getCoroutineScope().coroutineContext.kernelCoroutineContext()
+  ),
   additionalContext = clientId.asContextElement(),
 ), ClientSession {
   final override val isLightServiceSupported: Boolean = false
@@ -160,6 +165,11 @@ abstract class ClientSessionImpl(
 
   final override fun toString(): String {
     return "${javaClass.name}(type=${type}, clientId=$clientId)"
+  }
+
+  override fun debugString(short: Boolean): String {
+    val className = if (short) javaClass.simpleName else javaClass.name
+    return "$className::$type#$clientId"
   }
 }
 

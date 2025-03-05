@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
 import org.jetbrains.kotlin.idea.gradleTooling.compareTo
@@ -24,21 +25,23 @@ data class CompilerOption(val expression: String, val classToImport: FqName? = n
 data class Replacement(val expressionToReplace: KtExpression, val replacement: String, val classToImport: FqName? = null)
 
 @ApiStatus.Internal
-fun expressionContainsOperationForbiddenToReplace(binaryExpression: KtBinaryExpression): Boolean {
-    if (binaryExpression.operationToken == KtTokens.MINUSEQ) return true
-    val rightPartOfBinaryExpression = binaryExpression.right ?: return true
-    return if (rightPartOfBinaryExpression is KtBinaryExpression) {
-        checkIfExpressionContainsMinusOperator(rightPartOfBinaryExpression)
-    } else {
-        false
-    }
+fun KtDotQualifiedExpression.containsNonReplaceableOperation(): Boolean {
+    val psiElementParent = parent as? KtBinaryExpression ?: return true
+    return psiElementParent.containsNonReplaceableOperation()
 }
 
-private fun checkIfExpressionContainsMinusOperator(binaryExpression: KtBinaryExpression): Boolean {
-    if (binaryExpression.operationToken == KtTokens.MINUS) return true
-    val leftPartOfBinaryExpression = binaryExpression.left ?: return true
+@ApiStatus.Internal
+fun KtBinaryExpression.containsNonReplaceableOperation(): Boolean {
+    if (operationToken == KtTokens.MINUSEQ || right == null) return true
+    val rightPartOfBinaryExpression = right as? KtBinaryExpression ?: return false
+    return rightPartOfBinaryExpression.containsMinusOperator()
+}
+
+private fun KtBinaryExpression.containsMinusOperator(): Boolean {
+    if (this.operationToken == KtTokens.MINUS) return true
+    val leftPartOfBinaryExpression = this.left ?: return true
     return if (leftPartOfBinaryExpression is KtBinaryExpression) {
-        checkIfExpressionContainsMinusOperator(leftPartOfBinaryExpression)
+        leftPartOfBinaryExpression.containsMinusOperator()
     } else {
         false
     }
@@ -132,19 +135,11 @@ private fun getOptionsFromFreeCompilerArgsExpression(expression: KtExpression, o
     return optionValues
 }
 
-private fun getLeftmostReceiver(expression: KtDotQualifiedExpression): KtExpression {
-    val receiver = expression.receiverExpression
-    if (receiver is KtDotQualifiedExpression) {
-        return getLeftmostReceiver(receiver)
-    }
-    return receiver
-}
-
 private fun getOptionName(expression: KtExpression): Pair<String, StringBuilder>? {
     val replacementOfKotlinOptionsIfNeeded = StringBuilder()
     val optionName = when (expression) {
         is KtDotQualifiedExpression -> {
-            val receiver = getLeftmostReceiver(expression)
+            val receiver = expression.getLeftMostReceiverExpression()
             if (receiver !is KtNameReferenceExpression) return null
 
             val leftmostReceiverName = receiver.getReferencedName()
@@ -220,8 +215,8 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
         getOperationReplacer(operationToken, optionValue, valueContainsMultipleValues) ?: return null
     // jvmTarget, apiVersion and languageVersion
     val versionOptionData = optionsWithValuesMigratedFromNumericStringsToEnums[optionName]
-    if (versionOptionData != null) {
-        return getCompilerOptionForVersionValue(
+    return if (versionOptionData != null) {
+        getCompilerOptionForVersionValue(
             versionOptionData,
             optionValue,
             replacement,
@@ -232,14 +227,13 @@ private fun getReplacementForOldKotlinOptionIfNeeded(
         val processedOptionValue = optionValue.removeSurrounding("\"").removeSurrounding("'")
         val jsOptionsValuesStringToEnumCorrespondence = jsOptions[optionName] ?: return null
         val jsOptionValue = jsOptionsValuesStringToEnumCorrespondence[processedOptionValue]
-        if (jsOptionValue != null) {
-            return getCompilerOptionForJsValue(jsOptionValue, replacement, optionName, operationReplacer)
+        jsOptionValue?.let {
+            getCompilerOptionForJsValue(jsOptionValue, replacement, optionName, operationReplacer)
         }
     } else {
         replacement.append("$optionName.$operationReplacer($optionValue)")
-        return CompilerOption(replacement.toString())
+        CompilerOption(replacement.toString())
     }
-    return null
 }
 
 private fun getCompilerOptionForVersionValue(
@@ -299,7 +293,7 @@ private fun getReplacementOnlyOfKotlinOptionsIfNeeded(
 }
 
 private fun expressionStartsWithKotlinOptionsReference(expression: KtDotQualifiedExpression): Boolean {
-    val leftmostReceiver = getLeftmostReceiver(expression)
+    val leftmostReceiver = expression.getLeftMostReceiverExpression()
     if (leftmostReceiver !is KtNameReferenceExpression) return false
     val leftmostReceiverName = leftmostReceiver.getReferencedName()
     return (leftmostReceiverName == "kotlinOptions")
@@ -337,7 +331,7 @@ private fun jvmTargetValueMappingRule(inputValue: String): String? {
         "1_8" -> "1_8"
         else -> {
             val numericValue = version.removePrefix("1_").toIntOrNull() ?: return null
-            return if (numericValue > 8) {
+            if (numericValue > 8) {
                 numericValue.toString()
             } else { // Kotlin doesn't support jvmTarget 7 and less
                 null

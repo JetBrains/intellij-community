@@ -4,6 +4,7 @@ package com.intellij.openapi.project
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
@@ -27,13 +28,7 @@ fun displayUrlRelativeToProject(
 ): String {
   var result = url
 
-  if (isIncludeFilePath) {
-    val projectHomeUrl = PathUtil.toSystemDependentName(project.basePath)
-    result = when {
-      projectHomeUrl != null && result.startsWith(projectHomeUrl) -> ELLIPSIS + result.substring(projectHomeUrl.length)
-      else -> FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
-    }
-  }
+  if (isIncludeFilePath) result = displayFilePath(project = project, url = result, file = file)
 
   val urlWithLibraryName = decorateWithLibraryName(file = file, project = project, result = result)
   if (urlWithLibraryName != null) {
@@ -48,6 +43,18 @@ fun displayUrlRelativeToProject(
   return appendModuleName(file = file, project = project, result = result, moduleOnTheLeft = moduleOnTheLeft)
 }
 
+fun displayFilePath(project: Project, file: VirtualFile): @NlsSafe String {
+  return displayFilePath(project = project, url = file.presentableUrl, file = file)
+}
+
+private fun displayFilePath(project: Project, url: String, file: VirtualFile): @NlsSafe String {
+  val projectHomeUrl = PathUtil.toSystemDependentName(project.basePath)
+  return when {
+    projectHomeUrl != null && url.startsWith(projectHomeUrl) -> ELLIPSIS + url.substring(projectHomeUrl.length)
+    else -> FileUtil.getLocationRelativeToUserHome(file.presentableUrl)
+  }
+}
+
 fun decorateWithLibraryName(file: VirtualFile, project: Project, result: String): String? {
   if (file.fileSystem.protocol == URLUtil.JAR_PROTOCOL) {
     val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
@@ -59,13 +66,14 @@ fun decorateWithLibraryName(file: VirtualFile, project: Project, result: String)
   return null
 }
 
-fun appendModuleName(file: VirtualFile,
-                     project: Project,
-                     result: String,
-                     moduleOnTheLeft: Boolean): String {
+fun appendModuleName(file: VirtualFile, project: Project, result: String, moduleOnTheLeft: Boolean): String {
   val module = ModuleUtilCore.findModuleForFile(file, project)
+  return appendModuleName(module, result, moduleOnTheLeft)
+}
+
+fun appendModuleName(module: Module?, result: String, moduleOnTheLeft: Boolean): String {
   return when {
-    module == null || ModuleManager.getInstance(project).modules.size == 1 -> result
+    module == null || ModuleManager.getInstance(module.project).modules.size == 1 -> result
     moduleOnTheLeft -> "[${module.name}] $result"
     else -> "$result [${module.name}]"
   }

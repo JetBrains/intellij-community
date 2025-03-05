@@ -25,15 +25,13 @@ import java.io.IOException;
 
 public final class PyNamedTupleStubType extends CustomTargetExpressionStubType<PyNamedTupleStub> {
 
-  @Nullable
   @Override
-  public PyNamedTupleStub createStub(@NotNull PyTargetExpression psi) {
+  public @Nullable PyNamedTupleStub createStub(@NotNull PyTargetExpression psi) {
     return PyNamedTupleStubImpl.create(psi);
   }
 
-  @Nullable
   @Override
-  public PyNamedTupleStub deserializeStub(@NotNull StubInputStream stream) throws IOException {
+  public @Nullable PyNamedTupleStub deserializeStub(@NotNull StubInputStream stream) throws IOException {
     return PyNamedTupleStubImpl.deserialize(stream);
   }
 }

@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 class Scratch {
   String[] data;
   @Nullable String value;
+  String value2;
   
   void test() {
     if (hasValue() && value.isEmpty()) {}
@@ -18,10 +19,17 @@ class Scratch {
   void testOverriddenNullity() {
     // we inline nullable value, but should not report nullability problem here: it's reported inside the inlined method
     System.out.println(getValueNotNull().trim());
+    // TODO: technically we should report here, but due to inlining, @Nullable part is lost
+    System.out.println(getValue2Nullable().trim());
   }
 
   private boolean hasValue() {
     return value != null;
+  }
+  
+  @Nullable
+  private String getValue2Nullable() {
+    return value2;
   }
   
   @NotNull

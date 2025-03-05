@@ -25,21 +25,19 @@ import org.jetbrains.annotations.Nullable;
  * @author Dennis.Ushakov
  */
 public final class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
-  @NotNull
-  private final MembersManager<T> myMembersManager;
+  private final @NotNull MembersManager<T> myMembersManager;
   private final boolean myCouldBeAbstract;
-  @NotNull
-  private final PyElement myElementToStoreDependency;
+  private final @NotNull PyElement myElementToStoreDependency;
 
 
   /**
    * @see #PyMemberInfo(PyElement, PyElement, boolean, String, Boolean, MembersManager, boolean)
    */
-  PyMemberInfo(@NotNull final T member,
+  PyMemberInfo(final @NotNull T member,
                final boolean isStatic,
-               @NotNull final String displayName,
-               @Nullable final Boolean overrides,
-               @NotNull final MembersManager<T> membersManager,
+               final @NotNull String displayName,
+               final @Nullable Boolean overrides,
+               final @NotNull MembersManager<T> membersManager,
                final boolean couldBeAbstract) {
     this(member, member, isStatic, displayName, overrides, membersManager, couldBeAbstract);
   }
@@ -54,12 +52,12 @@ public final class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
    *                                              TODO: use primitive instead? "Implemeneted" has nothing to do with python duck-typing
    * @param membersManager  manager that knows how to handle this member
    */
-  PyMemberInfo(@NotNull final T member,
+  PyMemberInfo(final @NotNull T member,
                @NotNull PyElement elementToStoreDependency,
                final boolean isStatic,
-               @NotNull final String displayName,
-               @Nullable final Boolean overrides,
-               @NotNull final MembersManager<T> membersManager,
+               final @NotNull String displayName,
+               final @Nullable Boolean overrides,
+               final @NotNull MembersManager<T> membersManager,
                final boolean couldBeAbstract) {
     super(member);
     this.isStatic = isStatic;
@@ -70,8 +68,7 @@ public final class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
     myCouldBeAbstract = couldBeAbstract;
   }
 
-  @NotNull
-  public PyElement getElementToStoreDependency() {
+  public @NotNull PyElement getElementToStoreDependency() {
     return myElementToStoreDependency;
   }
 
@@ -102,7 +99,7 @@ public final class PyMemberInfo<T extends PyElement> extends MemberInfoBase<T> {
    * @param destinationClass destination class to check
    * @return true if conflict.
    */
-  public boolean hasConflict(@NotNull final PyClass destinationClass) {
+  public boolean hasConflict(final @NotNull PyClass destinationClass) {
     return myMembersManager.hasConflict(getMember(), destinationClass);
   }
 }

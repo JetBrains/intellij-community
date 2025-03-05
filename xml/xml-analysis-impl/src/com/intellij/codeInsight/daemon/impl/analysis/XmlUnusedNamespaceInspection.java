@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -28,9 +28,8 @@ import java.util.Objects;
  * @author Dmitry Avdeev
  */
 public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
       public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
@@ -160,8 +159,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
     return attribute.getName().contains(":") ? attribute.getLocalName() : "";
   }
 
-  @Nullable
-  private static XmlAttribute getDefaultLocation(@NotNull XmlTag parent) {
+  private static @Nullable XmlAttribute getDefaultLocation(@NotNull XmlTag parent) {
     return parent.getAttribute(XmlUtil.NO_NAMESPACE_SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
   }
 
@@ -199,9 +197,8 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
     return true;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "XmlUnusedNamespaceDeclaration";
   }
 
@@ -217,14 +214,12 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return getFamilyName();
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl");
     }
 
@@ -233,8 +228,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
       doFix(project, descriptor, true);
     }
 
-    @Nullable
-    public SmartPsiElementPointer<XmlTag> doFix(Project project, ProblemDescriptor descriptor, boolean reformat) {
+    public @Nullable SmartPsiElementPointer<XmlTag> doFix(Project project, ProblemDescriptor descriptor, boolean reformat) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof XmlAttributeValue) {
         element = element.getParent();
@@ -330,9 +324,8 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
       super(namespace, true, true);
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return XmlAnalysisBundle.message("xml.intention.remove.unused.namespace.location");
     }
 

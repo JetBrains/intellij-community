@@ -463,7 +463,7 @@ public final class DomHelper {
               continue;
             }
 
-            boolean addhd = (setNodes.size() == 0); // first handler == head
+            boolean addhd = (setNodes.isEmpty()); // first handler == head
             if (!addhd) {
               List<Statement> hdsupp = handler.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD);
               addhd = (setNodes.containsAll(hdsupp) && (setNodes.size() > hdsupp.size()
@@ -523,7 +523,7 @@ public final class DomHelper {
           Statement res;
 
           setPreds.removeAll(setNodes);
-          if (setPreds.size() == 0) {
+          if (setPreds.isEmpty()) {
             if ((setNodes.size() > 1 ||
                  head.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD).contains(head))
                 && setNodes.size() < stats.size()) {

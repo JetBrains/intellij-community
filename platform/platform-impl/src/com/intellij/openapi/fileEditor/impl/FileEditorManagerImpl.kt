@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -1067,7 +1067,9 @@ open class FileEditorManagerImpl(
 
   internal suspend fun checkForbidSplitAndOpenFile(window: EditorWindow, file: VirtualFile, options: FileEditorOpenOptions) {
     if (forbidSplitFor(file) && !window.isFileOpen(file)) {
-      closeFile(file)
+      withContext(Dispatchers.EDT) {
+        closeFile(file)
+      }
     }
 
     if (!ClientId.isCurrentlyUnderLocalId) {
@@ -1090,7 +1092,7 @@ open class FileEditorManagerImpl(
   private val clientFileEditorManager: ClientFileEditorManager?
     get() {
       // todo RDCT-78
-      val session = ClientSessionsManager.getProjectSession(project) ?: return null
+      val session = project.currentSessionOrNull ?: return null
       LOG.assertTrue(!session.isLocal, "Trying to get ClientFileEditorManager for local ClientId")
       return session.serviceOrNull<ClientFileEditorManager>()
     }
@@ -1483,6 +1485,7 @@ open class FileEditorManagerImpl(
     return result
   }
 
+  @RequiresEdt
   override fun getSelectedTextEditorWithRemotes(): Array<Editor> {
     val result = ArrayList<Editor>()
     for (e in selectedEditorWithRemotes) {
@@ -2143,7 +2146,7 @@ open class FileEditorManagerImpl(
     windowAdded: suspend () -> Unit,
   ) {
     if (items.isEmpty()) {
-      LOG.warn("no files to reopen")
+      LOG.info("no files to reopen")
       return
     }
 
@@ -2312,7 +2315,8 @@ suspend fun waitForFullyCompleted(composite: FileEditorComposite) {
   }
 }
 
-internal fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {
+@Internal
+fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {
   if (event is MouseEvent) {
     val isMouseClick = event.getID() == MouseEvent.MOUSE_CLICKED || event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED
     val modifiers = event.modifiersEx
@@ -2385,7 +2389,8 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
   val isSingletonEditor = isSingletonDockWindow(window) && window.isFileOpen(oldFile)
   if (isSingletonEditor) {
     window.closeFile(oldFile)
-    editorManager.openFile(newFile, window, newOptions.copy(openMode = FileEditorManagerImpl.OpenMode.NEW_WINDOW))
+    editorManager.openFile(newFile, window, newOptions.copy(openMode = FileEditorManagerImpl.OpenMode.NEW_WINDOW,
+                                                            isSingletonEditorInWindow = true))
   }
   else if (oldFile == newFile) {
     val index = window.files().indexOf(oldFile)

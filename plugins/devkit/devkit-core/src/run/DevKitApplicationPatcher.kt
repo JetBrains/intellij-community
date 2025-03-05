@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.compiler.options.MakeProjectStepBeforeRun
@@ -14,6 +14,7 @@ import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
@@ -32,7 +33,7 @@ import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
 @Suppress("SpellCheckingInspection")
-internal class DevKitApplicationPatcher : RunConfigurationExtension() {
+private class DevKitApplicationPatcher : RunConfigurationExtension() {
   override fun <T : RunConfigurationBase<*>> updateJavaParameters(
     configuration: T,
     javaParameters: JavaParameters,
@@ -105,6 +106,9 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (vmParametersAsList.none { it.startsWith("-Djava.util.zip.use.nio.for.zip.file.access") }) {
       vmParameters.add("-Djava.util.zip.use.nio.for.zip.file.access=true") // IJPL-149160
     }
+    if (vmParametersAsList.none { it.startsWith("-Djdk.nio.maxCachedBufferSize") }) {
+      vmParameters.add("-Djdk.nio.maxCachedBufferSize=2097152") // IJPL-164109
+    }
 
     enableIjentDefaultFsProvider(project, configuration, vmParameters)
 
@@ -127,7 +131,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       )
       vmParameters.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=$isIjentWslFsEnabled")
       if (isIjentWslFsEnabled) {
-        vmParameters.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
+        vmParameters.addAll(getMultiRoutingFileSystemVmOptions_Reflective(configuration.workingDirectory))
         vmParameters.add("-Xbootclasspath/a:${configuration.workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
       }
     }
@@ -149,7 +153,9 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     }
 
     if (!vmParameters.hasProperty("idea.config.path")) {
-      val dir = FileUtilRt.toSystemIndependentName("${configuration.workingDirectory}/out/dev-data/${productClassifier.lowercase()}")
+      val path = Path.of(configuration.workingDirectory!!)
+      val configDirPath = path.asEelPath().toString()
+      val dir = FileUtilRt.toSystemIndependentName("$configDirPath/out/dev-data/${productClassifier.lowercase()}")
       vmParameters.addProperty("idea.config.path", "$dir/config")
       vmParameters.addProperty("idea.system.path", "$dir/system")
     }
@@ -227,29 +233,7 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
 private fun isIjentWslFsEnabledByDefaultForProduct_Reflective(workingDirectory: String?, platformPrefix: String?): Boolean {
   if (workingDirectory == null) return false
   try {
-    val buildConstantsClassPath = Path.of(
-      workingDirectory,
-      "out/classes/production/intellij.platform.ijent.community.buildConstants",
-    ).toUri().toURL()
-
-    val kotlinStdlibClassPath = run {
-      val systemClassLoader = getSystemClassLoader()
-      val kotlinCollectionsClassUri = systemClassLoader.getResource("kotlin/collections/CollectionsKt.class")!!.toURI()
-
-      if (kotlinCollectionsClassUri.scheme != "jar") {
-        logger<DevKitApplicationPatcher>().warn("Kotlin stdlib is not in a JAR: $kotlinCollectionsClassUri")
-        return false
-      }
-      val osPath = kotlinCollectionsClassUri.schemeSpecificPart
-        .substringBefore(".jar!")
-        .plus(".jar")
-        .removePrefix(if (SystemInfo.isWindows) "file:/" else "file:")
-
-      Path.of(osPath).toUri().toURL()
-    }
-
-    val tmpClassLoader = URLClassLoader(arrayOf(buildConstantsClassPath, kotlinStdlibClassPath), null)
-    val constantsClass = tmpClassLoader.loadClass("com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt")
+    val constantsClass = getIjentBuildScriptsConstantsClass_Reflective(workingDirectory) ?: return false
     val method = constantsClass.getDeclaredMethod("isIjentWslFsEnabledByDefaultForProduct", String::class.java)
     return method.invoke(null, platformPrefix) as Boolean
   }
@@ -266,4 +250,61 @@ private fun isIjentWslFsEnabledByDefaultForProduct_Reflective(workingDirectory: 
       else -> throw err
     }
   }
+}
+
+/**
+ * A direct call of [com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS] gets
+ * values which is bundled with the DevKit plugin.
+ * In contrast, the result of this function corresponds to what is written in the source code at current revision.
+ */
+@Suppress("FunctionName")
+private fun getMultiRoutingFileSystemVmOptions_Reflective(workingDirectory: String?): List<String> {
+  if (workingDirectory == null) return MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+  try {
+    val constantsClass = getIjentBuildScriptsConstantsClass_Reflective(workingDirectory) ?: return MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+    val field = constantsClass.getDeclaredField("MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS")
+    field.trySetAccessible()
+    @Suppress("UNCHECKED_CAST")
+    return field.get(constantsClass) as List<String>
+  }
+  catch (err: Throwable) {
+    when (err) {
+      is ClassNotFoundException, is NoSuchMethodException, is IllegalAccessException, is java.lang.reflect.InvocationTargetException -> {
+        logger<DevKitApplicationPatcher>().warn(
+          "Failed to reflectively load MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS from built classes." +
+          " Options from DevKit plugin loaded class will be used.",
+          err,
+        )
+        return MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+      }
+      else -> throw err
+    }
+  }
+}
+
+@Suppress("FunctionName")
+private fun getIjentBuildScriptsConstantsClass_Reflective(workingDirectory: String): Class<*>? {
+  val buildConstantsClassPath = Path.of(
+    workingDirectory,
+    "out/classes/production/intellij.platform.ijent.community.buildConstants",
+  ).toUri().toURL()
+
+  val kotlinStdlibClassPath = run {
+    val systemClassLoader = getSystemClassLoader()
+    val kotlinCollectionsClassUri = systemClassLoader.getResource("kotlin/collections/CollectionsKt.class")!!.toURI()
+
+    if (kotlinCollectionsClassUri.scheme != "jar") {
+      logger<DevKitApplicationPatcher>().warn("Kotlin stdlib is not in a JAR: $kotlinCollectionsClassUri")
+      return null
+    }
+    val osPath = kotlinCollectionsClassUri.schemeSpecificPart
+      .substringBefore(".jar!")
+      .plus(".jar")
+      .removePrefix(if (SystemInfo.isWindows) "file:/" else "file:")
+
+    Path.of(osPath).toUri().toURL()
+  }
+
+  val tmpClassLoader = URLClassLoader(arrayOf(buildConstantsClassPath, kotlinStdlibClassPath), null)
+  return tmpClassLoader.loadClass("com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt")
 }

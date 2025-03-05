@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -90,7 +90,7 @@ public class BaseTableView extends JBTable {
     }
     for (int i = 0; i < columnIndices.size(); i++) {
       String width = propertyComponent.getValue(prefix + widthPropertyName(i));
-      if (width != null && width.length() > 0) {
+      if (width != null && !width.isEmpty()) {
         try {
           columnModel.getColumn(i).setPreferredWidth(Integer.parseInt(width));
         }

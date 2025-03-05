@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.awt.event.KeyEvent.*;
 
@@ -31,13 +30,11 @@ public final class ShortcutDataProvider {
    */
   private static final Collection<Integer> DOUBLE_CLICK_MODIFIER_KEYS = Arrays.asList(VK_CONTROL, VK_SHIFT);
 
-  @Nullable
-  public static String getActionEventText(@Nullable AnActionEvent event) {
+  public static @Nullable String getActionEventText(@Nullable AnActionEvent event) {
     return event != null ? getInputEventText(event.getInputEvent(), event.getPlace()) : null;
   }
 
-  @Nullable
-  public static String getInputEventText(@Nullable InputEvent inputEvent, @Nullable String place) {
+  public static @Nullable String getInputEventText(@Nullable InputEvent inputEvent, @Nullable String place) {
     if (inputEvent instanceof KeyEvent) {
       // touchbar uses KeyEvent to perform an action
       if (ActionPlaces.TOUCHBAR_GENERAL.equals(place)) {
@@ -51,16 +48,14 @@ public final class ShortcutDataProvider {
     return null;
   }
 
-  @Nullable
-  static String getKeyEventText(@Nullable KeyEvent key) {
+  static @Nullable String getKeyEventText(@Nullable KeyEvent key) {
     if (key == null) return null;
 
     final KeyStroke keystroke = KeyStroke.getKeyStrokeForEvent(key);
     return keystroke != null ? getShortcutText(new KeyboardShortcut(keystroke, null)) : "Unknown";
   }
 
-  @Nullable
-  static String getMouseEventText(@Nullable MouseEvent event) {
+  static @Nullable String getMouseEventText(@Nullable MouseEvent event) {
     if (event == null) return null;
 
     String res = getMouseButtonText(event.getButton());
@@ -82,8 +77,7 @@ public final class ShortcutDataProvider {
     return res;
   }
 
-  @NotNull
-  private static String roundClickCount(int clickCount) {
+  private static @NotNull String roundClickCount(int clickCount) {
     if (clickCount < 3) return String.valueOf(clickCount);
     if (clickCount < 5) return "3-5";
     if (clickCount < 25) return "5-25";

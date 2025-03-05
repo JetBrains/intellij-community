@@ -27,6 +27,7 @@
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-build-common-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
@@ -41,7 +42,6 @@
     <orderEntry type="module" module-name="kotlin.maven.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.k1.new.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
@@ -70,13 +70,17 @@
     <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.copyright.fir.tests" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.analysis.analysis-api.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.compose.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.injection.k2.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.test.parcelize.k2" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy.tests.k2" scope="TEST" />
   </component>
 </module>

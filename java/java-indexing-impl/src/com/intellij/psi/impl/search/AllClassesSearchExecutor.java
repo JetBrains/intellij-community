@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.JobLauncher;
@@ -21,7 +21,7 @@ import java.util.*;
 
 public final class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiClass> consumer) {
+  public boolean execute(final @NotNull AllClassesSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
 
     if (SearchScope.isEmptyScope(scope)) {
@@ -40,8 +40,8 @@ public final class AllClassesSearchExecutor implements QueryExecutor<PsiClass, A
     return true;
   }
 
-  private static boolean processAllClassesInGlobalScope(@NotNull final GlobalSearchScope scope,
-                                                        @NotNull final AllClassesSearch.SearchParameters parameters,
+  private static boolean processAllClassesInGlobalScope(final @NotNull GlobalSearchScope scope,
+                                                        final @NotNull AllClassesSearch.SearchParameters parameters,
                                                         @NotNull Processor<? super PsiClass> processor) {
     final Set<String> names = new HashSet<>(10000);
     Project project = parameters.getProject();
@@ -97,7 +97,7 @@ public final class AllClassesSearchExecutor implements QueryExecutor<PsiClass, A
     return success;
   }
 
-  private static boolean processScopeRootForAllClasses(@NotNull final PsiElement scopeRoot, @NotNull final Processor<? super PsiClass> processor) {
+  private static boolean processScopeRootForAllClasses(final @NotNull PsiElement scopeRoot, final @NotNull Processor<? super PsiClass> processor) {
     final boolean[] stopped = {false};
 
     final JavaElementVisitor visitor = scopeRoot instanceof PsiCompiledElement ? new JavaRecursiveElementVisitor() {

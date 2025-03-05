@@ -26,7 +26,7 @@ public final class ScriptRunner {
     return this;
   }
 
-  public void doRunScript(@NotNull final Project project, @NotNull String text, @Nullable File workingDir) {
+  public void doRunScript(final @NotNull Project project, @NotNull String text, @Nullable File workingDir) {
     PlaybackRunnerExtended runner = new PlaybackRunnerExtended(text, new CommandLogger(), project);
     runner.setScriptDir(workingDir);
 

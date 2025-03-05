@@ -14,14 +14,13 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.ExperimentalUI
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 
-internal suspend fun importConfigIfNeeded(
+internal suspend fun CoroutineScope.importConfigIfNeeded(
   isHeadless: Boolean,
   configImportNeededDeferred: Deferred<Boolean>,
   lockSystemDirsJob: Job,
@@ -33,6 +32,12 @@ internal suspend fun importConfigIfNeeded(
   initLafJob: Job
 ): Job? {
   if (!configImportNeededDeferred.await()) {
+    val configDir = PathManager.getConfigDir()
+    val configDirExists = Files.exists(configDir)
+    val entries: Array<File>? = PathManager.getConfigDir().toFile().listFiles()
+    launch {
+      logDeferred.await().info("Will skip the config import to directory \"$configDir\" (exists = $configDirExists). Current entries: ${entries?.joinToString(", ") { "\"${it.name}\"" }}.")
+    }
     return null
   }
 
@@ -53,6 +58,8 @@ internal suspend fun importConfigIfNeeded(
   initLafJob.join()
   val log = logDeferred.await()
   val targetDirectoryToImportConfig = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
+  val entries: Array<File>? = targetDirectoryToImportConfig.toFile().listFiles()
+  log.info("Will import config to directory \"$targetDirectoryToImportConfig\" (exists = ${Files.exists(targetDirectoryToImportConfig)}). Current entries: ${entries?.joinToString(", ") { "\"${it.name}\"" }}.")
   importConfig(args, targetDirectoryToImportConfig, log, appStarterDeferred.await(), euaDocumentDeferred)
 
   val isNewUser = ConfigImportHelper.isNewUser()

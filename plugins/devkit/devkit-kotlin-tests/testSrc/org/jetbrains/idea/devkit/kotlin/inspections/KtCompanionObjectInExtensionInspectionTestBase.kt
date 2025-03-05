@@ -1,17 +1,28 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import java.io.File
 
-abstract class KtCompanionObjectInExtensionInspectionTestBase : LightDevKitInspectionFixTestBase() {
+abstract class KtCompanionObjectInExtensionInspectionTestBase : LightDevKitInspectionFixTestBase(),
+                                                                ExpectedPluginModeProvider {
 
   override fun getFileExtension(): String = "kt"
 
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+  }
+
   override fun setUp() {
-    super.setUp()
+    setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
     myFixture.addClass(
       """
         package com.intellij.openapi.extensions; 
@@ -85,8 +96,7 @@ abstract class KtCompanionObjectInExtensionInspectionTestBase : LightDevKitInspe
       fail("Expected ConflictsInTestsException exception te be thrown.")
     }
     catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
-      assertEquals(e.messages.size, expectedConflicts.size)
-      UsefulTestCase.assertContainsElements(e.messages, expectedConflicts)
+      UsefulTestCase.assertSameElements(e.messages, expectedConflicts)
     }
   }
 
@@ -96,6 +106,13 @@ abstract class KtCompanionObjectInExtensionInspectionTestBase : LightDevKitInspe
     extension: String = fileExtension,
   ): Pair<String, String> {
     val resultName = testName + suffix?.let { "_$it" }.orEmpty()
-    return "${resultName}.$extension" to "${resultName}_after.$extension"
+    val beforeName = "${resultName}.$extension"
+
+    val k2FileName = "${resultName}_after.k2.$extension"
+    val k2FilePath = getTestDataPath() + "/" + k2FileName
+    if (KotlinPluginModeProvider.isK2Mode() && File(k2FilePath).exists()) {
+      return beforeName to k2FileName
+    }
+    return beforeName to "${resultName}_after.$extension"
   }
 }

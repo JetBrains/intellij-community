@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,9 +9,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
@@ -106,6 +106,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   private static final String PROCESSOR_MODULE_PATH_OPTION = "--processor-module-path";
   private static final String SOURCE_OPTION = "-source";
   private static final String SYSTEM_OPTION = "--system";
+  private static final String PATCH_MODULE_OPTION = "--patch-module";
   private static final Set<String> FILTERED_OPTIONS = Set.of(
     TARGET_OPTION, RELEASE_OPTION, "-d"
   );
@@ -157,9 +158,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   private final Executor myTaskRunner;
   private final Collection<JavacFileReferencesRegistrar> myRefRegistrars = new ArrayList<>();
 
-  public JavaBuilder(Executor tasksExecutor) {
+  public JavaBuilder() {
     super(BuilderCategory.TRANSLATOR);
-    myTaskRunner = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("JavaBuilder Pool", tasksExecutor);
+    myTaskRunner = SharedThreadPool.getInstance().createBoundedExecutor("JavaBuilder Pool", 1);
     //add here class processors in the sequence they should be executed
   }
 
@@ -169,7 +170,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
   @Override
   public @NotNull String getPresentableName() {
-    return StringUtil.capitalize(getBuilderName());
+    return Strings.capitalize(getBuilderName());
   }
 
   @Override
@@ -471,12 +472,15 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       final Iterable<? extends File> classPath;
       final ModulePath modulePath;
       final Iterable<? extends File> upgradeModulePath;
-      if (moduleInfoFile != null) { // has modules
+      if (moduleInfoFile != null || Iterators.contains(options, PATCH_MODULE_OPTION)) { // has modules or trying to patch a module
+
         final ModulePathSplitter splitter = MODULE_PATH_SPLITTER.get(context);
         final Pair<ModulePath, Collection<File>> pair = splitter.splitPath(
           moduleInfoFile, outs.keySet(), ProjectPaths.getCompilationModulePath(chunk, false), collectAdditionalRequires(options)
         );
-        final boolean useModulePathOnly = Boolean.parseBoolean(System.getProperty(USE_MODULE_PATH_ONLY_OPTION))/*compilerConfig.useModulePathOnly()*/;
+
+        // always add everything to ModulePath if module path usagfe is forced or '--patch-module' is explicitly specified in the command line
+        final boolean useModulePathOnly = moduleInfoFile == null || Boolean.parseBoolean(System.getProperty(USE_MODULE_PATH_ONLY_OPTION))/*compilerConfig.useModulePathOnly()*/;
         if (useModulePathOnly) {
           // in Java 9, named modules are not allowed to read classes from the classpath
           // moreover, the compiler requires all transitive dependencies to be on the module path
@@ -532,7 +536,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       return invokeJavac(compilerSdkVersion, context, chunk, compilingTool, options, files, classesConsumer, (_options, _files, _outSink) -> {
         logJavacCall(chunk, _options, "in-process");
         return JavacMain.compile(
-          _options, _files, classPath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnosticSink, _outSink, context.getCancelStatus(), compilingTool
+          _options, _files, classPath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnosticSink, _outSink, context.getCancelStatus(), compilingTool, null
         );
       });
     }
@@ -799,7 +803,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static synchronized @NotNull ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws IOException {
-    ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
+    ExternalJavacManager server = ExternalJavacManagerKey.KEY.get(context);
     if (server != null) {
       return server;
     }
@@ -821,7 +825,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     };
     server.start(listenPort);
-    ExternalJavacManager.KEY.set(context, server);
+    ExternalJavacManagerKey.KEY.set(context, server);
     return server;
   }
 
@@ -1272,7 +1276,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   @Override
   public void chunkBuildFinished(CompileContext context, ModuleChunk chunk) {
     JavaBuilderUtil.cleanupChunkResources(context);
-    ExternalJavacManager extJavacManager = ExternalJavacManager.KEY.get(context);
+    ExternalJavacManager extJavacManager = ExternalJavacManagerKey.KEY.get(context);
     if (extJavacManager != null) {
       extJavacManager.shutdownIdleProcesses();
     }

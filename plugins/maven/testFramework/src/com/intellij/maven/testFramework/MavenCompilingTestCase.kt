@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework
 
 import com.intellij.compiler.artifacts.ArtifactsTestUtil
@@ -12,18 +12,41 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEntry
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope
 import com.intellij.testFramework.CompilerTester
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.TestFileSystemBuilder
-import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
+import kotlin.io.path.notExists
+import kotlin.io.path.readText
 
+/**
+ * This test case uses the NIO API for handling file operations.
+ *
+ * **Background**:
+ * The test framework is transitioning from the `IO` API to the`NIO` API
+ *
+ * **Implementation Notes**:
+ * - `<TestCase>` represents the updated implementation using the `NIO` API.
+ * - `<TestCaseLegacy>` represents the legacy implementation using the `IO` API.
+ * - For now, both implementations coexist to allow for a smooth transition and backward compatibility.
+ * - Eventually, `<TestCaseLegacy>` will be removed from the codebase.
+ *
+ * **Action Items**:
+ * - Prefer using `<TestCase>` for new test cases.
+ * - Update existing tests to use `<TestCase>` where possible.
+ *
+ * **Future Direction**:
+ * Once the transition is complete, all test cases relying on the `IO` API will be retired,
+ * and the codebase will exclusively use the `NIO` implementation.
+ */
 abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
+
   protected suspend fun compileModules(vararg moduleNames: String) {
     // blockingContextScope here because we want to propagate cancellation to invokeAndWait
     blockingContextScope {
@@ -69,6 +92,7 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
         for (message in messages) {
           if (message.category === CompilerMessageCategory.ERROR) {
             fail("Compilation failed with error: " + message.message)
+
           }
         }
       }
@@ -103,15 +127,18 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   protected fun assertDirectory(relativePath: String, fileSystemBuilder: TestFileSystemBuilder) {
-    fileSystemBuilder.build().assertDirectoryEqual(File(projectPom.parent.path, relativePath))
+    val directory = projectPom.parent.toNioPath().resolve(relativePath)
+    fileSystemBuilder.build().assertDirectoryEqual(directory.toFile())
   }
 
   protected fun assertJar(relativePath: String, fileSystemBuilder: TestFileSystemBuilder) {
-    fileSystemBuilder.build().assertFileEqual(File(projectPom.parent.path, relativePath))
+    val jar = projectPom.parent.toNioPath().resolve(relativePath)
+    fileSystemBuilder.build().assertFileEqual(jar.toFile())
   }
 
   protected fun assertCopied(path: String) {
-    assertTrue(File(projectPom.parent.path, path).exists())
+    val parent = projectPom.parent.toNioPath()
+    assertTrue(parent.resolve(path).exists())
   }
 
   protected fun assertExists(path: String) {
@@ -122,15 +149,22 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
     assertNotCopied(path)
   }
 
+  protected fun assertExists(path: Path) {
+    assertTrue("File should exist $path", path.exists());
+  }
+
   @Throws(IOException::class)
   protected fun assertCopied(path: String, content: String?) {
-    val file = File(projectPom.parent.path, path)
+    val parent = projectPom.parent.toNioPath()
+    val file = parent.resolve(path)
     assertTrue(file.exists())
-    assertEquals(content, FileUtil.loadFile(file))
+    assertEquals(content, file.readText())
   }
 
   protected fun assertNotCopied(path: String) {
-    assertFalse(File(projectPom.parent.path, path).exists())
+    val parent = projectPom.parent.toNioPath()
+    val file = parent.resolve(path)
+    assertTrue(file.notExists())
   }
 
   @Throws(IOException::class)
@@ -140,9 +174,10 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
 
   @Throws(IOException::class)
   protected fun loadResult(pomFile: VirtualFile, relativePath: String): String {
-    val file = File(pomFile.parent.path, relativePath)
+    val parent = pomFile.parent.toNioPath()
+    val file = parent.resolve(relativePath)
     assertTrue("file not found: $relativePath", file.exists())
-    return String(FileUtil.loadFileText(file))
+    return file.readText()
   }
 
   protected fun extractJdkVersion(module: Module, fallbackToInternal: Boolean): String? {

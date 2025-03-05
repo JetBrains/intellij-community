@@ -8,6 +8,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.function.Consumer;
@@ -21,6 +22,7 @@ public interface OptionsSearchTopHitProvider {
    * Extension point name: com.intellij.search.topHitProvider
    */
   interface ApplicationLevelProvider extends OptionsSearchTopHitProvider, SearchTopHitProvider {
+    @Unmodifiable
     @NotNull Collection<OptionDescription> getOptions();
 
     // do not override

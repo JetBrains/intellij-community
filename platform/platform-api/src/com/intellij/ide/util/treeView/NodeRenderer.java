@@ -14,9 +14,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.treeStructure.TreeNodePresentation;
+import com.intellij.ui.treeStructure.TreeNodePresentationImpl;
 import com.intellij.ui.treeStructure.TreeNodeTextFragment;
 import com.intellij.ui.treeStructure.TreeNodeViewModel;
 import com.intellij.util.ui.StartupUiUtil;
@@ -39,14 +40,14 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     if (value instanceof TreeNodeViewModel vm) {
-      customizeViewModelRenderer(vm.presentationSnapshot(), selected, hasFocus);
+      customizeViewModelRenderer((TreeNodePresentationImpl)vm.stateSnapshot().getPresentation(), selected, hasFocus);
     }
     else {
       customizeLegacyRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
     }
   }
 
-  private void customizeViewModelRenderer(@NotNull TreeNodePresentation presentation, boolean selected, boolean hasFocus) {
+  private void customizeViewModelRenderer(@NotNull TreeNodePresentationImpl presentation, boolean selected, boolean hasFocus) {
     setIcon(fixIconIfNeeded(presentation.getIcon(), selected, hasFocus));
     boolean isMain = true;
     for (@NotNull TreeNodeTextFragment fragment : presentation.getFullText()) {
@@ -153,6 +154,9 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   private static SimpleTextAttributes addColorToSimpleTextAttributes(SimpleTextAttributes simpleTextAttributes, Color color) {
     if (color != null) {
       final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
+      if (simpleTextAttributes.useFaded()) {
+         color = ColorUtil.faded(color);
+      }
       textAttributes.setForegroundColor(color);
       simpleTextAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     }

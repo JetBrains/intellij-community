@@ -3,8 +3,7 @@
 
     <!-- Action ======================= -->
 
-    <!-- skip if 'id' not specified -->
-    <action description="Not localized"
+    <<warning descr="Extract text/description for i18n">action</warning> description="Not localized"
             text="Not Localized"
             class="foo.bar.BarAction"/>
 
@@ -22,8 +21,7 @@
 
     <!-- Group ======================= -->
 
-    <!-- skip if 'id' not specified -->
-    <group description="Not localized"
+    <<warning descr="Extract text/description for i18n">group</warning> description="Not localized"
            text="Not Localized"/>
 
     <!-- skip if internal -->

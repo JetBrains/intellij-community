@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.ide.IdeBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.panels.ValidatingComponent;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
@@ -65,7 +66,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
 
   @Override
   protected JComponent createNorthPanel() {
-    final Box box = Box.createHorizontalBox();
+    final JBBox box = JBBox.createHorizontalBox();
     box.add(new JLabel(myRenamer.getDialogDescription()));
     box.add(Box.createHorizontalGlue());
     return box;
@@ -100,7 +101,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final Box box = Box.createVerticalBox();
+    final JBBox box = JBBox.createVerticalBox();
     setupTable();
 
     myTableModel.addTableModelListener(e -> handleChanges());
@@ -119,7 +120,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     myValidatingComponent.doInitialize();
 
     box.add(myValidatingComponent);
-    final Box buttonBox = Box.createHorizontalBox();
+    final JBBox buttonBox = JBBox.createHorizontalBox();
     buttonBox.add(Box.createHorizontalGlue());
     final JButton selectAllButton = new JButton(RefactoringBundle.message("select.all.button"));
     buttonBox.add(selectAllButton);
@@ -308,8 +309,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     }
 
     @Override
-    @Nullable
-    public Class<?> getColumnClass(int columnIndex) {
+    public @Nullable Class<?> getColumnClass(int columnIndex) {
       return switch (columnIndex) {
         case CHECK_COLUMN -> Boolean.class;
         case OLD_NAME_COLUMN, NEW_NAME_COLUMN -> String.class;

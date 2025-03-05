@@ -228,9 +228,8 @@ public class GenericType extends VarType implements Type {
     return value.substring(0, index + 1);
   }
 
-  @NotNull
   @Override
-  public GenericType decreaseArrayDim() {
+  public @NotNull GenericType decreaseArrayDim() {
     assert getArrayDim() > 0 : this;
     return new GenericType(getType(), getArrayDim() - 1, getValue(), parent, arguments, wildcard);
   }

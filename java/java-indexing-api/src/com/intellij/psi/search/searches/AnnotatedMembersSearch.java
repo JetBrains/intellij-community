@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.psi.PsiClass;
@@ -13,13 +13,11 @@ public final class AnnotatedMembersSearch {
 
   private AnnotatedMembersSearch() {}
 
-  @NotNull
-  public static Query<PsiMember> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
+  public static @NotNull Query<PsiMember> search(@NotNull PsiClass annotationClass, @NotNull SearchScope scope) {
     return AnnotatedElementsSearch.searchPsiMembers(annotationClass, scope);
   }
 
-  @NotNull
-  public static Query<PsiMember> search(@NotNull PsiClass annotationClass) {
+  public static @NotNull Query<PsiMember> search(@NotNull PsiClass annotationClass) {
     return search(annotationClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(annotationClass)));
   }
 }

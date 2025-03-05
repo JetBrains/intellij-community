@@ -7,9 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ServiceViewNavBarExtension extends AbstractNavBarModelExtension {
-  @Nullable
   @Override
-  public String getPopupMenuGroup(@NotNull DataProvider provider) {
+  public @Nullable String getPopupMenuGroup(@NotNull DataProvider provider) {
     ServiceView serviceView = ServiceViewActionProvider.getSelectedView(provider);
     return serviceView == null ? null : ServiceViewActionProvider.SERVICE_VIEW_ITEM_POPUP;
   }

@@ -5,7 +5,6 @@ suspendFunWithInner.kt:41
 Thread stack trace:
 	CoroutinePreflightFrame c:!LINE_NUMBER!, TestSuspendA$InClassB$InClassC (continuation)
 		($completion, $continuation, $result, inClassCMethodVal)
-CoroutineInfo: 1 coroutine RUNNING
 	CoroutineStackFrame b:!LINE_NUMBER!, TestSuspendA$InClassB (continuation)
 		(inClassBMethodVal)
 	CoroutineStackFrame a:!LINE_NUMBER!, TestSuspendA (continuation)

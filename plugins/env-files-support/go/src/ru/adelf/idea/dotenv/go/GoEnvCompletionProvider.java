@@ -39,9 +39,8 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
         });
     }
 
-    @Nullable
     @Override
-    public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+    public @Nullable PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
         if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
         }
@@ -55,8 +54,7 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
         return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getDecodedText());
     }
 
-    @Nullable
-    private GoStringLiteral getStringLiteral(@NotNull PsiElement psiElement) {
+    private @Nullable GoStringLiteral getStringLiteral(@NotNull PsiElement psiElement) {
         PsiElement parent = psiElement.getParent();
 
         if (!(parent instanceof GoStringLiteral)) {
@@ -76,9 +74,8 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
         return null;
     }
 
-    @Nullable
     @Override
-    public String getActionText(@NotNull DataContext dataContext) {
+    public @Nullable String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

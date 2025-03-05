@@ -28,7 +28,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 73);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 74);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -66,8 +66,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   private static final EventId1<Long> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.DurationMs);
 
-  private static final EventId2<PluginInfo, Long> IDE_FREEZE_DETECTED_PLUGIN =
-    LIFECYCLE.registerEvent("ide.freeze.detected.plugin", EventFields.PluginInfo, EventFields.DurationMs);
+  private static final EventId3<PluginInfo, Long, Boolean> IDE_FREEZE_DETECTED_PLUGIN =
+    LIFECYCLE.registerEvent("ide.freeze.detected.plugin", EventFields.PluginInfo, EventFields.DurationMs, EventFields.Boolean("reported_to_user"));
   private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_ISSUE_REPORTED =
     LIFECYCLE.registerEvent("ide.freeze.reported.plugin", EventFields.PluginInfo);
   private static final EventId1<PluginInfo> IDE_FREEZE_PLUGIN_IGNORED =
@@ -229,8 +229,8 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
     EARLY_ERRORS.log(numErrors);
   }
 
-  public static void pluginFreezeDetected(@NotNull PluginId pluginId, long durationMs) {
-    IDE_FREEZE_DETECTED_PLUGIN.log(getPluginInfoById(pluginId), durationMs);
+  public static void pluginFreezeDetected(@NotNull PluginId pluginId, long durationMs, boolean reportedToUser) {
+    IDE_FREEZE_DETECTED_PLUGIN.log(getPluginInfoById(pluginId), durationMs, reportedToUser);
   }
 
   public static void pluginFreezeReported(@NotNull PluginId pluginId) {

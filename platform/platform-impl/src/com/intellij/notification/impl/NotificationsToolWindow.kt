@@ -162,7 +162,9 @@ internal class NotificationContent(val project: Project,
     val splitter = MySplitter()
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
-    splitterWrapper = NonOpaquePanel(splitter)
+    splitterWrapper = object : NonOpaquePanel(splitter) {
+      override fun isVisible() = super.isVisible() && splitter.isVisible
+    }
     myMainPanel.add(splitterWrapper)
 
     autoProportionController = AutoProportionController(splitter, suggestions, timeline)

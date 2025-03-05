@@ -185,6 +185,15 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       }
     }
 
+    // Ensure that the shortcuts of the actions registered above are included in tooltips.
+    span("stripeButton.updatePresentation executing$suffix") {
+      withContext(Dispatchers.EDT) {
+        for (result in entries) {
+          result.entry.stripeButton?.updatePresentation()
+        }
+      }
+    }
+
     span("postTask executing$suffix") {
       for (result in entries) {
         if (result.postTask != null) {

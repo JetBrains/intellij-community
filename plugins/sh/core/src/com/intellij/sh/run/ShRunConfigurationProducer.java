@@ -19,9 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.sh.run.ShRunFileAction.parseInterpreterAndOptions;
 
 final class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRunConfiguration> {
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return ShConfigurationType.getInstance();
   }
 

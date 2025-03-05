@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.externalSystem.JavaModuleData;
 import com.intellij.externalSystem.JavaProjectData;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -12,24 +11,17 @@ import com.intellij.openapi.externalSystem.model.project.ModuleSdkData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectSdkData;
 import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies;
-import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioPathUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.JavaVersion;
 import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.idea.IdeaJavaLanguageSettings;
@@ -41,7 +33,6 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
-import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -58,7 +49,6 @@ import static com.intellij.openapi.externalSystem.service.execution.ExternalSyst
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public final class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
-  private final static Logger LOG = Logger.getInstance(JavaGradleProjectResolver.class);
 
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
@@ -67,8 +57,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     nextResolver.populateProjectExtraModels(gradleProject, ideProject);
   }
 
-  @NotNull
-  private String getCompileOutputPath() {
+  private @NotNull String getCompileOutputPath() {
     String projectDirPath = resolverCtx.getProjectPath();
     // Gradle API doesn't expose gradleProject compile output path yet.
     return projectDirPath + "/build/classes";
@@ -126,8 +115,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     }
   }
 
-  @NotNull
-  private static AnnotationProcessingData getMergedAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel) {
+  private static @NotNull AnnotationProcessingData getMergedAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel) {
 
     final Set<String> mergedAnnotationProcessorPath = new LinkedHashSet<>();
     for (AnnotationProcessingConfig config : apModel.allConfigs().values()) {
@@ -143,9 +131,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     return AnnotationProcessingData.create(mergedAnnotationProcessorPath, apArguments);
   }
 
-  @Nullable
-  private static AnnotationProcessingData getAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel,
-                                                                      @NotNull String sourceSetName) {
+  private static @Nullable AnnotationProcessingData getAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel,
+                                                                                @NotNull String sourceSetName) {
     AnnotationProcessingConfig config = apModel.bySourceSetName(sourceSetName);
     if (config == null) {
       return null;
@@ -184,83 +171,19 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   @Override
-  public @NotNull Map<String, String> enhanceTaskProcessing(
-    @Nullable Project project,
-    @NotNull List<String> taskNames,
-    @NotNull Consumer<String> initScriptConsumer,
-    @NotNull Map<String, String> parameters
-  ) {
-    var isRunAsTest = Boolean.parseBoolean(parameters.get(IS_RUN_AS_TEST_KEY));
-    var isBuiltInTestEventsUsed = Boolean.parseBoolean(parameters.get(IS_BUILT_IN_TEST_EVENTS_USED_KEY));
-    var jvmParametersSetup = parameters.get(JVM_PARAMETERS_SETUP_KEY);
-    if (isRunAsTest) {
-      var initScript = isBuiltInTestEventsUsed
-                       ? GradleInitScriptUtil.loadFileComparisonTestLoggerInitScript()
-                       : GradleInitScriptUtil.loadIjTestLoggerInitScript();
-      initScriptConsumer.consume(initScript);
-    }
-    enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer);
-    return Map.of();
-  }
-
-  @Override
-  public void enhanceTaskProcessing(@NotNull List<String> taskNames,
-                                    @Nullable String jvmParametersSetup,
-                                    @NotNull Consumer<String> initScriptConsumer) {
-    if (!StringUtil.isEmpty(jvmParametersSetup)) {
-      LOG.assertTrue(!jvmParametersSetup.contains(ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX),
-                     "Please use org.jetbrains.plugins.gradle.service.debugger.GradleJvmDebuggerBackend to setup debugger");
-
-      final String names = "[" + toStringListLiteral(taskNames, ", ") + "]";
-      List<String> argv = ParametersListUtil.parse(jvmParametersSetup);
-      if (SystemInfo.isWindows) {
-        argv = ContainerUtil.map(argv, s -> CommandLineUtil.escapeParameterOnWindows(s, false));
-      }
-      final String jvmArgs = toStringListLiteral(argv, " << ");
-
-      final String[] lines = {
-        "gradle.taskGraph.whenReady { taskGraph ->",
-        "  taskGraph.allTasks.each { Task task ->",
-        "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
-        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
-        "        jvmArgs << " + jvmArgs,
-        "        task.jvmArgs = jvmArgs",
-        "    }",
-        "  }",
-        "}",
-      };
-      final String script = StringUtil.join(lines, System.lineSeparator());
-      initScriptConsumer.consume(script);
-    }
-  }
-
-  @NotNull
-  private static String toStringListLiteral(@NotNull List<String> strings, @NotNull String separator) {
-    final List<String> quotedStrings = ContainerUtil.map(strings, s -> StringUtil.escapeChar(toStringLiteral(s), '$'));
-    return StringUtil.join(quotedStrings, separator);
-  }
-
-  @NotNull
-  private static String toStringLiteral(@NotNull String s) {
-    return StringUtil.wrapWithDoubleQuote(StringUtil.escapeStringCharacters(s));
-  }
-
-  @NotNull
-  @Override
-  public Set<Class<?>> getExtraProjectModelClasses() {
+  public @NotNull Set<Class<?>> getExtraProjectModelClasses() {
     return Set.of(AnnotationProcessingModel.class, ProjectDependencies.class);
   }
 
   private void populateJavaProjectCompilerSettings(@NotNull IdeaProject ideaProject, @NotNull DataNode<ProjectData> projectNode) {
-    String compileOutputPath = getCompileOutputPath();
+    var compileOutputPath = getCompileOutputPath();
+    var languageLevel = getLanguageLevel(ideaProject);
+    var targetBytecodeVersion = getTargetBytecodeVersion(ideaProject);
+    var compilerArguments = getCompilerArguments(ideaProject);
+    var javaProjectData = new JavaProjectData(
+      GradleConstants.SYSTEM_ID, compileOutputPath, languageLevel, targetBytecodeVersion, compilerArguments);
 
-    LanguageLevel languageLevel = getLanguageLevel(ideaProject);
-    String targetBytecodeVersion = getTargetBytecodeVersion(ideaProject);
-
-    JavaSdkVersion jdkVersion = JavaProjectData.resolveSdkVersion(ideaProject.getJdkName());
-
-    JavaProjectData javaProjectData =
-      new JavaProjectData(GradleConstants.SYSTEM_ID, compileOutputPath, jdkVersion, languageLevel, targetBytecodeVersion);
+    javaProjectData.setJdkName(ideaProject.getJdkName());
 
     projectNode.createChild(JavaProjectData.KEY, javaProjectData);
   }
@@ -287,13 +210,15 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   private static @NotNull JavaModuleData createMainModuleData(@NotNull IdeaModule ideaModule, @NotNull ExternalProject externalProject) {
     LanguageLevel languageLevel = getLanguageLevel(ideaModule, externalProject);
     String targetBytecodeVersion = getTargetBytecodeVersion(ideaModule, externalProject);
-    return new JavaModuleData(GradleConstants.SYSTEM_ID, languageLevel, targetBytecodeVersion);
+    List<String> compilerArguments = getCompilerArguments(externalProject);
+    return new JavaModuleData(GradleConstants.SYSTEM_ID, languageLevel, targetBytecodeVersion, compilerArguments);
   }
 
   private static @NotNull JavaModuleData createSourceSetModuleData(@NotNull IdeaModule ideaModule, @NotNull ExternalSourceSet sourceSet) {
     LanguageLevel languageLevel = getLanguageLevel(ideaModule, sourceSet);
     String targetBytecodeVersion = getTargetBytecodeVersion(ideaModule, sourceSet);
-    return new JavaModuleData(GradleConstants.SYSTEM_ID, languageLevel, targetBytecodeVersion);
+    List<String> compilerArguments = getCompilerArguments(sourceSet);
+    return new JavaModuleData(GradleConstants.SYSTEM_ID, languageLevel, targetBytecodeVersion, compilerArguments);
   }
 
   private @NotNull Map<ExternalSourceSet, DataNode<GradleSourceSetData>> findSourceSets(
@@ -331,37 +256,34 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
       .min(Comparator.naturalOrder())
       .orElse(null);
     if (languageLevel != null) return languageLevel;
-    boolean isPreview = ContainerUtil.and(externalModules, it -> isPreview(it.second));
     IdeaJavaLanguageSettings javaLanguageSettings = ideaProject.getJavaLanguageSettings();
-    return getLanguageLevel(javaLanguageSettings, isPreview);
+    return getLanguageLevel(javaLanguageSettings, isPreview(ideaProject));
   }
 
   private static @Nullable LanguageLevel getLanguageLevel(@NotNull IdeaModule ideaModule, @NotNull ExternalProject externalProject) {
-    boolean isPreview = isPreview(externalProject);
-    LanguageLevel languageLevel = getLanguageLevel(externalProject, isPreview);
+    LanguageLevel languageLevel = getLanguageLevel(externalProject);
     if (languageLevel != null) return languageLevel;
     IdeaJavaLanguageSettings javaLanguageSettings = ideaModule.getJavaLanguageSettings();
-    return getLanguageLevel(javaLanguageSettings, isPreview);
+    return getLanguageLevel(javaLanguageSettings, isPreview(externalProject));
   }
 
   private static @Nullable LanguageLevel getLanguageLevel(@NotNull IdeaModule ideaModule, @NotNull ExternalSourceSet sourceSet) {
     LanguageLevel languageLevel = getLanguageLevel(sourceSet);
     if (languageLevel != null) return languageLevel;
     IdeaJavaLanguageSettings javaLanguageSettings = ideaModule.getJavaLanguageSettings();
-    return getLanguageLevel(javaLanguageSettings, sourceSet.isPreview());
+    return getLanguageLevel(javaLanguageSettings, isPreview(sourceSet));
   }
 
   private static @Nullable LanguageLevel getLanguageLevel(@NotNull ExternalSourceSet sourceSet) {
     String sourceCompatibility = sourceSet.getSourceCompatibility();
     if (sourceCompatibility == null) return null;
-    return parseLanguageLevel(sourceCompatibility, sourceSet.isPreview());
+    return parseLanguageLevel(sourceCompatibility, isPreview(sourceSet));
   }
 
-  @SuppressWarnings("SameParameterValue")
-  private static @Nullable LanguageLevel getLanguageLevel(@NotNull ExternalProject externalProject, boolean isPreview) {
+  private static @Nullable LanguageLevel getLanguageLevel(@NotNull ExternalProject externalProject) {
     String sourceCompatibility = externalProject.getSourceCompatibility();
     if (sourceCompatibility == null) return null;
-    return parseLanguageLevel(sourceCompatibility, isPreview);
+    return parseLanguageLevel(sourceCompatibility, isPreview(externalProject));
   }
 
   private static @Nullable LanguageLevel getLanguageLevel(@Nullable IdeaJavaLanguageSettings languageSettings, boolean isPreview) {
@@ -385,16 +307,6 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
       .filter(it -> it.toJavaVersion().equals(javaVersion))
       .findFirst()
       .orElse(languageLevel);
-  }
-
-  private static boolean isPreview(@NotNull ExternalProject externalProject) {
-    final Collection<? extends ExternalSourceSet> values = externalProject.getSourceSets().values();
-    if (values.isEmpty()) {
-      return false;
-    }
-    else {
-      return ContainerUtil.and(values, it -> it.isPreview());
-    }
   }
 
   private @Nullable String getTargetBytecodeVersion(@NotNull IdeaProject ideaProject) {
@@ -427,6 +339,36 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     JavaVersion targetByteCodeVersion = languageSettings.getTargetBytecodeVersion();
     if (targetByteCodeVersion == null) return null;
     return targetByteCodeVersion.toString();
+  }
+
+  private boolean isPreview(@NotNull IdeaProject ideaProject) {
+    return getCompilerArguments(ideaProject).contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+  }
+
+  private static boolean isPreview(@NotNull ExternalProject externalProject) {
+    return getCompilerArguments(externalProject).contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+  }
+
+  private static boolean isPreview(@NotNull ExternalSourceSet sourceSet) {
+    return getCompilerArguments(sourceSet).contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+  }
+
+  private @NotNull List<String> getCompilerArguments(@NotNull IdeaProject ideaProject) {
+    return getExternalModules(ideaProject).stream()
+      .map(it -> getCompilerArguments(it.getSecond()))
+      .min(Comparator.comparing(it -> it.size()))
+      .orElse(Collections.emptyList());
+  }
+
+  private static @NotNull List<String> getCompilerArguments(@NotNull ExternalProject externalProject) {
+    return externalProject.getSourceSets().values().stream()
+      .map(it -> getCompilerArguments(it))
+      .min(Comparator.comparing(it -> it.size()))
+      .orElse(Collections.emptyList());
+  }
+
+  private static @NotNull List<String> getCompilerArguments(@NotNull ExternalSourceSet sourceSet) {
+    return sourceSet.getCompilerArguments();
   }
 
   private void populateProjectSdkModel(@NotNull IdeaProject ideaProject, @NotNull DataNode<? extends ProjectData> projectNode) {

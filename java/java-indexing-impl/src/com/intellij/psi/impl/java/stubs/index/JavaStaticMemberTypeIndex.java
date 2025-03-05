@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -19,14 +19,12 @@ public final class JavaStaticMemberTypeIndex extends StringStubIndexExtension<Ps
     return ourInstance;
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PsiMember> getKey() {
+  public @NotNull StubIndexKey<String, PsiMember> getKey() {
     return JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES;
   }
 
-  @NotNull
-  public Collection<PsiMember> getStaticMembers(@NotNull String shortTypeText, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+  public @NotNull Collection<PsiMember> getStaticMembers(@NotNull String shortTypeText, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, shortTypeText, project, new JavaSourceFilterScope(scope), PsiMember.class);
   }
 }

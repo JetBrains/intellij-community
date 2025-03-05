@@ -1,4 +1,5 @@
 // RUNTIME_WITH_SCRIPT_RUNTIME
+// IGNORE_K2
 object Foo {
     val a = 1
 }

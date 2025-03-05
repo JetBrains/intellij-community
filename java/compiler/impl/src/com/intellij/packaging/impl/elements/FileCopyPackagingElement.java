@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity;
@@ -31,7 +31,7 @@ import java.io.File;
 import java.util.Objects;
 
 public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElement<FileCopyPackagingElement> implements RenameablePackagingElement {
-  @NonNls public static final String OUTPUT_FILE_NAME_ATTRIBUTE = "output-file-name";
+  public static final @NonNls String OUTPUT_FILE_NAME_ATTRIBUTE = "output-file-name";
   private String myRenamedOutputFileName;
 
   public FileCopyPackagingElement() {
@@ -49,8 +49,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
   }
 
   @Override
-  @NotNull
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new FileCopyPresentation(getMyFilePath(), getOutputFileName());
   }
 
@@ -58,8 +57,8 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     return getMyRenamedOutputFileName() != null ? getMyRenamedOutputFileName() : PathUtil.getFileName(getMyFilePath());
   }
 
-  @NonNls @Override
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "file:" + getMyFilePath() + (getMyRenamedOutputFileName() != null ? ",rename to:" + getMyRenamedOutputFileName() : "");
   }
 
@@ -85,9 +84,8 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     setRenamedOutputFileName(state.getRenamedOutputFileName());
   }
 
-  @Nullable
   @Attribute(OUTPUT_FILE_NAME_ATTRIBUTE)
-  public String getRenamedOutputFileName() {
+  public @Nullable String getRenamedOutputFileName() {
     return getMyRenamedOutputFileName();
   }
 
@@ -130,8 +128,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     );
   }
 
-  @Nullable
-  public VirtualFile getLibraryRoot() {
+  public @Nullable VirtualFile getLibraryRoot() {
     final String url = VfsUtil.getUrlForLibraryRoot(new File(FileUtil.toSystemDependentName(getFilePath())));
     return VirtualFileManager.getInstance().findFileByUrl(url);
   }
@@ -162,8 +159,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     return getBuilder(diff, addedEntity);
   }
 
-  @Nullable
-  private String getMyRenamedOutputFileName() {
+  private @Nullable String getMyRenamedOutputFileName() {
     if (myStorage == null) {
       return myRenamedOutputFileName;
     } else {

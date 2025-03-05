@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -33,7 +33,7 @@ public class MagicIntegerConstAccessor extends ExternalStringAccessor<Integer> i
   @Override
   protected final @Nullable Integer fromExternal(@NotNull String str) {
     IntArrayList keys = myValueToKeysMap.get(str);
-    return keys != null && keys.size() > 0 ? keys.get(0) : null;
+    return keys != null && !keys.isEmpty() ? keys.get(0) : null;
   }
 
   @Override

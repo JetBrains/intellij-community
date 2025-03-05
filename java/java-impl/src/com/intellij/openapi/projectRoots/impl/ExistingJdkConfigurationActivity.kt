@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -42,9 +42,9 @@ private class ExistingJdkConfigurationActivity : ProjectActivity {
     val rootManager = project.serviceAsync<ProjectRootManager>()
     val addedJdks = registeredJdks.toMutableList()
 
-    val priorityPaths = JavaHomeFinder.getFinder().findInJavaHome()
+    val priorityPaths = JavaHomeFinder.getFinder(project).findInJavaHome()
 
-    writeAction {
+    edtWriteAction {
       // Register collected JDKs
       for (path in jdkPathsToAdd) {
         addedJdks.add(SdkConfigurationUtil.createAndAddSDK(path, javaSdk))

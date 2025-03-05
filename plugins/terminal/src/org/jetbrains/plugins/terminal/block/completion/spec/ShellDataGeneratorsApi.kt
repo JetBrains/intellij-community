@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec
 
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeDat
  * If the cache key is null, the generator won't be cached.
  */
 @ApiStatus.Experimental
-fun <T> ShellRuntimeDataGenerator(
+fun <T : Any> ShellRuntimeDataGenerator(
   cacheKeyAndDebugName: String? = null,
   generate: suspend (ShellRuntimeContext) -> T
 ): ShellRuntimeDataGenerator<T> {
@@ -34,7 +34,7 @@ fun <T> ShellRuntimeDataGenerator(
  * If the cache key is null, the generator won't be cached.
  */
 @ApiStatus.Experimental
-fun <T> ShellRuntimeDataGenerator(
+fun <T : Any> ShellRuntimeDataGenerator(
   debugName: String? = null,
   getCacheKey: (ShellRuntimeContext) -> String? = { null },
   generate: suspend (ShellRuntimeContext) -> T

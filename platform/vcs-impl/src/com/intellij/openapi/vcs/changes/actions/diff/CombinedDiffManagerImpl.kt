@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
+import org.jetbrains.annotations.ApiStatus
 
 private class CombinedDiffManagerImpl(private val project: Project) : CombinedDiffManager {
   override fun createProcessor(diffPlace: String?): CombinedDiffComponentProcessor {
@@ -51,6 +52,7 @@ class CombinedDiffPreviewModel {
     }
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use prepareCombinedBlocksFromProducers", ReplaceWith("prepareCombinedBlocksFromProducers(changes)"))
     fun prepareCombinedDiffModelRequestsFromProducers(changes: List<ChangeDiffRequestChain.Producer>): List<CombinedBlockProducer> {
       return prepareCombinedBlocksFromProducers(changes)

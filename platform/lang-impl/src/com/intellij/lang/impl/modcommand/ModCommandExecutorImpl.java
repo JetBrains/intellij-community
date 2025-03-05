@@ -40,6 +40,7 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
@@ -68,16 +69,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
@@ -254,10 +253,13 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       chooser.selectElements(selected);
       chooser.setTitle(modChooser.title());
       chooser.setCopyJavadocVisible(false);
+      ActionContextPointer pointer = new ActionContextPointer(context);
       if (!chooser.showAndGet()) return false;
       List<ClassMember> elements = chooser.getSelectedElements();
       result = elements == null ? List.of() :
                IntStreamEx.ofIndices(members, elements::contains).elements(modChooser.elements()).toList();
+      context = pointer.restoreAndCheck(editor);
+      if (context == null) return false;
     }
     ModCommandExecutor.executeInteractively(context, modChooser.title(), editor, () -> modChooser.nextCommand().apply(result));
     return true;
@@ -311,8 +313,15 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     MultiMap<PsiElement, String> conflictData = new MultiMap<>(new LinkedHashMap<>());
     conflicts.conflicts().forEach((e, c) -> conflictData.put(e, c.messages()));
     if (conflictData.isEmpty()) return true;
+    ActionContextPointer pointer = new ActionContextPointer(context);
+    Project project = context.project();
     var conflictsDialog =
-      new ConflictsDialog(context.project(), conflictData, () -> doExecuteInteractively(context, tail, ModCommand.nop(), editor));
+      new ConflictsDialog(project, conflictData, () -> {
+        ActionContext restored = pointer.restoreAndCheck(editor);
+        if (restored != null) {
+          doExecuteInteractively(restored, tail, ModCommand.nop(), editor);
+        }
+      });
     return conflictsDialog.showAndGet();
   }
 
@@ -401,18 +410,24 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     if (file == null) return false;
     Editor finalEditor = editor == null ? getEditor(context.project(), file) : editor;
     if (finalEditor == null) return false;
+    ActionContextPointer pointer = new ActionContextPointer(context);
     ReadAction.nonBlocking(() -> {
-      return StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
+      ActionContext restored = pointer.restore();
+      if (restored == null) {
+        return List.<ActionAndPresentation>of();
+      }
+      return StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(restored))
         .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
     }).finishOnUiThread(ModalityState.defaultModalityState(), actions -> {
-      if (actions.isEmpty()) return;
+      ActionContext restored = pointer.restoreAndCheck(editor);
+      if (restored == null || actions.isEmpty()) return;
 
       String name = chooser.title();
       if (actions.size() == 1) {
         ModCommandAction action = actions.get(0).action();
-        ModCommandExecutor.executeInteractively(context, name, editor, () -> {
-          if (action.getPresentation(context) == null) return ModCommand.nop();
-          return action.perform(context);
+        ModCommandExecutor.executeInteractively(restored, name, editor, () -> {
+          if (action.getPresentation(restored) == null) return ModCommand.nop();
+          return action.perform(restored);
         });
         return;
       }
@@ -442,7 +457,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
           return action.getIcon();
         }
       };
-      IntentionHintComponent.showIntentionHint(context.project(), context.file(), finalEditor, true, intentions);
+      IntentionHintComponent.showIntentionHint(restored.project(), restored.file(), finalEditor, true, intentions);
     }).submit(AppExecutorUtil.getAppExecutorService());
     return true;
   }
@@ -507,7 +522,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   }
 
   @Override
-  protected @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
+  protected @Unmodifiable @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
     List<@NotNull Fragment> ranges = upd.updatedRanges();
     if (!ranges.isEmpty()) return ranges;
     String oldText = upd.oldText();
@@ -522,5 +537,56 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   protected @NotNull String getFileNamePresentation(Project project, VirtualFile file) {
     String fileTitle = EditorTabPresentationUtil.getCustomEditorTabTitle(project, file);
     return fileTitle != null ? fileTitle : super.getFileNamePresentation(project, file);
+  }
+
+  private static class ActionContextPointer {
+    private final @NotNull Project myProject;
+    private final @NotNull VirtualFile myFile;
+    private final @Nullable SmartPsiElementPointer<PsiElement> myElementPointer;
+    private final @NotNull RangeMarker myOffsetMarker;
+    private final @NotNull RangeMarker mySelectionMarker;
+    private boolean myDisposed = false;
+
+    ActionContextPointer(@NotNull ActionContext context) {
+      myProject = context.project();
+      myFile = Objects.requireNonNull(context.file().getVirtualFile());
+      myElementPointer = context.element() != null ? SmartPointerManager.createPointer(context.element()) : null;
+      Document document = context.file().getFileDocument();
+      myOffsetMarker = document.createRangeMarker(context.offset(), context.offset());
+      mySelectionMarker = document.createRangeMarker(context.selection());
+    }
+
+    boolean isValid() {
+      if (myDisposed) throw new IllegalStateException("Already disposed");
+      return myFile.isValid() &&
+             (myElementPointer == null || myElementPointer.getElement() != null) &&
+             myOffsetMarker.isValid() &&
+             mySelectionMarker.isValid();
+    }
+
+    @Nullable ActionContext restore() {
+      if (!isValid()) return null;
+      PsiFile file = PsiManager.getInstance(myProject).findFile(myFile);
+      if (file == null) return null;
+      return new ActionContext(myProject, file, myOffsetMarker.getStartOffset(),
+                               mySelectionMarker.getTextRange(), myElementPointer != null ? myElementPointer.getElement() : null);
+    }
+
+    void dispose() {
+      myDisposed = true;
+      myOffsetMarker.dispose();
+      mySelectionMarker.dispose();
+    }
+
+    private @Nullable ActionContext restoreAndCheck(@Nullable Editor editor) {
+      ActionContext restored = restore();
+      dispose();
+      if (restored == null) {
+        if (myProject.isDisposed()) return null;
+        executeMessage(myProject, new ModDisplayMessage(LangBundle.message("tooltip.unable.to.proceed.document.was.changed"),
+                                                        ModDisplayMessage.MessageKind.ERROR), editor);
+      }
+      return restored;
+    }
   }
 }

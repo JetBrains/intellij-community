@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.setItems
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
@@ -282,15 +283,17 @@ fun Document.bindTextIn(cs: CoroutineScope, textFlow: StateFlow<String>, setter:
   }
 
   cs.launchNow(CoroutineName("Text binding for $this")) {
-    addDocumentListener(listener)
-    textFlow.collectScoped { newText ->
-      doSetText(newText)
-    }
-    try {
-      awaitCancellation()
-    }
-    finally {
-      removeDocumentListener(listener)
+    withContext(Dispatchers.EDT) {
+      addDocumentListener(listener)
+      textFlow.collectScoped { newText ->
+        doSetText(newText)
+      }
+      try {
+        awaitCancellation()
+      }
+      finally {
+        removeDocumentListener(listener)
+      }
     }
   }
 }

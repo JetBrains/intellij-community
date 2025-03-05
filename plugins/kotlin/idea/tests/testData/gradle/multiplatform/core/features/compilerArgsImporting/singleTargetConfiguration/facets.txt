@@ -20,12 +20,12 @@ project.commonTest
 project.iosArm64Main
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -nostdlib
+    compilerSettings = -nopack -nostdlib
 
 project.iosArm64Test
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-    compilerSettings = -nostdlib
+    compilerSettings = -nopack -nostdlib
 
 project.iosMain
     languageLevel = 1.7
@@ -38,12 +38,12 @@ project.iosTest
 project.iosX64Main
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -nostdlib -opt-in IosAllOptInAnnotation
+    compilerSettings = -nopack -nostdlib -opt-in IosAllOptInAnnotation
 
 project.iosX64Test
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -nostdlib -opt-in IosAllOptInAnnotation
+    compilerSettings = -nopack -nostdlib -opt-in IosAllOptInAnnotation
 
 project.jsMain
     languageLevel = {{LATEST_STABLE}}

@@ -1,3 +1,8 @@
+c:com.intellij.extapi.psi.StubBasedPsiElementBase
+- com.intellij.extapi.psi.ASTDelegatePsiElement
+- *:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
+- *pf:getElementTypeImpl():com.intellij.psi.tree.IElementType
+- *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
 *:com.intellij.ide.plugins.PluginEnabler
 - sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
 - a:disable(java.util.Collection):Z
@@ -12,14 +17,16 @@
 - a:setIgnoredDisabledPlugins(Z):V
 *c:com.intellij.lang.impl.TokenSequence
 - com.intellij.lexer.TokenList
+- asLexer():com.intellij.lexer.Lexer
 - getTokenCount():I
 - getTokenEnd(I):I
 - getTokenStart(I):I
 - getTokenType(I):com.intellij.psi.tree.IElementType
 - getTokenizedText():java.lang.CharSequence
-- s:performLexing(java.lang.CharSequence,com.intellij.lexer.Lexer):com.intellij.lang.impl.TokenSequence
+- s:performLexing(java.lang.CharSequence,com.intellij.lexer.Lexer):com.intellij.lexer.TokenList
 com.intellij.openapi.application.ex.ApplicationEx
 - com.intellij.openapi.application.Application
+- *:addWriteActionListener(com.intellij.openapi.application.WriteActionListener,com.intellij.openapi.Disposable):V
 - *:runWriteActionWithCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
 - *:runWriteActionWithNonCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
 a:com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -37,15 +44,37 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - com.intellij.openapi.fileEditor.FileDocumentManager
 - *s:isTrackable(com.intellij.openapi.vfs.VirtualFile):Z
+com.intellij.psi.impl.PsiFileEx
+- com.intellij.psi.PsiFile
+- *s:isBatchReferenceProcessingEnabled(com.intellij.psi.PsiFile):Z
+*:com.intellij.psi.impl.PsiFileEx$BatchReferenceProcessingSuppressor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:isSuppressed(com.intellij.psi.PsiFile):Z
 f:com.intellij.psi.impl.PsiModificationTrackerImpl
 - com.intellij.psi.impl.PsiTreeChangePreprocessor
 - com.intellij.psi.util.PsiModificationTracker
 - *:incLanguageModificationCount(com.intellij.lang.Language):V
 f:com.intellij.psi.impl.file.PsiFileImplUtil
 - *s:setNonPhysicalFileDeleteHandler(com.intellij.psi.PsiFile,java.util.function.Consumer):V
+a:com.intellij.psi.impl.source.PsiFileImpl
+- com.intellij.psi.impl.ElementBase
+- com.intellij.openapi.ui.Queryable
+- com.intellij.psi.impl.PsiFileEx
+- com.intellij.psi.impl.source.PsiFileWithStubSupport
+- java.lang.Cloneable
+- *:getStubDescriptor():com.intellij.psi.stubs.LanguageStubDescriptor
 c:com.intellij.psi.impl.source.resolve.ResolveCache
 - com.intellij.openapi.Disposable
 - *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
 - *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,Z,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
 *:com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver
 - a:resolve(com.intellij.model.psi.PsiSymbolReference):java.util.Collection
+c:com.intellij.psi.stubs.PsiFileStubImpl
+- com.intellij.psi.stubs.StubBase
+- com.intellij.psi.stubs.PsiFileStub
+- *:getElementType():com.intellij.psi.tree.IElementType
+- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+*f:com.intellij.psi.stubs.StubElementUtil
+- sf:shouldCreateStubForPsi(com.intellij.psi.stubs.StubElementFactory,com.intellij.psi.PsiElement):Z
+f:com.intellij.psi.stubs.StubTreeBuilder
+- *s:getStubbedRootDescriptors(com.intellij.psi.FileViewProvider):java.util.List

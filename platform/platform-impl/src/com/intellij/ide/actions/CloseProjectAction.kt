@@ -18,7 +18,7 @@ class CloseProjectAction : CloseProjectsActionBase() {
 
   override fun canClose(project: Project, currentProject: Project): Boolean = project === currentProject
 
-  override fun shouldShow(e: AnActionEvent): Boolean = e.project != null
+  override fun shouldShow(e: AnActionEvent): Boolean = true
 
   override fun update(e: AnActionEvent) {
     super.update(e)

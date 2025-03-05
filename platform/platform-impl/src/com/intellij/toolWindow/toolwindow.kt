@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.BundleBase
 import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
@@ -121,5 +120,3 @@ data class ToolWindowDescriptor(
     TABBED, COMBO
   }
 }
-
-private val LOG by lazy { Logger.getInstance("#com.intellij.toolWindow.toolwindow") }

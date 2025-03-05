@@ -7,7 +7,7 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.jewel.samples.ideplugin.releasessample.ContentItem.AndroidStudio
 
 @Suppress("LargeClass")
-object AndroidStudioReleases : ContentSource<AndroidStudio>() {
+internal object AndroidStudioReleases : ContentSource<AndroidStudio>() {
     override val items: List<AndroidStudio> =
         listOf(
             AndroidStudio(

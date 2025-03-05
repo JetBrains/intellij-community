@@ -112,8 +112,7 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
   }
 
   @Override
-  @NotNull
-  public DFAMap<ScopeVariable> initial() {
+  public @NotNull DFAMap<ScopeVariable> initial() {
     return INITIAL_MAP;
   }
 }

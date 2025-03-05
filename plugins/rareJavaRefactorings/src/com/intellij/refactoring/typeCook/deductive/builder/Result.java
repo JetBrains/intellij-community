@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +53,7 @@ public class Result {
     if (myBinding != null) {
       final PsiType type = myBinding.substitute(myTypes.get(element));
 
-      @NonNls final String objectFQName = CommonClassNames.JAVA_LANG_OBJECT;
+      final @NonNls String objectFQName = CommonClassNames.JAVA_LANG_OBJECT;
       if (originalType.getCanonicalText().equals(objectFQName)) {
         if (type == null) {
           return originalType;

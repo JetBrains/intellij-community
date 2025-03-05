@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
+import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.nameDeterminant
 import org.jetbrains.kotlin.idea.refactoring.rename.KtReferenceMutateServiceBase
 import org.jetbrains.kotlin.idea.references.*
@@ -292,8 +293,15 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         }
     }
 
-    override fun canMoveLambdaOutsideParentheses(callExpression: KtCallExpression?): Boolean {
-        return callExpression?.canMoveLambdaOutsideParentheses() == true
-    }
-
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+    override fun canMoveLambdaOutsideParentheses(callExpression: KtCallExpression?): Boolean =
+        callExpression?.let {
+            allowAnalysisOnEdt {
+                allowAnalysisFromWriteAction {
+                    analyze(it) {
+                        it.canMoveLambdaOutsideParentheses()
+                    }
+                }
+            }
+        } == true
 }

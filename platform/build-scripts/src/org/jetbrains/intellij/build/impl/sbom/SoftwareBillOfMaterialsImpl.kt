@@ -4,9 +4,7 @@
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.DigestUtil.sha1Hex
-import com.intellij.util.io.bytesToHex
 import com.intellij.util.io.sha256Hex
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.outputStream
@@ -22,6 +20,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
@@ -186,35 +185,11 @@ class SoftwareBillOfMaterialsImpl(
     }
   }
 
-  class Checksums(@JvmField val path: Path) {
-    val sha1sum: String
-    val sha256sum: String
-
-    init {
-      val buffer = ByteArray(512 * 1024)
-      val digests = Files.newInputStream(path).use {
-        val sha1 = DigestUtil.sha1()
-        val sha256 = DigestUtil.sha256()
-        while (true) {
-          val sz = it.read(buffer)
-          if (sz <= 0) {
-            break
-          }
-          sha1.update(buffer, 0, sz)
-          sha256.update(buffer, 0, sz)
-        }
-        bytesToHex(sha1.digest()) to bytesToHex(sha256.digest())
-      }
-      sha1sum = digests.first
-      sha256sum = digests.second
-    }
-  }
-
   private suspend fun generateFromDistributions(): List<Path> {
     return withContext(Dispatchers.IO) {
       distributions.associateWith { distribution ->
         getFiles(distribution)
-          .map { async { Checksums(it) } }
+          .map { async(CoroutineName("checksums for $it")) { Checksums(it) } }
           .map { it.await() }
       }
     }.flatMap { (distribution, filesWithChecksums) ->
@@ -429,8 +404,9 @@ class SoftwareBillOfMaterialsImpl(
         .map { it.path }.distinct()
         // non-bundled plugins, for example
         .filterNot { it.startsWith(context.paths.tempDir) }
-        .toList().map { async { Checksums(it) } }
-        .map { it.await() }
+        .toList().map {
+          async(CoroutineName("checksums for $it")) { Checksums(it) }
+        }.map { it.await() }
     }
   }
 
@@ -478,8 +454,8 @@ class SoftwareBillOfMaterialsImpl(
       }.distinctBy {
         it.first.mavenDescriptor?.mavenId ?: it.first.name
       }.groupBy({ it.first }, { it.second }).map { (library, modules) ->
-        async {
-          val libraryName = getLibraryFilename(library)
+        val libraryName = getLibraryFilename(library)
+        async(CoroutineName("maven library $libraryName")) {
           val libraryEntry = librariesBundledInDistributions.get(libraryName)
           val libraryFile = libraryEntry?.libraryFile ?: return@async null
           val libraryLicense = context.productProperties.allLibraryLicenses.firstOrNull {
@@ -523,14 +499,14 @@ class SoftwareBillOfMaterialsImpl(
       ?: error("Unknown jar repository ID: ${mavenDescriptor.jarRepositoryId}")
     }
     else null
-    val libraryName = coordinates.getFileName(packaging = mavenDescriptor.packaging, classifier = "")
+    val libraryName = coordinates.getFileName(packaging = mavenDescriptor.packaging)
     val checksums = mavenDescriptor.artifactsVerification.filter {
       Path.of(JpsPathUtil.urlToOsPath(it.url)).name == libraryName
     }
     check(checksums.count() == 1) {
       "Missing checksum for $coordinates: ${checksums.map { it.url }}"
     }
-    val pomName = coordinates.getFileName(packaging = "pom", classifier = "")
+    val pomName = coordinates.getFileName(packaging = "pom")
     return MavenLibrary(
       path = libraryFile,
       coordinates = coordinates,
@@ -819,7 +795,7 @@ class SoftwareBillOfMaterialsImpl(
       val repositoryUrl = checkNotNull(upstream.mavenRepositoryUrl) {
         "Missing Maven repository url for ${upstream.groupId}:${upstream.artifactId}"
       }.removeSuffix("/")
-      val jarName = coordinates.getFileName(packaging = "jar", classifier = "")
+      val jarName = coordinates.getFileName(packaging = "jar")
       setDownloadLocation("$repositoryUrl/${coordinates.directoryPath}/$jarName")
       addExternalRef(coordinates.externalRef(this@spdxPackageUpstream, repositoryUrl))
     }

@@ -35,7 +35,6 @@
     <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>
     <useScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleUseScopeEnlarger"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.gradle.config.GradleImplicitUsageProvider"/>
-    <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="first"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
     <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleSuppressHighlightingListener"/>

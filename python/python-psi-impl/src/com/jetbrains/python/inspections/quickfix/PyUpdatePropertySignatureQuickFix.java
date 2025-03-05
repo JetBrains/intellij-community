@@ -32,9 +32,8 @@ public class PyUpdatePropertySignatureQuickFix extends PsiUpdateModCommandQuickF
     myHasValue = hasValue;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.update.parameters");
   }
 

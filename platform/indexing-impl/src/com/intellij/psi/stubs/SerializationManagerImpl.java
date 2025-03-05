@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.LanguageParserDefinitions;
@@ -6,13 +6,13 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.psi.tree.TemplateLanguageStubBaseVersion;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -26,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -62,11 +59,17 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @NonInjectable
-  public SerializationManagerImpl(@NotNull Supplier<? extends Path> nameStorageFile, boolean unmodifiable) {
+  public SerializationManagerImpl(@NotNull Supplier<? extends @Nullable Path> nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
     myUnmodifiable = unmodifiable;
     initialize();
     StubElementTypeHolderEP.EP_NAME.addChangeListener(this::dropSerializerData, this);
+    // todo IJPL-562 is this correct???
+    StubElementRegistryServiceImplKt.STUB_REGISTRY_EP.addChangeListener(this::dropSerializerData, this);
+    ExtensionPoint<@NotNull KeyedLazyInstance<@NotNull LanguageStubDefinition>> point = StubElementRegistryServiceImplKt.STUB_DEFINITION_EP.getPoint();
+    if (point != null) {
+      point.addChangeListener(this::dropSerializerData, this);
+    }
   }
 
   @Override
@@ -247,20 +250,33 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
       final List<StubFieldAccessor> lazySerializers = IStubElementType.loadRegisteredStubElementTypes();
 
-      final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
-      Arrays.sort(
-        stubElementTypes,         
-        comparing((IElementType type) -> type.getLanguage().getID())
+      record TypeAndSerializer(
+        @NotNull IElementType type,
+        @NotNull ObjectStubSerializer<?, Stub> serializer
+      ) {}
+
+      StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
+      List<TypeAndSerializer> stubElementTypes = IElementType.mapNotNull(type -> {
+        ObjectStubSerializer<?, @NotNull Stub> serializer = stubElementRegistryService.getStubSerializer(type);
+        if (serializer == null) {
+          return null;
+        }
+        return new TypeAndSerializer(type, serializer);
+      });
+
+      stubElementTypes.sort(
+        comparing((TypeAndSerializer tas) -> tas.type.getLanguage().getID())
           //TODO RC: not sure .debugName is enough for stable sorting. Maybe use .getClass() instead?
-          .thenComparing(type -> type.getDebugName())
+          .thenComparing(tas -> tas.type.getDebugName())
       );
-      for (IElementType type : stubElementTypes) {
-        if (type instanceof StubFileElementType &&
-            StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType<?>)type).getExternalId())) {
+
+      for (TypeAndSerializer tas : stubElementTypes) {
+        ObjectStubSerializer<?, Stub> serializer = tas.serializer;
+        if (StubSerializerId.DEFAULT_EXTERNAL_ID.equals(serializer.getExternalId())) {
           continue;
         }
 
-        registerSerializer((StubSerializer<?>)type);
+        registerSerializer(serializer);
       }
 
       final List<StubFieldAccessor> sortedLazySerializers = lazySerializers.stream()
@@ -287,7 +303,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     //noinspection SynchronizeOnThis
     synchronized (this) {
       IStubElementType.dropRegisteredTypes();
-      IStubFileElementType.dropTemplateStubBaseVersion();
+      TemplateLanguageStubBaseVersion.dropVersion();
       StubSerializerEnumerator enumerator = mySerializerEnumerator;
       if (enumerator != null) {
         enumerator.dropRegisteredSerializers();

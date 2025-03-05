@@ -8,9 +8,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.restructuredtext.RestTokenTypes;
-import com.intellij.util.ProcessingContext;
 import com.intellij.restructuredtext.psi.RestReference;
 import com.intellij.restructuredtext.psi.RestReferenceTarget;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -40,7 +40,7 @@ public class ReferenceCompletionContributor extends CompletionContributor {
                int offset = parameters.getOffset();
                String prefix = getPrefix(offset, file);
 
-               if (prefix.length() > 0) {
+               if (!prefix.isEmpty()) {
                  result = result.withPrefixMatcher(prefix);
                }
                RestReference[] elements = PsiTreeUtil.getChildrenOfType(file, RestReference.class);

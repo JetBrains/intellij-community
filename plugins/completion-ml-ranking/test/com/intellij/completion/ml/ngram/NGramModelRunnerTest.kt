@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.ngram
 
-import com.intellij.completion.ml.ngram.NGram
 import com.intellij.completion.ml.ngram.NGram.score
 import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
 import com.intellij.completion.ngram.slp.modeling.runners.ModelRunner

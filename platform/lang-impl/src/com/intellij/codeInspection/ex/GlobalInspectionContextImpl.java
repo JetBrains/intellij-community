@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInsight.util.GlobalInspectionScopeKt;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
@@ -82,10 +83,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.trace.Span;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -169,7 +167,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   public void addView(@NotNull InspectionResultsView view) {
-    addView(view, view.getViewTitle(), false);
+    addView(view, InspectionsBundle.message("inspection.results"), false);
+    ReadAction
+      .nonBlocking(view::getViewTitle)
+      .finishOnUiThread(ModalityState.any(), (@Nls String title) -> {
+        if (myViewClosed) return;
+        myContent.setDisplayName(title);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Override
@@ -309,7 +314,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       throw new IncorrectOperationException("Must not start inspections from within write action");
     }
     // in offline inspection application we don't care about global read action
-    if (!isOfflineInspections && ApplicationManager.getApplication().isReadAccessAllowed()) {
+    if (!isOfflineInspections && ApplicationManager.getApplication().holdsReadLock()) {
       throw new IncorrectOperationException("Must not start inspections from within global read action");
     }
     InspectionManager inspectionManager = InspectionManager.getInstance(getProject());
@@ -365,8 +370,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           // PCE may be thrown from inside wrapper when write action started.
           // Go on with the write action and then resume processing the rest of the queue.
           if (!isOfflineInspections) {
-            ApplicationManager.getApplication().assertReadAccessNotAllowed();
             ApplicationManager.getApplication().assertIsNonDispatchThread();
+            ThreadingAssertions.assertNoOwnReadAccess();
           }
 
           // wait for write action to complete
@@ -575,7 +580,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
     DaemonProgressIndicator progressIndicator = assertUnderDaemonProgress();
-    HighlightingSessionImpl.runInsideHighlightingSession(file, null, new ProperTextRange(file.getTextRange()), false, session -> {
+    HighlightingSessionImpl.runInsideHighlightingSession(file, FileViewProviderUtil.getCodeInsightContext(file), null, new ProperTextRange(file.getTextRange()), false, session -> {
       InspectionProfileWrapper.runWithCustomInspectionWrapper(file, __ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
         try {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
@@ -587,7 +592,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             final ProblemDescriptor firstDescriptor = descriptors.get(0);
             LocalInspectionToolWrapper toolWrapper =
               firstDescriptor instanceof ProblemDescriptorWithReporterName descriptor
-              ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolName()).getTool()
+              ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolShortName()).getTool()
               : entry.getKey();
             InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
             BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());
@@ -619,7 +624,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
           incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, displayUrl);
         }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
+        catch (CancellationException | IndexNotReadyException e) {
           throw e;
         }
         catch (Throwable e) {
@@ -724,7 +729,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                               @NotNull List<? extends Tools> globalTools,
                               boolean isOfflineInspections) {
     long timestamp = System.currentTimeMillis();
-    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || isOfflineInspections,
+    LOG.assertTrue(!ApplicationManager.getApplication().holdsReadLock() || isOfflineInspections,
                    "Must not run under read action, too unresponsive");
 
     if (isOfflineInspections && System.getProperty("idea.offline.no.global.inspections") != null) {
@@ -929,7 +934,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     return enabledInspectionsProvider.getEnabledTools(file, includeDoNotShow);
   }
 
-  public @NotNull <T extends @NotNull InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(
+  public @Unmodifiable @NotNull <T extends @NotNull InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(
     @NotNull List<? extends Tools> localTools,
     @NotNull PsiFile file,
     boolean includeDoNotShow

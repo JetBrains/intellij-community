@@ -10,11 +10,11 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import com.intellij.util.LocalTimeCounter
@@ -112,7 +112,7 @@ class GradleExecutionTestFixtureImpl(
 
   override suspend fun executeAsync(environment: ExecutionEnvironment) {
     awaitAnyGradleTaskExecution {
-      writeAction {
+      edtWriteAction {
         environment.runner.execute(environment)
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -37,7 +37,7 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
   private static final PathReferenceProvider ourProvider = new StaticPathReferenceProvider(null) {
 
     @Override
-    public boolean createReferences(@NotNull final PsiElement psiElement,
+    public boolean createReferences(final @NotNull PsiElement psiElement,
                                     int offset,
                                     String text,
                                     @NotNull List<? super PsiReference> references,
@@ -66,9 +66,8 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
           });
         }
 
-        @NotNull
         @Override
-        public Collection<PsiFileSystemItem> computeDefaultContexts() {
+        public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
           final PsiFile containingFile = getContainingFile();
           if (containingFile == null) {
             return Collections.emptyList();

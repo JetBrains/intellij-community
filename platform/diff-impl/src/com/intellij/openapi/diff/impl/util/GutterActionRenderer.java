@@ -23,8 +23,7 @@ public class GutterActionRenderer extends GutterIconRenderer implements DumbAwar
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return myAction.getTemplatePresentation().getIcon();
   }
 

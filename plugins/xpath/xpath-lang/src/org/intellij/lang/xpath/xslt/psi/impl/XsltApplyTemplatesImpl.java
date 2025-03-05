@@ -1,5 +1,5 @@
 
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.psi.xml.XmlTag;
@@ -23,8 +23,7 @@ public class XsltApplyTemplatesImpl extends XsltTemplateInvocationBase implement
     }
 
     @Override
-    @Nullable
-    public XPathExpression getSelect() {
+    public @Nullable XPathExpression getSelect() {
         return XsltCodeInsightUtil.getXPathExpression(this, "select");
     }
 

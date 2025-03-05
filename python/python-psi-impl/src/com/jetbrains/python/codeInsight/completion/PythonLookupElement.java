@@ -25,12 +25,12 @@ public class PythonLookupElement extends LookupElement implements Comparable<Loo
   protected final String myTailText;
   protected InsertHandler<PythonLookupElement> myHandler;
 
-  public PythonLookupElement(@NotNull final String lookupString,
-                           @Nullable final String tailText,
-                           @Nullable final String typeText, final boolean bold,
-                           @Nullable final Icon icon,
-                           @Nullable final Icon typeIcon,
-                           @NotNull final InsertHandler<PythonLookupElement> handler) {
+  public PythonLookupElement(final @NotNull String lookupString,
+                             final @Nullable String tailText,
+                             final @Nullable String typeText, final boolean bold,
+                             final @Nullable Icon icon,
+                             final @Nullable Icon typeIcon,
+                             final @NotNull InsertHandler<PythonLookupElement> handler) {
     myLookupString = lookupString;
     myTailText = tailText;
     myTypeText = typeText;
@@ -40,35 +40,32 @@ public class PythonLookupElement extends LookupElement implements Comparable<Loo
     myHandler = handler;
   }
 
-  public PythonLookupElement(@NotNull final String lookupString,
-                           @Nullable final String tailText,
-                           @Nullable final String typeText, final boolean bold,
-                           @Nullable final Icon icon,
-                           @Nullable final Icon typeIcon) {
+  public PythonLookupElement(final @NotNull String lookupString,
+                             final @Nullable String tailText,
+                             final @Nullable String typeText, final boolean bold,
+                             final @Nullable Icon icon,
+                             final @Nullable Icon typeIcon) {
     this(lookupString, tailText, typeText, bold, icon, typeIcon, new BasicInsertHandler<>());
   }
 
   public PythonLookupElement(
-    @NotNull final String lookupString,
+    final @NotNull String lookupString,
     final boolean bold,
-    @Nullable final Icon icon
+    final @Nullable Icon icon
   ) {
     this(lookupString, null, null, bold, icon, null, new BasicInsertHandler<>());
   }
 
   @Override
-  @NotNull
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myLookupString;
   }
 
-  @Nullable
-  public String getTailText() {
+  public @Nullable String getTailText() {
     return !StringUtil.isEmpty(myTailText) ? myTailText : null;
   }
 
-  @Nullable
-  protected String getTypeText() {
+  protected @Nullable String getTypeText() {
     return !StringUtil.isEmpty(myTypeText) ? myTypeText : null;
   }
 

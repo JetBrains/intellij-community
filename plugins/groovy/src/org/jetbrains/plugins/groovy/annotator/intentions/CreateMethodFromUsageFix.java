@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -35,22 +35,20 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     super(refExpression);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("create.method.from.usage.family.name");
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return GroovyBundle.message("create.method.from.usage", getMethodName());
   }
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     final List<PsiClass> classes = getTargetClasses();
-    if (classes.size() == 0) {
+    if (classes.isEmpty()) {
       return IntentionPreviewInfo.EMPTY;
     }
     Data data = generateMethod(classes.get(0), true);
@@ -117,8 +115,7 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     return PsiUtil.getArgumentTypes(getRefExpr(), false);
   }
 
-  @NotNull
-  protected String getMethodName() {
+  protected @NotNull String getMethodName() {
     return getRefExpr().getReferenceName();
   }
 
@@ -126,9 +123,8 @@ public class CreateMethodFromUsageFix extends GrCreateFromUsageBaseFix implement
     return aClass.isInterface() && !GrTraitUtil.isTrait(aClass);
   }
 
-  @Nullable
-  private PsiElement findInsertionAnchor(PsiGenerationInfo<PsiMethod> info,
-                                         PsiClass targetClass) {
+  private @Nullable PsiElement findInsertionAnchor(PsiGenerationInfo<PsiMethod> info,
+                                                   PsiClass targetClass) {
     PsiElement parent = targetClass instanceof GroovyScriptClass ? ((GroovyScriptClass)targetClass).getContainingFile() : targetClass;
     if (PsiTreeUtil.isAncestor(parent, getRefExpr(), false)) {
       return info.findInsertionAnchor(targetClass, getRefExpr());

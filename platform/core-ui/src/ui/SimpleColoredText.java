@@ -52,6 +52,7 @@ public class SimpleColoredText implements ColoredTextContainer {
     }
   }
 
+  @Override
   public @Nls String toString() {
     if (myCachedToString == null) {
       myCachedToString = String.join("", myTexts);

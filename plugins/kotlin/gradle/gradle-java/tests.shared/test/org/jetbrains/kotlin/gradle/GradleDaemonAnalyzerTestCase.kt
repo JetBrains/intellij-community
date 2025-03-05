@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle
 
 import com.intellij.codeInsight.EditorInfo
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
@@ -139,7 +139,7 @@ private fun createEditor(file: VirtualFile, project: Project): Editor {
     val editor = instance.openTextEditor(OpenFileDescriptor(project, file, 0), false)
     (editor as EditorImpl).setCaretActive()
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    DaemonCodeAnalyzer.getInstance(project).restart()
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart("GradleDaemonAnalyzerTestCaseKt.createEditor");
     return editor
 }
 

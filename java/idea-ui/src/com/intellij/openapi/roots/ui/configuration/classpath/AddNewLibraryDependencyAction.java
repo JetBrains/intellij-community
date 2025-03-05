@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -43,7 +43,7 @@ class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
 
   public static void chooseTypeAndCreate(final ClasspathPanel classpathPanel,
                                          final StructureConfigurableContext context,
-                                         final JButton contextButton, @NotNull final LibraryCreatedCallback callback) {
+                                         final JButton contextButton, final @NotNull LibraryCreatedCallback callback) {
     if (LibraryEditingUtil.hasSuitableTypes(classpathPanel)) {
       final ListPopup popup = JBPopupFactory.getInstance().createListPopup(LibraryEditingUtil.createChooseTypeStep(classpathPanel,
                                                                                                                    libraryType -> doCreateLibrary(classpathPanel, context, callback, contextButton, libraryType)));

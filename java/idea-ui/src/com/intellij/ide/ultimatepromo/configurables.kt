@@ -59,7 +59,7 @@ internal class PromoDatabaseConfigurable : UltimatePromoConfigurable() {
       FeaturePromoBundle.message("feature.database.description.html", "https://www.jetbrains.com/help/idea/relational-databases.html"),
       listOf(
         PromoFeatureListItem(AllIcons.Nodes.DataTables, FeaturePromoBundle.message("feature.database.create.and.manage")),
-        PromoFeatureListItem(AllIcons.Actions.Run_anything, FeaturePromoBundle.message("feature.database.run")),
+        PromoFeatureListItem(AllIcons.Actions.RunAnything, FeaturePromoBundle.message("feature.database.run")),
         PromoFeatureListItem(AllIcons.ToolbarDecorator.Import, FeaturePromoBundle.message("feature.database.export"))
       ),
       "com.intellij.database"

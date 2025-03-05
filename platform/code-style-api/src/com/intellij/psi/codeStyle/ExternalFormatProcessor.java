@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.editor.Document;
@@ -77,13 +77,11 @@ public interface ExternalFormatProcessor {
    * @param externalFormatterId the unique id for external formatter
    * @return the external formatter with the unique id, if any
    */
-  @NotNull
-  static Optional<ExternalFormatProcessor> findExternalFormatter(@NonNls @NotNull String externalFormatterId) {
+  static @NotNull Optional<ExternalFormatProcessor> findExternalFormatter(@NonNls @NotNull String externalFormatterId) {
     return EP_NAME.getExtensionList().stream().filter(efp -> externalFormatterId.equals(efp.getId())).findFirst();
   }
 
-  @Nullable
-  static ExternalFormatProcessor activeExternalFormatProcessor(@NotNull PsiFile source) {
+  static @Nullable ExternalFormatProcessor activeExternalFormatProcessor(@NotNull PsiFile source) {
     return ContainerUtil.find(EP_NAME.getExtensionList(), efp -> efp.activeForFile(source));
   }
 
@@ -94,8 +92,7 @@ public interface ExternalFormatProcessor {
    * @param lineStartOffset the offset of the indented line
    * @return the range after indentation or null if nothing to be changed
    */
-  @Nullable
-  static String indentLine(@NotNull PsiFile source, int lineStartOffset) {
+  static @Nullable String indentLine(@NotNull PsiFile source, int lineStartOffset) {
     ExternalFormatProcessor efp = activeExternalFormatProcessor(source);
     return efp != null ? efp.indent(source, lineStartOffset) : null;
   }
@@ -108,8 +105,7 @@ public interface ExternalFormatProcessor {
    * @param enableBulkUpdate don't turn on the bulk update
    * @return the range after formatting or null, if external format procedure was not found or inactive (disabled)
    */
-  @Nullable
-  static TextRange formatRangeInFile(@NotNull PsiFile source,
+  static @Nullable TextRange formatRangeInFile(@NotNull PsiFile source,
                                      @NotNull TextRange range,
                                      boolean canChangeWhiteSpacesOnly,
                                      boolean keepLineBreaks,
@@ -119,11 +115,10 @@ public interface ExternalFormatProcessor {
     return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, enableBulkUpdate, cursorOffset) : null;
   }
 
-  @Nullable
-  static TextRange formatRangeInFile(@NotNull PsiFile source,
-                                     @NotNull TextRange range,
-                                     boolean canChangeWhiteSpacesOnly,
-                                     boolean keepLineBreaks) {
+  static @Nullable TextRange formatRangeInFile(@NotNull PsiFile source,
+                                               @NotNull TextRange range,
+                                               boolean canChangeWhiteSpacesOnly,
+                                               boolean keepLineBreaks) {
     return formatRangeInFile(source, range, canChangeWhiteSpacesOnly, keepLineBreaks, true, -1);
   }
 
@@ -133,8 +128,7 @@ public interface ExternalFormatProcessor {
    * @param canChangeWhiteSpacesOnly procedure can change only whitespaces
    * @return the element after formatting
    */
-  @NotNull
-  static PsiElement formatElement(@NotNull PsiElement elementToFormat,
+  static @NotNull PsiElement formatElement(@NotNull PsiElement elementToFormat,
                                   @NotNull TextRange range,
                                   boolean canChangeWhiteSpacesOnly) {
     final PsiFile file = elementToFormat.getContainingFile();

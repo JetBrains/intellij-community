@@ -56,6 +56,7 @@ import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
@@ -212,9 +213,7 @@ object DynamicPlugins {
     //  2) SortedModuleGraph;
     //  3) SortedModuleGraph.topologicalComparator;
     //  4) PluginSetBuilder.sortedModuleGraph.
-    var comparator = PluginSetBuilder(allPlugins)
-      .moduleGraph
-      .topologicalComparator
+    var comparator = PluginSetBuilder(allPlugins).topologicalComparator
 
     if (!load) {
       comparator = comparator.reversed()
@@ -760,7 +759,12 @@ object DynamicPlugins {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(module)
 
-    val openedProjects = ProjectUtil.getOpenProjects().asList()
+    val openedProjects = ProjectUtil.getOpenProjects().toMutableList()
+    @Suppress("TestOnlyProblems")
+    if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
+      openedProjects.add(ProjectManagerEx.getInstanceEx().defaultProject)
+    }
+
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
     val unloadListeners = mutableListOf<Runnable>()
@@ -806,9 +810,9 @@ object DynamicPlugins {
     module.appContainerDescriptor.listeners?.let { appMessageBus.unsubscribeLazyListeners(module, it) }
 
     for (project in openedProjects) {
-      (project as ComponentManagerImpl).unloadServices(module, module.projectContainerDescriptor.services)
+      (project.actualComponentManager as ComponentManagerImpl).unloadServices(module, module.projectContainerDescriptor.services)
       module.projectContainerDescriptor.listeners?.let {
-        ((project as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
+        ((project.actualComponentManager as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
       }
 
       val moduleServices = module.moduleContainerDescriptor.services
@@ -1117,9 +1121,7 @@ private fun optionalDependenciesOnPlugin(
   }
 
   // 2. sort topologically
-  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first })
-    .moduleGraph
-    .topologicalComparator
+  val topologicalComparator = PluginSetBuilder(dependentPluginsAndItsModule.map { it.first }).topologicalComparator
   dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
   return dependentPluginsAndItsModule
@@ -1135,7 +1137,7 @@ private fun optionalDependenciesOnPlugin(
 private fun loadModules(modules: List<IdeaPluginDescriptorImpl>, app: ApplicationImpl, listenerCallbacks: MutableList<in Runnable>) {
   app.registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
   for (openProject in getOpenedProjects()) {
-    (openProject as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
+    (openProject.actualComponentManager as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
 
     for (module in ModuleManager.getInstance(openProject).modules) {
       (module as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)

@@ -17,7 +17,10 @@ package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -42,4 +45,10 @@ public interface MatchProvider {
   @Nullable String getConfirmDuplicatePrompt(Match match);
 
   @NlsContexts.DialogTitle String getReplaceDuplicatesTitle(int idx, int size);
+
+  static @NotNull MatchProvider create(@NotNull PsiMember member, @NotNull List<Match> matches) {
+    return member instanceof PsiMethod method ?
+           new MethodDuplicatesMatchProvider(method, matches) :
+           new ConstantMatchProvider(member, member.getProject(), matches);
+  }
 }

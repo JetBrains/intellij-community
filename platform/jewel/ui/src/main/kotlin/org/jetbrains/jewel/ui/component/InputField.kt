@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.Density
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
+import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
@@ -42,7 +43,6 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.InputFieldStyle
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
-import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
 internal fun InputField(

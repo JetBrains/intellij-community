@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -34,15 +34,13 @@ public final class MathRoundingWithIntArgumentInspection extends BaseInspection 
       CallMatcher.staticCall("java.lang.StrictMath", "ceil", "floor", "rint").parameterCount(1));
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "math.rounding.with.int.argument.problem.descriptor");
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)infos[0];
     if (!QUICK_FIX_MATH_ROUNDING_MATCHERS.matches(callExpression)) {
       return null;
@@ -59,14 +57,12 @@ public final class MathRoundingWithIntArgumentInspection extends BaseInspection 
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("math.rounding.with.int.argument.quickfix", method);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("math.rounding.with.int.argument.family.name");
     }
 

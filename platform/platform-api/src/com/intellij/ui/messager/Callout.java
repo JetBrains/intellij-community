@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messager;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,7 +36,7 @@ public final class Callout {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     JLabel label = new JLabel(text);
-    label.setHorizontalAlignment(JLabel.CENTER);
+    label.setHorizontalAlignment(SwingConstants.CENTER);
 
     final CalloutComponent callout = new CalloutComponent(label);
     callout.show(direction, aPoint);

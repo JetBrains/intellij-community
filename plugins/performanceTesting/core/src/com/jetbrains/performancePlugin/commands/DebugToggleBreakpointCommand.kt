@@ -24,7 +24,7 @@ class DebugToggleBreakpointCommand(text: String, line: Int) : AbstractCallbackBa
     val (virtualFile, line) = getArguments(context.project)
 
     val utils = XDebuggerUtilImpl.getInstance() as XDebuggerUtilImpl
-    utils.toggleAndReturnLineBreakpoint(context.project, virtualFile, line, false)
+    utils.toggleAndReturnLineBreakpoint(context.project, virtualFile, line-1, false)
       .onError {
         logger.info("Error on breakpoint toggling $it")
         callback.reject(it.message)

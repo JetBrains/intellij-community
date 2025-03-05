@@ -324,7 +324,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
         return true;
       }
     };
-    @NotNull private final ProjectTaskContext myContext;
+    private final @NotNull ProjectTaskContext myContext;
     private final AsyncPromise<Result> myPromise;
     private boolean myCollectingStopped;
 
@@ -338,7 +338,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
     }
 
     @Override
-    synchronized public void close() {
+    public synchronized void close() {
       if (!myCollectingStopped) {
         myCollectingStopped = true;
         notifyFinished();
@@ -354,7 +354,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
       }
     }
 
-    synchronized private void appendJpsBuildResult(boolean aborted, int errors,
+    private synchronized void appendJpsBuildResult(boolean aborted, int errors,
                                                    @NotNull CompileContext compileContext,
                                                    @NotNull MyCompileStatusNotification notification) {
       final boolean notificationRemoved = myNotifications.remove(notification);
@@ -371,7 +371,7 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
       }
     }
 
-    synchronized private void add(@NotNull MyCompileStatusNotification notification) {
+    private synchronized void add(@NotNull MyCompileStatusNotification notification) {
       assert !myCollectingStopped;
       if (!myNotifications.add(notification)) {
         LOG.error("Do not use the same callback for different JPS invocations");
@@ -405,9 +405,8 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
   private static class MyJpsBuildData implements JpsBuildData {
     private final List<CompileContext> myContexts = new ArrayList<>();
 
-    @NotNull
     @Override
-    public Set<String> getArtifactsWrittenPaths() {
+    public @NotNull Set<String> getArtifactsWrittenPaths() {
       return myContexts.stream()
         .map(ctx -> ArtifactsCompiler.getWrittenPaths(ctx))
         .filter(Objects::nonNull)
@@ -415,9 +414,8 @@ public final class JpsProjectTaskRunner extends ProjectTaskRunner {
         .collect(Collectors.toSet());
     }
 
-    @NotNull
     @Override
-    public List<CompileContext> getFinishedBuildsContexts() {
+    public @NotNull List<CompileContext> getFinishedBuildsContexts() {
       return Collections.unmodifiableList(myContexts);
     }
 

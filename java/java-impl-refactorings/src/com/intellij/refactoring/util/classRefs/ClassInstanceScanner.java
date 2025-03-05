@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.classRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +47,7 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
 
   private void visitVariable(PsiVariable variable, TypeOccurence occurence) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
-    for (PsiReference reference : ReferencesSearch.search(variable, projectScope, false)) {
+    for (PsiReference reference : ReferencesSearch.search(variable, projectScope, false).asIterable()) {
       PsiElement element = reference.getElement();
 
       // todo: handle arrays
@@ -64,7 +64,7 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
   @Override public void visitMethodReturnType(PsiMethod method, TypeOccurence occurence) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
 
-    for (PsiReference ref : ReferencesSearch.search(method, projectScope, false)) {
+    for (PsiReference ref : ReferencesSearch.search(method, projectScope, false).asIterable()) {
       PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
         PsiElement parent = element.getParent();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
@@ -17,11 +17,11 @@ import java.util.*;
 public abstract class DvcsBranchManager<T extends Repository> {
   private final AbstractRepositoryManager<T> myRepositoryManager;
 
-  @NotNull private final DvcsBranchSettings myBranchSettings;
-  @NotNull private final Map<BranchType, Collection<String>> myPredefinedFavoriteBranches = new HashMap<>();
-  @NotNull private final Project myProject;
+  private final @NotNull DvcsBranchSettings myBranchSettings;
+  private final @NotNull Map<BranchType, Collection<String>> myPredefinedFavoriteBranches = new HashMap<>();
+  private final @NotNull Project myProject;
 
-  @NotNull public static final Topic<DvcsBranchManagerListener> DVCS_BRANCH_SETTINGS_CHANGED =
+  public static final @NotNull Topic<DvcsBranchManagerListener> DVCS_BRANCH_SETTINGS_CHANGED =
     Topic.create("Branch settings changed", DvcsBranchManagerListener.class);
 
   protected DvcsBranchManager(@NotNull Project project,

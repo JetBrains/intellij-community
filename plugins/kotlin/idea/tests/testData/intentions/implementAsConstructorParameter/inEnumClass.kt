@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 enum class E {
     A, B, C;
 

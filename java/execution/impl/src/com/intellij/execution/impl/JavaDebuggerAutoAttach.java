@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider;
@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public final class JavaDebuggerAutoAttach extends RunConfigurationExtension {
   protected void attachToProcess(@NotNull RunConfigurationBase<?> configuration,
                                  @NotNull ProcessHandler handler,
                                  @Nullable RunnerSettings runnerSettings) {
-    if (Registry.is("debugger.auto.attach.from.console")) {
+    if (Registry.is("debugger.auto.attach.from.console") && !Registry.is("debugger.auto.attach.from.any.console")) {
       handler.addProcessListener(new ProcessAdapter() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
@@ -52,6 +53,6 @@ public final class JavaDebuggerAutoAttach extends RunConfigurationExtension {
 
   @Override
   public boolean isApplicableFor(@NotNull RunConfigurationBase<?> configuration) {
-    return true;
+    return EelPathUtils.isProjectLocal(configuration.getProject());
   }
 }

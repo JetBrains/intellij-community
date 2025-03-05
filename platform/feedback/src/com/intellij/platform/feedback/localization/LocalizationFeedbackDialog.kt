@@ -27,7 +27,7 @@ import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
-class LocalizationFeedbackDialog(
+internal class LocalizationFeedbackDialog(
   private val myProject: Project?,
   private val forTest: Boolean
 ) : DialogWrapper(myProject) {

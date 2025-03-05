@@ -24,11 +24,10 @@ import org.jetbrains.annotations.NotNull;
 public abstract class BaseGlobalInspection extends GlobalJavaBatchInspectionTool {
 
   private String shortName = null;
-  @NonNls private static final String INSPECTION = "Inspection";
+  private static final @NonNls String INSPECTION = "Inspection";
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     if (shortName == null) {
       final Class<? extends BaseGlobalInspection> aClass = getClass();
       final String name = aClass.getName();
@@ -41,9 +40,7 @@ public abstract class BaseGlobalInspection extends GlobalJavaBatchInspectionTool
   }
 
   @Override
-  @Nls
-  @NotNull
-  public final String getGroupDisplayName() {
+  public final @Nls @NotNull String getGroupDisplayName() {
     return GroupDisplayNameUtil.getGroupDisplayName(getClass());
   }
 

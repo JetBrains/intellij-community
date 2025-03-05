@@ -21,14 +21,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 final class ShStructureViewFactory implements PsiStructureViewFactory {
-  @Nullable
   @Override
-  public StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile psiFile) {
+  public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile psiFile) {
     if (!(psiFile instanceof ShFile)) return null;
     return new TreeBasedStructureViewBuilder() {
-      @NotNull
       @Override
-      public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+      public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
         return new Model(psiFile);
       }
     };
@@ -78,9 +76,8 @@ final class ShStructureViewFactory implements PsiStructureViewFactory {
       return ((Navigatable) myElement).canNavigateToSource();
     }
 
-    @Nullable
     @Override
-    public String getName() {
+    public @Nullable String getName() {
       return myElement instanceof ShFunctionDefinition ? getFunctionName((ShFunctionDefinition) myElement) : null;
     }
 
@@ -89,9 +86,8 @@ final class ShStructureViewFactory implements PsiStructureViewFactory {
       return name == null ? ShBundle.message("sh.unnamed.element.presentable.name") : name;
     }
 
-    @NotNull
     @Override
-    public ItemPresentation getPresentation() {
+    public @NotNull ItemPresentation getPresentation() {
       return this;
     }
 

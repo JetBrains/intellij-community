@@ -8,7 +8,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="dec50" class="com.intellij.openapi.ui.LabeledComponent" binding="myScriptPathComponent" default-binding="true">
+      <component id="dec50" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myScriptPathComponent" default-binding="true">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -32,7 +32,7 @@
           </grid>
         </constraints>
       </vspacer>
-      <component id="9b09" class="com.intellij.openapi.ui.LabeledComponent" binding="myModulesComboBoxComponent">
+      <component id="9b09" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myModulesComboBoxComponent">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>

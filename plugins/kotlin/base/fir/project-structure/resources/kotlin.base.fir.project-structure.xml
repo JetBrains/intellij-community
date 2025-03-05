@@ -4,6 +4,34 @@
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.projectStructure.K1KotlinLibraryDeduplicator"
+                    serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinLibraryDeduplicator"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.projectStructure.DelegatingIDEProjectStructureProvider"/>
+
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.fir.projectStructure.kmp.K2ForwardDeclarationScopeProviderImpl"
+                    serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.kmp.K2ForwardDeclarationScopeProvider"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileOwnerTracker"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.projectStructure.kmp.K2KotlinForwardDeclarationsFileOwnerTrackerImpl"/>
+
+    <registryKey key="kotlin.use.new.project.structure.provider" defaultValue="true"
+                 description="Use new project structure provider for Kotlin"
+                 restartRequired="true"/>
+
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.k2KaModuleFactory"
+            interface="org.jetbrains.kotlin.idea.base.fir.projectStructure.K2KaModuleFactory"
+            dynamic="true"/>
+  </extensionPoints>
+
   <dependencies>
     <module name="kotlin.base.fir.analysis-api-platform"/>
   </dependencies>

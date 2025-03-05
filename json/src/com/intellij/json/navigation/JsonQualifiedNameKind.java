@@ -2,7 +2,6 @@
 package com.intellij.json.navigation;
 
 import com.intellij.json.JsonBundle;
-import kotlin.NotImplementedError;
 
 public enum JsonQualifiedNameKind {
   Qualified,

@@ -27,7 +27,7 @@ abstract class KotlinGradleProjectTestCase : GradleProjectTestCase() {
     companion object {
 
         val KOTLIN_PROJECT: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("kotlin-plugin-project") { gradleVersion ->
-            withSettingsFile(useKotlinDsl = true) {
+            withSettingsFile(gradleVersion, useKotlinDsl = true) {
                 setProjectName("kotlin-plugin-project")
             }
             withBuildFile(gradleVersion, useKotlinDsl = true) {

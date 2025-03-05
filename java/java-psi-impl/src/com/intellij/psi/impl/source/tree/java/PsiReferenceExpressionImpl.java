@@ -105,10 +105,15 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     String qualifiedName  = qualifierClass.getQualifiedName();
     List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
     JavaFileCodeStyleFacade javaCodeStyleSettingsFacade = JavaFileCodeStyleFacade.forContext(importList.getContainingFile());
-    if (!javaCodeStyleSettingsFacade.isToImportOnDemand(qualifiedName) && refs.size() + 1 < javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand() ||
-        JavaCodeStyleManager.getInstance(qualifierClass.getProject()).hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
+    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(qualifierClass.getProject());
+    boolean hasToBeImportedBySettings =
+      (javaCodeStyleSettingsFacade.isToImportOnDemand(qualifiedName) ||
+      refs.size() + 1 >= javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand());
+    if (!hasToBeImportedBySettings ||
+        javaCodeStyleManager.hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
       importList.add(JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createImportStaticStatement(qualifierClass, staticName));
-    } else {
+    }
+    else {
       for (PsiJavaCodeReferenceElement ref : refs) {
         PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
         if (importStatement != null) {
@@ -119,7 +124,15 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
-  private static @NotNull List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className) {
+  /**
+   * Retrieves the static import statements from the given import list that reference
+   * a specified class.
+   *
+   * @param importList the list of import statements in a Java file.
+   * @param className the fully qualified name of the class for which static imports are to be retrieved.
+   * @return a list of static import references corresponding to the specified class.
+   */
+  public static @NotNull List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className) {
     List<PsiJavaCodeReferenceElement> array = new ArrayList<>();
     for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
       PsiClass psiClass = staticStatement.resolveTargetClass();

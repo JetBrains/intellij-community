@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -54,8 +54,7 @@ public final class AlternativeJreClassFinder extends NonClasspathClassFinder {
     return res;
   }
 
-  @Nullable
-  public static Sdk getAlternativeJre(RunProfile profile) {
+  public static @Nullable Sdk getAlternativeJre(RunProfile profile) {
     if (profile instanceof ConfigurationWithAlternativeJre appConfig && appConfig.isAlternativeJrePathEnabled()) {
       String path = appConfig.getAlternativeJrePath();
       return path == null ? null : ProjectJdkTable.getInstance().findJdk(path);
@@ -63,18 +62,15 @@ public final class AlternativeJreClassFinder extends NonClasspathClassFinder {
     return null;
   }
 
-  @NotNull
-  private static Collection<VirtualFile> getClassRoots(@NotNull Sdk jre) {
+  private static @NotNull Collection<VirtualFile> getClassRoots(@NotNull Sdk jre) {
     return Arrays.asList(jre.getRootProvider().getFiles(OrderRootType.CLASSES));
   }
 
-  @NotNull
-  public static Collection<VirtualFile> getSourceRoots(@NotNull Sdk jre) {
+  public static @NotNull Collection<VirtualFile> getSourceRoots(@NotNull Sdk jre) {
     return Arrays.asList(jre.getRootProvider().getFiles(OrderRootType.SOURCES));
   }
 
-  @NotNull
-  public static GlobalSearchScope getSearchScope(@NotNull Sdk jre) {
+  public static @NotNull GlobalSearchScope getSearchScope(@NotNull Sdk jre) {
     return new NonClasspathDirectoriesScope(getClassRoots(jre));
   }
 }

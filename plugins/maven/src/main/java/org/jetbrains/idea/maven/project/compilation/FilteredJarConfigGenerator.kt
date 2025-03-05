@@ -3,15 +3,13 @@ package org.jetbrains.idea.maven.project.compilation
 
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.utils.MavenFilteredJarUtils
 import org.jetbrains.jps.maven.model.impl.MavenProjectConfiguration
 
-@ApiStatus.Internal
-class FilteredJarConfigGenerator(
+internal class FilteredJarConfigGenerator(
   private val fileIndex: ProjectFileIndex,
   private val mavenProjectsManager: MavenProjectsManager,
   private val transformer: RemotePathTransformerFactory.Transformer,
@@ -22,7 +20,7 @@ class FilteredJarConfigGenerator(
     if (!Registry.`is`("maven.build.additional.jars")) {
       return
     }
-    if ("pom".equals(mavenProject.packaging)) return;
+    if ("pom" == mavenProject.packaging) return;
     MavenFilteredJarUtils.getAllFilteredConfigurations(mavenProjectsManager, mavenProject).forEach { jarConfig ->
       config.jarsConfiguration[jarConfig.name] = jarConfig
     }

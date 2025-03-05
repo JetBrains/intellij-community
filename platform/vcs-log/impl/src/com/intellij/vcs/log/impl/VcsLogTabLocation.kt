@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.vcs.log.VcsLogUi
 import org.jetbrains.annotations.ApiStatus
 
@@ -14,21 +14,14 @@ import org.jetbrains.annotations.ApiStatus
  * @see VcsLogTabsWatcher
  * @see VcsLogTabsWatcherExtension
  */
-@ApiStatus.Experimental
 enum class VcsLogTabLocation {
-  TOOL_WINDOW {
-    override fun select(project: Project, logUi: VcsLogUi): Boolean = VcsLogContentUtil.selectLogUi(project, logUi)
-  },
-  EDITOR {
-    override fun select(project: Project, logUi: VcsLogUi): Boolean = VcsLogEditorUtil.selectLogUi(project, logUi)
-  },
-  STANDALONE {
-    override fun select(project: Project, logUi: VcsLogUi): Boolean {
-      throw UnsupportedOperationException("Selecting standalone log tabs is not supported")
-    }
-  };
+  TOOL_WINDOW,
 
-  abstract fun select(project: Project, logUi: VcsLogUi): Boolean
+  @ApiStatus.Experimental
+  EDITOR,
+
+  @ApiStatus.Experimental
+  STANDALONE;
 
   companion object {
     /**
@@ -41,9 +34,20 @@ enum class VcsLogTabLocation {
      * @return true is the tab was found and selected (if selection was necessary), false otherwise.
      */
     fun <U : VcsLogUi> VcsLogManager.findLogUi(location: VcsLogTabLocation, clazz: Class<U>, select: Boolean, condition: (U) -> Boolean): U? {
-      val logUi = getLogUis(location).filterIsInstance(clazz).find(condition)
-      if (select && logUi != null) {
-        if (!location.select(dataManager.project, logUi)) return null
+      val logUi = getLogUis(location).filterIsInstance(clazz).find(condition) ?: return null
+      if (select) {
+        val project = dataManager.project
+        when (location) {
+          TOOL_WINDOW -> {
+            VcsLogContentUtil.selectLogUi(project, logUi)
+          }
+          EDITOR -> {
+            VcsLogEditorUtil.selectLogUi(project, logUi)
+          }
+          else -> {
+            logger<VcsLogTabLocation>().error("Selection in $location is not supported")
+          }
+        }
       }
       return logUi
     }

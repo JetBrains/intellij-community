@@ -1,4 +1,5 @@
 // "Change to constructor invocation" "true"
+// PRIORITY: HIGH
 fun bar() {
     abstract class Foo {}
     class A : Foo() {}

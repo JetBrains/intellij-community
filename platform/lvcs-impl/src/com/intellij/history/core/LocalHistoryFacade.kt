@@ -59,7 +59,7 @@ open class LocalHistoryFacade internal constructor() {
 
   @get:ApiStatus.Internal
   @get:TestOnly
-  val changeListInTests get() = changeList
+  val changeListInTests: ChangeList get() = changeList
   internal val changes: Iterable<ChangeSet> get() = changeList.iterChanges()
 
   fun beginChangeSet() {
@@ -152,8 +152,9 @@ open class LocalHistoryFacade internal constructor() {
     return ByteContent(false, entry.content.bytesIfAvailable)
   }
 
-  fun accept(v: ChangeVisitor) = changeList.accept(v)
+  fun accept(v: ChangeVisitor): Unit = changeList.accept(v)
 
+  @ApiStatus.Internal
   fun revertUpToChangeSet(root: RootEntry, changeSetId: Long, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
     var entryPath = path
     for (changeSet in changes) {
@@ -169,6 +170,7 @@ open class LocalHistoryFacade internal constructor() {
     return entryPath
   }
 
+  @ApiStatus.Internal
   fun revertUpToChange(root: RootEntry, changeId: Long, path: String, revertTarget: Boolean, warnOnFileNotFound: Boolean): String {
     var entryPath = path
     changeSetLoop@ for (changeSet in changes) {
@@ -209,8 +211,8 @@ open class LocalHistoryFacade internal constructor() {
   }
 
   abstract class Listener {
-    open fun changeAdded(c: Change) = Unit
-    open fun changeSetFinished(changeSet: ChangeSet) = Unit
+    open fun changeAdded(c: Change): Unit = Unit
+    open fun changeSetFinished(changeSet: ChangeSet): Unit = Unit
   }
 }
 
@@ -220,7 +222,6 @@ interface ChangeProcessor {
 }
 
 @ApiStatus.Internal
-@ApiStatus.Experimental
 open class ChangeProcessorBase(
   private val projectId: String?,
   private val filter: HistoryPathFilter?,

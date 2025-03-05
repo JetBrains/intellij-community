@@ -78,6 +78,7 @@ import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
+  private static final int TEST_COMPLETION_TIMEOUT = 100 * 1000;
   private static final Logger LOG = Logger.getInstance(CompletionProgressIndicator.class);
   private final Editor myEditor;
   private final @NotNull Caret myCaret;
@@ -651,8 +652,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   boolean blockingWaitForFinish(int timeoutMs) {
     if (handler.isTestingMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
-      if (!finishSemaphore.waitFor(100 * 1000)) {
-        throw new AssertionError("Too long completion");
+      if (!finishSemaphore.waitFor(TEST_COMPLETION_TIMEOUT)) {
+        throw new AssertionError("Too long completion. Timeout: " + TEST_COMPLETION_TIMEOUT + "ms. See `CompletionProgressIndicator.TEST_COMPLETION_TIMEOUT`");
       }
       return true;
     }
@@ -717,7 +718,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   }
 
   private boolean hideAutopopupIfMeaningless() {
-    if (lookup.isLookupDisposed() || !isAutopopupCompletion() || lookup.isSelectionTouched() || lookup.isCalculating()) {
+    if (lookup.isLookupDisposed() || !isAutopopupCompletion() || lookup.isSelectionTouched() || lookup.isCalculating() || lookup.isShowIfMeaningless()) {
       return false;
     }
 

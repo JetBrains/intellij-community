@@ -6,10 +6,10 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class AutolinkProcessorExtensionTest {
+public class AutolinkProcessorExtensionTest {
     // testing a simple case to assure wiring up our AutolinkProcessorExtension works correctly
     @Test
-    fun `https text gets processed into a link`() {
+    public fun `https text gets processed into a link`() {
         val processor = MarkdownProcessor(listOf(AutolinkProcessorExtension))
         val rawMarkDown = "https://commonmark.org"
         val processed = processor.processMarkdownDocument(rawMarkDown)

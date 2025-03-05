@@ -42,4 +42,13 @@ public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDeco
   public <T> @Nullable T getCustomStub(Class<T> stubClass) {
     return ObjectUtils.tryCast(myCustomStub, stubClass);
   }
+
+  @Override
+  public String toString() {
+    return "PyDecoratorStubImpl{" +
+           "myQualifiedName=" + myQualifiedName +
+           ", myHasArgumentList=" + myHasArgumentList +
+           ", myCustomStub=" + myCustomStub +
+           '}';
+  }
 }

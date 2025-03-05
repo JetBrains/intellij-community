@@ -10,11 +10,12 @@ import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.toMultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageElements
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.isInternal
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.tryFindConflict
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.internalUsageElements
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willBeMoved
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willNotBeMoved
 import org.jetbrains.kotlin.idea.refactoring.getContainer
@@ -62,6 +63,7 @@ internal fun checkModuleDependencyConflictsForNonMovedUsages(
         }.toMultiMap()
 }
 
+@ApiStatus.Internal
 fun checkModuleDependencyConflictsForInternalUsages(
     topLevelMovedDeclarations: Iterable<KtNamedDeclaration>,
     allDeclarationsToMove: Iterable<KtNamedDeclaration>,

@@ -11,5 +11,5 @@ public interface PreviewListener {
   @ApiStatus.Internal
   void onPreviewEditorCreated(SearchEverywhereUI searchEverywhereUI, Editor editor);
   @ApiStatus.Internal
-  void onPreviewDataReady(Project project, Object data, long duration);
+  void onPreviewDataReady(Project project, Object data, Duration duration);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.Project;
@@ -20,22 +20,22 @@ public interface ConfigurationErrors {
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   final
   class Bus {
-    public static void addError(@NotNull final ConfigurationError error, @NotNull final Project project) {
+    public static void addError(final @NotNull ConfigurationError error, final @NotNull Project project) {
       _do(error, project, (configurationErrors, configurationError) -> {
         configurationErrors.addError(configurationError);
         return false;
       });
     }
 
-    public static void removeError(@NotNull final ConfigurationError error, @NotNull final Project project) {
+    public static void removeError(final @NotNull ConfigurationError error, final @NotNull Project project) {
       _do(error, project, (configurationErrors, configurationError) -> {
         configurationErrors.removeError(configurationError);
         return false;
       });
     }
 
-    private static void _do(@NotNull final ConfigurationError error, @NotNull final Project project,
-                           @NotNull final PairProcessor<? super ConfigurationErrors, ? super ConfigurationError> fun) {
+    private static void _do(final @NotNull ConfigurationError error, final @NotNull Project project,
+                            final @NotNull PairProcessor<? super ConfigurationErrors, ? super ConfigurationError> fun) {
       if (!project.isInitialized()) {
         StartupManager.getInstance(project).runWhenProjectIsInitialized(
           () -> fun.process(project.getMessageBus().syncPublisher(TOPIC), error));

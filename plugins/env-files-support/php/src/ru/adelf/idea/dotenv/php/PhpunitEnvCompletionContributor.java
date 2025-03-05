@@ -23,32 +23,34 @@ import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 import java.util.Arrays;
 import java.util.List;
 
-public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
+final class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
     public static final List<String> TAGS = Arrays.asList("server", "env");
 
-    public PhpunitEnvCompletionContributor() {
-        extend(CompletionType.BASIC, PlatformPatterns.psiElement(XmlToken.class).withParent(XmlAttributeValue.class), new CompletionProvider<CompletionParameters>() {
-            @Override
-            protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+    PhpunitEnvCompletionContributor() {
+        extend(CompletionType.BASIC, PlatformPatterns.psiElement(XmlToken.class).withParent(XmlAttributeValue.class),
+               new CompletionProvider<>() {
+                   @Override
+                   protected void addCompletions(@NotNull CompletionParameters completionParameters,
+                                                 @NotNull ProcessingContext processingContext,
+                                                 @NotNull CompletionResultSet completionResultSet) {
 
-                PsiElement psiElement = completionParameters.getOriginalPosition();
+                       PsiElement psiElement = completionParameters.getOriginalPosition();
 
-                if (psiElement == null || !DotEnvSettings.getInstance().completionEnabled) {
-                    return;
-                }
+                       if (psiElement == null || !DotEnvSettings.getInstance().completionEnabled) {
+                           return;
+                       }
 
-                if (getXmlAttributeValue(psiElement) == null) {
-                    return;
-                }
+                       if (getXmlAttributeValue(psiElement) == null) {
+                           return;
+                       }
 
-                fillCompletionResultSet(completionResultSet, psiElement.getProject());
-            }
-        });
+                       fillCompletionResultSet(completionResultSet, psiElement.getProject());
+                   }
+               });
     }
 
-    @Nullable
     @Override
-    public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+    public @Nullable PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
         if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
@@ -63,8 +65,7 @@ public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider i
         return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getValue());
     }
 
-    @Nullable
-    private XmlAttributeValue getXmlAttributeValue(@NotNull PsiElement psiElement) {
+    private @Nullable XmlAttributeValue getXmlAttributeValue(@NotNull PsiElement psiElement) {
         PsiElement attributeValue = psiElement.getParent();
 
         if (!(attributeValue instanceof XmlAttributeValue)) return null;
@@ -86,9 +87,8 @@ public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider i
         return (XmlAttributeValue) attributeValue;
     }
 
-    @Nullable
     @Override
-    public String getActionText(@NotNull DataContext dataContext) {
+    public @Nullable String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
 }

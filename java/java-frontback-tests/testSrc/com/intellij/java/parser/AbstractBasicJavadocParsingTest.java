@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.parser;
 
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaParsingTestCase {
@@ -214,4 +215,23 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testReferenceLinkMarkdown10() { doTest(true); }
   public void testReferenceLinkMarkdown11() { doTest(true); }
 
+  public void testMarkdownWithDocCommentBeforeMarkdown() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest(true);
+  }
+
+  public void testOnlyMarkdownBeforeMarkdown() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest(true);
+  }
+
+  public void testMarkdownWithDocCommentAfterMarkdown() {
+    setLanguageLevel(LanguageLevel.JDK_23);
+    doTest(true);
+  }
+
+  public void testOnlyMarkdownAfterMarkdown() {
+    setLanguageLevel(LanguageLevel.JDK_23);
+    doTest(true);
+  }
 }

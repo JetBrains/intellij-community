@@ -92,7 +92,7 @@ abstract class KotlinGenerateTestSupportActionBase(
 
     class Data : KotlinGenerateTestSupportActionBase(MethodKind.DATA) {
         override fun isApplicableTo(framework: TestFramework, targetClass: KtClassOrObject): Boolean {
-            if (framework !is JavaTestFramework) return false
+            if (framework !is JavaTestFramework || framework.parametersMethodFileTemplateDescriptor == null) return false
             return framework.findParametersMethod(targetClass.toLightClass()) == null
         }
     }

@@ -43,3 +43,8 @@ set -l commandBlockSupportScript "$thisScriptParentDir/command-block-support.fis
 if test -e "$commandBlockSupportScript"
   source "$commandBlockSupportScript"
 end
+
+set -l commandBlockSupportReworkedScript "$thisScriptParentDir/command-block-support-reworked.fish"
+if test -e "$commandBlockSupportReworkedScript"
+  source "$commandBlockSupportReworkedScript"
+end

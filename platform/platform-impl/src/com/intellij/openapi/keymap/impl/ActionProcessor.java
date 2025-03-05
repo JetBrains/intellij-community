@@ -3,12 +3,11 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 
 @ApiStatus.Internal
 public abstract class ActionProcessor {
@@ -17,7 +16,8 @@ public abstract class ActionProcessor {
                                             @NotNull String place,
                                             @NotNull Presentation presentation,
                                             @NotNull ActionManager manager) {
-    return new AnActionEvent(inputEvent, context, place, presentation, manager, inputEvent.getModifiersEx());
+    //noinspection MagicConstant
+    return new AnActionEvent(context, presentation, place, ActionUiKind.NONE, inputEvent, inputEvent.getModifiersEx(), manager);
   }
 
   public void onUpdatePassed(@NotNull InputEvent inputEvent,
@@ -30,12 +30,7 @@ public abstract class ActionProcessor {
                             @NotNull AnActionEvent event) {
     inputEvent.consume();
     ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
-      if (inputEvent instanceof MouseEvent) {
-        popup.show(new RelativePoint((MouseEvent)inputEvent));
-      }
-      else {
-        popup.showInBestPositionFor(event.getDataContext());
-      }
+      popup.show(JBPopupFactory.getInstance().guessBestPopupLocation(action, event));
     });
   }
 }

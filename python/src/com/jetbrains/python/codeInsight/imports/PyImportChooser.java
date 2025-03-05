@@ -7,13 +7,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PyPsiBundle;
-import kotlin.Unit;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -22,39 +22,34 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import static com.jetbrains.python.codeInsight.imports.mlapi.MlImplementationKt.launchMLRanking;
-
-
-public final class PyImportChooser implements ImportChooser {
+public class PyImportChooser implements ImportChooser {
 
   @Override
   public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources, boolean useQualifiedImport) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return Promises.resolvedPromise(sources.get(0));
     }
+
     AsyncPromise<ImportCandidateHolder> result = new AsyncPromise<>();
 
-    launchMLRanking(sources, (mlRanking) -> {
-      // GUI part
-      DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(mlRanking.getOrder())
-        .setRenderer(new CellRenderer())
-        .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
-        .setItemChosenCallback(item -> {
-          result.setResult(item);
-          mlRanking.submitSelectedItem(item);
-        })
-        .setCancelCallback(() -> {
-          mlRanking.submitPopUpClosed();
-          return true;
-        })
-        .setNamerForFiltering(o -> o.getPresentableText())
-        .createPopup()
-        .showInBestPositionFor(dataContext));
-      return Unit.INSTANCE;
+    // GUI part
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> {
+      var popup = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(sources)
+      .setItemChosenCallback(item -> {
+        result.setResult(item);
+      });
+      processPopup(popup, useQualifiedImport);
+      popup.createPopup()
+      .showInBestPositionFor(dataContext);
     });
-
     return result;
+  }
+
+  protected void processPopup(IPopupChooserBuilder<? extends ImportCandidateHolder> popup, boolean useQualifiedImport) {
+    popup.setRenderer(new CellRenderer())
+      .setTitle(useQualifiedImport ? PyPsiBundle.message("ACT.qualify.with.module") : PyPsiBundle.message("ACT.from.some.module.import"))
+      .setNamerForFiltering(o -> o.getPresentableText());
   }
 
   // Stolen from FQNameCellRenderer

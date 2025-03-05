@@ -29,9 +29,8 @@ import java.util.List;
 
 public final class PythonOverridingBuiltinReferenceResolveProvider implements PyOverridingReferenceResolveProvider {
 
-  @NotNull
   @Override
-  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
+  public @NotNull List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
     final String referencedName = element.getReferencedName();
 
     // resolve implicit __class__ inside method

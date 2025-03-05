@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
@@ -13,17 +12,22 @@ import org.jetbrains.annotations.Nullable;
  * Implementation does nothing but marking the element type. 
  */
 public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter>  implements PyTupleParameterStub {
-  @Nullable
-  private final String myDefaultValueText;
+  private final @Nullable String myDefaultValueText;
 
   protected PyTupleParameterStubImpl(@Nullable String defaultValueText, StubElement parent) {
     super(parent, PyStubElementTypes.TUPLE_PARAMETER);
     myDefaultValueText = defaultValueText;
   }
 
-  @Nullable
   @Override
-  public String getDefaultValueText() {
+  public @Nullable String getDefaultValueText() {
     return myDefaultValueText;
+  }
+
+  @Override
+  public String toString() {
+    return "PyTupleParameterStubImpl{" +
+           "myDefaultValueText='" + myDefaultValueText + '\'' +
+           '}';
   }
 }

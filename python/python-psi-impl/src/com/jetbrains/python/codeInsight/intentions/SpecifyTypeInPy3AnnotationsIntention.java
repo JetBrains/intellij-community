@@ -52,8 +52,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.specify.type.in.annotation");
   }
 

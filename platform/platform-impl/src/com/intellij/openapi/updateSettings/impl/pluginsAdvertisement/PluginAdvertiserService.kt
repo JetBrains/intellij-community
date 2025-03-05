@@ -17,6 +17,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
@@ -55,7 +56,7 @@ sealed interface PluginAdvertiserService {
     @JvmStatic
     fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
-        "IC", "AS" -> "IU"
+        "IC", "AI" -> "IU"
         "PC" -> "PY"
         else -> null
       }
@@ -74,7 +75,7 @@ sealed interface PluginAdvertiserService {
     )
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-    val pyCharmProfessional = SuggestedIde(
+    val pyCharmProfessional: SuggestedIde = SuggestedIde(
       name = "PyCharm Professional",
       productCode = "PY",
       defaultDownloadUrl = "https://www.jetbrains.com/pycharm/download/",
@@ -103,12 +104,15 @@ sealed interface PluginAdvertiserService {
       "PC" to "pycharm_ce",
       "PE" to "pycharm_edu",
       "WS" to "webstorm",
+      "PS" to "phpstorm",
       "GO" to "go",
       "CL" to "clion",
       "RD" to "rider",
       "RM" to "ruby",
       "RR" to "rust",
-      "AS" to "androidstudio"
+      "AI" to "androidstudio",
+      "QA" to "aqua",
+      "DB" to "datagrip"
     )
 
     internal const val EXECUTABLE_DEPENDENCY_KIND: String = "executable"
@@ -140,9 +144,7 @@ open class PluginAdvertiserServiceImpl(
   private val cs: CoroutineScope,
 ) : PluginAdvertiserService {
 
-  companion object {
-    private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
-  }
+  private val notificationManager = SingletonNotificationManager(getPluginSuggestionNotificationGroup().displayId, NotificationType.INFORMATION)
 
   override suspend fun run(
     customPlugins: List<PluginNode>,
@@ -240,7 +242,7 @@ open class PluginAdvertiserServiceImpl(
       fun putFeature(data: PluginData) {
         val pluginId = data.pluginId
         if (ignoredPluginSuggestionState.isIgnored(pluginId) && !includeIgnored) { // globally ignored
-          LOG.info("Plugin is ignored by user, suggestion will not be shown: $pluginId")
+          thisLogger().info("Plugin is ignored by user, suggestion will not be shown: $pluginId")
           return
         }
 
@@ -434,13 +436,14 @@ open class PluginAdvertiserServiceImpl(
           tryUltimate(pluginId = null, suggestedIde = ideaUltimate, project, FUSEventSource.NOTIFICATION)
         },
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.ignore.ultimate")) {
-          FUSEventSource.NOTIFICATION.doIgnoreUltimateAndLog(project)
+          FUSEventSource.NOTIFICATION.ignoreUltimateAndLog(project)
         },
       )
     }
     else {
       if (includeIgnored) {
-        notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+        getPluginSuggestionNotificationGroup()
+          .createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
           .setDisplayId("advertiser.no.plugins")
           .notify(project)
       }

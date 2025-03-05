@@ -1,3 +1,5 @@
+import unittest
+
 def f():
     return
     <warning descr="This code is unreachable">a = 1</warning>

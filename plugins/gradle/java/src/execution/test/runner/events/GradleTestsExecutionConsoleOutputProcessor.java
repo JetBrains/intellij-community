@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -53,10 +53,9 @@ public final class GradleTestsExecutionConsoleOutputProcessor {
     };
   }
 
-  @Nullable
-  private static String getEventMessage(@NotNull GradleTestsExecutionConsole executionConsole,
-                                        @NotNull String text,
-                                        @NotNull Key<?> processOutputType) {
+  private static @Nullable String getEventMessage(@NotNull GradleTestsExecutionConsole executionConsole,
+                                                  @NotNull String text,
+                                                  @NotNull Key<?> processOutputType) {
     String eventMessage = null;
     final StringBuilder consoleBuffer = executionConsole.getBuffer();
     String trimmedText = text.trim();

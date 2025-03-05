@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.editor.Editor;
@@ -16,12 +16,12 @@ import java.util.List;
 import java.util.Objects;
 
 public class VisibleRangeMerger<T> {
-  @NotNull private final Editor myEditor;
-  @NotNull private final FlagsProvider<T> myFlagsProvider;
+  private final @NotNull Editor myEditor;
+  private final @NotNull FlagsProvider<T> myFlagsProvider;
 
-  @NotNull private ChangesBlock<T> myBlock = new ChangesBlock<>();
+  private @NotNull ChangesBlock<T> myBlock = new ChangesBlock<>();
 
-  @NotNull private final List<ChangesBlock<T>> myResult = new ArrayList<>();
+  private final @NotNull List<ChangesBlock<T>> myResult = new ArrayList<>();
 
   private VisibleRangeMerger(@NotNull Editor editor, @NotNull FlagsProvider<T> flagsProvider) {
     myEditor = editor;
@@ -41,8 +41,7 @@ public class VisibleRangeMerger<T> {
     return new VisibleRangeMerger<>(editor, flagsProvider).run(ranges, clip);
   }
 
-  @NotNull
-  private List<ChangesBlock<T>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
+  private @NotNull List<ChangesBlock<T>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
     int visibleLinesStart = EditorUtil.yToLogicalLineRange(myEditor, clip.y).intervalStart();
     int visibleLinesEnd = EditorUtil.yToLogicalLineRange(myEditor, clip.y + Math.max(clip.height - 1, 0)).intervalEnd() + 1;
 

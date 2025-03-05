@@ -9,9 +9,8 @@ import javax.swing.*;
 import java.awt.*;
 
 /* package */ final class KotlinImportListRenderer extends FQNameCellRenderer {
-    @NotNull
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    public @NotNull Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         setIcon(null);
         return component;

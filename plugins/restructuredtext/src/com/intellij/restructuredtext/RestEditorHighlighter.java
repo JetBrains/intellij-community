@@ -16,10 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Enables python highlighting for Rest files
- *
- * User : catherine
  */
-public class RestEditorHighlighter extends LayeredLexerEditorHighlighter {
+public final class RestEditorHighlighter extends LayeredLexerEditorHighlighter {
 
   public RestEditorHighlighter(@NotNull EditorColorsScheme scheme, @Nullable Project project, @Nullable VirtualFile file) {
     super(SyntaxHighlighterFactory.getSyntaxHighlighter(RestLanguage.INSTANCE, project, file), scheme);

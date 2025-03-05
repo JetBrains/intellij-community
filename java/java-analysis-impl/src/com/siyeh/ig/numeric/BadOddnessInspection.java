@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,8 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public final class BadOddnessInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "bad.oddness.problem.descriptor");
   }
@@ -93,7 +92,7 @@ public final class BadOddnessInspection extends BaseInspection {
       if (variable == null) return false;
       PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (codeBlock == null) return false;
-      return !HighlightControlFlowUtil.isEffectivelyFinal(variable, codeBlock, null);
+      return !ControlFlowUtil.isEffectivelyFinal(variable, codeBlock);
     }
 
     private static boolean hasValue(PsiExpression expression, int testValue) {

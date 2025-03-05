@@ -17,7 +17,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.search.FilenameIndex;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService;
@@ -33,6 +32,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 import static com.intellij.serviceContainer.ComponentManagerImplKt.handleComponentError;
 import static com.intellij.util.indexing.FileBasedIndexDataInitialization.FileBasedIndexDataInitializationResult;
@@ -82,7 +82,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
           // FileBasedIndexImpl.registerIndexer may throw, then the line below will not be executed
           myRegisteredIndexes.registerIndexExtension(extension);
         }
-        catch (IOException | AlreadyDisposedException | ProcessCanceledException e) {
+        catch (IOException | ProcessCanceledException e) {
           LOG.warnWithDebug("Could not register indexing extension: " + extension + ". reason: " + e, e);
           ID.unloadId(extension.getName());
           throw e;
@@ -150,7 +150,14 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
   private static class ShutdownTaskAsDisposable implements Disposable {
     @Override
     public void dispose() {
-      new FileBasedIndexImpl.ShutDownIndexesTask(/*byShutDownHook: */ false).run();
+      try {
+        new FileBasedIndexImpl.ShutDownIndexesTask(/*byShutDownHook: */ false).run();
+      }
+      catch (CancellationException e) {
+        LOG.warn(
+          "Dispose of indexes was canceled. It is likely that the Application was already closed by the moment when indexes started initialize",
+          new RuntimeException(e));
+      }
     }
   }
 

@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.references;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
@@ -22,8 +21,8 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.junit.jupiter.api.Assertions;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 
 import static org.jetbrains.jps.backwardRefs.index.JavaCompilerIndices.BACK_USAGES;
@@ -47,7 +46,7 @@ public class SensitiveFsReferenceIndexTest extends ReferenceIndexTestBase {
 
     ProjectDescriptor descriptor = createProjectDescriptor(new BuildLoggingManager(new TestProjectBuilderLogger()));
     BuildDataManager manager = descriptor.dataManager;
-    File root = manager.getDataPaths().getDataStorageRoot();
+    Path root = manager.getDataPaths().getDataStorageDir();
     JavaCompilerBackwardReferenceIndex index = new JavaCompilerBackwardReferenceIndex(root,
                                                                                       new PathRelativizerService(myProject, true), true,
                                                                                       true);
@@ -59,17 +58,19 @@ public class SensitiveFsReferenceIndexTest extends ReferenceIndexTestBase {
       ((MapReduceIndex<CompilerRef, Integer, CompiledFileData>)index.get(BACK_USAGES)).getStorage();
     ((MapIndexStorage<CompilerRef, Integer>)storage).processKeys(usage -> {
       try {
-        ValueContainer<Integer> data = index.get(BACK_USAGES).getData(usage);
-        data.forEach((id, value) -> {
-          try {
-            String fullName = filePathEnumerator.valueOf(id);
-            String fileName = PathUtil.getFileName(fullName);
-            fileNames.remove(fileName);
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-          return false;
+        index.get(BACK_USAGES).withData(usage, data -> {
+            data.forEach((id, value) -> {
+              try {
+                String fullName = filePathEnumerator.valueOf(id);
+                String fileName = PathUtil.getFileName(fullName);
+                fileNames.remove(fileName);
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              return false;
+            });
+            return true;
         });
       }
       catch (StorageException e) {

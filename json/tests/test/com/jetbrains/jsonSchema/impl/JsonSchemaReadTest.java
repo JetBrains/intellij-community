@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +32,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static com.jetbrains.jsonSchema.impl.JsonSchemaTraversalUtilsKt.getChildAsText;
 
 public class JsonSchemaReadTest extends BasePlatformTestCase {
   @NotNull
@@ -57,7 +61,7 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
     Assert.assertEquals("#/definitions/positiveIntegerDefault0", minLength.getRef());
   }
 
-  public void testMainSchemaHighlighting() {
+  public void testMainSchemaHighlighting() throws IOException {
     final JsonSchemaService service = JsonSchemaService.Impl.get(getProject());
     var versionsToTest = Stream.of(JsonSchemaVersion.SCHEMA_4, JsonSchemaVersion.SCHEMA_6, JsonSchemaVersion.SCHEMA_7).collect(Collectors.toSet());
     final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(getProject());
@@ -67,6 +71,11 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
       final VirtualFile mainSchema = provider.getSchemaFile();
       assertNotNull(mainSchema);
       assertTrue(service.isSchemaFile(mainSchema));
+      // mainSchema could be in a jar
+      final VirtualFile copyOfMainSchema =
+        myFixture.createFile(mainSchema.getName(), new String(mainSchema.contentsToByteArray(), mainSchema.getCharset()));
+      assertNotNull(copyOfMainSchema);
+      assertTrue(service.isSchemaFile(copyOfMainSchema));
 
       myFixture.enableInspections(new JsonSchemaComplianceInspection());
       Disposer.register(getTestRootDisposable(), new Disposable() {
@@ -76,7 +85,7 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
         }
       });
 
-      myFixture.configureFromExistingVirtualFile(mainSchema);
+      myFixture.configureFromExistingVirtualFile(copyOfMainSchema);
       final List<HighlightInfo> infos = myFixture.doHighlighting();
       for (HighlightInfo info : infos) {
         if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
@@ -131,6 +140,22 @@ public class JsonSchemaReadTest extends BasePlatformTestCase {
 
   public void testReadSchemaWithWrongItems() throws Exception {
     doTestSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongItems.json"));
+  }
+
+  public void testReadNestedSchemaObject() {
+    var schemaPsi = myFixture.configureByText("testSchemaReading.json", """
+      { "foo": {"bar": "hello there"}}
+    """);
+
+    var root = new JsonSchemaReader(schemaPsi.getVirtualFile()).read(schemaPsi);
+    var existingNodeText = getChildAsText(root, "foo", "bar");
+    Assert.assertEquals("hello there", existingNodeText);
+
+    var missingNodeText = getChildAsText(root, "foo", "buz");
+    Assert.assertNull(missingNodeText);
+
+    var nonTextualNode = getChildAsText(root);
+    Assert.assertNull(nonTextualNode);
   }
 
   private void doTestSchemaReadNotHung(final File file) throws Exception {

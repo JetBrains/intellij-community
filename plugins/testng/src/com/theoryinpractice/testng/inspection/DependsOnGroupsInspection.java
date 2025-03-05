@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.*;
@@ -28,17 +28,15 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
   private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z0-9_\\-\\(\\)]*)\"");
 
   public JDOMExternalizableStringList groups = new JDOMExternalizableStringList();
-  @NonNls public static final String SHORT_NAME = "groupsTestNG";
+  public static final @NonNls String SHORT_NAME = "groupsTestNG";
 
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -131,14 +129,12 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return TestngBundle.message("inspection.depends.on.groups.add.as.defined.test.group.fix", myGroupName);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return TestngBundle.message("inspection.depends.on.groups.family.name");
     }
 

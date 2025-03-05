@@ -44,11 +44,7 @@ public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor 
     return new FutureTask<>(() -> {
       if (!file.isValid()) return false;
       Collection<TextRange> ranges = getRanges(file, processChangedTextOnly);
-      if (myProfile == null) {
-        GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), file);
-      } else {
-        GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), myProfile, file);
-      }
+      GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), myProfile, file);
       return true;
     });
   }

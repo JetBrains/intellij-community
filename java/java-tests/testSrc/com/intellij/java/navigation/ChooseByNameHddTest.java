@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
@@ -57,7 +57,7 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     List<String> resultModules = ContainerUtil.map(ChooseByNameTest.calcContributorElements(contributor, "Foo"),
                                                    e -> ModuleUtilCore.findModuleForPsiElement((PsiElement)e).getName());
 
-    assertEquals(resultModules.get(0), "mod2");
+    assertEquals("mod2", resultModules.get(0));
   }
 
   public void test_paths_relative_to_topmost_module() throws IOException {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,8 +75,7 @@ public final class AntMessage {
     return myColumn;
   }
 
-  @NotNull
-  public AntMessage withText(@NotNull @Nls String text) {
+  public @NotNull AntMessage withText(@NotNull @Nls String text) {
     return new AntMessage(getType(), getPriority(), text, getFile(), getLine(), getColumn());
   }
 

@@ -38,7 +38,8 @@ public enum JavaSdkVersion {
   JDK_21(LanguageLevel.JDK_21),
   JDK_22(LanguageLevel.JDK_22),
   JDK_23(LanguageLevel.JDK_23),
-  JDK_24(LanguageLevel.JDK_X);
+  JDK_24(LanguageLevel.JDK_24),
+  JDK_25(LanguageLevel.JDK_X);
 
   private final LanguageLevel myMaxLanguageLevel;
 
@@ -46,13 +47,11 @@ public enum JavaSdkVersion {
     myMaxLanguageLevel = maxLanguageLevel;
   }
 
-  @NotNull
-  public LanguageLevel getMaxLanguageLevel() {
+  public @NotNull LanguageLevel getMaxLanguageLevel() {
     return myMaxLanguageLevel;
   }
 
-  @NotNull
-  public @NlsSafe String getDescription() {
+  public @NotNull @NlsSafe String getDescription() {
     int feature = ordinal();
     return feature < 5 ? "1." + feature : String.valueOf(feature);
   }
@@ -61,8 +60,7 @@ public enum JavaSdkVersion {
     return compareTo(version) >= 0;
   }
 
-  @NotNull
-  public static JavaSdkVersion fromLanguageLevel(@NotNull LanguageLevel languageLevel) throws IllegalArgumentException {
+  public static @NotNull JavaSdkVersion fromLanguageLevel(@NotNull LanguageLevel languageLevel) throws IllegalArgumentException {
     JavaSdkVersion[] values = values();
     if (languageLevel == LanguageLevel.JDK_X) {
       return values[values.length - 1];
@@ -75,14 +73,12 @@ public enum JavaSdkVersion {
   }
 
   /** See {@link JavaVersion#parse(String)} for supported formats. */
-  @Nullable
-  public static JavaSdkVersion fromVersionString(@NotNull String versionString) {
+  public static @Nullable JavaSdkVersion fromVersionString(@NotNull String versionString) {
     JavaVersion version = JavaVersion.tryParse(versionString);
     return version != null ? fromJavaVersion(version) : null;
   }
 
-  @Nullable
-  public static JavaSdkVersion fromJavaVersion(@NotNull JavaVersion version) {
+  public static @Nullable JavaSdkVersion fromJavaVersion(@NotNull JavaVersion version) {
     JavaSdkVersion[] values = values();
     return version.feature < values.length ? values[version.feature] : null;
   }

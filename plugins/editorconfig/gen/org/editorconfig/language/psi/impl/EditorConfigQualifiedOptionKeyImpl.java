@@ -1,15 +1,18 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
+import org.editorconfig.language.psi.EditorConfigQualifiedKeyPart;
+import org.editorconfig.language.psi.EditorConfigQualifiedOptionKey;
+import org.editorconfig.language.psi.EditorConfigVisitor;
 import org.editorconfig.language.psi.base.EditorConfigQualifiedOptionKeyBase;
-import org.editorconfig.language.psi.*;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class EditorConfigQualifiedOptionKeyImpl extends EditorConfigQualifiedOptionKeyBase implements EditorConfigQualifiedOptionKey {
 
@@ -28,8 +31,7 @@ public class EditorConfigQualifiedOptionKeyImpl extends EditorConfigQualifiedOpt
   }
 
   @Override
-  @NotNull
-  public List<EditorConfigQualifiedKeyPart> getQualifiedKeyPartList() {
+  public @NotNull List<EditorConfigQualifiedKeyPart> getQualifiedKeyPartList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigQualifiedKeyPart.class);
   }
 

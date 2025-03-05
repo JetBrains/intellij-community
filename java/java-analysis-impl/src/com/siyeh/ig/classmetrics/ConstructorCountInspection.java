@@ -32,8 +32,7 @@ public final class ConstructorCountInspection extends ClassMetricInspection {
   public boolean ignoreDeprecatedConstructors = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ClassWithTooManyConstructors";
   }
 
@@ -56,8 +55,7 @@ public final class ConstructorCountInspection extends ClassMetricInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer count = (Integer)infos[0];
     return InspectionGadgetsBundle.message("too.many.constructors.problem.descriptor", count);
   }

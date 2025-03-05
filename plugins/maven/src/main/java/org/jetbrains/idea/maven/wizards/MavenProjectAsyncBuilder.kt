@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
@@ -125,11 +126,11 @@ class MavenProjectAsyncBuilder {
     generalSettings: MavenGeneralSettings,
     syncProject: Boolean,
   ): List<Module> {
-    MavenAsyncUtil.setupProjectSdk(project)
+    MavenAsyncUtil.setupProjectSdk(project, rootDirectory)
     val projectsNavigator = MavenProjectsNavigator.getInstance(project)
     if (projectsNavigator != null) projectsNavigator.groupModules = true
 
-    val files: List<VirtualFile?> = withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), true) {
+    val files: List<VirtualFile> = withBackgroundProgress(project, MavenProjectBundle.message("maven.reading"), true) {
       coroutineToIndicator {
         val indicator = ProgressManager.getGlobalProgressIndicator()
         if (importProjectFile != null) {
@@ -154,8 +155,10 @@ class MavenProjectAsyncBuilder {
 
     if (project.isTrusted()) {
       withBackgroundProgress(project, MavenProjectBundle.message("maven.installing.wrapper"), false) {
-        withContext(tracer.span("installingMavenWrapperBeforeSync") + Dispatchers.IO) {
-          MavenWrapperDownloader.checkOrInstallForSync(project, rootDirectory.toString(), false);
+        withContext(Dispatchers.IO) {
+          tracer.spanBuilder("checkOrInstallMavenWrapper").useWithScope {
+            MavenWrapperDownloader.checkOrInstallForSync(project, rootDirectory.toString(), false);
+          }
         }
       }
     }

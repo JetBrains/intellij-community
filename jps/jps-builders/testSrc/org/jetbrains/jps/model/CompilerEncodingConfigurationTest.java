@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,7 +43,7 @@ public class CompilerEncodingConfigurationTest {
     BuildTargetRegistryImpl targetRegistry = new BuildTargetRegistryImpl(model);
     ModuleExcludeIndex index = new ModuleExcludeIndexImpl(model);
     IgnoredFileIndexImpl ignoredFileIndex = new IgnoredFileIndexImpl(model);
-    BuildDataPaths dataPaths = new BuildDataPathsImpl(myDataStorageRoot);
+    BuildDataPaths dataPaths = new BuildDataPathsImpl(myDataStorageRoot.toPath());
     BuildRootIndexImpl rootIndex = new BuildRootIndexImpl(targetRegistry, model, index, dataPaths, ignoredFileIndex);
 
     JpsEncodingProjectConfiguration projectConfig = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(projectData.getProject());

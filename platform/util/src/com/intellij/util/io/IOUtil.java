@@ -12,8 +12,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataOutputStream;
 import java.io.*;
+import java.io.DataOutputStream;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -372,6 +372,40 @@ public final class IOUtil {
     }
   }
 
+  /**
+   * Close all the non-null closeables, catch the exceptions along the way, and re-throw them at the end.
+   * I.e. method closes as many closeables as possible -- single failed .close() doesn't prevent closing of
+   * the remaining closeables.
+   */
+  @ApiStatus.Internal
+  public static void closeAllSafely(@Nullable Closeable ... closeables) throws IOException {
+    Throwable closeEx = null;
+    for (Closeable closeable : closeables) {
+      if (closeable != null) {
+        try {
+          closeable.close();
+        }
+        catch (Throwable t) {
+          if (closeEx == null) {
+            closeEx = t;
+          }
+          else {
+            closeEx.addSuppressed(t);
+          }
+        }
+      }
+    }
+
+    if (closeEx != null) {
+      if (closeEx instanceof IOException) {
+        throw (IOException)closeEx;
+      }
+      else {
+        throw new IOException(closeEx);
+      }
+    }
+  }
+
 
   private static final byte[] ZEROES = new byte[64 * 1024];
 
@@ -504,7 +538,7 @@ public final class IOUtil {
    * If the wrapperer call fails -- close storageToWrap before propagating exception up the callstack.
    * (If the wrapperer call succeeded -- wrapping storage (Out) is now responsible for the closing of wrapped storage)
    */
-  public static <Out extends AutoCloseable, In extends AutoCloseable, E extends Throwable>
+  public static <Out, In extends AutoCloseable, E extends Throwable>
   Out wrapSafely(@NotNull In storageToWrap,
                  @NotNull ThrowableNotNullFunction<In, Out, E> wrapperer) throws E {
     try {

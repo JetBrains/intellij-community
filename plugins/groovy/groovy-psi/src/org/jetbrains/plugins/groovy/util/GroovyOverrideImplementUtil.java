@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -127,8 +127,7 @@ public final class GroovyOverrideImplementUtil {
   }
 
 
-  @Nullable
-  private static PsiType getSuperReturnType(@NotNull PsiMethod superMethod) {
+  private static @Nullable PsiType getSuperReturnType(@NotNull PsiMethod superMethod) {
     if (superMethod instanceof GrMethod) {
       final GrTypeElement element = ((GrMethod)superMethod).getReturnTypeElementGroovy();
       return element != null ? element.getType() : null;
@@ -208,8 +207,8 @@ public final class GroovyOverrideImplementUtil {
   }
 
   public static void chooseAndOverrideOrImplementMethods(@NotNull Project project,
-                                                         @NotNull final Editor editor,
-                                                         @NotNull final GrTypeDefinition aClass,
+                                                         final @NotNull Editor editor,
+                                                         final @NotNull GrTypeDefinition aClass,
                                                          boolean toImplement) {
     LOG.assertTrue(aClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -244,8 +243,7 @@ public final class GroovyOverrideImplementUtil {
     });
   }
 
-  @NotNull
-  private static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
+  private static @NotNull String callSuper(PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuilder buffer = new StringBuilder();
     if (!superMethod.isConstructor() && !PsiTypes.voidType().equals(superMethod.getReturnType())) {
       buffer.append("return ");

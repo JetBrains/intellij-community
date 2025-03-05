@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.project.Project;
@@ -53,8 +53,7 @@ public interface PsiBuilder extends SyntaxTreeBuilder, UserDataHolder {
   @SuppressWarnings("DeprecatedIsStillUsed")
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  @Nullable
-  default <T> T getUserDataUnprotected(@NotNull Key<T> key) {
+  default @Nullable <T> T getUserDataUnprotected(@NotNull Key<T> key) {
     return getUserData(key);
   }
 

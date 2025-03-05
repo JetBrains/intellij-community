@@ -14,15 +14,12 @@ import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistValueType
 import java.io.InputStream
-import java.util.*
 
 private typealias VSCodeExtensionLanguageId = String
 
 fun readVSCBundle(resourceLoader: (relativePath: String) -> InputStream?): TextMateBundleReader? {
-  return resourceLoader(Constants.PACKAGE_JSON_NAME)?.let { packageJsonStream ->
-    val extension = packageJsonStream.reader(Charsets.UTF_8).useLines { lineSequence ->
-      JsonPlistReader.textmateJson.decodeFromString(VSCodeExtension.serializer(), lineSequence.removeJsonComments())
-    }
+  return resourceLoader(Constants.PACKAGE_JSON_NAME)?.use { packageJsonStream ->
+    val extension = JsonPlistReader.textmateJson.decodeFromStream(VSCodeExtension.serializer(), packageJsonStream)
 
     VSCBundleReader(extension = extension, resourceLoader = resourceLoader)
   }
@@ -53,7 +50,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   override fun readGrammars(): Sequence<TextMateGrammar> {
     return extension.contributes.grammars.asSequence().map { grammar ->
       val plist = lazy {
-        resourceLoader(grammar.path)?.let { readPlist(it.buffered(), CompositePlistReader(), grammar.path) } ?: Plist.EMPTY_PLIST
+        resourceLoader(grammar.path)?.use { readPlist(it, CompositePlistReader(), grammar.path) } ?: Plist.EMPTY_PLIST
       }
 
       val language = languages[grammar.language]
@@ -74,7 +71,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   override fun readPreferences(): Sequence<TextMatePreferences> {
     return extension.contributes.languages.asSequence().flatMap { language ->
       language.configuration?.let { path ->
-        resourceLoader(path)?.let { inputStream ->
+        resourceLoader(path)?.use { inputStream ->
           readPreferencesImpl(inputStream, scopesForLanguage(language.id))
         }
       } ?: emptySequence()
@@ -85,20 +82,20 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
     return extension.contributes.snippets.asSequence().filter { snippetConfiguration ->
       snippetConfiguration.path.endsWith(".json") || snippetConfiguration.path.endsWith(".code-snippets")
     }.flatMap { snippetConfiguration ->
-      resourceLoader(snippetConfiguration.path)?.buffered()?.let { inputStream ->
+      resourceLoader(snippetConfiguration.path)?.use { inputStream ->
         readPlist(inputStream, CompositePlistReader(), snippetConfiguration.path)?.entries()?.asSequence()?.flatMap { (name, value) ->
           val valuePlist = value.plist
           val bodyValue = valuePlist.getPlistValue("body", "")
           val body = when (bodyValue.type) {
-            PlistValueType.STRING -> bodyValue.string
-            PlistValueType.ARRAY -> bodyValue.array.joinToString(separator = "\n") { it.string }
+            PlistValueType.STRING -> bodyValue.string!!
+            PlistValueType.ARRAY -> bodyValue.array.mapNotNull { it.string }.joinToString(separator = "\n")
             else -> error("Can't parse body: $bodyValue")
           }
           valuePlist.getPlistValue("prefix")?.string?.let { key ->
-            val description = valuePlist.getPlistValue(Constants.DESCRIPTION_KEY, "").string
-            val snippetScopeName = valuePlist.getPlistValue(Constants.SCOPE_KEY)
+            val description = valuePlist.getPlistValue(Constants.DESCRIPTION_KEY, "").string!!
+            val snippetScopeName = valuePlist.getPlistValue(Constants.SCOPE_KEY)?.string
             if (snippetScopeName != null) {
-              sequenceOf(TextMateSnippet(key, body, snippetScopeName.string, name, description, name))
+              sequenceOf(TextMateSnippet(key, body, snippetScopeName, name, description, name))
             }
             else {
               scopesForLanguage(snippetConfiguration.language).map { scopeName ->
@@ -120,9 +117,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
 }
 
 internal fun readPreferencesImpl(inputStream: InputStream, scopeNames: Sequence<TextMateScopeName>): Sequence<TextMatePreferences> {
-  val configuration = inputStream.reader(Charsets.UTF_8).useLines { lineSequence ->
-    JsonPlistReader.textmateJson.decodeFromString(VSCodeExtensionLanguageConfiguration.serializer(), lineSequence.removeJsonComments())
-  }
+  val configuration = JsonPlistReader.textmateJson.decodeFromStream(VSCodeExtensionLanguageConfiguration.serializer(), inputStream)
 
   val highlightingPairs = readBrackets(configuration.brackets).takeIf { it.isNotEmpty() }
   val smartTypingPairs = configuration.autoClosingPairs
@@ -239,7 +234,7 @@ class VSCodeExtensionSurroundingPairsDeserializer : KSerializer<VSCodeExtensionS
 internal data class VSCodeExtensionAutoClosingPairs(
   val open: String,
   val close: String,
-  val notIn: EnumSet<TextMateStandardTokenType>? = null,
+  val notIn: Int,
 )
 
 internal class VSCodeExtensionAutoClosingPairsDeserializer : KSerializer<VSCodeExtensionAutoClosingPairs> {
@@ -248,17 +243,17 @@ internal class VSCodeExtensionAutoClosingPairsDeserializer : KSerializer<VSCodeE
   override fun deserialize(decoder: Decoder): VSCodeExtensionAutoClosingPairs {
     require(decoder is JsonDecoder)
     return when (val json = decoder.decodeJsonElement()) {
-      is JsonArray -> VSCodeExtensionAutoClosingPairs(json[0].jsonPrimitive.content, json[1].jsonPrimitive.content, null)
+      is JsonArray -> VSCodeExtensionAutoClosingPairs(json[0].jsonPrimitive.content, json[1].jsonPrimitive.content, 0)
       is JsonObject -> VSCodeExtensionAutoClosingPairs(
         open = json["open"]!!.jsonPrimitive.content,
         close = json["close"]!!.jsonPrimitive.content,
-        notIn = (json["notIn"] as? JsonArray)?.mapNotNull {
-          when (it.jsonPrimitive.content) {
-            "string" -> TextMateStandardTokenType.STRING
-            "comment" -> TextMateStandardTokenType.COMMENT
-            else -> null
+        notIn = (json["notIn"] as? JsonArray)?.fold(0) { acc, element ->
+          when (element.jsonPrimitive.content) {
+            "string" -> acc or  TextMateStandardTokenType.STRING.mask()
+            "comment" -> acc or TextMateStandardTokenType.COMMENT.mask()
+            else -> acc
           }
-        }?.let { EnumSet.copyOf(it) })
+        } ?: 0)
       else -> error("cannot deserialize $json")
     }
   }
@@ -267,7 +262,7 @@ internal class VSCodeExtensionAutoClosingPairsDeserializer : KSerializer<VSCodeE
     val json = JsonObject(mapOf(
       "open" to JsonPrimitive(value.open),
       "close" to JsonPrimitive(value.close),
-      "notIn" to JsonArray(value.notIn?.map { JsonPrimitive(it.name.lowercase()) } ?: emptyList())
+      "notIn" to JsonArray(TextMateStandardTokenType.entries.filter { value.notIn and it.mask() != 0 }.map { JsonPrimitive(it.name.lowercase()) })
     ))
     (encoder as JsonEncoder).encodeJsonElement(json)
   }
@@ -332,48 +327,4 @@ internal class TextRuleDeserializer : KSerializer<TextRule> {
   override fun serialize(encoder: Encoder, value: TextRule) {
     encoder.encodeString(value.text)
   }
-}
-
-// todo: remove when comments are supported in kotlin-serialization
-private fun Sequence<String>.removeJsonComments(): String {
-  return map { line ->
-    val commentIndex = lineCommentIndex(line)
-    if (commentIndex >= 0) {
-      line.substring(0, commentIndex)
-    }
-    else {
-      line
-    }
-  }.joinToString(separator = "\n")
-}
-
-private fun lineCommentIndex(line: String): Int {
-  var i = 0
-  var quote: Char? = null
-  while (i < line.length) {
-    val c = line[i]
-    if (quote != null) {
-      when (c) {
-        '\\' -> {
-          i++
-        }
-        quote -> {
-          quote = null
-        }
-      }
-    }
-    else {
-      when (c) {
-        '\'' -> quote = c
-        '"' -> quote = c
-        '/' -> {
-          if (i + 1 < line.length && line[i + 1] == '/') {
-            return i
-          }
-        }
-      }
-    }
-    i++
-  }
-  return -1
 }

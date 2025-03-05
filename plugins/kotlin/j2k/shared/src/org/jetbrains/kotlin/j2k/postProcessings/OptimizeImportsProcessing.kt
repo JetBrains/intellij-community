@@ -7,11 +7,10 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
@@ -21,7 +20,7 @@ import org.jetbrains.kotlin.resolve.ImportPath
  * NOTE: This class is J2K-specific, do not confuse it with [com.intellij.codeInsight.actions.OptimizeImportsProcessor].
  */
 class OptimizeImportsProcessing : FileBasedPostProcessing() {
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
         if (!shouldTryToOptimizeImports(file, rangeMarker)) return
 
         val optimizeImportsFacility = KotlinOptimizeImportsFacility.getInstance()
@@ -53,12 +52,11 @@ class OptimizeImportsProcessing : FileBasedPostProcessing() {
         }
     }
 
-    context(KaSession)
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,
         rangeMarker: RangeMarker?,
-        converterContext: NewJ2kConverterContext
+        converterContext: ConverterContext
     ): PostProcessingApplier {
         if (!shouldTryToOptimizeImports(file, rangeMarker)) return Applier.EMPTY
         val optimizeImportsFacility = KotlinOptimizeImportsFacility.getInstance()

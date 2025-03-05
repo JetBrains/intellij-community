@@ -56,10 +56,12 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
     return myFrame;
   }
 
+  @Override
   public int hashCode() {
     return 31 * myFrame.hashCode() + myVariableName.hashCode();
   }
 
+  @Override
   public boolean equals(Object o) {
     return o instanceof LocalVariableProxyImpl proxy &&
            Comparing.equal(proxy.myFrame, myFrame) &&

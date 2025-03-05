@@ -3,35 +3,25 @@
 
 package fleet.rpc.core
 
-import fleet.util.*
+import fleet.rpc.core.Blob.Companion.serializer
+import fleet.util.Base64WithOptionalPadding
+import fleet.util.UID
+import fleet.util.UIDSerializer
 import fleet.util.channels.channels
 import fleet.util.serialization.DataSerializer
-import fleet.util.serialization.ISerialization
-import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.serializer
-import java.util.Base64
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.CoroutineContext
-import kotlin.reflect.KClass
-import kotlin.reflect.KClassifier
-import kotlin.reflect.KType
-import kotlin.reflect.jvm.jvmErasure
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 private class SerializationContext(val streamDescriptors: MutableList<StreamDescriptor>,
-                                   val callJob: Job?,
                                    val rpcCoroutineScope: CoroutineScope,
                                    val token: RpcToken?,
                                    val displayName: String)
@@ -41,12 +31,10 @@ private val SerializationContextThreadLocal: ThreadLocal<SerializationContext> =
 fun <T> withSerializationContext(displayName: String,
                                  token: RpcToken?,
                                  rpcScope: CoroutineScope,
-                                 callJob: Job? = null,
                                  f: () -> T): Pair<T, List<StreamDescriptor>> {
   val old = SerializationContextThreadLocal.get()
   try {
     val ctx = SerializationContext(streamDescriptors = mutableListOf(),
-                                   callJob = callJob,
                                    token = token,
                                    rpcCoroutineScope = rpcScope,
                                    displayName = displayName)
@@ -190,148 +178,17 @@ class DeferredSerializer<T>(elementSerializer: KSerializer<T>) :
   }
 }
 
-@Serializable
-internal data class Scope(val cancellation: ReceiveChannel<Unit>, val completion: SendChannel<Unit>)
-
-internal object CoroutineScopeSerializer : DataSerializer<CoroutineScope, Scope>(Scope.serializer()) {
-  override fun fromData(data: Scope): CoroutineScope {
-    val ctx = requireSerializationContext<CoroutineScope>()
-    val supervisorJob = SupervisorJob(ctx.rpcCoroutineScope.coroutineContext[Job])
-    val scopeJob = Job(supervisorJob)
-
-    val callJob = requireNotNull(ctx.callJob) { "CoroutineScopes can be deserialized only as args of call method, not stream data" }
-    ctx.rpcCoroutineScope.launch {
-      try {
-        callJob.join()
-        // This completes only the created CompletableJob; we'll wait for children in `invokeOnCompletion`
-        scopeJob.complete()
-      }
-      catch (t: Throwable) {
-        scopeJob.completeExceptionally(t)
-      }
-    }
-
-    // This waits for both scopeJob and its children completion
-    scopeJob.invokeOnCompletion { cause ->
-      data.completion.close(cause)
-    }
-    ctx.rpcCoroutineScope.launch { data.cancellation.consumeEach { } }.invokeOnCompletion { scopeJob.cancel() }
-    return CoroutineScope(ctx.rpcCoroutineScope.coroutineContext + CoroutineExceptionHandler { _, _ -> } + scopeJob)
-  }
-
-  override fun toData(value: CoroutineScope): Scope {
-    val (completion_sender, completion_receiver) = channels<Unit>()
-    val (cancellation_sender, cancellation_receiver) = channels<Unit>()
-    value.launch {
-      try {
-        completion_receiver.consumeEach { }
-      }
-      finally {
-        cancellation_sender.close()
-      }
-    }
-    return Scope(cancellation_receiver, completion_sender)
-  }
-}
-
-
-class Serialization(internal val serializersModule: Lazy<SerializersModule> = lazyOf(SerializersModule {  })) : CoroutineContext.Element, ISerialization {
-  companion object : CoroutineContext.Key<Serialization>
-
-  override val key: CoroutineContext.Key<*> get() = Serialization
-
-  //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.kernel", "fleet.common"])
-  override val json by lazy {
-    Json {
-      this.allowStructuredMapKeys = true
-      this.ignoreUnknownKeys = true
-      this.serializersModule = this@Serialization.serializersModule.value
-      this.encodeDefaults = true
-    }
-  }
-
-  data class SerializerKey(val key: KType,
-                           val classifier: KClassifier?)
-
-  private val serializersCache: ConcurrentHashMap<SerializerKey, KSerializer<Any?>> = ConcurrentHashMap()
-
-  fun cleanup() {
-    serializersCache.clear()
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  override fun kSerializer(type: KType): KSerializer<Any?> = SerializerKey(type, type.classifier).let { serializerKey ->
-    serializersCache[serializerKey] ?: run {
-      val pKlass = type.jvmErasure
-      val hackySerializer = when {
-        // hacks for foreign types
-        // contextual serialization cannot be configured with parameterized serializers
-        // to define custom serializer for your types use @Serializable(with = CustomSerializer::class)
-        pKlass.fasterIsSubclassOf(ReceiveChannel::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          ReceiveChannelSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(SendChannel::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          SendChannelSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(Flow::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          @Suppress("DEPRECATION") FlowSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(Deferred::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          DeferredSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        //interfaces are always serialized with Polymorphic serializers
-        pKlass.fasterIsSubclassOf(CoroutineScope::class) -> {
-          CoroutineScopeSerializer as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(fleet.util.bifurcan.List::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          BifurcanListSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(io.lacuna.bifurcan.IMap::class) -> {
-          val keyType = requireNotNull(type.arguments[0].type)
-          val valueType = requireNotNull(type.arguments[1].type)
-          BifurcanMapSerializer(kSerializer(keyType), kSerializer(valueType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(kotlinx.collections.immutable.PersistentMap::class) -> {
-          val keyType = requireNotNull(type.arguments[0].type)
-          val valueType = requireNotNull(type.arguments[1].type)
-          KPersistentMapSerializer(kSerializer(keyType), kSerializer(valueType)) as KSerializer<Any>
-        }
-        pKlass.fasterIsSubclassOf(PersistentList::class) -> {
-          val argType = requireNotNull(type.arguments.single().type)
-          PersistentListSerializer(kSerializer(argType)) as KSerializer<Any>
-        }
-        else -> null
-      }
-      val serializer = hackySerializer?.nullable(type.isMarkedNullable) ?: serializersModule.value.serializer(type)
-      serializersCache.putIfAbsent(serializerKey, serializer) ?: serializer
-    }
-  }
-}
-
-fun KClass<*>.fasterIsSubclassOf(c: KClass<*>): Boolean =
-  c.java.isAssignableFrom(this.java)
-
-private fun <T : Any> KSerializer<T>.nullable(shouldBeNullable: Boolean): KSerializer<T?> =
-  @Suppress("UNCHECKED_CAST")
-  when {
-    shouldBeNullable -> nullable
-    else -> this as KSerializer<T?>
-  }
-
-fun rpcJsonImplementationDetail(ser: Serialization): Json {
-  return Json {
+private val RpcJson: Json by lazy {
+  Json {
     this.classDiscriminator = "type"
     this.allowStructuredMapKeys = true
     this.ignoreUnknownKeys = false
-    this.serializersModule = ser.serializersModule.value
     this.encodeDefaults = true
   }
 }
+
+fun rpcJsonImplementationDetail(): Json =
+  RpcJson
 
 /**
  * when resolving ktype to kserializer kotlinx.serialization will unconditionally use built in serializers before contextual ones
@@ -357,12 +214,14 @@ class Blob(val bytes: ByteArray) {
 
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.common", "fleet.protocol"])
 object BlobSerializer : DataSerializer<Blob, String>(String.serializer()) {
+  @OptIn(ExperimentalEncodingApi::class)
   override fun fromData(data: String): Blob {
-    return Blob(Base64.getDecoder().decode(data))
+    return Blob(Base64WithOptionalPadding.decode(data))
   }
 
+  @OptIn(ExperimentalEncodingApi::class)
   override fun toData(value: Blob): String {
-    return Base64.getEncoder().encodeToString(value.bytes)
+    return Base64WithOptionalPadding.encode(value.bytes)
   }
 }
 

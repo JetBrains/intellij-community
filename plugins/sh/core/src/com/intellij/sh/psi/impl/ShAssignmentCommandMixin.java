@@ -20,8 +20,7 @@ abstract class ShAssignmentCommandMixin extends ShCommandImpl implements ShAssig
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     PsiElement nameIdentifier = getNameIdentifier();
     return nameIdentifier == null ? null : nameIdentifier.getText();
   }

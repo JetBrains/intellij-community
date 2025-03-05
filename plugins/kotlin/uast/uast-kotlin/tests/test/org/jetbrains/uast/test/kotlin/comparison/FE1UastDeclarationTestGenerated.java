@@ -35,6 +35,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/annotationOnElvis.kt");
     }
 
+    @TestMetadata("annotationOnLocal.kt")
+    public void testAnnotationOnLocal() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/annotationOnLocal.kt");
+    }
+
     @TestMetadata("build.gradle.kts")
     public void testBuild_gradle() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/build.gradle.kts");
@@ -128,6 +133,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("interfaceCompanionObject.kt")
     public void testInterfaceCompanionObject() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/interfaceCompanionObject.kt");
+    }
+
+    @TestMetadata("jvmOverloads.kt")
+    public void testJvmOverloads() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/jvmOverloads.kt");
     }
 
     @TestMetadata("labeledExpression.kt")

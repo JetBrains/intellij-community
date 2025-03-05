@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 
 /**
@@ -94,6 +95,15 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
 
   public static <Data> Data deserializeFromByteSeq(@NotNull ByteArraySequence bytes,
                                                    @NotNull DataExternalizer<Data> externalizer) throws IOException {
-    return externalizer.read(bytes.toInputStream());
+    try (DataInputStream stream = bytes.toInputStream()) {
+      Data data = externalizer.read(stream);
+
+      int bytesLeft = stream.available();
+      if (bytesLeft > 0) { //MAYBE RC: IOException or CorruptedException suits better?
+        throw new IllegalStateException("stream is not read fully: " + bytesLeft + " bytes left out of " + bytes);
+      }
+
+      return data;
+    }
   }
 }

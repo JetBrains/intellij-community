@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -24,9 +24,8 @@ public final class JavaMethodParameterTypesIndex extends StringStubIndexExtensio
     return super.getVersion() + 1;
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PsiMethod> getKey() {
+  public @NotNull StubIndexKey<String, PsiMethod> getKey() {
     return JavaStubIndexKeys.METHOD_TYPES;
   }
 
@@ -35,11 +34,11 @@ public final class JavaMethodParameterTypesIndex extends StringStubIndexExtensio
    */
   @Deprecated
   @Override
-  public Collection<PsiMethod> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+  public Collection<PsiMethod> get(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
     return getMethodParameterTypes(s, project, scope);
   }
 
-  public Collection<PsiMethod> getMethodParameterTypes(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+  public Collection<PsiMethod> getMethodParameterTypes(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiMethod.class);
   }
 }

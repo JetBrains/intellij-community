@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.NavigateAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.lang.LangBundle;
 import com.intellij.model.Pointer;
 import com.intellij.model.psi.impl.UtilKt;
 import com.intellij.navigation.ItemPresentation;
@@ -28,6 +29,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -46,6 +48,8 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static com.intellij.codeInsight.multiverse.CodeInsightContextKt.isShowAllInheritorsEnabled;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
@@ -220,6 +224,48 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final int myOffset;
     private final GotoData myGotoData;
     private final PsiReference myReference;
+
+    @Override
+    protected boolean addElementToMyData(@NotNull ItemWithPresentation element) {
+      if (!isShowAllInheritorsEnabled()) {
+        return super.addElementToMyData(element);
+      }
+
+      var existingElement = getElementWithPresentableTextAndContainerText(element);
+      if (existingElement == null) {
+        return myData.add(element);
+      }
+      var existingItem = existingElement.getItem();
+      if (existingElement instanceof SeveralItemsWithPresentation) {
+        ((SeveralItemsWithPresentation)existingElement).addItem(element);
+        return true;
+      }
+
+      myData.remove(existingElement);
+      var newElement = new SeveralItemsWithPresentation(existingItem, createSharedTargetPresentation(existingElement.getPresentation()));
+      newElement.addItem(element.getItem());
+      myData.add(newElement);
+      return true;
+    }
+
+    private static TargetPresentation createSharedTargetPresentation(@NotNull TargetPresentation currentPresentation) {
+      return TargetPresentation.builder(currentPresentation).locationText(LangBundle.message("shared.target.presentation.label")).presentation();
+    }
+
+    private @Nullable ItemWithPresentation getElementWithPresentableTextAndContainerText(@NotNull ItemWithPresentation element) {
+      String presentableText = element.getPresentation().getPresentableText();
+      String containerText = element.getPresentation().getContainerText();
+      for (var elem : myData) {
+        String curPresentableText = elem.getPresentation().getPresentableText();
+        String curContainerText = elem.getPresentation().getContainerText();
+        if (Objects.equals(presentableText, curPresentableText) &&
+            Objects.equals(containerText, curContainerText)) {
+          return elem;
+        }
+      }
+
+      return null;
+    }
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
       super(

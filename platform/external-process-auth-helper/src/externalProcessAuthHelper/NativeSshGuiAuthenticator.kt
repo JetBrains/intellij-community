@@ -146,7 +146,7 @@ class NativeSshGuiAuthenticator(
       }
 
       val answer = askUserOnEdt {
-        val message = stripYesNoSuffix(description)
+        val message = SshPrompts.stripConfirmConnectionOptions(description)
 
         val knownAnswer = authenticationGate.getSavedInput(message)
         if (knownAnswer != null && lastAskedConfirmationInput == null) {
@@ -166,9 +166,6 @@ class NativeSshGuiAuthenticator(
       }
       return PromptAnswer.Answer(answer)
     }
-
-    private fun stripYesNoSuffix(description: String): @NlsSafe String =
-      description.replace(SshPrompts.CONFIRM_CONNECTION_PROMPT + " (yes/no)?", SshPrompts.CONFIRM_CONNECTION_PROMPT + "?")
   }
 
   private fun askGenericInput(description: @Nls String): String? = askUserOnEdt {

@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -310,6 +311,10 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
       }
     }
+    catch (_: IndexNotReadyException) {
+      event.presentation.isEnabledAndVisible = false
+      emptyList()
+    }
     catch (ex: Throwable) {
       handleException(opElement, updatedPresentations[group] ?: group.templatePresentation, actionManager, ex)
       result
@@ -336,6 +341,10 @@ internal class ActionUpdater @JvmOverloads constructor(
         }
       }.asList()
     }
+    catch (_: IndexNotReadyException) {
+      event.presentation.isEnabledAndVisible = false
+      return emptyList()
+    }
     catch (ex: Throwable) {
       handleException(opElement, event.presentation, actionManager, ex)
       return emptyList()
@@ -345,10 +354,12 @@ internal class ActionUpdater @JvmOverloads constructor(
 
   private suspend fun expandGroupChild(child: AnAction, hideDisabledBase: Boolean): List<AnAction> {
     val presentation = updateAction(child)
-    if (presentation == null) {
+    if (presentation == null || !presentation.isVisible) {
       return emptyList()
     }
-    else if (!presentation.isVisible || hideDisabledBase && !presentation.isEnabled) {
+    val alwaysVisible = child is ActionGroup && (
+      child is AlwaysVisibleActionGroup || presentation.getClientProperty(ALWAYS_VISIBLE_GROUP) == true)
+    if (hideDisabledBase && !presentation.isEnabled && !alwaysVisible) {
       return emptyList()
     }
     else if (child !is ActionGroup) {
@@ -357,7 +368,6 @@ internal class ActionUpdater @JvmOverloads constructor(
     val isPopup = presentation.isPopupGroup
     val canBePerformed = presentation.isPerformGroup
     var performOnly = isPopup && canBePerformed && presentation.getClientProperty(SUPPRESS_SUBMENU) == true
-    val alwaysVisible = child is AlwaysVisibleActionGroup || presentation.getClientProperty(ALWAYS_VISIBLE_GROUP) == true
     val skipChecks = performOnly || alwaysVisible
     val hideDisabled = isPopup && !skipChecks && hideDisabledBase
     val hideEmpty = isPopup && !skipChecks && presentation.isHideGroupIfEmpty
@@ -502,6 +512,10 @@ internal class ActionUpdater @JvmOverloads constructor(
           }
         }
       }
+    }
+    catch (_: IndexNotReadyException) {
+      presentation.isEnabledAndVisible = false
+      true
     }
     catch (ex: Throwable) {
       handleException(opElement, event.presentation, actionManager, ex)
@@ -684,6 +698,7 @@ private fun reportSlowEdtOperation(action: Any,
                                    operationName: String,
                                    currentEDTPerformMillis: Long,
                                    edtTraces: List<Throwable>?) {
+  if (application.isUnitTestMode) return
   var edtTraces1 = edtTraces
   val throwable: Throwable = PluginException.createByClass(
     elapsedReport(currentEDTPerformMillis, true, operationName) + REVISE_AUT_MSG_SUFFIX, null, action.javaClass)

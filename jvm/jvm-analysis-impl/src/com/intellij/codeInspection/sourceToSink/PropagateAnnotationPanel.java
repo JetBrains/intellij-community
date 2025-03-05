@@ -63,15 +63,14 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public final class PropagateAnnotationPanel extends JPanel implements Disposable {
   private final Tree myTree;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final List<TaintNode> myRoots;
   private final PropagateTreeListener myTreeSelectionListener;
   private final @NotNull Consumer<? super Collection<@NotNull TaintNode>> myCallback;
@@ -177,8 +176,7 @@ public final class PropagateAnnotationPanel extends JPanel implements Disposable
     return splitter;
   }
 
-  @NotNull
-  private static JComponent getEditorComponent(@NotNull Editor editor, @NlsContexts.BorderTitle String title) {
+  private static @NotNull JComponent getEditorComponent(@NotNull Editor editor, @NlsContexts.BorderTitle String title) {
     EditorSettings memberEditorSettings = editor.getSettings();
     memberEditorSettings.setGutterIconsShown(false);
     memberEditorSettings.setLineNumbersShown(false);

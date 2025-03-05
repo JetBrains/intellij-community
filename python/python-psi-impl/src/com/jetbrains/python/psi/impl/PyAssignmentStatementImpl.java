@@ -1,21 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.PyAstAssignmentStatement;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssignmentStatement {
@@ -44,8 +35,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return PyAstAssignmentStatement.calcTargets(this, true, PyExpression.EMPTY_ARRAY);
   }
 
-  @Nullable
-  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
+  public @Nullable PsiNamedElement getNamedElement(final @NotNull String the_name) {
     // performance: check simple case first
     PyExpression[] targets = getTargets();
     if (targets.length == 1 && targets[0] instanceof PyTargetExpression target) {

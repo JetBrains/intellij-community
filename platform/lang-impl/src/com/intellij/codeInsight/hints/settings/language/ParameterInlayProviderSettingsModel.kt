@@ -66,7 +66,9 @@ class ParameterInlayProviderSettingsModel(
   }
 
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
-    val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
+    fun createPass() = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
+
+    val pass = createPass()
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
                                                val enabled = ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
@@ -84,8 +86,10 @@ class ParameterInlayProviderSettingsModel(
                                                  setShowParameterHintsForLanguage(enabled, language)
                                                }
                                              }, DaemonProgressIndicator())
+
+    val passToCleanupHints = createPass()
     return Runnable {
-      ParameterHintsPass(file, editor, HintInfoFilter { true }, true).doApplyInformationToEditor() // clean up hints
+      passToCleanupHints.doApplyInformationToEditor()
       pass.doApplyInformationToEditor()
     }
   }

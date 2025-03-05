@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.patch.GitPatchWriter;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,17 +24,17 @@ import java.util.*;
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.shouldForceUnixLineSeparator;
 
 public final class UnifiedDiffWriter {
-  @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
-  @NonNls public static final String SUBJECT_HEADER = "Subject: [PATCH] ";
-  @NonNls public static final String HEADER_END_MARKER = "---";
-  @NonNls public static final String ADDITIONAL_PREFIX = "IDEA additional info:";
-  @NonNls public static final String ADD_INFO_HEADER = "Subsystem: ";
-  @NonNls public static final String ADD_INFO_LINE_START = "<+>";
+  private static final @NonNls String INDEX_SIGNATURE = "Index: {0}{1}";
+  public static final @NonNls String SUBJECT_HEADER = "Subject: [PATCH] ";
+  public static final @NonNls String HEADER_END_MARKER = "---";
+  public static final @NonNls String ADDITIONAL_PREFIX = "IDEA additional info:";
+  public static final @NonNls String ADD_INFO_HEADER = "Subsystem: ";
+  public static final @NonNls String ADD_INFO_LINE_START = "<+>";
   private static final String HEADER_SEPARATOR = "===================================================================";
-  @NonNls public static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
-  @NonNls public static final String DEV_NULL = "/dev/null";
-  @NonNls public static final String A_PREFIX = "a/";
-  @NonNls public static final String B_PREFIX = "b/";
+  public static final @NonNls String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
+  public static final @NonNls String DEV_NULL = "/dev/null";
+  public static final @NonNls String A_PREFIX = "a/";
+  public static final @NonNls String B_PREFIX = "b/";
 
   private UnifiedDiffWriter() {
   }
@@ -102,30 +103,35 @@ public final class UnifiedDiffWriter {
                                                             : StringUtil.notNullize(patch.getLineSeparator(), headerLineSeparator);
 
       writeFileHeading(writer, basePath, patch, headerLineSeparator, additionalMap);
-      for (PatchHunk hunk : patch.getHunks()) {
-        writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
-                       headerLineSeparator);
-        for (PatchLine line : hunk.getLines()) {
-          char prefixChar = switch (line.getType()) {
-            case ADD -> '+';
-            case REMOVE -> '-';
-            case CONTEXT -> ' ';
-          };
-          String text = line.getText();
-          text = StringUtil.trimEnd(text, "\n");
-          writeLine(writer, text, prefixChar);
-          if (line.isSuppressNewLine()) {
-            // do not use fileContentLineSeparator here, as this line has no own separator
-            writer.write(headerLineSeparator + NO_NEWLINE_SIGNATURE + headerLineSeparator);
-          }
-          else {
-            writer.write(fileContentLineSeparator);
-          }
-        }
-      }
+      writeHunk(writer, patch, headerLineSeparator, fileContentLineSeparator);
     }
     for (FilePatch patch : noContentPatches) {
       GitPatchWriter.writeGitHeader(writer, basePath, patch, headerLineSeparator);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void writeHunk(@NotNull Writer writer, TextFilePatch patch, String headerLineSeparator, String fileContentLineSeparator) throws IOException {
+    for (PatchHunk hunk : patch.getHunks()) {
+      writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
+                     headerLineSeparator);
+      for (PatchLine line : hunk.getLines()) {
+        char prefixChar = switch (line.getType()) {
+          case ADD -> '+';
+          case REMOVE -> '-';
+          case CONTEXT -> ' ';
+        };
+        String text = line.getText();
+        text = StringUtil.trimEnd(text, "\n");
+        writeLine(writer, text, prefixChar);
+        if (line.isSuppressNewLine()) {
+          // do not use fileContentLineSeparator here, as this line has no own separator
+          writer.write(headerLineSeparator + NO_NEWLINE_SIGNATURE + headerLineSeparator);
+        }
+        else {
+          writer.write(fileContentLineSeparator);
+        }
+      }
     }
   }
 
@@ -138,19 +144,31 @@ public final class UnifiedDiffWriter {
     return relativePath;
   }
 
-  private static void writeFileHeading(@NotNull final Writer writer,
+  private static void writeFileHeading(final @NotNull Writer writer,
                                        @Nullable Path basePath,
-                                       @NotNull final FilePatch patch,
-                                       @NotNull final String lineSeparator,
+                                       final @NotNull FilePatch patch,
+                                       final @NotNull String lineSeparator,
                                        @Nullable Map<String, CharSequence> additionalMap) throws IOException {
     writer.write(MessageFormat.format(INDEX_SIGNATURE, patch.getBeforeName(), lineSeparator));
     writeAdditionalInfo(writer, lineSeparator, additionalMap);
     writer.write(HEADER_SEPARATOR + lineSeparator);
     GitPatchWriter.writeGitHeader(writer, basePath, patch, lineSeparator);
-    writeRevisionHeading(writer, "---", getRevisionHeadingPath(patch, true),
-                         patch.getBeforeVersionId(), lineSeparator);
-    writeRevisionHeading(writer, "+++", getRevisionHeadingPath(patch, false),
-                         patch.getAfterVersionId(), lineSeparator);
+    writeBeforePath(writer, patch, lineSeparator, true);
+    writeAfterPath(writer, patch, lineSeparator, true);
+  }
+
+  @ApiStatus.Internal
+  public static void writeAfterPath(@NotNull Writer writer, @NotNull FilePatch patch, @NotNull String lineSeparator, boolean writeVersion)
+    throws IOException {
+    String versionId = writeVersion ? patch.getAfterVersionId() : "";
+    writeRevisionHeading(writer, "+++", getRevisionHeadingPath(patch, false), versionId, lineSeparator);
+  }
+
+  @ApiStatus.Internal
+  public static void writeBeforePath(@NotNull Writer writer, @NotNull FilePatch patch, @NotNull String lineSeparator, boolean writeVersion)
+    throws IOException {
+    String versionId = writeVersion ? patch.getBeforeVersionId() : "";
+    writeRevisionHeading(writer, "---", getRevisionHeadingPath(patch, true), versionId, lineSeparator);
   }
 
   private static void writeAdditionalInfo(@NotNull Writer writer,
@@ -173,8 +191,7 @@ public final class UnifiedDiffWriter {
     }
   }
 
-  @NonNls
-  private static String getRevisionHeadingPath(@NotNull FilePatch patch, boolean beforePath) {
+  private static @NonNls String getRevisionHeadingPath(@NotNull FilePatch patch, boolean beforePath) {
     if (beforePath) {
       return patch.isNewFile() ? DEV_NULL : A_PREFIX + patch.getBeforeName();
     }
@@ -189,8 +206,8 @@ public final class UnifiedDiffWriter {
     throws IOException {
     writer.write(prefix + " ");
     writer.write(revisionPath);
-    writer.write("\t");
     if (!StringUtil.isEmptyOrSpaces(revisionName)) {
+      writer.write("\t");
       writer.write(revisionName);
     }
     writer.write(lineSeparator);

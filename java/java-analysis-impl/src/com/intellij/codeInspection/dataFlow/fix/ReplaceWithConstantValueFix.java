@@ -1,11 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
 import com.intellij.util.ObjectUtils;
@@ -51,9 +54,8 @@ public class ReplaceWithConstantValueFix extends PsiBasedModCommandAction<PsiExp
     };
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("replace.with.constant.value");
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.*;
@@ -34,8 +34,7 @@ public class RegExpFileElementType extends IFileElementType {
     return result;
   }
 
-  @NotNull
-  private static EnumSet<RegExpCapability> setupCapabilities(PsiElement psi, @NotNull EnumSet<RegExpCapability> capabilities) {
+  private static @NotNull EnumSet<RegExpCapability> setupCapabilities(PsiElement psi, @NotNull EnumSet<RegExpCapability> capabilities) {
     PsiElement host = InjectedLanguageUtil.findInjectionHost(psi);
     if (host == null && !(psi instanceof PsiFile)) host = psi.getParent();
     Language language = host == null ? null : host.getLanguage();

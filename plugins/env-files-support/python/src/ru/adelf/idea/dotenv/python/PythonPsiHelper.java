@@ -6,7 +6,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 
-class PythonPsiHelper {
+final class PythonPsiHelper {
 
     /**
      * Checks os.environ.get("") call
@@ -29,7 +29,7 @@ class PythonPsiHelper {
 
         String name = qualifiedName.toString();
 
-        return name != null && (name.equals("os.environ.get") || name.equals("os.getenv"));
+        return name.equals("os.environ.get") || name.equals("os.getenv");
     }
 
     /**
@@ -46,6 +46,6 @@ class PythonPsiHelper {
 
         String name = qualifiedName.toString();
 
-        return name != null && name.equals("os.environ.__getitem__");
+        return name.equals("os.environ.__getitem__");
     }
 }

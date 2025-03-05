@@ -640,7 +640,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     }
 
     if (toolWindowGroup != null) {
-      group.addAll(toolWindowGroup);
+      group.add(toolWindowGroup);
     }
 
     final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
@@ -730,7 +730,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     tabActionGroup.removeAll();
     tabActionGroup.addSeparator();
     tabActionGroup.addAll(actions);
-    tabToolbar.updateActionsImmediately();
+    if (tabComponent.isShowing()) {
+      tabToolbar.updateActionsAsync();
+    }
   }
 
   private @NotNull CloseAction.CloseTarget computeCloseTarget() {

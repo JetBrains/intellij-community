@@ -24,12 +24,12 @@ project.commonTest
 project.iosArm64Main
     languageLevel = 1.7
     apiLevel = 1.8
-    compilerSettings = -nostdlib
+    compilerSettings = -nopack -nostdlib
 
 project.iosArm64Test
     languageLevel = 1.7
     apiLevel = 1.8
-    compilerSettings = -nostdlib
+    compilerSettings = -nopack -nostdlib
 
 project.iosMain
     languageLevel = 1.7
@@ -42,12 +42,12 @@ project.iosTest
 project.iosX64Main
     languageLevel = 1.7
     apiLevel = 1.8
-    compilerSettings = -nostdlib
+    compilerSettings = -nopack -nostdlib
 
 project.iosX64Test
     languageLevel = 1.7
     apiLevel = 1.8
-    compilerSettings = -nostdlib
+    compilerSettings = -nopack -nostdlib
 
 project.jsMain
     languageLevel = 1.7

@@ -78,8 +78,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     }
   }
 
-  @Nullable
-  private static String resolveCanonicalPath(@NotNull String path) {
+  private static @Nullable String resolveCanonicalPath(@NotNull String path) {
     if (path.isEmpty()) return null;
 
     String canonicalPath;
@@ -130,9 +129,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return "project.structureModulesPage.outputJavadoc";
   }
 

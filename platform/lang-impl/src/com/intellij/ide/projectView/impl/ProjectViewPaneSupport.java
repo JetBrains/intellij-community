@@ -183,9 +183,13 @@ public abstract class ProjectViewPaneSupport {
 
   public abstract @NotNull ActionCallback select(@NotNull JTree tree, @Nullable Object object, @Nullable VirtualFile file);
 
+  protected boolean isMultiSelectionEnabled() {
+    return myMultiSelectionEnabled;
+  }
+
   protected boolean selectPaths(@NotNull JTree tree, @NotNull List<TreePath> paths, @NotNull TreeVisitor visitor) {
     if (paths.isEmpty()) {
-      SelectInProjectViewImplKt.getLOG().debug("Nothing to select");
+      LOG.debug("Nothing to select");
       return false;
     }
     if (paths.size() > 1 && myMultiSelectionEnabled) {
@@ -197,13 +201,13 @@ public abstract class ProjectViewPaneSupport {
       }
     }
     if (!myMultiSelectionEnabled) {
-      SelectInProjectViewImplKt.getLOG().debug("Selecting only the first path because multi-selection is disabled");
+      LOG.debug("Selecting only the first path because multi-selection is disabled");
     }
     TreePath path = paths.get(0);
     tree.expandPath(path); // request to expand found path
     TreeUtil.selectPaths(tree, path); // select and scroll to center
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("Selected the only path: " + path);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Selected the only path: " + path);
     }
     return true;
   }
@@ -212,8 +216,8 @@ public abstract class ProjectViewPaneSupport {
     List<? extends TreePath> adjustedPaths = ProjectViewPaneSelectionHelper.getAdjustedPaths(selectionDescriptor);
     adjustedPaths.forEach(it -> tree.expandPath(it));
     TreeUtil.selectPaths(tree, adjustedPaths);
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug("Selected paths adjusted according to " + selectionDescriptor + ": " + adjustedPaths);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Selected paths adjusted according to " + selectionDescriptor + ": " + adjustedPaths);
     }
     return true;
   }

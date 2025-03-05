@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testFramework.fixtures.impl;
 
@@ -46,28 +46,26 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     myFixtureBuilder = fixtureBuilder;
   }
 
-  public ModuleFixtureBuilderImpl(@NotNull final NotNullProducer<? extends ModuleType<?>> moduleTypeProducer, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
+  public ModuleFixtureBuilderImpl(final @NotNull NotNullProducer<? extends ModuleType<?>> moduleTypeProducer, TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
     myModuleTypeProducer = moduleTypeProducer;
     myFixtureBuilder = fixtureBuilder;
   }
 
-  @NotNull
   @Override
-  public ModuleFixtureBuilder<T> addContentRoot(@NotNull final String contentRootPath) {
+  public @NotNull ModuleFixtureBuilder<T> addContentRoot(final @NotNull String contentRootPath) {
     myContentRoots.add(contentRootPath);
     return this;
   }
 
-  @NotNull
   @Override
-  public ModuleFixtureBuilder<T> addSourceRoot(@NotNull final String sourceRootPath) {
+  public @NotNull ModuleFixtureBuilder<T> addSourceRoot(final @NotNull String sourceRootPath) {
     Assert.assertFalse("content root should be added first", myContentRoots.isEmpty());
     mySourceRoots.add(sourceRootPath);
     return this;
   }
 
   @Override
-  public void setOutputPath(@NotNull final String outputPath) {
+  public void setOutputPath(final @NotNull String outputPath) {
     myOutputPath = outputPath;
   }
 
@@ -76,8 +74,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     myTestOutputPath = outputPath;
   }
 
-  @NotNull
-  protected Module createModule() {
+  protected @NotNull Module createModule() {
     Project project = myFixtureBuilder.getFixture().getProject();
     Assert.assertNotNull(project);
     Path moduleFilePath = ((ProjectStoreOwner)project).getComponentStore().getProjectBasePath().getParent().resolve(getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION);
@@ -88,9 +85,8 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     return ourIndex++;
   }
 
-  @NotNull
   @Override
-  public synchronized T getFixture() {
+  public synchronized @NotNull T getFixture() {
     if (myModuleFixture == null) {
       myModuleFixture = instantiateFixture();
     }
@@ -98,13 +94,12 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   }
 
   @Override
-  public void addSourceContentRoot(@NotNull final String path) {
+  public void addSourceContentRoot(final @NotNull String path) {
     addContentRoot(path);
     addSourceRoot(path);
   }
 
-  @NotNull
-  protected abstract T instantiateFixture();
+  protected abstract @NotNull T instantiateFixture();
 
   @NotNull
   Module buildModule() {

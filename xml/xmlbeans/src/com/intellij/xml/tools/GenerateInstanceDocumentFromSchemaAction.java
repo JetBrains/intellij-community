@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.tools;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -22,6 +22,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,10 +33,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
-final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
+
+@ApiStatus.Internal
+public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);

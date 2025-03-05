@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
@@ -74,13 +74,11 @@ public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends 
     return true;
   }
 
-  protected boolean isVisible(@NotNull final Project project, @NotNull Repo repository, @NotNull Hash hash) {
+  protected boolean isVisible(final @NotNull Project project, @NotNull Repo repository, @NotNull Hash hash) {
     return !getRepositoryManager(project).isExternal(repository);
   }
 
-  @NotNull
-  protected abstract AbstractRepositoryManager<Repo> getRepositoryManager(@NotNull Project project);
+  protected abstract @NotNull AbstractRepositoryManager<Repo> getRepositoryManager(@NotNull Project project);
 
-  @Nullable
-  protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
+  protected abstract @Nullable Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 }

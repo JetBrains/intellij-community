@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package org.jetbrains.ide
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -20,17 +18,18 @@ import java.io.IOException
 import java.util.*
 
 /**
- * See [Remote Communication](https://youtrack.jetbrains.com/articles/IDEA-A-63/Remote-Communication)
+ * See [Remote Communication](https://youtrack.jetbrains.com/articles/IDEA-A-63/Remote-Communication).
+ * Your handler will be instantiated on the first user request.
  */
 abstract class HttpRequestHandler {
   enum class OriginCheckResult {
-    ALLOW, FORBID,
-    // any origin is allowed but user confirmation is required
+    ALLOW,
+    FORBID,
+    /** Any origin is allowed but user confirmation is required */
     ASK_CONFIRMATION
   }
 
   companion object {
-    // Your handler will be instantiated on the first user request
     val EP_NAME: ExtensionPointName<HttpRequestHandler> = ExtensionPointName("com.intellij.httpRequestHandler")
 
     @JvmStatic
@@ -40,7 +39,7 @@ abstract class HttpRequestHandler {
           return true
         }
         else {
-          val c = uri.get(prefix.length + 1)
+          val c = uri[prefix.length + 1]
           return c == '/' || c == '?'
         }
       }
@@ -49,7 +48,7 @@ abstract class HttpRequestHandler {
   }
 
   /**
-   * Write request from a browser without Origin will always be blocked regardless of your implementation.
+   * Write request from a browser without `Origin` will always be blocked regardless of your implementation.
    */
   open fun isAccessible(request: HttpRequest): Boolean {
     val hostName = getHostName(request)
@@ -58,9 +57,8 @@ abstract class HttpRequestHandler {
     return hostName != null && isOriginAllowed(request) != OriginCheckResult.FORBID && isLocalHost(hostName)
   }
 
-  protected open fun isOriginAllowed(request: HttpRequest): OriginCheckResult {
-    return if (request.isLocalOrigin()) OriginCheckResult.ALLOW else OriginCheckResult.FORBID
-  }
+  protected open fun isOriginAllowed(request: HttpRequest): OriginCheckResult =
+    if (request.isLocalOrigin()) OriginCheckResult.ALLOW else OriginCheckResult.FORBID
 
   /**
    * Note that changes of [request] object in methods that overrides [isSupported] are highly undesirable. The same mutable [request] object
@@ -68,12 +66,11 @@ abstract class HttpRequestHandler {
    * If one [isSupported] method changes [request] then other services in the chain are affected by this change and might function
    * improperly.
    */
-  open fun isSupported(request: FullHttpRequest): Boolean {
-    return request.method() === HttpMethod.GET || request.method() === HttpMethod.HEAD
-  }
+  open fun isSupported(request: FullHttpRequest): Boolean =
+    request.method() === HttpMethod.GET || request.method() === HttpMethod.HEAD
 
   /**
-   * @return true if processed successfully, false to pass processing to other handlers.
+   * @return `true` if processed successfully, `false` to pass processing to other handlers.
    */
   @Throws(IOException::class)
   abstract fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean
@@ -82,7 +79,7 @@ abstract class HttpRequestHandler {
     val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, FileResponses.getContentType(name))
     response.addCommonHeaders()
-    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate") //NON-NLS
+    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
     response.headers().add(extraHeaders)
 

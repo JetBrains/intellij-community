@@ -3,9 +3,8 @@ package com.intellij.platform.experiment.ab.impl.experiment
 
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
-import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationInfo.getInstance
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -22,7 +21,7 @@ fun getABExperimentInstance(): ABExperiment {
 
 /**
  * This is a multi-optional A/B experiment for all IDEs and JetBrains plugins,
- * which affects IDE metrics like user retention in IDE.
+ * which affects IDE metrics like user retention in the IDE.
  *
  * Each feature is represented as an option.
  * An option defines the number of user groups which will be associated with this option.
@@ -30,7 +29,7 @@ fun getABExperimentInstance(): ABExperiment {
  * You need to implement `ABExperimentOption` extension point to implement an option for your feature.
  *
  * The number of A/B experimental groups is limited.
- * It is necessary to keep a group audience sufficient to make statistically significant conclusions.
+ * It is necessary to keep a group audience enough to make statistically significant conclusions.
  * So it is crucial to choose group size judiciously.
  * If group capacity is exhausted for a specific IDE, there will be an error.
  * In such a case, you need to communicate with related people to handle such a case and rearrange option groups accordingly.
@@ -41,18 +40,18 @@ fun getABExperimentInstance(): ABExperiment {
  * or disappear when the plugin is disabled or uninstalled.
  * The experiment uses special storage to be able to work with such conditions correctly.
  *
- * @see com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption
- * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperimentGroupStorageService
+ * @see ABExperimentControlOption
+ * @see ABExperimentGroupStorageService
  */
 interface ABExperiment {
   companion object {
     fun getABExperimentInstance(): ABExperiment {
       val application = ApplicationManager.getApplication() ?: return DummyABExperiment
-      return application.service<ABExperimentImpl>()
+      return application.service<ABExperiment>()
     }
   }
-  fun isControlExperimentOptionEnabled() : Boolean
 
+  fun isControlExperimentOptionEnabled() : Boolean
 
   fun isExperimentOptionEnabled(experimentOptionClass: Class<out ABExperimentOption>): Boolean
 }
@@ -65,32 +64,35 @@ internal object DummyABExperiment : ABExperiment {
   override fun isExperimentOptionEnabled(experimentOptionClass: Class<out ABExperimentOption>): Boolean = true
 }
 
-@Service
-internal class ABExperimentImpl : ABExperiment {
-  companion object {
-    private val AB_EXPERIMENTAL_OPTION_EP = ExtensionPointName<ABExperimentOptionBean>("com.intellij.experiment.abExperimentOption")
-    private val LOG = logger<ABExperiment>()
-    private val DEVICE_ID_PURPOSE = "A/B Experiment" + ApplicationInfo.getInstance().shortVersion
-    private const val TOTAL_NUMBER_OF_BUCKETS = 1024
-    internal const val TOTAL_NUMBER_OF_GROUPS = 256
+private val AB_EXPERIMENTAL_OPTION_EP: ExtensionPointName<ABExperimentOptionBean> =
+  ExtensionPointName("com.intellij.experiment.abExperimentOption")
 
-    internal val OPTION_ID_FREE_GROUP = ABExperimentOptionId("free.option")
+private val LOG = logger<ABExperiment>()
 
-    internal fun getJbABExperimentOptionList(): List<ABExperimentOption> {
-      return getJbABExperimentOptionBeanList().map { it.instance }
-    }
+private fun getDeviceIdPurpose(): String {
+  return "A/B Experiment" + getInstance().shortVersion
+}
 
-    internal fun getJbABExperimentOptionBeanList(): List<ABExperimentOptionBean> {
-      return AB_EXPERIMENTAL_OPTION_EP.extensionList.filter {
-        val pluginDescriptor = it.pluginDescriptor
-        val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
-        pluginInfo.isDevelopedByJetBrains() && it.instance.isEnabled()
-      }
-    }
+private const val TOTAL_NUMBER_OF_BUCKETS = 1024
+internal const val TOTAL_NUMBER_OF_GROUPS = 256
 
-    internal fun isPopularIDE() = PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro()
+internal val OPTION_ID_FREE_GROUP = ABExperimentOptionId("free.option")
+
+internal fun isPopularIDE(): Boolean = PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro()
+
+internal fun getJbABExperimentOptionList(): List<ABExperimentOption> {
+  return getJbABExperimentOptionBeanList().map { it.instance }
+}
+
+internal fun getJbABExperimentOptionBeanList(): List<ABExperimentOptionBean> {
+  return AB_EXPERIMENTAL_OPTION_EP.extensionList.filter {
+    val pluginDescriptor = it.pluginDescriptor
+    val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
+    pluginInfo.isDevelopedByJetBrains() && it.instance.isEnabled()
   }
+}
 
+internal class ABExperimentImpl : ABExperiment {
   override fun isControlExperimentOptionEnabled(): Boolean {
     return isExperimentOptionEnabled(ABExperimentControlOption::class.java)
   }
@@ -147,7 +149,7 @@ internal class ABExperimentImpl : ABExperiment {
 
   private fun getUserBucketNumber(): Int {
     val deviceId = LOG.runAndLogException {
-      MachineIdManager.getAnonymizedMachineId(DEVICE_ID_PURPOSE)
+      MachineIdManager.getAnonymizedMachineId(getDeviceIdPurpose())
     }
 
     val bucketNumber = MathUtil.nonNegativeAbs(deviceId.hashCode()) % TOTAL_NUMBER_OF_BUCKETS

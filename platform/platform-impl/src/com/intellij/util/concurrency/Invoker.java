@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -18,7 +18,9 @@ import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -273,7 +275,7 @@ public abstract class Invoker implements Disposable {
    * This data class is intended to combine a developer's task
    * with the corresponding object used to control its processing.
    */
-  static abstract class Task<T, R> implements Runnable {
+  abstract static class Task<T, R> implements Runnable {
     final AsyncPromise<T> promise = new AsyncPromise<>();
     private final Supplier<? extends R> supplier;
     private volatile R result;

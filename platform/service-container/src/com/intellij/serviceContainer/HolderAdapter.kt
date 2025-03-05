@@ -6,18 +6,13 @@ import org.picocontainer.ComponentAdapter
 
 internal class HolderAdapter(
   private val key: Any,
-  val holder: InstanceHolder,
+  @JvmField val holder: InstanceHolder,
 ) : ComponentAdapter {
+  override fun getComponentKey(): Any = key
 
-  override fun getComponentKey(): Any {
-    return key
-  }
-
-  override fun getComponentImplementation(): Class<*> {
-    return holder.instanceClass()
-  }
+  override fun getComponentImplementation(): Class<*> = holder.instanceClass()
 
   override fun getComponentInstance(): Any {
-    return checkNotNull(holder.getOrCreateInstanceBlocking(key.toString(), keyClass = null))
+    return checkNotNull(holder.getOrCreateInstanceBlocking(debugString = key.toString(), keyClass = null))
   }
 }

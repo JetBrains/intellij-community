@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
@@ -123,8 +123,7 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
     }
   }
 
-  @Nullable
-  private static TerminalGenerator getGenerator(PsiPolyadicExpression polyadicExpression) {
+  private static @Nullable TerminalGenerator getGenerator(PsiPolyadicExpression polyadicExpression) {
     IElementType tokenType = polyadicExpression.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.OROR)) {
       return (elementType, lambda, ct) -> ".anyMatch(" + lambda + ")";
@@ -168,8 +167,7 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
     return null;
   }
 
-  @NotNull
-  private static String mapToString(PsiType elementType, PsiType resultType, String lambda) {
+  private static @NotNull String mapToString(PsiType elementType, PsiType resultType, String lambda) {
     return "." + getMapOperationName(elementType, resultType) + "(" + lambda + ")";
   }
 
@@ -178,17 +176,13 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
 
     private FoldExpressionIntoStreamFix(boolean stringJoin) {myStringJoin = stringJoin;}
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.fold.expression.fix.family.name");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message(myStringJoin ?
                                        "inspection.fold.expression.into.string.fix.name" :
                                        "inspection.fold.expression.into.stream.fix.name");
@@ -271,9 +265,8 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
       return operands[0] == diff.get(0);
     }
 
-    @NotNull
     @Override
-    public String generateTerminal(PsiType elementType, String lambda, CommentTracker ct) {
+    public @NotNull String generateTerminal(PsiType elementType, String lambda, CommentTracker ct) {
       String map = (lambda == null ? "" : mapToString(elementType, myOperandType, lambda)) + myMapToString;
       return map +
              ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS +
@@ -281,8 +274,7 @@ public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLo
              (myRest == null ? "" : "+" + ct.text(myRest));
     }
 
-    @NotNull
-    private String getDelimiterText(CommentTracker ct) {
+    private @NotNull String getDelimiterText(CommentTracker ct) {
       if (myDelimiter == null) {
         return "";
       }

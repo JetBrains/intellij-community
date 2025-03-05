@@ -14,27 +14,24 @@ import javax.swing.*;
  */
 public final class RestFileType extends LanguageFileType {
   public static final RestFileType INSTANCE = new RestFileType();
-  @NonNls public static final String DEFAULT_EXTENSION = "rst";
+  public static final @NonNls String DEFAULT_EXTENSION = "rst";
 
   private RestFileType() {
     super(RestLanguage.INSTANCE);
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "ReST";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return RestBundle.message("restructured.text");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 

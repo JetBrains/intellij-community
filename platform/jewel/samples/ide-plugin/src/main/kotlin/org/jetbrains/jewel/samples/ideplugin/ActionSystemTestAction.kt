@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages.showMessageDialog
 
-class ActionSystemTestAction : AnAction() {
+internal class ActionSystemTestAction : AnAction() {
     private val logger = thisLogger()
 
     override fun actionPerformed(anActionEvent: AnActionEvent) {

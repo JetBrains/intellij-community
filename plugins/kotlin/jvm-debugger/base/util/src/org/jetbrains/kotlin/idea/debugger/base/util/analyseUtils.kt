@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.base.util
 
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
@@ -8,6 +9,7 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -50,3 +52,15 @@ suspend fun <T> dumbAnalyze(useSiteElement: KtElement, fallback: T, action: KaSe
     dumbAction(readAction { useSiteElement.project }, fallback) {
         readAction { analyze(useSiteElement, action) }
     }
+
+inline fun <T> runSmartReadActionIfUnderProgressElseDumb(project: Project, default: T, crossinline action: () -> T): T {
+    val isCancellableSection = DebuggerManagerThreadImpl.hasNonDefaultProgressIndicator()
+    // Cannot wait for smart mode in read action, it throws "Constraint inSmartMode cannot be satisfied"
+    return if (isCancellableSection && !application.isReadAccessAllowed) {
+        ReadAction.nonBlocking<T> { action() }
+            .inSmartMode(project)
+            .executeSynchronously()
+    } else {
+        dumbAction(project, default, action)
+    }
+}

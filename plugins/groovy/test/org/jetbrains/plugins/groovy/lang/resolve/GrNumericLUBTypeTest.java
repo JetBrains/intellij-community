@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -33,7 +33,7 @@ public class GrNumericLUBTypeTest extends LightGroovyTestCase {
       GroovyFile.class
     );
     GrExpression expression = DefaultGroovyMethods.asType(DefaultGroovyMethods.last(file.getStatements()), GrExpression.class);
-    assert expression.getType().equalsToText(expectedType) : "'" + expression.getText() + "' : " + expression.getType();
+    assertTrue("'" + expression.getText() + "' : " + expression.getType(), expression.getType().equalsToText(expectedType));
   }
 
   public void test_elvis_types() {

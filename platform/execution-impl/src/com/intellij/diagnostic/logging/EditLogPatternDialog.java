@@ -34,7 +34,7 @@ public final class EditLogPatternDialog extends DialogWrapper {
     myNameField.setText(name);
     myFilePattern.setText(pattern);
     myShowFilesCombo.setSelected(showAll);
-    setOKActionEnabled(pattern != null && pattern.length() > 0);
+    setOKActionEnabled(pattern != null && !pattern.isEmpty());
   }
 
   @Override
@@ -44,7 +44,7 @@ public final class EditLogPatternDialog extends DialogWrapper {
     myFilePattern.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        setOKActionEnabled(myFilePattern.getText().length() > 0);
+        setOKActionEnabled(!myFilePattern.getText().isEmpty());
       }
     });
     return myWholePanel;
@@ -61,7 +61,7 @@ public final class EditLogPatternDialog extends DialogWrapper {
 
   public String getName(){
     final String name = myNameField.getText();
-    if (name != null && name.length() > 0){
+    if (name != null && !name.isEmpty()){
       return name;
     }
     return myFilePattern.getText();

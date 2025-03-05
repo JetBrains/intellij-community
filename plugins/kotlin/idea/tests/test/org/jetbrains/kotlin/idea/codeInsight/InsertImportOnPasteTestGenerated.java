@@ -310,6 +310,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
                 runTest("testData/copyPaste/imports/KeywordClassName.kt");
             }
 
+            @TestMetadata("LabelReference.kt")
+            public void testLabelReference() throws Exception {
+                runTest("testData/copyPaste/imports/LabelReference.kt");
+            }
+
             @TestMetadata("Local.kt")
             public void testLocal() throws Exception {
                 runTest("testData/copyPaste/imports/Local.kt");
@@ -880,6 +885,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             @TestMetadata("KeywordClassName.kt")
             public void testKeywordClassName() throws Exception {
                 runTest("testData/copyPaste/imports/KeywordClassName.kt");
+            }
+
+            @TestMetadata("LabelReference.kt")
+            public void testLabelReference() throws Exception {
+                runTest("testData/copyPaste/imports/LabelReference.kt");
             }
 
             @TestMetadata("Local.kt")

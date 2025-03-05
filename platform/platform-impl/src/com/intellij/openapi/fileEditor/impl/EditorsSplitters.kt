@@ -49,7 +49,6 @@ import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy.getPreferredFocusedComponent
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
@@ -70,6 +69,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.computeFileIconImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
@@ -79,6 +79,7 @@ import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -287,6 +288,11 @@ open class EditorsSplitters internal constructor(
       removeAll()
     }
 
+    if (PlatformUtils.isJetBrainsClient()) {
+      // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
+      return
+    }
+
     UiBuilder(this, isLazyComposite = false).process(state = state, requestFocus = requestFocus) { add(it, BorderLayout.CENTER) }
     withContext(Dispatchers.EDT) {
       validate()
@@ -306,6 +312,11 @@ open class EditorsSplitters internal constructor(
 
   internal suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    if (PlatformUtils.isJetBrainsClient()) {
+      // Don't reopen editors from local files on JetBrains Client, it is done from the backend
+      return
+    }
+
     UiBuilder(splitters = this, isLazyComposite = System.getProperty("idea.delayed.editor.composite", "true").toBoolean())
       .process(
         state = state,
@@ -363,6 +374,7 @@ open class EditorsSplitters internal constructor(
     _currentWindowFlow.value = window
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
   fun openFilesAsync(): Job = openFilesAsync(requestFocus = true)
 
@@ -1330,7 +1342,8 @@ private fun getSplittersToActivate(activeWindow: Window, project: Project?): Edi
   return getSplittersForProject(activeWindow, project)
 }
 
-internal fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
+@Internal
+fun createSplitter(isVertical: Boolean, proportion: Float, minProp: Float, maxProp: Float): Splitter {
   return object : Splitter(isVertical, proportion, minProp, maxProp) {
     init {
       setDividerWidth(1)

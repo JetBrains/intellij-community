@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
@@ -33,19 +33,19 @@ import java.awt.event.ActionListener;
  * @author Eugene Zhuravlev
  */
 public class ProjectJdkForModuleStep extends ModuleWizardStep {
-  @NotNull private final Project myProject;
-  @NotNull private final ProjectSdksModel mySdksModel;
-  @NotNull private final JdkComboBox myJdkChooser;
-  @NotNull private final JPanel myPanel;
-  @NotNull private final WizardContext myContext;
-  @Nullable private final String myHelpId;
-  @NotNull private final JButton mySetAsDefaultButton;
+  private final @NotNull Project myProject;
+  private final @NotNull ProjectSdksModel mySdksModel;
+  private final @NotNull JdkComboBox myJdkChooser;
+  private final @NotNull JPanel myPanel;
+  private final @NotNull WizardContext myContext;
+  private final @Nullable String myHelpId;
+  private final @NotNull JButton mySetAsDefaultButton;
 
-  public ProjectJdkForModuleStep(@NotNull final WizardContext context, @Nullable final SdkType type) {
+  public ProjectJdkForModuleStep(final @NotNull WizardContext context, final @Nullable SdkType type) {
     this(context, type, null);
   }
 
-  public ProjectJdkForModuleStep(@NotNull final WizardContext context, @Nullable final SdkType type, @Nullable @NonNls String helpId) {
+  public ProjectJdkForModuleStep(final @NotNull WizardContext context, final @Nullable SdkType type, @Nullable @NonNls String helpId) {
     myContext = context;
     myHelpId = helpId;
     Project project = context.getProject();
@@ -108,9 +108,8 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     return myJdkChooser;
   }
 
-  @Nullable
   @Override
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return myHelpId;
   }
 
@@ -135,19 +134,16 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     mySetAsDefaultButton.setEnabled(defaultJdk != null);
   }
 
-  @Nullable
-  public Sdk getJdk() {
+  public @Nullable Sdk getJdk() {
     return myJdkChooser.getSelectedJdk();
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myContext.getStepIcon();
   }
 
-  @Nullable
-  private Sdk getDefaultJdk() {
+  private @Nullable Sdk getDefaultJdk() {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
     Sdk sdk = ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectSdk();
     if (sdk == null) {

@@ -281,6 +281,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/multiDeclarations/array.kt");
             }
 
+            @TestMetadata("complexCase.kt")
+            public void testComplexCase() throws Exception {
+                runTest("testData/refactoring/introduceVariable/multiDeclarations/complexCase.kt");
+            }
+
             @TestMetadata("intArray.kt")
             public void testIntArray() throws Exception {
                 runTest("testData/refactoring/introduceVariable/multiDeclarations/intArray.kt");
@@ -2080,6 +2085,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValue.kt");
                 }
 
+                @TestMetadata("singleOutputValueBracesRequired.kt")
+                public void testSingleOutputValueBracesRequired() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueBracesRequired.kt");
+                }
+
                 @TestMetadata("singleOutputValueWithIf.kt")
                 public void testSingleOutputValueWithIf() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithIf.kt");
@@ -2975,6 +2985,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("implicitThisWithSmartCast.kt")
                 public void testImplicitThisWithSmartCast() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/extractThis/implicitThisWithSmartCast.kt");
+                }
+
+                @TestMetadata("importedCall.kt")
+                public void testImportedCall() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/extractThis/importedCall.kt");
                 }
 
                 @TestMetadata("javaSyntheticProperty.kt")
@@ -4676,6 +4691,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doIntroduceJavaParameterTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaConstructor.java")
+        public void testJavaConstructor() throws Exception {
+            runTest("testData/refactoring/introduceJavaParameter/javaConstructor.java");
         }
 
         @TestMetadata("javaMethod.java")

@@ -7,11 +7,8 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.sun.jdi.Field
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_LABELED_THIS_FIELD
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_PREFIX
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_THIS_FIELD
+import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_TRANSFORMATION_SUFFIX
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.THIS
 import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
 import java.util.*
 
@@ -29,17 +26,18 @@ private sealed class PendingValue {
     class This(val label: String, val value: Value?) : PendingValue() {
         override fun addTo(existingVariables: ExistingVariables): DescriptorData<out ValueDescriptorImpl>? {
             val thisName = if (existingVariables.hasThisVariables) {
-                if (!existingVariables.add(ExistingVariable.LabeledThis(label))) {
-                    // Avoid item duplication
-                    return null
-                }
+              if (!existingVariables.add(ExistingVariable.LabeledThis(label))) {
+                // Avoid item duplication
+                return null
+              }
 
-                getThisName(label)
-            } else {
-                if (!existingVariables.add(ExistingVariable.LabeledThis(label))) {
-                    return null
-                }
-                THIS
+              getThisName(label)
+            }
+            else {
+              if (!existingVariables.add(ExistingVariable.LabeledThis(label))) {
+                return null
+              }
+              AsmUtil.THIS
             }
 
             return LabeledThisData(label, thisName, value)
@@ -55,7 +53,7 @@ private sealed class PendingValue {
 
         private fun Field.isApplicable(): Boolean {
             val name = name()
-            return name.startsWith(CAPTURED_PREFIX) || name == CAPTURED_THIS_FIELD
+            return name.startsWith(AsmUtil.CAPTURED_PREFIX) || name == AsmUtil.CAPTURED_THIS_FIELD
         }
 
         override fun addTo(existingVariables: ExistingVariables): DescriptorData<out ValueDescriptorImpl>? {
@@ -110,7 +108,7 @@ private tailrec fun collectValuesBfs(queue: Deque<PendingValue>, consumer: Mutab
 private fun createPendingValue(container: PendingValue.Container, field: Field): PendingValue? {
     val name = field.name()
 
-    if (name == CAPTURED_THIS_FIELD) {
+    if (name == AsmUtil.CAPTURED_THIS_FIELD) {
         /*
          * Captured entities.
          * In case of captured lambda, we just add values captured to the lambda to the list.
@@ -121,15 +119,15 @@ private fun createPendingValue(container: PendingValue.Container, field: Field):
             null -> PendingValue.Container(value)
             else -> PendingValue.This(label, value)
         }
-    } else if (name.startsWith(CAPTURED_LABELED_THIS_FIELD)) {
+    } else if (name.startsWith(AsmUtil.CAPTURED_LABELED_THIS_FIELD)) {
         // Extension receivers for a new scheme ($this_<label>)
         val value = container.value.getValue(field)
-        val label = name.drop(CAPTURED_LABELED_THIS_FIELD.length).takeIf { it.isNotEmpty() } ?: return null
+        val label = name.drop(AsmUtil.CAPTURED_LABELED_THIS_FIELD.length).takeIf { it.isNotEmpty() } ?: return null
         return PendingValue.This(label, value)
     }
 
     // Ordinary values (everything but 'this')
-    assert(name.startsWith(CAPTURED_PREFIX))
+    assert(name.startsWith(AsmUtil.CAPTURED_PREFIX))
 
     val capturedValueName = name.drop(1).removeSuffix(INLINE_TRANSFORMATION_SUFFIX).takeIf { it.isNotEmpty() } ?: return null
     return PendingValue.Ordinary(capturedValueName, field, container)

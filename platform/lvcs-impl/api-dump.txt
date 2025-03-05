@@ -23,8 +23,6 @@ c:com.intellij.history.core.LocalHistoryFacade
 - f:readOnlyStatusChanged(java.lang.String,Z):V
 - f:removeListener(com.intellij.history.core.LocalHistoryFacade$Listener):V
 - f:renamed(java.lang.String,java.lang.String):V
-- f:revertUpToChange(com.intellij.history.core.tree.RootEntry,J,java.lang.String,Z,Z):java.lang.String
-- f:revertUpToChangeSet(com.intellij.history.core.tree.RootEntry,J,java.lang.String,Z,Z):java.lang.String
 a:com.intellij.history.core.LocalHistoryFacade$Listener
 - <init>():V
 - changeAdded(com.intellij.history.core.changes.Change):V

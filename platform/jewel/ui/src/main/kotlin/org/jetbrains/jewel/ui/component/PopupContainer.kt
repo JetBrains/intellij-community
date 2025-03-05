@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
@@ -24,15 +25,15 @@ public fun PopupContainer(
     modifier: Modifier = Modifier,
     style: PopupContainerStyle = JewelTheme.popupContainerStyle,
     popupProperties: PopupProperties = PopupProperties(focusable = true),
-    content: @Composable () -> Unit,
-) {
-    val popupPositionProvider =
+    popupPositionProvider: PopupPositionProvider =
         AnchorVerticalMenuPositionProvider(
             contentOffset = style.metrics.offset,
             contentMargin = style.metrics.menuMargin,
             alignment = horizontalAlignment,
             density = LocalDensity.current,
-        )
+        ),
+    content: @Composable () -> Unit,
+) {
     Popup(
         popupPositionProvider = popupPositionProvider,
         onDismissRequest = onDismissRequest,

@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
-interface TMHAssertionGenerator {
-
+@ApiStatus.Internal
+public interface TMHAssertionGenerator {
   boolean isMyAnnotation(String annotationDescriptor);
 
   AnnotationVisitor getAnnotationChecker(int api, Runnable onShouldGenerateAssertion);

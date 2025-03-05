@@ -35,4 +35,6 @@ builtin unset -f __jetbrains_intellij_update_environment
 
 builtin local command_block_support="${JETBRAINS_INTELLIJ_ZSH_DIR}/command-block-support.zsh"
 [ -r "$command_block_support" ] && builtin source "$command_block_support"
+builtin local command_block_support_reworked="${JETBRAINS_INTELLIJ_ZSH_DIR}/command-block-support-reworked.zsh"
+[ -r "$command_block_support_reworked" ] && builtin source "$command_block_support_reworked"
 builtin unset JETBRAINS_INTELLIJ_ZSH_DIR

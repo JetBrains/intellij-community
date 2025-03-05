@@ -4,7 +4,6 @@ package com.jetbrains.python.codeInsight.stdlib;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -955,9 +954,6 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
 
   private static @NotNull String getExternalDocumentationRoot(@NotNull Sdk sdk) {
     final String versionString = sdk.getVersionString();
-    if (versionString != null && StringUtil.startsWithIgnoreCase(versionString, "jython")) {
-      return "http://jython.org/docs/library/";
-    }
     final String pyVersion = PythonDocumentationProvider.pyVersion(versionString);
     StringBuilder urlBuilder = new StringBuilder("https://docs.python.org/");
     if (pyVersion != null) {

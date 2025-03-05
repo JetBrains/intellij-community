@@ -15,6 +15,7 @@ import training.util.OnboardingFeedbackData
 import java.io.File
 import java.io.FileFilter
 import java.nio.file.Path
+import java.util.Locale
 
 interface LangSupport {
   /** It should be a language ID */
@@ -39,7 +40,7 @@ interface LangSupport {
 
   /** Relative path inside plugin resources */
   val projectResourcePath: String
-    get() = "learnProjects/${primaryLanguage.toLowerCase()}/$contentRootDirectoryName"
+    get() = "learnProjects/${primaryLanguage.lowercase(Locale.getDefault())}/$contentRootDirectoryName"
 
   /** Language can specify default sandbox-like file to be used for lessons with modifications but also with project support */
   val sampleFilePath: String?

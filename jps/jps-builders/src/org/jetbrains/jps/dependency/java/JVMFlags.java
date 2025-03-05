@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -11,6 +11,7 @@ public final class JVMFlags {
   private static final int ANON_MASK = 0x2000000;
   private static final int GENERATED_MASK = 0x4000000;
   private static final int SEALED_MASK = 0x8000000;
+  private static final int LIBRARY_MASK = 0x10000000;
 
   private final int myFlags;
 
@@ -32,6 +33,10 @@ public final class JVMFlags {
 
   public JVMFlags deriveIsSealed() {
     return new JVMFlags(myFlags | SEALED_MASK);
+  }
+
+  public JVMFlags deriveIsLibrary() {
+    return new JVMFlags(myFlags | LIBRARY_MASK);
   }
 
   public JVMFlags deriveAdded(JVMFlags past) {
@@ -168,6 +173,10 @@ public final class JVMFlags {
 
   public boolean isSealed() {
     return isSet(SEALED_MASK);
+  }
+
+  public boolean isLibrary() {
+    return isSet(LIBRARY_MASK);
   }
 
   public boolean isAllSet(JVMFlags flags) {

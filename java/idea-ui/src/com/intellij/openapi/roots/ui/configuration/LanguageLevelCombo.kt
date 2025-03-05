@@ -11,10 +11,8 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.ui.ColoredText
-import com.intellij.ui.GroupedComboBoxRenderer
-import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -71,22 +69,20 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
 
     isSwingPopup = false
     model = DefaultComboBoxModel(items.toTypedArray())
-    renderer = object: GroupedComboBoxRenderer<Any>(this) {
-      override fun getText(item: Any): String = when (item) {
-        is String -> item
-        is LanguageLevel -> item.presentableText
-        else -> ""
-      }
-
-      override fun customize(item: SimpleColoredComponent, value: Any, index: Int, isSelected: Boolean, cellHasFocus: Boolean) {
+    renderer = listCellRenderer("") {
+      val value = value
+      text(when (value) {
+             is String -> value
+             is LanguageLevel -> value.presentableText
+             else -> ""
+           }) {
         if (value is LanguageLevel && value.isUnsupported) {
-          item.append(ColoredText.singleFragment(value.presentableText, SimpleTextAttributes.ERROR_ATTRIBUTES))
-        } else {
-          super.customize(item, value, index, isSelected, cellHasFocus)
+          attributes = SimpleTextAttributes.ERROR_ATTRIBUTES
         }
       }
-
-      override fun separatorFor(value: Any): ListSeparator? = separatorsMap[value]
+      separatorsMap[value]?.let {
+        separator { text = it.text }
+      }
     }
   }
 

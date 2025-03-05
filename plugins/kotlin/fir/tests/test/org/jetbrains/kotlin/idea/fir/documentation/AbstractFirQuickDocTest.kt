@@ -3,10 +3,9 @@ package org.jetbrains.kotlin.idea.fir.documentation
 
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
-import kotlin.io.path.Path
+import java.io.File
 
 abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
 
@@ -24,8 +23,12 @@ abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
     }
 
     override fun doTest(path: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_K2) {
-            super.doTest(path)
+        val miscDirectory = dataFile().parentFile.parentFile
+        if (miscDirectory.name.equals("misc")) {
+            File(miscDirectory, "dependencies").listFiles().forEach {
+                myFixture.addFileToProject(it.name, it.readText())
+            }
         }
+        super.doTest(path)
     }
 }

@@ -22,7 +22,7 @@ import javax.swing.JComponent
 /**
  * @see PythonAddLocalInterpreterPresenter
  */
-class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLocalInterpreterPresenter) : DialogWrapper(dialogPresenter.moduleOrProject.project) {
+internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: PythonAddLocalInterpreterPresenter) : DialogWrapper(dialogPresenter.moduleOrProject.project) {
 
   private lateinit var mainPanel: PythonAddCustomInterpreter
   private lateinit var model: PythonLocalAddInterpreterModel

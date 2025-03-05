@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -13,19 +13,25 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 class MethodDuplicatesMatchProvider implements MatchProvider {
   private final PsiMethod myMethod;
   private final List<Match> myDuplicates;
   private static final Logger LOG = Logger.getInstance(MethodDuplicatesMatchProvider.class);
+  private final Map<Match, @Nls String> myConfirmDuplicatePrompts;
 
   MethodDuplicatesMatchProvider(PsiMethod method, List<Match> duplicates) {
     myMethod = method;
     myDuplicates = duplicates;
+    myConfirmDuplicatePrompts = StreamEx.of(duplicates).mapToEntry(this::computeConfirmDuplicatePrompt)
+      .nonNullValues().toMap();
   }
 
   @Override
@@ -45,7 +51,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
     final boolean needStaticQualifier = isExternal(match, myMethod);
     final boolean nameConflicts = nameConflicts(match);
     final String methodName = myMethod.isConstructor() ? "this" : myMethod.getName();
-    @NonNls final String text = needQualifier || needStaticQualifier || nameConflicts
+    final @NonNls String text = needQualifier || needStaticQualifier || nameConflicts
                                 ?  "q." + methodName + "()": methodName + "()";
     PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, null);
     methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
@@ -158,8 +164,11 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
   }
 
   @Override
-  @Nullable
-  public String getConfirmDuplicatePrompt(final Match match) {
+  public @Nullable String getConfirmDuplicatePrompt(final Match match) {
+    return myConfirmDuplicatePrompts.get(match);
+  }
+
+  private @Nls @Nullable String computeConfirmDuplicatePrompt(Match match) {
     final PsiElement matchStart = match.getMatchStart();
     String visibility = VisibilityUtil.getPossibleVisibility(myMethod, matchStart);
     final boolean shouldBeStatic = isEssentialStaticContextAbsent(match, myMethod);

@@ -3,12 +3,20 @@ package com.intellij.collaboration.api.graphql
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.io.InputStream
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentMap
 
+/**
+ * Built on the assumption that fragments are named the same as the file they're located in.
+ * Ex:
+ *
+ * /graphql/fragment/actor.graphql
+ * only publicly exposes the `actor` fragment
+ */
 @ApiStatus.Internal
 class CachingGraphQLQueryLoader(
   private val getFileStream: (relativePath: String) -> InputStream?,
@@ -20,30 +28,43 @@ class CachingGraphQLQueryLoader(
 
   private val fragmentDefinitionRegex = Regex("fragment (.*) on .*\\{")
 
-  // Use path to allow going to the file quickly
   @Throws(IOException::class)
-  override fun loadQuery(queryPath: String): String {
-    return queriesCache.computeIfAbsent(queryPath) { path ->
-      val (body, fragmentNames) = readBlock(path)
-                                  ?: throw GraphQLFileNotFoundException("Couldn't find query file at $queryPath")
+  override fun loadQuery(queryPath: String): String = getFileStream(queryPath)?.use {
+    loadQuery(it, queryPath)
+  } ?: throw GraphQLFileNotFoundException("Couldn't find query file at $queryPath")
 
-      val builder = StringBuilder()
-      val fragments = LinkedHashMap<String, Block>()
-      readFragmentsInto(fragmentNames, fragments)
-      for (fragment in fragments.values.reversed()) {
-        builder.append(fragment.body).append("\n")
-      }
-
-      builder.append(body)
-      builder.toString()
+  @Throws(IOException::class)
+  private fun loadQuery(stream: InputStream, key: String): String {
+    return queriesCache.computeIfAbsent(key) {
+      loadQuery(stream)
     }
+  }
+
+  /**
+   * Doesn't cache the resulting query.
+   */
+  @Throws(IOException::class)
+  fun loadQuery(stream: InputStream): String {
+    val (body, fragmentNames) = readBlock(stream)
+
+    val builder = StringBuilder()
+    val fragments = LinkedHashMap<String, Block>()
+    readFragmentsInto(fragmentNames, fragments)
+    for (fragment in fragments.values.reversed()) {
+      builder.append(fragment.body).append("\n")
+    }
+
+    builder.append(body)
+    return builder.toString()
   }
 
   private fun readFragmentsInto(names: Set<String>, into: MutableMap<String, Block>) {
     for (fragmentName in names) {
       val fragment = fragmentsDirectories.firstNotNullOfOrNull {
         val path = "$it/${fragmentName}.$fragmentsFileExtension"
-        fragmentsCache.computeIfAbsent(path, ::readBlock)
+        fragmentsCache.computeIfAbsent(path) {
+          getFileStream(path)?.use { stream -> readBlock(stream) }
+        }
       } ?: throw GraphQLFileNotFoundException("Couldn't find file for fragment $fragmentName")
       into[fragmentName] = fragment
 
@@ -52,12 +73,11 @@ class CachingGraphQLQueryLoader(
     }
   }
 
-  private fun readBlock(filePath: String): Block? {
+  private fun readBlock(stream: InputStream): Block {
     val bodyBuilder = StringBuilder()
     val fragments = mutableSetOf<String>()
     val innerFragments = mutableSetOf<String>()
 
-    val stream = getFileStream(filePath) ?: return null
     stream.reader().forEachLine {
       val line = it.trim()
       bodyBuilder.append(line).append("\n")
@@ -78,6 +98,10 @@ class CachingGraphQLQueryLoader(
   }
 
   companion object {
+    /**
+     * @param body The body of the query to be sent to the server.
+     * @param dependencies The set of fragments that the query depends on listed by name.
+     */
     data class Block(val body: String, val dependencies: Set<String>)
 
     fun createFragmentCache(): ConcurrentMap<String, Block> =

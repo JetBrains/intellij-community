@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.openapi.options.Configurable;
@@ -22,10 +22,9 @@ public final class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebugg
     super("groovy_debugger");
   }
 
-  @NotNull
   @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
   @Override
-  public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
+  public @NotNull Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
     return switch (category) {
       case STEPPING ->
         singletonList(SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"),
@@ -41,7 +40,7 @@ public final class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebugg
   }
 
   @Override
-  public void loadState(@NotNull final GroovyDebuggerSettings state) {
+  public void loadState(final @NotNull GroovyDebuggerSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 

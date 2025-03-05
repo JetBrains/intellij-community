@@ -39,8 +39,7 @@ public final class ResolveUtil {
   private ResolveUtil() {
   }
 
-  @Nullable
-  public static Collection<XmlFile> getDependencies(XmlFile element) {
+  public static @Nullable Collection<XmlFile> getDependencies(XmlFile element) {
     final CommonProcessors.CollectUniquesProcessor<XmlFile> processor = new CommonProcessors.CollectUniquesProcessor<>() {
       @Override
       public boolean process(XmlFile file) {
@@ -54,8 +53,7 @@ public final class ResolveUtil {
     return processor.getResults();
   }
 
-  @Nullable
-  public static PsiFile resolveFile(String name, PsiFile baseFile) {
+  public static @Nullable PsiFile resolveFile(String name, PsiFile baseFile) {
     if (baseFile == null) return null;
 
     final VirtualFile virtualFile = VfsUtilCore.findRelativeFile(name, baseFile.getVirtualFile());
@@ -68,8 +66,7 @@ public final class ResolveUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiFile resolveFile(XmlAttribute location, PsiFile baseFile) {
+  public static @Nullable PsiFile resolveFile(XmlAttribute location, PsiFile baseFile) {
     if (location == null) return null;
     final XmlAttributeValue valueElement = location.getValueElement();
     if (valueElement == null) return null;
@@ -134,11 +131,10 @@ public final class ResolveUtil {
     }
   }
 
-  @Nullable
-  public static PsiElement resolve(final Matcher matcher) {
+  public static @Nullable PsiElement resolve(final Matcher matcher) {
     if (matcher == null) return null;
     final List<PsiElement> found = process(matcher, true);
-    return found.size() > 0 ? found.get(0) : null;
+    return !found.isEmpty() ? found.get(0) : null;
   }
 
   public static PsiElement[] collect(final Matcher matcher) {
@@ -223,8 +219,7 @@ public final class ResolveUtil {
     PsiElement getResult();
   }
 
-  @Nullable
-  public static PsiElement treeWalkUp(final XmlProcessor processor, PsiElement elt) {
+  public static @Nullable PsiElement treeWalkUp(final XmlProcessor processor, PsiElement elt) {
     if (elt == null) return null;
 
     PsiElement cur = elt;

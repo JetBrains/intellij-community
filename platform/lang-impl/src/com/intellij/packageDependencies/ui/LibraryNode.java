@@ -29,6 +29,7 @@ public final class LibraryNode extends PackageDependenciesNode {
     }
   }
 
+  @Override
   public String toString() {
     return myLibraryOrJdk.getPresentableName();
   }
@@ -38,6 +39,7 @@ public final class LibraryNode extends PackageDependenciesNode {
     return 2;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
@@ -50,6 +52,7 @@ public final class LibraryNode extends PackageDependenciesNode {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myLibraryOrJdk.hashCode();
   }

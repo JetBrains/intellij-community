@@ -15,18 +15,17 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,11 +34,11 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CStyleArrayDeclarationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
+  private static final TokenSet BRACKET_TOKENS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
   public boolean ignoreVariables = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiMethod method) {
       return InspectionGadgetsBundle.message("cstyle.array.method.declaration.problem.descriptor", method.getName());
@@ -135,7 +134,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
         if (anchor instanceof PsiAnnotation) {
           if (start == null) start = anchor;
         }
-        else if (PsiUtil.isJavaToken(anchor, HighlightUtil.BRACKET_TOKENS)) {
+        else if (PsiUtil.isJavaToken(anchor, BRACKET_TOKENS)) {
           if (start == null) start = anchor;
           end = anchor;
         }

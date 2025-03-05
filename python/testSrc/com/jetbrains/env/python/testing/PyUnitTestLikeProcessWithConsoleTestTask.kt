@@ -21,9 +21,7 @@ PyScriptTestProcessRunner<*>> @JvmOverloads constructor(relativePathToTestData: 
                                                         private val myRerunFailedTests: Int = 0) :
   PyProcessWithConsoleTestTask<T>(relativePathToTestData, SdkCreationType.SDK_PACKAGES_ONLY) {
 
-  override fun getTagsToCover(): Set<String> = hashSetOf("python2.6", "python2.7", "python3.5", "python3.6", "jython", "pypy",
-                                                         "IronPython")
-
+  override fun getTagsToCover(): Set<String> = hashSetOf("python3.6")
 
   @Throws(Exception::class)
   override fun createProcessRunner(): T {

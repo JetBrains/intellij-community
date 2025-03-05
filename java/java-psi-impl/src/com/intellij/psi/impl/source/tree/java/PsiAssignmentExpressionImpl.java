@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -95,7 +95,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
-  private static final TokenSet OUR_OPERATIONS_BIT_SET = ExpressionParser.ASSIGNMENT_OPS;
+  private static final TokenSet OUR_OPERATIONS_BIT_SET = BasicExpressionParser.ASSIGNMENT_OPS;
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {

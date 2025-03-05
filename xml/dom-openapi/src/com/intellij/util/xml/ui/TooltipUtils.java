@@ -17,7 +17,7 @@ public final class TooltipUtils {
     .attr("noshade", "noshade");
 
   public static @NlsContexts.Tooltip String getTooltipText(List<? extends DomElementProblemDescriptor> annotations) {
-    if (annotations.size() == 0) return null;
+    if (annotations.isEmpty()) return null;
 
     return getTooltipText(getMessages(annotations));
   }

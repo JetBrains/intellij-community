@@ -62,6 +62,9 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
     assertHasPendingProjectForReload()
     scheduleProjectImportAndWait()
   }
+  private fun printDebugMessage(message: String) {
+    println("Debug: $message")
+  }
 
   @Test
   fun testSaveDocumentChangesBeforeAutoImport() = runBlocking {
@@ -179,6 +182,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
       VfsUtil.saveText(file, content)
       null
     } as ThrowableComputable<*, IOException?>)
+    printDebugMessage("Replaced content in file: ${file.path}")
   }
 
   private fun replaceDocumentString(file: VirtualFile?, oldString: String, newString: String?) {
@@ -190,6 +194,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
       val endOffset = startOffset + oldString.length
       document.replaceString(startOffset, endOffset, newString!!)
     }
+    printDebugMessage("Replaced string in document at path: ${file!!.path}")
   }
 
   internal class MavenProjectTreeTracker : MavenProjectsTree.Listener {

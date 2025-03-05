@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,8 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
  *
  * @see GitLogParser
  */
-class GitLogRecord {
+@ApiStatus.Internal
+public class GitLogRecord {
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
   protected final @NotNull Map<GitLogParser.GitLogOption, String> myOptions;

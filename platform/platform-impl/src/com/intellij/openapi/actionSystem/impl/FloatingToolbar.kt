@@ -220,7 +220,13 @@ abstract class FloatingToolbar(
     }
     val elementAtStart = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionStart)
     val elementAtEnd = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionEnd)
-    return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd)) && !AppMode.isRemoteDevHost()
+    return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd)) &&
+           !AppMode.isRemoteDevHost() &&
+           isAvailableForSelection(editor, elementAtStart, elementAtEnd)
+  }
+
+  protected open fun isAvailableForSelection(editor: Editor, elementAtStart: PsiElement, elementAtEnd: PsiElement): Boolean {
+    return true
   }
 
   /**

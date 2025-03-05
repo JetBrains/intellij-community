@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.trello;
 
@@ -44,21 +30,18 @@ public class TrelloTask extends Task {
     myRepository = repository;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myCard.getId();
   }
 
-  @NotNull
   @Override
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return myCard.getName();
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return myCard.getDescription();
   }
 
@@ -68,27 +51,23 @@ public class TrelloTask extends Task {
     return comments.toArray(Comment.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return ourIconBuilder.buildIcon(myCard.getColors());
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     return TaskType.OTHER;
   }
 
-  @Nullable
   @Override
-  public Date getUpdated() {
+  public @Nullable Date getUpdated() {
     return myCard.getDateLastActivity();
   }
 
-  @Nullable
   @Override
-  public Date getCreated() {
+  public @Nullable Date getCreated() {
     return null;
   }
 
@@ -103,9 +82,8 @@ public class TrelloTask extends Task {
     return true;
   }
 
-  @Nullable
   @Override
-  public String getIssueUrl() {
+  public @Nullable String getIssueUrl() {
     return myCard.getUrl();
   }
 
@@ -114,15 +92,13 @@ public class TrelloTask extends Task {
     return myCard.getName();
   }
 
-  @Nullable
   @Override
-  public TaskRepository getRepository() {
+  public @Nullable TaskRepository getRepository() {
     return myRepository;
   }
 
-  @NotNull
   @Override
-  public String getNumber() {
+  public @NotNull String getNumber() {
     return myCard.getIdShort();
   }
 }

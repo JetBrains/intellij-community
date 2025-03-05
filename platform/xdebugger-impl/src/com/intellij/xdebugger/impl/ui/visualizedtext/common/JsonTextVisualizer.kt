@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui.visualizedtext.common
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.XDebuggerBundle
@@ -14,15 +15,9 @@ import com.intellij.xdebugger.ui.TextValueVisualizer
 import com.intellij.xdebugger.ui.VisualizedContentTab
 
 internal class JsonTextVisualizer : TextValueVisualizer {
+
   override fun visualize(value: @NlsSafe String): List<VisualizedContentTab> {
-    // Visualize only complex JSON, it's useless to visualize 123 as JSON primitive.
-    val firstChar = value.firstOrNull { !it.isWhitespace() }
-    if (firstChar != '[' && firstChar != '{') return emptyList()
-
-    // Also no need to visualize empty arrays and dictionaries as JSON.
-    if (value == "[]" || value == "{}") return emptyList()
-
-    val json = JsonEncodingUtil.tryParseJson(value)
+    val json = detectJson(value)
     if (json == null) return emptyList()
 
     return listOf(object : TextBasedContentTab(), VisualizedContentTabWithStats {
@@ -35,12 +30,29 @@ internal class JsonTextVisualizer : TextValueVisualizer {
       override fun formatText() =
         JsonEncodingUtil.prettifyJson(json)
       override val fileType
-        get() =
-          // Right now we don't want to have an explicit static dependency here.
-          // In an ideal world this class would be part of the optional module of the debugger plugin with a dependency on intellij.json.
-          FileTypeManager.getInstance().getStdFileType("JSON")
+        get() = jsonFileType
     })
   }
+
+  override fun detectFileType(value: @NlsSafe String): FileType? =
+    if (detectJson(value) != null) jsonFileType else null
+
+  private fun detectJson(value: String): JsonNode? {
+    // Visualize only complex JSON, it's useless to visualize 123 as JSON primitive.
+    val firstChar = value.firstOrNull { !it.isWhitespace() }
+    if (firstChar != '[' && firstChar != '{') return null
+
+    // Also no need to visualize empty arrays and dictionaries as JSON.
+    if (value == "[]" || value == "{}") return null
+
+    return JsonEncodingUtil.tryParseJson(value)
+  }
+
+  private val jsonFileType
+    get() =
+      // Right now we don't want to have an explicit static dependency here.
+      // In an ideal world, this class would be part of the optional module of the debugger plugin with a dependency on intellij.json.
+      FileTypeManager.getInstance().getStdFileType("JSON")
 }
 
 internal object JsonEncodingUtil {

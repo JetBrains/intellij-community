@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.CodeStyleBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -14,7 +15,8 @@ import java.util.function.Supplier;
 /**
  * Enumerates formatting processing states.
  */
-enum FormattingStateId {
+@ApiStatus.Internal
+public enum FormattingStateId {
 
   /**
    * Corresponds to {@link InitialInfoBuilder#buildFrom(Block, int, CompositeBlockWrapper, WrapImpl, Block)}.

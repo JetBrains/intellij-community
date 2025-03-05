@@ -1,5 +1,8 @@
 // WITH_STDLIB
 // HIGHLIGHT: GENERIC_ERROR_OR_WARNING
+// ERROR: Type mismatch: inferred type is List<Int> but MutableList<Int> was expected
+// ERROR: Type mismatch: inferred type is List<Int> but MutableList<Int> was expected
+// ERROR: Val cannot be reassigned
 
 fun foo() {
     val list = mutableListOf(1, 2, 3)

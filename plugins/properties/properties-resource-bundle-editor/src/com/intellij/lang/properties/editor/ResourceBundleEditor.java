@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.editor;
 
@@ -63,6 +63,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -74,14 +75,14 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
   private static final Logger LOG = Logger.getInstance(ResourceBundleEditor.class);
-  @NonNls private static final String VALUES               = "values";
-  @NonNls private static final String NO_PROPERTY_SELECTED = "noPropertySelected";
+  private static final @NonNls String VALUES               = "values";
+  private static final @NonNls String NO_PROPERTY_SELECTED = "noPropertySelected";
   public static final Key<ResourceBundleEditor> RESOURCE_BUNDLE_EDITOR_KEY = Key.create("resourceBundleEditor");
 
   private final Project myProject;
@@ -96,7 +97,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   private final DataProviderPanel myDataProviderPanel;
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
-  private final Set<VirtualFile> myBackSlashPressed     = new HashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm();
 
   private final JPanel              myValuesPanel;
@@ -207,9 +207,8 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     myHighlighter = myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile ? null : new ResourceBundleEditorHighlighter(this);
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
@@ -221,8 +220,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     myStructureViewComponent.rebuild();
   }
 
-  @NotNull
-  public ResourceBundlePropertiesUpdateManager getPropertiesInsertDeleteManager() {
+  public @NotNull ResourceBundlePropertiesUpdateManager getPropertiesInsertDeleteManager() {
     return myPropertiesInsertDeleteManager;
   }
 
@@ -263,7 +261,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     setStructureViewSelection(propertyName);
   }
 
-  private void setStructureViewSelection(@NotNull final String propertyName) {
+  private void setStructureViewSelection(final @NotNull String propertyName) {
     if (myStructureViewComponent.isDisposed()) {
       return;
     }
@@ -326,8 +324,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     return loadingNodes > 0 && loadingNodes == node.getChildCount();
   }
 
-  @Nullable
-  private static String getPropertyName(@NotNull Document document, int line) {
+  private static @Nullable String getPropertyName(@NotNull Document document, int line) {
     int startOffset = document.getLineStartOffset(line);
     int endOffset = StringUtil.indexOf(document.getCharsSequence(), '=', startOffset, document.getLineEndOffset(line));
     if (endOffset <= startOffset) {
@@ -432,12 +429,12 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
 
       editor.addFocusListener(new FocusChangeListener() {
         @Override
-        public void focusGained(@NotNull final Editor editor) {
+        public void focusGained(final @NotNull Editor editor) {
           mySelectedEditor = editor;
         }
 
         @Override
-        public void focusLost(@NotNull final Editor editor) {
+        public void focusLost(final @NotNull Editor editor) {
           if (!editor.isViewer() && propertiesFile.getContainingFile().isValid()) {
             writeEditorPropertyValue(null, editor, propertiesFile.getVirtualFile());
             myVfsListener.flush();
@@ -484,8 +481,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     updateEditorsFromProperties(true);
   }
 
-  @NotNull
-  public static String getPropertyEditorValue(@Nullable final IProperty property) {
+  public static @NotNull String getPropertyEditorValue(final @Nullable IProperty property) {
     if (property == null) {
       return "";
     }
@@ -508,7 +504,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       final Document document = editor.getDocument();
       CommandProcessor.getInstance().executeCommand(null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
         if (!checkIsUnderUndoRedoAction || !undoManager.isActive() || !undoManager.isUndoOrRedoInProgress()) {
-          updateDocumentFromPropertyValue(getPropertyEditorValue(property), document,  propertiesFile.getVirtualFile());
+          updateDocumentFromPropertyValue(getPropertyEditorValue(property), document);
         }
       }), "", this);
       JPanel titledPanel = myTitledPanels.get(propertiesFile.getVirtualFile());
@@ -517,8 +513,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     }
   }
 
-  @NotNull
-  private ResourceBundleEditorFileListener installPropertiesChangeListeners() {
+  private @NotNull ResourceBundleEditorFileListener installPropertiesChangeListeners() {
     final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
     ResourceBundleEditorFileListener myVfsListener = new ResourceBundleEditorFileListener(this);
 
@@ -558,7 +553,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   private void selectionChanged() {
-    myBackSlashPressed.clear();
     UIUtil.invokeLaterIfNeeded(() -> {
       updateEditorsFromProperties(true);
       final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
@@ -568,15 +562,11 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     });
   }
 
-  private void updateDocumentFromPropertyValue(final String value,
-                                               final Document document,
-                                               final VirtualFile propertiesFile) {
-    @NonNls String text = myBackSlashPressed.contains(propertiesFile) ? value + "\\" : value;
-    UndoUtil.disableUndoIn(document, () -> document.replaceString(0, document.getTextLength(), text));
+  private static void updateDocumentFromPropertyValue(final String value, final Document document) {
+    UndoUtil.disableUndoIn(document, () -> document.replaceString(0, document.getTextLength(), value));
   }
 
-  @NotNull
-  private JBIterable<Object> getSelectedNodes() {
+  private @NotNull JBIterable<Object> getSelectedNodes() {
     if (!isValid()) {
       return JBIterable.empty();
     }
@@ -585,8 +575,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       .map(TreeUtil::getLastUserObject);
   }
 
-  @Nullable
-  private String getSelectedPropertyName() {
+  private @Nullable String getSelectedPropertyName() {
     final IProperty selectedProperty = getSelectedProperty();
     return selectedProperty == null ? null : selectedProperty.getName();
   }
@@ -602,8 +591,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
            ((PropertyStructureViewElement)first).getProperty() : null;
   }
 
-  @NotNull
-  public Collection<ResourceBundleEditorViewElement> getSelectedElements() {
+  public @NotNull @Unmodifiable Collection<ResourceBundleEditorViewElement> getSelectedElements() {
     return getSelectedNodes()
       .filter(AbstractTreeNode.class)
       .filterMap(AbstractTreeNode::getValue)
@@ -611,16 +599,14 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       .toList();
   }
 
-  @NotNull
-  public Collection<Object> getSelectedObjects() {
+  public @NotNull @Unmodifiable Collection<Object> getSelectedObjects() {
     return getSelectedNodes()
       .filter(AbstractTreeNode.class)
       .filterMap(AbstractTreeNode::getValue)
       .toList();
   }
 
-  @Nullable
-  public Object getSelectedElementIfOnlyOne() {
+  public @Nullable Object getSelectedElementIfOnlyOne() {
     final Collection<Object> selectedElements = getSelectedObjects();
     return selectedElements.size() == 1 ? ContainerUtil.getFirstItem(selectedElements) : null;
   }
@@ -656,8 +642,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myDataProviderPanel;
   }
 
@@ -684,18 +669,16 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return ResourceBundleEditorBundle.message("resource.bundle.editor.title");
   }
 
   @Override
-  @NotNull
-  public ResourceBundleEditorState getState(@NotNull FileEditorStateLevel level) {
+  public @NotNull ResourceBundleEditorState getState(@NotNull FileEditorStateLevel level) {
     return new ResourceBundleEditorState(getSelectedPropertyName());
   }
 
-  public void selectProperty(@Nullable final String propertyName) {
+  public void selectProperty(final @Nullable String propertyName) {
     if (propertyName != null) {
       setStructureViewSelection(propertyName);
     }

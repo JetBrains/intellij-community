@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.usageView;
 
@@ -18,15 +18,14 @@ public final class UsageViewShortNameLocation extends ElementDescriptionLocation
 
   public static final UsageViewShortNameLocation INSTANCE = new UsageViewShortNameLocation();
 
-  @NotNull
   @Override
-  public ElementDescriptionProvider getDefaultProvider() {
+  public @NotNull ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;
   }
 
   private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
     @Override
-    public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
+    public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
       if (!(location instanceof UsageViewShortNameLocation)) return null;
 
       if (element instanceof PsiMetaOwner) {

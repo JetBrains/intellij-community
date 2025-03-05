@@ -13,35 +13,30 @@ public class AsyncResult<T> extends ActionCallback {
 
   public AsyncResult() { }
 
-  @NotNull
-  public AsyncResult<T> setDone(T result) {
+  public @NotNull AsyncResult<T> setDone(T result) {
     myResult = result;
     setDone();
     return this;
   }
 
-  @NotNull
-  public AsyncResult<T> setRejected(T result) {
+  public @NotNull AsyncResult<T> setRejected(T result) {
     myResult = result;
     setRejected();
     return this;
   }
 
-  @NotNull
-  public AsyncResult<T> doWhenDone(@NotNull final Handler<? super T> handler) {
+  public @NotNull AsyncResult<T> doWhenDone(final @NotNull Handler<? super T> handler) {
     doWhenDone(() -> handler.run(myResult));
     return this;
   }
 
-  @NotNull
-  public AsyncResult<T> doWhenDone(@NotNull final Consumer<? super T> consumer) {
+  public @NotNull AsyncResult<T> doWhenDone(final @NotNull Consumer<? super T> consumer) {
     doWhenDone(() -> consumer.consume(myResult));
     return this;
   }
 
   @Override
-  @NotNull
-  public final AsyncResult<T> notify(@NotNull final ActionCallback child) {
+  public final @NotNull AsyncResult<T> notify(final @NotNull ActionCallback child) {
     super.notify(child);
     return this;
   }
@@ -54,8 +49,7 @@ public class AsyncResult<T> extends ActionCallback {
     return getResultSync(-1);
   }
 
-  @Nullable
-  public T getResultSync(long msTimeout) {
+  public @Nullable T getResultSync(long msTimeout) {
     waitFor(msTimeout);
     return myResult;
   }
@@ -64,8 +58,7 @@ public class AsyncResult<T> extends ActionCallback {
     void run(T t);
   }
 
-  @NotNull
-  public static <R> AsyncResult<R> done(@Nullable R result) {
+  public static @NotNull <R> AsyncResult<R> done(@Nullable R result) {
     return new AsyncResult<R>().setDone(result);
   }
 }

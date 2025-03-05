@@ -28,8 +28,7 @@ public final class AbstractMethodOverridesConcreteMethodInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.method.overrides.concrete.method.problem.descriptor");
   }

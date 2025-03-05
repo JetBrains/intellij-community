@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +54,13 @@ public abstract class Executor {
   public abstract @NlsActions.ActionDescription String getDescription();
 
   public abstract @NotNull @NlsActions.ActionText String getActionName();
+
+  /**
+   * @return tool window title text that will be applied to a tool window when it's customized.
+   */
+  public @NotNull @NlsContexts.TabTitle String getToolWindowTitle() {
+    return getActionName();
+  }
 
   /**
    * @return the unique ID of the executor

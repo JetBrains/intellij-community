@@ -4,13 +4,13 @@ package com.intellij.platform.workspace.storage.tests.propertyBased
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.platform.workspace.storage.impl.StorageIndexes
 import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
 import com.intellij.platform.workspace.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.tests.createBuilderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
+import com.intellij.testFramework.propertyBased.MadTestingUtil.assertNoErrorLoggedIn
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentHashSet
 import kotlinx.collections.immutable.toPersistentMap
@@ -26,34 +26,34 @@ class PropertyTest {
   @Test
   fun entityManipulations() {
     PropertyChecker.checkScenarios {
-      ImperativeCommand { env ->
+      assertNoErrorLoggedIn(ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         val detachedEntities = ArrayList<WorkspaceEntity>()
         env.executeCommands(getEntityManipulation(workspace, detachedEntities))
         workspace.assertConsistency()
-      }
+      })
     }
   }
 
   @Test
   fun testReplaceBySource() {
     PropertyChecker.checkScenarios {
-      ImperativeCommand { env ->
+      assertNoErrorLoggedIn(ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         env.executeCommands(ReplaceBySource.create(workspace))
         workspace.assertConsistency()
-      }
+      })
     }
   }
 
   @Test
   fun testApplyChangesFrom() {
     PropertyChecker.checkScenarios {
-      ImperativeCommand { env ->
+      assertNoErrorLoggedIn(ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         env.executeCommands(ApplyChangesFrom.create(workspace))
         workspace.assertConsistency()
-      }
+      })
     }
   }
 
@@ -63,9 +63,9 @@ class PropertyTest {
   @Test
   fun `add diff generates same changelog simple test`() {
     PropertyChecker.checkScenarios {
-      ImperativeCommand { env ->
+      assertNoErrorLoggedIn(ImperativeCommand { env ->
         env.executeCommands(ApplyChangesFromCheckChangelog.create(null))
-      }
+      })
     }
   }
 
@@ -75,11 +75,11 @@ class PropertyTest {
   @Test
   fun `add diff generates same changelog`() {
     PropertyChecker.checkScenarios {
-      ImperativeCommand { env ->
+      assertNoErrorLoggedIn(ImperativeCommand { env ->
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         env.executeCommands(ApplyChangesFromCheckChangelog.create(workspace))
         workspace.assertConsistency()
-      }
+      })
     }
   }
 }

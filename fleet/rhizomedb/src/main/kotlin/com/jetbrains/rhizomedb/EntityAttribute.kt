@@ -5,6 +5,7 @@ import com.jetbrains.rhizomedb.impl.*
 import fleet.util.singleOrNullOrThrow
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlin.jvm.JvmName
 
 /**
  * Represents an attribute of an [Entity].
@@ -62,6 +63,12 @@ sealed class EntityAttribute<E : Entity, T : Any>(
  * Returns a set of pairs of [Entity] and the corresponding attribute's value.
  * */
 fun <E : Entity, T : Any> EntityAttribute<E, T>.all(): Set<Pair<E, T>> = DbContext.threadBound.all(this)
+
+/**
+ * Column query.
+ * Returns a set of all values of the given attribute
+ * */
+fun <E : Entity, T : Any> EntityAttribute<E, T>.values(): Set<T> = DbContext.threadBound.values(this)
 
 /**
  * Returns a single pair of [Entity] and [T] if exactly one [Entity] has this [EntityAttribute].
@@ -279,6 +286,13 @@ fun <E : Entity, V : Any> DbContext<Q>.all(attribute: EntityAttribute<E, V>): Se
 
 /**
  * Column query.
+ * Returns a set of all values of the given attribute
+ * */
+fun <E : Entity, V : Any> DbContext<Q>.values(attribute: EntityAttribute<E, V>): Set<V> =
+  impl.values(attribute)
+
+/**
+ * Column query.
  * Returns a set of pairs of [Entity] and the corresponding attribute's value.
  * */
 fun <E : Entity, V : Any> Q.all(attribute: EntityAttribute<E, V>): Set<Pair<E, V>> =
@@ -287,6 +301,16 @@ fun <E : Entity, V : Any> Q.all(attribute: EntityAttribute<E, V>): Set<Pair<E, V
       @Suppress("UNCHECKED_CAST")
       val entity = entity(datom.eid) as E?
       entity?.let { it to fromIndexValue(attribute, datom.value) }
+    }
+
+/**
+ * Column query.
+ * Returns a set of pairs of [Entity] and the corresponding attribute's value.
+ * */
+fun <E : Entity, V : Any> Q.values(attribute: EntityAttribute<E, V>): Set<V> =
+  queryIndex(IndexQuery.Column(attribute.attr))
+    .mapTo(HashSet()) { datom ->
+      fromIndexValue(attribute, datom.value)
     }
 
 /**

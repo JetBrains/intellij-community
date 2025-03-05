@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -29,9 +29,9 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.util.Collection;
 
 public abstract class CompilingEvaluator implements ExpressionEvaluator {
-  @NotNull protected final Project myProject;
-  @NotNull protected final PsiElement myPsiContext;
-  @NotNull protected final LightMethodObjectExtractedData myData;
+  protected final @NotNull Project myProject;
+  protected final @NotNull PsiElement myPsiContext;
+  protected final @NotNull LightMethodObjectExtractedData myData;
 
   public CompilingEvaluator(@NotNull Project project, @NotNull PsiElement context, @NotNull LightMethodObjectExtractedData data) {
     myProject = project;
@@ -57,7 +57,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);
     autoLoadContext.setClassLoader(classLoader);
 
-    JavaSdkVersion version = JavaSdkVersion.fromVersionString(autoLoadContext.getSuspendContext().getVirtualMachineProxy().version());
+    JavaSdkVersion version = JavaSdkVersion.fromVersionString(autoLoadContext.getVirtualMachineProxy().version());
     Collection<ClassObject> classes = compile(version);
     defineClasses(classes, autoLoadContext, process, classLoader);
 
@@ -83,7 +83,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
   }
 
   private void defineClasses(Collection<ClassObject> classes,
-                             EvaluationContext context,
+                             EvaluationContextImpl context,
                              DebugProcess process,
                              ClassLoaderReference classLoader) throws EvaluateException {
     boolean useMagicAccessorImpl = myData.useMagicAccessor();
@@ -117,8 +117,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     return classWriter.toByteArray();
   }
 
-  @NotNull
-  public static String getGeneratedClassName() {
+  public static @NotNull String getGeneratedClassName() {
     return GEN_CLASS_NAME;
   }
 
@@ -134,6 +133,5 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
   ///////////////// Compiler stuff
 
-  @NotNull
-  protected abstract Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
+  protected abstract @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException;
 }

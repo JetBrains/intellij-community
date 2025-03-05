@@ -7,6 +7,7 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -55,6 +56,7 @@ abstract class LineStatusMarkerRendererWithPopup(
 
   override fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
     if (!rangesSource.isValid()) return
+    DiffUsageTriggerCollector.logShowMarkerPopup(project)
     LineStatusMarkerPopupService.instance.buildAndShowPopup(disposable, editor, mousePosition) { popupDisposable ->
       createPopupPanel(editor, range, mousePosition, popupDisposable)
     }

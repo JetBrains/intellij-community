@@ -58,7 +58,7 @@ final class RngDocumentationProvider implements DocumentationProvider {
         for (DElementPattern pattern : patterns) {
           final PsiElement psiElement = d.getDeclaration(pattern.getLocation());
           if (psiElement instanceof XmlTag && elements.add(psiElement)) {
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
               sb.append("<hr>");
             }
             sb.append(getDocumentationFromTag((XmlTag)psiElement, xmlElement.getLocalName(), "Element"));
@@ -78,7 +78,7 @@ final class RngDocumentationProvider implements DocumentationProvider {
         final Collection<PsiElement> declaration = new ReferenceOpenHashSet<>(descriptor.getDeclarations());
         for (PsiElement psiElement : declaration) {
           if (psiElement instanceof XmlTag) {
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
               sb.append("<hr>");
             }
             sb.append(getDocumentationFromTag((XmlTag)psiElement, descriptor.getName(), "Attribute"));
@@ -121,6 +121,7 @@ final class RngDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
+  @Override
   public int hashCode() {
     return 0;   // CompositeDocumentationProvider uses a HashSet that doesn't preserve order. We want to be the first one.
   }

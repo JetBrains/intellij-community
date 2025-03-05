@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -9,7 +10,7 @@ import java.awt.*;
 
 public class TextIcon implements Icon {
 
-  @NotNull private final String myText;
+  private final @NotNull String myText;
 
   private final int myControlWidth;
   private final int myControlHeight;

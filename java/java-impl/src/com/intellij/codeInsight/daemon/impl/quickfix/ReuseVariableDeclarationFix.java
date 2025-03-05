@@ -2,19 +2,21 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static java.util.Objects.requireNonNull;
 
 public class ReuseVariableDeclarationFix extends PsiUpdateModCommandAction<PsiLocalVariable> {
   public ReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable) {
@@ -50,10 +52,10 @@ public class ReuseVariableDeclarationFix extends PsiUpdateModCommandAction<PsiLo
     final PsiElement statement = factory.createStatementFromText(
       variable.getName() + " = " +
       ExpressionUtils.convertInitializerToExpression(initializer, factory, variable.getType()).getText() + ";", null);
-    variable.getParent().replace(statement);
+    PsiExpressionStatement replacement = (PsiExpressionStatement)variable.getParent().replace(statement);
+    PsiExpression rValue = requireNonNull(((PsiAssignmentExpression)replacement.getExpression()).getRExpression());
     if (wasFinal &&
-        refVariable instanceof PsiLocalVariable &&
-        HighlightControlFlowUtil.isEffectivelyFinal(refVariable, initializer, null)) {
+        refVariable instanceof PsiLocalVariable && ControlFlowUtil.isEffectivelyFinal(refVariable, rValue)) {
       PsiUtil.setModifierProperty(refVariable, PsiModifier.FINAL, true);
     }
   }

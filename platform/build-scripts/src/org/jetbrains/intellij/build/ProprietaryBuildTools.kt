@@ -5,6 +5,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import java.nio.file.Path
 
@@ -58,8 +59,12 @@ data class ProprietaryBuildTools(
         )
       }
 
+      override suspend fun signFilesWithGpg(files: List<Path>, context: BuildContext) {
+        signFiles(files, context, persistentMapOf())
+      }
+
       override suspend fun getPresignedLibraryFile(path: String, libName: String, libVersion: String, context: BuildContext): Path? {
-        error("Must be not called if signNativeFileMode equals to ENABLED")
+        error("Must be not called if signNativeFileMode equals to $signNativeFileMode")
       }
 
       override suspend fun commandLineClient(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Path? {

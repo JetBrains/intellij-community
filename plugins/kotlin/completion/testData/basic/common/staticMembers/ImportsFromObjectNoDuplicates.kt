@@ -15,7 +15,6 @@ fun main() {
     xxx<caret>
 }
 
-// IGNORE_K2
 // INVOCATION_COUNT: 2
 // EXIST: { allLookupStrings: "xxxFun1", itemText: "xxxFun1" }
 // EXIST: { allLookupStrings: "xxxFun2", itemText: "O.xxxFun2" }

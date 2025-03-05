@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +27,7 @@ public class DefaultModuleEditorsProvider implements ModuleConfigurationEditorPr
     Module module = state.getCurrentRootModel().getModule();
     ModuleType<?> moduleType = ModuleType.get(module);
     if (!(moduleType instanceof JavaModuleType) &&
-        (!GeneralModuleType.INSTANCE.equals(moduleType) || ProjectRootManager.getInstance(state.getProject()).getProjectSdk() == null)) {
+        (!GeneralModuleType.INSTANCE.equals(moduleType))) {
       return ModuleConfigurationEditor.EMPTY;
     }
 

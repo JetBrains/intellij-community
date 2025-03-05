@@ -42,7 +42,7 @@ class UnknownSdkTrackerTestKt : LightPlatformTestCase() {
       UIUtil.dispatchAllInvocationEvents()
     }
 
-    val notifications = UnknownSdkEditorNotification.getInstance(project).notifications.joinToString { it.sdkTypeAndNameText }
+    val notifications = UnknownSdkEditorNotification.getInstance(project).getNotifications().joinToString { it.sdkTypeAndNameText }
     Assertions.assertThat(notifications).contains("new-sdk")
   }
 }

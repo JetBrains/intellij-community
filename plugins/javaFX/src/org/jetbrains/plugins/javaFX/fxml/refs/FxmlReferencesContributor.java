@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.TextRange;
@@ -132,7 +132,7 @@ public final class FxmlReferencesContributor extends PsiReferenceContributor {
     public PsiReference @NotNull [] getReferencesByString(@NotNull String str,
                                                           final @NotNull PsiElement position,
                                                           int offsetInPosition) {
-      if (str.length() == 0) return PsiReference.EMPTY_ARRAY;
+      if (str.isEmpty()) return PsiReference.EMPTY_ARRAY;
       final PsiReference[] references = super.getReferencesByString(str, position, offsetInPosition);
       final int offset = position instanceof XmlTag ? 1 : 0;
       if (references.length <= offset) return PsiReference.EMPTY_ARRAY;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class NewModuleInGroupAction extends NewModuleAction {
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     super.update(e);
     boolean mainMenu = ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
     final ModuleGroup[] moduleGroups = e.getData(ModuleGroup.ARRAY_DATA_KEY);

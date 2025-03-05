@@ -58,6 +58,7 @@ import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
+@Suppress("UnresolvedPluginConfigReference")
 @RunsInEdt
 class DynamicPluginsTest {
   companion object {
@@ -875,6 +876,7 @@ private class MyRegistryAccessor {
   var invocations: Int = 0
 
   fun accessRegistry() {
+    @Suppress("UnresolvedPluginConfigReference")
     check(Registry.get("test.plugin.registry.key").asBoolean())
     invocations++
   }

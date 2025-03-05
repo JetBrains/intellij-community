@@ -25,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.management.PythonPackagesInstaller;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
-import com.jetbrains.python.sdk.uv.UvExtKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -312,11 +311,6 @@ public final class PyPackageManagerUI {
     @Override
     protected @NotNull List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
       final List<ExecutionException> exceptions = new ArrayList<>();
-      if (UvExtKt.isUv(mySdk)) {
-        // FIXME: lame hack
-        return exceptions;
-      }
-
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
       indicator.setText(PyBundle.message("python.packaging.installing.packaging.tools"));
       indicator.setIndeterminate(true);

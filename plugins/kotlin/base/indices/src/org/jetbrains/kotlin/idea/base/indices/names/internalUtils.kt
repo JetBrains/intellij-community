@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache
 import org.jetbrains.kotlin.load.kotlin.KotlinClassFinder
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.metadata.ProtoBuf
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmNameResolver
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.FqName
@@ -63,7 +63,7 @@ internal fun readProtoPackageData(kotlinJvmBinaryClass: KotlinJvmBinaryClass): P
 
 internal fun FileContent.toKotlinJvmBinaryClass(): KotlinJvmBinaryClass? {
     val result = try {
-        KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, JvmMetadataVersion.INSTANCE, content) ?: return null
+        KotlinBinaryClassCache.getKotlinBinaryClassOrClassFileContent(file, MetadataVersion.INSTANCE, content) ?: return null
     } catch (e: Exception) {
         if (e is ControlFlowException) throw e
 

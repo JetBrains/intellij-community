@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.history.ActivityId;
@@ -42,7 +42,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
   protected abstract Change @Nullable [] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate);
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     VirtualFile baseDir = Objects.requireNonNull(project.getBaseDir());

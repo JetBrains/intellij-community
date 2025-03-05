@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -13,6 +13,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiMethodUtil;
@@ -33,7 +34,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   private JPanel myWholePanel;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myMainClass;
   private CommonJavaParametersPanel myCommonProgramParameters;
-  private LabeledComponent<ModuleDescriptionsComboBox> myModule;
+  private LabeledComponentNoThrow<ModuleDescriptionsComboBox> myModule;
   private LabeledComponent<JBCheckBox> myIncludeProvidedDeps;
   private JrePathEditor myJrePathEditor;
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
@@ -95,8 +96,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     hideUnsupportedFieldsIfNeeded();
   }
 
-  @NotNull
-  private static String getInitialMainClassName(@NotNull ApplicationConfiguration configuration) {
+  private static @NotNull String getInitialMainClassName(@NotNull ApplicationConfiguration configuration) {
     return configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "";
   }
 
@@ -108,9 +108,8 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     return myCommonProgramParameters;
   }
 
-  @NotNull
   @Override
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     return myWholePanel;
   }
 
@@ -119,8 +118,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myShortenClasspathModeCombo = new LabeledComponent<>();
   }
 
-  @NotNull
-  static JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
+  static @NotNull JavaCodeFragment.VisibilityChecker getVisibilityChecker(@NotNull ConfigurationModuleSelector selector) {
     return (declaration, place) -> {
       if (declaration instanceof PsiClass aClass) {
         if (ConfigurationUtil.MAIN_CLASS.value(aClass) && PsiMethodUtil.findMainMethod(aClass) != null ||

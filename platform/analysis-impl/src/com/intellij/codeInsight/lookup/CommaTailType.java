@@ -24,6 +24,7 @@ public class CommaTailType extends TailType {
     return tailOffset;
   }
 
+  @Override
   public String toString() {
     return "COMMA";
   }

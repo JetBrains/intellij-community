@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;
@@ -51,12 +51,11 @@ import java.util.Objects;
 /**
  * Registers "Coverage" tab in Java run configurations
  */
-public class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
-
+final class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
   private JavaTargetDependentParameters myTargetDependentParameters;
 
   @Override
-  public void attachToProcess(@NotNull final RunConfigurationBase configuration, @NotNull ProcessHandler handler, RunnerSettings runnerSettings) {
+  public void attachToProcess(final @NotNull RunConfigurationBase configuration, @NotNull ProcessHandler handler, RunnerSettings runnerSettings) {
     if (myTargetDependentParameters == null || myTargetDependentParameters.getTargetEnvironment() == null) {
       CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
       return;
@@ -65,7 +64,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (runnerSettings instanceof CoverageRunnerData) {
       handler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(@NotNull final ProcessEvent event) {
+        public void processTerminated(final @NotNull ProcessEvent event) {
           new Task.Backgroundable(configuration.getProject(),
                                   JavaCoverageBundle.message("download.coverage.report.from.target.progress.title")) {
             @Override
@@ -95,8 +94,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  @Nullable
-  public SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
+  public @Nullable SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
     return new CoverageConfigurable(configuration);
   }
 
@@ -110,9 +108,8 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return CoverageEngine.getEditorTitle();
   }
 
-  @NotNull
   @Override
-  public String getSerializationId() {
+  public @NotNull String getSerializationId() {
     return "coverage";
   }
 
@@ -154,7 +151,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void readExternal(@NotNull final RunConfigurationBase runConfiguration, @NotNull Element element) throws InvalidDataException {
+  public void readExternal(final @NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws InvalidDataException {
      if (!isApplicableFor(runConfiguration)) {
       return;
     }
@@ -279,7 +276,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
+  public boolean isApplicableFor(final @NotNull RunConfigurationBase configuration) {
     return CoverageEnabledConfiguration.isApplicableTo(configuration);
   }
 

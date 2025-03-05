@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
@@ -110,7 +110,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
     }
   }
 
-  protected GlobalInspectionContextImpl runTool(@NotNull final String testName,
+  protected GlobalInspectionContextImpl runTool(final @NotNull String testName,
                                                 @NotNull InspectionToolWrapper<?,?> toolWrapper,
                                                 List<? extends InspectionToolWrapper<?, ?>> tools) {
     File file = new File(getTestDataPath(), testName);
@@ -143,10 +143,9 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
     return globalContext;
   }
 
-  @NotNull
-  private static List<InspectionToolWrapper<?, ?>> getTools(boolean runDeadCodeFirst,
-                                                            @NotNull InspectionToolWrapper<?,?> toolWrapper,
-                                                            InspectionToolWrapper<?,?> @NotNull [] additional) {
+  private static @NotNull List<InspectionToolWrapper<?, ?>> getTools(boolean runDeadCodeFirst,
+                                                                     @NotNull InspectionToolWrapper<?,?> toolWrapper,
+                                                                     InspectionToolWrapper<?,?> @NotNull [] additional) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = new ArrayList<>();
     if (runDeadCodeFirst) {
       toolWrappers.add(getUnusedDeclarationWrapper());
@@ -156,15 +155,13 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
     return toolWrappers;
   }
 
-  @NotNull
-  protected AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
+  protected @NotNull AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
     PsiManager psiManager = PsiManager.getInstance(getProject());
     return new AnalysisScope(psiManager.findDirectory(sourceDir));
   }
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return ourDescriptor;
   }
 
@@ -172,9 +169,8 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   protected void setUp() throws Exception {
     super.setUp();
     myUnusedCodeExtension = new EntryPoint() {
-      @NotNull
       @Override
-      public String getDisplayName() {
+      public @NotNull String getDisplayName() {
         return "duh";
       }
 
@@ -227,8 +223,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
   }
 
   @Override
-  @NonNls
-  protected String getTestDataPath() {
+  protected @NonNls String getTestDataPath() {
     return PathManagerEx.getTestDataPath() + "/inspection/";
   }
 }

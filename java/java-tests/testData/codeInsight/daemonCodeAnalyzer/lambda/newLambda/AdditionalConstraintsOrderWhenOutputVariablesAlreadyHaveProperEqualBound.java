@@ -6,7 +6,7 @@ import java.util.function.Function;
 
 class Test {
   {
-    final Map<Comparable, List<Collection<?>>> families = <error descr="Incompatible types. Found: 'java.util.Map<java.lang.Integer,java.util.List<java.lang.Object>>', required: 'java.util.Map<java.lang.Comparable,java.util.List<java.util.Collection<?>>>'">sortingMerge((s) -> 0);</error>
+    final Map<Comparable, List<Collection<?>>> families = <error descr="Incompatible types. Found: 'java.util.Map<java.lang.Integer,java.util.List<java.lang.Object>>', required: 'java.util.Map<java.lang.Comparable,java.util.List<java.util.Collection<?>>>'">sortingMerge</error>((s) -> 0);
   }
 
   private <C extends Comparable<C>, T> Map<C, List<T>> sortingMerge(Function<T, C> keyFunction) {

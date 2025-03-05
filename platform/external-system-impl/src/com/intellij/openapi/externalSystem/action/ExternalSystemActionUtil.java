@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -9,18 +9,10 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.module.Module;
-import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeCellRenderer;
-import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.List;
+import java.awt.event.InputEvent;
 import java.util.*;
 
 /**
@@ -32,7 +24,7 @@ public final class ExternalSystemActionUtil {
     executeAction(actionId, "", e);
   }
 
-  public static void executeAction(final String actionId, @NotNull final String place, final InputEvent e) {
+  public static void executeAction(final String actionId, final @NotNull String place, final InputEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction action = actionManager.getAction(actionId);
     if (action != null) {
@@ -40,8 +32,7 @@ public final class ExternalSystemActionUtil {
     }
   }
 
-  @Nullable
-  public static Module getModule(DataContext context) {
+  public static @Nullable Module getModule(DataContext context) {
     final Module module = PlatformCoreDataKeys.MODULE.getData(context);
     return module != null ? module : LangDataKeys.MODULE_CONTEXT.getData(context);
   }
@@ -57,8 +48,7 @@ public final class ExternalSystemActionUtil {
     chooser.selectElements(selection);
   }
 
-  @NotNull
-  public static ExternalTaskExecutionInfo buildTaskInfo(@NotNull TaskData task) {
+  public static @NotNull ExternalTaskExecutionInfo buildTaskInfo(@NotNull TaskData task) {
     ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
     settings.setExternalProjectPath(task.getLinkedExternalProjectPath());
     settings.setTaskNames(Collections.singletonList(task.getName()));

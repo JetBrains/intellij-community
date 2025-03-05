@@ -6,8 +6,6 @@ import com.intellij.openapi.util.text.LineTokenizer
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtStringTemplateEntry
-import kotlin.text.isNotEmpty
 
 class TemplateTokenSequence(
     private val inputString: String,

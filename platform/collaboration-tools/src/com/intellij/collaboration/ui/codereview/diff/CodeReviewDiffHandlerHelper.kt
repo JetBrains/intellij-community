@@ -20,10 +20,14 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Can be used as a delegate for a service which is supposed to provide diff UI
+ *
+ * [AsyncDiffRequestProcessorFactory] should be used instead
  */
+@ApiStatus.Obsolete
 class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main.immediate)
 

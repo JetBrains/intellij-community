@@ -9,6 +9,7 @@ f:com.intellij.platform.backend.observation.Observation
 - f:awaitConfiguration(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - bs:awaitConfiguration$default(com.intellij.platform.backend.observation.Observation,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:configurationFlow(com.intellij.openapi.project.Project):kotlinx.coroutines.flow.StateFlow
+- f:dumpAwaitedActivitiesToString():java.lang.String
 f:com.intellij.platform.backend.observation.TrackingUtil
 - sf:launchTracked(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):V
 - bs:launchTracked$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):V

@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-private val DEFAULT_SYNC_TIMEOUT: Duration = 10.minutes
+val DEFAULT_SYNC_TIMEOUT: Duration = 10.minutes
 
 private object TestGradleProjectConfigurationActivityKey: ActivityKey {
   override val presentableName: @Nls String

@@ -3,6 +3,6 @@ package org.jetbrains.intellij.build
 
 /**
  * Full name of a keychain identity (Applications > Utilities > Keychain Access).
- * More info in [SIGNING IDENTITIES](https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/codesign.1.html).
+ * More info in the `SIGNING IDENTITIES` section of the `man codesign` Terminal command output.
  */
 data class MacOsCodesignIdentity(val value: String)

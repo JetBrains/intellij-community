@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.TextRange;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExceptionWorker {
-  @NonNls private static final String AT = "at";
+  private static final @NonNls String AT = "at";
   private static final String AT_PREFIX = AT + " ";
   private static final String STANDALONE_AT = " " + AT + " ";
 
@@ -81,8 +81,7 @@ public class ExceptionWorker {
     return singleRParen;
   }
 
-  @Nullable
-  public static ParsedLine parseExceptionLine(@NotNull String line) {
+  public static @Nullable ParsedLine parseExceptionLine(@NotNull String line) {
     ParsedLine result = parseNormalStackTraceLine(line);
     if (result == null) result = parseYourKitLine(line);
     if (result == null) result = parseForcedLine(line);
@@ -90,21 +89,18 @@ public class ExceptionWorker {
     return result;
   }
 
-  @Nullable
-  private static ParsedLine parseNormalStackTraceLine(@NotNull String line) {
+  private static @Nullable ParsedLine parseNormalStackTraceLine(@NotNull String line) {
     return parseStackTraceLine(line, false);
   }
 
-  @Nullable
-  private static ParsedLine parseLinchekLine(@NotNull String line) {
+  private static @Nullable ParsedLine parseLinchekLine(@NotNull String line) {
     if (line.startsWith("|")) {
       return parseStackTraceLine(line, true);
     }
     return null;
   }
 
-  @Nullable
-  private static ParsedLine parseStackTraceLine(@NotNull String line, boolean searchForRParenOnlyAfterAt) {
+  private static @Nullable ParsedLine parseStackTraceLine(@NotNull String line, boolean searchForRParenOnlyAfterAt) {
     int startIdx = findAtPrefix(line);
     int rParenIdx = findRParenAfterLocation(line, searchForRParenOnlyAfterAt ? startIdx : 0);
     if (rParenIdx < 0) return null;
@@ -139,8 +135,7 @@ public class ExceptionWorker {
                                             lParenIdx + 1, rParenIdx, line);
   }
 
-  @NotNull
-  private static TextRange trimRange(@NotNull String line, @NotNull TextRange range) {
+  private static @NotNull TextRange trimRange(@NotNull String line, @NotNull TextRange range) {
     int start = handleSpaces(line, range.getStartOffset(), 1);
     int end = handleSpaces(line, range.getEndOffset(), -1);
     if (start != range.getStartOffset() || end != range.getEndOffset()) {
@@ -149,8 +144,7 @@ public class ExceptionWorker {
     return range;
   }
 
-  @Nullable
-  private static ParsedLine parseYourKitLine(@NotNull String line) {
+  private static @Nullable ParsedLine parseYourKitLine(@NotNull String line) {
     int lineEnd = line.length() - 1;
     if (lineEnd > 0 && line.charAt(lineEnd) == '\n') lineEnd--;
     if (lineEnd > 0 && Character.isDigit(line.charAt(lineEnd))) {
@@ -169,8 +163,7 @@ public class ExceptionWorker {
     return null;
   }
 
-  @Nullable
-  private static ParsedLine parseForcedLine(@NotNull String line) {
+  private static @Nullable ParsedLine parseForcedLine(@NotNull String line) {
     String dash = "- ";
     if (!line.trim().startsWith(dash)) return null;
 
@@ -213,10 +206,10 @@ public class ExceptionWorker {
   }
 
   public static class ParsedLine {
-    @NotNull public final TextRange classFqnRange;
-    @NotNull public final TextRange methodNameRange;
-    @NotNull public final TextRange fileLineRange;
-    @Nullable public final String fileName;
+    public final @NotNull TextRange classFqnRange;
+    public final @NotNull TextRange methodNameRange;
+    public final @NotNull TextRange fileLineRange;
+    public final @Nullable String fileName;
     public final int lineNumber;
 
     ParsedLine(@NotNull TextRange classFqnRange,
@@ -229,10 +222,9 @@ public class ExceptionWorker {
       this.lineNumber = lineNumber;
     }
 
-    @Nullable
-    private static ParsedLine createFromFileAndLine(@NotNull TextRange classFqnRange,
-                                                    @NotNull TextRange methodNameRange,
-                                                    int fileLineStart, int fileLineEnd, @NotNull String line) {
+    private static @Nullable ParsedLine createFromFileAndLine(@NotNull TextRange classFqnRange,
+                                                              @NotNull TextRange methodNameRange,
+                                                              int fileLineStart, int fileLineEnd, @NotNull String line) {
       TextRange fileLineRange = TextRange.create(fileLineStart, fileLineEnd);
       String fileAndLine = fileLineRange.substring(line);
 

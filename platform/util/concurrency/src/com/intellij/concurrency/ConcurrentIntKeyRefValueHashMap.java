@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.reference.SoftReference;
@@ -19,8 +19,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   private final ConcurrentIntObjectHashMap<IntReference<V>> myMap = new ConcurrentIntObjectHashMap<>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
-  @NotNull
-  protected abstract IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue);
+  protected abstract @NotNull IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue);
 
   interface IntReference<V> extends Supplier<V> {
     int getKey();
@@ -38,9 +37,20 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     }
   }
 
-  @NotNull
+
   @Override
-  public V cacheOrGet(int key, @NotNull V value) {
+  public V getOrDefault(int key, V defaultValue) {
+    V v;
+    return (v = get(key)) == null ? defaultValue : v;
+  }
+
+  @Override
+  public final V replace(int key, @NotNull V value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final @NotNull V cacheOrGet(int key, @NotNull V value) {
     IntReference<V> newRef = createReference(key, value, myQueue);
     V result;
     while (true) {
@@ -100,13 +110,11 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     return SoftReference.deref(ref);
   }
 
-  @NotNull
-  private static IncorrectOperationException pointlessContainsKey() {
+  private static @NotNull IncorrectOperationException pointlessContainsKey() {
     return new IncorrectOperationException("containsKey() makes no sense for weak/soft map because GC can clear the value any moment now");
   }
 
-  @NotNull
-  private static IncorrectOperationException pointlessContainsValue() {
+  private static @NotNull IncorrectOperationException pointlessContainsValue() {
     return new IncorrectOperationException("containsValue() makes no sense for weak/soft map because GC can clear the key any moment now");
   }
 
@@ -131,16 +139,14 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     return myMap.keys();
   }
 
-  @NotNull
   @Override
-  public Set<Entry<V>> entrySet() {
+  public @NotNull Set<Entry<V>> entrySet() {
     return new MyEntrySetView();
   }
 
   private final class MyEntrySetView extends AbstractSet<Entry<V>> {
-    @NotNull
     @Override
-    public Iterator<Entry<V>> iterator() {
+    public @NotNull Iterator<Entry<V>> iterator() {
       return entriesIterator();
     }
 
@@ -150,8 +156,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     }
   }
 
-  @NotNull
-  private Iterator<Entry<V>> entriesIterator() {
+  private @NotNull Iterator<Entry<V>> entriesIterator() {
     final Iterator<Entry<IntReference<V>>> entryIterator = myMap.entrySet().iterator();
     return new Iterator<>() {
       private Entry<V> nextVEntry;
@@ -213,8 +218,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   }
 
   @Override
-  @NotNull
-  public Enumeration<V> elements() {
+  public @NotNull Enumeration<V> elements() {
     final Enumeration<IntReference<V>> elementRefs = myMap.elements();
     return new Enumeration<>() {
       private V findNextRef() {

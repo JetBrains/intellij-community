@@ -35,7 +35,7 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
     }
   }
 
-  //@ParameterizedTest
+  @ParameterizedTest
   @BaseGradleVersionSource
   fun testCompletionForBundles(gradleVersion: GradleVersion) {
     test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
@@ -86,8 +86,8 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
 
   companion object {
 
-    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") {
-      withSettingsFile {
+    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleVersionCatalogs-completion")
       }
       withFile("gradle/libs.versions.toml", /* language=TOML */ """
@@ -110,7 +110,7 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
     }
 
     private val JAVA_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion-java") { gradleVersion ->
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleVersionCatalogs-completion-java")
       }
       withBuildFile(gradleVersion) {

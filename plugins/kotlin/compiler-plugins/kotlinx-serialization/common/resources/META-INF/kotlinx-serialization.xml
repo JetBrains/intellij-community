@@ -7,7 +7,6 @@
     </extensionPoints>
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
         <syntheticResolveExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEResolveExtension"/>
-        <jsSyntheticTranslateExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEJsExtension"/>
         <irGenerationExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEIrExtension"/>
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.extensions.SerializationIDEContainerContributor"/>
         <quickFixContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.quickfixes.SerializationQuickFixContributor"/>

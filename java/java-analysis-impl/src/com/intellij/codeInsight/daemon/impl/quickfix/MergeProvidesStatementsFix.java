@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -19,29 +19,24 @@ public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProv
     myInterfaceName = interfaceName;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return QuickFixBundle.message("java.9.merge.module.statements.fix.name", PsiKeyword.PROVIDES, myInterfaceName);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("java.9.merge.module.statements.fix.family.name", PsiKeyword.PROVIDES);
   }
 
-  @NotNull
   @Override
-  protected String getReplacementText(@NotNull List<? extends PsiProvidesStatement> statementsToMerge) {
+  protected @NotNull String getReplacementText(@NotNull List<? extends PsiProvidesStatement> statementsToMerge) {
     final List<String> implementationNames = getImplementationNames(statementsToMerge);
     LOG.assertTrue(!implementationNames.isEmpty());
     return PsiKeyword.PROVIDES + ' ' + myInterfaceName + ' ' + PsiKeyword.WITH + ' ' + joinUniqueNames(implementationNames);
   }
 
-  @NotNull
-  private static List<String> getImplementationNames(@NotNull List<? extends PsiProvidesStatement> statements) {
+  private static @NotNull List<String> getImplementationNames(@NotNull List<? extends PsiProvidesStatement> statements) {
     return StreamEx.of(statements)
       .map(PsiProvidesStatement::getImplementationList)
       .nonNull()
@@ -52,9 +47,8 @@ public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProv
       .toList();
   }
 
-  @NotNull
   @Override
-  protected List<PsiProvidesStatement> getStatementsToMerge(@NotNull PsiJavaModule javaModule) {
+  protected @NotNull List<PsiProvidesStatement> getStatementsToMerge(@NotNull PsiJavaModule javaModule) {
     return StreamEx.of(javaModule.getProvides().iterator())
       .filter(statement -> {
         final PsiJavaCodeReferenceElement reference = statement.getInterfaceReference();
@@ -63,8 +57,7 @@ public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProv
       .toList();
   }
 
-  @Nullable
-  public static MergeModuleStatementsFix<?> createFix(@Nullable PsiProvidesStatement statement) {
+  public static @Nullable MergeModuleStatementsFix<?> createFix(@Nullable PsiProvidesStatement statement) {
     if (statement != null) {
       final PsiElement parent = statement.getParent();
       if (parent instanceof PsiJavaModule) {

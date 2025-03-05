@@ -88,7 +88,7 @@ public class SphinxBaseCommand {
     }
   }
 
-  public void execute(@NotNull final Module module) {
+  public void execute(final @NotNull Module module) {
     final Project project = module.getProject();
 
     try {
@@ -107,8 +107,7 @@ public class SphinxBaseCommand {
     }
   }
 
-  @Nullable
-  protected Runnable getAfterTask(final Module module) {
+  protected @Nullable Runnable getAfterTask(final Module module) {
     return () -> {
       final ReSTService service = ReSTService.getInstance(module);
       LocalFileSystem.getInstance().refreshAndFindFileByPath(service.getWorkdir());

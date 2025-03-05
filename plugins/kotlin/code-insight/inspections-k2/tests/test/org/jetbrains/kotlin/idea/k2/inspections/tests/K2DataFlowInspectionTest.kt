@@ -37,6 +37,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testCallWithSideEffect() = doTest()
     fun testCastArray() = doTest()
     fun testCastGenericMethodReturn() = doTest()
+    fun testCharExtension() = doTest()
     fun testClassRef() = doTest()
     fun testCollectionConstructors() = doTest()
     fun testCompareInLoop() = doTest()
@@ -60,31 +61,43 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testInlineLambda() = doTest()
     fun testInlineStandardCalls() = doTest()
     fun testIndices() = doTest()
+    fun testErrorTypes() = doTest()
+    fun testJavaFields() {
+        myFixture.addClass("""
+            public class Point {
+                public int x, y;
+            }""".trimIndent()
+        )
+        doTest()
+    }
     fun testJavaMethods() = doTest()
     fun testJavaConstant() = doTest()
     fun testJavaType() = doTest()
     fun testLambda() = doTest()
     fun testLanguageConstructs() = doTest()
+    fun testLastIndex() = doTest()
     fun testLetNonLocalReturn() = doTest()
     fun testList() = doTest()
     fun testListApply() = doTest()
     fun testMapEmpty() = doTest()
     fun testMath() = doTest()
     fun testMembers() = doTest()
+    fun testNestedLoopLabel() = doTest()
+    fun testNestedThis() = doTest()
     fun testNothingType() = doTest()
     fun testPlatformType() {
         // KTIJ-22430
-        myFixture.addClass(
-            "public class SomeJavaUtil {\n" +
-                    "\n" +
-                    "    public static Boolean b() {\n" +
-                    "        return false;\n" +
-                    "    }\n" +
-                    "}"
+        myFixture.addClass("""
+            public class SomeJavaUtil {
+                public static Boolean b() {
+                    return false;
+                }
+            }""".trimIndent()
         )
         doTest()
     }
     fun testPrimitiveAndNullK2() = doTest()
+    fun testPrimitiveBound() = doTest()
     fun testProperty() = doTest()
     fun testQualifierK2() = doTest()
     fun testRangeAnnotation() = doTest()
@@ -113,6 +126,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testWhenInLambdaK2() = doTest()
     fun testWhenIsObject() = doTest()
     fun testWhenGuarded() = doTest()
+    fun testWhenGuardedElse() = doTest()
     fun testWhileLoop() = doTest()
 
     fun doTest(warnOnConstantRefs: Boolean = true) {

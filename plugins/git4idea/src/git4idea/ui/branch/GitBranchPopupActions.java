@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.MultiRootBranches;
@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
@@ -21,12 +20,11 @@ import com.intellij.util.ui.EmptyIcon;
 import git4idea.*;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.branch.GitBrancher;
-import git4idea.branch.GitNewBranchDialog;
-import git4idea.branch.GitNewBranchOptions;
 import git4idea.config.GitSharedSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.remote.hosting.GitRemoteBranchesUtil;
 import git4idea.repo.GitRepository;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,15 +34,17 @@ import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.*;
-import static git4idea.GitReference.BRANCH_NAME_HASHING_STRATEGY;
+import static com.intellij.util.containers.ContainerUtil.map2Array;
+import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
-import static git4idea.ui.branch.GitBranchActionsUtilKt.*;
+import static git4idea.ui.branch.GitBranchActionsUtilKt.GIT_SINGLE_REF_ACTION_GROUP;
+import static git4idea.ui.branch.GitBranchActionsUtilKt.createOrCheckoutNewBranch;
 
 public final class GitBranchPopupActions {
 
+  @Language("devkit-action-id")
   public static final @NonNls String EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP = "Git.Experimental.Branch.Popup.Actions";
 
   private static final int MAX_BRANCH_NAME_LENGTH = 40;
@@ -277,7 +277,7 @@ public final class GitBranchPopupActions {
      * @deprecated use {@link GitBrancher}
      */
     @Deprecated(forRemoval = true)
-    public final static class CheckoutAction {
+    public static final class CheckoutAction {
       /**
        * @deprecated use {@link GitBrancher#checkout(String, boolean, List, Runnable))}
        */

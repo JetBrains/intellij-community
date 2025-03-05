@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +46,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * <p>
  */
 @ApiStatus.Internal
-final class FilePageCache {
+public final class FilePageCache {
   private static final Logger LOG = Logger.getInstance(FilePageCache.class);
   //@formatter:off
   /**

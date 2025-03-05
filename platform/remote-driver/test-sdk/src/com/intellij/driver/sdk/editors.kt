@@ -4,8 +4,10 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.remoteDev.GuestNavigationService
 import java.awt.Point
+import java.awt.Rectangle
 import kotlin.time.Duration.Companion.seconds
 
 @Remote("com.intellij.openapi.editor.Editor")
@@ -17,15 +19,21 @@ interface Editor {
   fun getVirtualFile(): VirtualFile
   fun getLineHeight(): Int
   fun offsetToVisualPosition(offset: Int): VisualPosition
-  fun visualPositionToXY(visible: VisualPosition): Point
+  fun visualPositionToXY(visualPosition: VisualPosition): Point
+  fun offsetToXY(offset: Int): Point
   fun getInlayModel(): InlayModel
   fun getColorsScheme(): EditorColorsScheme
+  fun logicalPositionToOffset(logicalPosition: LogicalPosition): Int
+  fun getSelectionModel(): SelectionModel
+  fun getSoftWrapModel(): SoftWrapModel
 }
+
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
   fun getLine(): Int
   fun getColumn(): Int
 }
+
 @Remote("com.intellij.openapi.editor.Document")
 interface Document {
   fun getText(): String
@@ -49,26 +57,32 @@ interface InlayModel {
 interface Inlay {
   fun getRenderer(): EditorCustomElementRenderer
   fun getOffset(): Int
+  fun getBounds(): Rectangle
+}
+
+@Remote("com.intellij.openapi.editor.SoftWrapModel")
+interface SoftWrapModel {
+  fun isSoftWrappingEnabled(): Boolean
 }
 
 @Remote("com.intellij.openapi.editor.EditorCustomElementRenderer")
-interface EditorCustomElementRenderer{
+interface EditorCustomElementRenderer {
   fun getText(): String?
 }
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer")
-interface DeclarativeInlayRenderer{
+interface DeclarativeInlayRenderer {
   fun getPresentationList(): InlayPresentationList
 }
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList")
-interface InlayPresentationList{
+interface InlayPresentationList {
   fun getEntries(): Array<TextInlayPresentationEntry>
 }
 
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry")
-interface TextInlayPresentationEntry{
+interface TextInlayPresentationEntry {
   fun getText(): String
 }
 
@@ -80,8 +94,8 @@ interface LogicalPosition {
   fun getColumn(): Int
 }
 
-fun Driver.logicalPosition(line: Int, column: Int): LogicalPosition {
-  return new(LogicalPosition::class, line, column)
+fun Driver.logicalPosition(line: Int, column: Int, rdTarget: RdTarget = RdTarget.DEFAULT): LogicalPosition {
+  return new(LogicalPosition::class, line, column, rdTarget = rdTarget)
 }
 
 @Remote("com.intellij.openapi.fileEditor.FileEditor")
@@ -98,36 +112,45 @@ interface EditorColorsScheme {
   fun getEditorFontSize(): Int
 }
 
+@Remote("com.intellij.openapi.editor.SelectionModel")
+interface SelectionModel {
+  fun setSelection(startOffset: Int, endOffset: Int)
+  fun getSelectedText(): String?
+  fun removeSelection()
+}
+
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
   return withContext(OnDispatcher.EDT) {
     service<FileEditorManager>(project ?: singleProject()).openFile(file, true, false)
   }
 }
 
-fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = withContext {
-  val openedFile = if (!isRemoteIdeMode) {
-    val fileToOpen = findFile(relativePath = relativePath, project = project)
-    if (fileToOpen == null) {
-      throw IllegalArgumentException("Fail to find file $relativePath")
+fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = step("Open file $relativePath") {
+  withContext {
+    val openedFile = if (!isRemoteIdeMode) {
+      val fileToOpen = findFile(relativePath = relativePath, project = project)
+      if (fileToOpen == null) {
+        throw IllegalArgumentException("Fail to find file $relativePath")
+      }
+      openEditor(fileToOpen, project)
+      fileToOpen
     }
-    openEditor(fileToOpen, project)
-    fileToOpen
-  }
-  else {
-    val service = service(GuestNavigationService::class, project)
-    withContext(OnDispatcher.EDT) {
-      service.navigateViaBackend(relativePath, 0)
-      waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
-              getter = {
-                service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
-              },
-              checker = { virtualFile ->
-                virtualFile != null &&
-                virtualFile.getPath().contains(relativePath)
-              })!!
+    else {
+      val service = service(GuestNavigationService::class, project)
+      withContext(OnDispatcher.EDT) {
+        service.navigateViaBackend(relativePath, 0)
+        waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
+                getter = {
+                  service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
+                },
+                checker = { virtualFile ->
+                  virtualFile != null &&
+                  virtualFile.getPath().contains(relativePath)
+                })!!
+      }
     }
-  }
-  if (waitForCodeAnalysis) {
-    waitForCodeAnalysis(project, openedFile)
+    if (waitForCodeAnalysis) {
+      waitForCodeAnalysis(project, openedFile)
+    }
   }
 }

@@ -47,7 +47,7 @@ public class ShColorPage implements ColorSettingsPage {
       new AttributesDescriptor(ShBundle.message("sh.color.function.declaration"), ShHighlighterColors.FUNCTION_DECLARATION)
   };
 
-  @NonNls private static final HashMap<String, TextAttributesKey> TAG_DESCRIPTOR_MAP = new HashMap<>();
+  private static final @NonNls HashMap<String, TextAttributesKey> TAG_DESCRIPTOR_MAP = new HashMap<>();
   static {
     TAG_DESCRIPTOR_MAP.put("var", ShHighlighterColors.VARIABLE_DECLARATION);
     TAG_DESCRIPTOR_MAP.put("composed_var", ShHighlighterColors.COMPOSED_VARIABLE);
@@ -56,27 +56,23 @@ public class ShColorPage implements ColorSettingsPage {
     TAG_DESCRIPTOR_MAP.put("subshell", ShHighlighterColors.SUBSHELL_COMMAND);
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return ShLanguage.INSTANCE.getID();
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return ShFileType.INSTANCE.getIcon();
   }
 
-  @NotNull
   @Override
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     return SyntaxHighlighterFactory.getSyntaxHighlighter(ShLanguage.INSTANCE, null, null);
   }
 
-  @Nullable
   @Override
-  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return TAG_DESCRIPTOR_MAP;
   }
 
@@ -90,9 +86,8 @@ public class ShColorPage implements ColorSettingsPage {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return
       """
         #!/usr/bin/env sh

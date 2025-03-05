@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.indexer;
 
 import org.codehaus.plexus.*;
@@ -95,9 +95,8 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
     return myPlexusContainer;
   }
 
-  @NotNull
   @Override
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) throws RemoteException {
+  public @NotNull MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
   }
 
@@ -115,18 +114,17 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
     throw new UnsupportedOperationException("indexing server");
   }
 
-  @Nullable
   @Override
-  public MavenPullServerLogger createPullLogger(MavenToken token) throws RemoteException {
+  public @Nullable MavenPullServerLogger createPullLogger(MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
   }
 
-  @Nullable
   @Override
-  public MavenPullDownloadListener createPullDownloadListener(MavenToken token) throws RemoteException {
+  public @Nullable MavenPullDownloadListener createPullDownloadListener(MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
   }
 
+  @Override
   public MavenServerStatus getDebugStatus(boolean clean) {
     MavenServerStatus result = new MavenServerStatus();
     result.statusCollected = false;

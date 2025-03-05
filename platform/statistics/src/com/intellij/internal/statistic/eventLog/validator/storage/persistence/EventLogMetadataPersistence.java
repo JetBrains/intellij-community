@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,16 +16,14 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
   public static final String EVENTS_SCHEME_FILE = "events-scheme.json";
 
   private static final Logger LOG = Logger.getInstance(EventLogMetadataPersistence.class);
-  @NotNull
-  private final String myRecorderId;
+  private final @NotNull String myRecorderId;
 
   public EventLogMetadataPersistence(@NotNull String recorderId) {
     myRecorderId = recorderId;
   }
 
   @Override
-  @Nullable
-  public String getCachedEventsScheme() {
+  public @Nullable String getCachedEventsScheme() {
     try {
       Path file = getEventsSchemeFile();
       if (Files.exists(file) && Files.isRegularFile(file)) {

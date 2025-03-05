@@ -7,13 +7,9 @@ import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-
 
 public class JavaCallHierarchyProvider implements HierarchyProvider {
   @Override
@@ -21,7 +17,8 @@ public class JavaCallHierarchyProvider implements HierarchyProvider {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    if (element instanceof PsiField) return element;
+    if (element instanceof PsiField || element instanceof PsiRecordComponent
+        || element instanceof PsiClass aClass && aClass.isRecord()) return element;
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
   }
 

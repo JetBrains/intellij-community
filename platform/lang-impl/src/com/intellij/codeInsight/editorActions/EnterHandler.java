@@ -613,7 +613,7 @@ public class EnterHandler extends BaseEnterHandler {
           if (docProvider.findExistingDocComment(comment) != comment) return comment;
           String docStub = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> docProvider.generateDocumentationContentStub(comment));
 
-          if (docStub != null && docStub.length() != 0) {
+          if (docStub != null && !docStub.isEmpty()) {
             myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
             myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
             myDocument.insertString(myOffset, docStub);

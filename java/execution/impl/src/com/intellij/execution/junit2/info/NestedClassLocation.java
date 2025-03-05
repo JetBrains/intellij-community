@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.info;
 
 import com.intellij.execution.Location;
@@ -20,7 +20,7 @@ public class NestedClassLocation extends Location<PsiClass> {
   private final PsiClass myNestedClass;
   private final Location<? extends PsiClass> myClassLocation;
 
-  public NestedClassLocation(@NotNull final Project project, @NotNull final PsiClass nestedClass, @NotNull final Location<? extends PsiClass> classLocation) {
+  public NestedClassLocation(final @NotNull Project project, final @NotNull PsiClass nestedClass, final @NotNull Location<? extends PsiClass> classLocation) {
     myProject = project;
     myNestedClass = nestedClass;
     myClassLocation = classLocation;
@@ -36,20 +36,17 @@ public class NestedClassLocation extends Location<PsiClass> {
   }
 
   @Override
-  @NotNull
-  public PsiClass getPsiElement() {
+  public @NotNull PsiClass getPsiElement() {
     return myNestedClass;
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @Nullable
   @Override
-  public Module getModule() {
+  public @Nullable Module getModule() {
     return myClassLocation.getModule();
   }
 
@@ -58,8 +55,7 @@ public class NestedClassLocation extends Location<PsiClass> {
   }
 
   @Override
-  @NotNull
-  public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
+  public @NotNull <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
     final Iterator<Location<T>> fromClass = myClassLocation.getAncestors(ancestorClass, false);
     if (strict) return fromClass;
     return new Iterator<>() {

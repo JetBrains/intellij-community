@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,6 +15,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -60,6 +61,7 @@ import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -185,6 +187,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     PsiUtil.setModifierProperty(result, PsiModifier.ABSTRACT, aClass.isInterface() && method.hasModifierProperty(PsiModifier.ABSTRACT));
     PsiUtil.setModifierProperty(result, PsiModifier.NATIVE, false);
 
+    if (method.isConstructor() && aClass.hasModifier(JvmModifier.FINAL) && method.hasModifier(JvmModifier.PROTECTED)) {
+      result.getModifierList().setModifierProperty(PsiModifier.PROTECTED, false);
+    }
+
     if (!toCopyJavaDoc){
       deleteDocComment(result);
     }
@@ -268,10 +274,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
   }
 
-  public static @NotNull List<PsiGenerationInfo<PsiMethod>> overrideOrImplementMethods(@NotNull PsiClass aClass,
-                                                                                       @NotNull Collection<? extends PsiMethodMember> candidates,
-                                                                                       boolean toCopyJavaDoc,
-                                                                                       boolean toInsertAtOverride)
+  public static @Unmodifiable @NotNull List<PsiGenerationInfo<PsiMethod>> overrideOrImplementMethods(@NotNull PsiClass aClass,
+                                                                                                     @NotNull Collection<? extends PsiMethodMember> candidates,
+                                                                                                     boolean toCopyJavaDoc,
+                                                                                                     boolean toInsertAtOverride)
     throws IncorrectOperationException {
     List<CandidateInfo> candidateInfos = ContainerUtil.map(candidates, s -> new CandidateInfo(s.getElement(), s.getSubstitutor()));
     final List<PsiMethod> methods = overrideOrImplementMethodCandidates(aClass, candidateInfos, toCopyJavaDoc, toInsertAtOverride);
@@ -292,7 +298,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     return result;
   }
 
-  public static @NotNull List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(@NotNull Collection<? extends PsiMethod> methods) {
+  public static @Unmodifiable @NotNull List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(@NotNull Collection<? extends PsiMethod> methods) {
     return ContainerUtil.map(methods, s -> createGenerationInfo(s));
   }
 

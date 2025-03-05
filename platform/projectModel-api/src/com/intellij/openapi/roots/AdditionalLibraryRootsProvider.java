@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +31,7 @@ public abstract class AdditionalLibraryRootsProvider {
    * @param project Project instance
    * @return a collection of {@link SyntheticLibrary}
    */
-  public @NotNull Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+  public @Unmodifiable @NotNull Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
     return Collections.emptyList();
   }
 
@@ -47,7 +48,7 @@ public abstract class AdditionalLibraryRootsProvider {
    * @param project Project instance
    * @see com.intellij.openapi.roots.WatchedRootsProvider
    */
-  public @NotNull Collection<VirtualFile> getRootsToWatch(@NotNull Project project) {
+  public @Unmodifiable @NotNull Collection<VirtualFile> getRootsToWatch(@NotNull Project project) {
     return Collections.emptyList();
   }
 }

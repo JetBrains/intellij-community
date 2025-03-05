@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jpsBootstrap
 
-import com.google.common.hash.Hashing
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
 import com.intellij.openapi.util.SystemInfo
@@ -10,6 +9,7 @@ import com.intellij.util.ExceptionUtil
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
 import org.apache.commons.cli.*
+import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.compress.archivers.examples.Archiver
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.io.file.PathUtils
@@ -407,7 +407,7 @@ class JpsBootstrapMain(args: Array<String>?) {
           }
           else {
             val length = attributes.size()
-            val sha256 = Hashing.sha256().hashBytes(Files.readAllBytes(file.toPath())).toString()
+            val sha256 = DigestUtils.sha256Hex(Files.readAllBytes(file.toPath()))
             "$file file length $length sha256 $sha256"
           }
         }

@@ -439,25 +439,43 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   private void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
 
-    for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
+    List<CommandLineInspectionProjectConfigurator> configurators = CommandLineInspectionProjectConfigurator.EP_NAME.getExtensionList();
+    List<CommandLineInspectionProjectConfigurator> enabledConfigurators =
+      isActivityBasedConfigurationEnabled()
+      ? ContainerUtil.filter(configurators, configurator -> configurator.shouldBeInvokedAlongsideActivityTracking())
+      : configurators;
+
+    for (CommandLineInspectionProjectConfigurator configurator : enabledConfigurators) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
       configurator.preConfigureProject(project, context);
     }
 
-    for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
+    for (CommandLineInspectionProjectConfigurator configurator : enabledConfigurators) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
       if (configurator.isApplicable(context)) {
         configurator.configureProject(project, context);
       }
     }
+
+
     ApplicationManager.getApplication().invokeAndWait(() -> PatchProjectUtil.patchProject(project));
+
+    if (isActivityBasedConfigurationEnabled()) {
+      ActivityUtilsKt.configureProjectWithActivities(project, configuratorContext(projectPath, scope));
+    }
+
     waitForInvokeLaterActivities();
   }
 
   private static void waitForInvokeLaterActivities() {
     for (int i = 0; i < 3; i++) {
-      ApplicationManager.getApplication().invokeAndWait(() -> { }, ModalityState.any());
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+      }, ModalityState.any());
     }
+  }
+
+  private static boolean isActivityBasedConfigurationEnabled() {
+    return Registry.is("ide.inspect.activity.based.inspections.enabled", false);
   }
 
   private void runAnalysis(Project project,
@@ -684,10 +702,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
     };
     new ProgressRunner<>(task)
-        .onThread(ProgressRunner.ThreadToUse.POOLED)
-        .withProgress(createProgressIndicator())
-        .sync()
-        .submitAndGet();
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .withProgress(createProgressIndicator())
+      .sync()
+      .submitAndGet();
   }
 
   private @NotNull ProgressIndicatorBase createProgressIndicator() {
@@ -771,7 +789,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       public @Nullable InspectionProfileImpl loadProfileByPath(@NotNull String profilePath) {
         InspectionProfileImpl inspectionProfileFromYaml = tryLoadProfileFromYaml(profilePath,
                                                                                  InspectionToolRegistrar.getInstance(),
-                                                                                 (BaseInspectionProfileManager)InspectionProjectProfileManager.getInstance(project));
+                                                                                 (BaseInspectionProfileManager)InspectionProjectProfileManager.getInstance(
+                                                                                   project));
         if (inspectionProfileFromYaml != null) return inspectionProfileFromYaml;
 
         try {
@@ -920,7 +939,8 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       super.setText(text);
       if (text == null) return;
       switch (myVerboseLevel) {
-        case 0 -> { }
+        case 0 -> {
+        }
         case 1 -> {
           String prefix = getPrefix(text);
           if (prefix.equals(lastPrefix)) {

@@ -3,9 +3,13 @@
 
 package com.intellij.openapi.progress
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicReference
+import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
@@ -17,7 +21,7 @@ import kotlin.coroutines.resume
  * Example:
  * ```
  * val suspender = coroutineSuspender()
- * launch(Dispatchers.Default + suspender) {
+ * launch(Dispatchers.Default + suspender.asContextElement()) {
  *   for (item in data) {
  *     checkCanceled()
  *     // process data
@@ -32,13 +36,14 @@ import kotlin.coroutines.resume
  * @return handle which can be used to pause and resume the coroutine
  * @see checkCanceled
  */
-fun coroutineSuspender(active: Boolean = true): CoroutineSuspender = CoroutineSuspenderElement(active)
+fun coroutineSuspender(active: Boolean = true): CoroutineSuspender = CoroutineSuspenderImpl(active)
+
+fun CoroutineSuspender.asContextElement(): CoroutineContext.Element = CoroutineSuspenderElement(this)
 
 /**
  * Implementation of this interface is thread-safe.
  */
-@ApiStatus.NonExtendable
-interface CoroutineSuspender : CoroutineContext {
+sealed interface CoroutineSuspender {
 
   fun isPaused(): Boolean
 
@@ -49,7 +54,8 @@ interface CoroutineSuspender : CoroutineContext {
 
 private val EMPTY_PAUSED_STATE: CoroutineSuspenderState = CoroutineSuspenderState.Paused(emptyArray())
 
-private sealed class CoroutineSuspenderState {
+@ApiStatus.Internal
+sealed class CoroutineSuspenderState {
   object Active : CoroutineSuspenderState()
   class Paused(val continuations: Array<Continuation<Unit>>) : CoroutineSuspenderState()
 }
@@ -60,18 +66,24 @@ private sealed class CoroutineSuspenderState {
  * The code which calls [coroutineSuspender] must store the reference somewhere,
  * because this code is responsible for pausing/resuming.
  */
-internal object CoroutineSuspenderElementKey : CoroutineContext.Key<CoroutineSuspenderElement>
+@ApiStatus.Internal
+object CoroutineSuspenderElementKey : CoroutineContext.Key<CoroutineSuspenderElement>
 
-internal class CoroutineSuspenderElement(active: Boolean)
-  : AbstractCoroutineContextElement(CoroutineSuspenderElementKey),
-    CoroutineSuspender {
+@ApiStatus.Internal
+class CoroutineSuspenderElement(val coroutineSuspender: CoroutineSuspender) : AbstractCoroutineContextElement(CoroutineSuspenderElementKey)
 
-  private val myState: AtomicReference<CoroutineSuspenderState> = AtomicReference(
-    if (active) CoroutineSuspenderState.Active else EMPTY_PAUSED_STATE
-  )
+@ApiStatus.Internal
+class CoroutineSuspenderImpl(active: Boolean) : CoroutineSuspender {
+
+  private val myState = MutableStateFlow(if (active) CoroutineSuspenderState.Active else EMPTY_PAUSED_STATE)
+
+  @TestOnly
+  val state: Flow<CoroutineSuspenderState> = myState
+
+  val isPaused: Flow<Boolean> = myState.map { it is CoroutineSuspenderState.Paused }
 
   override fun isPaused(): Boolean {
-    return myState.get() is CoroutineSuspenderState.Paused
+    return myState.value is CoroutineSuspenderState.Paused
   }
 
   override fun pause() {
@@ -79,7 +91,7 @@ internal class CoroutineSuspenderElement(active: Boolean)
   }
 
   override fun resume() {
-    val oldState = myState.getAndSet(CoroutineSuspenderState.Active)
+    val oldState = myState.getAndUpdate { CoroutineSuspenderState.Active }
     if (oldState is CoroutineSuspenderState.Paused) {
       for (suspendedContinuation in oldState.continuations) {
         suspendedContinuation.resume(Unit)
@@ -89,7 +101,7 @@ internal class CoroutineSuspenderElement(active: Boolean)
 
   suspend fun checkPaused() {
     while (true) {
-      when (val state = myState.get()) {
+      when (val state = myState.value) {
         is CoroutineSuspenderState.Active -> return // don't suspend
         is CoroutineSuspenderState.Paused -> suspendCancellableCoroutine { continuation: Continuation<Unit> ->
           val newState = CoroutineSuspenderState.Paused(state.continuations + continuation)

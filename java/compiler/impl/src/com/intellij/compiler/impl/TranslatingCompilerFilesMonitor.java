@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.InternedPath;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
@@ -13,20 +14,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystemMarker;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.FileCollectionFactory;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * A source file is scheduled for recompilation if
@@ -45,10 +49,10 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     return ApplicationManager.getApplication().getComponent(TranslatingCompilerFilesMonitor.class);
   }
 
-  private static void processRecursively(@NotNull VirtualFile fromFile, final boolean dbOnly, @NotNull Consumer<VirtualFile> processor) {
+  private static void processRecursively(@NotNull VirtualFile fromFile, final boolean dbOnly, @NotNull Consumer<? super VirtualFile> processor) {
     VfsUtilCore.visitChildrenRecursively(fromFile, new VirtualFileVisitor<Void>() {
-      @NotNull @Override
-      public Result visitFileEx(@NotNull VirtualFile file) {
+      @Override
+      public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
         ProgressManager.checkCanceled();
         if (isIgnoredByBuild(file)) {
           return SKIP_CHILDREN;
@@ -60,9 +64,8 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         return CONTINUE;
       }
 
-      @Nullable
       @Override
-      public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+      public @Nullable Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
         if (dbOnly) {
           return file.isDirectory()? ((NewVirtualFile)file).iterInDbChildren() : null;
         }
@@ -80,7 +83,7 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     return fileSystem instanceof LocalFileSystem && !(fileSystem instanceof TempFileSystemMarker);
   }
 
-  private static boolean isInContentOfOpenedProject(@NotNull final VirtualFile file) {
+  private static boolean isInContentOfOpenedProject(final @NotNull VirtualFile file) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (!project.isInitialized() || !BuildManager.getInstance().isProjectWatched(project)) {
         continue;
@@ -97,30 +100,41 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     if (events.isEmpty()) {
       return null;
     }
-    Set<File> filesChanged = FileCollectionFactory.createCanonicalFileSet();
-    Set<File> filesDeleted = FileCollectionFactory.createCanonicalFileSet();
-    List<VFileEvent> processLaterEvents = new SmartList<>();
-    for (VFileEvent event : events) {
-      if (!isToProcess(event)) {
-        continue;
-      }
-      if (isAfterProcessEvent(event)) {
-        processLaterEvents.add(event);
-      }
-      if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
-        collectPaths(event.getFile(), filesDeleted, true);
-      }
-      else if (event instanceof VFileContentChangeEvent) {
-        collectPaths(event.getFile(), filesChanged, true);
-      }
-      else {
-        handleFileRename(event, e -> collectDeletedPathsOnFileRename(e, filesDeleted));
+    ChangeSession session = new ChangeSession();
+    try {
+      for (VFileEvent event : events) {
+        if (!isToProcess(event)) {
+          continue;
+        }
+        if (isAfterProcessEvent(event)) {
+          session.processLater(event);
+        }
+        if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
+          collectPaths(event.getFile(), session::addDeleted, true);
+        }
+        else if (event instanceof VFileContentChangeEvent) {
+          collectPaths(event.getFile(), session::addChanged, true);
+        }
+        else {
+          handleFileRename(event, e -> collectDeletedPathsOnFileRename(e, session));
+        }
       }
     }
-    return processLaterEvents.isEmpty() && filesDeleted.isEmpty() && filesChanged.isEmpty()? null : new ChangeApplier() {
+    catch (ProcessCanceledException e) {
+      session.finish();
+      BuildManager.getInstance().notifyChanges(() -> BuildManager.Changes.createIncomplete());
+      throw e;
+    }
+
+    if (!session.hasChanges()) {
+      session.finish();
+      return null;
+    }
+    
+    return new ChangeApplier() {
       @Override
       public void afterVfsChange() {
-        after(processLaterEvents, filesDeleted, filesChanged);
+        after(session);
       }
     };
   }
@@ -139,7 +153,7 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     return false;
   }
 
-  private static void after(@NotNull List<? extends VFileEvent> events, Set<File> filesDeleted, Set<File> filesChanged) {
+  private static void after(ChangeSession session) {
     var changedFilesCollector = new Consumer<VirtualFile>() {
       private final Set<VirtualFile> dirsToTraverse = new SmartHashSet<>();
       
@@ -152,7 +166,7 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
             dirsToTraverse.add(file);
           }
           else {
-            collectPaths(file, filesChanged, false);
+            collectPaths(file, session::addChanged, false);
           }
         }
       }
@@ -167,7 +181,7 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
               }
               return false;
             }
-            collectPaths(root, filesChanged, true);
+            collectPaths(root, session::addChanged, true);
             processed.add(root);
           }
         }
@@ -176,43 +190,50 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         }
         return true;
       }
-
-      public boolean hasPaths() {
-        return !filesChanged.isEmpty() || !dirsToTraverse.isEmpty();
-      }
     };
 
-    for (VFileEvent event : events) {
-      if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent) {
-        changedFilesCollector.accept(event.getFile());
+    try {
+      for (VFileEvent event : session.processLaterEvents) {
+        if (event instanceof VFileMoveEvent || event instanceof VFileCreateEvent) {
+          changedFilesCollector.accept(event.getFile());
+        }
+        else if (event instanceof VFileCopyEvent copyEvent) {
+          changedFilesCollector.accept(copyEvent.findCreatedFile());
+        }
+        else {
+          handleFileRename(event, e -> changedFilesCollector.accept(e.getFile()));
+        }
       }
-      else if (event instanceof VFileCopyEvent copyEvent) {
-        changedFilesCollector.accept(copyEvent.findCreatedFile());
-      }
-      else {
-        handleFileRename(event, e -> changedFilesCollector.accept(e.getFile()));
-      }
-    }
 
-    // If a file name differs ony in case, on case-insensitive file systems such name still denotes the same file.
-    // In this situation filesDeleted and filesChanged sets will contain paths which are different only in case.
-    // Thus, the order in which BuildManager is notified, is important:
-    // first deleted paths notification and only then changed paths notification
-    BuildManager buildManager = BuildManager.getInstance();
-    buildManager.notifyFilesDeleted(filesDeleted);
-    if (changedFilesCollector.hasPaths()) {
-      buildManager.notifyFilesChanged(() -> {
-        // traversing dirs may take time and block UI thread, so traversing them in a non-blocking read-action in background
-        if (changedFilesCollector.dirsToTraverse.isEmpty()) {
-          return filesChanged;
+      // lazily calculate complete set of changes to offload the event-handling thread
+      BuildManager.getInstance().notifyChanges(new Supplier<>() {
+        BuildManager.Changes data = null;
+        @Override
+        public BuildManager.Changes get() {
+          return data != null? data : (data = calculate());
         }
-        if (ReadAction.nonBlocking(changedFilesCollector::traverseDirs).executeSynchronously()) {
-          return filesChanged;
+
+        private BuildManager.Changes calculate() {
+          try {
+            // traversing dirs may take time and block UI thread, so traversing them in a non-blocking read-action in background
+            if (changedFilesCollector.dirsToTraverse.isEmpty() || ReadAction.nonBlocking(changedFilesCollector::traverseDirs).executeSynchronously()) {
+              return session.getResult();
+            }
+            return BuildManager.Changes.createIncomplete();
+          }
+          catch (ProcessCanceledException e) {
+            return BuildManager.Changes.createIncomplete();
+          }
+          finally {
+            session.finish();
+          }
         }
-        // force FS rescan on the next build, because information from event may be incomplete
-        buildManager.clearState();
-        return Collections.emptyList();
       });
+    }
+    catch (ProcessCanceledException e) {
+      session.finish();
+      BuildManager.getInstance().notifyChanges(() -> BuildManager.Changes.createIncomplete());
+      throw e;
     }
   }
 
@@ -225,7 +246,7 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
     }
   }
 
-  private static void collectDeletedPathsOnFileRename(@NotNull VFilePropertyChangeEvent event, @NotNull Collection<? super File> filesDeleted) {
+  private static void collectDeletedPathsOnFileRename(@NotNull VFilePropertyChangeEvent event, ChangeSession session) {
     final VirtualFile eventFile = event.getFile();
     final VirtualFile parent = eventFile.getParent();
     if (parent != null) {
@@ -248,7 +269,7 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
               if (!child.equals(eventFile)) {
                 childPath += "/" + child.getName();
               }
-              filesDeleted.add(new File(childPath));
+              session.addDeletedPath(childPath);
             }
             return true;
           }
@@ -262,18 +283,18 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         });
       }
       else {
-        filesDeleted.add(new File(root));
+        session.addDeletedPath(root);
       }
     }
   }
 
-  private static void collectPaths(@Nullable VirtualFile file, @NotNull Collection<? super File> outFiles, boolean recursive) throws ProcessCanceledException {
+  private static void collectPaths(@Nullable VirtualFile file, @NotNull Consumer<? super VirtualFile> consumer, boolean recursive) throws ProcessCanceledException {
     if (file != null && !isIgnoredOrUnderIgnoredDirectory(file)) {
       if (recursive) {
-        processRecursively(file, !isInContentOfOpenedProject(file), f -> outFiles.add(new File(f.getPath())));
+        processRecursively(file, !isInContentOfOpenedProject(file), consumer);
       }
       else {
-        outFiles.add(new File(file.getPath()));
+        consumer.accept(file);
       }
     }
   }
@@ -298,5 +319,65 @@ public final class TranslatingCompilerFilesMonitor implements AsyncFileListener 
         FileTypeManager.getInstance().isFileIgnored(file) ||
         ProjectUtil.isProjectOrWorkspaceFile(file)        ||
         FileUtil.isAncestor(PathManager.getConfigPath(), file.getPath(), false); // is config file
+  }
+
+  private static final class ChangeSession {
+    private final Set<InternedPath> filesChanged = CollectionFactory.createSmallMemoryFootprintSet();
+    private final Set<InternedPath> filesDeleted = CollectionFactory.createSmallMemoryFootprintSet();
+    final List<VFileEvent> processLaterEvents = new SmartList<>();
+
+    private final LowMemoryWatcher myMemWatcher;
+    private boolean myLowMemorySignalled = false;
+
+    ChangeSession() {
+      myMemWatcher = LowMemoryWatcher.register(this::clearState, LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC);
+    }
+
+    synchronized BuildManager.Changes getResult() {
+      return myLowMemorySignalled? BuildManager.Changes.createIncomplete() : new BuildManager.Changes.Paths(List.copyOf(filesDeleted), List.copyOf(filesChanged));
+    }
+
+    synchronized boolean hasChanges() {
+      return myLowMemorySignalled || !processLaterEvents.isEmpty() || !filesDeleted.isEmpty() || !filesChanged.isEmpty();
+    }
+    
+    void addDeleted(VirtualFile vFile) {
+      addDeletedPath(vFile.getPath());
+    }
+
+    synchronized void addDeletedPath(String path) {
+      checkMemory();
+      filesDeleted.add(InternedPath.create(path));
+    }
+    
+    void addChanged(VirtualFile vFile) {
+      addChangedPath(vFile.getPath());
+    }
+
+    synchronized void addChangedPath(String path) {
+      checkMemory();
+      filesChanged.add(InternedPath.create(path));
+    }
+
+    void processLater(VFileEvent event) {
+      processLaterEvents.add(event);
+    }
+
+    void finish() {
+      myMemWatcher.stop();
+    }
+
+    private void checkMemory() {
+      if (myLowMemorySignalled) {
+        throw new ProcessCanceledException();
+      }
+    }
+
+    private synchronized void clearState() {
+      myLowMemorySignalled = true;
+      filesChanged.clear();
+      filesDeleted.clear();
+      processLaterEvents.clear();
+    }
   }
 }

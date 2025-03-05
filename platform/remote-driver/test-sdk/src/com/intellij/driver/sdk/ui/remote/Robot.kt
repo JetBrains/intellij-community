@@ -16,18 +16,18 @@ interface Robot {
   fun click(component: Component, point: Point)
   fun click(point: Point, button: RemoteMouseButton, times: Int)
   fun click(component: Component, point: Point, button: RemoteMouseButton, times: Int)
-  fun pressAndReleaseKey(p0: Int, vararg p1: Int)
-  fun pressModifiers(p0: Int)
+  fun pressAndReleaseKey(keyCode: Int, vararg modifiers: Int)
+  fun pressModifiers(modifierMask: Int)
 
   fun pressMouse(mouseButton: RemoteMouseButton)
   fun pressMouse(component: Component, point: Point)
 
   fun pressMouse(component: Component, point: Point, mouseButton: RemoteMouseButton)
   fun pressMouse(point: Point, mouseButton: RemoteMouseButton)
-  fun pressKey(p0: Int)
-  fun doubleKey(p0: Int)
+  fun pressKey(keyCode: Int)
+  fun doubleKey(keyCode: Int)
   fun doublePressKeyAndHold(key: Int)
-  fun releaseKey(p0: Int)
+  fun releaseKey(keyCode: Int)
   fun type(char: Char)
   fun enterText(text: String)
 
@@ -39,10 +39,12 @@ interface Robot {
   fun cleanUpWithoutDisposingWindows()
   fun isReadyForInput(component: Component): Boolean
   fun focusAndWaitForFocusGain(component: Component)
-  fun releaseModifiers(p0: Int)
-  fun rotateMouseWheel(component: Component, p1: Int)
-  fun rotateMouseWheel(p0: Int)
-  fun pressAndReleaseKeys(vararg p0: Int)
+  fun releaseModifiers(modifierMask: Int)
+  fun rotateMouseWheel(component: Component, amount: Int)
+  fun rotateMouseWheel(amount: Int)
+  fun pressAndReleaseKeys(vararg keyCodes: Int)
   fun waitForIdle()
   fun selectAndDrag(component: Component, to: Point, from: Point, delayMs: Int)
+
+  fun getColor(component: Component, point: Point?): ColorRef
 }

@@ -187,7 +187,7 @@ object CommentInputActionsComponentFactory {
 
       override fun actionPerformed(event: AnActionEvent) = performAction(event)
 
-      override fun promote(actions: MutableList<out AnAction>, context: DataContext): List<AnAction> =
+      override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> =
         actions.filterIsInstance<EditorAction>()
     }
   }

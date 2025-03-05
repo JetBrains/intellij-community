@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.PsiFileEx
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
@@ -22,6 +24,12 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
 
         if (this is KMPTest) {
             KMPProjectDescriptorTestUtilities.validateTest(files, testPlatform)
+        }
+
+        files.forEach {
+            if (InTextDirectivesUtils.isDirectiveDefined(it.text, "BATCH_MODE")) {
+                it.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, true)
+            }
         }
 
         checkHighlighting(psiFile, expectedHighlighting, globalDirectives, project)

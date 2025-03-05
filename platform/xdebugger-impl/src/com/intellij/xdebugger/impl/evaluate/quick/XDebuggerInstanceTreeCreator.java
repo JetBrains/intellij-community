@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.concurrency.ResultConsumer;
@@ -25,7 +25,7 @@ import javax.swing.tree.TreeNode;
 
 @ApiStatus.Internal
 public class XDebuggerInstanceTreeCreator implements DebuggerTreeCreator<Pair<XInstanceEvaluator,String>> {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final XDebuggerEditorsProvider myProvider;
   private final XSourcePosition myPosition;
   private final XValueMarkers<?, ?> myMarkers;
@@ -40,9 +40,8 @@ public class XDebuggerInstanceTreeCreator implements DebuggerTreeCreator<Pair<XI
     mySession = session;
   }
 
-  @NotNull
   @Override
-  public Tree createTree(@NotNull Pair<XInstanceEvaluator, String> descriptor) {
+  public @NotNull Tree createTree(@NotNull Pair<XInstanceEvaluator, String> descriptor) {
     final XDebuggerTree tree = new XDebuggerTree(myProject, myProvider, myPosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, myMarkers);
     final XValueNodeImpl root = new XValueNodeImpl(tree, null, descriptor.getSecond(),
                                                    new InstanceEvaluatorTreeRootValue(descriptor.getFirst(), descriptor.getSecond()));
@@ -54,9 +53,8 @@ public class XDebuggerInstanceTreeCreator implements DebuggerTreeCreator<Pair<XI
     return tree;
   }
 
-  @NotNull
   @Override
-  public String getTitle(@NotNull Pair<XInstanceEvaluator, String> descriptor) {
+  public @NotNull String getTitle(@NotNull Pair<XInstanceEvaluator, String> descriptor) {
     return descriptor.getSecond();
   }
 
@@ -82,7 +80,7 @@ public class XDebuggerInstanceTreeCreator implements DebuggerTreeCreator<Pair<XI
     }
 
     @Override
-    public void computeChildren(@NotNull final XCompositeNode node) {
+    public void computeChildren(final @NotNull XCompositeNode node) {
       XStackFrame frame = mySession.getCurrentStackFrame();
       if (frame != null) {
         myInstanceEvaluator.evaluate(new XDebuggerEvaluator.XEvaluationCallback() {

@@ -10,15 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.unresolvedReference.PyCommonImportAliasesKt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
-import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.stubs.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -106,12 +105,16 @@ public class PyImportCollector {
   private void addSymbolImportCandidates(PsiFile existingImportFile) {
     Project project = myNode.getProject();
     GlobalSearchScope scope = PySearchUtilBase.defaultSuggestionScope(myNode);
+    TypeEvalContext context = TypeEvalContext.codeAnalysis(project, myNode.getContainingFile());
 
     List<PsiNamedElement> symbols = new ArrayList<>(PyClassNameIndex.find(myRefText, project, scope));
     if (!isQualifier()) {
       symbols.addAll(PyFunctionNameIndex.find(myRefText, project, scope));
     }
     symbols.addAll(PyVariableNameIndex.find(myRefText, project, scope));
+    if (PyTypingTypeProvider.isInsideTypeHint(myNode, context)) {
+      symbols.addAll(PyTypeAliasNameIndex.find(myRefText, project, scope));
+    }
     if (isPossibleModuleReference()) {
       symbols.addAll(findImportableModules(myRefText, false, scope));
       String packageQName = PyCommonImportAliasesKt.PY_COMMON_IMPORT_ALIASES.get(myRefText);
@@ -186,10 +189,9 @@ public class PyImportCollector {
     return true;
   }
 
-  @NotNull
-  private Collection<PsiFileSystemItem> findImportableModules(@NotNull String name,
-                                                              boolean matchQualifiedName,
-                                                              @NotNull GlobalSearchScope scope) {
+  private @NotNull Collection<PsiFileSystemItem> findImportableModules(@NotNull String name,
+                                                                       boolean matchQualifiedName,
+                                                                       @NotNull GlobalSearchScope scope) {
     List<PsiFileSystemItem> result = new ArrayList<>();
     QualifiedName qualifiedName = QualifiedName.fromDottedString(name);
     List<PyFile> matchingModules = matchQualifiedName ? PyModuleNameIndex.findByQualifiedName(qualifiedName, myNode.getProject(), scope)
@@ -210,7 +212,7 @@ public class PyImportCollector {
     if (symbol instanceof PyClass || symbol instanceof PyFunction) {
       return PyUtil.isTopLevel(symbol);
     }
-    // only top-level target expressions are included in VariableNameIndex
-    return symbol instanceof PyTargetExpression;
+    // only top-level target expressions and type aliases are included in VariableNameIndex and TypeAliasNameIndex, respectively
+    return symbol instanceof PyTargetExpression || symbol instanceof PyTypeAliasStatement;
   }
 }

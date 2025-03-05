@@ -1,7 +1,7 @@
 // FILE: first.before.kt
 // "Import operator 'Some.set'" "true"
 // ERROR: 'operator' modifier is required on 'set' in 'some.Some'
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package testing
 
@@ -29,7 +29,7 @@ operator fun Some.set(s: String, i: Int) {}
 // FILE: first.after.kt
 // "Import operator 'Some.set'" "true"
 // ERROR: 'operator' modifier is required on 'set' in 'some.Some'
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package testing
 

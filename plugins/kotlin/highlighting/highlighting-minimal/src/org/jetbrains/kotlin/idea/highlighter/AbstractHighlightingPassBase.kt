@@ -24,7 +24,12 @@ abstract class AbstractHighlightingPassBase(
 
     override fun doCollectInformation(progress: ProgressIndicator) {
         val holder = HighlightInfoHolder(file)
-        runAnnotatorWithContext(file, holder)
+        if (IGNORE_IN_TESTS) {
+            assert(ApplicationManager.getApplication().isUnitTestMode)
+        }
+        else {
+            runAnnotatorWithContext(file, holder)
+        }
         applyInformationInBackground(holder)
     }
 
@@ -55,10 +60,6 @@ abstract class AbstractHighlightingPassBase(
     }
 
     private fun applyInformationInBackground(holder: HighlightInfoHolder) {
-        if (IGNORE_IN_TESTS) {
-            assert(ApplicationManager.getApplication().isUnitTestMode)
-            return
-        }
         val result:MutableList<HighlightInfo> = ArrayList(holder.size())
         for (i in 0 until holder.size()) {
             result.add(holder.get(i))

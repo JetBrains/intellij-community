@@ -14,11 +14,13 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="PROVIDED" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.restructuredtext.python" scope="RUNTIME" />
   </component>
 </module>

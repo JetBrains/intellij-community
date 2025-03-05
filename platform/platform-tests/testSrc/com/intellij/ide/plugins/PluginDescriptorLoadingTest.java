@@ -18,6 +18,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PluginDescriptorLoadingTest {
   private static boolean ourResetPool = false;
 
+  @BeforeAll static void setUp() {
+    if (ZipFilePool.POOL == null) {
+      ZipFilePool.POOL = new ZipFilePoolImpl();
+      ourResetPool = true;
+    }
+  }
+
+  @AfterAll static void tearDown() {
+    if (ourResetPool) {
+      ZipFilePool.POOL = null;
+    }
+  }
+
   @Test void descriptorLoadingFromJarArtifact(@TempDir Path tempDir) throws IOException {
     var jarFile = tempDir.resolve("test.plugin.jar");
     try (var jar = new Compressor.Jar(jarFile)) {
@@ -62,18 +75,5 @@ public class PluginDescriptorLoadingTest {
     descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(zipFile, null);
     assertThat(descriptor).isNotNull();
     assertThat(descriptor.getPluginId().getIdString()).isEqualTo("test.plugin");
-  }
-
-  @BeforeAll static void setUp() {
-    if (ZipFilePool.POOL == null) {
-      ZipFilePool.POOL = new ZipFilePoolImpl();
-      ourResetPool = true;
-    }
-  }
-
-  @AfterAll static void tearDown() {
-    if (ourResetPool) {
-      ZipFilePool.POOL = null;
-    }
   }
 }

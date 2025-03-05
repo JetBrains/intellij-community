@@ -19,6 +19,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -87,8 +88,8 @@ public final class DetectedFrameworksData {
     }
   }
 
-  public Collection<? extends DetectedFrameworkDescription> updateFrameworksList(String detectorId,
-                                                                                 Collection<? extends DetectedFrameworkDescription> frameworks) {
+  public @Unmodifiable Collection<? extends DetectedFrameworkDescription> updateFrameworksList(String detectorId,
+                                                                                               Collection<? extends DetectedFrameworkDescription> frameworks) {
     synchronized (myLock) {
       final Collection<DetectedFrameworkDescription> oldFrameworks = myDetectedFrameworks.remove(detectorId);
       myDetectedFrameworks.putValues(detectorId, frameworks);

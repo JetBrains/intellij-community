@@ -24,9 +24,8 @@ public final class FieldNameConstantsPredefinedInnerClassFieldProcessor extends 
     super(PsiField.class, LombokClassNames.FIELD_NAME_CONSTANTS);
   }
 
-  @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  public @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     if (psiClass.getParent() instanceof PsiClass parentClass) {
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, getSupportedAnnotationClasses());
       if (null != psiAnnotation && supportAnnotationVariant(psiAnnotation)) {

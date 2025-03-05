@@ -58,18 +58,18 @@ internal open class DefaultScrollBarAnimationBehavior(
 
   override fun onReset() {
     trackAnimator.rewind(false)
-    trackAnimator.rewind(false)
+    thumbAnimator.rewind(false)
   }
 }
 
 internal class MacScrollBarAnimationBehavior(
+  coroutineScope : CoroutineScope,
   private val scrollBarComputable: () -> JScrollBar?,
   trackAnimator: TwoWayAnimator,
   thumbAnimator: TwoWayAnimator,
 ) : DefaultScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   private var isTrackHovered: Boolean = false
-  @Suppress("SSBasedInspection")
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
   private val hideThumbRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {

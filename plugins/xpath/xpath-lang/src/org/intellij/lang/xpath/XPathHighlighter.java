@@ -38,8 +38,7 @@ public class XPathHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return XPathLexer.create(myXPath2Syntax);
   }
 

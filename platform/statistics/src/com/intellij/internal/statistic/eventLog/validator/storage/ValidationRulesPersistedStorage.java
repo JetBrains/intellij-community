@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.*;
@@ -141,17 +141,15 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     return !myIsInitialized.get();
   }
 
-  @NotNull
-  protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
+  protected @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
     return createValidators(build, groups, globalRulesHolder, myRecorderId);
   }
 
-  @NotNull
-  public static Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,
-                                                              @NotNull EventGroupRemoteDescriptors groups,
-                                                              @NotNull GlobalRulesHolder globalRulesHolder,
-                                                              @NotNull String recorderId) {
+  public static @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,
+                                                                       @NotNull EventGroupRemoteDescriptors groups,
+                                                                       @NotNull GlobalRulesHolder globalRulesHolder,
+                                                                       @NotNull String recorderId) {
     ValidationSimpleRuleFactory ruleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer(recorderId));
     return groups.groups.stream()
       .filter(group -> EventGroupFilterRules.create(group, EventLogBuild.EVENT_LOG_BUILD_PRODUCER).accepts(build))

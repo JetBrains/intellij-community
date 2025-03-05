@@ -20,7 +20,7 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.SystemProperties
-import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
+import com.intellij.util.indexing.PerProjectIndexingQueue
 import com.intellij.util.indexing.UnindexedFilesIndexer
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.util.indexing.roots.IndexableFilesIterator
@@ -65,11 +65,11 @@ internal class SdkPreIndexingService: Disposable {
     cancelCurrentPreIndexation()
 
     val defaultProject = DefaultProjectFactory.getInstance().defaultProject
-    val providers = geSdkAndAdditionalSetIndexableFileProviders(sdk, defaultProject)
+    val filesSource = getSdkAndAdditionalSetIndexableFileProviders(sdk, defaultProject)
 
     val task = object : Task.Backgroundable(null, JavaUiBundle.message("project.wizard.sdk.preindexing.progress.title")) {
       override fun run(indicator: ProgressIndicator) {
-        UnindexedFilesIndexer(defaultProject, QueuedFiles.fromFilesCollection(providers, emptyList()), "SDK pre-indexing").perform(indicator)
+        UnindexedFilesIndexer(defaultProject, filesSource, "SDK pre-indexing").perform(indicator)
       }
     }
 
@@ -78,21 +78,19 @@ internal class SdkPreIndexingService: Disposable {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, currentProgressIndicator!!)
   }
 
-  private fun geSdkAndAdditionalSetIndexableFileProviders(sdk: Sdk, project: Project): Set<VirtualFile> {
+  private fun getSdkAndAdditionalSetIndexableFileProviders(sdk: Sdk, project: Project): PerProjectIndexingQueue {
     val allIterators: MutableList<IndexableFilesIterator> = ArrayList(2)
     allIterators.addAll(createProjectUnAwareIndexableSetContributors())
     allIterators.addAll(createIterators(sdk))
 
-    val files = HashSet<VirtualFile>()
+    val queue = PerProjectIndexingQueue(project)
     for (iterator in allIterators) {
-      val files: MutableSet<VirtualFile> = HashSet()
       iterator.iterateFiles(project, ContentIterator { fileOrDir: VirtualFile ->
-        files.add(fileOrDir)
+        queue.addFile(fileOrDir, 0)
         true
       }, VirtualFileFilter.ALL)
-      files.addAll(files)
     }
-    return files
+    return queue
   }
 
   @Synchronized

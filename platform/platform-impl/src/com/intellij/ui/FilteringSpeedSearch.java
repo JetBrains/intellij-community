@@ -154,8 +154,7 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
     return null;
   }
 
-  @NotNull
-  private JBIterator<T> filterMatchingNodes(JBIterator<T> nodes, boolean fullMatch) {
+  private @NotNull JBIterator<T> filterMatchingNodes(JBIterator<T> nodes, boolean fullMatch) {
     return nodes.filter(item -> {
       FilteringTree.Matching matching = checkMatching(item);
       return fullMatch ? matching == FilteringTree.Matching.FULL : matching != FilteringTree.Matching.NONE;

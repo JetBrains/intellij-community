@@ -24,6 +24,7 @@ class LanguageExtensionOrderTest : LightPlatformTestCase() {
     super.setUp()
     myDescriptor = DefaultPluginDescriptor(PluginId.getId(""))
     area = ApplicationManager.getApplication().getExtensionArea() as ExtensionsAreaImpl
+    @Suppress("UnresolvedPluginConfigReference")
     myLanguageExtension = LanguageExtension<TestLangExtension>("langExt")
     registerMetaLanguage()
     registerLanguageEP()

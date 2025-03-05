@@ -14,10 +14,33 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+
 public final class XValuePresentationUtil {
-  public static void renderValue(@NotNull @NlsSafe String value, @NotNull ColoredTextContainer text, @NotNull SimpleTextAttributes attributes, int maxLength,
+  public static void renderValue(@NotNull @NlsSafe String value,
+                                 @NotNull ColoredTextContainer text,
+                                 @NotNull SimpleTextAttributes attributes,
+                                 int maxLength,
                                  @Nullable String additionalSpecialCharsToHighlight) {
-    SimpleTextAttributes escapeAttributes = null;
+    renderValue(value, text, attributes, maxLength, additionalSpecialCharsToHighlight,
+                DebuggerUIUtil.getColorScheme().getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE));
+  }
+
+  @ApiStatus.Internal
+  public static void renderValue(@NotNull @NlsSafe String value,
+                                 @NotNull ColoredTextContainer text,
+                                 @NotNull SimpleTextAttributes attributes,
+                                 int maxLength,
+                                 @Nullable String additionalSpecialCharsToHighlight,
+                                 @Nullable TextAttributes escapeCharsAttribute) {
+    SimpleTextAttributes escapeAttributes;
+    if (escapeCharsAttribute != null) {
+      escapeAttributes = SimpleTextAttributes.fromTextAttributes(escapeCharsAttribute);
+    }
+    else {
+      escapeAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY);
+    }
+
     int lastOffset = 0;
     int length = maxLength == -1 ? value.length() : Math.min(value.length(), maxLength);
     for (int i = 0; i < length; i++) {
@@ -28,16 +51,6 @@ public final class XValuePresentationUtil {
           text.append(value.substring(lastOffset, i), attributes);
         }
         lastOffset = i + 1;
-
-        if (escapeAttributes == null) {
-          TextAttributes fromHighlighter = DebuggerUIUtil.getColorScheme().getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
-          if (fromHighlighter != null) {
-            escapeAttributes = SimpleTextAttributes.fromTextAttributes(fromHighlighter);
-          }
-          else {
-            escapeAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY);
-          }
-        }
 
         if (isEscapingSymbol(ch)) {
           text.append("\\", escapeAttributes);
@@ -55,6 +68,60 @@ public final class XValuePresentationUtil {
   private static boolean isEscapingSymbol(char ch) {
     return getEscapingSymbol(ch) != ch;
   }
+
+  @ApiStatus.Experimental
+  public static void renderName(@NotNull @NlsSafe String name,
+                                int maxOutputLength,
+                                Consumer<@NlsSafe String> appender) {
+    int lastPartStart = 0;
+    int lastPartEnd = 0;
+    boolean lastCharWasWhitespace = false;
+    int appendedCount = 0;
+    for (int i = 0; i < name.length(); i++) {
+      char ch = name.charAt(i);
+      if (isEscapingSymbol(ch) || ch == ' ') {
+        lastCharWasWhitespace = true;
+      }
+      else {
+        if (lastCharWasWhitespace) {
+          appendedCount += appendPart(name, appender, maxOutputLength, appendedCount, lastPartStart, lastPartEnd);
+          if (appendedCount > 0 && appendedCount < maxOutputLength) {
+            appendedCount++;
+            appender.accept(" ");
+          }
+          if (appendedCount == maxOutputLength) {
+            return;
+          }
+          lastPartStart = i;
+          lastPartEnd = i + 1;
+        }
+        else {
+          lastPartEnd++;
+        }
+        lastCharWasWhitespace = false;
+      }
+    }
+
+    if (lastPartStart < lastPartEnd) {
+      appendPart(name, appender, maxOutputLength, appendedCount, lastPartStart, lastPartEnd);
+    }
+  }
+
+  private static int appendPart(@NotNull String name,
+                                @NotNull Consumer<String> appender,
+                                int maxOutputLength,
+                                int appendedCount,
+                                int lastPartStart,
+                                int lastPartEnd) {
+    int remainingLength = maxOutputLength - appendedCount - (lastPartEnd - lastPartStart);
+    if (remainingLength <= 0) {
+      lastPartEnd = Math.max(lastPartStart, lastPartEnd + remainingLength);
+    }
+    String substring = name.substring(lastPartStart, lastPartEnd);
+    appender.accept(substring);
+    return substring.length();
+  }
+
 
   private static char getEscapingSymbol(char ch) {
     return switch (ch) {
@@ -77,8 +144,7 @@ public final class XValuePresentationUtil {
     }
   }
 
-  @NotNull
-  public static String computeValueText(@NotNull XValuePresentation presentation) {
+  public static @NotNull String computeValueText(@NotNull XValuePresentation presentation) {
     XValuePresentationTextExtractor extractor = new XValuePresentationTextExtractor();
     presentation.renderValue(extractor);
     return extractor.getText();

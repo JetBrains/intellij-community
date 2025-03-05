@@ -39,8 +39,7 @@ public class GenerateCopyrightAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  @Nullable
-  private static PsiFile getFile(DataContext context, Project project) {
+  private static @Nullable PsiFile getFile(DataContext context, Project project) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file == null) {
       Editor editor = CommonDataKeys.EDITOR.getData(context);

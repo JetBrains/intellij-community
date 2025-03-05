@@ -28,8 +28,7 @@ public final class ClassNestingDepthInspection
   private static final int CLASS_NESTING_LIMIT = 1;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "InnerClassTooDeeplyNested";
   }
 
@@ -45,8 +44,7 @@ public final class ClassNestingDepthInspection
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer nestingLevel = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "inner.class.too.deeply.nested.problem.descriptor",

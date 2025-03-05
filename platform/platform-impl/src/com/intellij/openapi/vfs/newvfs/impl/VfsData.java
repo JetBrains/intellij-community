@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * <li> The file has not been instantiated yet, so {@link #getFileById} returns null. </li>
  *
  * <li> A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary data (in a thread-safe context)
- * and creates the file instance. See {@link Segment#initFileData(int, Object)} </li>
+ * and creates the file instance. See {@link Segment#initFileData(int, Object, VirtualDirectoryImpl)} </li>
  *
  * <li> After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
  * kept on hard references in {@link PersistentFS} </li>
@@ -215,12 +215,12 @@ public final class VfsData {
   }
 
   /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
-  static final class Segment {
+  @ApiStatus.Internal
+  public static final class Segment {
     private static final int INT_FIELDS_COUNT = 1;
     private static final int FLAGS_FIELD_NO = 0;
 
     final @NotNull VfsData owningVfsData;
-
 
     /** user data (KeyFMap) for files, {@link DirectoryData} for folders */
     private final AtomicReferenceArray<Object> objectFieldsArray;
@@ -235,7 +235,6 @@ public final class VfsData {
      * file attribute/content/etc change.
      */
     private final AtomicIntegerArray intFieldsArray;
-
 
     /** the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result */
     @Nullable Segment replacement;
@@ -334,12 +333,13 @@ public final class VfsData {
     }
 
     //@GuardedBy("parent.DirectoryData")
-    void initFileData(int fileId, @NotNull Object fileData) throws FileAlreadyCreatedException {
+    void initFileData(int fileId, @NotNull Object fileData, @NotNull VirtualDirectoryImpl parent) throws FileAlreadyCreatedException {
       int offset = objectOffsetInSegment(fileId);
 
       Object existingData = objectFieldsArray.get(offset);
       if (existingData != null) {
-        //RC: it seems like concurrency issue, really -- check the locks acquired up the stack in all invocation traces
+        //RC: it seems like concurrency issue, but I can't find a specific location
+        //MAYBE RC: don't throw the exception -- if an entry was already created, so be it, log warn and go on?
 
         FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
         int parentId = vfsPeer.getParent(fileId);
@@ -350,17 +350,17 @@ public final class VfsData {
           describeAlreadyCreatedFile(fileId)
           + " data: " + fileData
           + ", alreadyExistingData: " + existingData
-          + ", parentData: " + parentData
+          + ", parentData: " + parentData + ", parent.data: " + parent.myData + " equals: " + (parentData == parent.myData)
           + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
         );
       }
+
       objectFieldsArray.set(offset, fileData);
     }
 
 
     /** @return offset of field #fieldNo of file=fileId in a {@link #intFieldsArray} */
-    private static int fieldOffset(int fileId,
-                                   int fieldNo) {
+    private static int fieldOffset(int fileId, int fieldNo) {
       if (fileId <= 0) {
         throw new IllegalArgumentException("invalid fileId: " + fileId);
       }
@@ -386,7 +386,8 @@ public final class VfsData {
   }
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
-  static final class DirectoryData {
+  @ApiStatus.Internal
+  public static final class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> USER_MAP_UPDATER =
       AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     volatile @NotNull KeyFMap userMap = KeyFMap.EMPTY_MAP;
@@ -491,6 +492,7 @@ public final class VfsData {
     }
 
     @NotNull
+    @Unmodifiable
     List<String> getAdoptedNames() {
       Set<CharSequence> adopted = adoptedNames;
       if (adopted == null) return Collections.emptyList();

@@ -235,8 +235,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     return new BrowseFolderRunnable<>(null, descriptor, getComponent(), JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
   }
 
-  @Nullable
-  public String getJrePathOrName() {
+  public @Nullable String getJrePathOrName() {
     JreComboBoxItem jre = getSelectedJre();
     if (jre instanceof DefaultJreItem || myRemoteTarget) {
       return myPreviousCustomJrePath;
@@ -315,8 +314,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     @Nullable @NlsSafe
     String getPathOrName();
 
-    @Nullable
-    default String getVersion() { return null; }
+    default @Nullable String getVersion() { return null; }
 
     default @NlsSafe @Nullable String getDescription() { return getPresentableText(); }
 

@@ -27,8 +27,7 @@ internal object PyWelcomeCollector : CounterUsagesCollector() {
     welcomeRunConfigurationEvent.log(project, result)
   }
 
-  private val GROUP = EventLogGroup("python.welcome.events", 2)
-
+  private val GROUP = EventLogGroup("python.welcome.events", 3)
   private val welcomeProjectEvent =
     GROUP.registerEvent("welcome.project", EventFields.Enum("project_type", ProjectType::class.java))
 

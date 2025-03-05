@@ -30,8 +30,7 @@ abstract class ShAssignmentExpressionMixin extends ShBinaryExpressionImpl implem
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     PsiElement nameIdentifier = getNameIdentifier();
     return nameIdentifier == null ? null : nameIdentifier.getText();
   }
@@ -43,8 +42,7 @@ abstract class ShAssignmentExpressionMixin extends ShBinaryExpressionImpl implem
    * @return the name identifier of the assignment expression, if available
    */
   @Override
-  @Nullable
-  public PsiElement getNameIdentifier() {
+  public @Nullable PsiElement getNameIdentifier() {
     PsiElement left = getLeft();
     if (!(left instanceof ShLiteralExpression)) return null;
     PsiElement first = left.getFirstChild();

@@ -3,6 +3,7 @@
 // ACTION: Create function 'foo'
 // ACTION: Create member function 'Base.foo'
 // ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public final fun Other.foo(): Unit defined in p.Base
+// K2_AFTER_ERROR: Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:<br>fun Other.foo(): Unit
 package p
 
 class Other

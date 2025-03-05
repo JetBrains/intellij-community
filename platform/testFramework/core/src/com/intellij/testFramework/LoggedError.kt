@@ -6,6 +6,5 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 class LoggedError(
   message: String?,
-  @Suppress("unused") val details: Array<out String>, // already part of [message]
   cause: Throwable?,
 ) : Throwable(message, cause)

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.selects.select
+import kotlin.time.TimeSource
 
 private val logger = logger<Transport<*>>()
 
@@ -43,9 +44,9 @@ fun FleetTransportFactory.debugDisconnect(control: StateFlow<DebugConnectionStat
   val underlying = this
   return FleetTransportFactory { transportStats, body ->
     logger.debug { "Waiting for control flow to allow connection $debugToken" }
-    val t = System.nanoTime()
+    val t = TimeSource.Monotonic.markNow()
     control.first { it == DebugConnectionState.Connect }
-    val nanos = System.nanoTime() - t
+    val nanos = t.elapsedNow().inWholeNanoseconds
     logger.debug { "Connection $debugToken allowed, ${nanos / 1_000_000}ms spent waiting" }
     underlying.connect(transportStats) { transport ->
       val bodyJob = launch { body(transport) }

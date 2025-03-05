@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -374,6 +374,12 @@ public final class DebuggerUtilsAsync {
     return toCompletableFuture(() -> thread.frameCount());
   }
 
+  public static CompletableFuture<String> nameAsync(ThreadReference thread) {
+    if (thread instanceof ThreadReferenceImpl threadReferenceImpl && isAsyncEnabled()) {
+      return reschedule(threadReferenceImpl.nameAsync());
+    }
+    return toCompletableFuture(() -> thread.name());
+  }
 
   // Reader thread
   public static CompletableFuture<List<Method>> methods(ReferenceType type) {
@@ -469,6 +475,23 @@ public final class DebuggerUtilsAsync {
     return toCompletableFuture(() -> virtualMachine.allClasses());
   }
 
+  public static CompletableFuture<Void> disableCollection(Value value) {
+    if (value instanceof ObjectReference objectReference) {
+      if (value instanceof ObjectReferenceImpl objectReferenceImpl && isAsyncEnabled()) {
+        return objectReferenceImpl.disableCollectionAsync();
+      }
+      return toCompletableFuture(() -> objectReference.disableCollection());
+    }
+    return completedFuture(null);
+  }
+
+  public static CompletableFuture<Boolean> isCollected(ObjectReference reference) {
+    if (reference instanceof ObjectReferenceImpl objectReferenceImpl && isAsyncEnabled()) {
+      return objectReferenceImpl.isCollectedAsync();
+    }
+    return toCompletableFuture(() -> reference.isCollected());
+  }
+
   /**
    * Schedule future completion in a separate command with the same priority and suspend context (if available)
    * as in the command being processed at the moment
@@ -524,7 +547,12 @@ public final class DebuggerUtilsAsync {
   }
 
   public static Throwable unwrap(@Nullable Throwable throwable) {
-    return throwable instanceof CompletionException || throwable instanceof ExecutionException ? throwable.getCause() : throwable;
+    while (throwable instanceof CompletionException || throwable instanceof ExecutionException) {
+      Throwable cause = throwable.getCause();
+      if (cause == throwable) break;
+      throwable = cause;
+    }
+    return throwable;
   }
 
   public static <T> T logError(@NotNull Throwable throwable) {

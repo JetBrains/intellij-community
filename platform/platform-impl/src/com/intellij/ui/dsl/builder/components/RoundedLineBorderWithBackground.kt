@@ -2,10 +2,13 @@
 package com.intellij.ui.dsl.builder.components
 
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.border.LineBorder
 
-class RoundedLineBorderWithBackground(
+@ApiStatus.Internal
+@ApiStatus.Experimental
+internal class RoundedLineBorderWithBackground(
   color: Color,
   private val bgColor: Color,
   private val arcSize: Int = JBUI.scale(10),

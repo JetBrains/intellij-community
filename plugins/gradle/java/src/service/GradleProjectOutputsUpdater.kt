@@ -3,42 +3,32 @@ package org.jetbrains.plugins.gradle.service
 
 import com.intellij.compiler.impl.CompilerUtil
 import com.intellij.openapi.compiler.CompilerPaths
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectKeys
-import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
-import org.jetbrains.plugins.gradle.service.task.GradleTaskResultListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
-class GradleProjectOutputsUpdater: GradleTaskResultListener {
-  override fun onSuccess(id: ExternalSystemTaskId, projectPath: String) {
+class GradleProjectOutputsUpdater : ExternalSystemTaskNotificationListener {
+
+  override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
     if (!Registry.`is`("gradle.refresh.project.outputs")) return
+    if (id.type != ExternalSystemTaskType.EXECUTE_TASK) return
 
-    val ideaProject = id.findProject()
-    if (ideaProject == null) {
-      LOG.warn("Project path [$projectPath] does not belong to any open Gradle projects")
-      return
-    }
+    val project = id.findProject() ?: return
 
-    val modelsProvider = IdeModelsProviderImpl(ideaProject)
-    val projectNode = ExternalSystemApiUtil.findProjectNode(ideaProject, GradleConstants.SYSTEM_ID, projectPath) ?: return
+    val projectNode = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, projectPath) ?: return
     val moduleNodes = ExternalSystemApiUtil.findAll(projectNode, ProjectKeys.MODULE)
-    val affectedModules: List<Module> = moduleNodes.flatMap { ExternalSystemApiUtil.findAll(it, GradleSourceSetData.KEY) + it }
-      .map { it.data }
-      .filterIsInstance(ModuleData::class.java)
-      .mapNotNull { modelsProvider.findIdeModule(it) }
+    val sourceSetNodes = moduleNodes.flatMap { ExternalSystemApiUtil.findAll(it, GradleSourceSetData.KEY) }
 
-    val affectedRoots = ContainerUtil.newHashSet(*CompilerPaths.getOutputPaths(affectedModules.toTypedArray()))
+    val modelsProvider = IdeModelsProviderImpl(project)
+    val affectedModules = (moduleNodes + sourceSetNodes).mapNotNull { modelsProvider.findIdeModule(it.data) }
+
+    val affectedRoots = CompilerPaths.getOutputPaths(affectedModules.toTypedArray()).toSet()
     CompilerUtil.refreshOutputRoots(affectedRoots)
-  }
-
-  companion object {
-    private val LOG = logger<GradleProjectOutputsUpdater>()
   }
 }

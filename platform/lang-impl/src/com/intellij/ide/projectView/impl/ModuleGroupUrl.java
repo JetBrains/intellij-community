@@ -12,7 +12,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class ModuleGroupUrl extends AbstractUrl {
-  private static final @NonNls String ELEMENT_TYPE = "module_group";
+  private static final @NonNls String ELEMENT_TYPE = TYPE_MODULE_GROUP;
 
   public ModuleGroupUrl(String url) {
     super(url, null, ELEMENT_TYPE);

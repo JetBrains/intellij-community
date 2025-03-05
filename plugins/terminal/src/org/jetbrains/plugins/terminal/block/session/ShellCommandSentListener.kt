@@ -8,6 +8,14 @@ import java.util.EventListener
  */
 internal interface ShellCommandSentListener : EventListener {
   /**
+   * Called when a user command has been submitted for later execution.
+   * Might be called in the background or in the UI thread.
+   *
+   * Please note this call may happen prior to actual writing bytes to TTY.
+   */
+  fun userCommandSubmitted(userCommand: String) {}
+
+  /**
    * Called when a user command has been sent for execution in shell.
    * Might be called in the background or in the UI thread.
    *

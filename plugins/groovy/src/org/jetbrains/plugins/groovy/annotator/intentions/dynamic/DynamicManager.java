@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -15,8 +15,7 @@ import java.util.List;
 
 public abstract class DynamicManager implements PersistentStateComponent<DRootElement> {
 
-  @NotNull
-  public static DynamicManager getInstance(@NotNull Project project) {
+  public static @NotNull DynamicManager getInstance(@NotNull Project project) {
     return project.getService(DynamicManager.class);
   }
 
@@ -39,10 +38,9 @@ public abstract class DynamicManager implements PersistentStateComponent<DRootEl
   * Returns all containing classes
   */
 
-  @NotNull
-  public abstract Collection<DClassElement> getAllContainingClasses();
+  public abstract @NotNull Collection<DClassElement> getAllContainingClasses();
 
-  public abstract void replaceClassName(@Nullable final DClassElement oldClassElement, String newClassName);
+  public abstract void replaceClassName(final @Nullable DClassElement oldClassElement, String newClassName);
 
   public abstract void addProperty(DynamicElementSettings settings);
 
@@ -50,30 +48,23 @@ public abstract class DynamicManager implements PersistentStateComponent<DRootEl
 
   public abstract void removeClassElement(DClassElement classElement);
 
-  @Nullable
-  public abstract DPropertyElement findConcreteDynamicProperty(final String containingClassName, final String propertyName);
+  public abstract @Nullable DPropertyElement findConcreteDynamicProperty(final String containingClassName, final String propertyName);
 
-  @NotNull
-  public abstract Collection<DPropertyElement> findDynamicPropertiesOfClass(final String containingClassName);
+  public abstract @NotNull Collection<DPropertyElement> findDynamicPropertiesOfClass(final String containingClassName);
 
-  @Nullable
-  public abstract String getPropertyType(String className, String propertyName);
+  public abstract @Nullable String getPropertyType(String className, String propertyName);
 
-  @Nullable
-  public abstract String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName);
+  public abstract @Nullable String replaceDynamicPropertyName(String className, String oldPropertyName, String newPropertyName);
 
-  @Nullable
-  public abstract String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType);
+  public abstract @Nullable String replaceDynamicPropertyType(String className, String propertyName, String oldPropertyType, String newPropertyType);
 
-  @Nullable
-  public abstract DMethodElement findConcreteDynamicMethod(final String containingClassName, final String name, final String[] types);
+  public abstract @Nullable DMethodElement findConcreteDynamicMethod(final String containingClassName, final String name, final String[] types);
 
   public abstract void removeItemElement(DItemElement element);
 
   public abstract void replaceDynamicMethodType(String className, String name, List<ParamInfo> myPairList, String oldType, String newType);
 
-  @NotNull
-  public abstract DClassElement getOrCreateClassElement(Project project, String className);
+  public abstract @NotNull DClassElement getOrCreateClassElement(Project project, String className);
 
   public abstract DClassElement getClassElementByItem(DItemElement itemElement);
 

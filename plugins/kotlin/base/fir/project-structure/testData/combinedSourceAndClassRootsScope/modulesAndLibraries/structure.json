@@ -1,0 +1,45 @@
+{
+    "libraries": [
+        {
+            "name": "libraryA",
+            "roots": ["libraryRoot1", "libraryRoot2"]
+        },
+        {
+            "name": "libraryB",
+            "roots": ["libraryRoot3"]
+        },
+        {
+            "name": "unrelatedLibrary",
+            "roots": ["unrelatedLibraryRoot"]
+        }
+    ],
+    "excluded_libraries": ["unrelatedLibrary"],
+
+    "modules" : [
+        {
+            "name": "moduleA",
+            "content_roots": ["production"]
+        },
+        {
+            "name": "moduleB",
+            "content_roots": ["production", "tests"]
+        },
+        {
+            "name": "moduleC",
+            "content_roots": [
+                { "path": "src1", "kind": "production" },
+                { "path": "src2", "kind": "production" }
+            ]
+        },
+        {
+            "name": "unrelatedModule",
+            "content_roots": ["production", "tests"]
+        },
+        {
+            "name": "dependentModule",
+            "dependencies": ["libraryA", "libraryB", "unrelatedLibrary"],
+            "content_roots": ["production"]
+        }
+    ],
+    "excluded_modules": ["unrelatedModule", "dependentModule"]
+}

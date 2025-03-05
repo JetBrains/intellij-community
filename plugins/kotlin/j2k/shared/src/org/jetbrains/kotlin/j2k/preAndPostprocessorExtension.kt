@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.KtFile
  * ```
  *
  * All preprocessors are run via coroutines on a background thread, so write actions must be wrapped in
- * [com.intellij.openapi.application.writeAction] so that they are executed on the EDT thread. As usual, read actions must be wrapped in
+ * [com.intellij.openapi.application.edtWriteAction] so that they are executed on the EDT thread. As usual, read actions must be wrapped in
  * [com.intellij.openapi.application.readAction], and analysis must be done outside write actions.
  *
  * Preprocessors are only applied to file-level conversions; copy-paste conversions ignore registered preprocessors.
@@ -31,7 +31,7 @@ interface J2kPreprocessorExtension : J2kExtension<PsiJavaFile> {
 
     /**
      * Override this method to analyze and edit Java files before conversion. This method is always executed via coroutines on a background
-     * thread, so write actions must be wrapped in [com.intellij.openapi.application.writeAction]. As usual, read actions must be wrapped in
+     * thread, so write actions must be wrapped in [com.intellij.openapi.application.edtWriteAction]. As usual, read actions must be wrapped in
      * [com.intellij.openapi.application.readAction], and analysis must be done outside write actions.
      */
     override suspend fun processFiles(project: Project, files: List<PsiJavaFile>)
@@ -52,7 +52,7 @@ interface J2kPreprocessorExtension : J2kExtension<PsiJavaFile> {
  * ```
  *
  * All postprocessors are run via coroutines on a background thread, so write actions must be wrapped in
- * [com.intellij.openapi.application.writeAction] so that they are executed on the EDT thread. As usual, read actions must be wrapped in
+ * [com.intellij.openapi.application.edtWriteAction] so that they are executed on the EDT thread. As usual, read actions must be wrapped in
  * [com.intellij.openapi.application.readAction], and analysis must be done outside write actions.
  *
  * Postprocessors are only applied to file-level conversions; copy-paste conversions ignore registered postprocessors.
@@ -63,7 +63,7 @@ interface J2kPostprocessorExtension : J2kExtension<KtFile> {
 
     /**
      * Override this method to analyze and edit Kotlin files after conversion. This method is always executed via coroutines on a background
-     * thread, so write actions must be wrapped in [com.intellij.openapi.application.writeAction]. As usual, read actions must be wrapped in
+     * thread, so write actions must be wrapped in [com.intellij.openapi.application.edtWriteAction]. As usual, read actions must be wrapped in
      * [com.intellij.openapi.application.readAction]`, and analysis must be done outside write actions.
      */
     override suspend fun processFiles(project: Project, files: List<KtFile>)

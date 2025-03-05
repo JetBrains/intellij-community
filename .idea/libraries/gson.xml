@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="gson" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.google.code.gson:gson:2.11.0">
+    <properties include-transitive-deps="false" maven-id="com.google.code.gson:gson:2.12.1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar">
-          <sha256sum>57928d6e5a6edeb2abd3770a8f95ba44dce45f3b23b7a9dc2b309c581552a78b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.12.1/gson-2.12.1.jar">
+          <sha256sum>ebee13d5fb7477cd7f1cc010e0c356df8ca80709715248da97f79e35ccb4fbec</sha256sum>
         </artifact>
       </verification>
     </properties>
@@ -11,11 +11,11 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/gson" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.11.0/gson-2.11.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.12.1/gson-2.12.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.11.0/gson-2.11.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.12.1/gson-2.12.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

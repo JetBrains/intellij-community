@@ -2,6 +2,7 @@
 package fleet.kernel.rete
 
 import fleet.util.hash
+import kotlin.jvm.JvmInline
 
 interface Match<out T> {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -746,7 +746,7 @@ public class CodeCompletionHandlerBase {
     if (!context.getOffsetMap().containsOffset(InsertionContext.TAIL_OFFSET)) {
       @NonNls String message = "tailOffset<0 after inserting " + item + " of " + item.getClass();
       if (context instanceof WatchingInsertionContext) {
-        message += "; invalidated at: " + ((WatchingInsertionContext)context).invalidateTrace + "\n--------";
+        message += "; invalidated at: " + ((WatchingInsertionContext)context).getInvalidateTrace() + "\n--------";
       }
       LOG.info(message);
     }

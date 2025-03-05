@@ -29,7 +29,7 @@ class JavaCompilersTabUi(
 
   val panel = panel {
     row(JavaCompilerBundle.message("option.use.compiler.text")) {
-      compilerComboBox = comboBox(compilers, textListCellRenderer { it?.presentableName ?: "" })
+      compilerComboBox = comboBox(compilers, textListCellRenderer { it?.presentableName })
         .applyToComponent {
           addActionListener {
             val compiler = compilerComboBox.getSelectedItem()

@@ -75,8 +75,12 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     Set<VcsRoot> detectedRoots = new HashSet<>();
     Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
 
-    detectedRoots.addAll(scanForRootsInsideDir(myProject, dirToScan, null, scannedDirs));
-    detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(dirToScan), scannedDirs, detectedRoots));
+    VirtualFile resolvedDir = dirToScan.getCanonicalFile();
+    if (resolvedDir == null) {
+      return Collections.emptySet();
+    }
+    detectedRoots.addAll(scanForRootsInsideDir(myProject, resolvedDir, null, scannedDirs));
+    detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(resolvedDir), scannedDirs, detectedRoots));
     return detectedRoots;
   }
 
@@ -120,6 +124,17 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
       }
 
       if (scannedDirs.containsKey(dir)) return CONTINUE;
+
+      VirtualFile canonicalFile = dir.getCanonicalFile(); // NO_FOLLOW_SYMLINKS still allows iterating over symlinks non-recursively
+      if (canonicalFile != null) {
+        Boolean scanResult = scannedDirs.get(canonicalFile);
+        if (scanResult != null) {
+          scannedDirs.put(canonicalFile, scanResult);
+          return CONTINUE;
+        }
+
+        dir = canonicalFile; // scan links for vcs repos, once
+      }
 
       VcsRoot vcsRoot = getVcsRootFor(dir, null);
       scannedDirs.put(dir, vcsRoot != null);

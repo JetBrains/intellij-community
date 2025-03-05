@@ -5,8 +5,6 @@ import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -20,8 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class StartUseVcsAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(StartUseVcsAction.class);
-
   public StartUseVcsAction() {
     super(VcsBundle.messagePointer("action.enable.version.control.integration.text"));
   }
@@ -33,35 +29,34 @@ public class StartUseVcsAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-
-    boolean enabled = isEnabled(project);
-
-    Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(enabled);
+    e.getPresentation().setEnabledAndVisible(guessDirectory(e) != null);
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
-    if (!isEnabled(project)) return;
-    VirtualFile targetDirectory = ProjectUtil.guessProjectDir(project);
-    if (targetDirectory == null) {
-      LOG.warn("Project directory is null");
-      return;
-    }
+    @Nullable VirtualFile directory = guessDirectory(e);
+    if (directory == null) return;
 
-    StartUseVcsDialog dialog = new StartUseVcsDialog(project, targetDirectory.getPath());
+    StartUseVcsDialog dialog = new StartUseVcsDialog(project, directory.getPath());
     if (dialog.showAndGet()) {
       AbstractVcs vcs = dialog.getVcs();
-      vcs.enableIntegration();
+      vcs.enableIntegration(directory);
     }
   }
 
-  private static boolean isEnabled(@Nullable Project project) {
-    if (project == null || !TrustedProjects.isTrusted(project)) return false;
+  protected @Nullable VirtualFile guessDirectory(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null || !TrustedProjects.isTrusted(project)) return null;
     ProjectLevelVcsManagerImpl manager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
-    return manager.haveVcses() && !manager.hasAnyMappings();
+    if (manager.haveVcses() && !manager.hasAnyMappings()) {
+      VirtualFile targetDirectory = ProjectUtil.guessProjectDir(project);
+      if (targetDirectory == null) {
+        return null;
+      }
+      return targetDirectory;
+    }
+    return null;
   }
 }

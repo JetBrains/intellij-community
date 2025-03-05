@@ -6,6 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface FilesScanningTask {
-  fun isFullIndexUpdate(): Boolean
+  fun isFullIndexUpdate(): Boolean?
   fun close()
 }

@@ -3,6 +3,7 @@ package com.intellij.execution.ijent.nio
 
 import com.intellij.platform.core.nio.fs.DelegatingFileSystem
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
+import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.util.text.nullize
@@ -14,10 +15,13 @@ import kotlin.io.path.Path
 import kotlin.io.path.isSameFileAs
 import kotlin.io.path.pathString
 
+private fun Path.unwrap(): Path = if (this is MultiRoutingFsPath) delegate else this
+
 /**
  * The `RootAwarePath `class delegates all operations to the original IjentNioPath.
  * The root is used only as an information holder and for computing the `toUri` and `toString`.
  */
+@Suppress("NAME_SHADOWING")
 internal class IjentEphemeralRootAwarePath(val rootPath: Path, val originalPath: IjentNioPath) : Path {
   override fun getFileSystem(): FileSystem {
     return originalPath.fileSystem
@@ -28,7 +32,7 @@ internal class IjentEphemeralRootAwarePath(val rootPath: Path, val originalPath:
   }
 
   override fun getRoot(): Path? {
-    return originalPath.root
+    return originalPath.root?.let { IjentEphemeralRootAwarePath(rootPath, it) }
   }
 
   override fun getFileName(): Path? {
@@ -53,10 +57,12 @@ internal class IjentEphemeralRootAwarePath(val rootPath: Path, val originalPath:
   }
 
   override fun startsWith(other: Path): Boolean {
+    val other = other.unwrap()
     return originalPath.startsWith(if (other is IjentEphemeralRootAwarePath) other.originalPath else other)
   }
 
   override fun endsWith(other: Path): Boolean {
+    val other = other.unwrap()
     return originalPath.endsWith(if (other is IjentEphemeralRootAwarePath) other.originalPath else other)
   }
 
@@ -65,10 +71,12 @@ internal class IjentEphemeralRootAwarePath(val rootPath: Path, val originalPath:
   }
 
   override fun resolve(other: Path): Path {
+    val other = other.unwrap()
     return IjentEphemeralRootAwarePath(rootPath, originalPath.resolve(if (other is IjentEphemeralRootAwarePath) other.originalPath else other))
   }
 
   override fun relativize(other: Path): Path {
+    val other = other.unwrap()
     return IjentEphemeralRootAwarePath(rootPath, originalPath.relativize(if (other is IjentEphemeralRootAwarePath) other.originalPath else other))
   }
 
@@ -89,19 +97,27 @@ internal class IjentEphemeralRootAwarePath(val rootPath: Path, val originalPath:
   }
 
   override fun compareTo(other: Path): Int {
+    val other = other.unwrap()
     return originalPath.compareTo(if (other is IjentEphemeralRootAwarePath) other.originalPath else other)
-  }
-
-  override fun equals(other: Any?): Boolean {
-    return originalPath == if (other is IjentEphemeralRootAwarePath) other.originalPath else other
   }
 
   override fun toFile(): File {
     return originalPath.toFile()
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is Path) return false
+
+    val other = other.unwrap()
+
+    return if (other is IjentEphemeralRootAwarePath) other.rootPath == rootPath && other.originalPath == originalPath else originalPath == other
+  }
+
   override fun hashCode(): Int {
-    return originalPath.hashCode()
+    var result = rootPath.hashCode()
+    result = 31 * result + originalPath.hashCode()
+    return result
   }
 
   override fun toString(): String {
@@ -177,7 +193,7 @@ internal class IjentEphemeralRootAwareFileSystem(
 
   override fun getPath(first: String, vararg more: String): Path {
     if (first.startsWith(root.pathString)) {
-      val parts = more.flatMap { it.split("/") }.toTypedArray()
+      val parts = more.flatMap { it.split("/") }.filter(String::isNotEmpty).toTypedArray()
       val ijentNioPath = originalFs.getPath(first.removePrefix(root.pathString).nullize() ?: "/", *parts) as IjentNioPath
       return IjentEphemeralRootAwarePath(root, ijentNioPath)
     }

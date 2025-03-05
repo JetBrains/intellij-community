@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -91,10 +91,10 @@ public final class IfStatement extends Statement {
           post = elsestat;
         }
         else {
-          if (lstSucc.size() == 0) {
+          if (lstSucc.isEmpty()) {
             post = elsestat;
           }
-          else if (lstSucc1.size() == 0) {
+          else if (lstSucc1.isEmpty()) {
             post = ifstat;
           }
         }

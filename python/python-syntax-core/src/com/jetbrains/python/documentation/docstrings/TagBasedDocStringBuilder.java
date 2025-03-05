@@ -27,18 +27,15 @@ public class TagBasedDocStringBuilder extends DocStringBuilder<TagBasedDocString
     myTagPrefix = prefix;
   }
 
-  @NotNull
-  public TagBasedDocStringBuilder addParameterDescription(@NotNull String name, @NotNull String description) {
+  public @NotNull TagBasedDocStringBuilder addParameterDescription(@NotNull String name, @NotNull String description) {
     return addLine(String.format("%sparam %s: %s", myTagPrefix, name, description));
   }
 
-  @NotNull
-  public TagBasedDocStringBuilder addParameterType(@NotNull String name, @NotNull String type) {
+  public @NotNull TagBasedDocStringBuilder addParameterType(@NotNull String name, @NotNull String type) {
     return addLine(String.format("%stype %s: %s", myTagPrefix, name, type));
   }
 
-  @NotNull
-  public TagBasedDocStringBuilder addReturnValueType(@NotNull String type) {
+  public @NotNull TagBasedDocStringBuilder addReturnValueType(@NotNull String type) {
     // named return values are not supported in Sphinx and Epydoc
     return addLine(String.format("%srtype: %s", myTagPrefix, type));
   }
@@ -47,13 +44,11 @@ public class TagBasedDocStringBuilder extends DocStringBuilder<TagBasedDocString
     return addLine(String.format("%sreturn: %s", myTagPrefix, description));
   }
 
-  @NotNull
-  public TagBasedDocStringBuilder addExceptionDescription(@NotNull String type, @NotNull String description) {
+  public @NotNull TagBasedDocStringBuilder addExceptionDescription(@NotNull String type, @NotNull String description) {
     return addLine(String.format("%sraise %s: %s", myTagPrefix, type, description));
   }
 
-  @NotNull
-  public TagBasedDocStringBuilder addSummary(@NotNull String summary) {
+  public @NotNull TagBasedDocStringBuilder addSummary(@NotNull String summary) {
     return addLine(summary).addLine("");
   }
 }

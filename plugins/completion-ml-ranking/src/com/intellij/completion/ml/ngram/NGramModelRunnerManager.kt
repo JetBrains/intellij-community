@@ -26,11 +26,11 @@ class NGramModelRunnerManager(
     coroutineScope.launch {
       myMutex.withLock {
         smartReadAction(project) {
-          if (!file.isValid) return@smartReadAction
-
-          val psiFile = PsiManager.getInstance(project).findFile(file)
-          if (psiFile != null) {
-            processFile(psiFile, psiFile.language)
+          if (file.isValid && !project.isDisposed) {
+            val psiFile = PsiManager.getInstance(project).findFile(file)
+            if (psiFile != null) {
+              processFile(psiFile, psiFile.language)
+            }
           }
         }
       }

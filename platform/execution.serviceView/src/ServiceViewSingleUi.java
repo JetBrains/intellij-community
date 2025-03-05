@@ -26,9 +26,8 @@ final class ServiceViewSingleUi implements ServiceViewUi {
     myMessagePanel.setFocusable(true);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myMainPanel;
   }
 
@@ -77,9 +76,8 @@ final class ServiceViewSingleUi implements ServiceViewUi {
   public void setMasterComponentVisible(boolean visible) {
   }
 
-  @Nullable
   @Override
-  public JComponent getDetailsComponent() {
+  public @Nullable JComponent getDetailsComponent() {
     JComponent content = myMainPanel.getContent();
     return content == myMessagePanel ? null : content;
   }

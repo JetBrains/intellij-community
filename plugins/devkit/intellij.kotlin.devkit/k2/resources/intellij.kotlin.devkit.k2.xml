@@ -1,0 +1,21 @@
+<idea-plugin package="org.jetbrains.idea.devkit.kotlin.k2">
+
+  <dependencies>
+    <plugin id="com.intellij.modules.kotlin.k2"/>
+    <module name="intellij.kotlin.devkit"/>
+    <module name="kotlin.refactorings.move.k2"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="org.jetbrains.idea.devkit.kotlin.inspections.CompanionObjectInExtensionInspectionSupport"
+      serviceImplementation="org.jetbrains.idea.devkit.kotlin.k2.K2CompanionObjectInExtensionInspectionSupport"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="DevKit.lang">
+    <appServiceAsStaticFinalFieldOrPropertyVisitorProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.k2.K2AppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
+  </extensions>
+
+</idea-plugin>

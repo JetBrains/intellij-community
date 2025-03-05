@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -183,7 +183,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
         }
       }
     }
-    if (name.length() != 0 && Character.isLowerCase(name.charAt(0))) {
+    if (!name.isEmpty() && Character.isLowerCase(name.charAt(0))) {
       return new JavaFxPropertyTagDescriptor(psiClass, name, false);
     }
     return new JavaFxClassTagDescriptor(name, childTag);

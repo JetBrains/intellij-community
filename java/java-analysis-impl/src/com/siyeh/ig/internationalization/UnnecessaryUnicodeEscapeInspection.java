@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -34,9 +34,8 @@ import java.nio.charset.CodingErrorAction;
  */
 public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Character c = (Character)infos[0];
     if (c == '\n') {
       return InspectionGadgetsBundle.message("unnecessary.unicode.escape.problem.newline.descriptor");
@@ -49,9 +48,8 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryUnicodeEscapeFix(((Character) infos[0]).charValue(), (RangeMarker)infos[1]);
   }
 
@@ -65,18 +63,16 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
       myRangeMarker = rangeMarker;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       if (c == '\n') {
         return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
       }
       return CommonQuickFixBundle.message("fix.replace.with.x", (c == '\t') ? "\\t" : c);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.family.name");
     }
 

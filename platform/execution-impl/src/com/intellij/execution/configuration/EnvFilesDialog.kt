@@ -12,7 +12,6 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.Consumer
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -42,6 +41,8 @@ class EnvFilesDialog(parentComponent: JComponent,
 }
 
 fun addEnvFile(component: Component, toSelect: VirtualFile? = null, consumer: (s: String) -> Unit) {
-  FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleLocalFileDescriptor(), null, component, toSelect,
-                         Consumer { consumer(it.path) })
+  FileChooser.chooseFiles(FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor(), null, component, toSelect,
+                          { files ->
+                            files.forEach { consumer(it.path) }
+                          })
 }

@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.multiverse.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -45,49 +46,6 @@ import java.util.*;
 @ApiStatus.Experimental
 public final class BackgroundUpdateHighlightersUtil {
   private static final Logger LOG = Logger.getInstance(BackgroundUpdateHighlightersUtil.class);
-  // return true if added
-  @Deprecated
-  static void addHighlighterToEditorIncrementally(@NotNull HighlightingSession session,
-                                                  @NotNull PsiFile file,
-                                                  @NotNull Document document,
-                                                  @NotNull TextRange restrictRange,
-                                                  @NotNull HighlightInfo info,
-                                                  @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
-                                                  int group,
-                                                  @NotNull Long2ObjectMap<RangeMarker> range2markerCache) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    Project project = file.getProject();
-    if (!UpdateHighlightersUtil.HighlightInfoPostFilters.accept(project, info)) {
-      return;
-    }
-
-    if (UpdateHighlightersUtil.isFileLevelOrGutterAnnotation(info)) return;
-    if (!restrictRange.intersects(info)) return;
-
-    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
-    boolean myInfoIsError = UpdateHighlightersUtil.isSevere(info, severityRegistrar);
-    HighlighterRecycler.runWithRecycler(session, recycler -> {
-      Processor<HighlightInfo> otherHighlightInTheWayProcessor = oldInfo -> {
-        if (!myInfoIsError && UpdateHighlightersUtil.isCovered(info, severityRegistrar, oldInfo)) {
-          return false;
-        }
-        RangeHighlighterEx oldHighlighter = oldInfo.getHighlighter();
-        if (oldHighlighter != null && oldInfo.equals(info)) {
-          recycler.recycleHighlighter(info);
-        }
-        return !(Objects.equals(oldInfo.toolId, info.toolId) && oldInfo.equalsByActualOffset(info));
-      };
-      boolean allIsClear = DaemonCodeAnalyzerEx.processHighlights(document, project,
-                                                                  null, info.getActualStartOffset(), info.getActualEndOffset(),
-                                                                  otherHighlightInTheWayProcessor);
-      if (allIsClear) {
-        createOrReuseHighlighterFor(info, colorsScheme, document, group, file, (MarkupModelEx)markup, recycler, range2markerCache, severityRegistrar, session);
-        UpdateHighlightersUtil.clearWhiteSpaceOptimizationFlag(document);
-      }
-    });
-  }
 
   public static void setHighlightersToEditor(@NotNull Project project,
                                              @NotNull PsiFile psiFile,
@@ -148,7 +106,7 @@ public final class BackgroundUpdateHighlightersUtil {
       List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
       List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredInfos.size());
 
-      DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
+      DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside((MarkupModelEx)markup, priorityRange.getStartOffset(), priorityRange.getEndOffset(), session.getCodeInsightContext(), processor);
       SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
         if (!atStart) return true;
         if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && !restrictedRange.contains(info)) {
@@ -200,7 +158,7 @@ public final class BackgroundUpdateHighlightersUtil {
     boolean[] changed = {false};
     Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     HighlighterRecycler.runWithRecycler(session, recycler -> {
-      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
+      DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), session.getCodeInsightContext(), info -> {
         if (info.getGroup() == group) {
           int hiEnd = info.getEndOffset();
           boolean willBeRemoved = range.contains(info)
@@ -239,7 +197,6 @@ public final class BackgroundUpdateHighlightersUtil {
         return true;
       });
       for (HighlightInfo info : infosToCreateHighlightersFor) {
-        assert !info.isFromInspection() && !info.isFromAnnotator() && !info.isFromHighlightVisitor() && !info.isInjectionRelated(): info; // all these types are handled in GHP/LHP separately
         assert !info.isFromInspection() && !info.isFromAnnotator() && !info.isFromHighlightVisitor() && !info.isInjectionRelated(): info; // all these types are handled in GHP/LHP separately
         createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, recycler, range2markerCache, severityRegistrar, session);
       }
@@ -291,11 +248,14 @@ public final class BackgroundUpdateHighlightersUtil {
     int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
     int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
 
+    CodeInsightContext context = session.getCodeInsightContext();
+
     TextAttributes infoAttributes = info.getTextAttributes(psiFile, colorsScheme);
     Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       changeAttributes(finalHighlighter, info, colorsScheme, psiFile, infoAttributes);
 
-      range2markerCache.put(finalInfoRange, finalHighlighter);
+      CodeInsightContextHighlightingUtil.installCodeInsightContext(finalHighlighter, session.getProject(), context);
+
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
@@ -315,12 +275,13 @@ public final class BackgroundUpdateHighlightersUtil {
     if (salvagedHighlighter == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
-      info.setHighlighter(highlighter);
     }
     else {
       highlighter = salvagedHighlighter;
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
+    info.setHighlighter(highlighter);
+    range2markerCache.put(finalInfoRange, highlighter);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("createOrReuseHighlighter " + highlighter + (salvagedHighlighter == null ? "" : " (recycled)"));
@@ -350,17 +311,14 @@ public final class BackgroundUpdateHighlightersUtil {
     TextAttributesKey textAttributesKey = info.forcedTextAttributesKey == null ? info.type.getAttributesKey() : info.forcedTextAttributesKey;
     highlighter.setTextAttributesKey(textAttributesKey);
 
-    TextAttributes highlighterTextAttributes = highlighter.getTextAttributes(colorsScheme);
-    if (infoAttributes == TextAttributes.ERASE_MARKER ||
-        infoAttributes != null && !infoAttributes.equals(highlighterTextAttributes)) {
+    if (infoAttributes != null) {
       highlighter.setTextAttributes(infoAttributes);
     }
 
-    info.setHighlighter(highlighter);
     highlighter.setAfterEndOfLine(info.isAfterEndOfLine());
 
     Color infoErrorStripeColor = info.getErrorStripeMarkColor(psiFile, colorsScheme);
-    Color attributesErrorStripeColor = highlighterTextAttributes != null ? highlighterTextAttributes.getErrorStripeColor() : null;
+    Color attributesErrorStripeColor = infoAttributes != null ? infoAttributes.getErrorStripeColor() : null;
     if (infoErrorStripeColor != null && !infoErrorStripeColor.equals(attributesErrorStripeColor)) {
       highlighter.setErrorStripeMarkColor(infoErrorStripeColor);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ui.dualView.DualTreeElement;
@@ -10,7 +10,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.List;
 
 class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements DualTreeElement {
-  @NotNull private final VcsFileRevision myRevision;
+  private final @NotNull VcsFileRevision myRevision;
 
   TreeNodeOnVcsRevision(@Nullable VcsFileRevision revision, @NotNull List<TreeItem<VcsFileRevision>> roots) {
     myRevision = revision == null ? VcsFileRevision.NULL : revision;
@@ -19,8 +19,7 @@ class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements DualTreeEl
     }
   }
 
-  @NotNull
-  public VcsFileRevision getRevision() {
+  public @NotNull VcsFileRevision getRevision() {
     return myRevision;
   }
 
@@ -29,6 +28,7 @@ class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements DualTreeEl
     return myRevision != VcsFileRevision.NULL;
   }
 
+  @Override
   public String toString() {
     return myRevision.getRevisionNumber().asString();
   }

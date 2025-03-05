@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.Strings;
@@ -151,6 +152,39 @@ public final class IdeBackgroundUtil {
                                                         Disposable disposable) {
     PainterHelper paintersHelper = new PainterHelper(root);
     paintersHelper.addPainter(PainterHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
+  }
+
+  /**
+   * Allows painting anything as a background for component and its children
+   */
+  @ApiStatus.Experimental
+  public static void createTemporaryBackgroundTransform(JComponent root,
+                                                        Painter painter,
+                                                        Disposable disposable) {
+    PainterHelper paintersHelper = new PainterHelper(root);
+    // In order not to expose MyGraphics class, we need to have a delegate that unwraps MyGraphics to Graphics2D
+    paintersHelper.addPainter(new Painter() {
+      @Override
+      public boolean needsRepaint() {
+        return painter.needsRepaint();
+      }
+
+      @Override
+      public void paint(Component component, Graphics2D g) {
+        painter.paint(component, MyGraphics.unwrap(g));
+      }
+
+      @Override
+      public void addListener(@NotNull Listener listener) {
+        painter.addListener(listener);
+      }
+
+      @Override
+      public void removeListener(Listener listener) {
+        painter.removeListener(listener);
+      }
+    }, root);
     createTemporaryBackgroundTransform(root, paintersHelper, disposable);
   }
 

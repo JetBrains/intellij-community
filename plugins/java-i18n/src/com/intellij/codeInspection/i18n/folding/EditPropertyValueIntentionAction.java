@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -12,14 +12,12 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
 public final class EditPropertyValueIntentionAction implements IntentionAction {
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return JavaI18nBundle.message("intention.text.edit.property.value");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 

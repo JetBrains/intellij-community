@@ -50,6 +50,11 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/compose.kt");
     }
 
+    @TestMetadata("composeAgainstOldBinaries.kt")
+    public void testComposeAgainstOldBinaries() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/composeAgainstOldBinaries.kt");
+    }
+
     @TestMetadata("lombok.kt")
     public void testLombok() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/lombok.kt");
@@ -78,5 +83,10 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
     @TestMetadata("serialize_importFromGeneratedCompanion.kt")
     public void testSerialize_importFromGeneratedCompanion() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize_importFromGeneratedCompanion.kt");
+    }
+
+    @TestMetadata("serialize_non_existing_jar_from_kotlinDistForIde.kt")
+    public void testSerialize_non_existing_jar_from_kotlinDistForIde() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize_non_existing_jar_from_kotlinDistForIde.kt");
     }
 }

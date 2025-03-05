@@ -6,8 +6,16 @@ import fleet.rpc.core.RpcMessage
 import fleet.util.UID
 import kotlinx.coroutines.CopyableThrowable
 
+/**
+ * Base class for all exceptions that will be retried by [durable]
+ * */
 abstract class RpcClientException(message: String?, cause: Throwable?) : RuntimeException(message, cause)
 
+/**
+ * Thrown when the remote service designated by [route] is offline (maybe temporarily).
+ *
+ * see [RpcClientException]
+ * */
 class RouteClosedException(val route: UID, message: String, cause: Throwable? = null)
   : RpcClientException(message, cause),
     CopyableThrowable<RouteClosedException> {
@@ -17,6 +25,11 @@ class RouteClosedException(val route: UID, message: String, cause: Throwable? = 
   }
 }
 
+/**
+ * Thrown when the request has timed out.
+ *
+ * see [RpcClientException]
+ * */
 class RpcTimeoutException(val msg: String, cause: Throwable? = null)
   : RpcClientException(msg, cause),
     CopyableThrowable<RpcTimeoutException> {
@@ -41,8 +54,11 @@ class UnresolvedServiceException(val serviceId: InstanceId, cause: Throwable? = 
   }
 }
 
-
-//@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.kernel", "fleet.app.fleet.tests"])
+/**
+ * Thrown when the client is disconnected from the server.
+ *
+ * see [RpcClientException]
+ * */
 class RpcClientDisconnectedException(reason: String?, cause: Throwable?)
   : RpcClientException(reason, cause),
     CopyableThrowable<RpcClientDisconnectedException> {
@@ -51,7 +67,6 @@ class RpcClientDisconnectedException(reason: String?, cause: Throwable?)
   }
 }
 
-//@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.common"])
 class RpcCausalityTimeout(msg: String?, cause: Throwable?)
   : RpcClientException(msg, cause),
     CopyableThrowable<RpcCausalityTimeout> {
@@ -60,7 +75,11 @@ class RpcCausalityTimeout(msg: String?, cause: Throwable?)
   }
 }
 
-//@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.app.fleet.tests"])
+/**
+ * Thrown when the remote producer fails with a CancellationException.
+ *
+ * see [RpcClientException]
+ * */
 class ProducerIsCancelledException(msg: String?, cause: Throwable?)
   : RpcClientException(msg, cause),
     CopyableThrowable<ProducerIsCancelledException> {

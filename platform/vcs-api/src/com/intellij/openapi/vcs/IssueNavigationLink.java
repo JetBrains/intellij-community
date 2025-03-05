@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs;
 
@@ -16,13 +16,12 @@ public class IssueNavigationLink {
   public IssueNavigationLink() {
   }
 
-  public IssueNavigationLink(@NonNls final String issueRegexp, @NonNls final String linkRegexp) {
+  public IssueNavigationLink(final @NonNls String issueRegexp, final @NonNls String linkRegexp) {
     myIssueRegexp = issueRegexp;
     myLinkRegexp = linkRegexp;
   }
 
-  @NotNull
-  public String getIssueRegexp() {
+  public @NotNull String getIssueRegexp() {
     return myIssueRegexp;
   }
 
@@ -38,8 +37,7 @@ public class IssueNavigationLink {
     return myIssuePattern;
   }
 
-  @NotNull
-  public String getLinkRegexp() {
+  public @NotNull String getLinkRegexp() {
     return myLinkRegexp;
   }
 
@@ -47,6 +45,7 @@ public class IssueNavigationLink {
     myLinkRegexp = linkRegexp;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -59,6 +58,7 @@ public class IssueNavigationLink {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myIssueRegexp.hashCode();
@@ -66,9 +66,8 @@ public class IssueNavigationLink {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "IssueNavigationLink{" +
            "myIssueRegexp='" + myIssueRegexp + '\'' +
            ", myLinkRegexp='" + myLinkRegexp + '\'' +

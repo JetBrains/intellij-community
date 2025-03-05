@@ -24,8 +24,7 @@ class VariableAssignedFromVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private boolean assignedFrom = false;
 
-  @NotNull
-  private final PsiVariable variable;
+  private final @NotNull PsiVariable variable;
 
   VariableAssignedFromVisitor(@NotNull PsiVariable variable) {
     super();

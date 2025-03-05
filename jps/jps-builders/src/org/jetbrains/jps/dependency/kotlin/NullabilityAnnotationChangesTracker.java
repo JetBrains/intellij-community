@@ -1,14 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.*;
-import org.jetbrains.jps.javac.Iterators;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.jps.javac.Iterators.*;
 
 public final class NullabilityAnnotationChangesTracker implements AnnotationChangesTracker {
   private static final Set<String> ourTrackedAnnotations = Set.of(
@@ -42,8 +43,13 @@ public final class NullabilityAnnotationChangesTracker implements AnnotationChan
   );
 
   @Override
+  public boolean isAnnotationTracked(@NotNull TypeRepr.ClassType annotationType) {
+    return ourTrackedAnnotations.contains(annotationType.getJvmName());
+  }
+
+  @Override
   public @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff, Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotationsDiff) {
-    if (isAffected(Iterators.map(Iterators.flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), paramAnnotationsDiff.added(), paramAnnotationsDiff.removed())), an -> an.getAnnotationClass()))) {
+    if (isAffected(map(flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), paramAnnotationsDiff.added(), paramAnnotationsDiff.removed())), AnnotationInstance::getAnnotationClass))) {
       return method.isFinal()? EnumSet.of(Recompile.USAGES) : EnumSet.of(Recompile.USAGES, Recompile.SUBCLASSES);
     }
     return RECOMPILE_NONE;
@@ -51,10 +57,10 @@ public final class NullabilityAnnotationChangesTracker implements AnnotationChan
 
   @Override
   public @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff) {
-    return isAffected(Iterators.map(Iterators.flat(annotationsDiff.added(), annotationsDiff.removed()), an -> an.getAnnotationClass()))? EnumSet.of(Recompile.USAGES) : RECOMPILE_NONE;
+    return isAffected(map(flat(annotationsDiff.added(), annotationsDiff.removed()), AnnotationInstance::getAnnotationClass))? EnumSet.of(Recompile.USAGES) : RECOMPILE_NONE;
   }
 
   private static boolean isAffected(Iterable<TypeRepr.ClassType> addedOrRemoved) {
-    return !Iterators.isEmpty(Iterators.filter(addedOrRemoved, t -> ourTrackedAnnotations.contains(t.getJvmName())));
+    return !isEmpty(filter(addedOrRemoved, t -> ourTrackedAnnotations.contains(t.getJvmName())));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.CustomMethodHandlers;
@@ -46,8 +46,7 @@ public class StringConcatInstruction extends EvalInstruction {
     return factory.fromDfType(result);
   }
 
-  @NotNull
-  private static DfIntType getLength(@NotNull DfaValueFactory factory, @NotNull DfaMemoryState state, @NotNull DfaValue dfaValue, @Nullable String constValue) {
+  private static @NotNull DfIntType getLength(@NotNull DfaValueFactory factory, @NotNull DfaMemoryState state, @NotNull DfaValue dfaValue, @Nullable String constValue) {
     if (constValue != null) {
       return intValue(constValue.length());
     }
@@ -67,8 +66,7 @@ public class StringConcatInstruction extends EvalInstruction {
     return (DfIntType)intRange(LongRangeSet.range(0, Integer.MAX_VALUE));
   }
   
-  @Nullable
-  private static String getString(@NotNull DfaMemoryState state, DfaValue value) {
+  private static @Nullable String getString(@NotNull DfaMemoryState state, DfaValue value) {
     DfType dfType = state.getDfType(value);
     if (dfType.equals(NULL)) {
       return "null";
@@ -79,6 +77,7 @@ public class StringConcatInstruction extends EvalInstruction {
            constant instanceof Boolean ? constant.toString() : null;
   }
 
+  @Override
   public String toString() {
     return "STRING_CONCAT";
   }

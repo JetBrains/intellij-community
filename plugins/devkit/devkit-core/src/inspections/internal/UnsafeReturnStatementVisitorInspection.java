@@ -98,16 +98,13 @@ public final class UnsafeReturnStatementVisitorInspection extends DevKitUastInsp
       myMethods = methods;
     }
 
-    @IntentionName
-    @NotNull
     @Override
-    public String getName() {
+    public @IntentionName @NotNull String getName() {
       return myName;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return DevKitBundle.message("inspections.unsafe.return.insert.family.name");
     }
 

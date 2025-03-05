@@ -28,7 +28,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.psi.PsiDocumentManager;
@@ -578,7 +577,7 @@ public final class ImplementationViewComponent extends JPanel {
   private class ShowInFindWindowAction extends AnAction {
     ShowInFindWindowAction() {
       super(() -> IdeBundle.message("show.in.find.window.button.name"),
-            ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab));
+            ToolWindowManager.getInstance(project).getShowInFindToolWindowIcon());
     }
 
     @Override

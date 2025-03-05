@@ -6,6 +6,7 @@ import com.intellij.driver.model.TextData
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
+import java.awt.font.GlyphVector
 import java.text.AttributedCharacterIterator
 import kotlin.math.cos
 import kotlin.math.sin
@@ -84,5 +85,9 @@ internal class DataExtractorGraphics2d(private val g: Graphics2D,
   override fun rotate(theta: Double, x: Double, y: Double) {
     g.rotate(theta, x, y)
     rotation = Rotation(theta, x, y)
+  }
+
+  override fun drawGlyphVector(g: GlyphVector, x: Float, y: Float) {
+    addTextData(getTextByGlyphVector(g), x.toInt(), y.toInt())
   }
 }

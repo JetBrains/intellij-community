@@ -1,16 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.internal.daemon
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
+import com.intellij.openapi.diagnostic.logger
 import org.gradle.internal.id.IdGenerator
 import org.gradle.internal.service.ServiceRegistry
 import org.gradle.launcher.daemon.client.DaemonClientFactory
 import org.gradle.launcher.daemon.client.DaemonConnector
 import org.gradle.launcher.daemon.client.DaemonStopClient
+import org.gradle.launcher.daemon.client.DaemonStopClientExecuter
 import org.gradle.launcher.daemon.protocol.Command
 import org.gradle.launcher.daemon.registry.DaemonInfo
 import org.gradle.launcher.daemon.registry.DaemonRegistry
+import java.io.File
 
-abstract class AbstractDaemonStopAction(serviceDirectoryPath: String?) : DaemonAction(serviceDirectoryPath) {
+private val LOG = logger<DaemonStopAction>()
+
+abstract class AbstractDaemonStopAction(private val serviceDirectoryPath: String?) : DaemonAction(serviceDirectoryPath) {
 
   protected abstract val commandClass: Class<out Command>
 
@@ -18,8 +24,20 @@ abstract class AbstractDaemonStopAction(serviceDirectoryPath: String?) : DaemonA
 
   fun run(daemonClientFactory: DaemonClientFactory) {
     val daemonServices = getDaemonServices(daemonClientFactory)
-    val stopClient = daemonServices.get(DaemonStopClient::class.java)
-    stopAll(stopClient, daemonServices)
+    if (GradleVersionUtil.isCurrentGradleAtLeast("8.12")) {
+      if (serviceDirectoryPath == null) {
+        LOG.info("Gradle daemon service directory path is not defined. Unable to execute a daemon action.")
+        return
+      }
+      val executor = daemonServices.get(DaemonStopClientExecuter::class.java)
+      executor.execute(daemonServices, File(serviceDirectoryPath)) { stopClient ->
+        stopAll(stopClient, daemonServices)
+      }
+    }
+    else {
+      val stopClient = daemonServices.get(DaemonStopClient::class.java)
+      stopAll(stopClient, daemonServices)
+    }
   }
 
   fun run(daemonClientFactory: DaemonClientFactory, tokens: List<ByteArray>) {

@@ -273,6 +273,7 @@ public final class MacrosDialog extends DialogWrapper {
 
     @NotNull String getPreview();
 
+    @Override
     @NotNull String toString();
   }
 
@@ -293,6 +294,7 @@ public final class MacrosDialog extends DialogWrapper {
       return StringUtil.notNullize(myMacro.preview(myDataContext));
     }
 
+    @Override
     public @NotNull String toString() {
       return myMacro.getName() + " - " + myMacro.getDescription();
     }
@@ -315,6 +317,7 @@ public final class MacrosDialog extends DialogWrapper {
       return StringUtil.notNullize(myEntry.getValue(), "$" + getName() + "$");
     }
 
+    @Override
     public @NotNull String toString() {
       return myEntry.getKey();
     }

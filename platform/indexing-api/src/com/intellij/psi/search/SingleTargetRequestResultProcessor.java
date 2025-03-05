@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -14,22 +14,22 @@ import java.util.List;
 public final class SingleTargetRequestResultProcessor extends RequestResultProcessor {
   private final PsiElement myTarget;
 
-
   public SingleTargetRequestResultProcessor(@NotNull PsiElement target) {
     super(target);
     myTarget = target;
   }
 
   @Override
-  public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull final Processor<? super PsiReference> consumer) {
+  public boolean processTextOccurrence(@NotNull PsiElement element,
+                                       int offsetInElement,
+                                       @NotNull Processor<? super PsiReference> consumer) {
     if (!myTarget.isValid()) {
       return false;
     }
 
-    final List<PsiReference> references = PsiReferenceService.getService().getReferences(element,
-                                                                                         new PsiReferenceService.Hints(myTarget,
-                                                                                                                       offsetInElement));
-    //noinspection ForLoopReplaceableByForEach
+    PsiReferenceService service = PsiReferenceService.getService();
+    PsiReferenceService.Hints hints = new PsiReferenceService.Hints(myTarget, offsetInElement);
+    List<PsiReference> references = service.getReferences(element, hints);
     for (int i = 0; i < references.size(); i++) {
       PsiReference ref = references.get(i);
       ProgressManager.checkCanceled();
@@ -40,7 +40,6 @@ public final class SingleTargetRequestResultProcessor extends RequestResultProce
     return true;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @Override
   public String toString() {
     return "SingleTarget: " + myTarget;

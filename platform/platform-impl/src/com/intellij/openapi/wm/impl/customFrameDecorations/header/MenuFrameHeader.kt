@@ -68,7 +68,7 @@ internal class MenuFrameHeader(
   }
 
   override fun calcHeight(): Int {
-    val isCompactHeader = isAlwaysCompact || isCompactHeader(UISettings.getInstance()) { blockingComputeMainActionGroups() }
+    val isCompactHeader = isAlwaysCompact || isCompactHeader { blockingComputeMainActionGroups() }
     return CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader)
   }
 

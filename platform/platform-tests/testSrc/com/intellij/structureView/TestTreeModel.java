@@ -77,6 +77,7 @@ public class TestTreeModel implements StructureViewModel{
       return new PresentationData(myValue, null, null, null);
     }
 
+    @Override
     public String toString() {
       return myValue;
     }

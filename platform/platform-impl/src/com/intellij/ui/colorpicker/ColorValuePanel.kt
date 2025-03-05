@@ -564,7 +564,7 @@ private abstract class ColorDocument(internal val src: JTextField) : PlainDocume
 
     val charsToInsert = source
       .filter { isLegalCharacter(it) }
-      .map { it.toUpperCase() }
+      .map { it.uppercaseChar() }
       .joinToString("")
 
     val res = StringBuilder(src.text).insert(offs, charsToInsert).toString()

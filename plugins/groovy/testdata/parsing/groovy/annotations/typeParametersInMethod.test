@@ -1,0 +1,264 @@
+class A {
+   <V> V m1() {}
+
+   <@Anno1 V> V m2() {}
+
+   <@Anno2(a=b) V> V m3() {}
+
+   <@Anno1 @Anno2(a=b) V> V m4() {}
+
+   <@Anno1 V, @Anno2(a=b) U> U m5() {}
+}
+
+static <@Anno1 T> T function() {
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
+    Permits clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n   ')
+      Method
+        Modifiers
+          <empty list>
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            PsiElement(identifier)('V')
+            Type extends bounds list
+              <empty list>
+          PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('V')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('m1')
+        Parameter list
+          PsiElement(()('(')
+          PsiElement())(')')
+        Throw clause
+          <empty list>
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n   ')
+      Method
+        Modifiers
+          <empty list>
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            Annotation
+              PsiElement(@)('@')
+              Reference element
+                PsiElement(identifier)('Anno1')
+              Annotation arguments
+                <empty list>
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('V')
+            Type extends bounds list
+              <empty list>
+          PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('V')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('m2')
+        Parameter list
+          PsiElement(()('(')
+          PsiElement())(')')
+        Throw clause
+          <empty list>
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n   ')
+      Method
+        Modifiers
+          <empty list>
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            Annotation
+              PsiElement(@)('@')
+              Reference element
+                PsiElement(identifier)('Anno2')
+              Annotation arguments
+                PsiElement(()('(')
+                Annotation member value pair
+                  PsiElement(identifier)('a')
+                  PsiElement(=)('=')
+                  Reference expression
+                    PsiElement(identifier)('b')
+                PsiElement())(')')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('V')
+            Type extends bounds list
+              <empty list>
+          PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('V')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('m3')
+        Parameter list
+          PsiElement(()('(')
+          PsiElement())(')')
+        Throw clause
+          <empty list>
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n   ')
+      Method
+        Modifiers
+          <empty list>
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            Annotation
+              PsiElement(@)('@')
+              Reference element
+                PsiElement(identifier)('Anno1')
+              Annotation arguments
+                <empty list>
+            PsiWhiteSpace(' ')
+            Annotation
+              PsiElement(@)('@')
+              Reference element
+                PsiElement(identifier)('Anno2')
+              Annotation arguments
+                PsiElement(()('(')
+                Annotation member value pair
+                  PsiElement(identifier)('a')
+                  PsiElement(=)('=')
+                  Reference expression
+                    PsiElement(identifier)('b')
+                PsiElement())(')')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('V')
+            Type extends bounds list
+              <empty list>
+          PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('V')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('m4')
+        Parameter list
+          PsiElement(()('(')
+          PsiElement())(')')
+        Throw clause
+          <empty list>
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n\n   ')
+      Method
+        Modifiers
+          <empty list>
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            Annotation
+              PsiElement(@)('@')
+              Reference element
+                PsiElement(identifier)('Anno1')
+              Annotation arguments
+                <empty list>
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('V')
+            Type extends bounds list
+              <empty list>
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Type parameter
+            Annotation
+              PsiElement(@)('@')
+              Reference element
+                PsiElement(identifier)('Anno2')
+              Annotation arguments
+                PsiElement(()('(')
+                Annotation member value pair
+                  PsiElement(identifier)('a')
+                  PsiElement(=)('=')
+                  Reference expression
+                    PsiElement(identifier)('b')
+                PsiElement())(')')
+            PsiWhiteSpace(' ')
+            PsiElement(identifier)('U')
+            Type extends bounds list
+              <empty list>
+          PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        Type element
+          Reference element
+            PsiElement(identifier)('U')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('m5')
+        Parameter list
+          PsiElement(()('(')
+          PsiElement())(')')
+        Throw clause
+          <empty list>
+        PsiWhiteSpace(' ')
+        Open block
+          PsiElement({)('{')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+  PsiElement(new line)('\n\n')
+  Method
+    Modifiers
+      PsiElement(static)('static')
+    PsiWhiteSpace(' ')
+    Type parameter list
+      PsiElement(<)('<')
+      Type parameter
+        Annotation
+          PsiElement(@)('@')
+          Reference element
+            PsiElement(identifier)('Anno1')
+          Annotation arguments
+            <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('T')
+        Type extends bounds list
+          <empty list>
+      PsiElement(>)('>')
+    PsiWhiteSpace(' ')
+    Type element
+      Reference element
+        PsiElement(identifier)('T')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('function')
+    Parameter list
+      PsiElement(()('(')
+      PsiElement())(')')
+    Throw clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n')
+      PsiElement(})('}')

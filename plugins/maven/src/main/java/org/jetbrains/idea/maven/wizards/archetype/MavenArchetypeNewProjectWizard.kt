@@ -10,6 +10,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
@@ -105,7 +106,6 @@ internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       archetypeItemProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypeVersions() }
       archetypeVersionProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypeDescriptor() }
       data.putUserData(MavenArchetypeNewProjectWizardData.KEY, this)
-      data.putUserData(RootNewProjectWizardStep.PROJECT_BUILDER_KEY, moduleBuilder)
     }
 
     fun setupCatalogUI(builder: Panel) {
@@ -342,6 +342,10 @@ internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           putAll(archetypeDescriptor)
         }
       }
+    }
+
+    override fun createProjectConfigurator(): ProjectConfigurator? {
+      return moduleBuilder.createProjectConfigurator()
     }
   }
 

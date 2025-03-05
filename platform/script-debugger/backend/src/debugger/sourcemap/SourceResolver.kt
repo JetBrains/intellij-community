@@ -14,9 +14,9 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.debugger.ScriptDebuggerUrls
-import java.io.File
 import java.nio.file.InvalidPathException
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 @ApiStatus.Internal
 interface SourceFileResolver {
@@ -168,7 +168,7 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
 fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFileIfAbsoluteAndExists: Boolean): Url {
   val path = canonicalizePath(url, baseUrl, baseUrlIsFile)
   if (baseUrl.isInLocalFileSystem ||
-      asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && File(path).exists()) {
+      asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && Path(path).exists()) {
     // file:///home/user/foo.js.map, foo.ts -> file:///home/user/foo.ts (baseUrl is in local fs)
     // http://localhost/home/user/foo.js.map, foo.ts -> file:///home/user/foo.ts (File(path) exists)
     return ScriptDebuggerUrls.newLocalFileUrl(path)

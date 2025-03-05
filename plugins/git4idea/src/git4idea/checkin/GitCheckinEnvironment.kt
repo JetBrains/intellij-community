@@ -14,7 +14,10 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
@@ -50,6 +53,7 @@ import git4idea.checkin.GitCheckinExplicitMovementProvider.Movement
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
+import git4idea.commit.GitMergeCommitMessageReader
 import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
@@ -68,7 +72,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
-import kotlin.Pair
 
 @Service(Service.Level.PROJECT)
 class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment, AmendCommitAware {
@@ -89,37 +92,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   }
 
   override fun getDefaultMessageFor(filesToCheckin: Array<FilePath>): String? {
-    val messages = LinkedHashSet<String>()
     val manager = GitUtil.getRepositoryManager(myProject)
     val repositories = filesToCheckin.mapNotNullTo(HashSet()) { file -> manager.getRepositoryForFileQuick(file) }
-
-    for (repository in repositories) {
-      val mergeMsg = repository.repositoryFiles.mergeMessageFile
-      val squashMsg = repository.repositoryFiles.squashMessageFile
-      try {
-        if (!mergeMsg.exists() && !squashMsg.exists()) {
-          continue
-        }
-        val encoding = GitConfigUtil.getCommitEncoding(myProject, repository.root)
-        if (mergeMsg.exists()) {
-          messages.add(loadMessage(mergeMsg, encoding))
-        }
-        else {
-          messages.add(loadMessage(squashMsg, encoding))
-        }
-      }
-      catch (e: IOException) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Unable to load merge message", e)
-        }
-      }
-    }
-    return DvcsUtil.joinMessagesOrNull(messages)
-  }
-
-  @Throws(IOException::class)
-  private fun loadMessage(messageFile: File, encoding: @NonNls String): String {
-    return FileUtil.loadFile(messageFile, encoding)
+    val singleRepo = repositories.singleOrNull() ?: return null
+    return GitMergeCommitMessageReader.getInstance(myProject).read(singleRepo)
   }
 
   override fun getHelpId(): String? {
@@ -255,7 +231,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   private fun markRootDirty(root: VirtualFile) {
     // Note that the root is invalidated because changes are detected per-root anyway.
     // Otherwise it is not possible to detect moves.
-    VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root)
+    VcsDirtyScopeManager.getInstance(myProject).rootDirty(root)
   }
 
   override fun getPostCommitChangeConverter(): PostCommitChangeConverter {
@@ -961,7 +937,7 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       @Suppress("SSBasedInspection")
       file.deleteOnExit()
 
-      val encoding: @NonNls String = GitConfigUtil.getCommitEncoding(project, root)
+      val encoding = GitConfigUtil.getCommitEncodingCharset(project, root)
       OutputStreamWriter(FileOutputStream(file), encoding).use { out ->
         out.write(message)
       }

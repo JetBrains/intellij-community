@@ -115,6 +115,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
   }
 
   private suspend fun readPortFromChannel(channel: ByteReadChannel): Int = readToBuffer(channel, 2).short.toUShort().toInt()
+  private val stdoutChannel: ByteReadChannel
 
   init {
     val args = if (Registry.`is`("wsl.proxy.connect.localhost")) arrayOf("--loopback") else emptyArray()
@@ -133,7 +134,8 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
       }
     }
     try {
-      val stdoutChannel = process.inputStream.toByteReadChannel()
+
+      stdoutChannel = process.inputStream.toByteReadChannel()
       wslLinuxIp = runBlocking {
         readToBuffer(stdoutChannel, 4)
       }.let { InetAddress.getByAddress(it.array()).hostAddress }
@@ -193,5 +195,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
 
   override fun dispose() {
     scope.cancel()
+    // Workaround KTOR-8182
+    stdoutChannel.cancel()
   }
 }

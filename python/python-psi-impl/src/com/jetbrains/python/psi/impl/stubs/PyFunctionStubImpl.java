@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -42,33 +43,28 @@ public class PyFunctionStubImpl extends PyVersionSpecificStubBase<PyFunction> im
     myAnnotation = annotation;
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 
-  @Nullable
   @Override
-  public String getDocString() {
+  public @Nullable String getDocString() {
     return myDocString;
   }
 
-  @Nullable
   @Override
-  public String getDeprecationMessage() {
+  public @Nullable String getDeprecationMessage() {
     return myDeprecationMessage;
   }
 
-  @Nullable
   @Override
-  public String getTypeComment() {
+  public @Nullable String getTypeComment() {
     return myTypeComment;
   }
 
-  @Nullable
   @Override
-  public String getAnnotation() {
+  public @Nullable String getAnnotation() {
     return myAnnotation;
   }
 
@@ -89,6 +85,17 @@ public class PyFunctionStubImpl extends PyVersionSpecificStubBase<PyFunction> im
 
   @Override
   public String toString() {
-    return "PyFunctionStub(" + myName + ")";
+    // @formatter:off
+    return "PyFunctionStubImpl{" +
+           "myName='" + myName + '\'' +
+           ", myDocString='" + (myDocString != null ? StringUtil.escapeStringCharacters(myDocString) : null) + '\'' +
+           ", myDeprecationMessage='" + (myDeprecationMessage != null ? StringUtil.escapeStringCharacters(myDeprecationMessage) : null) + '\'' +
+           ", myAsync=" + myAsync +
+           ", myGenerator=" + myGenerator +
+           ", myOnlyRaisesNotImplementedError=" + myOnlyRaisesNotImplementedError +
+           ", myTypeComment='" + myTypeComment + '\'' +
+           ", myAnnotation='" + myAnnotation + '\'' +
+           '}';
+    // @formatter:on
   }
 }

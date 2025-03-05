@@ -3,6 +3,7 @@ package com.maddyhome.idea.copyright.vcs
 
 import com.intellij.copyright.CopyrightBundle
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -48,11 +49,14 @@ private class UpdateCopyrightCheckinHandler(private val project: Project) : Chec
         }
       }
     }
-    FileDocumentManager.getInstance().saveAllDocuments()
+    writeIntentReadAction {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
     return null
   }
 
-  private val settings: UpdateCopyrightCheckinHandlerState get() = UpdateCopyrightCheckinHandlerState.getInstance(project)
+  private val settings: UpdateCopyrightCheckinHandlerState
+    get() = UpdateCopyrightCheckinHandlerState.getInstance(project)
 
   private fun getPsiFiles(files: List<VirtualFile>): Array<PsiFile> {
     val psiFiles = mutableListOf<PsiFile>()

@@ -7,17 +7,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.textmate.joni.JoniRegexFactory;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Interner;
-import com.intellij.util.containers.PathInterner;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.textmate.TestUtil;
-import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher;
-import org.jetbrains.plugins.textmate.bundles.TextMateGrammar;
-import org.jetbrains.plugins.textmate.editor.TextMateEditorUtilsKt;
+import org.jetbrains.plugins.textmate.TestUtilKt;
+import org.jetbrains.plugins.textmate.language.TextMateConcurrentMapInterner;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableCore;
+import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTableBuilder;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher;
+import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl;
+import org.jetbrains.plugins.textmate.regex.CachingRegexFactory;
+import org.jetbrains.plugins.textmate.regex.RegexFactory;
+import org.jetbrains.plugins.textmate.regex.RememberingLastMatchRegexFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,7 +30,8 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtilRt.getExtension;
 
@@ -35,10 +40,8 @@ abstract public class LexerTestCase extends UsefulTestCase {
   private static final String TEST_DATA_BASE_DIR =
     PlatformTestUtil.getCommunityPath() + "/plugins/textmate/testData/lexer";
 
-  private final Interner<CharSequence> myInterner = new PathInterner.PathEnumerator();
-  private final Map<TextMateFileNameMatcher, CharSequence> myLanguageDescriptors = new HashMap<>();
   private CharSequence myRootScope;
-  private TextMateSyntaxTable mySyntaxTable;
+  private @NotNull TextMateSyntaxTableCore mySyntaxTable;
 
   @Parameterized.Parameter
   public String myFileName;
@@ -65,49 +68,14 @@ abstract public class LexerTestCase extends UsefulTestCase {
 
   @Before
   public void before() {
-    mySyntaxTable = new TextMateSyntaxTable();
-
-    CharSequence scope = null;
-    Iterator<TextMateGrammar> grammars = TestUtil.readBundle(getBundleName()).readGrammars().iterator();
-    while (grammars.hasNext()) {
-      TextMateGrammar grammar = grammars.next();
-      CharSequence rootScope = mySyntaxTable.loadSyntax(grammar.getPlist().getValue(), myInterner);
-      if (rootScope != null) {
-        grammar.getFileNameMatchers().forEach(matcher -> {
-          myLanguageDescriptors.put(matcher, rootScope);
-        });
-        if (scope == null) {
-          scope = rootScope;
-        }
-      }
-    }
-
-    assertNotNull(scope);
-    final List<String> extraBundleNames = getExtraBundleNames();
+    TextMateSyntaxTableBuilder syntaxTableBuilder = new TextMateSyntaxTableBuilder(new TextMateConcurrentMapInterner());
+    var matchers = TestUtilKt.loadBundle(syntaxTableBuilder, getBundleName());
+    List<String> extraBundleNames = getExtraBundleNames();
     for (String bundleName : extraBundleNames) {
-      Iterator<TextMateGrammar> extraGrammars = TestUtil.readBundle(bundleName).readGrammars().iterator();
-      while (extraGrammars.hasNext()) {
-        TextMateGrammar grammar = extraGrammars.next();
-        mySyntaxTable.loadSyntax(grammar.getPlist().getValue(), myInterner);
-      }
+      TestUtilKt.loadBundle(syntaxTableBuilder, bundleName);
     }
-    mySyntaxTable.compact();
-
-    CharSequence scopeForFileName = myLanguageDescriptors.get(new TextMateFileNameMatcher.Name(myFileName));
-    if (scopeForFileName != null) {
-      myRootScope = scopeForFileName;
-    }
-    else {
-      Iterator<CharSequence> extensionsIterator = TextMateEditorUtilsKt.fileNameExtensions(myFileName).iterator();
-      while (extensionsIterator.hasNext()) {
-        CharSequence scopeForExtension =
-          myLanguageDescriptors.get(new TextMateFileNameMatcher.Extension(extensionsIterator.next().toString()));
-        if (scopeForExtension != null) {
-          myRootScope = scopeForExtension;
-          break;
-        }
-      }
-    }
+    mySyntaxTable = syntaxTableBuilder.build();
+    myRootScope = TestUtilKt.findScopeByFileName(matchers, myFileName);
     assertNotNull("scope is empty for file name: " + myFileName, myRootScope);
   }
 
@@ -117,7 +85,13 @@ abstract public class LexerTestCase extends UsefulTestCase {
 
     StringBuilder output = new StringBuilder();
     String text = sourceData.replaceAll("$(\\n+)", "");
-    Lexer lexer = new TextMateHighlightingLexer(new TextMateLanguageDescriptor(myRootScope, mySyntaxTable.getSyntax(myRootScope)), -1);
+    RegexFactory regexFactory = new CachingRegexFactory(new RememberingLastMatchRegexFactory(new JoniRegexFactory()));
+
+    TextMateSelectorCachingWeigher weigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
+    TextMateCachingSyntaxMatcher syntaxMatcher = new TextMateCachingSyntaxMatcher(new TextMateSyntaxMatcherImpl(regexFactory, weigher));
+    Lexer lexer = new TextMateHighlightingLexer(new TextMateLanguageDescriptor(myRootScope, mySyntaxTable.getSyntax(myRootScope)),
+                                                syntaxMatcher,
+                                                -1);
     lexer.start(text);
     while (lexer.getTokenType() != null) {
       final int s = lexer.getTokenStart();

@@ -37,8 +37,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
   /**
    * The orignal item - must not be modified unless apply() is called.
    */
-  @NotNull
-  protected final T myOrigInjection;
+  protected final @NotNull T myOrigInjection;
 
   /**
    * Represents the current UI state. Outside access should use {@link #getInjection()}

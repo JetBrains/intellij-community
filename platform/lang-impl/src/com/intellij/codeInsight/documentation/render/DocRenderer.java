@@ -6,6 +6,7 @@ import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.codeInsight.documentation.DocumentationActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationFontSize;
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
+import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
@@ -28,7 +29,6 @@ import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.scale.JBUIScale;
@@ -251,7 +251,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       if (nextLineNumber < document.getLineCount()) {
         int lineStartOffset = document.getLineStartOffset(nextLineNumber);
         int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t\n");
-        return editor.offsetToXY(contentStartOffset, true, true).x;
+        int vfmtRightShift = VirtualFormattingInlaysInfo.measureVirtualFormattingInlineInlays(editor, contentStartOffset, contentStartOffset);
+        return editor.offsetToXY(contentStartOffset, false, true).x + vfmtRightShift;
       }
     }
     return editor.getInsets().left;
@@ -414,7 +415,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
     EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
       super(
-        QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme(), true),
+        QuickDocHighlightingHelper.getDefaultDocStyleOptions(() -> editor.getColorsScheme(), true),
         JBHtmlPaneConfiguration.builder()
           .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
           .customStyleSheetProvider(bg -> getStyleSheet(editor))

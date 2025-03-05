@@ -39,10 +39,10 @@ public interface LineWiseProcessOutputListener {
 
     @Override
     public void processTerminated(@NotNull ProcessEvent event) {
-      if (myStdoutLine.length() != 0) {
+      if (!myStdoutLine.isEmpty()) {
         myListener.onStdoutLine(myStdoutLine.toString());
       }
-      if (myStderrLine.length() != 0) {
+      if (!myStderrLine.isEmpty()) {
         myListener.onStderrLine(myStderrLine.toString());
       }
     }

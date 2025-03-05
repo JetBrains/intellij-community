@@ -63,6 +63,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
   }
 
+  @Override
   public boolean equals(Object obj) {
     synchronized (mySections) {
       if (!(obj instanceof CompositeAppearance appearance)) return false;
@@ -75,6 +76,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
   }
 
+  @Override
   public int hashCode() {
     return getText().hashCode();
   }
@@ -152,11 +154,13 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
       return ATTRIBUTES;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (!(obj instanceof TextSection section)) return false;
       return section.ATTRIBUTES.equals(ATTRIBUTES) && section.TEXT.equals(TEXT);
     }
 
+    @Override
     public int hashCode() {
       return TEXT.hashCode();
     }

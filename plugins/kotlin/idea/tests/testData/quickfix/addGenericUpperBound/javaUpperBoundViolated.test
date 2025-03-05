@@ -1,5 +1,5 @@
 // FILE: test.before.kt
-// "Add 'kotlin.Any' as upper bound for T" "true"
+// "Add 'Any' as upper bound for T" "true"
 package p;
 
 class Derived<T> : Base<<caret>T>() {}
@@ -29,7 +29,7 @@ import org.jspecify.nullness.NullMarked;
 public class Base<T> {}
 
 // FILE: test.after.kt
-// "Add 'kotlin.Any' as upper bound for T" "true"
+// "Add 'Any' as upper bound for T" "true"
 package p;
 
 class Derived<T : Any> : Base<<caret>T>() {}

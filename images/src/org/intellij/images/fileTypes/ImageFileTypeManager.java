@@ -27,6 +27,5 @@ public abstract class ImageFileTypeManager {
 
   public abstract boolean isImage(@NotNull VirtualFile file);
 
-  @NotNull
-  public abstract FileType getImageFileType();
+  public abstract @NotNull FileType getImageFileType();
 }

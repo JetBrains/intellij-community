@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote.hosting
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -223,7 +223,7 @@ object GitRemoteBranchesUtil {
       askNewBranchNameAndCheckout(project, repositories, remoteBranchName, suggestedLocalName, callInAwtLater)
     } else {
       GitBranchCheckoutOperation(project, repositories)
-        .perform(remoteBranchName, GitNewBranchOptions(suggestedLocalName, true, true), callInAwtLater)
+        .perform(remoteBranchName, GitNewBranchOptions(suggestedLocalName, true, true, false, repositories), callInAwtLater)
     }
   }
 
@@ -244,7 +244,7 @@ object GitRemoteBranchesUtil {
     GitBrancher.getInstance(project).checkoutNewBranchStartingFrom(options.name,
                                                                    remoteBranchName,
                                                                    options.reset,
-                                                                   repositories,
+                                                                   options.repositories.toList(),
                                                                    callInAwtLater)
   }
 

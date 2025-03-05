@@ -115,13 +115,11 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     return processHandler;
   }
 
-  @Nullable
-  protected Runnable getAfterTask() {
+  protected @Nullable Runnable getAfterTask() {
     return null;
   }
 
-  @Nullable
-  protected VirtualFile findOutput() {
+  protected @Nullable VirtualFile findOutput() {
     if (!StringUtil.isEmptyOrSpaces(myConfiguration.getOutputFile())) {
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
         myConfiguration.getOutputFile());
@@ -138,6 +136,5 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
 
   protected abstract String getTask();
 
-  @Nullable
-  protected abstract String getKey();
+  protected abstract @Nullable String getKey();
 }

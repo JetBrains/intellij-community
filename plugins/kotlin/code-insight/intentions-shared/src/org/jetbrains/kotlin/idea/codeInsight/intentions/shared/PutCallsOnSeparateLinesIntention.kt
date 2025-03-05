@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
 import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.util.takeWhileIsInstance
@@ -31,6 +32,7 @@ internal class PutCallsOnSeparateLinesIntention :
     override fun isApplicableByPsi(element: KtQualifiedExpression): Boolean {
         val topmostQualifierExpression = element.topmostQualifierExpression() ?: return false
         if (topmostQualifierExpression.parent is KtImportDirective) return false
+        if (topmostQualifierExpression.parent is KtPackageDirective) return false
 
         topmostQualifierExpression.visitOperations(transformation = callChainTransformation(element)) {
             val nextSibling = it.operationTokenNode.treePrev as? PsiWhiteSpace ?: return true
@@ -47,8 +49,7 @@ internal class PutCallsOnSeparateLinesIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("put.calls.on.separate.lines")
 
-    context(KaSession)
-    override fun prepareContext(element: KtQualifiedExpression) {
+    override fun KaSession.prepareContext(element: KtQualifiedExpression) {
     }
 
     override fun invoke(

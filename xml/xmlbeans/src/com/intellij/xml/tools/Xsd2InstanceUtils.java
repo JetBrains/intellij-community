@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.tools;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -156,7 +156,7 @@ final class Xsd2InstanceUtils {
     return Collections.emptyList();
   }
 
-  public static @NotNull String processAndSaveAllSchemas(@NotNull XmlFile file, @NotNull final Map<String, String> scannedToFileName,
+  public static @NotNull String processAndSaveAllSchemas(@NotNull XmlFile file, final @NotNull Map<String, String> scannedToFileName,
                                                          final @NotNull SchemaReferenceProcessor schemaReferenceProcessor) {
     final String fileName = file.getName();
 

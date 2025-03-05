@@ -1,0 +1,4 @@
+.idea
+bazel-*
+.bazelbsp/
+src/jps-builder/jps-build-standalone.jar

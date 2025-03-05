@@ -128,6 +128,7 @@ a:com.intellij.execution.testframework.TestConsoleProperties
 - sf:SHOW_INLINE_STATISTICS:com.intellij.util.config.BooleanProperty
 - sf:SHOW_STATISTICS:com.intellij.util.config.BooleanProperty
 - sf:SORT_ALPHABETICALLY:com.intellij.util.config.BooleanProperty
+- sf:SORT_BY_DECLARATION_ORDER:com.intellij.util.config.BooleanProperty
 - sf:SORT_BY_DURATION:com.intellij.util.config.BooleanProperty
 - sf:SUITES_ALWAYS_ON_TOP:com.intellij.util.config.BooleanProperty
 - sf:TRACK_CODE_COVERAGE:com.intellij.util.config.BooleanProperty
@@ -226,9 +227,8 @@ a:com.intellij.execution.testframework.TestTreeViewStructure
 - getFilter():com.intellij.execution.testframework.Filter
 - setFilter(com.intellij.execution.testframework.Filter):V
 f:com.intellij.execution.testframework.TestsUIUtil
-- sf:NOTIFICATION_GROUP:com.intellij.notification.NotificationGroup
-- sf:PASSED_COLOR:java.awt.Color
 - s:clearIconProgress(com.intellij.openapi.project.Project):V
+- s:getNotificationGroup():com.intellij.notification.NotificationGroup
 - s:getOpenFileDescriptor(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestConsoleProperties):com.intellij.pom.Navigatable
 - s:getOpenFileDescriptor(com.intellij.execution.testframework.AbstractTestProxy,com.intellij.execution.testframework.TestFrameworkRunningModel):com.intellij.pom.Navigatable
 - s:getTestSummary(com.intellij.execution.testframework.AbstractTestProxy):java.lang.String
@@ -342,6 +342,7 @@ a:com.intellij.execution.testframework.autotest.AbstractAutoTestManager
 - p:myDelayMillis:I
 - <init>(com.intellij.openapi.project.Project):V
 - pa:createWatcher(com.intellij.openapi.project.Project):com.intellij.execution.testframework.autotest.AutoTestWatcher
+- disableAllAutoTests():V
 - getState():com.intellij.execution.testframework.autotest.AbstractAutoTestManager$State
 - loadState(com.intellij.execution.testframework.autotest.AbstractAutoTestManager$State):V
 - p:restartAllAutoTests(I):V
@@ -354,7 +355,6 @@ com.intellij.execution.testframework.autotest.AutoTestWatcher
 f:com.intellij.execution.testframework.autotest.DelayedDocumentWatcher
 - com.intellij.execution.testframework.autotest.AutoTestWatcher
 - <init>(com.intellij.openapi.project.Project,I,com.intellij.execution.testframework.autotest.AbstractAutoTestManager,java.util.function.Predicate):V
-- <init>(com.intellij.openapi.project.Project,I,com.intellij.util.Consumer,com.intellij.openapi.util.Condition):V
 - activate():V
 - deactivate():V
 - getProject():com.intellij.openapi.project.Project
@@ -460,11 +460,13 @@ c:com.intellij.execution.testframework.ui.TestStatusLine
 - pf:myState:com.intellij.ui.SimpleColoredComponent
 - <init>():V
 - formatTestMessage(I,I,I,I,java.lang.Long,J):V
+- p:getStateDescription():com.intellij.ui.SimpleColoredComponent
 - getStateText():java.lang.String
 - getStatusColor():java.awt.Color
 - onTestsDone(java.util.function.Supplier):V
 - setFraction(D):V
 - setIndeterminate(Z):V
+- setStatus(java.lang.String):V
 - setStatusColor(java.awt.Color):V
 - setText(java.lang.String):V
 c:com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl

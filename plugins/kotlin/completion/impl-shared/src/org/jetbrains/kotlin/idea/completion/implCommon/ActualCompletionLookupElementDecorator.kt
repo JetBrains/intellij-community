@@ -31,6 +31,7 @@ class ActualCompletionLookupElementDecorator(
     private val generateMember: () -> KtDeclaration,
     private val shortenReferences: (KtElement) -> Unit,
     private val declarationLookupObject: Any? = null,
+    private val declaration: KtDeclaration? = null,
 ) : LookupElementDecorator<LookupElement>(lookupElement) {
     private val actualKeyword: String = KtTokens.ACTUAL_KEYWORD.value
 
@@ -39,7 +40,7 @@ class ActualCompletionLookupElementDecorator(
         return declarationLookupObject
     }
 
-    override fun getLookupString(): String = actualKeyword
+    override fun getLookupString(): String = if (declaration == null) actualKeyword else delegate.lookupString
 
     override fun getAllLookupStrings() = setOf(lookupString, delegate.lookupString)
 
@@ -53,7 +54,7 @@ class ActualCompletionLookupElementDecorator(
     }
 
     override fun getDelegateInsertHandler(): InsertHandler<LookupElement> = InsertHandler { context, _ ->
-        val dummyMemberHead = "$actualKeyword fun "
+        val dummyMemberHead = if (declaration == null) "$actualKeyword fun " else ""
         val dummyMemberTail = "dummy() {}"
         val dummyMemberText = dummyMemberHead + dummyMemberTail
         val actual = KtTokens.ACTUAL_KEYWORD.value

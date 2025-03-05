@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.graph.Dependency;
@@ -23,23 +24,23 @@ import java.util.stream.Collectors;
  * {@link Maven40AetherModelConverter} provides adapted methods of {@link Maven40ModelConverter} for aether models conversion
  */
 public final class Maven40AetherModelConverter extends Maven40ModelConverter {
-  @NotNull
-  public static MavenModel convertModelWithAetherDependencyTree(MavenProject mavenProject,
-                                                                Collection<? extends DependencyNode> dependencyTree,
-                                                                File localRepository) {
+  public static @NotNull MavenModel convertModelWithAetherDependencyTree(MavenProject mavenProject,
+                                                                         Model model,
+                                                                         Collection<? extends DependencyNode> dependencyTree,
+                                                                         File localRepository) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(mavenProject.getGroupId(), mavenProject.getArtifactId(), mavenProject.getVersion()));
 
-    Parent parent = mavenProject.getModel().getParent();
+    Parent parent = model.getParent();
     if (parent != null) {
       result.setParent(
         new MavenParent(new MavenId(parent.getGroupId(), parent.getArtifactId(), parent.getVersion()), parent.getRelativePath()));
     }
-    result.setPackaging(mavenProject.getPackaging());
+    result.setPackaging(model.getPackaging());
     result.setName(mavenProject.getName());
-    result.setProperties(mavenProject.getProperties() == null ? new Properties() : mavenProject.getProperties());
+    result.setProperties(mavenProject.getProperties() == null ? new Properties() : model.getProperties());
     //noinspection SSBasedInspection
-    result.setPlugins(convertPlugins(mavenProject.getModel(), mavenProject.getPluginArtifacts()));
+    result.setPlugins(convertPlugins(model, mavenProject.getPluginArtifacts()));
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
     result.setExtensions(convertArtifacts(mavenProject.getExtensionArtifacts(), convertedArtifacts, localRepository));
@@ -48,11 +49,13 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
 
     result.setRemoteRepositories(convertAetherRepositories(mavenProject.getRemoteProjectRepositories()));
     result.setRemotePluginRepositories(convertAetherRepositories(mavenProject.getRemotePluginRepositories()));
-    result.setProfiles(convertProfiles(mavenProject.getModel().getProfiles()));
+    result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(mavenProject.getModules());
 
-    convertBuild(result.getBuild(), mavenProject.getModel().getBuild(), mavenProject.getCompileSourceRoots(),
-                 mavenProject.getTestCompileSourceRoots());
+    convertBuild(result.getBuild(), model.getBuild(),
+                 //mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots()
+                 Collections.singletonList(model.getBuild().getSourceDirectory()), Collections.singletonList(model.getBuild().getTestSourceDirectory())
+    );
     return result;
   }
 
@@ -110,8 +113,7 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     return result;
   }
 
-  @Nullable
-  public static Artifact toArtifact(@Nullable Dependency dependency) {
+  public static @Nullable Artifact toArtifact(@Nullable Dependency dependency) {
     if (dependency == null) {
       return null;
     }

@@ -1,0 +1,9 @@
+// "Add non-null asserted (i!!) call" "true"
+fun test() {
+    val i: Int? = 0
+    val result: IntArray = intArrayOf(0)
+    result[0] += i<caret>
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.psi.impl;
 
 import com.intellij.psi.PsiElement;
@@ -20,11 +20,11 @@ public final class EditorConfigPsiImplUtils {
 
   // ---- ---- Charclass utils ---- ----
 
-  public static boolean isEscape(@NotNull final EditorConfigCharClassLetter letter) {
+  public static boolean isEscape(final @NotNull EditorConfigCharClassLetter letter) {
     return letter.textContains('\\');
   }
 
-  public static boolean isValidEscape(@NotNull final EditorConfigCharClassLetter letter) {
+  public static boolean isValidEscape(final @NotNull EditorConfigCharClassLetter letter) {
     if (!letter.isEscape()) return false;
 
     final int length = letter.getTextLength();
@@ -41,8 +41,7 @@ public final class EditorConfigPsiImplUtils {
 
   // ---- ---- Value pair utils ---- ----
 
-  @Nullable
-  public static EditorConfigDescriptor getDescriptor(@NotNull final EditorConfigOptionValuePair pair, final boolean smart) {
+  public static @Nullable EditorConfigDescriptor getDescriptor(final @NotNull EditorConfigOptionValuePair pair, final boolean smart) {
     final EditorConfigDescribableElement parent = pair.getDescribableParent();
     if (parent == null) {
       return null;
@@ -61,8 +60,7 @@ public final class EditorConfigPsiImplUtils {
   // ---- ---- Value list utils ---- ----
 
 
-  @Nullable
-  public static EditorConfigDescriptor getDescriptor(@NotNull final EditorConfigOptionValueList list, final boolean smart) {
+  public static @Nullable EditorConfigDescriptor getDescriptor(final @NotNull EditorConfigOptionValueList list, final boolean smart) {
     final EditorConfigDescribableElement parent = list.getDescribableParent();
     if (parent == null) {
       return null;
@@ -80,8 +78,7 @@ public final class EditorConfigPsiImplUtils {
 
   // ---- ---- Value pair utils ---- ----
 
-  @NotNull
-  public static EditorConfigDescribableElement getFirst(@NotNull final EditorConfigOptionValuePair pair) {
+  public static @NotNull EditorConfigDescribableElement getFirst(final @NotNull EditorConfigOptionValuePair pair) {
     final Optional<PsiElement> first = Arrays.stream(pair.getChildren())
       .filter(child -> child instanceof EditorConfigDescribableElement)
       .findFirst();
@@ -93,8 +90,7 @@ public final class EditorConfigPsiImplUtils {
     return (EditorConfigDescribableElement)first.get();
   }
 
-  @NotNull
-  public static EditorConfigDescribableElement getSecond(@NotNull final EditorConfigOptionValuePair pair) {
+  public static @NotNull EditorConfigDescribableElement getSecond(final @NotNull EditorConfigOptionValuePair pair) {
     final Optional<PsiElement> second = Arrays.stream(pair.getChildren())
       .filter(child -> child instanceof EditorConfigDescribableElement)
       .skip(1)

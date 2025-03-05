@@ -3,15 +3,17 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
@@ -33,6 +35,10 @@ import java.io.File
 val J2K_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
     object : KotlinWithJdkAndRuntimeLightProjectDescriptor() {
         override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk21()
+
+        override fun addDefaultLibraries(model: ModifiableRootModel) {
+            DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model)
+        }
     }
 
 private val ignoreDirectives: Set<String> = setOf(IGNORE_K1, IGNORE_K2)
@@ -124,7 +130,7 @@ internal object J2kTestPreprocessorExtension : J2kPreprocessorExtension {
                 }
             } ?: continue
 
-            writeAction {
+            edtWriteAction {
                 PsiImplUtil.setName(checkNotNull(method.nameIdentifier), "prebar")
             }
         }
@@ -142,11 +148,11 @@ internal object J2kTestPostprocessorExtension : J2kPostprocessorExtension {
             } ?: continue
 
             val references = ReferencesSearch.search(firstNamedParameter, LocalSearchScope(file)).findAll()
-            writeAction {
+            edtWriteAction {
                 PsiImplUtil.setName(checkNotNull(firstNamedParameter.nameIdentifier), "postbar")
             }
             for (reference in references) {
-                writeAction {
+                edtWriteAction {
                     PsiImplUtil.setName(reference.element, "postbar")
                 }
             }

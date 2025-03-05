@@ -13,10 +13,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryParams
 import com.intellij.webSymbols.webTypes.json.WebTypes
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 
@@ -36,9 +38,11 @@ internal fun Icon.scaleToHeight(height: Int): Icon {
   return IconUtil.scale(this, null, scale)
 }
 
-internal fun <T> List<T>.selectBest(segmentsProvider: (T) -> List<WebSymbolNameSegment>,
-                                    priorityProvider: (T) -> WebSymbol.Priority?,
-                                    isExtension: (T) -> Boolean) =
+internal fun <T> List<T>.selectBest(
+  segmentsProvider: (T) -> List<WebSymbolNameSegment>,
+  priorityProvider: (T) -> WebSymbol.Priority?,
+  isExtension: (T) -> Boolean,
+) =
   if (size > 1) {
     var bestWeight: IntArray = intArrayOf(0, 0, 0)
 
@@ -88,7 +92,7 @@ internal fun <T : WebSymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsQ
     && ((params as? WebSymbolsNameMatchQueryParams)?.abstractSymbols == true
         || (params as? WebSymbolsListSymbolsQueryParams)?.abstractSymbols == true
         || !symbol.abstract)
-    && ((params as? WebSymbolsQueryParams)?.virtualSymbols != false || !symbol.virtual)
+    && (params.virtualSymbols != false || !symbol.virtual)
   }
 
 internal fun WebSymbolNameSegment.withOffset(offset: Int): WebSymbolNameSegmentImpl =
@@ -100,14 +104,30 @@ internal fun WebSymbolNameSegment.withDisplayName(displayName: String?) =
 internal fun WebSymbolNameSegment.withRange(start: Int, end: Int) =
   (this as WebSymbolNameSegmentImpl).withRange(start, end)
 
+internal val WebSymbolNameSegment.highlightingEnd: Int?
+  get() =
+    (this as WebSymbolNameSegmentImpl).highlightingEnd
+
 internal fun WebSymbolNameSegment.copy(
   apiStatus: WebSymbolApiStatus? = null,
   priority: WebSymbol.Priority? = null,
   proximity: Int? = null,
   problem: WebSymbolNameSegment.MatchProblem? = null,
   symbols: List<WebSymbol> = emptyList(),
+  highlightEnd: Int? = null,
 ): WebSymbolNameSegmentImpl =
-  (this as WebSymbolNameSegmentImpl).copy(apiStatus, priority, proximity, problem, symbols)
+  (this as WebSymbolNameSegmentImpl).copy(apiStatus, priority, proximity, problem, symbols, highlightEnd)
 
-internal fun WebSymbolNameSegment.canUnwrapSymbols(): Boolean =
+@ApiStatus.Internal
+fun WebSymbolNameSegment.canUnwrapSymbols(): Boolean =
   (this as WebSymbolNameSegmentImpl).canUnwrapSymbols()
+
+internal fun WebSymbol.removeZeroLengthSegmentsRecursively(): List<WebSymbol> {
+  if (this !is WebSymbolMatch) return listOf(this)
+  val nameLength = matchedName.length
+  return nameSegments
+           .takeIf { it.size > 1 && it.none { segment -> segment.problem != null } }
+           ?.find { segment -> segment.start == 0 && segment.end == nameLength }
+           ?.let { segment -> segment.symbols.flatMap { it.removeZeroLengthSegmentsRecursively() } }
+         ?: listOf(this)
+}

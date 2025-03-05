@@ -37,8 +37,7 @@ public final class PyJoinIfIntention extends PsiUpdateModCommandAction<PyIfState
   }
   
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.join.if");
   }
 
@@ -104,14 +103,12 @@ public final class PyJoinIfIntention extends PsiUpdateModCommandAction<PyIfState
     outerStatementList.replace(innerStatementList);
   }
 
-  @Nullable
-  private static PyStatement getFirstStatement(@NotNull PyIfStatement ifStatement) {
+  private static @Nullable PyStatement getFirstStatement(@NotNull PyIfStatement ifStatement) {
     PyStatementList stList = ifStatement.getIfPart().getStatementList();
     return ArrayUtil.getFirstElement(stList.getStatements());
   }
 
-  @Nullable
-  private static PyIfStatement getIfStatement(@Nullable PyIfStatement ifStatement) {
+  private static @Nullable PyIfStatement getIfStatement(@Nullable PyIfStatement ifStatement) {
     while (ifStatement != null && !(getFirstStatement(ifStatement) instanceof PyIfStatement)) {
       ifStatement = PsiTreeUtil.getParentOfType(ifStatement, PyIfStatement.class);
     }

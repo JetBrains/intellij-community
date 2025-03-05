@@ -10,7 +10,10 @@ import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.eventLog.filters.*;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -20,8 +23,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   private static final String METADATA = "metadata";
   private static final String DICTIONARY = "dictionary";
 
-  @NotNull
-  private final EventLogApplicationInfo myApplicationInfo;
+  private final @NotNull EventLogApplicationInfo myApplicationInfo;
 
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
     this(recorderId, appInfo, TimeUnit.MINUTES.toMillis(10));
@@ -37,23 +39,20 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
     myApplicationInfo = appInfo;
   }
 
-  @NotNull
-  private static String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTestConfig) {
+  private static @NotNull String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTestConfig) {
     if (isTestConfig) {
       return String.format(templateUrl, "test/" + recorderId, productCode);
     }
     return String.format(templateUrl, recorderId, productCode);
   }
 
-  @Nullable
   @Override
-  public String getServiceUrl() {
+  public @Nullable String getServiceUrl() {
     return getEndpointValue(SEND);
   }
 
   @Override
-  @Nullable
-  public String getDictionaryServiceUrl() {
+  public @Nullable String getDictionaryServiceUrl() {
     return getEndpointValue(DICTIONARY);
   }
 
@@ -69,14 +68,12 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   }
 
   @Override
-  @NotNull
-  public LogEventFilter getBaseEventFilter() {
+  public @NotNull LogEventFilter getBaseEventFilter() {
     return new LogEventMetadataFilter(notNull(loadApprovedGroupsRules(), EventGroupsFilterRules.empty()));
   }
 
   @Override
-  @NotNull
-  public LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
+  public @NotNull LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
     final EventLogSendConfiguration configuration = getConfiguration(type);
     if (configuration == null) {
       DataCollectorDebugLogger logger = myApplicationInfo.getLogger();
@@ -102,17 +99,14 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
     return myApplicationInfo;
   }
 
-  @Nullable
-  protected EventGroupsFilterRules<EventLogBuild> loadApprovedGroupsRules() {
+  protected @Nullable EventGroupsFilterRules<EventLogBuild> loadApprovedGroupsRules() {
     final String productUrl = getMetadataProductUrl();
     if (productUrl == null) return null;
     EventLogConnectionSettings settings = myApplicationInfo.getConnectionSettings();
     return EventLogMetadataUtils.loadAndParseGroupsFilterRules(productUrl, settings);
   }
 
-  @NonNls
-  @Nullable
-  public String getMetadataProductUrl() {
+  public @NonNls @Nullable String getMetadataProductUrl() {
     String baseMetadataUrl = getEndpointValue(METADATA);
     if (baseMetadataUrl == null) return null;
     return baseMetadataUrl + myApplicationInfo.getBaselineVersion() + "/" + myApplicationInfo.getProductCode() + ".json";

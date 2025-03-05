@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -261,7 +262,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     myDisableSwitchConsoleActionOnProcessEnd = disableSwitchConsoleActionOnProcessEnd;
   }
 
-  private @NotNull List<AnAction> mergeConsoleActions(@NotNull List<? extends AnAction> actions1, @NotNull Collection<? extends AnAction> actions2) {
+  private @Unmodifiable @NotNull List<AnAction> mergeConsoleActions(@NotNull List<? extends AnAction> actions1, @NotNull Collection<? extends AnAction> actions2) {
     return ContainerUtil.map(actions1, action1 -> {
       final AnAction action2 = ContainerUtil.find(actions2, action -> action1.getClass() == action.getClass()
                                                                       && StringUtil.equals(action1.getTemplatePresentation().getText(),

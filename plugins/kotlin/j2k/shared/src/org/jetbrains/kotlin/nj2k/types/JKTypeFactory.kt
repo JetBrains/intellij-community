@@ -23,10 +23,10 @@ import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
     internal var nullabilityInfo: NullabilityInfo? = null
 
-    fun fromPsiType(type: PsiType): JKType = createPsiType(type)
+    fun fromPsiType(type: PsiType): JKType = createFromPsiType(type)
 
     context(KaSession)
-    fun fromKaType(type: KaType): JKType = createKaType(type)
+    fun fromKaType(type: KaType): JKType = createFromKaType(type)
 
     inner class DefaultTypes {
         private fun typeByFqName(
@@ -39,23 +39,23 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
             nullability
         )
 
-        val boolean = typeByFqName(StandardNames.FqNames._boolean)
-        val char = typeByFqName(StandardNames.FqNames._char)
-        val byte = typeByFqName(StandardNames.FqNames._byte)
-        val short = typeByFqName(StandardNames.FqNames._short)
-        val int = typeByFqName(StandardNames.FqNames._int)
-        val float = typeByFqName(StandardNames.FqNames._float)
-        val long = typeByFqName(StandardNames.FqNames._long)
-        val double = typeByFqName(StandardNames.FqNames._double)
+        val boolean: JKClassType = typeByFqName(StandardNames.FqNames._boolean)
+        val char: JKClassType = typeByFqName(StandardNames.FqNames._char)
+        val byte: JKClassType = typeByFqName(StandardNames.FqNames._byte)
+        val short: JKClassType = typeByFqName(StandardNames.FqNames._short)
+        val int: JKClassType = typeByFqName(StandardNames.FqNames._int)
+        val float: JKClassType = typeByFqName(StandardNames.FqNames._float)
+        val long: JKClassType = typeByFqName(StandardNames.FqNames._long)
+        val double: JKClassType = typeByFqName(StandardNames.FqNames._double)
 
-        val string = typeByFqName(StandardNames.FqNames.string)
+        val string: JKClassType = typeByFqName(StandardNames.FqNames.string)
 
-        val unit = typeByFqName(StandardNames.FqNames.unit)
-        val nothing = typeByFqName(StandardNames.FqNames.nothing)
-        val nullableAny = typeByFqName(StandardNames.FqNames.any, nullability = Nullable)
+        val unit: JKClassType = typeByFqName(StandardNames.FqNames.unit)
+        val nothing: JKClassType = typeByFqName(StandardNames.FqNames.nothing)
+        val nullableAny: JKClassType = typeByFqName(StandardNames.FqNames.any, nullability = Nullable)
     }
 
-    fun fromPrimitiveType(primitiveType: JKJavaPrimitiveType) = when (primitiveType.jvmPrimitiveType) {
+    fun fromPrimitiveType(primitiveType: JKJavaPrimitiveType): JKClassType = when (primitiveType.jvmPrimitiveType) {
         JvmPrimitiveType.BOOLEAN -> types.boolean
         JvmPrimitiveType.CHAR -> types.char
         JvmPrimitiveType.BYTE -> types.byte
@@ -66,9 +66,9 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         JvmPrimitiveType.DOUBLE -> types.double
     }
 
-    val types by lazy(LazyThreadSafetyMode.NONE) { DefaultTypes() }
+    val types: DefaultTypes by lazy(LazyThreadSafetyMode.NONE) { DefaultTypes() }
 
-    private fun createPsiType(type: PsiType): JKType {
+    private fun createFromPsiType(type: PsiType): JKType {
         val nullability = getNullability(type)
 
         return when (type) {
@@ -88,12 +88,12 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                         // we will not be able to access JKUniverseClassSymbol's target
                         // and will get UninitializedPropertyAccessException exception,
                         // so it is ok to use the base class for now.
-                        createPsiType(target.baseClassType)
+                        createFromPsiType(target.baseClassType)
                     }
 
                     else -> {
                         JKClassType(
-                            target.let { symbolProvider.provideDirectSymbol(it) as JKClassSymbol },
+                            symbolProvider.provideDirectSymbol(target) as JKClassSymbol,
                             parameters,
                             nullability
                         )
@@ -134,9 +134,9 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
             is PsiLambdaParameterType -> // Probably, means that we have erroneous Java code
                 JKNoType
 
-            is PsiLambdaExpressionType -> type.expression.functionalInterfaceType?.let(::createPsiType) ?: JKNoType
+            is PsiLambdaExpressionType -> type.expression.functionalInterfaceType?.let(::createFromPsiType) ?: JKNoType
 
-            is PsiMethodReferenceType -> type.expression.functionalInterfaceType?.let(::createPsiType) ?: JKNoType
+            is PsiMethodReferenceType -> type.expression.functionalInterfaceType?.let(::createFromPsiType) ?: JKNoType
 
             else -> JKNoType
         }
@@ -154,7 +154,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
     }
 
     context(KaSession)
-    private fun createKaType(type: KaType): JKType {
+    private fun createFromKaType(type: KaType): JKType {
         return when (type) {
             is KaTypeParameterType -> {
                 val symbol = symbolProvider.provideDirectSymbol(type.symbol) as? JKTypeParameterSymbol ?: return JKNoType
@@ -169,7 +169,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                         JKStarProjectionTypeImpl
                     } else {
                         val typeArgumentType = typeArgument.type ?: return JKNoType
-                        createKaType(typeArgumentType)
+                        createFromKaType(typeArgumentType)
                     }
                 }
                 val nullability = if (type.nullability.isNullable) Nullable else NotNull

@@ -1,4 +1,5 @@
 // "Opt in for 'MyOptIn' on 'bar'" "true"
+// PRIORITY: HIGH
 // RUNTIME_WITH_SCRIPT_RUNTIME
 // ACTION: Opt in for 'MyOptIn' in containing file 'sam2.kts'
 // ACTION: Opt in for 'MyOptIn' in module 'light_idea_test_case'
@@ -22,4 +23,4 @@ fun interface SamI {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

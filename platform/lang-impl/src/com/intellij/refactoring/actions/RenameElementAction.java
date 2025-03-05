@@ -2,6 +2,8 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -15,7 +17,7 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.Renamer;
 import com.intellij.refactoring.rename.RenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.SlowOperations;
+
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,10 +70,8 @@ public class RenameElementAction extends AnAction {
       return;
     }
 
-    List<Renamer> renamers;
-    try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-      renamers = getAvailableRenamers(dataContext).collect(Collectors.toList());
-    }
+    List<Renamer> renamers = Utils.computeWithProgressIcon(e.getDataContext(), e.getPlace(), __ -> ReadAction.compute(
+      () -> getAvailableRenamers(dataContext).collect(Collectors.toList())));
     if (renamers.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("error.wrong.caret.position.symbol.to.refactor")

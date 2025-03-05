@@ -74,6 +74,8 @@ public class JavadocDeclarationHighlightingTest extends LightDaemonAnalyzerTestC
   public void testException2() { doTest(); }
   public void testException3() { doTest(); }
   public void testException4() { doTest(); }
+  public void testExceptionWrongDot() { doTest(); }
+  public void testExceptionWrongDotIgnored() { myInspection.IGNORE_SYNTAX_ERRORS = true; doTest(); }
   public void testInheritJavaDoc() { setLanguageLevel(LanguageLevel.JDK_1_3); doTest(); }
   public void testLink0() { doTest(); }
   public void testLinkFromInnerClassToSelfMethod() { doTest(); }

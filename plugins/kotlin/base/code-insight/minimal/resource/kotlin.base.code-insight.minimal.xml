@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.fake">
+<idea-plugin>
   <module value="kotlin.base.code-insight.minimal"/>
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.kotlin.smartEnterProcessorFixer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

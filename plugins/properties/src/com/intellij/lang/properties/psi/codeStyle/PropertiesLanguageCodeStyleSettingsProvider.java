@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
@@ -15,10 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 
 final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  @NotNull
   @Override
-  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
-                                                  @NotNull CodeStyleSettings modelSettings) {
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
+                                                           @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings,
                                              PropertiesBundle.message("properties.files.code.style.node.title")) {
       @Override
@@ -38,9 +37,8 @@ final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyl
     return new PropertiesCodeStyleSettings(settings);
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return PropertiesLanguage.INSTANCE;
   }
 
@@ -68,10 +66,9 @@ final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyl
       last.key=some text here""";
   }
 
-  @Nullable
   @Override
-  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
-                                            @NotNull Field field) {
+  public @Nullable CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
+                                                      @NotNull Field field) {
     if (codeStyleObject instanceof PropertiesCodeStyleSettings) {
       if ("KEY_VALUE_DELIMITER_CODE".equals(field.getName())) {
         return new MagicIntegerConstAccessor(

@@ -58,7 +58,7 @@ object LanguageAndRegionUi {
       val locales = getAllAvailableLocales()
       val initSelectionLocale = LocalizationUtil.getLocale(true)
       val localizationService = LocalizationStateService.getInstance()!!
-      val model = CollectionComboBoxModel(locales.first, initSelectionLocale)
+      val model = CollectionComboBoxModel(locales.first.toMutableList(), initSelectionLocale)
       val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
       comment(IdeBundle.message("ide.restart.required.comment"))
 
@@ -127,7 +127,7 @@ object LanguageAndRegionUi {
             selection = newLocales.first.first()
           }
           languageComponent.renderer = createLanguageRenderer(newLocales)
-          languageComponent.model = CollectionComboBoxModel(newLocales.first, selection)
+          languageComponent.model = CollectionComboBoxModel(newLocales.first.toMutableList(), selection)
         }
       }, parentDisposable)
     }
@@ -135,7 +135,7 @@ object LanguageAndRegionUi {
     panel.row(IdeBundle.message("combobox.region")) {
       val helpUrl = HelpManagerImpl.getHelpUrl("region-settings")
 
-      val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }, RegionSettings.getRegion())
+      val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }.toMutableList(), RegionSettings.getRegion())
       val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
 
       if (propertyGraph != null && connection != null) {
@@ -195,6 +195,17 @@ object LanguageAndRegionUi {
     }
   }
 
+  @JvmStatic
+  fun showLanguageAndRegionDialog(parent: JComponent?) {
+    val configurable = LanguageAndRegionConfigurable()
+    try {
+      ShowSettingsUtil.getInstance().editConfigurable(parent, configurable)
+    }
+    finally {
+      configurable.disposeUIResources()
+    }
+  }
+
   fun showRestartDialog(runAlways: Boolean = true) {
     DynamicPlugins.runAfter(runAlways) {
       application.invokeLater {
@@ -238,6 +249,8 @@ internal class LanguageAndRegionConfigurable :
     initSelectionRegion = RegionSettings.getRegion()
 
     return panel {
+      useNewComboBoxRenderer()
+
       LanguageAndRegionUi.createContent(this, null, disposable!!, null, eventSource)
     }
   }

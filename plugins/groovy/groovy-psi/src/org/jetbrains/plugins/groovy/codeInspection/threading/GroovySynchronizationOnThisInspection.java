@@ -28,15 +28,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public final class GroovySynchronizationOnThisInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.synchronization.on.ref");
 
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

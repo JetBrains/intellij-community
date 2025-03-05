@@ -1,0 +1,10 @@
+c:com.intellij.execution.ExecutionException
+- java.lang.Exception
+- <init>(java.lang.String):V
+Fa:com.intellij.execution.ExecutionExceptionWithAttachments
+- com.intellij.execution.ExecutionException
+- com.intellij.openapi.diagnostic.ExceptionWithAttachments
+com.intellij.execution.KillableProcess
+- a:canKillProcess():Z
+- a:killProcess():V
+- sf:EMPTY_ARRAY:com.intellij.execution.process.ProcessInfo[]

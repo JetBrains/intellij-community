@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,7 +117,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     }
     setProgressLimit(externalAnnotatorsInRoots);
 
-    boolean errorFound = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().wasErrorFound(myDocument);
+    boolean errorFound = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().wasErrorFound(myDocument, getContext());
     Editor editor = getEditor();
 
     DumbService dumbService = DumbService.getInstance(myProject);
@@ -132,6 +133,8 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
         Object collectedInfo = null;
         try {
           collectedInfo = editor == null ? annotator.collectInformation(psiRoot) : annotator.collectInformation(psiRoot, editor, errorFound);
+        }
+        catch (IndexNotReadyException ignore) {
         }
         catch (Throwable t) {
           processError(t, annotator, psiRoot);
@@ -225,6 +228,8 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
         return null;
       });
     }
+    catch (IndexNotReadyException ignore) {
+    }
     catch (Throwable t) {
       processError(t, data.annotator, data.psiRoot);
     }
@@ -251,13 +256,13 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
   private void doFinish() {
     List<HighlightInfo> highlights = myAnnotationData.stream()
       .flatMap(data ->
-        ContainerUtil.notNullize(data.annotationHolder).stream().map(annotation -> HighlightInfo.fromAnnotation(data.annotator, annotation)))
+        ContainerUtil.notNullize(data.annotationHolder).stream().map(annotation -> HighlightInfo.fromAnnotation(data.annotator, annotation, getDocument())))
       .toList();
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
-    HighlightingSessionImpl.runInsideHighlightingSession(myFile, getColorsScheme(), ProperTextRange.create(myFile.getTextRange()), false, session -> {
+    HighlightingSessionImpl.runInsideHighlightingSession(myFile, getContext(), getColorsScheme(), ProperTextRange.create(myFile.getTextRange()), false, session -> {
       // use the method which doesn't retrieve a HighlightingSession from the indicator, because we likely destroyed the one already
       BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), session);
-      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getContext(), getId());
       myHighlightInfos = highlights;
     });
   }

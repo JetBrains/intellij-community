@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import org.jetbrains.intellij.build.PluginBuildDescriptor
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import java.nio.file.Path
 
@@ -10,19 +11,28 @@ internal data class ContentReport(
   @JvmField val bundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
   @JvmField val nonBundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
 ) {
-  fun all(): Sequence<DistributionFileEntry> {
-    return sequence {
-      yieldAll(platform)
-      yieldAll(bundledPlugins.flatMap { it.second })
-      yieldAll(nonBundledPlugins.flatMap { it.second })
+  init {
+    val intersection = bundledPlugins
+      .map { it.first.layout.mainModule }
+      .intersect(
+        nonBundledPlugins
+          .filterNot { it.first.layout.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
+          .map { it.first.layout.mainModule }
+      )
+    require(intersection.none()) {
+      "Plugins cannot be both bundled and non-bundled for the same IDE: $intersection"
     }
   }
 
-  fun bundled(): Sequence<DistributionFileEntry> {
-    return sequence {
-      yieldAll(platform)
-      yieldAll(bundledPlugins.flatMap { it.second })
-    }
+  fun all(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.second })
+    yieldAll(nonBundledPlugins.flatMap { it.second })
+  }
+
+  fun bundled(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.second })
   }
 }
 
@@ -59,7 +69,7 @@ internal data class CustomAssetEntry(
 }
 
 /**
- * Represents a file in module-level library
+ * Represents a file in a module-level library
  */
 internal data class ModuleLibraryFileEntry(
   override val path: Path,

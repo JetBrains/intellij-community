@@ -8,7 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.lang.annotation.ProblemGroup
@@ -128,7 +128,7 @@ class AnnotationPresentationInfo(
             if (fix == RegisterQuickFixesLaterIntentionAction) {
                 if (builder != null) {
                     element.reference?.let {
-                        UnresolvedReferenceQuickFixUpdater.getInstance(element.project).registerQuickFixesLater(it, builder)
+                        UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(it, builder)
                     }
                     continue
                 }

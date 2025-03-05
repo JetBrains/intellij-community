@@ -12,6 +12,6 @@ class Foo {
 }
 
 class Bar {
-    fun s() {}
+    fun s(s: String) {}
 }
 

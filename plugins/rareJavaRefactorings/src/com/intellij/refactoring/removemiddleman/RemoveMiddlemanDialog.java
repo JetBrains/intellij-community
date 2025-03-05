@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.psi.PsiField;
@@ -52,7 +52,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
     final MemberSelectionTable table = selectionPanel.getTable();
     table.setMemberInfoModel(new DelegatingMemberInfoModel<>(table.getMemberInfoModel()) {
       @Override
-      public int checkForProblems(@NotNull final MemberInfo member) {
+      public int checkForProblems(final @NotNull MemberInfo member) {
         return hasSuperMethods(member) ? ERROR : OK;
       }
 

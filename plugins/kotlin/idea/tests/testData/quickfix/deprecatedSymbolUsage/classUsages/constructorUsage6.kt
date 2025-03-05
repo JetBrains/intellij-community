@@ -1,4 +1,5 @@
 // "Replace usages of 'constructor A(Int)' in whole project" "true"
+// K2_ACTION: "Replace usages of 'A(Int)' in whole project" "true"
 
 open class A(val s: String, val i: () -> Int, val i2: Int) {
     @Deprecated("Replace with primary constructor", ReplaceWith("C(s = \"\", a = { i }, m = i)"))
@@ -14,4 +15,4 @@ fun b() {
     A(b)
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix
-/* IGNORE_K2 */
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

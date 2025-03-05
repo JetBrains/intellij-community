@@ -1,7 +1,7 @@
 // FILE: first.before.kt
 // "Import operator 'A.invoke'" "true"
 // ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package b
 
@@ -17,7 +17,7 @@ fun main() {
 // FILE: second.kt
 // "Import extension function 'A.invoke'" "true"
 // ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package a
 
@@ -29,7 +29,7 @@ operator fun A.invoke() = 42
 // FILE: first.after.kt
 // "Import operator 'A.invoke'" "true"
 // ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package b
 

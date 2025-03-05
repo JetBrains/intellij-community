@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.UCallExpression;
@@ -17,7 +18,8 @@ import org.jetbrains.uast.UastCallKind;
 
 import java.awt.*;
 
-final class UseDPIAwareInsetsInspection extends AbstractUseDPIAwareBorderInspection {
+@ApiStatus.Internal
+public final class UseDPIAwareInsetsInspection extends AbstractUseDPIAwareBorderInspection {
 
   private static final String AWT_INSETS_CLASS_NAME = Insets.class.getName();
   private static final String JB_INSETS_CLASS_NAME = JBInsets.class.getName();
@@ -71,7 +73,7 @@ final class UseDPIAwareInsetsInspection extends AbstractUseDPIAwareBorderInspect
   }
 
 
-  private static abstract class AbstractConvertToDpiAwareInsetsQuickFix extends AbstractConvertToDpiAwareCallQuickFix {
+  private abstract static class AbstractConvertToDpiAwareInsetsQuickFix extends AbstractConvertToDpiAwareCallQuickFix {
 
     @Override
     protected @NotNull String getFactoryMethodContainingClassName() {
@@ -119,14 +121,14 @@ final class UseDPIAwareInsetsInspection extends AbstractUseDPIAwareBorderInspect
     }
   }
 
-  private static class SimplifyJBUIInsetsCreationQuickFix extends AbstractConvertToDpiAwareInsetsQuickFix {
+  private static final class SimplifyJBUIInsetsCreationQuickFix extends AbstractConvertToDpiAwareInsetsQuickFix {
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
       return DevKitBundle.message("inspections.use.dpi.aware.insets.simplify.fix.name");
     }
   }
 
-  private static class ConvertToJBUIInsetsQuickFix extends AbstractConvertToDpiAwareInsetsQuickFix {
+  private static final class ConvertToJBUIInsetsQuickFix extends AbstractConvertToDpiAwareInsetsQuickFix {
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
       return DevKitBundle.message("inspections.use.dpi.aware.insets.convert.fix.name");

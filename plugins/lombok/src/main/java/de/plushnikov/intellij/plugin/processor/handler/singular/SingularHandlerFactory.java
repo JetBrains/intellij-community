@@ -44,8 +44,7 @@ public final class SingularHandlerFactory {
     return elements.contains(className) || ContainerUtil.exists(elements, t -> t.endsWith("." + className));
   }
 
-  @NotNull
-  public static BuilderElementHandler getHandlerFor(@NotNull PsiVariable psiVariable, boolean hasSingularAnnotation) {
+  public static @NotNull BuilderElementHandler getHandlerFor(@NotNull PsiVariable psiVariable, boolean hasSingularAnnotation) {
     if (!hasSingularAnnotation) {
       return new NonSingularHandler();
     }

@@ -1,15 +1,14 @@
+// FIR_COMPARISON
+
 package test
 
 import foo.Bar
 
-class Main {
-    fun test() {
-        class Bar
+fun test() {
+    class Bar
 
-        val b = foo.Bar()<caret>
-    }
+    val bar = foo.Bar()<caret>
 }
 
-// IGNORE_K2
 // ELEMENT: Bar
 // TAIL_TEXT: " (foo)"

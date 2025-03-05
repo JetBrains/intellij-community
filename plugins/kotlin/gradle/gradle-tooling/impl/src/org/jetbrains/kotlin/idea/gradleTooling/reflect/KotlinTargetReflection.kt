@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import org.gradle.api.Named
-import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 import org.jetbrains.kotlin.idea.gradleTooling.loadClassOrNull
 
 fun KotlinTargetReflection(kotlinTarget: Any): KotlinTargetReflection = KotlinTargetReflectionImpl(kotlinTarget)

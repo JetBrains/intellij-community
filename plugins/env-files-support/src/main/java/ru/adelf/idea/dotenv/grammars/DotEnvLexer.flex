@@ -5,8 +5,6 @@ import com.intellij.psi.tree.IElementType;
 import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 import com.intellij.psi.TokenType;
 
-import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
-
 %%
 
 %class _DotEnvLexer
@@ -20,22 +18,28 @@ WHITE_SPACE=[\ \t\f]
 FIRST_VALUE_CHARACTER=[^ \n\f\r\"\'\\\#] | "\\".
 VALUE_CHARACTER=[^\r\n\#]
 ANY_CHARACTER=[^\r\n]
-QUOTE_VALUE_CHARACTER=[^\\\"]
+QUOTE_VALUE_CHARACTER=[^\\\"\$]
+DOLLAR_CHARACTER=[\$]
+NON_SYNTACTIC_DOLLAR_CHARACTER={DOLLAR_CHARACTER}[^\{\"]
 QUOTED_SYMBOL=[\\][^]
 SINGLE_QUOTE_VALUE_CHARACTER=[^\\\']
 END_OF_LINE_COMMENT=("#")[^\r\n]*
 SEPARATOR=[:=]
-KEY_CHARACTER=[^:=\ \n\t\f\\] | "\\ "
+KEY_CHARACTER=[^:=\ \n\t\f\\\${}] | "\\ "
 QUOTE=[\"]
 SINGLE_QUOTE=[\']
 COMMENT=["#"]
 EXPORT_PREFIX=[eE][xX][pP][oO][rR][tT](" ")+
+NESTED_VARIABLE_START="${"
+NESTED_VARIABLE_END={WHITE_SPACE}* "}"
 
 %state WAITING_KEY
 %state WAITING_VALUE
 %state WAITING_QUOTED_VALUE
 %state WAITING_SINGLE_QUOTED_VALUE
 %state WAITING_COMMENT
+%state WAITING_NESTED_VARIABLE
+%state WAITING_NESTED_VARIABLE_END
 
 %%
 
@@ -63,7 +67,15 @@ EXPORT_PREFIX=[eE][xX][pP][oO][rR][tT](" ")+
 
 <WAITING_QUOTED_VALUE> {QUOTE}                              { yybegin(WAITING_COMMENT); return DotEnvTypes.QUOTE; }
 
-<WAITING_QUOTED_VALUE> ({QUOTE_VALUE_CHARACTER}|{QUOTED_SYMBOL})+ { yybegin(WAITING_QUOTED_VALUE); return DotEnvTypes.VALUE_CHARS; }
+<WAITING_QUOTED_VALUE> {NESTED_VARIABLE_START}              { yybegin(WAITING_NESTED_VARIABLE); return DotEnvTypes.NESTED_VARIABLE_START; }
+
+<WAITING_NESTED_VARIABLE> {KEY_CHARACTER}+                  { yybegin(WAITING_NESTED_VARIABLE_END); return DotEnvTypes.KEY_CHARS; }
+
+<WAITING_NESTED_VARIABLE_END, WAITING_NESTED_VARIABLE> {NESTED_VARIABLE_END}         { yybegin(WAITING_QUOTED_VALUE); return DotEnvTypes.NESTED_VARIABLE_END; }
+
+<WAITING_QUOTED_VALUE> ({QUOTE_VALUE_CHARACTER}|{QUOTED_SYMBOL}|{NON_SYNTACTIC_DOLLAR_CHARACTER})+ { yybegin(WAITING_QUOTED_VALUE); return DotEnvTypes.VALUE_CHARS; }
+
+<WAITING_QUOTED_VALUE> {DOLLAR_CHARACTER} / {QUOTE} { yybegin(WAITING_QUOTED_VALUE); return DotEnvTypes.VALUE_CHARS; }
 
 <WAITING_SINGLE_QUOTED_VALUE> {SINGLE_QUOTE}                { yybegin(WAITING_COMMENT); return DotEnvTypes.QUOTE; }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
@@ -118,8 +118,8 @@ import static java.awt.GridBagConstraints.*;
  * @author Bas Leijdekkers
  */
 public final class StructuralSearchDialog extends DialogWrapper implements DocumentListener {
-  @NonNls private static final String SEARCH_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
-  @NonNls private static final String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
+  private static final @NonNls String SEARCH_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
+  private static final @NonNls String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
 
   private static final Key<Configuration> STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION = Key.create("STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION");
 
@@ -127,7 +127,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   private final @NotNull SearchContext mySearchContext;
   private Editor myEditor;
   private ReplaceConfiguration myConfiguration;
-  @Nullable @NonNls private LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
+  private @Nullable @NonNls LanguageFileType myFileType = StructuralSearchUtil.getDefaultFileType();
   private Language myDialect;
   private PatternContext myPatternContext;
   private final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
@@ -278,7 +278,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   }
 
   @Override
-  public void documentChanged(@NotNull final DocumentEvent event) {
+  public void documentChanged(final @NotNull DocumentEvent event) {
     initValidation();
     if (!myChangedConfiguration) {
       myExistingTemplatesComponent.templateChanged();
@@ -301,8 +301,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }, ModalityState.stateForComponent(myFilterPanel.getComponent()));
   }
 
-  @NotNull
-  private ReplaceConfiguration createConfiguration(Configuration template) {
+  private @NotNull ReplaceConfiguration createConfiguration(Configuration template) {
     final ReplaceConfiguration result = template == null
                                         ? new ReplaceConfiguration(SSRBundle.message("new.template.defaultname"),
                                                                    SSRBundle.message("user.defined.category"))
@@ -387,10 +386,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
   }
 
-  @NotNull
-  @Nls
-  @NlsContexts.DialogTitle
-  private String getDefaultTitle() {
+  private @NotNull @Nls @NlsContexts.DialogTitle String getDefaultTitle() {
     return myReplace ? SSRBundle.message("structural.replace.title") : SSRBundle.message("structural.search.title");
   }
 
@@ -679,9 +675,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     myStaticImport.setVisible(profile != null && profile.supportsUseStaticImports());
   }
 
-  @Nullable
   @Override
-  protected JPanel createSouthAdditionalPanel() {
+  protected @Nullable JPanel createSouthAdditionalPanel() {
     if (myEditConfigOnly) return null;
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
@@ -691,9 +686,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     return panel;
   }
 
-  @Nullable
   @Override
-  public Point getInitialLocation() {
+  public @Nullable Point getInitialLocation() {
     // handle dimension service manually to store dimensions correctly when switching between search/replace in the same dialog
     final DimensionService dimensionService = DimensionService.getInstance();
     final Dimension size = dimensionService.getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, myProject);
@@ -882,7 +876,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
   }
 
   @Override
-  protected @NotNull Alarm.ThreadToUse getValidationThreadToUse() {
+  protected @NotNull Alarm.ThreadToUse getContinuousValidationThreadToUse() {
     return Alarm.ThreadToUse.POOLED_THREAD;
   }
 

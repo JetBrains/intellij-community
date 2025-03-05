@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.execution.Location;
@@ -31,8 +31,8 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 
@@ -91,8 +91,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel {
         }
       }
 
-      @Nullable
-      private static String getMenuId(Collection<? extends MavenSimpleNode> nodes) {
+      private static @Nullable String getMenuId(Collection<? extends MavenSimpleNode> nodes) {
         String id = null;
         for (MavenSimpleNode node : nodes) {
           String menuId = node.getMenuId();
@@ -174,8 +173,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel {
     return psiFile == null ? null : new MavenGoalLocation(myProject, psiFile, goals);
   }
 
-  @Nullable
-  private static RunnerAndConfigurationSettings extractRunSettings(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static @Nullable RunnerAndConfigurationSettings extractRunSettings(@NotNull List<MavenSimpleNode> selectedNodes) {
     @Nullable MavenSimpleNode node = selectedNodes.isEmpty() ? null : selectedNodes.get(0);
     if (!(node instanceof RunConfigurationNode)) return null;
 
@@ -211,8 +209,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel {
     return null;
   }
 
-  @Nullable
-  private static MavenProjectNode getCommonProjectNode(Collection<? extends MavenSimpleNode> nodes) {
+  private static @Nullable MavenProjectNode getCommonProjectNode(Collection<? extends MavenSimpleNode> nodes) {
     MavenProjectNode parent = null;
     for (MavenSimpleNode node : nodes) {
       var nextParent = node.findParentProjectNode();
@@ -226,8 +223,7 @@ public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel {
     return parent;
   }
 
-  @Nullable
-  private static MavenRepositoryInfo extractRepositoryInfo(@NotNull List<MavenSimpleNode> selectedNodes) {
+  private static @Nullable MavenRepositoryInfo extractRepositoryInfo(@NotNull List<MavenSimpleNode> selectedNodes) {
     List<RepositoryNode> repositoryNodes = filterNodesByClass(selectedNodes, RepositoryNode.class);
     if (repositoryNodes == null || repositoryNodes.isEmpty()) {
       return null;

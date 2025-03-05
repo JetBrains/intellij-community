@@ -1,5 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
 
+  <module value="com.intellij.modules.kotlin.k2"/>
+
   <dependencies>
     <plugin id="com.intellij.modules.platform"/>
     <plugin id="com.intellij.modules.java"/>
@@ -37,11 +39,24 @@
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="command-completion-k2.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.ModuleScriptAdditionalIdeaDependenciesProvider"/>
 
-    <bundledFirCompilerPluginProvider implementation="org.jetbrains.kotlin.idea.fir.extensions.DefaultBundledFirCompilerPluginProvider"
-                                      order="first"/>
+    <bundledFirCompilerPluginProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.MainByRegistrarContentBundledFirCompilerPluginProvider"
+            order="first"/>
+
+    <bundledFirCompilerPluginProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider"
+            order="last"/>
+
+    <firCompilerPluginConfigurationProvider
+            implementation="org.jetbrains.kotlin.idea.fir.extensions.DefaultParcelizeFirCompilerPluginConfigurationForIdeProvider" 
+            order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
@@ -61,8 +76,6 @@
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.fir.extensions.KtCompilerPluginsProviderIdeImpl"/>
     <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
-    <scratch.creationHelper language="kotlin"
-                            implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileCreationHelper"/>
     <!-- fir-specific -->
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
@@ -174,10 +187,6 @@
     <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer"/>
 
     <applicationService
-            serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
-            serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.fe10.KotlinDeclarationInCompiledFileSearcherFE10Impl"/>
-
-    <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
             serviceImplementation="org.jetbrains.kotlin.idea.inspections.suppress.KotlinK2SuppressionChecker"/>
 
@@ -202,6 +211,7 @@
     <module name="kotlin.base.fir.analysis-api-platform"/>
     <module name="kotlin.base.fir.code-insight"/>
     <module name="kotlin.base.fir.project-structure"/>
+    <module name="kotlin.base.fir.scripting"/>
 
     <module name="kotlin.copyright"/>
     <module name="kotlin.coverage"/>
@@ -220,6 +230,7 @@
     <module name="kotlin.gradle.code-insight-groovy"/>
     <module name="kotlin.gradle.code-insight-toml"/>
     <module name="kotlin.gradle.gradle-java"/>
+    <module name="kotlin.gradle.gradle-java.k2"/>
 
     <module name="kotlin.onboarding"/>
     <module name="kotlin.onboarding.gradle"/>

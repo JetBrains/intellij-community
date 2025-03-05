@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.project.DumbService;
@@ -195,6 +195,7 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
     }
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -208,7 +209,13 @@ public abstract class RefEntityImpl extends UserDataHolderBase implements RefEnt
     return BitUtil.isSet(myFlags, mask);
   }
 
-  public synchronized void setFlag(final boolean value, final long mask) {
+  public synchronized boolean checkAndSetFlag(long mask) {
+    boolean result = BitUtil.isSet(myFlags, mask);
+    if (!result) myFlags = BitUtil.set(myFlags, mask, true);
+    return result;
+  }
+
+  public synchronized void setFlag(boolean value, long mask) {
     myFlags = BitUtil.set(myFlags, mask, value);
   }
 

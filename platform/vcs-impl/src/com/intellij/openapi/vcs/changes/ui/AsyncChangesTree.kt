@@ -94,7 +94,7 @@ abstract class AsyncChangesTree : ChangesTree {
                               onRefreshed = null)
   }
 
-  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>) {
+  open fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>) {
     return requestRefreshImpl(treeStateStrategy = treeStateStrategy,
                               onRefreshed = null)
   }

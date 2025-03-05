@@ -259,12 +259,11 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     override val attributeValue: WebSymbolHtmlAttributeValue
       get() {
         val isBooleanAttribute = HtmlUtil.isBooleanAttribute(descriptor, null)
-        val isEnumerated = descriptor.isEnumerated
         return WebSymbolHtmlAttributeValue.create(
           null,
           when {
             isBooleanAttribute -> WebSymbolHtmlAttributeValue.Type.BOOLEAN
-            isEnumerated -> WebSymbolHtmlAttributeValue.Type.ENUM
+            descriptor.isEnumerated -> WebSymbolHtmlAttributeValue.Type.ENUM
             else -> WebSymbolHtmlAttributeValue.Type.STRING
           },
           !isBooleanAttribute,

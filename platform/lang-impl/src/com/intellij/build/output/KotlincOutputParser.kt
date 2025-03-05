@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.net.URI
+import java.util.Locale
 import java.util.function.Consumer
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -47,7 +48,7 @@ class KotlincOutputParser : BuildOutputParser {
     }
   }
 
-    override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in BuildEvent>): Boolean {
+  override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in BuildEvent>): Boolean {
     val colonIndex1 = line.colon()
 
     val severity = if (colonIndex1 >= 0) line.substringBeforeAndTrim(colonIndex1) else return false
@@ -60,14 +61,14 @@ class KotlincOutputParser : BuildOutputParser {
     val file = if (path.startsWith("file:")) {
       try {
         URI(path).toPath().toFile()
-      } catch (_: Exception){
+      } catch (_: Exception) {
         File(path)
       }
     } else {
       File(path)
     }
 
-    val fileExtension = file.extension.toLowerCase()
+    val fileExtension = file.extension.lowercase(Locale.getDefault())
     if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) { //NON-NLS
       @NlsSafe
       val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)

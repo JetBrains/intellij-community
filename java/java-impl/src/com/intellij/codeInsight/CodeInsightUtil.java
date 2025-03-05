@@ -28,6 +28,7 @@ import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -405,9 +406,9 @@ public final class CodeInsightUtil {
     return baseType.isAssignableFrom(result) ? result : null;
   }
 
-  public static @NotNull List<PsiType> getExpectedTypeArgs(PsiElement context,
-                                                           PsiTypeParameterListOwner paramOwner,
-                                                           Iterable<? extends PsiTypeParameter> typeParams, PsiClassType expectedType) {
+  public static @Unmodifiable @NotNull List<PsiType> getExpectedTypeArgs(PsiElement context,
+                                                                         PsiTypeParameterListOwner paramOwner,
+                                                                         Iterable<? extends PsiTypeParameter> typeParams, PsiClassType expectedType) {
     if (paramOwner instanceof PsiClass) {
       return GenericsUtil.getExpectedTypeArguments(context, (PsiClass)paramOwner, typeParams, expectedType);
     }

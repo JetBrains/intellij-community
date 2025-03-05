@@ -42,8 +42,7 @@ public final class ImplicitlyImportedModule implements ImplicitlyImportedElement
     return factory.createImportModuleStatementFromText(moduleName);
   }
 
-  @NotNull
-  public static ImplicitlyImportedModule create(@NotNull Project project, @NotNull String moduleName) {
+  public static @NotNull ImplicitlyImportedModule create(@NotNull Project project, @NotNull String moduleName) {
     return new ImplicitlyImportedModule(project, moduleName);
   }
 }

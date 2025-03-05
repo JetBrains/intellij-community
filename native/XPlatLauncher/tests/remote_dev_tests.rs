@@ -117,6 +117,7 @@ mod tests {
         let libs_dir = &self_contained_root.join("lib");
         fs::create_dir_all(libs_dir).unwrap();
         File::create(self_contained_root.join("lib-load-order")).unwrap();
+        File::create(self_contained_root.join("lib-load-order-limited")).unwrap();
     }
 
     #[test]

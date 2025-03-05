@@ -8,10 +8,11 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RemoteConnection
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.execution.run.MavenRemoteConnection
 
 abstract class MavenRemoteConnectionCreator {
   abstract fun createRemoteConnection(javaParameters: JavaParameters, runConfiguration: MavenRunConfiguration): RemoteConnection?
-
+  abstract fun createRemoteConnectionForScript(runConfiguration: MavenRunConfiguration): MavenRemoteConnection?
   protected fun createConnection(project: Project, parameters: JavaParameters): RemoteConnection {
     try {
       // there's no easy and reliable way to know the version of target JRE, but without it there won't be any debugger agent settings

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
@@ -20,8 +20,7 @@ import java.util.Map;
  * @see JavaPsiFacade#getElementFactory()
  * @see PsiFileFactory
  */
-@NonNls
-public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactory {
+public @NonNls interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactory {
 
   /**
    * @deprecated please use {@link #getInstance(Project)}
@@ -392,7 +391,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param languageLevel language level used to construct array class.
    */
   @NotNull
-  PsiClassType getArrayClassType(@NotNull PsiType componentType, @NotNull final LanguageLevel languageLevel);
+  PsiClassType getArrayClassType(@NotNull PsiType componentType, final @NotNull LanguageLevel languageLevel);
 
   /**
    * @param psiClass class to test

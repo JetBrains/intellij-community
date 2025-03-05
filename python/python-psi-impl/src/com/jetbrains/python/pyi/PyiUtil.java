@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.pyi;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
@@ -50,8 +48,7 @@ public final class PyiUtil {
     return PyiUtilCore.isInsideStub(element);
   }
 
-  @Nullable
-  public static PsiElement getPythonStub(@NotNull PyElement element) {
+  public static @Nullable PsiElement getPythonStub(@NotNull PyElement element) {
     final PsiFile file = element.getContainingFile();
     if (pyButNotPyiFile(file)) {
       final PyiFile pythonStubFile = getPythonStubFile((PyFile)file);
@@ -62,8 +59,7 @@ public final class PyiUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiElement getOriginalElement(@NotNull PyElement element) {
+  public static @Nullable PsiElement getOriginalElement(@NotNull PyElement element) {
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof PyiFile)) return null;
 
@@ -95,44 +91,12 @@ public final class PyiUtil {
   }
 
   /**
-   * Returns the language level of {@link #getOriginalElement(PyElement)} result if {@code element} belongs to a .pyi file and
-   * the language level of the {@code element} itself, otherwise.
-   * <p>
-   * If {@link #getOriginalElement(PyElement)} still returns {@code null}, we try to restore the original SDK language level
-   * from the corresponding .pyi file using the underlying machinery of {@link PythonLanguageLevelPusher}. The reason for that
-   * is that by design {@link PyiFile#getLanguageLevel()} unconditionally returns the latest supported Python version (as these
-   * are not executable), and original .py implementations may be absent in some environments such as unit tests with a mock SDK.
-   */
-  @NotNull
-  public static LanguageLevel getOriginalLanguageLevel(@NotNull PyElement element) {
-    PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof PyiFile pyiFile) {
-      PsiElement impl = getOriginalElement(element);
-      if (impl != null) {
-        return LanguageLevel.forElement(impl);
-      }
-      else {
-        // XXX: Relying on the fact .pyi files still have the language level key set by the pusher
-        VirtualFile vFile = containingFile.getVirtualFile();
-        if (vFile != null) {
-          return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(element.getProject(), vFile);
-        }
-        else {
-          return pyiFile.getLanguageLevel();
-        }
-      }
-    }
-    return LanguageLevel.forElement(element);
-  }
-
-  /**
    * @param function function whose scope is used to look for implementation
    * @param context  context to be used in determining if some function is overload
    * @return implementation in the scope owner of {@code function} with the same name as {@code function} has.
    * <i>Note: returns {@code null} if {@code function} is located in pyi-file.</i>
    */
-  @Nullable
-  public static PyFunction getImplementation(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+  public static @Nullable PyFunction getImplementation(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     final PsiFile file = function.getContainingFile();
     if (file instanceof PyiFile) return null;
     return ContainerUtil.getLastItem(collectImplementationsOrOverloads(function, true, context));
@@ -143,8 +107,7 @@ public final class PyiUtil {
    * @param context  context to be used in determining if some function is overload
    * @return overloads in the scope owner of {@code function} with the same name as {@code function} has.
    */
-  @NotNull
-  public static List<PyFunction> getOverloads(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+  public static @NotNull List<PyFunction> getOverloads(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     return collectImplementationsOrOverloads(function, false, context);
   }
 
@@ -161,8 +124,7 @@ public final class PyiUtil {
    * @param <T>     expected type of original element
    * @return original element or {@code element} if original is not instance of {@code cls} or does not exist.
    */
-  @NotNull
-  public static <T extends PyElement> T getOriginalElementOrLeaveAsIs(@NotNull T element, @NotNull Class<T> cls) {
+  public static @NotNull <T extends PyElement> T getOriginalElementOrLeaveAsIs(@NotNull T element, @NotNull Class<T> cls) {
     return ObjectUtils.notNull(PyUtil.as(getOriginalElement(element), cls), element);
   }
 
@@ -174,8 +136,7 @@ public final class PyiUtil {
     return file instanceof PyFile && !(file instanceof PyiFile);
   }
 
-  @Nullable
-  private static PyiFile getPythonStubFile(@NotNull PyFile file) {
+  private static @Nullable PyiFile getPythonStubFile(@NotNull PyFile file) {
     final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
     if (name == null) {
       return null;
@@ -188,8 +149,7 @@ public final class PyiUtil {
       .orElse(null), PyiFile.class);
   }
 
-  @Nullable
-  private static PyFile getOriginalFile(@NotNull PyiFile file) {
+  private static @Nullable PyFile getOriginalFile(@NotNull PyiFile file) {
     final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
     if (name == null) {
       return null;
@@ -202,8 +162,7 @@ public final class PyiUtil {
                        .orElse(null), PyFile.class);
   }
 
-  @Nullable
-  private static PsiElement findSimilarElement(@NotNull PyElement element, @NotNull PyFile file) {
+  private static @Nullable PsiElement findSimilarElement(@NotNull PyElement element, @NotNull PyFile file) {
     if (element instanceof PyFile) {
       return file;
     }
@@ -237,10 +196,9 @@ public final class PyiUtil {
     return takeTopPriorityElement(results);
   }
 
-  @NotNull
-  private static List<PyFunction> collectImplementationsOrOverloads(@NotNull PyFunction function,
-                                                                    boolean implementations,
-                                                                    @NotNull TypeEvalContext context) {
+  private static @NotNull List<PyFunction> collectImplementationsOrOverloads(@NotNull PyFunction function,
+                                                                             boolean implementations,
+                                                                             @NotNull TypeEvalContext context) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(function);
     final String name = function.getName();
 
@@ -269,8 +227,7 @@ public final class PyiUtil {
     return result;
   }
 
-  @Nullable
-  private static PsiElement takeTopPriorityElement(@Nullable List<? extends RatedResolveResult> resolveResults) {
+  private static @Nullable PsiElement takeTopPriorityElement(@Nullable List<? extends RatedResolveResult> resolveResults) {
     if (!ContainerUtil.isEmpty(resolveResults)) {
       return Collections.max(resolveResults, Comparator.comparingInt(RatedResolveResult::getRate)).getElement();
     }

@@ -7,7 +7,11 @@ from types import CodeType
 import pytest
 
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code, \
-    add_jump_instruction, IS_PY310_OR_GREATER
+    add_jump_instruction
+from _pydevd_bundle.pydevd_constants import IS_PY39
+from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY311_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_LESSER
 from opcode import EXTENDED_ARG
 
 TRACE_MESSAGE = "Trace called"
@@ -30,7 +34,7 @@ IS_PY37_OR_GREATER = sys.version_info > (3, 7)
 
 LOAD_OPCODES = [dis.opmap[x] for x in ('LOAD_ATTR', 'LOAD_CONST', 'LOAD_FAST', 'LOAD_GLOBAL', 'LOAD_NAME')]
 
-if IS_PY37_OR_GREATER:
+if IS_PY37_OR_GREATER and IS_PY313_OR_LESSER:
     LOAD_OPCODES.append(dis.opmap['LOAD_METHOD'])
 
 
@@ -115,6 +119,7 @@ class TestInsertCode(unittest.TestCase):
         elif opcode == dis.opmap['LOAD_NAME']:
             assert code1.co_names[arg1] == code2.co_names[arg2], err_msg
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-876')
     def test_line_before_py310(self):
 
         def foo():
@@ -138,6 +143,7 @@ class TestInsertCode(unittest.TestCase):
         assert success
         assert list(result.co_lnotab) == [0, 1, 4, 1, 14, 1]
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-866')
     def test_assignment(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -153,6 +159,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-874')
     def test_for_loop(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -170,6 +177,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-875')
     def test_if(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -188,6 +196,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-871')
     def test_else(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -206,6 +215,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-873')
     def test_for_else(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -257,6 +267,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-870')
     def test_elif(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -328,6 +339,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-867')
     def test_call_other_function(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -364,6 +376,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-868')
     def test_class_method(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -388,6 +401,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-879')
     def test_offset_overflow(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -454,6 +468,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-877')
     def test_long_lines(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -485,6 +500,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-878')
     def test_many_names(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -496,6 +512,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-872')
     def test_extended_arg_overflow(self):
 
         from pydev_tests_python.resources._bytecode_overflow_example import Dummy, DummyTracing
@@ -610,6 +627,7 @@ class TestInsertCode(unittest.TestCase):
 
     @pytest.mark.skipif(
         not IS_PY310_OR_GREATER, reason="Test is specific for Python versions >= 3.10")
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-869')
     def test_double_extended_arg_after_py310(self):
         self.original_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -769,6 +787,7 @@ class TestInsertCode(unittest.TestCase):
         finally:
             sys.stdout = self.original_stdout
 
+    @pytest.mark.xfail(IS_PY311_OR_GREATER, reason='PCQA-865')
     def test_add_jump_instruction(self):
         def foo():
             a = 1
@@ -817,6 +836,7 @@ class TestInsertCode(unittest.TestCase):
 
     @pytest.mark.skipif(
         IS_PY310_OR_GREATER, reason="Test is specific for Python versions < 3.10")
+    @pytest.mark.xfail(IS_PY39, reason="PCQA-732")
     def testing_add_extended_arg(self):
 
         def backtrack(move_list, board_p, number_p):

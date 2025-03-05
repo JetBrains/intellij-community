@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiElement;
@@ -23,13 +23,11 @@ public interface GrOperatorExpression extends GrExpression {
   @NotNull
   PsiElement getOperationToken();
 
-  @NotNull
-  default IElementType getOperationTokenType() {
+  default @NotNull IElementType getOperationTokenType() {
     return getOperationToken().getNode().getElementType();
   }
 
-  @Nullable
-  default IElementType getOperator() {
+  default @Nullable IElementType getOperator() {
     return getOperationTokenType();
   }
 }

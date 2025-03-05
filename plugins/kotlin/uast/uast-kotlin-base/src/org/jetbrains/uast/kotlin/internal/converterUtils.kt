@@ -61,17 +61,19 @@ fun UElement.toSourcePsiFakeAndCommentsAware(): List<PsiElement> {
     return sourcePsi
 }
 
-fun wrapExpressionBody(function: UElement, bodyExpression: KtExpression): UExpression? = when (bodyExpression) {
-    !is KtBlockExpression -> {
-        KotlinLazyUBlockExpression(function) { block ->
-            val implicitReturn = KotlinUImplicitReturnExpression(block)
-            val uBody = function.getLanguagePlugin().convertElement(bodyExpression, implicitReturn) as? UExpression
-                ?: return@KotlinLazyUBlockExpression emptyList()
-            listOf(implicitReturn.apply { returnExpression = uBody })
+fun wrapExpressionBody(function: UElement, bodyExpression: KtExpression): UExpression? {
+    val languagePlugin = UastFacade.findPlugin(function.lang)
+    return when (bodyExpression) {
+        !is KtBlockExpression -> {
+            KotlinLazyUBlockExpression(function) { block ->
+                val implicitReturn = KotlinUImplicitReturnExpression(block)
+                val uBody = languagePlugin?.convertElement(bodyExpression, implicitReturn) as? UExpression
+                    ?: return@KotlinLazyUBlockExpression emptyList()
+                listOf(implicitReturn.apply { returnExpression = uBody })
+            }
         }
-
+        else -> languagePlugin?.convertElement(bodyExpression, function) as? UExpression
     }
-    else -> function.getLanguagePlugin().convertElement(bodyExpression, function) as? UExpression
 }
 
 fun reportConvertFailure(psiMethod: PsiMethod): Nothing {

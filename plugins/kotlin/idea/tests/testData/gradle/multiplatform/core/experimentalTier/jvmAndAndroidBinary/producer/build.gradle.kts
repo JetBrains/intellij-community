@@ -18,7 +18,7 @@ publishing {
 
 kotlin {
     jvm()
-    android {
+    {{androidTargetPlaceholder}} {
         publishLibraryVariants("release", "debug")
     }
 

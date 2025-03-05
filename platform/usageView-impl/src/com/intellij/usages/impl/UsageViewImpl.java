@@ -73,8 +73,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -93,7 +93,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final UsageNodeTreeBuilder myBuilder;
   private final @NotNull CoroutineScope coroutineScope;
   private MyPanel myRootPanel; // accessed in EDT only
-  private JTree myTree; // accessed in EDT only
+  private MyTree myTree; // accessed in EDT only
   private final ScheduledFuture<?> myFireEventsFuture;
   private Content myContent;
 
@@ -160,11 +160,6 @@ public class UsageViewImpl implements UsageViewEx {
   private Splitter myPreviewSplitter; // accessed in EDT only
   private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
 
-  // true if usages tree is currently expanding or collapsing,
-  // either at the end of find usages thanks to the 'expand usages after find' setting, or
-  // because the user pressed 'expand all' or 'collapse all' button. During this, some ugly hacks applied
-  // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer()
-  private boolean myExpandingCollapsing;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   private @Nullable Action myRerunAction;
   private final CoroutineDispatcherBackedExecutor updateRequests;
@@ -326,38 +321,7 @@ public class UsageViewImpl implements UsageViewEx {
   private void initInEDT() {
     ThreadingAssertions.assertEventDispatchThread();
     if (isDisposed()) return;
-    myTree = new Tree(myModel) {
-      {
-        ToolTipManager.sharedInstance().registerComponent(this);
-      }
-
-      @Override
-      public boolean isRootVisible() {
-        return false;  // to avoid re-building model when it calls setRootVisible(true)
-      }
-
-      @Override
-      public String getToolTipText(MouseEvent e) {
-        TreePath path = getPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
-            return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
-          }
-        }
-        return null;
-      }
-
-      @Override
-      public boolean isPathEditable(@NotNull TreePath path) {
-        return path.getLastPathComponent() instanceof UsageViewTreeModelBuilder.TargetsRootNode;
-      }
-
-      // hack to avoid quadratic expandAll()
-      @Override
-      public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
-        return myExpandingCollapsing ? Collections.emptyEnumeration() : super.getExpandedDescendants(parent);
-      }
-    };
+    myTree = new MyTree(myModel);
     myTree.setName("UsageViewTree");
 
     myRootPanel = new MyPanel(myTree);
@@ -806,7 +770,7 @@ public class UsageViewImpl implements UsageViewEx {
         TreePath path = event.getPath();
         Object component = path.getLastPathComponent();
         if (component instanceof Node node) {
-          if (!myExpandingCollapsing && node.needsUpdate()) {
+          if (!myTree.myExpandingCollapsing && node.needsUpdate()) {
             List<Node> toUpdate = new ArrayList<>();
             checkNodeValidity(node, path, toUpdate);
             queueUpdateBulk(toUpdate, EmptyRunnable.getInstance());
@@ -1061,6 +1025,7 @@ public class UsageViewImpl implements UsageViewEx {
    *
    * @param actions to sort
    */
+  @Contract(mutates = "param1")
   protected void sortGroupingActions(@NotNull List<? extends AnAction> actions) {
     actions.sort((o1, o2) -> Comparing.compare(o1.getTemplateText(), o2.getTemplateText()));
   }
@@ -1073,6 +1038,12 @@ public class UsageViewImpl implements UsageViewEx {
   private boolean rulesChanged; // accessed in EDT only
 
   private void rulesChanged() {
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-164976")) {
+      rulesChangedImpl();
+    }
+  }
+
+  private void rulesChangedImpl() {
     ThreadingAssertions.assertEventDispatchThread();
     if (!shouldTreeReactNowToRuleChanges()) {
       rulesChanged = true;
@@ -1139,8 +1110,8 @@ public class UsageViewImpl implements UsageViewEx {
     //always expand the last level group
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
     try {
-      if (myTree instanceof Tree jbTree) {
-        jbTree.suspendExpandCollapseAccessibilityAnnouncements();
+      if (myTree != null) {
+        myTree.suspendExpandCollapseAccessibilityAnnouncements();
       }
       for (int i = root.getChildCount() - 1; i >= 0; i--) {
         DefaultMutableTreeNode child = (DefaultMutableTreeNode)root.getChildAt(i);
@@ -1155,8 +1126,8 @@ public class UsageViewImpl implements UsageViewEx {
       }
     }
     finally {
-      if (myTree instanceof Tree jbTree) {
-        jbTree.resumeExpandCollapseAccessibilityAnnouncements();
+      if (myTree != null) {
+        myTree.resumeExpandCollapseAccessibilityAnnouncements();
       }
     }
   }
@@ -1174,12 +1145,12 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     fireEvents();  // drain all remaining insertion events in the queue
 
-    myExpandingCollapsing = true;
+    myTree.myExpandingCollapsing = true;
     try {
       task.run();
     }
     finally {
-      myExpandingCollapsing = false;
+      myTree.myExpandingCollapsing = false;
     }
   }
 
@@ -1872,9 +1843,15 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   private @NotNull List<TreeNode> selectedNodes() {
+    return selectedNodes(myTree);
+  }
+
+  private static @NotNull List<TreeNode> selectedNodes(@NotNull MyTree tree) {
     ThreadingAssertions.assertEventDispatchThread();
-    TreePath[] selectionPaths = myTree.getSelectionPaths();
-    return selectionPaths == null ? Collections.emptyList() : ContainerUtil.mapNotNull(selectionPaths, p-> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
+    TreePath[] selectionPaths = tree.getSelectionPaths();
+    return selectionPaths == null
+           ? Collections.emptyList()
+           : ContainerUtil.mapNotNull(selectionPaths, p -> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
   }
 
   private @NotNull JBIterable<TreeNode> traverseNodesRecursively(@NotNull List<TreeNode> roots) {
@@ -1887,7 +1864,7 @@ public class UsageViewImpl implements UsageViewEx {
     return new HashSet<>(allUsagesRecursive(selectedNodes()));
   }
 
-  private static @NotNull List<@NotNull Usage> allUsagesRecursive(@NotNull List<? extends TreeNode> selection) {
+  private static @Unmodifiable @NotNull List<@NotNull Usage> allUsagesRecursive(@NotNull List<? extends TreeNode> selection) {
     return TreeUtil.treeNodeTraverser(null).withRoots(selection).traverse()
       .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() : null).toList();
   }
@@ -1935,7 +1912,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   private final class MyPanel extends JPanel implements UiDataProvider, OccurenceNavigator, Disposable {
     private @Nullable OccurenceNavigatorSupport mySupport;
-    private final CopyProvider myCopyProvider;
 
     private MyPanel(@NotNull JTree tree) {
       mySupport = new OccurenceNavigatorSupport(tree) {
@@ -1956,18 +1932,6 @@ public class UsageViewImpl implements UsageViewEx {
         @Override
         public @NotNull String getPreviousOccurenceActionName() {
           return UsageViewBundle.message("action.previous.occurrence");
-        }
-      };
-      myCopyProvider = new TextCopyProvider() {
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.EDT;
-        }
-
-        @Override
-        public @Nullable Collection<String> getTextLinesToCopy() {
-          List<String> lines = ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof Node ? ((Node)o).getNodeText() : null);
-          return lines.isEmpty() ? null : lines;
         }
       };
     }
@@ -2028,7 +1992,6 @@ public class UsageViewImpl implements UsageViewEx {
       sink.set(CommonDataKeys.PROJECT, myProject);
       sink.set(USAGE_VIEW_KEY, UsageViewImpl.this);
       sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
-      sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       sink.set(ExclusionHandler.EXCLUSION_HANDLER, myExclusionHandler);
       sink.set(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myTextFileExporter);
       sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, ContainerUtil.mapNotNull(
@@ -2064,6 +2027,65 @@ public class UsageViewImpl implements UsageViewEx {
           .unique()
           .toArray(VirtualFile.EMPTY_ARRAY);
       });
+    }
+  }
+
+  private static class MyTree extends Tree implements UiDataProvider {
+
+    // true if usages tree is currently expanding or collapsing,
+    // either at the end of find usages thanks to the 'expand usages after find' setting, or
+    // because the user pressed 'expand all' or 'collapse all' button. During this, some ugly hacks applied
+    // to speed up the expanding (see getExpandedDescendants() here and UsageViewTreeCellRenderer.customizeCellRenderer()
+    boolean myExpandingCollapsing;
+
+    final CopyProvider myCopyProvider = new TextCopyProvider() {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
+      public @Nullable Collection<String> getTextLinesToCopy() {
+        List<String> lines = ContainerUtil.mapNotNull(selectedNodes(MyTree.this), o -> o instanceof Node ? ((Node)o).getNodeText() : null);
+        return lines.isEmpty() ? null : lines;
+      }
+    };
+
+    MyTree(UsageViewTreeModelBuilder model) {
+      super(model);
+      ToolTipManager.sharedInstance().registerComponent(this);
+    }
+
+    @Override
+    public boolean isRootVisible() {
+      return false;  // to avoid re-building model when it calls setRootVisible(true)
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent e) {
+      TreePath path = getPathForLocation(e.getX(), e.getY());
+      if (path != null) {
+        if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
+          return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public boolean isPathEditable(@NotNull TreePath path) {
+      return path.getLastPathComponent() instanceof UsageViewTreeModelBuilder.TargetsRootNode;
+    }
+
+    // hack to avoid quadratic expandAll()
+    @Override
+    public Enumeration<TreePath> getExpandedDescendants(TreePath parent) {
+      return myExpandingCollapsing ? Collections.emptyEnumeration() : super.getExpandedDescendants(parent);
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
     }
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 
@@ -44,11 +45,15 @@ class LazySource(
 
 data class ZipSource(
   @JvmField val file: Path,
-  @JvmField val excludes: List<Regex> = emptyList(),
   @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
   @JvmField val optimizeConfigId: String? = null,
   @JvmField val distributionFileEntryProducer: DistributionFileEntryProducer?,
+  override val filter: ((String) -> Boolean),
 ) : Source, Comparable<ZipSource> {
+  init {
+    assert(Files.isRegularFile(file)) { "'$file' is not a file" }
+  }
+
   override var size: Int = 0
   override var hash: Long = 0
 
@@ -70,7 +75,6 @@ data class ZipSource(
     if (other !is ZipSource) return false
 
     if (file != other.file) return false
-    if (excludes != other.excludes) return false
     if (isPreSignedAndExtractedCandidate != other.isPreSignedAndExtractedCandidate) return false
     if (filter != other.filter) return false
 
@@ -79,9 +83,8 @@ data class ZipSource(
 
   override fun hashCode(): Int {
     var result = file.hashCode()
-    result = 31 * result + excludes.hashCode()
     result = 31 * result + isPreSignedAndExtractedCandidate.hashCode()
-    result = 31 * result + (filter?.hashCode() ?: 0)
+    result = 31 * result + filter.hashCode()
     return result
   }
 }
@@ -90,8 +93,11 @@ data class DirSource(
   @JvmField val dir: Path,
   @JvmField val excludes: List<PathMatcher> = emptyList(),
   @JvmField val prefix: String = "",
-  @JvmField val removeModuleInfo: Boolean = true,
 ) : Source {
+  init {
+    assert(!Files.isRegularFile(dir)) { "'$dir' should not be a file" }
+  }
+
   override var size: Int = 0
   override var hash: Long = 0
 
@@ -109,7 +115,6 @@ data class DirSource(
     if (dir != other.dir) return false
     if (excludes != other.excludes) return false
     if (prefix != other.prefix) return false
-    if (removeModuleInfo != other.removeModuleInfo) return false
 
     return true
   }
@@ -118,7 +123,6 @@ data class DirSource(
     var result = dir.hashCode()
     result = 31 * result + excludes.hashCode()
     result = 31 * result + prefix.hashCode()
-    result = 31 * result + removeModuleInfo.hashCode()
     return result
   }
 }

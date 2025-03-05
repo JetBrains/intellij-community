@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.checkers;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
@@ -70,7 +70,7 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
             if (e.toString().contains("Expected duplication problem")) {
                 FileDocumentManager.getInstance().reloadFromDisk(getEditor().getDocument());
                 myFixture.configureByFile(fileName());
-                DaemonCodeAnalyzer.getInstance(getProject()).restart();
+                DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
                 checkHighlighting(true, true, false, true);
                 checkResolveToDescriptor();
             }

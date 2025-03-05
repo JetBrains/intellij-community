@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.extension;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
@@ -34,12 +35,19 @@ public interface JsonLikePsiWalker {
   @Nullable
   JsonPointerPosition findPosition(final @NotNull PsiElement element, boolean forceLastTransition);
 
+  // for languages where objects and arrays are syntactically indistinguishable
+  default boolean hasObjectArrayAmbivalence() { return false; }
+
   boolean requiresNameQuotes();
   default boolean requiresValueQuotes() { return true; }
   boolean allowsSingleQuotes();
-  default boolean isValidIdentifier(String string, Project project) { return true; }
+  default boolean isValidIdentifier(@NotNull String string, Project project) { return true; }
 
   default boolean isQuotedString(@NotNull PsiElement element) { return false; }
+
+  default String escapeInvalidIdentifier(@NotNull String identifier) {
+    return StringUtil.wrapWithDoubleQuote(identifier);
+  }
 
   boolean hasMissingCommaAfter(@NotNull PsiElement element);
 
@@ -108,4 +116,7 @@ public interface JsonLikePsiWalker {
   PsiElement getPropertyNameElement(@Nullable PsiElement property);
 
   default String getPropertyValueSeparator(@Nullable JsonSchemaType valueType) { return ":"; }
+
+  // handling of exotic syntaxes where object properties can be located within object subsections and not directly
+  default boolean haveSameParentWithinObject(@NotNull PsiElement property1, @NotNull PsiElement property2) { return true; }
 }

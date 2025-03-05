@@ -27,9 +27,8 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveAssignmentStatementTargetQuickFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.assignment.target");
   }
 

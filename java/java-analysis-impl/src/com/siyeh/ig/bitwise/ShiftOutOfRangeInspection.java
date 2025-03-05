@@ -19,7 +19,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -35,8 +35,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ShiftOutOfRangeInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     LongRangeSet range = (LongRangeSet)infos[0];
     Long val = range.getConstantValue();
     if (val == null) {
@@ -73,15 +72,13 @@ public final class ShiftOutOfRangeInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       final int newValue = (int)(myValue & (myLong ? 63 : 31));
       return CommonQuickFixBundle.message("fix.replace.x.with.y", myValue, newValue);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("shift.out.of.range.fix.family.name");
     }
 
@@ -111,7 +108,7 @@ public final class ShiftOutOfRangeInspection extends BaseInspection {
       super.visitBinaryExpression(expression);
       final PsiJavaToken sign = expression.getOperationSign();
       final IElementType tokenType = sign.getTokenType();
-      if (!ExpressionParser.SHIFT_OPS.contains(tokenType)) return;
+      if (!BasicExpressionParser.SHIFT_OPS.contains(tokenType)) return;
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) return;
       final PsiType expressionType = expression.getType();

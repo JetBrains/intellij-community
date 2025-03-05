@@ -1,36 +1,54 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class InlineWatchesRootNode extends WatchesRootNode {
   private final @NotNull XWatchesView myWatchesView;
   private final XValueGroupNodeImpl myInlinesRootNode;
   private final InlinesGroup myInlinesGroup;
 
+  /**
+   * @deprecated Use {@link InlineWatchesRootNode#InlineWatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean)} instead
+   */
+  @Deprecated
+  public InlineWatchesRootNode(@NotNull XDebuggerTree tree,
+                               @NotNull XWatchesView watchesView,
+                               @NotNull List<XExpression> regularWatchesExpressions,
+                               @NotNull List<InlineWatch> inlineWatchesExpressions,
+                               @Nullable XStackFrame stackFrame,
+                               boolean watchesInVariables) {
+    this(tree, watchesView,
+         Objects.requireNonNull(((XVariablesView)watchesView).getSession()).getSessionData().getConfigurationName(),
+         stackFrame, watchesInVariables);
+  }
 
   public InlineWatchesRootNode(@NotNull XDebuggerTree tree,
-                        @NotNull XWatchesView watchesView,
-                        @NotNull List<XExpression> regularWatchesExpressions,
-                        @NotNull List<InlineWatch> inlineWatchesExpressions,
-                        @Nullable XStackFrame stackFrame,
-                        boolean watchesInVariables) {
-    super(tree, watchesView, regularWatchesExpressions, stackFrame, watchesInVariables);
+                               @NotNull XWatchesView watchesView,
+                               @NotNull String configurationName,
+                               @Nullable XStackFrame stackFrame,
+                               boolean watchesInVariables) {
+    super(tree, watchesView, configurationName, stackFrame, watchesInVariables);
     myWatchesView = watchesView;
     myInlinesGroup = new InlinesGroup(XDebuggerBundle.message("debugger.inline.watches.group.name"), true);
     myInlinesRootNode = new XValueGroupNodeImpl(tree, this, myInlinesGroup) {
@@ -39,8 +57,11 @@ public class InlineWatchesRootNode extends WatchesRootNode {
         return myInlinesGroup.getChildren();
       }
     };
-    for (InlineWatch watchExpression : inlineWatchesExpressions) {
-      myInlinesGroup.getChildren().add(new InlineWatchNodeImpl(myTree, myInlinesRootNode, watchExpression, stackFrame));
+    List<InlineWatch> inlineWatches = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(tree.getProject()))
+      .getWatchesManager().getInlineWatches();
+
+    for (InlineWatch inlineWatch : inlineWatches) {
+      myInlinesGroup.getChildren().add(new InlineWatchNodeImpl(myTree, myInlinesRootNode, inlineWatch, stackFrame));
     }
   }
 
@@ -123,28 +144,27 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     List<InlineWatchNodeImpl> getChildren() {
       return myChildren;
     }
-
   }
 
 
-  @NotNull
   @Override
-  public List<? extends XValueContainerNode<?>> getLoadedChildren() {
+  public @NotNull @Unmodifiable List<? extends XValueContainerNode<?>> getLoadedChildren() {
     List<? extends XValueContainerNode<?>> children = super.getLoadedChildren();
-    if(inlinesRootNodeIsShown()) {
+    if (inlinesRootNodeIsShown()) {
       return ContainerUtil.prepend(children, myInlinesRootNode);
-    } else {
+    }
+    else {
       return children;
     }
   }
 
-  @NotNull
   @Override
-  public List<? extends TreeNode> getChildren() {
+  public @NotNull @Unmodifiable List<? extends TreeNode> getChildren() {
     List<? extends TreeNode> children = super.getChildren();
-    if(myInlinesRootNode != null && inlinesRootNodeIsShown()) {
+    if (myInlinesRootNode != null && inlinesRootNodeIsShown()) {
       return ContainerUtil.prepend(children, myInlinesRootNode);
-    } else {
+    }
+    else {
       return children;
     }
   }
@@ -153,8 +173,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     return !getInlineWatchChildren().isEmpty();
   }
 
-  @NotNull
-  public List<? extends InlineWatchNode> getInlineWatchChildren() {
+  public @NotNull List<? extends InlineWatchNode> getInlineWatchChildren() {
     return myInlinesGroup.myChildren;
   }
 
@@ -201,7 +220,8 @@ public class InlineWatchesRootNode extends WatchesRootNode {
   public void editWatch(@Nullable WatchNodeImpl node) {
     if (node instanceof InlineWatchNodeImpl) {
       new WatchInplaceEditor(this, myWatchesView, node, node).show();
-    } else {
+    }
+    else {
       super.editWatch(node);
     }
   }
@@ -211,6 +231,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     return inlinesRootNodeIsShown() ? 1 : 0;
   }
 
+  @Override
   public void moveUp(WatchNode node) {
     int index = getIndex(node);
     if (inlinesRootNodeIsShown()) {
@@ -224,6 +245,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     getTree().setSelectionRow(selectionRow);
   }
 
+  @Override
   public void moveDown(WatchNode node) {
     int index = getIndex(node);
     if (inlinesRootNodeIsShown()) {

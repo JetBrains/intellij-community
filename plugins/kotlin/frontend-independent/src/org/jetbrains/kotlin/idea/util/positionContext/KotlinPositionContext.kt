@@ -58,7 +58,7 @@ sealed class KotlinNameReferencePositionContext : KotlinRawPositionContext() {
     abstract val nameExpression: KtElement
     abstract val explicitReceiver: KtElement?
 
-    abstract fun getName(): Name
+    abstract val name: Name
 }
 
 sealed class KotlinSimpleNameReferencePositionContext : KotlinNameReferencePositionContext() {
@@ -66,7 +66,8 @@ sealed class KotlinSimpleNameReferencePositionContext : KotlinNameReferencePosit
     abstract override val nameExpression: KtSimpleNameExpression
     abstract override val explicitReceiver: KtExpression?
 
-    override fun getName(): Name = nameExpression.getReferencedNameAsName()
+    override val name: Name
+        get() = nameExpression.getReferencedNameAsName()
 }
 
 class KotlinImportDirectivePositionContext(
@@ -132,8 +133,7 @@ class KotlinSuperReceiverNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
-    override val explicitReceiver: KtExpression?,
-    val superExpression: KtSuperExpression,
+    override val explicitReceiver: KtSuperExpression,
 ) : KotlinSimpleNameReferencePositionContext()
 
 class KotlinExpressionNameReferencePositionContext(
@@ -201,12 +201,32 @@ class KotlinMemberDeclarationExpectedPositionContext(
     val classBody: KtClassBody
 ) : KotlinRawPositionContext()
 
+/**
+ * A position that describes a delegated property.
+ * 
+ * Example: 
+ * ```
+ * val foo by bar
+ * ```
+ * 
+ * [propertyDelegate] points to the delegation part (`by bar`) of the declaration.
+ * 
+ * Note: This position currently is NOT detected automatically by `KotlinPositionContextDetector`;
+* it should be created explicitly.
+ */
+class KotlinPropertyDelegatePositionContext(
+    val propertyDelegate: KtPropertyDelegate,
+) : KotlinRawPositionContext() {
+    override val position: KtElement = propertyDelegate
+}
+
 sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionContext() {
     abstract override val reference: KDocReference
     abstract override val nameExpression: KDocName
     abstract override val explicitReceiver: KDocName?
 
-    override fun getName(): Name = nameExpression.getQualifiedNameAsFqName().shortName()
+    override val name: Name
+        get() = nameExpression.getQualifiedNameAsFqName().shortName()
 }
 
 class KDocParameterNamePositionContext(
@@ -272,9 +292,12 @@ object KotlinPositionContextDetector {
                 detectForTypeContext(parent, position, reference, nameExpression, explicitReceiver)
             }
 
-            parent is KtCallableReferenceExpression -> {
+            parent is KtCallableReferenceExpression && (parent.receiverExpression as? KtNameReferenceExpression)?.getIdentifier() != position -> {
                 KotlinCallableReferencePositionContext(
-                    position, reference, nameExpression, parent.receiverExpression
+                    position = position,
+                    reference = reference,
+                    nameExpression = nameExpression,
+                    explicitReceiver = parent.receiverExpression,
                 )
             }
 
@@ -319,11 +342,10 @@ object KotlinPositionContextDetector {
             }
 
             explicitReceiver is KtSuperExpression -> KotlinSuperReceiverNameReferencePositionContext(
-                position,
-                reference,
-                nameExpression,
-                explicitReceiver,
-                explicitReceiver
+                position = position,
+                reference = reference,
+                nameExpression = nameExpression,
+                explicitReceiver = explicitReceiver,
             )
 
             nameExpression is KtLabelReferenceExpression -> {

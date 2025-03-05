@@ -5,16 +5,16 @@ import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.get
 import fleet.kernel.*
-import fleet.util.serialization.ISerialization
 import fleet.util.UID
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.MutableIntMap
 
 class FollowerTransactorMiddleware(
-  private val serialization: ISerialization,
   private val instructionEncoder: InstructionEncoder
 ) : TransactorMiddleware {
 
   override fun ChangeScope.performChange(next: ChangeScope.() -> Unit): Unit = run {
-    val idMapping: HashMap<EID, UID> = HashMap()
+    val idMapping: MutableIntMap<UID> = Int2ObjectOpenHashMap()
     val sharedBlocks: ArrayList<SharedBlock> = ArrayList()
     val sharedDbBefore = dbBefore.selectPartitions(setOf(SharedPart))
     val uidAttribute = uidAttribute()
@@ -39,7 +39,6 @@ class FollowerTransactorMiddleware(
           f = f,
           idMappings = idMappings,
           instructionEncoder = instructionEncoder,
-          json = serialization
         )
 
         sharedBlocks.add(
@@ -54,13 +53,11 @@ class FollowerTransactorMiddleware(
         t
       }
     }
-    meta[SerializationKey] = serialization
 
     context.alter(
       context.impl
         .instructionsRecording(
           serContext = InstructionEncodingContext(
-            json = serialization,
             uidAttribute = uidAttribute,
             encoder = instructionEncoder
           ),

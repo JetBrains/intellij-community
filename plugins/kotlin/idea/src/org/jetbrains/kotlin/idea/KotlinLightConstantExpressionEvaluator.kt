@@ -6,7 +6,6 @@ import com.intellij.psi.PsiConstantEvaluationHelper
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.asJava.computeExpression
-import org.jetbrains.kotlin.psi.KtExpression
 
 class KotlinLightConstantExpressionEvaluator : ConstantExpressionEvaluator {
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -39,15 +39,13 @@ final class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHel
            DescriptorUtil.isPluginXml(PsiManager.getInstance(project).findFile(file));
   }
 
-  @NotNull
   @Override
-  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull VirtualFile file) {
     return getRootsContainingPluginXmlFiles(project);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
+  public @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
     return getRootsContainingPluginXmlFiles(module.getProject());
   }
 

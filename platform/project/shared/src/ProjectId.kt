@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.project
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @JvmField
 @ApiStatus.Internal
-val PROJECT_ID = Key.create<ProjectId>("ProjectImpl.PROJECT_ID")
+val PROJECT_ID: Key<ProjectId> = Key.create<ProjectId>("ProjectImpl.PROJECT_ID")
 
 /**
  * Represents a unique identifier for a [Project].
@@ -84,6 +85,7 @@ fun Project.projectId(): ProjectId {
 @ApiStatus.Internal
 fun ProjectId.findProjectOrNull(): Project? {
   return ProjectManager.getInstance().openProjects.firstOrNull { it.getUserData(PROJECT_ID) == this }
+         ?: ProjectIdResolver.EP_NAME.extensionList.firstNotNullOfOrNull { it.resolve(this) }
 }
 
 /**
@@ -95,4 +97,18 @@ fun ProjectId.findProjectOrNull(): Project? {
 @ApiStatus.Internal
 fun ProjectId.findProject(): Project {
   return findProjectOrNull() ?: error("Project is not found for $this")
+}
+
+/**
+ * Extension point which allows providing a custom way to convert [ProjectId] to [Project].
+ *
+ * The extension will be used, if [ProjectManager] doesn't have [Project] with [ProjectId] in [ProjectManager.getOpenProjects].
+ */
+@ApiStatus.Internal
+interface ProjectIdResolver {
+  fun resolve(id: ProjectId): Project?
+
+  companion object {
+    internal val EP_NAME = ExtensionPointName.create<ProjectIdResolver>("com.intellij.project.projectIdResolver")
+  }
 }

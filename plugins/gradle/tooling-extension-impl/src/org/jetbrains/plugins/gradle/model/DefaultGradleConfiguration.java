@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.serialization.PropertyMapping;
@@ -37,15 +37,13 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
          configuration.getDeclarationAlternatives());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return description;
   }
 
@@ -59,9 +57,8 @@ public final class DefaultGradleConfiguration implements GradleConfiguration {
     return scriptClasspathConfiguration;
   }
 
-  @NotNull
   @Override
-  public List<String> getDeclarationAlternatives() {
+  public @NotNull List<String> getDeclarationAlternatives() {
     return declarationAlternatives;
   }
 

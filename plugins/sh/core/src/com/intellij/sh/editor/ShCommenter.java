@@ -35,38 +35,32 @@ public class ShCommenter implements CodeDocumentationAwareCommenter {
   }
 
   @Override
-  @Nullable
-  public IElementType getLineCommentTokenType() {
+  public @Nullable IElementType getLineCommentTokenType() {
     return COMMENT;
   }
 
   @Override
-  @Nullable
-  public IElementType getBlockCommentTokenType() {
+  public @Nullable IElementType getBlockCommentTokenType() {
     return null;
   }
 
   @Override
-  @Nullable
-  public IElementType getDocumentationCommentTokenType() {
+  public @Nullable IElementType getDocumentationCommentTokenType() {
     return null;
   }
 
   @Override
-  @Nullable
-  public String getDocumentationCommentPrefix() {
+  public @Nullable String getDocumentationCommentPrefix() {
     return "#";
   }
 
   @Override
-  @Nullable
-  public String getDocumentationCommentLinePrefix() {
+  public @Nullable String getDocumentationCommentLinePrefix() {
     return "#";
   }
 
   @Override
-  @Nullable
-  public String getDocumentationCommentSuffix() {
+  public @Nullable String getDocumentationCommentSuffix() {
     return null;
   }
 

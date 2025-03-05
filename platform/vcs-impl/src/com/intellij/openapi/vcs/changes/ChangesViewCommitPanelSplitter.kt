@@ -24,7 +24,7 @@ private fun getVerticalProportionKey(project: Project) =
 private fun getDefaultVerticalProportion(project: Project) =
   if (project.isCommitToolWindowShown) COMMIT_TOOL_WINDOW_DEFAULT_PROPORTION else DEFAULT_VERTICAL_PROPORTION
 
-private class ChangesViewCommitPanelSplitter(private val project: Project) :
+internal class ChangesViewCommitPanelSplitter(private val project: Project) :
   OnePixelSplitter(true, "", getDefaultVerticalProportion(project)),
   ChangesViewContentManagerListener,
   Disposable {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.SettingsProvider;
@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -82,7 +83,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return (NodeDescriptor<?>)element;
   }
 
-  public abstract @Nullable List<TreeStructureProvider> getProviders();
+  public abstract @Unmodifiable @Nullable List<TreeStructureProvider> getProviders();
 
   /** @deprecated Drop together with {@link TreeStructureProvider#getData(Collection, String)} */
   @Deprecated(forRemoval = true)
@@ -91,7 +92,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return null;
   }
 
-  private @NotNull List<TreeStructureProvider> getProvidersDumbAware() {
+  private @Unmodifiable @NotNull List<TreeStructureProvider> getProvidersDumbAware() {
     if (myProject == null) {
       return Collections.emptyList();
     }

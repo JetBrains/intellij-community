@@ -3,14 +3,17 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,28 +26,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   private final Stack<Assertion> myStack = new Stack<>();
   private boolean myPositive;
 
-  public PyTypeAssertionEvaluator() {
-    this(true);
-  }
-
   public PyTypeAssertionEvaluator(boolean positive) {
     myPositive = positive;
   }
 
-  public List<Assertion> getDefinitions() {
+  List<Assertion> getDefinitions() {
     return myStack;
-  }
-
-  @Override
-  public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
-    if (node.getOperator() == PyTokenTypes.NOT_KEYWORD) {
-      myPositive = !myPositive;
-      super.visitPyPrefixExpression(node);
-      myPositive = !myPositive;
-    }
-    else {
-      super.visitPyPrefixExpression(node);
-    }
   }
 
   @Override
@@ -88,95 +75,166 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
-    final PyExpression lhs = node.getLeftExpression();
-    final PyExpression rhs = node.getRightExpression();
+    final PyExpression lhs = PyPsiUtils.flattenParens(node.getLeftExpression());
+    final PyExpression rhs = PyPsiUtils.flattenParens(node.getRightExpression());
+    if (lhs == null || rhs == null) return;
 
-    if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression ||
-        lhs instanceof PyReferenceExpression && rhs instanceof PyNoneLiteralExpression ||
-        lhs instanceof PyNoneLiteralExpression && rhs instanceof PyReferenceExpression) {
-      final boolean leftIsNone = lhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(lhs.getName());
-      final boolean rightIsNone = rhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(rhs.getName());
-
-      if (leftIsNone ^ rightIsNone) {
-        final PyReferenceExpression target = (PyReferenceExpression)(rightIsNone ? lhs : rhs);
-
-        if (node.isOperator(PyNames.IS)) {
-          pushAssertion(target, myPositive, false, context -> PyNoneType.INSTANCE, null);
-          return;
-        }
-
-        if (node.isOperator("isnot")) {
-          pushAssertion(target, !myPositive, false, context -> PyNoneType.INSTANCE, null);
-          return;
-        }
-      }
+    PyElementType operator = node.getOperator();
+    boolean isOrEqualsOperator = node.isOperator(PyNames.IS) || PyTokenTypes.EQEQ.equals(operator);
+    if (isOrEqualsOperator || node.isOperator("isnot") || PyTokenTypes.NE.equals(operator) || PyTokenTypes.NE_OLD.equals(operator)) {
+      setPositive(isOrEqualsOperator, () -> processIsOrEquals(lhs, rhs));
     }
 
-    final Object leftValue = PyEvaluator.evaluateNoResolve(lhs, Object.class);
-    final Object rightValue = PyEvaluator.evaluateNoResolve(rhs, Object.class);
-
-    if (leftValue instanceof Boolean && rightValue instanceof Boolean) {
-      return;
+    if (PyTokenTypes.IN_KEYWORD.equals(operator) || node.isOperator("notin")) {
+      setPositive(PyTokenTypes.IN_KEYWORD.equals(operator), () -> processIn(lhs, rhs));
     }
-
-    if (node.isOperator(PyNames.IS) && (leftValue == Boolean.FALSE || rightValue == Boolean.FALSE) ||
-        node.isOperator("isnot") && (leftValue == Boolean.TRUE || rightValue == Boolean.TRUE)) {
-      myPositive = !myPositive;
-      super.visitPyBinaryExpression(node);
-      myPositive = !myPositive;
-      return;
-    }
-
-    super.visitPyBinaryExpression(node);
   }
 
-  /**
-   * @param isStrict is false means that a type guard makes the assertion
-   */
-  @Nullable
-  @ApiStatus.Internal
-  public static Ref<PyType> createAssertionType(@Nullable PyType initial,
-                                                @Nullable PyType suggested,
-                                                boolean positive,
-                                                boolean isStrict,
-                                                @NotNull TypeEvalContext context) {
-    // non-strict type guard
-    if (!isStrict) return Ref.create((positive) ? suggested : initial);
-    if (positive) {
-      if (!(initial instanceof PyUnionType) &&
-          !(initial instanceof PyStructuralType) &&
-          !PyTypeChecker.isUnknown(initial, context) &&
-          PyTypeChecker.match(suggested, initial, context)) {
-        return Ref.create(initial);
+  private void processIsOrEquals(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
+    final Boolean leftBoolean = PyEvaluator.evaluateNoResolve(lhs, Boolean.class);
+    if (leftBoolean != null) {
+      setPositive(leftBoolean, () -> rhs.accept(this));
+      return;
+    }
+
+    final Boolean rightBoolean = PyEvaluator.evaluateNoResolve(rhs, Boolean.class);
+    if (rightBoolean != null) {
+      setPositive(rightBoolean, () -> lhs.accept(this));
+      return;
+    }
+
+    if (PyLiteralType.isNone(lhs)) {
+      if (rhs instanceof PyReferenceExpression referenceExpr) {
+        pushAssertion(referenceExpr, myPositive, false, context -> PyNoneType.INSTANCE, null);
       }
-      if (initial instanceof PyUnionType unionType) {
-        if (!unionType.isWeak()) {
-          var matched = unionType.getMembers().stream().filter((member) -> match(member, suggested, context)).toList();
-          if (!matched.isEmpty()) {
-            return Ref.create(PyUnionType.union(matched));
+      return;
+    }
+
+    if (PyLiteralType.isNone(rhs)) {
+      if (lhs instanceof PyReferenceExpression referenceExpr) {
+        pushAssertion(referenceExpr, myPositive, false, context -> PyNoneType.INSTANCE, null);
+      }
+      return;
+    }
+
+    if (lhs instanceof PyReferenceExpression referenceExpr) {
+      pushAssertion(referenceExpr, myPositive, false, context -> getLiteralType(rhs, context), null);
+    }
+  }
+
+  private void processIn(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
+    if (lhs instanceof PyReferenceExpression referenceExpr && rhs instanceof PyTupleExpression tupleExpr) {
+      pushAssertion(referenceExpr, myPositive, false, context -> {
+        PyExpression[] elements = tupleExpr.getElements();
+        List<PyType> types = new ArrayList<>(elements.length);
+        for (PyExpression element : elements) {
+          PyType type = PyLiteralType.isNone(element) ? PyNoneType.INSTANCE : getLiteralType(element, context);
+          if (type == null) {
+            return null;
           }
+          types.add(type);
         }
+        return PyUnionType.union(types);
+      }, null);
+    }
+  }
+
+  private static @Nullable PyType getLiteralType(@NotNull PyExpression element, @NotNull TypeEvalContext context) {
+    PyType type = PyLiteralType.getLiteralType(element, context);
+    if (type == null) {
+      type = context.getType(element);
+    }
+    return PyTypeUtil.toStream(type).allMatch(subtype -> subtype instanceof PyLiteralType) ? type : null;
+  }
+
+  private void setPositive(boolean positive, @NotNull Runnable runnable) {
+    boolean oldPositive = myPositive;
+    if (!positive) {
+      myPositive = !myPositive;
+    }
+    try {
+      runnable.run();
+    }
+    finally {
+      myPositive = oldPositive;
+    }
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Ref<PyType> createAssertionType(@Nullable PyType initial,
+                                                          @Nullable PyType suggested,
+                                                          boolean positive,
+                                                          @NotNull TypeEvalContext context) {
+    if (positive) {
+      List<PyType> initialSubtypes = PyTypeUtil.toStream(initial)
+        .filter(initialSubtype -> match(suggested, initialSubtype, context))
+        .toList();
+
+      StreamEx<PyType> suggestedSubtypes = PyTypeUtil.toStream(suggested)
+        .filter(suggestedSubtype -> match(initial, suggestedSubtype, context))
+        .filter(suggestedSubtype -> !ContainerUtil.exists(initialSubtypes,
+                                                          initialSubtype -> match(initialSubtype, suggestedSubtype, context)));
+
+      List<PyType> types = StreamEx.of(initialSubtypes).append(suggestedSubtypes).toList();
+      return Ref.create(types.isEmpty() ? suggested : PyUnionType.union(types));
+    }
+    else {
+      if (initial instanceof PyUnionType unionType) {
+        return Ref.create(excludeFromUnion(unionType, suggested, context));
       }
-      return Ref.create(suggested);
+      if (match(suggested, initial, context)) {
+        return null;
+      }
+      Ref<@Nullable PyType> diff = trySubtract(initial, suggested, context);
+      return diff != null ? diff : Ref.create(initial);
     }
-    else if (initial instanceof PyUnionType) {
-      return Ref.create(((PyUnionType)initial).exclude(suggested, context));
-    }
-    else if (match(initial, suggested, context)) {
-      return null;
-    }
-    return Ref.create(initial);
   }
 
-  private static boolean match(@Nullable PyType initial, PyType transformedType, @NotNull TypeEvalContext context) {
-    return !(initial instanceof PyStructuralType) &&
-           !PyTypeChecker.isUnknown(initial, context) &&
-           PyTypeChecker.match(transformedType, initial, context);
+  private static @Nullable PyType excludeFromUnion(@NotNull PyUnionType unionType,
+                                                   @Nullable PyType type,
+                                                   @NotNull TypeEvalContext context) {
+    final List<PyType> members = new ArrayList<>();
+    for (PyType m : unionType.getMembers()) {
+      Ref<@Nullable PyType> diff = trySubtract(m, type, context);
+      if (diff != null) {
+        members.add(diff.get());
+      }
+      else if (!PyTypeChecker.match(type, m, context)) {
+        members.add(m);
+      }
+    }
+    return PyUnionType.union(members);
   }
 
-  @Nullable
-  private static PyType transformTypeFromAssertion(@Nullable PyType type, boolean transformToDefinition, @NotNull TypeEvalContext context,
-                                                   @Nullable PyExpression typeElement) {
+  private static @Nullable Ref<@Nullable PyType> trySubtract(@Nullable PyType type1,
+                                                             @Nullable PyType type2,
+                                                             @NotNull TypeEvalContext context) {
+    assert !(type1 instanceof PyUnionType);
+
+    if (!(type1 instanceof PyLiteralType) &&
+        type1 instanceof PyClassType classType1 &&
+        PyStdlibTypeProvider.isCustomEnum(classType1.getPyClass(), context)) {
+      if (ContainerUtil.exists(classType1.getPyClass().getAncestorClasses(context),
+                               cls -> PyNames.TYPE_ENUM_FLAG.equals(cls.getQualifiedName()))) {
+        // Do not expand enum classes that derive from enum.Flag
+        return null;
+      }
+      List<PyLiteralType> enumMembers = PyStdlibTypeProvider.getEnumMembers(classType1.getPyClass(), context).toList();
+      List<PyType> filteredEnumMembers = ContainerUtil.filter(enumMembers, m -> !PyTypeChecker.match(type2, m, context));
+      PyType type = enumMembers.size() == filteredEnumMembers.size() ? type1 : PyUnionType.union(filteredEnumMembers);
+      return Ref.create(type);
+    }
+    return null;
+  }
+
+  private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context) {
+    return !(actual instanceof PyStructuralType) &&
+           !PyTypeChecker.isUnknown(actual, context) &&
+           PyTypeChecker.match(expected, actual, context);
+  }
+
+  private static @Nullable PyType transformTypeFromAssertion(@Nullable PyType type, boolean transformToDefinition, @NotNull TypeEvalContext context,
+                                                             @Nullable PyExpression typeElement) {
     /*
      * We need to distinguish:
      *   if isinstance(x, (int, str)):
@@ -228,11 +286,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                              @Nullable PyExpression typeElement) {
     final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
       @Override
-      public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+      public Ref<PyType> getType(TypeEvalContext context) {
         return createAssertionType(context.getType(target),
                                    transformTypeFromAssertion(suggestedType.apply(context), transformToDefinition, context, typeElement),
                                    positive,
-                                   /*isStrict*/ true,
                                    context);
       }
     };

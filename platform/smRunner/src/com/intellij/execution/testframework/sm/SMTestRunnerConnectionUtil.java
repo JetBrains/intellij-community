@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.ExecutionException;
@@ -25,6 +25,7 @@ import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -72,8 +73,7 @@ public final class SMTestRunnerConnectionUtil {
    * @param consoleProperties Console properties for test console actions
    * @return Console view
    */
-  @NotNull
-  public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
+  public static @NotNull BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
                                                                   @NotNull ProcessHandler processHandler,
                                                                   @NotNull TestConsoleProperties consoleProperties) throws ExecutionException {
     BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties);
@@ -81,26 +81,23 @@ public final class SMTestRunnerConnectionUtil {
     return console;
   }
 
-  @NotNull
-  public static BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
-                                                         @NotNull TestConsoleProperties consoleProperties) {
+  public static @NotNull BaseTestsOutputConsoleView createConsole(@NotNull String testFrameworkName,
+                                                                  @NotNull TestConsoleProperties consoleProperties) {
     String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
     SMTRunnerConsoleView consoleView = new SMTRunnerConsoleView(consoleProperties, splitterPropertyName);
     initConsoleView(consoleView, testFrameworkName);
     return consoleView;
   }
 
-  @NotNull
-  public static SMTRunnerConsoleView createConsole(@NotNull SMTRunnerConsoleProperties consoleProperties) {
+  public static @NotNull SMTRunnerConsoleView createConsole(@NotNull SMTRunnerConsoleProperties consoleProperties) {
     return (SMTRunnerConsoleView)createConsole(consoleProperties.getTestFrameworkName(), consoleProperties);
   }
 
-  @NotNull
-  public static String getSplitterPropertyName(@NotNull String testFrameworkName) {
+  public static @NotNull String getSplitterPropertyName(@NotNull String testFrameworkName) {
     return testFrameworkName + ".Splitter.Proportion";
   }
 
-  public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView, @NotNull final String testFrameworkName) {
+  public static void initConsoleView(final @NotNull SMTRunnerConsoleView consoleView, final @NotNull String testFrameworkName) {
     consoleView.addAttachToProcessListener(new AttachToProcessListener() {
       @Override
       public void onAttachToProcess(@NotNull ProcessHandler processHandler) {
@@ -206,14 +203,14 @@ public final class SMTestRunnerConnectionUtil {
       }
 
       @Override
-      public void processTerminated(@NotNull final ProcessEvent event) {
+      public void processTerminated(final @NotNull ProcessEvent event) {
         outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
         outputConsumer.finishTesting();
         Disposer.dispose(outputConsumer);
       }
 
       @Override
-      public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
+      public void onTextAvailable(final @NotNull ProcessEvent event, final @NotNull Key outputType) {
         outputConsumer.process(event.getText(), outputType);
       }
     });
@@ -226,19 +223,17 @@ public final class SMTestRunnerConnectionUtil {
       myLocator = locator;
     }
 
-    @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    public @NotNull @Unmodifiable List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       return getLocation(protocol, path, null, project, scope);
     }
 
-    @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String protocol,
-                                      @NotNull String path,
-                                      @Nullable String metainfo,
-                                      @NotNull Project project,
-                                      @NotNull GlobalSearchScope scope) {
+    public @NotNull @Unmodifiable List<Location> getLocation(@NotNull String protocol,
+                                                             @NotNull String path,
+                                                             @Nullable String metainfo,
+                                                             @NotNull Project project,
+                                                             @NotNull GlobalSearchScope scope) {
       if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
@@ -250,15 +245,13 @@ public final class SMTestRunnerConnectionUtil {
       }
     }
 
-    @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    public @NotNull @Unmodifiable List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       return myLocator.getLocation(stacktraceLine, project, scope);
     }
 
-    @NotNull
     @Override
-    public ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
+    public @NotNull ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
       return myLocator.getLocationCacheModificationTracker(project);
     }
   }
@@ -314,9 +307,8 @@ public final class SMTestRunnerConnectionUtil {
       myPrimaryLocator = primaryLocator;
     }
 
-    @NotNull
     @Override
-    public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    public @NotNull List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       if (myPrimaryLocator != null && DumbService.getInstance(project).isUsableInCurrentContext(myPrimaryLocator)) {
         List<Location> locations = myPrimaryLocator.getLocation(protocol, path, project);
         if (!locations.isEmpty()) {

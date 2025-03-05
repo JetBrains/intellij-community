@@ -10,7 +10,7 @@ class User {
   private void oper() {
     Subject subj = new Subject();
     int[] ia = new int[]{0, 1};
-    ia[0] = 2;
+    (ia)[0] = 2;
     subj.withArray(ia);
   }
 }

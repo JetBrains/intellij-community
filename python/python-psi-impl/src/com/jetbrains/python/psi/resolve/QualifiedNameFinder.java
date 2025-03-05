@@ -43,14 +43,12 @@ public final class QualifiedNameFinder {
    * @return a possibly qualified name under which the file may be imported, or null. If there's more than one way (overlapping roots),
    *         the name with fewest qualifiers is selected.
    */
-  @Nullable
-  public static String findShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
+  public static @Nullable String findShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
     final QualifiedName qName = findShortestImportableQName(foothold, vfile);
     return qName == null ? null : qName.toString();
   }
 
-  @Nullable
-  public static QualifiedName findCachedShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile virtualFile) {
+  public static @Nullable QualifiedName findCachedShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile virtualFile) {
     final PythonPathCache cache = ResolveImportUtil.getPathCache(foothold);
     if (cache != null) {
       final List<QualifiedName> names = cache.getNames(virtualFile);
@@ -61,19 +59,16 @@ public final class QualifiedNameFinder {
     return null;
   }
 
-  @Nullable
-  public static QualifiedName findShortestImportableQName(@Nullable PsiFileSystemItem fsItem) {
+  public static @Nullable QualifiedName findShortestImportableQName(@Nullable PsiFileSystemItem fsItem) {
     VirtualFile vFile = fsItem != null ? fsItem.getVirtualFile() : null;
     return vFile != null ? findShortestImportableQName(fsItem, vFile) : null;
   }
 
-  @Nullable
-  public static QualifiedName findShortestImportableQName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
+  public static @Nullable QualifiedName findShortestImportableQName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
     return shortestQName(findImportableQNames(foothold, vfile));
   }
 
-  @NotNull
-  public static List<QualifiedName> findImportableQNames(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
+  public static @NotNull List<QualifiedName> findImportableQNames(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
     final PythonPathCache cache = ResolveImportUtil.getPathCache(foothold);
     final List<QualifiedName> names = cache != null ? cache.getNames(vfile) : null;
     if (names != null) {
@@ -88,13 +83,11 @@ public final class QualifiedNameFinder {
     return results;
   }
 
-  @Nullable
-  private static QualifiedName shortestQName(@NotNull List<QualifiedName> qNames) {
+  private static @Nullable QualifiedName shortestQName(@NotNull List<QualifiedName> qNames) {
     return qNames.stream().min(Comparator.comparingInt(QualifiedName::getComponentCount)).orElse(null);
   }
 
-  @Nullable
-  public static String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
+  public static @Nullable String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
     final PythonPathCache cache = PythonModulePathCache.getInstance(module);
     List<QualifiedName> names = cache.getNames(vfile);
     if (names == null) {
@@ -115,13 +108,11 @@ public final class QualifiedNameFinder {
    * @param foothold the location where the import statement would be added
    * @return the qualified name, or null if it wasn't possible to calculate one
    */
-  @Nullable
-  public static QualifiedName findCanonicalImportPath(@NotNull PsiElement symbol, @Nullable PsiElement foothold) {
+  public static @Nullable QualifiedName findCanonicalImportPath(@NotNull PsiElement symbol, @Nullable PsiElement foothold) {
     return PyUtil.getNullableParameterizedCachedValue(symbol, Couple.of(symbol, foothold), QualifiedNameFinder::doFindCanonicalImportPath);
   }
 
-  @Nullable
-  private static QualifiedName doFindCanonicalImportPath(@NotNull Couple<PsiElement> param) {
+  private static @Nullable QualifiedName doFindCanonicalImportPath(@NotNull Couple<PsiElement> param) {
     final PsiElement symbol = param.getFirst();
     final PsiElement foothold = param.getSecond();
 
@@ -168,8 +159,7 @@ public final class QualifiedNameFinder {
     return qname;
   }
 
-  @NotNull
-  private static PyFile jumpFromBinarySkeletonsToRealInitPy(@NotNull PyFile initPy) {
+  private static @NotNull PyFile jumpFromBinarySkeletonsToRealInitPy(@NotNull PyFile initPy) {
     if (PythonSdkUtil.isElementInSkeletons(initPy)) {
       QualifiedName packageName = findShortestImportableQName(initPy);
       if (packageName != null) {
@@ -187,8 +177,7 @@ public final class QualifiedNameFinder {
     return initPy;
   }
 
-  @Nullable
-  public static QualifiedName canonizeQualifiedName(PsiElement symbol, QualifiedName qname, PsiElement foothold) {
+  public static @Nullable QualifiedName canonizeQualifiedName(PsiElement symbol, QualifiedName qname, PsiElement foothold) {
     for (PyCanonicalPathProvider provider : PyCanonicalPathProvider.EP_NAME.getExtensionList()) {
       final QualifiedName restored = provider.getCanonicalPath(symbol, qname, foothold);
       if (restored != null) {
@@ -198,14 +187,12 @@ public final class QualifiedNameFinder {
     return null;
   }
 
-  @Nullable
-  public static String getQualifiedName(@NotNull PyElement element) {
+  public static @Nullable String getQualifiedName(@NotNull PyElement element) {
     return CachedValuesManager.getCachedValue(element, () ->
       new Result<>(getQualifiedNameInner(element), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  @Nullable
-  private static String getQualifiedNameInner(@NotNull final PyElement element) {
+  private static @Nullable String getQualifiedNameInner(final @NotNull PyElement element) {
     final String name = element.getName();
     if (name != null) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
@@ -244,8 +231,8 @@ public final class QualifiedNameFinder {
    * Tries to find roots that contain given vfile.
    */
   private static final class PathChoosingVisitor implements RootVisitor {
-    @NotNull private final VirtualFile myVFile;
-    @NotNull private final Set<QualifiedName> myResults = new LinkedHashSet<>();
+    private final @NotNull VirtualFile myVFile;
+    private final @NotNull Set<QualifiedName> myResults = new LinkedHashSet<>();
 
     private PathChoosingVisitor(@NotNull VirtualFile file) {
       myVFile = file;
@@ -260,14 +247,13 @@ public final class QualifiedNameFinder {
       return true;
     }
 
-    @NotNull
-    public List<QualifiedName> getResults() {
+    public @NotNull List<QualifiedName> getResults() {
       return new ArrayList<>(myResults);
     }
   }
 
   @ApiStatus.Internal
-  public static abstract class QualifiedNameBasedScope extends GlobalSearchScope {
+  public abstract static class QualifiedNameBasedScope extends GlobalSearchScope {
     private final ProjectFileIndex myProjectFileIndex;
 
     public QualifiedNameBasedScope(@NotNull Project project) {
@@ -296,8 +282,7 @@ public final class QualifiedNameFinder {
 
     protected abstract boolean containsQualifiedNameInRoot(@NotNull VirtualFile root, @NotNull QualifiedName qName);
 
-    @Nullable
-    private VirtualFile findClosestRoot(@NotNull VirtualFile vFile) {
+    private @Nullable VirtualFile findClosestRoot(@NotNull VirtualFile vFile) {
       VirtualFile sourceRoot = myProjectFileIndex.getSourceRootForFile(vFile);
       if (sourceRoot != null) return sourceRoot;
       VirtualFile contentRoot = myProjectFileIndex.getContentRootForFile(vFile);
@@ -308,8 +293,7 @@ public final class QualifiedNameFinder {
     }
   }
 
-  @Nullable
-  private static QualifiedName computeQualifiedNameInRoot(@NotNull VirtualFile root, @NotNull VirtualFile file) {
+  private static @Nullable QualifiedName computeQualifiedNameInRoot(@NotNull VirtualFile root, @NotNull VirtualFile file) {
     String relativePath = VfsUtilCore.getRelativePath(file, root, VfsUtilCore.VFS_SEPARATOR_CHAR);
     if (StringUtil.isEmpty(relativePath)) {
       return null;

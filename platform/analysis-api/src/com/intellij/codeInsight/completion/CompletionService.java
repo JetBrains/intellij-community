@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.WeighingContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.Weigher;
@@ -70,18 +71,24 @@ public abstract class CompletionService {
       if (customSorter != null) {
         result = result.withRelevanceSorter(customSorter);
       }
-      getVariantsFromContributor(parameters, contributor, result);
+      try {
+        getVariantsFromContributor(parameters, contributor, result);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
       if (result.isStopped()) {
         return;
       }
     }
   }
 
-  protected void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
+  @ApiStatus.Internal
+  public void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
     contributor.fillCompletionVariants(params, result);
   }
 
-  protected abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
+  @ApiStatus.Internal
+  public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
                                                          @NotNull CompletionContributor contributor, PrefixMatcher matcher);
 
   protected abstract String suggestPrefix(CompletionParameters parameters);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -20,6 +20,10 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
   }
 
   default boolean isImplicit() {
+    return false;
+  }
+
+  default boolean isValueClass() {
     return false;
   }
 

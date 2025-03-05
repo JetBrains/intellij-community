@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types
 
-import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx.ChangeScopeAction
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.ide.hierarchy.JavaHierarchyUtil
@@ -20,7 +19,6 @@ import com.intellij.usageView.UsageViewLongNameLocation
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.text.MessageFormat
-import java.util.Comparator
 import javax.swing.JPanel
 import javax.swing.JTree
 

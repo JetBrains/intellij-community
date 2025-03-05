@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,15 +22,14 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
 
   private static final Logger LOG = Logger.getInstance(SvnCommittedListsZipper.class);
 
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull SvnVcs myVcs;
 
   public SvnCommittedListsZipper(@NotNull SvnVcs vcs) {
     myVcs = vcs;
   }
 
-  @NotNull
   @Override
-  public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
+  public @NotNull Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
     final List<RepositoryLocationGroup> groups = new ArrayList<>();
     final List<RepositoryLocation> singles = new ArrayList<>();
 
@@ -64,9 +63,8 @@ public class SvnCommittedListsZipper implements VcsCommittedListsZipper {
     return Pair.create(groups, singles);
   }
 
-  @NotNull
   @Override
-  public CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
+  public @NotNull CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
     return new SvnChangeList(lists, new SvnRepositoryLocation(group.toPresentableString()));
   }
 

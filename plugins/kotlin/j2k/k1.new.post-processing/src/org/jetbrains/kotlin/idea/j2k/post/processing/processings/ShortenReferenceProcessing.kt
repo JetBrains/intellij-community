@@ -5,12 +5,11 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.nj2k.JKImportStorage
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
@@ -26,7 +25,7 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
         }
     }
 
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
         if (rangeMarker != null) {
             if (runReadAction { rangeMarker.isValid }) {
                 ShortenReferences.DEFAULT.process(
@@ -42,12 +41,11 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
         }
     }
 
-    context(KaSession)
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,
         rangeMarker: RangeMarker?,
-        converterContext: NewJ2kConverterContext
+        converterContext: ConverterContext
     ): PostProcessingApplier {
         error("Not supported in K1 J2K")
     }

@@ -8,6 +8,7 @@
 // ACTION: Convert to lazy property
 // ACTION: Do not show hints for current method
 // ACTION: Enable option 'Property types' for 'Types' inlay hints
+// K2_AFTER_ERROR: Argument type mismatch: actual type is 'Int', but 'UInt' was expected.
 
 fun takeUInt(u: UInt) = 0
 

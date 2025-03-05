@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -29,10 +30,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -41,8 +39,8 @@ import java.util.*;
 public final class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(InjectedLanguageManagerImpl.class);
   static final Object ourInjectionPsiLock = ObjectUtils.sentinel("injectionPsiLock");
-  public static final Object INJECTION_BACKGROUND_TOOL_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_ID");
-  public static final Object INJECTION_SYNTAX_TOOL_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_ID");
+  public static final Object INJECTION_BACKGROUND_TOOL_ID = ObjectUtils.sentinel("INJECTION_BACKGROUND_TOOL_ID");
+  public static final Object INJECTION_SYNTAX_TOOL_ID = ObjectUtils.sentinel("INJECTION_SYNTAX_TOOL_ID");
   private final Project myProject;
   private final DumbService myDumbService;
   private final PsiDocumentManager myDocManager;
@@ -366,7 +364,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   @Override
-  public @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
+  public @Unmodifiable @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
     return InjectedLanguageUtilBase.getCachedInjectedDocumentsInRange(hostPsiFile, range);
   }
 
@@ -409,8 +407,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     Place shreds = ((DocumentWindowImpl)document).getShreds();
     Project project = shreds.getHostPointer().getProject();
     DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(document.getDelegate());
-    Place place = new Place();
-    place.addAll(ContainerUtil.map(shreds, shred -> ((ShredImpl)shred).withPsiRange()));
+    Place place = new Place(ContainerUtil.map(shreds, shred -> ((ShredImpl)shred).withPsiRange()));
     return new DocumentWindowImpl(delegate, place);
   }
 
@@ -494,10 +491,13 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       if (!myDumbService.isUsableInCurrentContext(injector)) {
         continue;
       }
-
-      injector.getLanguagesToInject(hostRegistrar, element);
-      InjectionResult result = hostRegistrar.getInjectedResult();
-      if (result != null) return result;
+      try {
+        injector.getLanguagesToInject(hostRegistrar, element);
+        InjectionResult result = hostRegistrar.getInjectedResult();
+        if (result != null) return result;
+      }
+      catch (IndexNotReadyException ignore) {
+      }
     }
     return null;
   }

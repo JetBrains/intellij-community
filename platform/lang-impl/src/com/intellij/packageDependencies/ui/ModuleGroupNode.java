@@ -36,6 +36,7 @@ public final class ModuleGroupNode extends PackageDependenciesNode {
     return PlatformIcons.CLOSED_MODULE_GROUP_ICON;
   }
 
+  @Override
   public String toString() {
     return myModuleGroup == null ? CodeInsightBundle.message("unknown.node.text") : myModuleGroup.toString();
   }
@@ -48,6 +49,7 @@ public final class ModuleGroupNode extends PackageDependenciesNode {
     return myModuleGroup;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
@@ -58,6 +60,7 @@ public final class ModuleGroupNode extends PackageDependenciesNode {
     return Comparing.equal(myModuleGroup, moduleNode.myModuleGroup);
   }
 
+  @Override
   public int hashCode() {
     return myModuleGroup == null ? 0 : myModuleGroup.hashCode();
   }

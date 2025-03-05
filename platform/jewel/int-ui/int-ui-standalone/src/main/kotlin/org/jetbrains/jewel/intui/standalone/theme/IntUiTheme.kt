@@ -33,6 +33,7 @@ import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
@@ -44,6 +45,7 @@ import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
+import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
@@ -114,6 +116,7 @@ public fun ComponentStyling.dark(
     defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.dark(),
     comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.dark(),
     defaultButtonStyle: ButtonStyle = ButtonStyle.Default.dark(),
+    defaultSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Default.dark(),
     defaultTabStyle: TabStyle = TabStyle.Default.dark(),
     dividerStyle: DividerStyle = DividerStyle.dark(),
     dropdownStyle: DropdownStyle = DropdownStyle.Default.dark(),
@@ -121,11 +124,13 @@ public fun ComponentStyling.dark(
     groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.dark(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.dark(),
     iconButtonStyle: IconButtonStyle = IconButtonStyle.dark(),
+    inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.dark(),
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.dark(),
     linkStyle: LinkStyle = LinkStyle.dark(),
     menuStyle: MenuStyle = MenuStyle.dark(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.dark(),
+    outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.dark(),
     radioButtonStyle: RadioButtonStyle = RadioButtonStyle.dark(),
     scrollbarStyle: ScrollbarStyle = ScrollbarStyle.dark(),
     segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.dark(),
@@ -147,17 +152,20 @@ public fun ComponentStyling.dark(
             comboBoxStyle = comboBoxStyle,
             defaultButtonStyle = defaultButtonStyle,
             defaultDropdownStyle = dropdownStyle,
+            defaultSplitButtonStyle = defaultSplitButtonStyle,
             defaultTabStyle = defaultTabStyle,
             dividerStyle = dividerStyle,
             editorTabStyle = editorTabStyle,
             groupHeaderStyle = groupHeaderStyle,
             horizontalProgressBarStyle = horizontalProgressBarStyle,
             iconButtonStyle = iconButtonStyle,
+            inlineBannerStyle = inlineBannerStyle,
             lazyTreeStyle = lazyTreeStyle,
             linkStyle = linkStyle,
             menuStyle = menuStyle,
             outlinedButtonStyle = outlinedButtonStyle,
             popupContainerStyle = popupContainerStyle,
+            outlinedSplitButtonStyle = outlinedSplitButtonStyle,
             radioButtonStyle = radioButtonStyle,
             scrollbarStyle = scrollbarStyle,
             segmentedControlButtonStyle = segmentedControlButtonStyle,
@@ -180,6 +188,7 @@ public fun ComponentStyling.light(
     defaultBannerStyle: DefaultBannerStyles = DefaultBannerStyles.Default.light(),
     comboBoxStyle: ComboBoxStyle = ComboBoxStyle.Default.light(),
     defaultButtonStyle: ButtonStyle = ButtonStyle.Default.light(),
+    defaultSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Default.light(),
     defaultTabStyle: TabStyle = TabStyle.Default.light(),
     dividerStyle: DividerStyle = DividerStyle.light(),
     dropdownStyle: DropdownStyle = DropdownStyle.Default.light(),
@@ -187,11 +196,13 @@ public fun ComponentStyling.light(
     groupHeaderStyle: GroupHeaderStyle = GroupHeaderStyle.light(),
     horizontalProgressBarStyle: HorizontalProgressBarStyle = HorizontalProgressBarStyle.light(),
     iconButtonStyle: IconButtonStyle = IconButtonStyle.light(),
+    inlineBannerStyle: InlineBannerStyles = InlineBannerStyles.Default.light(),
     lazyTreeStyle: LazyTreeStyle = LazyTreeStyle.light(),
     linkStyle: LinkStyle = LinkStyle.light(),
     menuStyle: MenuStyle = MenuStyle.light(),
     popupContainerStyle: PopupContainerStyle = PopupContainerStyle.light(),
     outlinedButtonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
+    outlinedSplitButtonStyle: SplitButtonStyle = SplitButtonStyle.Outlined.light(),
     radioButtonStyle: RadioButtonStyle = RadioButtonStyle.light(),
     scrollbarStyle: ScrollbarStyle = ScrollbarStyle.light(),
     segmentedControlButtonStyle: SegmentedControlButtonStyle = SegmentedControlButtonStyle.light(),
@@ -213,17 +224,20 @@ public fun ComponentStyling.light(
             defaultBannerStyle = defaultBannerStyle,
             defaultButtonStyle = defaultButtonStyle,
             defaultDropdownStyle = dropdownStyle,
+            defaultSplitButtonStyle = defaultSplitButtonStyle,
             defaultTabStyle = defaultTabStyle,
             dividerStyle = dividerStyle,
             editorTabStyle = editorTabStyle,
             groupHeaderStyle = groupHeaderStyle,
             horizontalProgressBarStyle = horizontalProgressBarStyle,
             iconButtonStyle = iconButtonStyle,
+            inlineBannerStyle = inlineBannerStyle,
             lazyTreeStyle = lazyTreeStyle,
             linkStyle = linkStyle,
             menuStyle = menuStyle,
             outlinedButtonStyle = outlinedButtonStyle,
             popupContainerStyle = popupContainerStyle,
+            outlinedSplitButtonStyle = outlinedSplitButtonStyle,
             radioButtonStyle = radioButtonStyle,
             scrollbarStyle = scrollbarStyle,
             segmentedControlButtonStyle = segmentedControlButtonStyle,

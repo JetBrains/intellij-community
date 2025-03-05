@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
+import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
+import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
+import com.intellij.internal.statistic.eventLog.EventLogSendConfig;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
@@ -13,7 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -125,10 +129,9 @@ public final class EventLogUploader {
     }
   }
 
-  @Nullable
-  private static EventLogApplicationInfo newApplicationInfo(Map<String, String> options,
-                                                            DataCollectorDebugLogger logger,
-                                                            DataCollectorSystemEventLogger eventLogger) {
+  private static @Nullable EventLogApplicationInfo newApplicationInfo(Map<String, String> options,
+                                                                      DataCollectorDebugLogger logger,
+                                                                      DataCollectorSystemEventLogger eventLogger) {
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
     String productVersion = options.get(EventLogUploaderOptions.PRODUCT_VERSION_OPTION);
     String url = options.get(EventLogUploaderOptions.URL_OPTION);

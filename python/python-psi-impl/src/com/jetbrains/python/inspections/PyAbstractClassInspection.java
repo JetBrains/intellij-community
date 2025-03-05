@@ -27,11 +27,10 @@ import java.util.List;
 
 public final class PyAbstractClassInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -94,10 +93,8 @@ public final class PyAbstractClassInspection extends PyInspection {
 
     private static class AddABCToSuperclassesQuickFix extends PsiUpdateModCommandQuickFix {
 
-      @Nls(capitalization = Nls.Capitalization.Sentence)
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
         return PyPsiBundle.message("INSP.abstract.class.add.to.superclasses", PyNames.ABC);
       }
 
@@ -115,10 +112,8 @@ public final class PyAbstractClassInspection extends PyInspection {
 
     private static class SetABCMetaAsMetaclassQuickFix extends PsiUpdateModCommandQuickFix {
 
-      @Nls(capitalization = Nls.Capitalization.Sentence)
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
         return PyPsiBundle.message("INSP.abstract.class.set.as.metaclass", PyNames.ABC_META);
       }
 

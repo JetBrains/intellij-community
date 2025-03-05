@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -425,7 +426,7 @@ public class InjectedLanguageUtilBase {
     return (ConcurrentList<DocumentWindow>)injected;
   }
 
-  static @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
+  static @Unmodifiable @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
     List<DocumentWindow> injected = getCachedInjectedDocuments(hostPsiFile);
 
     return ContainerUtil.filter(injected, inj-> Arrays.stream(inj.getHostRanges()).anyMatch(range::intersects));
@@ -435,7 +436,8 @@ public class InjectedLanguageUtilBase {
     file.putUserData(INJECTED_DOCS_KEY, null);
   }
 
-  static void clearCaches(@NotNull Project project, @NotNull DocumentWindow documentWindow) {
+  @ApiStatus.Internal
+  public static void clearCaches(@NotNull Project project, @NotNull DocumentWindow documentWindow) {
     if (project.isDisposed()) return;
     VirtualFileWindowImpl virtualFile =
       (VirtualFileWindowImpl)Objects.requireNonNull(FileDocumentManager.getInstance().getFile(documentWindow));

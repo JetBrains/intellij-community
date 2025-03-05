@@ -4,8 +4,6 @@ package com.tylerthrailkill.helpers.prettyprint
 import fleet.util.UID
 import fleet.util.logging.KLogging
 import java.lang.reflect.Modifier
-import java.math.BigDecimal
-import java.math.BigInteger
 import java.text.BreakIterator
 import java.util.UUID
 
@@ -224,7 +222,7 @@ private class PrettyPrinter(val tabSize: Int, val writeTo: Appendable, val wrapp
    */
   private fun writeLine(str: Any? = "") {
     logger.trace { "writing $str" }
-    writeTo.append(str.toString()).appendln()
+    writeTo.append(str.toString()).appendLine()
   }
 
   /**
@@ -269,7 +267,7 @@ private class PrettyPrinter(val tabSize: Int, val writeTo: Appendable, val wrapp
  */
 private fun Any?.isAtomic(): Boolean =
   this == null
-  || this is Char || this is Number || this is Boolean || this is BigInteger || this is BigDecimal || this is UUID || this is UID
+  || this is Char || this is Number || this is Boolean || this is UUID || this is UID
 
 // For syntactic sugar
 operator fun <T> Set<T>.get(x: T): Boolean = this.contains(x)

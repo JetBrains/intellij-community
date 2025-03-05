@@ -24,16 +24,13 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
-import com.jetbrains.python.packaging.PyPIPackageRanking
-import com.jetbrains.python.packaging.PyPackageRequirementsSettings
+import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
+import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
-import com.jetbrains.python.packaging.getConfirmedPackages
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.createSpecification
 import com.jetbrains.python.packaging.management.runPackagingTool
-import com.jetbrains.python.packaging.syncWithImports
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.requirements.psi.NameReq
 import com.jetbrains.python.requirements.psi.Requirement
@@ -97,12 +94,14 @@ class InstallAllRequirementsQuickFix(requirements: List<Requirement>) : LocalQui
   }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val confirmedPackages = getConfirmedPackages(requirements.mapNotNull { it.element?.displayName })
-    requirements.filter { it.element?.displayName in confirmedPackages }
-      .mapNotNull { it.element }
-      .forEach {
-        InstallRequirementQuickFix.installPackage(project, descriptor, it)
-      }
+    val requirementElements =  requirements.mapNotNull { it.element }
+    val confirmedPackages = getConfirmedPackages(requirementElements.map { pyRequirement(it.displayName) }, project)
+
+    InstallRequirementQuickFix.installPackages(
+      project,
+      descriptor,
+      requirementElements.filter { pkg -> confirmedPackages.any { it.name == pkg.displayName } }
+    )
   }
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
@@ -153,12 +152,30 @@ class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickFix {
       val manager = PythonPackageManager.forSdk(project, sdk)
       val versionSpec = if (requirement is NameReq) requirement.versionspec?.text else ""
       val name = requirement.displayName
+      val specification = manager.repositoryManager.createSpecification(name, versionSpec) ?: return
 
       project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
-        val specification = manager.repositoryManager.createSpecification(name, versionSpec) ?: return@launch
         runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
-          manager.installPackage(specification, emptyList<String>())
+          manager.installPackage(specification, emptyList())
         }
+        DaemonCodeAnalyzer.getInstance(project).restart(file)
+      }
+    }
+
+    fun installPackages(project: Project, descriptor: ProblemDescriptor, requirements: List<Requirement>) {
+      val element = descriptor.psiElement
+      val file = descriptor.psiElement.containingFile ?: return
+      val sdk = ModuleUtilCore.findModuleForPsiElement(element)?.pythonSdk ?: return
+      val manager = PythonPackageManager.forSdk(project, sdk)
+
+      val specifications = requirements.mapNotNull { requirement ->
+        val versionSpec = if (requirement is NameReq) requirement.versionspec?.text else ""
+        val name = requirement.displayName
+        manager.repositoryManager.createSpecification(name, versionSpec)
+      }
+
+      project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
+        manager.installPackagesWithDialogOnError(specifications, emptyList())
         DaemonCodeAnalyzer.getInstance(project).restart(file)
       }
     }

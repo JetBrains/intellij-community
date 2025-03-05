@@ -2,7 +2,6 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
@@ -80,7 +79,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     }
 
     val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
-    val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.mixedListInfo, session.cachedContextInfo)
+    val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.cachedContextInfo)
 
     val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) contributor.getEffectiveContributor() else contributor
     val mlWeight = if (shouldCalculateMlWeight(effectiveContributor, state, element)) state.getMLWeight(session.cachedContextInfo, mlElementInfo) else null

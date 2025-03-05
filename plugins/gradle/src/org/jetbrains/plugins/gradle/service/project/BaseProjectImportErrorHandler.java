@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.FilePosition;
@@ -39,12 +39,11 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
 
   private static final Logger LOG = Logger.getInstance(BaseProjectImportErrorHandler.class);
 
-  @NotNull
   @Override
-  public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
-                                                      @NotNull Throwable error,
-                                                      @NotNull String projectPath,
-                                                      @Nullable String buildFilePath) {
+  public @NotNull ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                               @NotNull Throwable error,
+                                                               @NotNull String projectPath,
+                                                               @Nullable String buildFilePath) {
     GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error, projectPath, buildFilePath);
     ExternalSystemException exception = doGetUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath, executionErrorHandler);
     if (!exception.isCauseInitialized()) {
@@ -179,8 +178,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     return createUserFriendlyError(errMessage, location);
   }
 
-  @Nullable
-  private static FilePosition getErrorFilePosition(@Nullable String location) {
+  private static @Nullable FilePosition getErrorFilePosition(@Nullable String location) {
     if (location == null) return null;
     Pair<String, Integer> errorLocation = GradleExecutionErrorHandler.getErrorLocation(location);
     if (errorLocation == null) return null;

@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.treeStructure.TreeNodeViewModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,8 @@ public abstract class ProjectViewPaneSelectionHelper {
    */
   protected abstract @Nullable List<? extends TreePath> computeAdjustedPaths(@NotNull SelectionDescriptor selectionDescriptor);
 
+  protected abstract @Nullable List<? extends TreeNodeViewModel> computeAdjustedNodes(@NotNull List<? extends TreeNodeViewModel> originalNodes);
+
   /**
    * @param selectionDescriptor information about target elements and potential {@link TreePath tree paths} for selection found by {@link AbstractProjectViewPane#createVisitor(PsiElement, VirtualFile, List)}  node visitor}
    * @return list of {@link TreePath tree paths} to select, computed from {@code selectionDescriptor} with first suitable selection helper
@@ -39,6 +42,16 @@ public abstract class ProjectViewPaneSelectionHelper {
       }
     }
     return selectionDescriptor.originalTreePaths;
+  }
+
+  static @NotNull List<? extends TreeNodeViewModel> getAdjustedNodes(@NotNull List<? extends TreeNodeViewModel> originalNodes) {
+    for (ProjectViewPaneSelectionHelper helper : EP_NAME.getExtensionList()) {
+      var adjustedNodes = helper.computeAdjustedNodes(originalNodes);
+      if (adjustedNodes != null) {
+        return adjustedNodes;
+      }
+    }
+    return originalNodes;
   }
 
   public record SelectionDescriptor(@Nullable PsiElement targetPsiElement,

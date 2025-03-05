@@ -8,7 +8,7 @@ public class RedundantCast{
             throw (<warning descr="Casting '(Object)e' to 'Ex' is redundant">Ex</warning>)(<warning descr="Casting 'e' to 'Object' is redundant">Object</warning>)e;
         }
         else if (!f && false) {
-            throw <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Throwable'">(<warning descr="Casting 'e' to 'Object' is redundant">Object</warning>)e</error>;
+            throw <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Throwable'">(<warning descr="Casting 'e' to 'Object' is redundant">Object</warning>)e;</error>
         }
         throw (<warning descr="Casting '(Ex)e' to 'Ex' is redundant">Ex</warning>)(<warning descr="Casting 'e' to 'Ex' is redundant">Ex</warning>)e;
     }

@@ -29,32 +29,12 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdate
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.psi.KtAnnotatedExpression
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtLabeledExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtScript
-import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.KtUnaryExpression
-import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 class KtReferencesTypeHintsProvider: AbstractKtInlayHintsProvider() {
     override fun collectFromElement(
@@ -135,8 +115,13 @@ class KtReferencesTypeHintsProvider: AbstractKtInlayHintsProvider() {
         }
     }
 
-    private fun isFunctionParameter(e: PsiElement): Boolean =
-        e is KtParameter && e.typeReference == null && !e.isLoopParameter
+    @OptIn(ExperimentalContracts::class)
+    private fun isFunctionParameter(e: PsiElement): Boolean {
+        contract {
+            returns(true) implies (e is KtParameter)
+        }
+        return e is KtParameter && e.typeReference == null && !e.isLoopParameter
+    }
 
     fun collectFromFunctionParameter(
         element: PsiElement,
@@ -144,11 +129,9 @@ class KtReferencesTypeHintsProvider: AbstractKtInlayHintsProvider() {
     ) {
         if (!isFunctionParameter(element)) return
 
-        val parameter = element as? KtParameter ?: return
-
         sink.whenOptionEnabled(SHOW_FUNCTION_PARAMETER_TYPES.name) {
-            parameter.nameIdentifier?.let {
-                collectProvideTypeHint(parameter, it.endOffset, sink)
+            element.nameIdentifier?.let {
+                collectProvideTypeHint(element, it.endOffset, sink)
             }
         }
     }

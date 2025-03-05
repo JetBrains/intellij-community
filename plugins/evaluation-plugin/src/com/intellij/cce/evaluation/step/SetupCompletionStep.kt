@@ -7,7 +7,7 @@ import com.intellij.cce.evaluable.completion.CompletionType
 import com.intellij.cce.evaluation.UndoableEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.sorting.RankingSupport
 import com.intellij.openapi.diagnostic.logger

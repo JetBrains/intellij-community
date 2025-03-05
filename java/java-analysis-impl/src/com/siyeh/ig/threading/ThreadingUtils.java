@@ -30,7 +30,7 @@ final class ThreadingUtils {
     @NotNull PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression =
       expression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
       return false;
     }
@@ -63,7 +63,7 @@ final class ThreadingUtils {
     @NotNull PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression =
       expression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!HardcodedMethodConstants.NOTIFY.equals(methodName) && !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
       return false;
     }
@@ -76,7 +76,7 @@ final class ThreadingUtils {
     @NotNull PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression =
       expression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"signal".equals(methodName) && !"signalAll".equals(methodName)) {
       return false;
     }
@@ -99,7 +99,7 @@ final class ThreadingUtils {
     @NotNull PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression =
       expression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"await".equals(methodName)
         && !"awaitUntil".equals(methodName)
         && !"awaitUninterruptibly".equals(methodName)

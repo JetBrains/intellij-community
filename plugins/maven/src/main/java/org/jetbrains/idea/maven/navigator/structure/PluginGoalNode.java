@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.pom.Navigatable;
@@ -22,9 +22,8 @@ class PluginGoalNode extends MavenGoalNode {
     myUnqualifiedGoal = unqualifiedGoal;
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     PluginNode pluginNode = (PluginNode)getParent();
 
     MavenDomPluginModel pluginModel = MavenPluginDomUtil.getMavenPluginModel(myProject,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,7 +90,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    * @param descriptor problem descriptor
    * @return list of ranges to highlight, along with highlight attributes; empty list if no specific highlighting should be done
    */
-  default @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(Project project, ProblemDescriptor descriptor) {
+  default @Unmodifiable @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(Project project, ProblemDescriptor descriptor) {
     return List.of();
   }
 

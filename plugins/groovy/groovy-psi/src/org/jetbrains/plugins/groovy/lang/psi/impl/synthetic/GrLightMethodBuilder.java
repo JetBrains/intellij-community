@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
@@ -60,6 +60,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   private Object myMethodKind;
   private Object myData;
   private String myOriginInfo;
+  private boolean myDeprecated;
 
   public GrLightMethodBuilder(GrTypeDefinition constructedClass) {
     this(constructedClass.getManager(), constructedClass.getName());
@@ -98,8 +99,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public LightTypeParameterListBuilder getTypeParameterList() {
+  public @NotNull LightTypeParameterListBuilder getTypeParameterList() {
     return myTypeParameterList;
   }
 
@@ -110,7 +110,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
 
   @Override
   public boolean isDeprecated() {
-    return false;
+    return myDeprecated;
+  }
+
+  public GrLightMethodBuilder setDeprecated(boolean deprecated) {
+    this.myDeprecated = deprecated;
+    return this;
   }
 
   @Override
@@ -124,8 +129,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public HierarchicalMethodSignature getHierarchicalMethodSignature() {
+  public @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature() {
     return PsiSuperMethodImplUtil.getHierarchicalMethodSignature(this);
   }
 
@@ -140,14 +144,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public GrLightModifierList getModifierList() {
+  public @NotNull GrLightModifierList getModifierList() {
     return myModifierList;
   }
 
-  @NotNull
   @Override
-  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+  public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return myNamedParameters;
   }
 
@@ -206,8 +208,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return myReturnType;
   }
 
-  @Nullable
-  public GrTypeElement setReturnType(@NlsSafe String returnType, GlobalSearchScope scope) {
+  public @Nullable GrTypeElement setReturnType(@NlsSafe String returnType, GlobalSearchScope scope) {
     setReturnType(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName(returnType, scope));
     return null;
   }
@@ -229,73 +230,60 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public GrLightParameterListBuilder getParameterList() {
+  public @NotNull GrLightParameterListBuilder getParameterList() {
     return myParameterList;
   }
 
-  @NotNull
-  public GrLightMethodBuilder addParameter(@NotNull GrParameter parameter) {
+  public @NotNull GrLightMethodBuilder addParameter(@NotNull GrParameter parameter) {
     getParameterList().addParameter(parameter);
     return this;
   }
 
-  @NotNull
-  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type) {
+  public @NotNull GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type) {
     return addParameter(name, type, false);
   }
 
-  @NotNull
-  public GrLightMethodBuilder addOptionalParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type) {
+  public @NotNull GrLightMethodBuilder addOptionalParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type) {
     return addParameter(name, type, true);
   }
 
-  @NotNull
-  private GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type, boolean isOptional) {
+  private @NotNull GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type, boolean isOptional) {
     return addParameter(name, TypesUtil.createType(type, ObjectUtils.notNull(getContext(), this)), isOptional);
   }
 
-  @NotNull
-  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @Nullable PsiType type) {
+  public @NotNull GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @Nullable PsiType type) {
     return addParameter(name, type, false);
   }
 
-  @NotNull
-  public GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @Nullable PsiType type, boolean isOptional) {
+  public @NotNull GrLightMethodBuilder addParameter(@NlsSafe @NotNull String name, @NlsSafe @Nullable PsiType type, boolean isOptional) {
     GrLightParameter param = new GrLightParameter(name, type, this).setOptional(isOptional);
     return addParameter(param);
   }
 
-  @NotNull
-  public GrLightParameter addAndGetParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type) {
+  public @NotNull GrLightParameter addAndGetParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type) {
     return addAndGetParameter(name, type, false);
   }
 
-  @NotNull
-  public GrLightParameter addAndGetParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull PsiType type) {
+  public @NotNull GrLightParameter addAndGetParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull PsiType type) {
     return addAndGetParameter(name, type, false);
   }
 
-  @NotNull
-  public GrLightParameter addAndGetOptionalParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type) {
+  public @NotNull GrLightParameter addAndGetOptionalParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type) {
     return addAndGetParameter(name, type, true);
   }
 
-  @NotNull
-  private GrLightParameter addAndGetParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type, boolean isOptional) {
+  private @NotNull GrLightParameter addAndGetParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull String type, boolean isOptional) {
     return addAndGetParameter(name, JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(type, this), isOptional);
   }
 
-  @NotNull
-  public GrLightParameter addAndGetParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull PsiType type, boolean isOptional) {
+  public @NotNull GrLightParameter addAndGetParameter(@NlsSafe @NotNull String name, @NlsSafe @NotNull PsiType type, boolean isOptional) {
     GrLightParameter param = new GrLightParameter(name, type, this).setOptional(isOptional);
     addParameter(param);
     return param;
   }
 
   @Override
-  @NotNull
-  public LightReferenceListBuilder getThrowsList() {
+  public @NotNull LightReferenceListBuilder getThrowsList() {
     return myThrowsList;
   }
 
@@ -322,8 +310,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
+  public @NotNull MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
@@ -348,8 +335,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
+  public @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
   }
 
@@ -392,9 +378,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return this;
   }
 
-  @NotNull
   @Override
-  public PsiElement getNameIdentifierGroovy() {
+  public @NotNull PsiElement getNameIdentifierGroovy() {
     return new LightIdentifier(getManager(), getName());
   }
 
@@ -454,14 +439,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
 
   @Override
-  @Nullable
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     final PsiClass containingClass = getContainingClass();
     return containingClass == null ? null : containingClass.getContainingFile();
   }
@@ -512,8 +495,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return (T)myData;
   }
 
-  @Nullable
-  public static <T> T getData(@Nullable PsiElement method, @NotNull Object kind) {
+  public static @Nullable <T> T getData(@Nullable PsiElement method, @NotNull Object kind) {
     if (method instanceof GrLightMethodBuilder) {
       if (kind.equals(((GrLightMethodBuilder)method).getMethodKind())) {
         return ((GrLightMethodBuilder)method).getData();
@@ -532,9 +514,8 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     return this;
   }
 
-  @Nullable
   @Override
-  public String getOriginInfo() {
+  public @Nullable String getOriginInfo() {
     return myOriginInfo;
   }
 
@@ -542,8 +523,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     myOriginInfo = originInfo;
   }
 
-  @NotNull
-  public LightTypeParameterBuilder addTypeParameter(@NlsSafe @NotNull String name) {
+  public @NotNull LightTypeParameterBuilder addTypeParameter(@NlsSafe @NotNull String name) {
     LightTypeParameterBuilder typeParameter = new LightTypeParameterBuilder(name, this, getTypeParameters().length) {
       @Override
       public PsiFile getContainingFile() {
@@ -565,6 +545,11 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     };
     myTypeParameterList.addParameter(typeParameter);
     return typeParameter;
+  }
+
+  public GrLightMethodBuilder addTypeParameter(@NotNull PsiTypeParameter typeParameter) {
+    myTypeParameterList.addParameter(typeParameter);
+    return this;
   }
 
   @Override

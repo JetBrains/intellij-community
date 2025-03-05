@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.CommitMessageI
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -48,8 +47,8 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
-  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi) { getIncludedChanges() }
   private var currentChangeList: LocalChangeList = changeListManager.defaultChangeList
+  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi, currentChangeList)
 
   init {
     Disposer.register(this, inclusionModel)
@@ -79,15 +78,17 @@ internal class ChangesViewCommitWorkflowHandler(
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(ProjectCloseListener.TOPIC, this)
 
-    commitMessagePolicy.init(currentChangeList, this)
+    commitMessagePolicy.init()
+    Disposer.register(this, commitMessagePolicy)
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
-    if (!isActive) return
-    sink[VcsDataKeys.COMMIT_WORKFLOW_HANDLER] = this
-    sink[VcsDataKeys.COMMIT_WORKFLOW_UI] = ui
-    sink[VcsDataKeys.COMMIT_MESSAGE_CONTROL] = ui.commitMessageUi as? CommitMessageI
+    if (!isActive) {
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_UI)
+      sink.setNull(VcsDataKeys.COMMIT_MESSAGE_CONTROL)
+    }
   }
 
   override fun commitOptionsCreated() {
@@ -191,9 +192,8 @@ internal class ChangesViewCommitWorkflowHandler(
     val oldChangeList = currentChangeList
     currentChangeList = newChangeList
 
+    commitMessagePolicy.onChangelistChanged(newChangeList)
     if (oldChangeList.id != newChangeList.id) {
-      commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList)
-
       commitOptions.changeListChanged(newChangeList)
     }
     if (oldChangeList.data != newChangeList.data) {
@@ -276,7 +276,7 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.onBeforeCommit(currentChangeList)
+    commitMessagePolicy.onBeforeCommit()
   }
 
   // save state on project close
@@ -295,7 +295,6 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun saveStateBeforeDispose() {
     commitOptions.saveState()
-    commitMessagePolicy.onDispose(currentChangeList)
   }
 
   interface ActivityListener : EventListener {
@@ -305,7 +304,7 @@ internal class ChangesViewCommitWorkflowHandler(
   private inner class NonModalCommitStateCleaner : CommitStateCleaner() {
 
     override fun onSuccess() {
-      commitMessagePolicy.onAfterCommit(currentChangeList)
+      commitMessagePolicy.onAfterCommit()
       super.onSuccess()
     }
   }

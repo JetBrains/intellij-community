@@ -59,8 +59,11 @@ class GotoRelatedSymbolAction : AnAction() {
         point.translate(0, -contextComponent.editor.lineHeight)
       }
 
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(LangBundle.message("hint.text.no.related.symbols"), MessageType.ERROR, null)
+      val balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(LangBundle.message("hint.text.no.related.symbols"), MessageType.ERROR, null)
         .setFadeoutTime(3000)
+      e.project?.let { balloonBuilder.setDisposable(it) }
+
+      balloonBuilder
         .createBalloon()
         .show(popupLocation, Balloon.Position.above)
     }

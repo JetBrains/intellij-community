@@ -14,9 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class PySignatureCacheManager {
-  @ApiStatus.Internal
-  @NonNls
-  public static final String RETURN_TYPE = "<RETURN_TYPE>";
+  @ApiStatus.Internal public static final @NonNls String RETURN_TYPE = "<RETURN_TYPE>";
 
   public static PySignatureCacheManager getInstance(Project project) {
     return project.getService(PySignatureCacheManager.class);
@@ -39,11 +37,9 @@ public abstract class PySignatureCacheManager {
 
   public abstract void recordSignature(@NotNull PySignature signature);
 
-  @Nullable
-  public abstract String findParameterType(@NotNull PyAstFunction function, @NotNull String name);
+  public abstract @Nullable String findParameterType(@NotNull PyAstFunction function, @NotNull String name);
 
-  @Nullable
-  public abstract PySignature findSignature(@NotNull PyAstFunction function);
+  public abstract @Nullable PySignature findSignature(@NotNull PyAstFunction function);
 
   public abstract boolean clearCache();
 }

@@ -584,7 +584,7 @@ type_parameter_list ::= '<' mb_nl type_parameters <<mb_nl_group '>'>>
 private type_parameters ::= type_parameter type_parameters_tail*
 private type_parameters_tail ::= ',' mb_nl type_parameter { pin = 1 }
 
-type_parameter ::= IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
+type_parameter ::= (non_empty_annotation_list mb_nl)? IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
 {
   name = 'type parameter'
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrTypeParameterElementType'

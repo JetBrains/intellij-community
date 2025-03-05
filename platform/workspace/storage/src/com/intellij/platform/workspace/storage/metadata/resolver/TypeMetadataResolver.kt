@@ -6,7 +6,6 @@ import com.intellij.platform.workspace.storage.impl.serialization.ModuleId
 import com.intellij.platform.workspace.storage.impl.serialization.PluginId
 import com.intellij.platform.workspace.storage.metadata.MetadataHash
 import com.intellij.platform.workspace.storage.metadata.MetadataStorage
-import com.intellij.platform.workspace.storage.metadata.exceptions.MissingMetadataStorage
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import org.jetbrains.annotations.TestOnly
 

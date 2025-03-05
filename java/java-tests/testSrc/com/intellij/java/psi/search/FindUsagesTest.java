@@ -265,10 +265,12 @@ public class FindUsagesTest extends JavaPsiTestCase {
       return endOffset - o.endOffset;
     }
 
+    @Override
     public String toString() {
       return fileName + "[" + startOffset + ":" + endOffset + "]";
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;

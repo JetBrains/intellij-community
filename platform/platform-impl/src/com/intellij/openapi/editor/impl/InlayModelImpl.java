@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.view.EditorView;
@@ -25,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -34,25 +35,25 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
 
 //@ApiStatus.Internal
-public final class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, Disposable, Dumpable {
+public final class InlayModelImpl implements InlayModel, InlayModelEx, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
 
-  private static final Comparator<InlineInlayImpl> INLINE_ELEMENTS_COMPARATOR = Comparator
-    .comparingInt((InlineInlayImpl i) -> i.getOffset())
+  private static final Comparator<InlineInlayImpl<?>> INLINE_ELEMENTS_COMPARATOR = Comparator
+    .comparingInt((InlineInlayImpl<?> i) -> i.getOffset())
     .thenComparing(i -> i.isRelatedToPrecedingText())
     .thenComparing(i -> -i.myPriority);
-  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator
+  private static final Comparator<BlockInlayImpl<?>> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator
     .comparingInt(i -> -i.myPriority);
-  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR = Comparator
-    .comparing((BlockInlayImpl i) -> i.getPlacement())
+  private static final Comparator<BlockInlayImpl<?>> BLOCK_ELEMENTS_COMPARATOR = Comparator
+    .comparing((BlockInlayImpl<?> i) -> i.getPlacement())
     .thenComparing(i -> i.getPlacement() == Inlay.Placement.ABOVE_LINE ? i.myPriority : -i.myPriority);
-  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR = Comparator
-    .comparingInt((AfterLineEndInlayImpl i) -> i.getOffset())
+  private static final Comparator<AfterLineEndInlayImpl<?>> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR = Comparator
+    .comparingInt((AfterLineEndInlayImpl<?> i) -> i.getOffset())
     .thenComparing(i -> !i.mySoftWrappable)
     .thenComparingInt(i -> -i.myPriority)
     .thenComparingInt(i -> i.myOrder);
-  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_COMPARATOR = Comparator
-    .comparing((AfterLineEndInlayImpl i) -> !i.mySoftWrappable)
+  private static final Comparator<AfterLineEndInlayImpl<?>> AFTER_LINE_END_ELEMENTS_COMPARATOR = Comparator
+    .comparing((AfterLineEndInlayImpl<?> i) -> !i.mySoftWrappable)
     .thenComparingInt(i -> -i.myPriority)
     .thenComparingInt(i -> i.myOrder);
 
@@ -202,10 +203,10 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   }
 
   @Override
-  public <T extends EditorCustomElementRenderer> @NotNull Inlay<T> addAfterLineEndElement(int offset,
-                                                                                          boolean relatesToPrecedingText,
-                                                                                          @NotNull T renderer) {
-   return addAfterLineEndElement(offset, relatesToPrecedingText, true, 0, renderer);
+  public <T extends EditorCustomElementRenderer> @NotNull Inlay<@NotNull T> addAfterLineEndElement(int offset,
+                                                                                                   boolean relatesToPrecedingText,
+                                                                                                   @NotNull T renderer) {
+    return addAfterLineEndElement(offset, relatesToPrecedingText, true, 0, renderer);
   }
 
   @Override
@@ -282,7 +283,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   public @NotNull List<Inlay<?>> getBlockElementsForVisualLine(int visualLine, boolean above) {
     int visibleLineCount = myEditor.getVisibleLineCount();
     if (visualLine < 0 || visualLine >= visibleLineCount || myBlockElementsTree.size() == 0) return Collections.emptyList();
-    List<BlockInlayImpl> result = new ArrayList<>();
+    List<BlockInlayImpl<?>> result = new ArrayList<>();
     int startOffset = myEditor.visualLineStartOffset(visualLine);
     int endOffset = visualLine == visibleLineCount - 1 ? myEditor.getDocument().getTextLength()
                                                        : myEditor.visualLineStartOffset(visualLine + 1) - 1;
@@ -292,13 +293,17 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
       }
       return true;
     });
-    if (above) Collections.reverse(result); // matters for inlays with equal priority
+    if (above) {
+      // matters for inlays with equal priority
+      Collections.reverse(result);
+    }
     result.sort(BLOCK_ELEMENTS_COMPARATOR);
     //noinspection unchecked
     return (List)result;
   }
 
   @ApiStatus.Internal
+  @Override
   public int getHeightOfBlockElementsBeforeVisualLine(int visualLine, int startOffset, int prevFoldRegionIndex) {
     if (visualLine < 0 || !hasBlockElements()) return 0;
     int visibleLineCount = myEditor.getVisibleLineCount();
@@ -327,6 +332,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
    * Unlike {@link #getElementsInRange}, this method does not allocate and sort an array
    */
   @ApiStatus.Internal
+  @Override
   public @Nullable Inlay<?> getWidestVisibleBlockInlay() {
     AtomicInteger maxWidth = new AtomicInteger(-1);
     Ref<Inlay<?>> inlayRef = new Ref<>(null);
@@ -477,7 +483,9 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
 
   @Override
   public @NotNull List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
-    if (!hasAfterLineEndElements()) return Collections.emptyList();
+    if (!hasAfterLineEndElements()) {
+      return List.of();
+    }
     List<AfterLineEndInlayImpl<?>> range =
       getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
     //noinspection unchecked
@@ -486,8 +494,11 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
 
   @Override
   public @NotNull <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
-    if (!hasAfterLineEndElements()) return Collections.emptyList();
-    List<AfterLineEndInlayImpl> range =
+    if (!hasAfterLineEndElements()) {
+      return List.of();
+    }
+
+    List<AfterLineEndInlayImpl<?>> range =
       getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
                          AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
     //noinspection unchecked
@@ -500,7 +511,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     if (!hasAfterLineEndElements() || logicalLine < 0 || logicalLine > 0 && logicalLine >= document.getLineCount()) {
       return Collections.emptyList();
     }
-    List<AfterLineEndInlayImpl> result = new ArrayList<>();
+    List<AfterLineEndInlayImpl<?>> result = new ArrayList<>();
     int startOffset = document.getLineStartOffset(logicalLine);
     int endOffset = document.getLineEndOffset(logicalLine);
     myAfterLineEndElementsTree.processOverlappingWith(startOffset, endOffset, inlay -> {
@@ -552,11 +563,11 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     myDispatcher.addListener(listener, disposable);
   }
 
-  private void notifyAdded(InlayImpl inlay) {
+  private void notifyAdded(InlayImpl<?, ?> inlay) {
     myDispatcher.getMulticaster().onAdded(inlay);
   }
 
-  void notifyChanged(InlayImpl inlay, int changeFlags) {
+  void notifyChanged(InlayImpl<?, ?> inlay, int changeFlags) {
     myDispatcher.getMulticaster().onUpdated(inlay, changeFlags);
   }
 
@@ -613,7 +624,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
                                                                 boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
       return new RMNode<InlineInlayImpl<?>>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
-        void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
+        public void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
           super.addIntervalsFrom(otherNode);
           if (myPutMergedIntervalsAtBeginning) {
             List<Supplier<? extends InlineInlayImpl<?>>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
@@ -626,7 +637,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
+    public void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         if (myMoveInProgress) {
           // delay notification about invalidated inlay - folding model is not consistent at this point
@@ -646,7 +657,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
+    public void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
@@ -659,7 +670,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
+    public void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
       if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }

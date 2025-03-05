@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -62,24 +62,24 @@ public interface PsiKeyword extends PsiJavaToken {
   @NlsSafe String FALSE = "false";
   @NlsSafe String NULL = "null";
 
-  @NlsSafe String OPEN = "open";
-  @NlsSafe String MODULE = "module";
-  @NlsSafe String REQUIRES = "requires";
-  @NlsSafe String EXPORTS = "exports";
-  @NlsSafe String OPENS = "opens";
-  @NlsSafe String USES = "uses";
-  @NlsSafe String PROVIDES = "provides";
-  @NlsSafe String TRANSITIVE = "transitive";
-  @NlsSafe String TO = "to";
-  @NlsSafe String WITH = "with";
-
-  @NlsSafe String VAR = "var";
-  @NlsSafe String YIELD = "yield";
-
-  @NlsSafe String RECORD = "record";
-
-  @NlsSafe String SEALED = "sealed";
-  @NlsSafe String PERMITS = "permits";
   @NlsSafe String NON_SEALED = "non-sealed";
+
+  // soft keywords:
+  @NlsSafe String EXPORTS = "exports";
+  @NlsSafe String MODULE = "module";
+  @NlsSafe String OPEN = "open";
+  @NlsSafe String OPENS = "opens";
+  @NlsSafe String PERMITS = "permits";
+  @NlsSafe String PROVIDES = "provides";
+  @NlsSafe String RECORD = "record";
+  @NlsSafe String REQUIRES = "requires";
+  @NlsSafe String SEALED = "sealed";
+  @NlsSafe String TO = "to";
+  @NlsSafe String TRANSITIVE = "transitive";
+  @NlsSafe String USES = "uses";
+  @NlsSafe String VALUE = "value";
+  @NlsSafe String VAR = "var";
   @NlsSafe String WHEN = "when";
+  @NlsSafe String WITH = "with";
+  @NlsSafe String YIELD = "yield";
 }

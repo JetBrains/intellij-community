@@ -8,6 +8,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -25,8 +26,7 @@ public interface UsageGroupingRule extends PossiblyDumbAware {
    * <p>If the rule returns at most one parent group extend {@link SingleParentUsageGroupingRule} and override
    * {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead.</p>
    */
-  @NotNull
-  default List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  default @NotNull @Unmodifiable List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     return ContainerUtil.createMaybeSingletonList(groupUsage(usage));
   }
 
@@ -42,8 +42,7 @@ public interface UsageGroupingRule extends PossiblyDumbAware {
    * @deprecated extend {@link SingleParentUsageGroupingRule} and override {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead
    */
   @Deprecated
-  @Nullable
-  default UsageGroup groupUsage(@NotNull Usage usage) {
+  default @Nullable UsageGroup groupUsage(@NotNull Usage usage) {
     throw new UnsupportedOperationException();
   }
 }

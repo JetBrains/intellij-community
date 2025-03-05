@@ -37,7 +37,7 @@ private fun getDaemonServicesBefore8Dot8(daemonClientFactory: DaemonClientFactor
                                                                            InputStream::class.java
     )
     val invocationResult: Any = method.invoke(daemonClientFactory,
-                                              OutputEventListener.NO_OP,
+                                              OutputEventListener {},
                                               parameters,
                                               ByteArrayInputStream(ByteArray(0))
     )

@@ -11,19 +11,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
-import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.Parameter
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionData
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IParameter
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.TypeDescriptor
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.TypeParameter
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.collectRelevantConstraints
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -154,7 +144,7 @@ fun isResolvableInScope(typeToCheck: KaType, scope: PsiElement, typeParameters: 
         }
 
         val fileSymbol = (scope.containingFile as KtFile).symbol
-        if (!isVisible(classSymbol, fileSymbol, null, scope)) {
+        if (!createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, scope).isVisible(classSymbol)) {
             return false
         }
 

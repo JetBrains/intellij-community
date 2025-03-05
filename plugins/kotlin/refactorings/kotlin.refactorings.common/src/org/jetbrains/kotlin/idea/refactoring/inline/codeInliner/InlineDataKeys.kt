@@ -17,6 +17,9 @@ object InlineDataKeys {
     val WAS_FUNCTION_LITERAL_ARGUMENT_KEY = Key<Unit>("WAS_FUNCTION_LITERAL_ARGUMENT")
 
     @JvmStatic
+    val WAS_CONVERTED_TO_FUNCTION_KEY = Key<Unit>("WAS_CONVERTED_TO_FUNCTION")
+
+    @JvmStatic
     val NEW_DECLARATION_KEY = Key<Unit>("NEW_DECLARATION")
 
     // these keys are used on KtValueArgument

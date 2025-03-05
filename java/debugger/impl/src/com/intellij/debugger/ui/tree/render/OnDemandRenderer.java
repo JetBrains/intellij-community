@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.actions.ForceOnDemandRenderersAction;
@@ -12,21 +12,36 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.HeadlessValueEvaluationCallback;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface OnDemandRenderer extends FullValueEvaluatorProvider {
-  @Nullable
   @Override
-  default XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext,
-                                                    @NotNull ValueDescriptorImpl valueDescriptor) {
+  default @Nullable XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext,
+                                                              @NotNull ValueDescriptorImpl valueDescriptor) {
     if (isOnDemand(evaluationContext, valueDescriptor) && !isCalculated(valueDescriptor)) {
       return createFullValueEvaluator(getLinkText());
+    }
+    return null;
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  default @Nullable XFullValueEvaluator getFullValueEvaluator(
+    @NotNull XValueNode valueNode,
+    @NotNull EvaluationContextImpl evaluationContext,
+    @NotNull ValueDescriptorImpl valueDescriptor
+  ) {
+    if (isOnDemand(evaluationContext, valueDescriptor) && !isCalculated(valueDescriptor)) {
+      return createFullValueEvaluator(valueNode, valueDescriptor, getLinkText());
     }
     return null;
   }
@@ -50,6 +65,25 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
           node.clearFullValueEvaluator();
           setCalculated(((JavaValue)node.getValueContainer()).getDescriptor());
           node.getValueContainer().computePresentation(node, XValuePlace.TREE);
+        }
+        callback.evaluated("");
+      }
+    }.setShowValuePopup(false);
+  }
+
+  @ApiStatus.Experimental
+  static XFullValueEvaluator createFullValueEvaluator(
+    @NotNull XValueNode valueNode,
+    @NotNull ValueDescriptor valueDescriptor,
+    @Nls String text
+  ) {
+    return new XFullValueEvaluator(text) {
+      @Override
+      public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
+        if (valueNode instanceof XValueNodeEx xValueNodeEx) {
+          xValueNodeEx.clearFullValueEvaluator();
+          setCalculated(valueDescriptor);
+          xValueNodeEx.getXValue().computePresentation(valueNode, XValuePlace.TREE);
         }
         callback.evaluated("");
       }

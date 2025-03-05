@@ -6,13 +6,16 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import javax.swing.JComponent
 
-internal class RefactorDropdownActionGroup: DefaultActionGroup(), CustomComponentAction {
+internal class RefactorDropdownActionGroup : DefaultActionGroup(), CustomComponentAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return object: ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    return object : ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       override fun actionPerformed(event: AnActionEvent) {
-        showActionGroupPopup(this@RefactorDropdownActionGroup, event)
+        val newEvent = event.withDataContext(CustomizedDataContext.withSnapshot(event.dataContext) { sink ->
+          sink[CONTEXT_ACTION_GROUP_KEY] = this@RefactorDropdownActionGroup
+        })
+        showActionGroupPopup(this@RefactorDropdownActionGroup, newEvent)
       }
     }
   }

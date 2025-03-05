@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.*;
@@ -16,6 +16,7 @@ import com.intellij.toolWindow.RegisterToolWindowTaskProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -133,7 +134,7 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
     }
   }
 
-  private static @NotNull List<FacetDependentToolWindow> getDependentExtensions(@NotNull FacetType<?, ?> facetType) {
+  private static @Unmodifiable @NotNull List<FacetDependentToolWindow> getDependentExtensions(@NotNull FacetType<?, ?> facetType) {
     return ContainerUtil.filter(FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList(),
                                 toolWindowEP -> ArrayUtil.contains(facetType.getStringId(), toolWindowEP.getFacetIds()));
   }

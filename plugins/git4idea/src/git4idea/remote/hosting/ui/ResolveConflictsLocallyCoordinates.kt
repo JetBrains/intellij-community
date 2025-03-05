@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nls
 /**
  * Represents a request to resolve conflicts in a code review locally.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class ResolveConflictsLocallyCoordinates(
   val headRemoteDescriptor: HostedGitRepositoryRemote,
   val headRefName: String,
@@ -17,7 +17,7 @@ class ResolveConflictsLocallyCoordinates(
   val baseRefName: String
 )
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 enum class BaseOrHead(val text: @Nls String) {
   Base(CollaborationToolsBundle.message("review.details.resolve-conflicts.base")),
   Head(CollaborationToolsBundle.message("review.details.resolve-conflicts.head"));

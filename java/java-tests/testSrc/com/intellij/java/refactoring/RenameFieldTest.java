@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.refactoring;
 
@@ -6,13 +6,17 @@ import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
-import com.intellij.refactoring.rename.RenameWrongRefHandler;
+import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class RenameFieldTest extends LightRefactoringTestCase {
   @NotNull
@@ -106,6 +110,19 @@ public class RenameFieldTest extends LightRefactoringTestCase {
 
   public void testRecordOverloads() {
     doTest("baz", "java");
+  }
+
+  public void testFieldOnlyInImplicitClass() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+      String suffix = getTestName(false);
+      configureByFile("/refactoring/renameField/before" + suffix + ".java");
+      DataContext context = ((EditorEx)getEditor()).getDataContext();
+      List<? extends @NotNull RenameHandler> handlers = RenameHandlerRegistry.getInstance().getRenameHandlers(context);
+      assertEquals(1, handlers.size());
+      RenameHandler renameHandler = handlers.get(0);
+      renameHandler.invoke(getProject(), getEditor(), getFile(), context);
+      checkResultByFile("/refactoring/renameField/after" + suffix + ".java");
+    });
   }
 
   private void perform(String newName) {

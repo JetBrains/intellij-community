@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.MultiPanel
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -18,16 +18,16 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowserBase.ErrorPage
 import com.intellij.ui.jcef.JCEFHtmlPanel
-import com.intellij.util.Alarm
+import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.browser.CefMessageRouter
@@ -37,15 +37,20 @@ import org.cef.network.CefRequest
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
+import kotlin.time.Duration.Companion.milliseconds
 
-internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, request: HTMLEditorProvider.Request) : UserDataHolderBase(), FileEditor {
+internal class HTMLFileEditor(private val project: Project, private val file: LightVirtualFile, request: HTMLEditorProvider.Request)
+  : UserDataHolderBase(), FileEditor
+{
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
   private val contentPanel = JCEFHtmlPanel(true, null, null)
-  private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
+  private val timeoutJob = AtomicReference<Job>()
   private val initial = AtomicBoolean(true)
   private val navigating = AtomicBoolean(false)
-  private val htmlTabScope = (project as ComponentManagerEx).getCoroutineScope().childScope("HTMLFileEditor[${file.name}]")
+  private val htmlTabScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope("HTMLFileEditor[${file.name}]")
+  private var jsRouter: CefMessageRouter? = null
 
   private val multiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent = when (key) {
@@ -70,15 +75,15 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
       override fun onLoadingStateChange(browser: CefBrowser, isLoading: Boolean, canGoBack: Boolean, canGoForward: Boolean) {
         if (initial.get()) {
           if (isLoading) {
-            invokeLater {
+            EdtInvocationManager.getInstance().invokeLater {
               loadingPanel.startLoading()
               multiPanel.select(LOADING_KEY, true)
             }
           }
           else {
-            alarm.cancelAllRequests()
+            timeoutJob.getAndSet(null)?.cancel()
             initial.set(false)
-            invokeLater {
+            EdtInvocationManager.getInstance().invokeLater {
               loadingPanel.stopLoading()
               multiPanel.select(CONTENT_KEY, true)
             }
@@ -103,8 +108,8 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
     val queryHandler = request.queryHandler
     if (queryHandler != null) {
       val config = CefMessageRouter.CefMessageRouterConfig(HTMLEditorProvider.JS_FUNCTION_NAME, "${HTMLEditorProvider.JS_FUNCTION_NAME}Cancel")
-      val jsRouter = JBCefApp.getInstance().createMessageRouter(config)
-      jsRouter.addHandler(object : CefMessageRouterHandlerAdapter() {
+      jsRouter = JBCefApp.getInstance().createMessageRouter(config)
+      jsRouter!!.addHandler(object : CefMessageRouterHandlerAdapter() {
         override fun onQuery(browser: CefBrowser, frame: CefFrame, id: Long, request: String?, persistent: Boolean, callback: CefQueryCallback): Boolean {
           htmlTabScope.launch {
             runCatching { queryHandler.query(id, request ?: "") }
@@ -131,7 +136,10 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
 
     if (request.url != null) {
       val timeoutText = request.timeoutHtml ?: EditorBundle.message("message.html.editor.timeout")
-      alarm.addRequest({ contentPanel.loadHTML(timeoutText) }, Registry.intValue("html.editor.timeout", URL_LOADING_TIMEOUT_MS))
+      timeoutJob.set(htmlTabScope.launch {
+        delay(Registry.intValue("html.editor.timeout", URL_LOADING_TIMEOUT_MS).milliseconds)
+        withContext(Dispatchers.EDT) { contentPanel.loadHTML(timeoutText) }
+      })
       contentPanel.loadURL(request.url)
     }
     else {
@@ -150,7 +158,12 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
   override fun isValid(): Boolean = true
   override fun addPropertyChangeListener(listener: PropertyChangeListener) { }
   override fun removePropertyChangeListener(listener: PropertyChangeListener) { }
-  override fun dispose() { htmlTabScope.cancel() }
+  override fun dispose() {
+    htmlTabScope.cancel()
+    jsRouter?.let { router ->
+      contentPanel.jbCefClient.cefClient.removeMessageRouter(router)
+    }
+  }
   override fun getFile(): VirtualFile = file
 
   private companion object {

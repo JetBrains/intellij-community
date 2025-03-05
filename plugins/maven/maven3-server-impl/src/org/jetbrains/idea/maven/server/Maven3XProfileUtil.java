@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.text.VersionComparatorUtil;
@@ -109,8 +109,7 @@ public final class Maven3XProfileUtil {
     );
   }
 
-  @NotNull
-  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
+  public static @NotNull MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
     Model nativeModel = Maven3ModelConverter.toNativeModel(model);
     Model result = doInterpolate(nativeModel, basedir);
     org.apache.maven.project.path.PathTranslator pathTranslator = new DefaultPathTranslator();
@@ -136,8 +135,7 @@ public final class Maven3XProfileUtil {
     return collectProfilesIds(profiles);
   }
 
-  @NotNull
-  private static Model doInterpolate(@NotNull Model result, File basedir) {
+  private static @NotNull Model doInterpolate(@NotNull Model result, File basedir) {
     String mavenVersion = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION);
     if (VersionComparatorUtil.compare(mavenVersion, "3.3.1") >= 0) {
       return doInterpolate330(result, basedir);
@@ -150,8 +148,7 @@ public final class Maven3XProfileUtil {
     }
   }
 
-  @NotNull
-  private static Model doInterpolate325(@NotNull Model result, File basedir) {
+  private static @NotNull Model doInterpolate325(@NotNull Model result, File basedir) {
     try {
       AbstractStringBasedModelInterpolator interpolator = new CustomMaven3ModelInterpolator(new DefaultPathTranslator());
       interpolator.initialize();
@@ -175,8 +172,7 @@ public final class Maven3XProfileUtil {
     return result;
   }
 
-  @NotNull
-  private static Model doInterpolate330(@NotNull Model result, File basedir) {
+  private static @NotNull Model doInterpolate330(@NotNull Model result, File basedir) {
     try {
 
       CustomMaven3ModelInterpolator2 interpolator = new CustomMaven3ModelInterpolator2();

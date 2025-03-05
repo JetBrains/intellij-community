@@ -16,9 +16,9 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -26,15 +26,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
 public final class FinalPrivateMethodInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "final.private.method.problem.descriptor");
   }
@@ -64,7 +62,7 @@ public final class FinalPrivateMethodInspection extends BaseInspection {
       if (!PsiUtil.isLanguageLevel9OrHigher(method) && AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0)) {
         return;
       }
-      if (!HighlightUtil.isLegalModifierCombination(method.getModifierList())) {
+      if (!JavaPsiModifierUtil.isLegalModifierCombination(method.getModifierList())) {
         return;
       }
       registerModifierError(PsiModifier.FINAL, method, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, PsiModifier.FINAL);

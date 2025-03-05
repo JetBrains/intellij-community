@@ -6,8 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.StandardProgressIndicator;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
@@ -137,7 +136,7 @@ public class VcsLogProgress implements Disposable {
     }
   }
 
-  private final class VcsLogProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
+  private final class VcsLogProgressIndicator extends ProgressIndicatorBase {
     private @NotNull ProgressKey myKey;
     private final boolean myVisible;
 

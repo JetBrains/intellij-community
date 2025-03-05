@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.dynatrace.hash4j.hashing.HashStream64;
@@ -10,9 +10,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetHashSupplier;
+import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.GlobalContextKey;
@@ -37,13 +39,14 @@ public final class BuildTargetConfiguration {
   private static final String DIRTY_MARK = "$dirty_mark$";
 
   private final BuildTarget<?> target;
-  private final BuildTargetsState targetState;
+  @NotNull private final BuildDataPaths dataPaths;
   private @NotNull String configuration;
   private volatile String currentState;
 
-  public BuildTargetConfiguration(@NotNull BuildTarget<?> target, @NotNull BuildTargetsState targetState) {
+  @ApiStatus.Internal
+  public BuildTargetConfiguration(@NotNull BuildTarget<?> target, @NotNull BuildDataPaths dataPaths) {
     this.target = target;
-    this.targetState = targetState;
+    this.dataPaths = dataPaths;
     configuration = load();
   }
 
@@ -99,7 +102,7 @@ public final class BuildTargetConfiguration {
     persist(getCurrentState(context.getProjectDescriptor()));
   }
 
-  public void invalidate() {
+  void invalidate() {
     persist(DIRTY_MARK);
   }
 
@@ -116,11 +119,11 @@ public final class BuildTargetConfiguration {
   }
 
   private @NotNull Path getConfigFile() {
-    return targetState.getDataPaths().getTargetDataRootDir(target).resolve("config.dat");
+    return dataPaths.getTargetDataRootDir(target).resolve("config.dat");
   }
 
   private @NotNull Path getNonexistentOutputsFile() {
-    return targetState.getDataPaths().getTargetDataRootDir(target).resolve("nonexistent-outputs.dat");
+    return dataPaths.getTargetDataRootDir(target).resolve("nonexistent-outputs.dat");
   }
 
   private @NotNull String getCurrentState(@NotNull ProjectDescriptor projectDescriptor) {
@@ -143,7 +146,7 @@ public final class BuildTargetConfiguration {
     return state;
   }
 
-  public void storeNonexistentOutputRoots(@NotNull CompileContext context) throws IOException {
+  void storeNonExistentOutputRoots(@NotNull CompileContext context) throws IOException {
     PathRelativizerService relativizer = context.getProjectDescriptor().dataManager.getRelativizer();
     Collection<File> outputRoots = target.getOutputRoots(context);
     List<String> nonexistentOutputRoots = new ArrayList<>();

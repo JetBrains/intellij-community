@@ -1,0 +1,279 @@
+--- FIND MODEL ---
+myStringToFind = null
+myStringToReplace = ''
+isReplaceState = false
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = false
+isRegularExpressions = false
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+<meteor
+meteor
+meteor
+meteor
+meteor>
+
+--
+------------
+--- FIND MODEL ---
+myStringToFind = 'meteor'
+myStringToReplace = ''
+isReplaceState = false
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = false
+isRegularExpressions = false
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+[[<meteor]]
+[[meteor]]
+[[meteor]]
+[[meteor]]
+[[meteor>]]
+
+--
+highlighter: (0,6); layer: 5999 : BOXED
+highlighter: (0,6); layer: 5999 : ROUNDED_BOX
+highlighter: (7,13); layer: 5999 : BOXED
+highlighter: (7,13); layer: 5999 : ROUNDED_BOX
+highlighter: (14,20); layer: 5999 : BOXED
+highlighter: (14,20); layer: 5999 : ROUNDED_BOX
+highlighter: (21,27); layer: 5999 : BOXED
+highlighter: (21,27); layer: 5999 : ROUNDED_BOX
+highlighter: (28,34); layer: 5999 : BOXED
+highlighter: (28,34); layer: 5999 : ROUNDED_BOX
+------------
+--- FIND MODEL ---
+myStringToFind = 'meteor'
+myStringToReplace = '.'
+isReplaceState = false
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = false
+isRegularExpressions = false
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+[[<meteor]]
+[[meteor]]
+[[meteor]]
+[[meteor]]
+[[meteor>]]
+
+--
+highlighter: (0,6); layer: 5999 : BOXED
+highlighter: (0,6); layer: 5999 : ROUNDED_BOX
+highlighter: (7,13); layer: 5999 : BOXED
+highlighter: (7,13); layer: 5999 : ROUNDED_BOX
+highlighter: (14,20); layer: 5999 : BOXED
+highlighter: (14,20); layer: 5999 : ROUNDED_BOX
+highlighter: (21,27); layer: 5999 : BOXED
+highlighter: (21,27); layer: 5999 : ROUNDED_BOX
+highlighter: (28,34); layer: 5999 : BOXED
+highlighter: (28,34); layer: 5999 : ROUNDED_BOX
+------------
+--- FIND MODEL ---
+myStringToFind = 'meteor'
+myStringToReplace = '.'
+isReplaceState = true
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = false
+isRegularExpressions = false
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+[[<meteor]]
+[[meteor]]
+[[meteor]]
+[[meteor]]
+[[meteor>]]
+
+--
+highlighter: (0,6); layer: 5999 : BOXED
+highlighter: (0,6); layer: 5999 : ROUNDED_BOX
+highlighter: (7,13); layer: 5999 : BOXED
+highlighter: (7,13); layer: 5999 : ROUNDED_BOX
+highlighter: (14,20); layer: 5999 : BOXED
+highlighter: (14,20); layer: 5999 : ROUNDED_BOX
+highlighter: (21,27); layer: 5999 : BOXED
+highlighter: (21,27); layer: 5999 : ROUNDED_BOX
+highlighter: (28,34); layer: 5999 : BOXED
+highlighter: (28,34); layer: 5999 : ROUNDED_BOX
+------------
+--- FIND MODEL ---
+myStringToFind = 'meteor'
+myStringToReplace = '.'
+isReplaceState = true
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = false
+isRegularExpressions = false
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+<.
+[[meteor]]
+[[meteor]]
+[[meteor]]
+[[meteor>]]
+
+--
+highlighter: (2,8); layer: 5999 : BOXED
+highlighter: (2,8); layer: 5999 : ROUNDED_BOX
+highlighter: (9,15); layer: 5999 : BOXED
+highlighter: (9,15); layer: 5999 : ROUNDED_BOX
+highlighter: (16,22); layer: 5999 : BOXED
+highlighter: (16,22); layer: 5999 : ROUNDED_BOX
+highlighter: (23,29); layer: 5999 : BOXED
+highlighter: (23,29); layer: 5999 : ROUNDED_BOX
+------------
+--- FIND MODEL ---
+myStringToFind = 'meteor'
+myStringToReplace = '.'
+isReplaceState = true
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = false
+isRegularExpressions = false
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+<.
+.
+[[meteor]]
+[[meteor]]
+[[meteor>]]
+
+--
+highlighter: (4,10); layer: 5999 : BOXED
+highlighter: (4,10); layer: 5999 : ROUNDED_BOX
+highlighter: (11,17); layer: 5999 : BOXED
+highlighter: (11,17); layer: 5999 : ROUNDED_BOX
+highlighter: (18,24); layer: 5999 : BOXED
+highlighter: (18,24); layer: 5999 : ROUNDED_BOX
+------------
+--- FIND MODEL ---
+myStringToFind = 'meteor'
+myStringToReplace = '.'
+isReplaceState = true
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = false
+isRegularExpressions = false
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+<.
+.
+.
+[[meteor]]
+[[meteor>]]
+
+--
+highlighter: (6,12); layer: 5999 : BOXED
+highlighter: (6,12); layer: 5999 : ROUNDED_BOX
+highlighter: (13,19); layer: 5999 : BOXED
+highlighter: (13,19); layer: 5999 : ROUNDED_BOX
+------------

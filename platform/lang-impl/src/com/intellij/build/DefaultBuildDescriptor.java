@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -124,7 +125,7 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   }
 
   @ApiStatus.Experimental
-  public @NotNull List<AnAction> getContextActions(@NotNull ExecutionNode node) {
+  public @Unmodifiable @NotNull List<AnAction> getContextActions(@NotNull ExecutionNode node) {
     return ContainerUtil.map(myContextActions, function -> function.apply(node));
   }
 

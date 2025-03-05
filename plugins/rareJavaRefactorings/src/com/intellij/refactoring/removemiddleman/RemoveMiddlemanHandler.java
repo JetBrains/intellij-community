@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class RemoveMiddlemanHandler implements RefactoringActionHandler {
-  @NonNls static final String REMOVE_METHODS = "refactoring.removemiddleman.remove.methods";
+  static final @NonNls String REMOVE_METHODS = "refactoring.removemiddleman.remove.methods";
 
   protected static String getRefactoringName() {
     return getRefactoringNameText();

@@ -102,7 +102,7 @@ public final class AnnotateLocalFileAction {
     }
   }
 
-  private static void doAnnotate(@NotNull final Editor editor, AnActionEvent e, @NotNull final Project project) {
+  private static void doAnnotate(final @NotNull Editor editor, AnActionEvent e, final @NotNull Project project) {
     StructuredIdeActivity activity = ANNOTATE_ACTIVITY.started(project);
     final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
     if (file == null) return;

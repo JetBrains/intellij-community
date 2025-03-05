@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolyadicExpression> {
-  @NonNls public static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
+public final class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolyadicExpression> {
+  public static final @NonNls String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   public I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
     super(info);
@@ -56,14 +56,13 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolya
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaI18nBundle.message("quickfix.i18n.concatentation");
   }
 
   @Override
-  protected void doReplacement(@NotNull final PsiFile psiFile,
-                               @NotNull final Editor editor,
+  protected void doReplacement(final @NotNull PsiFile psiFile,
+                               final @NotNull Editor editor,
                                @Nullable UPolyadicExpression literalExpression,
                                String i18nizedText) throws IncorrectOperationException {
     @Nullable UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
@@ -82,8 +81,7 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolya
 
     return new JavaI18nizeQuickFixDialog<>(project, context, concatenation, formatString, getCustomization(formatString), true, true) {
       @Override
-      @Nullable
-      protected String getTemplateName() {
+      protected @Nullable String getTemplateName() {
         return myResourceBundleManager.getConcatenationTemplateName();
       }
 
@@ -127,8 +125,7 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolya
   }
 
 
-  @Nullable
-  public static UPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
+  public static @Nullable UPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
     return getEnclosingLiteralConcatenation(UastContextKt.getUastParentOfType(psiElement, UPolyadicExpression.class));
   }
 

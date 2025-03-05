@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.openapi.util.text.Strings;
@@ -36,7 +36,7 @@ public class TestEventXPPXmlView implements TestEventXmlView {
   private String myTestName;
   private String myTestDisplayName;
 
-  public TestEventXPPXmlView(@NotNull final String xml) {
+  public TestEventXPPXmlView(final @NotNull String xml) {
     final HierarchicalStreamReader parser = DRIVER.createReader(new StringReader(xml));
 
     if (!"ijLog".equals(parser.getNodeName())) throw new RuntimeException("root element must be 'ijLog'");
@@ -111,51 +111,43 @@ public class TestEventXPPXmlView implements TestEventXmlView {
     }
   }
 
-  @NotNull
   @Override
-  public String getTestEventType() {
+  public @NotNull String getTestEventType() {
     return myTestEventType == null ? "" : myTestEventType;
   }
 
-  @NotNull
   @Override
-  public String getTestName() {
+  public @NotNull String getTestName() {
     return myTestName == null ? "" : myTestName;
   }
 
-  @NotNull
   @Override
-  public String getTestDisplayName() {
+  public @NotNull String getTestDisplayName() {
     return Strings.isEmpty(myTestDisplayName) ? getTestName() : myTestDisplayName;
   }
 
-  @NotNull
   @Override
-  public String getTestParentId() {
+  public @NotNull String getTestParentId() {
     return myTestParentId == null ? "" : myTestParentId;
   }
 
-  @NotNull
   @Override
-  public String getTestId() {
+  public @NotNull String getTestId() {
     return myTestId == null ? "" : myTestId;
   }
 
-  @NotNull
   @Override
-  public String getTestClassName() {
+  public @NotNull String getTestClassName() {
     return myTestClassName == null ? "" : myTestClassName;
   }
 
-  @NotNull
   @Override
-  public String getTestEventResultType() {
+  public @NotNull String getTestEventResultType() {
     return myTestEventResultType == null ? "" : myTestEventResultType;
   }
 
-  @NotNull
   @Override
-  public String getEventTitle() {
+  public @NotNull String getEventTitle() {
     return myEventTitle == null ? "" : myEventTitle;
   }
 
@@ -164,87 +156,73 @@ public class TestEventXPPXmlView implements TestEventXmlView {
     return Boolean.parseBoolean(myEventOpenSettings == null ? "" : myEventOpenSettings);
   }
 
-  @NotNull
   @Override
-  public String getEventMessage() {
+  public @NotNull String getEventMessage() {
     return myEventMessage == null ? "" : myEventMessage;
   }
 
-  @NotNull
   @Override
-  public String getTestEventTest() {
+  public @NotNull String getTestEventTest() {
     return myTestEventTest == null ? "" : myTestEventTest;
   }
 
-  @NotNull
   @Override
-  public String getTestEventTestDescription() {
+  public @NotNull String getTestEventTestDescription() {
     return myTestEventTestDescription == null ? "" : myTestEventTestDescription;
   }
 
-  @NotNull
   @Override
-  public String getEventTestReport() {
+  public @NotNull String getEventTestReport() {
     return myEventTestReport == null ? "" : myEventTestReport;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultActualFilePath() {
+  public @NotNull String getEventTestResultActualFilePath() {
     return myEventTestResultActionFilePath == null ? "" : myEventTestResultActionFilePath;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultFilePath() {
+  public @NotNull String getEventTestResultFilePath() {
     return myEventTestResultFilePath == null ? "" : myEventTestResultFilePath;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultExpected() {
+  public @NotNull String getEventTestResultExpected() {
     return myEventTestResultExpected == null ? "" : myEventTestResultExpected;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultActual() {
+  public @NotNull String getEventTestResultActual() {
     return myEventTestResultActual == null ? "" : myEventTestResultActual;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultFailureType() {
+  public @NotNull String getEventTestResultFailureType() {
     return myEventTestResultFailureType == null ? "" : myEventTestResultFailureType;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultExceptionName() {
+  public @NotNull String getEventTestResultExceptionName() {
     return myEventTestResultExceptionName == null ? "" : myEventTestResultExceptionName;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultStackTrace() {
+  public @NotNull String getEventTestResultStackTrace() {
     return myEventTestResultStackTrace == null ? "" : myEventTestResultStackTrace;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultErrorMsg() {
+  public @NotNull String getEventTestResultErrorMsg() {
     return myEventTestResultErrorMsg == null ? "" : myEventTestResultErrorMsg;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultEndTime() {
+  public @NotNull String getEventTestResultEndTime() {
     return myEventTestResultEndTime == null ? "" : myEventTestResultEndTime;
   }
 
-  @NotNull
   @Override
-  public String getEventTestResultStartTime() {
+  public @NotNull String getEventTestResultStartTime() {
     return myEventTestResultStartTime == null ? "" : myEventTestResultStartTime;
   }
 }

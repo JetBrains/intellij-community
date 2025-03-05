@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ public final class FileReferenceHelperRegistrar {
     return ContainerUtil.find(getHelpers(), fileReferenceHelper -> fileReferenceHelper.isMine(project, file));
   }
 
-  public static <T extends PsiFileSystemItem> List<FileReferenceHelper> getHelpers(final @NotNull T psiFileSystemItem) {
+  public static @Unmodifiable <T extends PsiFileSystemItem> List<FileReferenceHelper> getHelpers(final @NotNull T psiFileSystemItem) {
     final VirtualFile file = psiFileSystemItem.getVirtualFile();
     if (file == null) return null;
     final Project project = psiFileSystemItem.getProject();

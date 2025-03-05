@@ -1,0 +1,16 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Unresolved reference: Some
+// ACTION: Rename reference
+
+package test
+
+fun test() = ::Some<caret>
+
+
+// FILE: some/Outer.java
+package some;
+
+public class Outer {
+    public class Some {}
+}

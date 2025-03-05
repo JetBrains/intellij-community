@@ -1,4 +1,5 @@
 // "Make 'bar' private" "true"
+// PRIORITY: HIGH
 // ACTION: Convert member to extension
 // ACTION: Convert to block body
 // ACTION: Enable option 'Function return types' for 'Types' inlay hints

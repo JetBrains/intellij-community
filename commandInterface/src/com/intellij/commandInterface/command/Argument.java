@@ -20,29 +20,26 @@ public final class Argument {
   /**
    * Argument help user-readable text
    */
-  @NotNull
-  private final Help myHelpText;
+  private final @NotNull Help myHelpText;
   /**
    * List of values argument may have. Null if any value is possible.
    * Second argument is True if values can <strong>only</strong> be one from these values, or false if any value actually supported
    */
-  @Nullable
-  private final Pair<List<String>, Boolean> myAvailableValues;
-  @Nullable
-  private final ArgumentType myType;
+  private final @Nullable Pair<List<String>, Boolean> myAvailableValues;
+  private final @Nullable ArgumentType myType;
 
 
   /**
    * @param helpText Argument help user-readable text
    */
-  public Argument(@NotNull final Help helpText) {
+  public Argument(final @NotNull Help helpText) {
     this(helpText, null, null);
   }
 
   /**
    * @param type Argument value type. Null if any type is possible.
    */
-  public Argument(@NotNull final ArgumentType type) {
+  public Argument(final @NotNull ArgumentType type) {
     this(new Help(""), type);
   }
 
@@ -50,8 +47,8 @@ public final class Argument {
    * @param helpText Argument help user-readable text
    * @param type     Argument value type. Null if any type is possible.
    */
-  public Argument(@NotNull final Help helpText,
-                  @Nullable final ArgumentType type) {
+  public Argument(final @NotNull Help helpText,
+                  final @Nullable ArgumentType type) {
     this(helpText, null, type);
   }
 
@@ -59,7 +56,7 @@ public final class Argument {
    * @param availableValues List of values argument may have. Null if any value is possible.
    *                        Second argument is True if values can <strong>only</strong> be one from these values, or false if any value actually supported
    */
-  public Argument(@Nullable final Pair<List<String>, Boolean> availableValues) {
+  public Argument(final @Nullable Pair<List<String>, Boolean> availableValues) {
     this(new Help(""), availableValues, null);
   }
 
@@ -68,7 +65,7 @@ public final class Argument {
    * @param availableValues List of values argument may have. Null if any value is possible.
    *                        Second argument is True if values can <strong>only</strong>be one from these values, or false if any value actually supported
    */
-  public Argument(@NotNull final Help helpText, @NotNull final Pair<List<String>, Boolean> availableValues) {
+  public Argument(final @NotNull Help helpText, final @NotNull Pair<List<String>, Boolean> availableValues) {
     this(helpText, availableValues, null);
   }
 
@@ -79,9 +76,9 @@ public final class Argument {
    *                        Second argument is True if values can <strong>only</strong> be one from these values, or false if any value actually supported
    * @param type            Argument value type. Null if any type is possible.
    */
-  public Argument(@NotNull final Help helpText,
-                  @Nullable final Pair<List<String>, Boolean> availableValues,
-                  @Nullable final ArgumentType type) {
+  public Argument(final @NotNull Help helpText,
+                  final @Nullable Pair<List<String>, Boolean> availableValues,
+                  final @Nullable ArgumentType type) {
     myHelpText = helpText;
     myAvailableValues =
       (availableValues == null ? null : Pair.create(Collections.unmodifiableList(availableValues.first), availableValues.second));
@@ -91,16 +88,14 @@ public final class Argument {
   /**
    * @return Argument help user-readable text
    */
-  @NotNull
-  public Help getHelp() {
+  public @NotNull Help getHelp() {
     return myHelpText;
   }
 
   /**
    * @return List of values argument may have. Null if any value is possible.
    */
-  @Nullable
-  public List<String> getAvailableValues() {
+  public @Nullable List<String> getAvailableValues() {
     return (myAvailableValues == null ? null : Collections.unmodifiableList(myAvailableValues.first));
   }
 
@@ -111,7 +106,7 @@ public final class Argument {
    * @param value value to check
    * @return true if argument may have this value.
    */
-  public boolean isValid(@NotNull final String value) {
+  public boolean isValid(final @NotNull String value) {
     if (!isTypeValid(value)) {
       return false;
     }
@@ -128,7 +123,7 @@ public final class Argument {
    * @param value value to check
    * @return false if type is known and it differs from value
    */
-  private boolean isTypeValid(@NotNull final String value) {
+  private boolean isTypeValid(final @NotNull String value) {
     // We only check integer for now
     if (myType == ArgumentType.INTEGER) {
       try {

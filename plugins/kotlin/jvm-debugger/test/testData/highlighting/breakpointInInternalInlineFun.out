@@ -1,0 +1,10 @@
+LineBreakpoint created at breakpointInInternalInlineFun.kt:15 lambdaOrdinal = 1
+Run Java
+Connected to the target VM
+breakpointInInternalInlineFun.kt:15
+Highlight lambda range: 'foo()'
+breakpointInInternalInlineFun.kt:3
+Highlight whole line
+Disconnected from the target VM
+
+Process finished with exit code 0

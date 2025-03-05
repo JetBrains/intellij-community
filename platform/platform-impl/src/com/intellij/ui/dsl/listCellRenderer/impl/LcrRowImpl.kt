@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.SimpleColoredComponent
@@ -17,7 +18,7 @@ import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.render.RenderingUtil
-import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -38,7 +39,7 @@ import kotlin.math.max
 open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
 
   companion object {
-    const val DEFAULT_GAP = 6
+    const val DEFAULT_GAP: Int = 6
   }
 
   private var listCellRendererParams: ListCellRendererParams<T>? = null
@@ -61,6 +62,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
 
   override var background: Color? = null
   override var selectionColor: Color? = null
+  override var toolTipText: @NlsContexts.Tooltip String? = null
 
   private var foreground: Color = JBUI.CurrentTheme.List.FOREGROUND
 
@@ -79,7 +81,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
   }
 
   override fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)?) {
-    val initParams = LcrTextInitParams(foreground)
+    val initParams = LcrTextInitParamsImpl(foreground)
     initParams.accessibleName = text
     if (init != null) {
       initParams.init()
@@ -88,7 +90,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     add(LcrSimpleColoredTextImpl(initParams, true, gap, text, selected, foreground))
   }
 
-  override fun separator(init: (LcrSeparator.() -> Unit)) {
+  override fun separator(init: LcrSeparator.() -> Unit) {
     if (separator != null) {
       throw UiDslException("Separator is defined already")
     }
@@ -133,8 +135,6 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
     val cellsTypes = cells.map { it.type }
     val result = rendererCache.getRootPanel(cellsTypes)
 
-    applyRowStyle(result, renderingType)
-
     result.listSeparator = if (separator == null) null else ListSeparator(separator!!.text)
 
     @Suppress("UNCHECKED_CAST")
@@ -145,28 +145,36 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       else -> if (model.isSeparatorAboveOf(value)) ListSeparator(model.getCaptionAboveOf(value)) else null
     }
     result.applySeparator(listSeparator, index == 0, list)
+    result.setToolTipText(toolTipText)
+
+    var minHeight = 0
 
     for ((i, cell) in cells.withIndex()) {
       val component = result.applyCellConstraints(i, cell, if (i == 0) 0 else getGapValue(cell.beforeGap))
-      cell.apply(component, enabled)
+      cell.apply(component, enabled, list, isSelected)
 
-      if (cell is LcrSimpleColoredTextImpl && cell.initParams.speedSearchHighlighting) {
-        SpeedSearchUtil.applySpeedSearchHighlighting(list, component as SimpleColoredComponent, true, isSelected)
+      val cellMinHeight = when (cell) {
+        is LcrIconImpl -> cell.icon.iconHeight
+        is LcrSimpleColoredTextImpl -> {
+          val font = cell.initParams.font
+          if (font == null) 0 else component.getFontMetrics(font).height
+        }
       }
+      minHeight = max(minHeight, cellMinHeight)
     }
 
-    result.applyAccessibleName()
+    applyRowStyle(result, renderingType, minHeight)
 
     return result
   }
 
-  private fun applyRowStyle(rendererPanel: RendererPanel, renderingType: RenderingType) {
+  private fun applyRowStyle(rendererPanel: RendererPanel, renderingType: RenderingType, minHeight: Int) {
     if (ExperimentalUI.isNewUI()) {
       if (renderingType == RenderingType.COLLAPSED_SELECTED_COMBO_BOX_ITEM) {
         rendererPanel.initCollapsedComboBoxItem()
       }
       else {
-        rendererPanel.initItem(background, if (selected) selectionColor else null)
+        rendererPanel.initItem(background, if (selected) selectionColor else null, minHeight)
       }
     }
     else {
@@ -209,7 +217,7 @@ open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>
       val field = ReflectionUtil.findField(BasicComboPopup::class.java, JComboBox::class.java, "comboBox")
       return field.get(popup) as JComboBox<*>?
     }
-    catch (e: ReflectiveOperationException) {
+    catch (_: ReflectiveOperationException) {
       return null
     }
   }
@@ -321,6 +329,15 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     if (accessibleContext == null) {
       accessibleContext = object : AccessibleJPanel() {
         override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
+        override fun getAccessibleName(): String {
+          val names = cellsPanel.components
+            .map { it.accessibleContext.accessibleName?.trim() }
+            .filter { !it.isNullOrEmpty() }
+
+          // Comma gives a good pause between unrelated texts for readers on Windows and macOS
+          @Suppress("HardCodedStringLiteral")
+          return names.joinToString(", ")
+        }
       }
     }
     return accessibleContext
@@ -341,10 +358,14 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     val result = cellsPanel.getComponent(i) as JComponent
     val constraints = cellsLayout.getConstraints(result)!!
 
-    // Row height is usually even. If components height is odd the component cannot be placed right in center.
-    // Because of rounding it's placed a little bit higher which looks not good, especially for text. This patch fixes that
-    val roundingTopGapPatch = result.preferredSize.height % 2
-    val gaps = UnscaledGaps(top = roundingTopGapPatch, left = leftGap)
+    val topOffset = when (cell) {
+      is LcrIconImpl -> 0
+
+      // Add 1 pixel above, which gives better vertical alignment in case odd row height
+      is LcrSimpleColoredTextImpl -> 1
+    }
+
+    val gaps = UnscaledGaps(top = topOffset, left = leftGap)
     val horizontalAlign = when (cell.initParams.align) {
       null, LcrInitParams.Align.LEFT -> HorizontalAlign.LEFT
       LcrInitParams.Align.CENTER -> HorizontalAlign.CENTER
@@ -368,15 +389,6 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     return result
   }
 
-  fun applyAccessibleName() {
-    val names = cellsPanel.components
-      .map { it.accessibleContext.accessibleName?.trim() }
-      .filter { !it.isNullOrEmpty() }
-
-    // Comma gives a good pause between unrelated text for readers on Windows and macOS
-    getAccessibleContext().accessibleName = names.joinToString(", ")
-  }
-
   /**
    * Init renderer for selected item in collapsed ComboBox component
    */
@@ -392,7 +404,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
     }
   }
 
-  fun initItem(background: Color?, selectionColor: Color?) {
+  fun initItem(background: Color?, selectionColor: Color?, minHeight: Int) {
     val leftRightInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get()
     val innerInsets = JBUI.CurrentTheme.Popup.Selection.innerInsets()
 
@@ -402,7 +414,7 @@ private class RendererPanel(key: RowKey) : JPanel(BorderLayout()), KotlinUIDslRe
       selectionArc = JBUI.CurrentTheme.Popup.Selection.ARC.get()
       selectionInsets = JBInsets.create(0, leftRightInset)
       border = JBUI.Borders.empty(0, innerInsets.left + leftRightInset, 0, innerInsets.right + leftRightInset)
-      preferredHeight = JBUI.CurrentTheme.List.rowHeight()
+      preferredHeight = max(JBUI.CurrentTheme.List.rowHeight(), minHeight + JBUIScale.scale(2))
       this.background = background
       this.selectionColor = selectionColor
     }

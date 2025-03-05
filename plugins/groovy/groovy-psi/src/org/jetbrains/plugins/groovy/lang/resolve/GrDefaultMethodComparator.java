@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.psi.*;
@@ -38,7 +38,7 @@ public final class GrDefaultMethodComparator extends GrMethodComparator {
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
 
-    if (arguments != null && arguments.size() == 0) {
+    if (arguments != null && arguments.isEmpty()) {
       if (params2.length == 1 && params2[0].getType() instanceof PsiArrayType) return true;
     }
 

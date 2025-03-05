@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Pair;
@@ -9,6 +9,7 @@ import com.intellij.util.containers.FlatteningIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -61,7 +62,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   }
 
   @Override
-  public @NotNull List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, final @NotNull ProcessingContext context) {
+  public @Unmodifiable @NotNull List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, final @NotNull ProcessingContext context) {
     return ContainerUtil.map(items, t -> new Pair<>(t, getWeight(t, context)));
   }
 }

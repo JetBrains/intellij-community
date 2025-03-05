@@ -5,6 +5,19 @@ class CommandBlockIntegration(useCommandEndMarker: Boolean = false) {
 
   val commandEndMarker: String? = if (useCommandEndMarker) generateRandomCommandEndMarker() else null
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as CommandBlockIntegration
+
+    return commandEndMarker == other.commandEndMarker
+  }
+
+  override fun hashCode(): Int {
+    return commandEndMarker?.hashCode() ?: 0
+  }
+
   companion object {
     private fun generateRandomCommandEndMarker(): String {
       val alphanumeric: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')

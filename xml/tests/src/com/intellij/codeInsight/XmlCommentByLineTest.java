@@ -3,10 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.File;
 
 public class XmlCommentByLineTest extends CommentByLineTestBase {
   @Override

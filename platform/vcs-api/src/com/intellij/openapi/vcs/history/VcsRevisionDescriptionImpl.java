@@ -22,9 +22,8 @@ public final class VcsRevisionDescriptionImpl implements VcsRevisionDescription 
     myNumber = number;
   }
 
-  @NotNull
   @Override
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return myNumber;
   }
 

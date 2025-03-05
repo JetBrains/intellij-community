@@ -136,7 +136,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     try {
       withTimeout(CLOSE_LOG_TIMEOUT) {
         mutex.withLock {
-          disposeLogInternal(useRawSwingDispatcher = useRawSwingDispatcher)
+          disposeLogInternal(useRawSwingDispatcher, notify = false)
         }
       }
     }
@@ -170,7 +170,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   private fun launchDisposeLog(useRawSwingDispatcher: Boolean = false): Job {
     return launchWithAnyModality {
       mutex.withLock {
-        disposeLogInternal(useRawSwingDispatcher)
+        disposeLogInternal(useRawSwingDispatcher, notify = true)
       }
     }
   }
@@ -178,7 +178,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   private fun launchRecreateLog(beforeCreateLog: (suspend () -> Unit)? = null): Job {
     return launchWithAnyModality {
       mutex.withLock {
-        disposeLogInternal(false)
+        disposeLogInternal(useRawSwingDispatcher = false, notify = true)
 
         try {
           beforeCreateLog?.invoke()
@@ -192,9 +192,9 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     }
   }
 
-  private suspend fun disposeLogInternal(useRawSwingDispatcher: Boolean) {
+  private suspend fun disposeLogInternal(useRawSwingDispatcher: Boolean, notify: Boolean) {
     val logManager = withContext(if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT) {
-      dropLogManager()?.also { it.disposeUi() }
+      dropLogManager(notify)?.also { it.disposeUi() }
     }
     if (logManager != null) Disposer.dispose(logManager)
   }
@@ -232,12 +232,14 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
   }
 
   @RequiresEdt
-  private fun dropLogManager(): VcsLogManager? {
+  private fun dropLogManager(notify: Boolean): VcsLogManager? {
     ThreadingAssertions.assertEventDispatchThread()
     val oldValue = cachedLogManager ?: return null
     cachedLogManager = null
     LOG.debug { "Disposing ${oldValue.name}" }
-    project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
+    if (notify) {
+      project.messageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue)
+    }
     return oldValue
   }
 
@@ -355,7 +357,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
       // schedule showing the log, wait its initialization, and then open the tab
       projectLog.coroutineScope.launch {
         withBackgroundProgress(project, VcsLogBundle.message("vcs.log.creating.process")) {
-          waitWhenLogIsReady(project)
+          awaitLogIsReady(project)
 
           withContext(Dispatchers.EDT) {
             projectLog.logManager?.let {
@@ -366,11 +368,11 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
       }
     }
 
-    suspend fun waitWhenLogIsReady(project: Project): Boolean {
-      val projectLog = getInstance(project)
-      if (projectLog.logManager != null) return true
+    suspend fun awaitLogIsReady(project: Project): VcsLogManager? {
+      val projectLog = project.serviceAsync<VcsProjectLog>()
+      if (projectLog.logManager != null) return projectLog.logManager
       projectLog.launchCreateLog(forceInit = true).join()
-      return projectLog.logManager != null
+      return projectLog.logManager
     }
 
     @ApiStatus.Internal
@@ -378,7 +380,7 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
     fun ensureLogCreated(project: Project): Boolean {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
       return runBlockingMaybeCancellable {
-        waitWhenLogIsReady(project)
+        awaitLogIsReady(project) != null
       }
     }
   }

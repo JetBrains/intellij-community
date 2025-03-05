@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.awt.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -255,7 +257,7 @@ public final class SdkConfigurationUtil {
       List<Sdk> sdks = ProjectJdkTable.getInstance().getSdksOfType(type);
       if (!sdks.isEmpty()) {
         if (comparator != null) {
-          sdks.sort(comparator);
+          sdks = ContainerUtil.sorted(sdks, comparator);
         }
         return sdks.get(0);
       }
@@ -319,8 +321,12 @@ public final class SdkConfigurationUtil {
     return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !nameList.contains(o));
   }
 
+  /**
+   * @deprecated Please use {@link SdkConfigurationUtil#selectSdkHome(SdkType, Component, Path, Consumer)}
+   */
+  @Deprecated
   public static void selectSdkHome(final @NotNull SdkType sdkType, final @NotNull Consumer<? super String> consumer) {
-    selectSdkHome(sdkType, null, consumer);
+    selectSdkHome(sdkType, null, Path.of(System.getProperty("user.home")), consumer);
   }
 
   public static boolean selectSdkHomeForTests(@NotNull SdkType sdkType, @NotNull Consumer<? super String> consumer) {
@@ -335,12 +341,13 @@ public final class SdkConfigurationUtil {
 
   public static void selectSdkHome(final @NotNull SdkType sdkType,
                                    @Nullable Component component,
+                                   @NotNull Path path,
                                    final @NotNull Consumer<? super String> consumer) {
     if (selectSdkHomeForTests(sdkType, consumer)) return;
 
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
 
-    Future<VirtualFile> sdkRootFuture = PooledThreadExecutor.INSTANCE.submit(() -> getSuggestedSdkRoot(sdkType));
+    Future<VirtualFile> sdkRootFuture = PooledThreadExecutor.INSTANCE.submit(() -> getSuggestedSdkRoot(sdkType, path));
     VirtualFile suggestedSdkRoot = null;
     try {
       suggestedSdkRoot = sdkRootFuture.get(200, TimeUnit.MILLISECONDS);
@@ -352,19 +359,30 @@ public final class SdkConfigurationUtil {
     // selecting the last opened project path, instead of the suggested detected JDK home (one of many).
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
     FileChooser.chooseFiles(descriptor, null, component, suggestedSdkRoot, chosen -> {
-      final String path = chosen.get(0).getPath();
-      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
+      final String chosenPath = chosen.get(0).getPath();
+      final String adjustedPath = sdkType.adjustSelectedSdkHome(chosenPath);
       AtomicBoolean isAdjustedPathValid = new AtomicBoolean(false);
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
         () -> isAdjustedPathValid.set(DiskQueryRelay.compute(() -> sdkType.isValidSdkHome(adjustedPath))),
         ProjectBundle.message("progress.title.checking.sdk.home"), true, null
       );
-      consumer.consume(isAdjustedPathValid.get() ? adjustedPath : path);
+      consumer.consume(isAdjustedPathValid.get() ? adjustedPath : chosenPath);
     });
   }
 
+  /**
+   * @deprecated Please use {@link SdkConfigurationUtil#getSuggestedSdkRoot(SdkType, Path)}
+   */
+  @Deprecated
   public static @Nullable VirtualFile getSuggestedSdkRoot(@NotNull SdkType sdkType) {
-    final String homePath = sdkType.suggestHomePath();
+    return doGetSuggestedSdkRoot(sdkType.suggestHomePath());
+  }
+
+  public static @Nullable VirtualFile getSuggestedSdkRoot(@NotNull SdkType sdkType, @NotNull Path path) {
+    return doGetSuggestedSdkRoot(sdkType.suggestHomePath(path));
+  }
+
+  private static @Nullable VirtualFile doGetSuggestedSdkRoot(@Nullable String homePath) {
     return homePath == null ? null : LocalFileSystem.getInstance().findFileByPath(homePath);
   }
 

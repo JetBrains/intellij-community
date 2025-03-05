@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +25,7 @@ public class BeforeSuiteEventProcessor extends AbstractBeforeTestEventProcessor 
   }
 
   @Override
-  public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
+  public void process(final @NotNull TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     var testId = eventXml.getTestId();
     var parentTestId = eventXml.getTestParentId();
     var suiteName = ObjectUtils.coalesce(StringUtil.nullize(eventXml.getTestClassName()), eventXml.getTestDisplayName());

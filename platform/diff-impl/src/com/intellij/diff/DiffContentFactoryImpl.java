@@ -626,7 +626,7 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (file != null && !file.isInLocalFileSystem()) {
-        OutsidersPsiFileSupport.markFile(file, originalFilePath != null ? originalFilePath : null);
+        OutsidersPsiFileSupport.markFile(file, originalFilePath);
       }
 
       if (fileName != null) {

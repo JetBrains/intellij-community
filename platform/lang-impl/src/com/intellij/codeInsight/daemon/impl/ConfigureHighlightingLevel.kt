@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonBundle.message
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil.forceRootHighlighting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
@@ -69,7 +68,7 @@ private class LevelAction(val level: InspectionsLevel, val provider: FileViewPro
     val file = provider.getPsi(language) ?: return
     forceRootHighlighting(file, FileHighlightingSetting.fromInspectionsLevel(level))
     InjectedLanguageManager.getInstance(file.project).dropFileCaches(file)
-    DaemonCodeAnalyzer.getInstance(file.project).restart()
+    DaemonCodeAnalyzerEx.getInstanceEx(file.project).restart("LevelAction.setSelected")
   }
 
   override fun update(e: AnActionEvent) {

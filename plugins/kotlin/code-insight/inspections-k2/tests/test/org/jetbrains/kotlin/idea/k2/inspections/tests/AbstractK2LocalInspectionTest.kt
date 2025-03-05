@@ -1,19 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inspections.tests
 
-import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.registerExtension
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEPENDENCIES_SOURCES
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesData
+import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
+import org.jetbrains.kotlin.idea.core.script.k2.BundledScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDependenciesSource
-import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptModel
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -31,7 +33,19 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
 
     override val inspectionFileName: String = ".k2Inspection"
 
-    override fun checkForUnexpectedErrors(fileText: String) {}
+    override val skipErrorsBeforeCheckDirectives: List<String>
+        get() = super.skipErrorsBeforeCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
+
+    override val skipErrorsAfterCheckDirectives: List<String>
+        get() = super.skipErrorsAfterCheckDirectives + K2DirectiveBasedActionUtils.DISABLE_K2_ERRORS_DIRECTIVE
+
+    override fun checkForErrorsBefore(mainFile: File,ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsBefore(mainFile, ktFile, fileText)
+    }
+
+    override fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
+    }
 
     override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory)
 
@@ -51,12 +65,6 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         return super.getAfterTestDataAbsolutePath(mainFileName)
     }
 
-    override fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2, "after") {
-            doTestForInternal(mainFile, inspection, fileText)
-        }
-    }
-
     override fun doTest(path: String) {
         val mainFile = File(dataFilePath(fileName()))
 
@@ -65,17 +73,14 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         val psiFile = myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
 
         if ((myFixture.file as? KtFile)?.isScript() == true) {
-            val dependenciesSource = object : GradleScriptDependenciesSource(project) {
-                override suspend fun updateModules(
-                    dependencies: ScriptDependenciesData,
-                    storage: MutableEntityStorage?
-                ) {
+            val dependenciesSource = object : BundledScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
+                override suspend fun updateModules(storage: MutableEntityStorage?) {
                     //do nothing because adding modules is not permitted in light tests
                 }
             }
-            project.registerExtension(SCRIPT_DEPENDENCIES_SOURCES, dependenciesSource, testRootDisposable)
+            project.registerExtension(SCRIPT_CONFIGURATIONS_SOURCES, dependenciesSource, testRootDisposable)
 
-            val script = GradleScriptModel(psiFile.virtualFile)
+            val script = BaseScriptModel(psiFile.virtualFile)
             runWithModalProgressBlocking(project, "Testing") {
                 dependenciesSource.updateDependenciesAndCreateModules(setOf(script))
             }

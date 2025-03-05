@@ -303,7 +303,11 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
     public boolean matches(Object item) {
       return item instanceof FileMessageEvent
              && ((FileMessageEvent)item).getMessage().equals(myMessage)
-             && FileUtil.filesEqual(new File(myFileName), ((FileMessageEvent)item).getFilePosition().getFile())
+             && (
+               FileUtil.filesEqual(new File(myFileName), ((FileMessageEvent)item).getFilePosition().getFile())
+               ||
+               FileUtil.filesEqual(new File("/" + myFileName), ((FileMessageEvent)item).getFilePosition().getFile())
+             )
              && ((FileMessageEvent)item).getFilePosition().getStartLine() == myLine
              && ((FileMessageEvent)item).getFilePosition().getStartColumn() == myColumn;
     }

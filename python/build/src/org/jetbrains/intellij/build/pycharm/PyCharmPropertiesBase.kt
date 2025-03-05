@@ -12,7 +12,7 @@ import java.util.function.Predicate
 
 const val PYDEVD_PACKAGE: String = "pydevd_package"
 
-abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean = false) : JetBrainsProductProperties() {
+abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsProductProperties() {
   override val baseFileName: String
     get() = "pycharm"
 

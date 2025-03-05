@@ -295,14 +295,15 @@ public final class ScopeEditorPanel implements Disposable {
       LOG.warn("ScopeEditorPanel.updateSelectedSets called before tree initialization", new Throwable());
       return;
     }
-    int[] rows = myPackageTree.getSelectionRows();
-    if (rows == null) return;
+    var paths = myPackageTree.getSelectionPaths();
+    if (paths == null) return;
     PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
     if (provider == null) return;
-    final var nodes = new ArrayList<PackageDependenciesNode>(rows.length);
-    for (int row : rows) {
-      final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
-      nodes.add(node);
+    final var nodes = new ArrayList<PackageDependenciesNode>(paths.length);
+    for (var path : paths) {
+      if (path.getLastPathComponent() instanceof PackageDependenciesNode node) {
+        nodes.add(node);
+      }
     }
     computeSelection(invoker, nodes, provider, false).onSuccess(result -> {
       myInclude.setSelection(result);

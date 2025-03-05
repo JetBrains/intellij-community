@@ -111,7 +111,7 @@ public abstract class SpellCheckerDictionaryGenerator {
     final ArrayList<String> names = new ArrayList<>(seenNames);
     Collections.sort(names);
     for (String name : names) {
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         builder.append("\n");
       }
       builder.append(name);

@@ -2,57 +2,41 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.renderer.render
 
 open class AddAnnotationFix(
     element: KtElement,
     private val annotationClassId: ClassId,
     private val kind: Kind = Kind.Self,
-    private val arguments: List<String> = emptyList(),
-    private val existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-) : KotlinQuickFixAction<KtElement>(element) {
-    override fun getText(): String {
+    private val annotationInnerText: String? = null,
+) : PsiUpdateModCommandAction<KtElement>(element) {
+
+    override fun getPresentation(context: ActionContext, element: KtElement): Presentation? {
         val annotationCall = annotationClassId.shortClassName.render() + renderArgumentsForIntentionName()
-        return when (kind) {
+        val actionName = when (kind) {
             Kind.Self -> KotlinBundle.message("fix.add.annotation.text.self", annotationCall)
             Kind.Constructor -> KotlinBundle.message("fix.add.annotation.text.constructor", annotationCall)
             is Kind.Declaration -> KotlinBundle.message("fix.add.annotation.text.declaration", annotationCall, kind.name ?: "?")
             is Kind.ContainingClass -> KotlinBundle.message("fix.add.annotation.text.containing.class", annotationCall, kind.name ?: "?")
             is Kind.Copy -> KotlinBundle.message("fix.add.annotation.with.arguments.text.copy", annotationCall, kind.source, kind.target)
         }
+        return Presentation.of(actionName)
     }
 
-    protected open fun renderArgumentsForIntentionName(): String {
-        return arguments.takeIf { it.isNotEmpty() }?.joinToString(", ", "(", ")") ?: ""
-    }
+    protected open fun renderArgumentsForIntentionName(): String = annotationInnerText.orEmpty()
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.annotation.family")
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        val annotationEntry = existingAnnotationEntry?.element
-        val annotationInnerText = arguments.takeIf { it.isNotEmpty() }?.joinToString(", ")
-        if (annotationEntry != null) {
-            if (annotationInnerText == null) return
-            val psiFactory = KtPsiFactory(project)
-            annotationEntry.valueArgumentList?.addArgument(psiFactory.createArgument(annotationInnerText))
-                ?: annotationEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), annotationEntry.lastChild)
-            ShortenReferencesFacility.getInstance().shorten(annotationEntry)
-        } else {
-            element.addAnnotation(annotationClassId, annotationInnerText, searchForExistingEntry = false)
-        }
+    override fun invoke(context: ActionContext, element: KtElement, updater: ModPsiUpdater) {
+        element.addAnnotation(annotationClassId, annotationInnerText, searchForExistingEntry = false)
     }
 
     sealed class Kind {

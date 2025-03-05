@@ -1,7 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -57,7 +56,7 @@ class DumpProjectFiles(text: String, line: Int) : AbstractCommand(text, line) {
   }
 
   companion object {
-    const val PREFIX = CMD_PREFIX + "dumpProjectFiles"
+    internal const val PREFIX = CMD_PREFIX + "dumpProjectFiles"
 
     private val LOG = logger<DumpProjectFiles>()
 

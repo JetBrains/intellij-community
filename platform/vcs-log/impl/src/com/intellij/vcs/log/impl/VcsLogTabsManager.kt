@@ -8,14 +8,11 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts.TabTitle
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.TabGroupId
-import com.intellij.util.ContentUtilEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -26,13 +23,8 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil.updateLogUiName
 import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
-import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
-import com.intellij.vcs.log.util.GraphOptionsUtil.presentationForTabTitle
-import com.intellij.vcs.log.visible.filters.getPresentation
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
-import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class VcsLogTabsManager internal constructor(private val project: Project,
@@ -96,7 +88,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   }
 
   fun openAnotherLogTab(filters: VcsLogFilterCollection, location: VcsLogTabLocation): MainVcsLogUi {
-    val tabId = generateTabId(logManager)
+    val tabId = VcsLogTabsUtil.generateTabId(logManager)
     uiProperties.resetState(tabId)
     if (location === VcsLogTabLocation.EDITOR) {
       val editors = openEditorLogTab(tabId, true, filters)
@@ -118,7 +110,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   private fun openToolWindowLogTab(toolWindow: ToolWindow, tabId: String, focus: Boolean,
                                    filters: VcsLogFilterCollection?): MainVcsLogUi {
     val factory = getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.TOOL_WINDOW, filters)
-    val ui = openLogTab(logManager, factory, toolWindow, TAB_GROUP_ID, { u: MainVcsLogUi -> generateShortDisplayName(u) }, focus)
+    val ui = openLogTab(logManager, factory, toolWindow, TAB_GROUP_ID, { u: MainVcsLogUi -> VcsLogTabsUtil.generateShortDisplayName(u) }, focus)
     ui.onDisplayNameChange { updateLogUiName(project, ui) }
     return ui
   }
@@ -148,40 +140,11 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     private val LOG = Logger.getInstance(VcsLogTabsManager::class.java)
     val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
 
-    private fun generateShortDisplayName(ui: VcsLogUiEx): @TabTitle String {
-      val options = ui.properties.
-      getOrNull(MainVcsLogUiProperties.GRAPH_OPTIONS)
-      val optionsPresentation = options?.presentationForTabTitle ?: ""
-      val filters = ui.filterUi.filters
-      val filtersPresentation = if (filters.isEmpty) "" else filters.getPresentation(withPrefix = optionsPresentation.isNotEmpty())
-      val presentation = listOf(optionsPresentation, filtersPresentation).filter { it.isNotEmpty() }.joinToString(separator = " ")
-      return StringUtil.shortenTextWithEllipsis(presentation, 150, 20)
-    }
-
-    fun getFullName(shortName: @TabTitle String): @TabTitle String {
-      return ContentUtilEx.getFullName(VcsLogBundle.message("vcs.log.tab.name"), shortName)
-    }
-
-    @JvmStatic
-    fun generateDisplayName(ui: VcsLogUiEx): @TabTitle String {
-      return getFullName(generateShortDisplayName(ui))
-    }
-
     fun MainVcsLogUi.onDisplayNameChange(block: () -> Unit) {
       filterUi.addFilterListener { block() }
       properties.onPropertyChange(this) {
         if (it == MainVcsLogUiProperties.GRAPH_OPTIONS) block()
       }
-    }
-
-    private fun generateTabId(manager: VcsLogManager): @NonNls String {
-      val existingIds = manager.logUis.map { it.id }.toSet()
-      var newId: String
-      do {
-        newId = UUID.randomUUID().toString()
-      }
-      while (existingIds.contains(newId))
-      return newId
     }
   }
 }

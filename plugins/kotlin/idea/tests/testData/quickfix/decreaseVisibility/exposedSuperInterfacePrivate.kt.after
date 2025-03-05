@@ -1,4 +1,5 @@
 // "Make 'Derived' private" "true"
+// PRIORITY: HIGH
 // ACTION: Add full qualifier
 // ACTION: Implement interface
 // ACTION: Introduce import alias

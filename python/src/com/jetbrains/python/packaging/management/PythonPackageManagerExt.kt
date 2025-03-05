@@ -8,15 +8,15 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.targetPath
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.net.HttpConfigurable
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
@@ -31,13 +31,13 @@ import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.prepareHelperScriptExecution
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
+@RequiresBackgroundThread
 fun PythonPackageManager.launchReload() {
-  (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
+  runBlockingCancellable {
     runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
       reloadPackages()
     }

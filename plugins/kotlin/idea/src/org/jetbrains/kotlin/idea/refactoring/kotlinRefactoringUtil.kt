@@ -26,12 +26,12 @@ import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.asJava.*
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.asJava.namedUnwrappedElement
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -40,16 +40,20 @@ import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.createKotlinFile
+import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.rename.canonicalRender
 import org.jetbrains.kotlin.idea.roots.isOutsideKotlinAwareSourceRoot
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.calls.util.getCallWithAssert
@@ -57,7 +61,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.typeUtil.unCapture
-import java.util.*
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory as newToPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile as newToPsiFile
 
@@ -81,20 +84,6 @@ fun getOrCreateKotlinFile(
     packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
 ): KtFile =
     (targetDir.findFile(fileName) ?: createKotlinFile(fileName, targetDir, packageName)) as KtFile
-
-fun createKotlinFile(
-    fileName: String,
-    targetDir: PsiDirectory,
-    packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
-): KtFile {
-    targetDir.checkCreateFile(fileName)
-    val packageFqName = packageName?.let(::FqName) ?: FqName.ROOT
-    val file = PsiFileFactory.getInstance(targetDir.project).createFileFromText(
-        fileName, KotlinFileType.INSTANCE, if (!packageFqName.isRoot) "package ${packageFqName.quoteSegmentsIfNeeded()} \n\n" else ""
-    )
-
-    return targetDir.add(file) as KtFile
-}
 
 fun PsiElement.getUsageContext(): PsiElement {
     return when (this) {
@@ -143,7 +132,9 @@ fun PsiFile.getLineStartOffset(line: Int): Int? {
 }
 
 internal fun broadcastRefactoringExit(project: Project, refactoringId: String) {
+    // We send events both to the old K1 specific and new frontend-agnostic topic from here
     project.messageBus.syncPublisher(KotlinRefactoringEventListener.EVENT_TOPIC).onRefactoringExit(refactoringId)
+    project.messageBus.syncPublisher(KotlinRefactoringListener.EVENT_TOPIC).onRefactoringExit(refactoringId)
 }
 
 // IMPORTANT: Target refactoring must support KotlinRefactoringEventListener

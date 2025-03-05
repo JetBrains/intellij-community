@@ -35,6 +35,11 @@ public class IrBreakpointHighlightingTestGenerated extends AbstractIrBreakpointH
         runTest("testData/highlighting/anonymousFun.kt");
     }
 
+    @TestMetadata("breakpointInInternalInlineFun.kt")
+    public void testBreakpointInInternalInlineFun() throws Exception {
+        runTest("testData/highlighting/breakpointInInternalInlineFun.kt");
+    }
+
     @TestMetadata("conditionalReturn.kt")
     public void testConditionalReturn() throws Exception {
         runTest("testData/highlighting/conditionalReturn.kt");

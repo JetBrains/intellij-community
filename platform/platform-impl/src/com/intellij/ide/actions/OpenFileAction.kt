@@ -172,8 +172,11 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
 
     LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, virtualFile)
     readAction { virtualFile.fileType }.takeIf { it != FileTypes.UNKNOWN }
-    ?: FileTypeChooser.associateFileType(virtualFile.name)
+    ?: withContext(Dispatchers.EDT) {
+      FileTypeChooser.associateFileType(virtualFile.name)
+    }
     ?: return
+
     if (project == null || project.isDefault) {
       PlatformProjectOpenProcessor.createTempProjectAndOpenFileAsync(file, OpenProjectTask { projectToClose = project })
     }

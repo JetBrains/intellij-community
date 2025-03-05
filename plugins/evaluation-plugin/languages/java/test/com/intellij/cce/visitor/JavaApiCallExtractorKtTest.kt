@@ -1,25 +1,13 @@
 package com.intellij.cce.visitor
 
-
-import com.intellij.cce.evaluable.chat.extractCalledInternalApiMethods
+import com.intellij.cce.java.chat.extractCalledInternalApiMethods
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class JavaApiCallExtractorKtTest : BasePlatformTestCase() {
-  private lateinit var psiFileFactory: PsiFileFactoryImpl
-  private lateinit var psiElementFactory: PsiElementFactory
-
-  override fun setUp() {
-    super.setUp()
-    psiFileFactory = PsiFileFactoryImpl.getInstance(project) as PsiFileFactoryImpl
-    psiElementFactory = PsiElementFactory.getInstance(project)
-  }
-
   fun `test extract internal API methods within project`() {
     val code = """
             public class MyClass {
@@ -82,6 +70,7 @@ class JavaApiCallExtractorKtTest : BasePlatformTestCase() {
     assertSize(1, internalMethods)
     assertEquals("foo", internalMethods[0].name)
   }
+
 
   private fun createPsiFile(code: String): PsiFile {
     val project = myFixture.project

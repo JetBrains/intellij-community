@@ -21,11 +21,10 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   }
 
   @Override
-  @Nullable
-  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(final @NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
     return null;
   }
 
@@ -46,5 +45,13 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
 
   @Override
   public void assertValid(String message) {
+  }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyNoneType(this);
+    }
+    return visitor.visitPyType(this);
   }
 }

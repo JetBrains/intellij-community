@@ -241,7 +241,7 @@ object LessonUtil {
     EditorModificationUtil.setReadOnlyHint(editor, LearnBundle.message("learn.task.read.only.hint"))
   }
 
-  fun actionName(actionId: String): @NlsActions.ActionText String {
+  fun actionName(@Language("devkit-action-id") actionId: String): @NlsActions.ActionText String {
     val name = getActionById(actionId).templatePresentation.text?.replace("...", "")
     return "<strong>${name}</strong>"
   }
@@ -477,7 +477,7 @@ fun LessonContext.highlightOldDebugActionsToolbar(highlightInside: Boolean = fal
 }
 
 fun TaskContext.highlightToolbarWithAction(place: String,
-                                           actionId: String,
+                                           @Language("devkit-action-id") actionId: String,
                                            highlightInside: Boolean,
                                            usePulsation: Boolean,
                                            clearPreviousHighlights: Boolean = true) {
@@ -655,7 +655,7 @@ fun LessonContext.restoreChangedSettingsInformer(restoreSettings: () -> Unit) {
   }
 }
 
-fun LessonContext.highlightButtonById(actionId: String,
+fun LessonContext.highlightButtonById(@Language("devkit-action-id") actionId: String,
                                       highlightInside: Boolean = true,
                                       usePulsation: Boolean = true,
                                       clearHighlights: Boolean = true,

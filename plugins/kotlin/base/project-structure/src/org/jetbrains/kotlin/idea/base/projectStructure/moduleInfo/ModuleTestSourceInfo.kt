@@ -9,16 +9,15 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.base.facet.additionalVisibleModules
 import org.jetbrains.kotlin.idea.base.facet.stableName
-import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
-import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.ModuleSourcesScope
-import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.closure
 
 //TODO: (module refactoring) do not create ModuleTestSourceInfo when there are no test roots for module
+@K1ModeProjectStructureApi
 data class ModuleTestSourceInfo internal constructor(
     override val module: Module
 ) : ModuleSourceInfoWithExpectedBy(forProduction = false), IdeaModuleInfo {
@@ -27,6 +26,9 @@ data class ModuleTestSourceInfo internal constructor(
 
     override val displayedName: String
         get() = KotlinBaseProjectStructureBundle.message("module.name.0.test", module.name)
+
+    override val sourceModuleKind: KaSourceModuleKind
+        get() = KaSourceModuleKind.TEST
 
     override val stableName: Name by lazy { module.stableName }
 

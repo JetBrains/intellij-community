@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="testcontainers-junit-jupiter" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.testcontainers:junit-jupiter:1.20.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/testcontainers/junit-jupiter/1.20.3/junit-jupiter-1.20.3.jar">
+          <sha256sum>3b0f0422993e571f3460d8436a0e56538bd474147084a6cbb244a6d5cb1a01a5</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/junit-jupiter/1.20.3/junit-jupiter-1.20.3.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/junit-jupiter/1.20.3/junit-jupiter-1.20.3-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/testcontainers/junit-jupiter/1.20.3/junit-jupiter-1.20.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

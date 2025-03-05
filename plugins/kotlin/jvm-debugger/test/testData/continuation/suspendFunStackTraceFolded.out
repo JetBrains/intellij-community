@@ -5,7 +5,6 @@ suspendFunStackTraceFolded.kt:12
 Thread stack trace:
 	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendFunStackTraceFoldedKt$main$1 (continuation)
 		($result, this)
-CoroutineInfo: 1 coroutine RUNNING
 	<hidden frames>
 	KotlinStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceFoldedKt (continuation)
 		()

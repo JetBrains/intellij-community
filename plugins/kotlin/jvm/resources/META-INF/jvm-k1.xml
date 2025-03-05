@@ -24,7 +24,7 @@
         <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
         <projectService serviceInterface="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"
-                        serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"/>
+                        serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunnerK1"/>
 
         <framework.type implementation="org.jetbrains.kotlin.idea.framework.JavaFrameworkType"/>
 
@@ -53,8 +53,6 @@
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider"/>
 
-        <scratch.creationHelper language="kotlin"
-                                implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileCreationHelper"/>
         <runLineMarkerContributor language="kotlin"
                                   implementationClass="org.jetbrains.kotlin.idea.scratch.actions.ScratchRunLineMarkerContributor"/>
 
@@ -82,11 +80,6 @@
                    description="Whether to use Psi Source type checking optimization"
                    defaultValue="true"
                    restartRequired="true"/>
-
-      <registryKey key="kotlin.jps.instrument.bytecode"
-                   description="Enable bytecode instrumentation for Kotlin classes"
-                   defaultValue="false"
-                   restartRequired="false"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.uast">

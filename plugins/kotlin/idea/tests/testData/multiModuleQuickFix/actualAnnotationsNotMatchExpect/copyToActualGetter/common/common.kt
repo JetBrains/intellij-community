@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 @Target(AnnotationTarget.PROPERTY_GETTER)
 annotation class Ann
 

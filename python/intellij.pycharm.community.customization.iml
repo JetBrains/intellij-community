@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="intellij.jupyter.viewOnly" />
     <orderEntry type="module" module-name="intellij.pycharm.community.ide.impl.promotion" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.pycharm.community.ide.implTraining" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.pycharm.community.customization.shared" scope="RUNTIME" />
   </component>
 </module>

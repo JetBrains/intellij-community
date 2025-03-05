@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.PyDebuggerException;
@@ -10,7 +10,7 @@ public class LoadSourceCommand extends AbstractCommand {
 
   private String myContent = null;
 
-  protected LoadSourceCommand(@NotNull final RemoteDebugger debugger, String path) {
+  protected LoadSourceCommand(final @NotNull RemoteDebugger debugger, String path) {
     super(debugger, LOAD_SOURCE);
     myPath = path;
   }
@@ -21,7 +21,7 @@ public class LoadSourceCommand extends AbstractCommand {
   }
 
   @Override
-  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(final @NotNull ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     myContent = ProtocolParser.parseSourceContent(response.getPayload());
   }
@@ -31,8 +31,7 @@ public class LoadSourceCommand extends AbstractCommand {
     payload.add(myPath);
   }
 
-  @Nullable
-  public String getContent() {
+  public @Nullable String getContent() {
     return myContent;
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
+import java.util.concurrent.CancellationException
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -97,6 +98,9 @@ class JsonSchemaObjectStorage {
     }
     return try {
       schemaFile.inputStream.use<InputStream, JsonNode?>(suitableReader::readTree)
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (exception: Exception) {
       Logger.getInstance("JsonSchemaReader2").warn("Unable to parse JSON schema from the given file '${schemaFile.name}'", exception)

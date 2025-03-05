@@ -187,20 +187,20 @@ public interface DfaMemoryState {
   void flushVariable(@NotNull DfaVariableValue variable);
 
   /**
-   * Flush given variable (forget any knowledge about it)
-   * @param variable to flush
-   * @param canonicalize whether to canonicalize the variable before flushing. Flushing canonical variable allows to forget
-   *                     about all known aliases as well. Flushing without canonicalization could be necessary only
-   *                     to simplify memory state, if it's known that given variable is never used anymore.
-   */
-  void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize);
-
-  /**
    * Flush all the variables for which filter returns true
    *
    * @param filter filter to check whether the variable should be flushed
    */
   void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter);
+
+  /**
+   * Forget variables matching the predicate. Only knowledge about given variables will be flushed,
+   * no derived variables will be affected. This method could be used to simplify the memory state, flushing the variables
+   * which are not used after that point.
+   * 
+   * @param filter filter to check whether the variable should be forgotten
+   */
+  void forgetVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter);
 
   /**
    * Mark this state as ephemeral. See {@link #isEphemeral()} for details.

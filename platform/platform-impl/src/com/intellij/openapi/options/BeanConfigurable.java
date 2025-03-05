@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -12,10 +12,7 @@ import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import kotlin.reflect.KMutableProperty0;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -254,40 +251,9 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     myFields.add(new CheckboxField(new BeanKPropertyAccessor<>(prop), title));
   }
 
-  /**
-   * Adds custom component (e.g. edit box).
-   * Initial value is obtained from {@code beanGetter} and applied to the component via {@code componentSetter}.
-   * E.g. text is read from the model and set to the edit box.
-   * After the apply, the value from the component is queried via {@code componentGetter} and written back to model via {@code beanSetter}.
-   * E.g. text from the edit box is queried and saved back to model bean.
-   *
-   * @deprecated Use {@see com.intellij.openapi.options.BoundConfigurable} and Kotlin UI DSL for complex configurables
-   */
-  @Deprecated(forRemoval = true)
-  protected <V> void component(@NotNull JComponent component, @NotNull Getter<? extends V> beanGetter, @NotNull Setter<? super V> beanSetter, @NotNull Getter<? extends V> componentGetter, @NotNull Setter<? super V> componentSetter) {
-    BeanField<JComponent> field = new BeanField<>(new BeanMethodAccessor<V>(beanGetter, beanSetter)) {
-      @NotNull
-      @Override
-      JComponent createComponent() {
-        return component;
-      }
-
-      @Override
-      Object getComponentValue() {
-        return componentGetter.get();
-      }
-
-      @Override
-      void setComponentValue(Object value) {
-        componentSetter.set((V)value);
-      }
-    };
-    myFields.add(field);
-  }
-
   @Override
-  public @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                               @NotNull Function<? super String, @Nls String> nameConverter) {
+  public @Unmodifiable @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
+                                                                             @NotNull Function<? super String, @Nls String> nameConverter) {
     List<CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     Object instance = getInstance();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
@@ -335,7 +301,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
   }
 
-  private List<JComponent> getComponents() {
+  private @Unmodifiable List<JComponent> getComponents() {
     return ContainerUtil.map(myFields, field -> field.getComponent());
   }
 }

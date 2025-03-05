@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.history.LocalHistory;
@@ -33,15 +33,15 @@ import java.util.List;
 /**
  * This service finds correspondence of lines of a file in a specified timestamp in VCS/local history and current state of the file.
  */
-class LineHistoryMapper {
+final class LineHistoryMapper {
   private static final Logger LOG = Logger.getInstance(LineHistoryMapper.class);
   private final Object myLock = new Object();
   private final Project myProject;
   private final VirtualFile myFile;
   private final Document myDocument;
   private final long myDate;
-  protected SoftReference<Int2IntMap> myNewToOldLines;
-  protected SoftReference<Int2IntMap> myOldToNewLines;
+  private SoftReference<Int2IntMap> myNewToOldLines;
+  private SoftReference<Int2IntMap> myOldToNewLines;
   private volatile SoftReference<byte[]> myOldContent;
 
   LineHistoryMapper(Project project, VirtualFile file, Document document, long date) {
@@ -67,8 +67,7 @@ class LineHistoryMapper {
     return myOldContent != null;
   }
 
-  @Nullable
-  public Int2IntMap getOldToNewLineMapping() {
+  public @Nullable Int2IntMap getOldToNewLineMapping() {
     if (myOldToNewLines == null) {
       myOldToNewLines = doGetLineMapping(true);
       if (myOldToNewLines == null) return null;
@@ -76,8 +75,7 @@ class LineHistoryMapper {
     return myOldToNewLines.get();
   }
 
-  @Nullable
-  public Int2IntMap getNewToOldLineMapping() {
+  public @Nullable Int2IntMap getNewToOldLineMapping() {
     if (myNewToOldLines == null) {
       myNewToOldLines = doGetLineMapping(false);
       if (myNewToOldLines == null) return null;
@@ -179,7 +177,7 @@ class LineHistoryMapper {
     });
   }
 
-  protected Int2IntMap buildMapping(Diff.Change change, int firstNLines) {
+  private static Int2IntMap buildMapping(Diff.Change change, int firstNLines) {
     Int2IntMap result = new Int2IntOpenHashMap();
     int prevLineInFirst = 0;
     int prevLineInSecond = 0;

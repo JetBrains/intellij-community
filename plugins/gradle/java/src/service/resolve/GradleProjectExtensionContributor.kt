@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
@@ -46,10 +47,15 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
     val factory = PsiElementFactory.getInstance(containingFile.project)
     val manager = containingFile.manager
 
-    val staticExtensions = getGradleStaticallyHandledExtensions(place.project)
+    val module = ModuleUtilCore.findModuleForPsiElement(place)
+    val versionCatalogNames = if (module != null) {
+      getVersionCatalogFiles(module).keys
+    } else {
+      emptySet()
+    }
 
     for (extension in extensions) {
-      if (staticExtensions.contains(extension.name)) continue
+      if (versionCatalogNames.contains(extension.name)) continue
 
       val delegateType = createType(factory, extension.typeFqn, place.resolveScope)
       if (delegateType !is PsiClassType) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ReadAction;
@@ -36,40 +36,33 @@ public final class FunctionalExpressionSearch extends ExtensibleQueryFactory<Psi
       myScope = scope;
     }
 
-    @Nullable
-    public PsiMethod getMethod() {
+    public @Nullable PsiMethod getMethod() {
       return myMethod;
     }
 
-    @NotNull
-    public PsiClass getElementToSearch() {
+    public @NotNull PsiClass getElementToSearch() {
       return myElementToSearch;
     }
 
-    @NotNull
-    public SearchScope getEffectiveSearchScope () {
+    public @NotNull SearchScope getEffectiveSearchScope () {
       return myScope.intersectWith(PsiSearchHelper.getInstance(myProject).getUseScope(myElementToSearch));
     }
 
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myProject;
     }
   }
 
-  @NotNull
-  public static Query<PsiFunctionalExpression> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+  public static @NotNull Query<PsiFunctionalExpression> search(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
     SearchParameters parameters = ReadAction.compute(() -> new SearchParameters(aClass, scope));
     return INSTANCE.createUniqueResultsQuery(parameters, element -> ReadAction.compute(()->SmartPointerManager.getInstance(parameters.myProject).createSmartPsiElementPointer(element)));
   }
 
-  @NotNull
-  public static Query<PsiFunctionalExpression> search(@NotNull PsiMethod psiMethod) {
+  public static @NotNull Query<PsiFunctionalExpression> search(@NotNull PsiMethod psiMethod) {
     return search(psiMethod, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(psiMethod)));
   }
 
-  @NotNull
-  public static Query<PsiFunctionalExpression> search(@NotNull PsiMethod psiMethod, @NotNull SearchScope scope) {
+  public static @NotNull Query<PsiFunctionalExpression> search(@NotNull PsiMethod psiMethod, @NotNull SearchScope scope) {
     return ReadAction.compute(() -> {
       if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         PsiClass containingClass = psiMethod.getContainingClass();
@@ -81,8 +74,7 @@ public final class FunctionalExpressionSearch extends ExtensibleQueryFactory<Psi
     });
   }
 
-  @NotNull
-  public static Query<PsiFunctionalExpression> search(@NotNull PsiClass aClass) {
+  public static @NotNull Query<PsiFunctionalExpression> search(@NotNull PsiClass aClass) {
     return search(aClass, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass)));
   }
 }

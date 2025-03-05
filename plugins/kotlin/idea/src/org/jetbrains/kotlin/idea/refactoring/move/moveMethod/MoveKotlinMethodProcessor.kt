@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.move.moveMethod
 
 import com.intellij.ide.util.EditorHelper
@@ -60,11 +60,11 @@ class MoveKotlinMethodProcessor(
         )
     }
 
-    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         return showConflicts(conflicts, refUsages.get())
     }
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
         val changeInfo = MoveContainerChangeInfo(
             MoveContainerInfo.Class(method.containingClassOrObject!!.fqName!!),
             MoveContainerInfo.Class(targetClassOrObject.fqName!!)
@@ -75,12 +75,12 @@ class MoveKotlinMethodProcessor(
         val internalUsages = mutableSetOf<UsageInfo>()
         val methodCallUsages = mutableSetOf<UsageInfo>()
 
-        methodCallUsages += ReferencesSearch.search(method, searchScope).mapNotNull { ref ->
+        methodCallUsages += ReferencesSearch.search(method, searchScope).asIterable().mapNotNull { ref ->
             KotlinMoveRenameUsage.createIfPossible(ref, method, addImportToOriginalFile = true, isInternal = method.isAncestor(ref.element))
         }
 
         if (targetVariableIsMethodParameter()) {
-            internalUsages += ReferencesSearch.search(targetVariable, searchScope).mapNotNull { ref ->
+            internalUsages += ReferencesSearch.search(targetVariable, searchScope).asIterable().mapNotNull { ref ->
                 KotlinMoveRenameUsage.createIfPossible(ref, targetVariable, addImportToOriginalFile = false, isInternal = true)
             }
         }

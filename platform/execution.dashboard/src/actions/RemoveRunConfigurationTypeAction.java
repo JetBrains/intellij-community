@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -51,7 +52,7 @@ final class RemoveRunConfigurationTypeAction extends DumbAwareAction {
     runDashboardManager.setTypes(types);
   }
 
-  private static Set<ConfigurationType> getTargetTypes(AnActionEvent e) {
+  private static @Unmodifiable Set<ConfigurationType> getTargetTypes(AnActionEvent e) {
     List<RunDashboardRunConfigurationNode> nodes = ServiceViewActionUtils.getTargets(e, RunDashboardRunConfigurationNode.class);
     return ContainerUtil.map2Set(nodes, node -> node.getConfigurationSettings().getType());
   }

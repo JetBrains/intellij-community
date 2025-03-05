@@ -8,7 +8,9 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.AndroidGrad
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.GradleVersionTestsProperty
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.KotlinGradlePluginVersionTestsProperty
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.SimpleProperties
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import java.io.File
 
 class KotlinTestProperties private constructor(
@@ -36,6 +38,13 @@ class KotlinTestProperties private constructor(
             put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
             put(GradleVersionTestsProperty.id, gradleVersion.version)
             put(AndroidGradlePluginVersionTestsProperty.id, agpVersion)
+            if (kotlinGradlePluginVersion < KotlinGradlePluginVersions.V_2_1_0) {
+                put("androidTargetPlaceholder", "android()")
+                put("iosTargetPlaceholder", "ios()")
+            } else {
+                put("androidTargetPlaceholder", "androidTarget()")
+                put("iosTargetPlaceholder", "iosX64()\niosArm64()\niosSimulatorArm64()")
+            }
         }
 
         var result = text

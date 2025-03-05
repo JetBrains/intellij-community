@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class LVTTest extends SingleClassesTestBase {
   @Override
-  protected Map<String, String> getDecompilerOptions() {
+  protected Map<String, Object> getDecompilerOptions() {
     return Map.of(
       IFernflowerPreferences.DECOMPILE_INNER,"1",
       IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES,"1",

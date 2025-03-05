@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.CommonBundle;
@@ -13,6 +13,7 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.customization.CustomActionsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -32,6 +33,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -240,9 +242,8 @@ public final class RunContentBuilder extends RunTab {
 
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
     ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(mainGroupId);
-    AnAction[] mainChildren = toolbarGroup.getChildren(null);
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
-    addAvoidingDuplicates(actionGroup, mainChildren);
+    addAvoidingDuplicates(actionGroup, ((CustomisedActionGroup)toolbarGroup).getDefaultChildrenOrStubs());
 
     DefaultActionGroup afterRunActions = new DefaultActionGroup(restartActions);
     if (!isNewLayout) {
@@ -252,10 +253,10 @@ public final class RunContentBuilder extends RunTab {
 
     MoreActionGroup moreGroup = null;
     if (isNewLayout) {
-      moreGroup = new MoreActionGroup();
+      moreGroup = createToolbarMoreActionGroup(actionGroup);
       ActionGroup moreActionGroup =
         (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP);
-      addAvoidingDuplicates(moreGroup, moreActionGroup.getChildren(null), mainChildren);
+      addAvoidingDuplicates(moreGroup, ((CustomisedActionGroup)moreActionGroup).getDefaultChildrenOrStubs());
     }
 
     addActionsWithConstraints(afterRunActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
@@ -369,8 +370,7 @@ public final class RunContentBuilder extends RunTab {
       return super.getChildren(e);
     }
 
-    @Nullable
-    private static Component getEventComponent(@Nullable AnActionEvent e) {
+    private static @Nullable Component getEventComponent(@Nullable AnActionEvent e) {
       if (e == null) return null;
       SingleContentSupplier supplier = e.getData(SingleContentSupplier.KEY);
       return supplier != null ? supplier.getTabs().getComponent() : null;
@@ -427,10 +427,24 @@ public final class RunContentBuilder extends RunTab {
     }
   }
 
-  public static void addAvoidingDuplicates(DefaultActionGroup group, AnAction[] actions, AnAction[] existingActions) {
-    addAvoidingDuplicates(group, actions, Constraints.LAST, existingActions);
+  /**
+   * Creates a {@link MoreActionGroup} for the specified toolbar action group.
+   * The returned group excludes actions from the toolbar in its post-processed
+   * visible children.
+   */
+  @ApiStatus.Internal
+  public static MoreActionGroup createToolbarMoreActionGroup(ActionGroup toolbarGroup) {
+    return new MoreActionGroup() {
+      @Override
+      public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                                                 @NotNull List<? extends @NotNull AnAction> visibleChildren) {
+        List<? extends AnAction> toolbarChildren = e.getUpdateSession().children(toolbarGroup);
+        return ContainerUtil.filter(visibleChildren, action -> action instanceof Separator || !toolbarChildren.contains(action));
+      }
+    };
   }
 
+  @ApiStatus.Internal
   public static void addAvoidingDuplicates(DefaultActionGroup group, AnAction[] actions) {
     addAvoidingDuplicates(group, actions, Constraints.LAST, AnAction.EMPTY_ARRAY);
   }

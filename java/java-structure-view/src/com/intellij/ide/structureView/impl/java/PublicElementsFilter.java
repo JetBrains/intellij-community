@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class PublicElementsFilter implements Filter{
-  @NonNls public static final String ID = "SHOW_NON_PUBLIC";
+  public static final @NonNls String ID = "SHOW_NON_PUBLIC";
 
   @Override
   public boolean isVisible(TreeElement treeNode) {
@@ -24,15 +24,13 @@ public class PublicElementsFilter implements Filter{
   }
 
   @Override
-  @NotNull
-  public ActionPresentation getPresentation() {
+  public @NotNull ActionPresentation getPresentation() {
     return new ActionPresentationData(JavaStructureViewBundle.message("action.structureview.show.non.public"), null,
                                       IconManager.getInstance().getPlatformIcon(PlatformIcons.Private));
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return ID;
   }
 

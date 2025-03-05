@@ -32,18 +32,24 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.DiskQueryRelay;
+import com.intellij.platform.buildData.productInfo.CustomProperty;
+import com.intellij.platform.buildData.productInfo.CustomPropertyNames;
+import com.intellij.platform.ide.productInfo.IdeProductInfo;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -60,8 +66,8 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -146,7 +152,7 @@ public final class AboutDialog extends DialogWrapper {
   }
 
   private @NotNull Box getText() {
-    Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
     List<String> lines = new ArrayList<>();
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
 
@@ -161,6 +167,12 @@ public final class AboutDialog extends DialogWrapper {
     lines.add(result.first);
     lines.add("");
     myInfo.add(result.second);
+    CustomProperty revision = ContainerUtil.find(
+      IdeProductInfo.getInstance().getCurrentProductInfo()
+        .getCustomProperties(), o -> CustomPropertyNames.GIT_REVISION.equals(o.getKey()));
+    if (revision != null) {
+      myInfo.add("Source revision: " + revision.getValue());
+    }
 
     LicensingFacade la = LicensingFacade.getInstance();
     if (la != null) {
@@ -193,11 +205,11 @@ public final class AboutDialog extends DialogWrapper {
     lines.add("");
     myInfo.add(MessageFormat.format("VM: {0} by {1}", vmVersion, vmVendor));
 
-    //Print extra information from plugins
+    // Print extra information from plugins
     for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensionList()) {
       String description = aboutInfoProvider.getDescription();
       if (description != null) {
-        lines.add(description);
+        lines.add(cleanupDescriptionText(description, false));
         lines.add("");
       }
     }
@@ -288,7 +300,7 @@ public final class AboutDialog extends DialogWrapper {
     for (var aboutInfoProvider : EP_NAME.getExtensionList()) {
       var description = aboutInfoProvider.getExtendedDescription();
       if (description != null) {
-        text.append(description).append('\n');
+        text.append(cleanupDescriptionText(description, true)).append('\n');
       }
     }
 
@@ -331,6 +343,17 @@ public final class AboutDialog extends DialogWrapper {
     return text.toString();
   }
 
+  private static @NotNull String cleanupDescriptionText(@NotNull String description, boolean allowMultiline) {
+    var textOnly = Jsoup.parse(description).text().trim();
+    if (allowMultiline) {
+      return textOnly;
+    } else {
+      return textOnly.replace("\r\n", " ")
+        .replace("\r", " ")
+        .replace("\n", " ");
+    }
+  }
+
   private static void showOssInfo(JComponent component) {
     @NlsSafe String licenseText;
     try {
@@ -347,7 +370,7 @@ public final class AboutDialog extends DialogWrapper {
             }
             matcher.appendTail(sb);
             content = sb.toString();
-            if (StartupUiUtil.isUnderDarcula()) {
+            if (StartupUiUtil.INSTANCE.isDarkTheme()) {
               content = content.replace("779dbd", "5676a0");
             }
             return content;

@@ -13,7 +13,7 @@ import com.intellij.psi.search.UsageSearchContext
 import org.toml.lang.lexer.TomlLexer
 import org.toml.lang.psi.TOML_COMMENTS
 
-class TomlTodoIndexer : LexerBasedTodoIndexer() {
+private class TomlTodoIndexer : LexerBasedTodoIndexer() {
     override fun createLexer(consumer: OccurrenceConsumer): Lexer = object : BaseFilterLexer(TomlLexer(), consumer) {
         override fun advance() {
             if (myDelegate.tokenType in TOML_COMMENTS) {

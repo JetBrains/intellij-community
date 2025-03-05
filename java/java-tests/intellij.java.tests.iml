@@ -6,7 +6,6 @@
       <sourceFolder url="file://$MODULE_DIR$/testData/inspection" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/testGen" isTestSource="true" generated="true" />
-      <sourceFolder url="file://$MODULE_DIR$/generate-to-string" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -16,9 +15,14 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.impl.inspections" />
     <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.diff" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.java.i18n" exported="" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
@@ -40,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="easymock" level="project" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
@@ -85,10 +90,16 @@
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.junit.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.navbar.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.unscramble" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.todo" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.codeserver.core" scope="TEST" />
   </component>
 </module>

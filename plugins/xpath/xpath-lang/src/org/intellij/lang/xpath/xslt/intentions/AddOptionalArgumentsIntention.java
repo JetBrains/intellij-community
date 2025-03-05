@@ -36,14 +36,12 @@ import java.util.Set;
 public class AddOptionalArgumentsIntention extends AddWithParamFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.add.optional.argument");
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return getFamilyName();
     }
 
@@ -75,7 +73,7 @@ public class AddOptionalArgumentsIntention extends AddWithParamFix {
         }
 
         myTag = tag;
-        return params.size() > 0 && isAvailableAt(element, tag, offset);
+        return !params.isEmpty() && isAvailableAt(element, tag, offset);
     }
 
     protected static boolean isAvailableAt(PsiElement element, XmlTag tag, int offset) {

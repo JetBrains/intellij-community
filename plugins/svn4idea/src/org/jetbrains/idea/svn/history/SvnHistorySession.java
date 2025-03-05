@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -19,7 +22,7 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
   private final boolean myHasLocalSource;
 
   public SvnHistorySession(SvnVcs vcs, final List<? extends VcsFileRevision> revisions, final FilePath committedPath, final boolean haveMergeSources,
-                           @Nullable final VcsRevisionNumber currentRevision, boolean skipRefreshOnStart, boolean source) {
+                           final @Nullable VcsRevisionNumber currentRevision, boolean skipRefreshOnStart, boolean source) {
     super(revisions, currentRevision);
     myVcs = vcs;
     myCommittedPath = committedPath;
@@ -31,8 +34,7 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber calcCurrentRevisionNumber() {
+  public @Nullable VcsRevisionNumber calcCurrentRevisionNumber() {
     if (myCommittedPath == null) {
       return null;
     }

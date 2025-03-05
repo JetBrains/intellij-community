@@ -26,9 +26,9 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
 
-final class WelcomeScreenActionsUtil {
+public final class WelcomeScreenActionsUtil {
 
-  static @NotNull CustomComponentAction createToolbarTextButtonAction(@NotNull AnAction action) {
+  public static @NotNull CustomComponentAction createToolbarTextButtonAction(@NotNull AnAction action) {
     return new CustomComponentAction() {
       @Override
       public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {

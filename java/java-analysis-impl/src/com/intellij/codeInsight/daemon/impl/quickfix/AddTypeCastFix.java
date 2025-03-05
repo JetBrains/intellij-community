@@ -42,8 +42,7 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.typecast.family");
   }
 

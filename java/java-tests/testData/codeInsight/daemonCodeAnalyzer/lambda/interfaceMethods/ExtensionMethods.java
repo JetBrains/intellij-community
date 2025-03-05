@@ -50,14 +50,14 @@ class D {
 }
 
 interface IllegalMods {
-  void m1()<error descr="'{' or ';' expected"> </error>default<error descr="Identifier or type expected">;</error> <error descr="Not allowed in interface">{ }</error>
+  void m1()<error descr="'{' or ';' expected"> </error>default<error descr="Identifier or type expected">;</error> <error descr="Class initializer is not allowed in interface">{ }</error>
 
-  <error descr="Static methods in interfaces should have a body">static void m2()</error>;
+  <error descr="Static methods in interfaces should have a body">static void m2();</error>
   <error descr="Illegal combination of modifiers 'static' and 'default'">static</error> <error descr="Illegal combination of modifiers 'default' and 'static'">default</error> void m3() { }
 
   <error descr="Illegal combination of modifiers 'abstract' and 'default'">abstract</error> <error descr="Illegal combination of modifiers 'default' and 'abstract'">default</error> void m4() { }
 
-  <error descr="Extension method should have a body">default void m5()</error>;
+  <error descr="Extension method should have a body">default void m5();</error>
 
   <error descr="Modifier 'default' not allowed here">default</error> int i;
   <error descr="Modifier 'default' not allowed here">default</error> interface X { }

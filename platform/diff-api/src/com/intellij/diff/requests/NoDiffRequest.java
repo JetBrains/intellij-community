@@ -17,15 +17,18 @@ package com.intellij.diff.requests;
 
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 public class NoDiffRequest extends MessageDiffRequest {
   public static final NoDiffRequest INSTANCE = new NoDiffRequest();
 
+  @ApiStatus.Internal
   public NoDiffRequest(@Nullable @NlsContexts.DialogTitle String title) {
     super(title, IdeCoreBundle.message("message.nothingToShow"));
   }
 
+  @ApiStatus.Internal
   public NoDiffRequest() {
     super(IdeCoreBundle.message("message.nothingToShow"));
   }

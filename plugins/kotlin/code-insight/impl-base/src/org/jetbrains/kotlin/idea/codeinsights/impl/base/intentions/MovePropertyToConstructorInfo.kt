@@ -6,8 +6,13 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -40,6 +45,23 @@ sealed interface MovePropertyToConstructorInfo {
     fun toWritable(updater: ModPsiUpdater): MovePropertyToConstructorInfo
 
     companion object {
+        // This is needed to always render the lower bounds for flexible types.
+        // Flexible types cannot be represented in Kotlin, so without this renderer,
+        // syntax errors might be caused by flexible types.
+        @OptIn(KaExperimentalApi::class)
+        private val LOWER_FLEXIBLE_BOUND_TYPE_RENDERER: KaTypeRenderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+            flexibleTypeRenderer = object : KaFlexibleTypeRenderer {
+                override fun renderType(
+                    analysisSession: KaSession,
+                    type: KaFlexibleType,
+                    typeRenderer: KaTypeRenderer,
+                    printer: PrettyPrinter
+                ) {
+                    typeRenderer.renderType(analysisSession, type.lowerBound, printer)
+                }
+            }
+        }
+
         context(KaSession)
         @OptIn(KaExperimentalApi::class)
         fun create(element: KtProperty, initializer: KtExpression? = element.initializer): MovePropertyToConstructorInfo? {
@@ -54,7 +76,10 @@ sealed interface MovePropertyToConstructorInfo {
                     propertyAnnotationsText = propertyAnnotationsText,
                 )
             } else {
-                val typeText = element.typeReference?.text ?: element.symbol.returnType.render(position = Variance.INVARIANT)
+                val typeText = element.typeReference?.text ?: element.symbol.returnType.render(
+                    position = Variance.INVARIANT,
+                    renderer = LOWER_FLEXIBLE_BOUND_TYPE_RENDERER
+                )
                 return AdditionalParameter(
                     parameterTypeText = typeText,
                     propertyAnnotationsText = propertyAnnotationsText,

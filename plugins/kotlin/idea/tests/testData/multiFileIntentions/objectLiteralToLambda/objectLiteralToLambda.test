@@ -1,6 +1,6 @@
 {
   "mainFile": "source/test.kt",
-  "intentionClass": "org.jetbrains.kotlin.idea.intentions.ObjectLiteralToLambdaIntention",
+  "intentionClass": "org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectLiteralToLambdaIntention",
   "intentionText": "Convert to lambda",
   "withRuntime": "true"
 }

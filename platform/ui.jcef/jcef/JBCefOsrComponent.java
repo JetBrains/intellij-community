@@ -49,7 +49,7 @@ class JBCefOsrComponent extends JPanel {
   private final @NotNull AtomicLong myScheduleResizeMs = new AtomicLong(-1);
   private @Nullable Alarm myResizeAlarm;
 
-  private final @NotNull Alarm myGraphicsConfigurationAlarm = new Alarm();
+  private final @NotNull Alarm myGraphicsConfigurationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   AtomicBoolean myScaleInitialized = new AtomicBoolean(false);
 
   private @NotNull Disposable myDisposable;
@@ -69,16 +69,6 @@ class JBCefOsrComponent extends JPanel {
     setFocusable(true);
     setRequestFocusEnabled(true);
     setFocusTraversalKeysEnabled(false);
-    addFocusListener(new FocusListener() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        myBrowser.setFocus(true);
-      }
-      @Override
-      public void focusLost(FocusEvent e) {
-        myBrowser.setFocus(false);
-      }
-    });
 
     addInputMethodListener(myInputMethodAdapter);
 
@@ -350,7 +340,7 @@ class JBCefOsrComponent extends JPanel {
       composition.reset();
     }
 
-    static private boolean areHomogenous(MouseWheelEvent e1, MouseWheelEvent e2) {
+    private static boolean areHomogenous(MouseWheelEvent e1, MouseWheelEvent e2) {
       if (e1 == null || e2 == null) return false;
 
       double distance = Point2D.distance(e1.getX(), e1.getY(), e2.getX(), e2.getY());

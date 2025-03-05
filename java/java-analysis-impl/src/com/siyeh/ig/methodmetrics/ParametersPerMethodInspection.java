@@ -24,14 +24,12 @@ import org.jetbrains.annotations.NotNull;
 public final class ParametersPerMethodInspection extends MethodMetricInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MethodWithTooManyParameters";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer parameterCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "parameters.per.method.problem.descriptor", parameterCount);

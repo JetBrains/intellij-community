@@ -1,7 +1,15 @@
 def f(x) -> int | None:
-    if x == 1:
+    y = 42
+    print(y)
+    <weak_warning descr="Explicit return statement expected">if x == 1:
         return 42
     elif x == 2:
-        <warning descr="Function returning 'int | None' has implicit 'return None'">return<caret></warning>
+        <weak_warning descr="Explicit return value expected">return<caret></weak_warning>
     elif x == 3:
-        pass
+        raise Exception()
+    elif x == 4:
+        assert False
+    elif x == 5:
+        <weak_warning descr="Explicit return statement expected">assert x</weak_warning>
+    elif x == 4:
+        <weak_warning descr="Explicit return statement expected">pass</weak_warning></weak_warning>

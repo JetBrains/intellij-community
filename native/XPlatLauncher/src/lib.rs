@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #![warn(
 absolute_paths_not_starting_with_crate,
@@ -11,7 +11,6 @@ missing_abi,
 missing_copy_implementations,
 non_ascii_idents,
 noop_method_call,
-pointer_structural_match,
 rust_2021_incompatible_closure_captures,
 rust_2021_incompatible_or_patterns,
 rust_2021_prefixes_incompatible_syntax,
@@ -78,7 +77,7 @@ pub fn main_lib() {
     let remote_dev = remote_dev_launcher_used || server_mode_argument_used;
     let sandbox_subprocess = cfg!(target_os = "windows") && env::args().any(|arg| arg.contains("--type="));
 
-    let debug_mode = remote_dev || env::var(DEBUG_MODE_ENV_VAR).is_ok();
+    let debug_mode = env::var(DEBUG_MODE_ENV_VAR).is_ok();
 
     #[cfg(target_os = "windows")]
     {
@@ -88,7 +87,8 @@ pub fn main_lib() {
     }
 
     if let Err(e) = main_impl(exe_path, remote_dev, debug_mode, sandbox_subprocess, remote_dev_launcher_used) {
-        ui::show_error(!debug_mode, e);
+        let gui_mode = !debug_mode && !sandbox_subprocess;
+        ui::show_error(gui_mode, e);
         std::process::exit(1);
     }
 }
@@ -383,7 +383,7 @@ pub fn get_caches_home() -> Result<PathBuf> {
 #[cfg(target_os = "windows")]
 fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
     debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
-    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, HANDLE::default()) }?;
+    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, None) }?;
     let result_str = unsafe { result.to_string() }?;
     debug!("  result: {}", result_str);
     Ok(PathBuf::from(result_str))
@@ -437,7 +437,7 @@ fn win_user_profile_dir() -> Result<String> {
     let mut size = buf.len() as u32;
     debug!("Calling GetUserProfileDirectoryW({:?})", token);
     let result = unsafe {
-        Shell::GetUserProfileDirectoryW(token, PWSTR::from_raw(buf.as_mut_ptr()), std::ptr::addr_of_mut!(size))
+        Shell::GetUserProfileDirectoryW(token, Some(PWSTR::from_raw(buf.as_mut_ptr())), std::ptr::addr_of_mut!(size))
     };
     debug!("  result: {:?}, size: {}", result, size);
     if result.is_ok() {

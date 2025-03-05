@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.FilePath;
 import java.util.Comparator;
 
 public final class FilePathByPathComparator implements Comparator<FilePath> {
-  private final static FilePathByPathComparator ourInstance = new FilePathByPathComparator();
+  private static final FilePathByPathComparator ourInstance = new FilePathByPathComparator();
 
   public static FilePathByPathComparator getInstance() {
     return ourInstance;

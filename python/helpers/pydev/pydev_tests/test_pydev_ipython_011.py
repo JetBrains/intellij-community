@@ -9,6 +9,8 @@ from _pydev_bundle.pydev_stdin import StdIn
 from _pydev_bundle.pydev_localhost import get_localhost
 from _pydev_comm.pydev_rpc import make_rpc_client
 from _pydevd_bundle import pydevd_io
+from _pydevd_bundle.pydevd_constants import IS_PY2
+from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 from pydev_console.pydev_protocol import PythonConsoleFrontendService, PythonConsoleBackendService
 from pydevconsole import enable_thrift_logging, create_server_handler_factory
 
@@ -17,19 +19,21 @@ try:
 except:
     xrange = range
 
+
 def eq_(a, b):
     if a != b:
         raise AssertionError('%s != %s' % (a, b))
-    
+
+
 try:
     from IPython import core
     has_ipython = True
 except:
     has_ipython = False
 
+
 @pytest.mark.skipif(not has_ipython, reason='IPython not available')
 class TestBase(unittest.TestCase):
-
 
     def setUp(self):
         from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend
@@ -40,7 +44,7 @@ class TestBase(unittest.TestCase):
         self.front_end = get_pydev_ipython_frontend(None)
 
         from pydev_ipython.inputhook import set_return_control_callback
-        set_return_control_callback(lambda:True)
+        set_return_control_callback(lambda: True)
         self.front_end.clear_buffer()
 
     def tearDown(self):
@@ -67,32 +71,28 @@ class TestPyDevFrontEnd(TestBase):
     def testAddExec_1(self):
         self.add_exec('if True:', True)
 
-    
     def testAddExec_2(self):
-        #Change: 'more' must now be controlled in the client side after the initial 'True' returned.
+        # Change: 'more' must now be controlled in the client side after the initial 'True' returned.
         self.add_exec('if True:\n    testAddExec_a = 10\n', False)
         assert 'testAddExec_a' in self.front_end.get_namespace()
 
-    
     def testAddExec_3(self):
         assert 'testAddExec_x' not in self.front_end.get_namespace()
         self.add_exec('if True:\n    testAddExec_x = 10\n\n')
         assert 'testAddExec_x' in self.front_end.get_namespace()
         eq_(self.front_end.get_namespace()['testAddExec_x'], 10)
 
-    
     def test_get_namespace(self):
         assert 'testGetNamespace_a' not in self.front_end.get_namespace()
         self.add_exec('testGetNamespace_a = 10')
         assert 'testGetNamespace_a' in self.front_end.get_namespace()
         eq_(self.front_end.get_namespace()['testGetNamespace_a'], 10)
 
-    
     def test_complete(self):
         unused_text, matches = self.front_end.complete('%')
         assert len(matches) > 1, 'at least one magic should appear in completions'
 
-    
+    @pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-780')
     def test_complete_does_not_do_python_matches(self):
         # Test that IPython's completions do not do the things that
         # PyDev's completions will handle
@@ -102,7 +102,6 @@ class TestPyDevFrontEnd(TestBase):
         unused_text, matches = self.front_end.complete('testComplete_')
         assert len(matches) == 0
 
-    
     def testGetCompletions_1(self):
         # Test the merged completions include the standard completions
         self.add_exec('testComplete_a = 5')
@@ -113,7 +112,6 @@ class TestPyDevFrontEnd(TestBase):
         assert len(matches) == 3
         eq_(set(['testComplete_a', 'testComplete_b', 'testComplete_c']), set(matches))
 
-    
     def testGetCompletions_2(self):
         # Test that we get IPython completions in results
         # we do this by checking kw completion which PyDev does
@@ -123,7 +121,6 @@ class TestPyDevFrontEnd(TestBase):
         matches = [f[0] for f in res]
         assert 'ABC=' in matches
 
-    
     def testGetCompletions_3(self):
         # Test that magics return IPYTHON magic as type
         res = self.front_end.getCompletions('%cd', '%cd')
@@ -133,7 +130,7 @@ class TestPyDevFrontEnd(TestBase):
 
 @pytest.mark.skipif(not has_ipython, reason='IPython not available')
 class TestRunningCode(TestBase):
-    
+
     def test_print(self):
         self.redirect_stdout()
         try:
@@ -142,7 +139,6 @@ class TestRunningCode(TestBase):
         finally:
             self.restore_stdout()
 
-    
     def testQuestionMark_1(self):
         self.redirect_stdout()
         try:
@@ -153,7 +149,6 @@ class TestRunningCode(TestBase):
         finally:
             self.restore_stdout()
 
-    
     def testQuestionMark_2(self):
         self.redirect_stdout()
         try:
@@ -164,8 +159,7 @@ class TestRunningCode(TestBase):
         finally:
             self.restore_stdout()
 
-
-    
+    @pytest.mark.xfail(IS_PY2, reason="PCQA-716")
     def test_gui(self):
         try:
             import Tkinter
@@ -181,7 +175,6 @@ class TestRunningCode(TestBase):
             self.add_exec('%gui none')
             assert get_inputhook() is None
 
-    
     def test_history(self):
         ''' Make sure commands are added to IPython's history '''
         self.redirect_stdout()
@@ -201,7 +194,6 @@ class TestRunningCode(TestBase):
         finally:
             self.restore_stdout()
 
-    
     def test_edit(self):
         ''' Make sure we can issue an edit command'''
         if os.environ.get('TRAVIS') == 'true':
@@ -304,4 +296,3 @@ class TestRunningCode(TestBase):
             assert called_RequestInput[0], "Make sure the 'wait' parameter has been respected"
         finally:
             sys.stdin = orig_stdin
-

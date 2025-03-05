@@ -32,9 +32,8 @@ public final class PyDemorganIntention extends PsiUpdateModCommandAction<PyBinar
     super(PyBinaryExpression.class);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.demorgan.law");
   }
 
@@ -70,8 +69,7 @@ public final class PyDemorganIntention extends PsiUpdateModCommandAction<PyBinar
     // TODO codeStyleManager.reformat(insertedElement)
   }
 
-  @NotNull
-  private static String convertConjunctionExpression(@NotNull PyBinaryExpression exp, @NotNull PyElementType tokenType) {
+  private static @NotNull String convertConjunctionExpression(@NotNull PyBinaryExpression exp, @NotNull PyElementType tokenType) {
     final PyExpression lhs = exp.getLeftExpression();
     final String lhsText;
     final String rhsText;
@@ -94,8 +92,7 @@ public final class PyDemorganIntention extends PsiUpdateModCommandAction<PyBinar
     return lhsText + flippedConjunction + rhsText;
   }
 
-  @NotNull
-  private static String convertLeafExpression(@Nullable PyExpression condition) {
+  private static @NotNull String convertLeafExpression(@Nullable PyExpression condition) {
     if (condition == null) {
       return "";
     }
@@ -114,8 +111,7 @@ public final class PyDemorganIntention extends PsiUpdateModCommandAction<PyBinar
     }
   }
 
-  @Nullable
-  private static PyExpression getNegated(@NotNull PyExpression expression) {
+  private static @Nullable PyExpression getNegated(@NotNull PyExpression expression) {
     return ((PyPrefixExpression)expression).getOperand();  // TODO strip ()
   }
 

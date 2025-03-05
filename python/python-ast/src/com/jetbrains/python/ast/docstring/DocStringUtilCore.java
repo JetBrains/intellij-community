@@ -16,8 +16,7 @@ public final class DocStringUtilCore {
   private DocStringUtilCore() {
   }
 
-  @Nullable
-  public static String getDocStringValue(@NotNull PyAstDocStringOwner owner) {
+  public static @Nullable String getDocStringValue(@NotNull PyAstDocStringOwner owner) {
     return PyPsiUtilsCore.strValue(owner.getDocStringExpression());
   }
 
@@ -27,8 +26,7 @@ public final class DocStringUtilCore {
    * @param parent where to look. For classes and functions, this would be PyStatementList, for modules, PyFile.
    * @return the defining expression, or null.
    */
-  @Nullable
-  public static PyAstStringLiteralExpression findDocStringExpression(@Nullable PyAstElement parent) {
+  public static @Nullable PyAstStringLiteralExpression findDocStringExpression(@Nullable PyAstElement parent) {
     if (parent != null) {
       PsiElement seeker = PyPsiUtilsCore.getNextNonCommentSibling(parent.getFirstChild(), false);
       if (seeker instanceof PyAstExpressionStatement) seeker = PyPsiUtilsCore.getNextNonCommentSibling(seeker.getFirstChild(), false);
@@ -41,8 +39,7 @@ public final class DocStringUtilCore {
    * Returns containing docstring expression of class definition, function definition or module.
    * Useful to test whether particular PSI element is or belongs to such docstring.
    */
-  @Nullable
-  public static PyAstStringLiteralExpression getParentDefinitionDocString(@NotNull PsiElement element) {
+  public static @Nullable PyAstStringLiteralExpression getParentDefinitionDocString(@NotNull PsiElement element) {
     final PyAstDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyAstDocStringOwner.class);
     if (docStringOwner != null) {
       final PyAstStringLiteralExpression docString = docStringOwner.getDocStringExpression();

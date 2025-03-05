@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -6,6 +6,7 @@ import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -100,8 +101,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
     myCbAlwaysSmartStep = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.always.smart.step.into"));
     myCbSkipSyntheticMethods = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
@@ -140,7 +140,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     group.add(myRbEvaluateFinallyAlways);
     group.add(myRbEvaluateFinallyNever);
     group.add(myRbEvaluateFinallyAsk);
-    final Box box = Box.createHorizontalBox();
+    final JBBox box = JBBox.createHorizontalBox();
     box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
     box.add(myRbEvaluateFinallyAlways);
     box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));

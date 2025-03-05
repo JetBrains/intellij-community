@@ -7,9 +7,9 @@ import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ProcessingContext;
 import com.intellij.restructuredtext.RestUtil;
 import com.intellij.restructuredtext.psi.RestDirectiveBlock;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -35,7 +35,7 @@ public class OptionCompletionContributor extends CompletionContributor {
                  final PsiFile file = parameters.getOriginalFile();
                  String prefix = getPrefix(offset, file);
 
-                 if (prefix.length() > 0) {
+                 if (!prefix.isEmpty()) {
                    result = result.withPrefixMatcher(prefix);
                  }
                  for (String tag : RestUtil.getDirectiveOptions(original.getDirectiveName())) {

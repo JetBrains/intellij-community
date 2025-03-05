@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -13,7 +14,6 @@ import java.awt.Rectangle
 
 fun Driver.hasFocus(c: Component) = utility(IJSwingUtilities::class).hasFocus(c)
 fun Driver.hasFocus(c: UiComponent) = hasFocus(c.component)
-
 
 fun Driver.requestFocusFromIde(project: Project?) {
   fileLogger().info("Requesting focus from IDE for project: $project")
@@ -46,20 +46,19 @@ val UiComponent.boundsOnScreen
 
 val UiComponent.accessibleName: String? get() = component.getAccessibleContext()?.getAccessibleName()
 
+val Component.rdTarget get() = (this as RefWrapper).getRef().rdTarget()
+
 @Remote("com.intellij.util.IJSwingUtilities")
 interface IJSwingUtilities {
   fun hasFocus(c: Component): Boolean
 }
 
-@Remote("java.awt.Rectangle")
-interface RectangleRef {
-  fun contains(p: Point): Boolean
-  fun getX(): Double
-  fun getY(): Double
-  fun getWidth(): Double
-  fun getCenterX(): Double
-  fun getCenterY(): Double
+@Remote("javax.swing.SwingUtilities")
+interface SwingUtilities {
+  fun computeDifference(rectA: Rectangle, rectB: Rectangle): Array<Rectangle>
 }
+
+val Rectangle.center: Point get() = Point(centerX.toInt(), centerY.toInt())
 
 fun printableString(toPrint: String): String {
   val resultString = toPrint.let {

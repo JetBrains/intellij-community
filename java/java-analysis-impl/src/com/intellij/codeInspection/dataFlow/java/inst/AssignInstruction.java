@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.java.inst;
 
@@ -19,47 +19,40 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-import static com.intellij.util.ObjectUtils.tryCast;
-
 public class AssignInstruction extends ExpressionPushingInstruction {
   private final PsiExpression myRExpression;
   private final PsiExpression myLExpression;
-  @Nullable private final DfaValue myAssignedValue;
+  private final @Nullable DfaValue myAssignedValue;
 
   public AssignInstruction(PsiExpression rExpression, @Nullable DfaValue assignedValue) {
     this(getLeftHandOfAssignment(rExpression), rExpression, assignedValue);
   }
 
   public AssignInstruction(PsiExpression lExpression, PsiExpression rExpression, @Nullable DfaValue assignedValue) {
-    super(getAnchor(rExpression));
+    super(getAnchor(lExpression));
     myLExpression = lExpression;
     myRExpression = rExpression;
     myAssignedValue = assignedValue;
   }
 
-  @Nullable
-  private static DfaAnchor getAnchor(PsiExpression rExpression) {
-    if (rExpression == null) return null;
-    PsiAssignmentExpression expression = tryCast(rExpression.getParent(), PsiAssignmentExpression.class);
-    return expression == null ? null : new JavaExpressionAnchor(expression);
+  private static @Nullable DfaAnchor getAnchor(PsiExpression lExpression) {
+    if (lExpression == null) return null;
+    if (lExpression.getParent() instanceof PsiExpression expression &&
+        (expression instanceof PsiAssignmentExpression || PsiUtil.isIncrementDecrementOperation(expression))) {
+      return new JavaExpressionAnchor(expression);
+    }
+    return null;
   }
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myAssignedValue == null) return this;
     return new AssignInstruction(myLExpression, myRExpression, myAssignedValue.bindToFactory(factory));
-  }
-
-  @Override
-  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
-    return ContainerUtil.createMaybeSingletonList(tryCast(myAssignedValue, DfaVariableValue.class));
   }
 
   @Override
@@ -74,6 +67,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     }
     interpreter.getListener().beforeAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
     if (dfaSource == dfaDest) {
+      interpreter.getListener().afterAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
       stateBefore.push(dfaDest);
       return nextStates(interpreter, stateBefore);
     }
@@ -94,6 +88,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
         }
       }
       stateBefore.setVarValue(var, dfaSource);
+      interpreter.getListener().afterAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
       if (DfaNullability.fromDfType(var.getInherentType()) == DfaNullability.NULLABLE &&
           DfaNullability.fromDfType(stateBefore.getDfType(var)) == DfaNullability.UNKNOWN && isVariableInitializer()) {
         stateBefore.meetDfType(var, DfaNullability.NULLABLE.asDfType());
@@ -104,18 +99,15 @@ public class AssignInstruction extends ExpressionPushingInstruction {
     return nextStates(interpreter, stateBefore);
   }
 
-  @Nullable
-  public PsiExpression getRExpression() {
+  public @Nullable PsiExpression getRExpression() {
     return myRExpression;
   }
 
-  @Nullable
-  public PsiExpression getLExpression() {
+  public @Nullable PsiExpression getLExpression() {
     return myLExpression;
   }
 
-  @Nullable
-  public DfaValue getAssignedValue() {
+  public @Nullable DfaValue getAssignedValue() {
     return myAssignedValue;
   }
 
@@ -124,8 +116,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static PsiExpression getLeftHandOfAssignment(PsiExpression rExpression) {
+  private static @Nullable PsiExpression getLeftHandOfAssignment(PsiExpression rExpression) {
     if(rExpression == null) return null;
     if(rExpression.getParent() instanceof PsiAssignmentExpression) {
       return ((PsiAssignmentExpression)rExpression.getParent()).getLExpression();

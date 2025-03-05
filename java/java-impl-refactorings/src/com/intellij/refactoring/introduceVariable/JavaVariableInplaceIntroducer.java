@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -32,9 +32,9 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation;
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil;
@@ -107,8 +107,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  @Nullable
-  protected PsiVariable getVariable() {
+  protected @Nullable PsiVariable getVariable() {
     final PsiElement declarationStatement = myPointer != null ? myPointer.getElement() : null;
     if (declarationStatement instanceof PsiDeclarationStatement) {
       PsiElement[] declaredElements = ((PsiDeclarationStatement)declarationStatement).getDeclaredElements();
@@ -353,10 +352,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     }
   }
 
-  @Nullable
-  private static @NlsContexts.PopupAdvertisement String getAdvertisementText(final PsiDeclarationStatement declaration,
-                                                                             final PsiType type,
-                                                                             final boolean hasTypeSuggestion) {
+  private static @Nullable @NlsContexts.PopupAdvertisement String getAdvertisementText(final PsiDeclarationStatement declaration,
+                                                                                       final PsiType type,
+                                                                                       final boolean hasTypeSuggestion) {
     final VariablesProcessor processor = ReassignVariableUtil.findVariablesOfType(declaration, type);
     if (processor.size() > 0) {
       final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("IntroduceVariable");
@@ -400,7 +398,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
     if (isReplaceAllOccurrences()) {
       List<RangeMarker> occurrences = new ArrayList<>();
-      ReferencesSearch.search(variable).forEach(reference -> {
+      ReferencesSearch.search(variable).asIterable().forEach(reference -> {
         occurrences.add(createMarker(reference.getElement()));
       });
       setOccurrenceMarkers(occurrences);
@@ -422,8 +420,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     return variable;
   }
 
-  @Nullable
-  protected PsiVariable introduceVariable() {
+  protected @Nullable PsiVariable introduceVariable() {
     PsiElement anchor = myChosenAnchor.getElement();
     if (anchor == null) return null;
     PsiVariable variable = VariableExtractor.introduce(myProject, myExpr, myEditor, anchor, getOccurrences(), mySettings);

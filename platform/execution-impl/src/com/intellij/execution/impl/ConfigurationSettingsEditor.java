@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.impl;
 
@@ -31,8 +31,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 
 public final class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
@@ -79,7 +79,7 @@ public final class ConfigurationSettingsEditor extends CompositeSettingsEditor<R
         }
       }
 
-      if (myRunnerEditors.size() > 0) {
+      if (!myRunnerEditors.isEmpty()) {
         myCompound.addEditor(getRunnersTabName(),
                              new CompositeSettingsEditor<>(getFactory()) {
                                @Override

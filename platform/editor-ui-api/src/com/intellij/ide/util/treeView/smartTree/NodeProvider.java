@@ -3,6 +3,7 @@ package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -17,5 +18,6 @@ public interface NodeProvider<T extends TreeElement> extends TreeAction, Possibl
    * @return a collection of additional children for the specified node
    */
   @NotNull
+  @Unmodifiable
   Collection<T> provideNodes(@NotNull TreeElement node);
 }

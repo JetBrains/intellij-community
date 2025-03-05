@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.ide.CommonActionsManager;
@@ -90,8 +90,7 @@ public final class AntBuildMessageView extends JPanel
   private volatile int myWarningCount;
   private volatile boolean myIsOutputPaused;
 
-  @NotNull
-  private volatile AntOutputView myCurrentView;
+  private volatile @NotNull AntOutputView myCurrentView;
 
   private final PlainTextView myPlainTextView;
   private final TreeView myTreeView;
@@ -130,8 +129,7 @@ public final class AntBuildMessageView extends JPanel
       AntBuildMessageView.this.expandAll();
     }
   };
-  @NonNls
-  private static final String FILE_PREFIX = "file:";
+  private static final @NonNls String FILE_PREFIX = "file:";
 
   private AntBuildMessageView(Project project, AntBuildFileBase buildFile, List<String> targets, List<BuildFileProperty> additionalProperties) {
     super(new BorderLayout(2, 0));
@@ -234,8 +232,7 @@ public final class AntBuildMessageView extends JPanel
   /**
    * @return can be null if user cancelled operation
    */
-  @Nullable
-  static AntBuildMessageView openBuildMessageView(Project project,
+  static @Nullable AntBuildMessageView openBuildMessageView(Project project,
                                                   AntBuildFileBase buildFile,
                                                   List<String> targets,
                                                   List<BuildFileProperty> additionalProperties) {
@@ -408,8 +405,7 @@ public final class AntBuildMessageView extends JPanel
     addCommand(new AddMessageCommand(message));
   }
 
-  @Nullable
-  private static AntMessage getCustomizedMessage(final @Nls String text, @AntMessage.Priority int priority) {
+  private static @Nullable AntMessage getCustomizedMessage(final @Nls String text, @AntMessage.Priority int priority) {
     AntMessage customizedMessage = null;
 
     for (AntMessageCustomizer customizer : AntMessageCustomizer.EP_NAME.getExtensionList()) {
@@ -668,8 +664,7 @@ public final class AntBuildMessageView extends JPanel
       myMessage = message;
     }
 
-    @NotNull
-    final AntMessage getMessage() {
+    final @NotNull AntMessage getMessage() {
       return myMessage;
     }
   }
@@ -806,7 +801,7 @@ public final class AntBuildMessageView extends JPanel
     return myWarningCount;
   }
 
-  void buildFinished(boolean isProgressAborted, final long buildTimeInMilliseconds, @NotNull final AntBuildListener antBuildListener, OutputPacketProcessor dispatcher) {
+  void buildFinished(boolean isProgressAborted, final long buildTimeInMilliseconds, final @NotNull AntBuildListener antBuildListener, OutputPacketProcessor dispatcher) {
     final boolean aborted = isProgressAborted || myIsAborted;
 
     dispatcher.processOutput(__ -> {
@@ -900,11 +895,11 @@ public final class AntBuildMessageView extends JPanel
       sb.append(seconds / 3600).append("h ");
       seconds %= 3600;
     }
-    if (seconds >= 60 || sb.length() > 0) {
+    if (seconds >= 60 || !sb.isEmpty()) {
       sb.append(seconds / 60).append("m ");
       seconds %= 60;
     }
-    if (seconds > 0 || sb.length() > 0) {
+    if (seconds > 0 || !sb.isEmpty()) {
       sb.append(seconds).append("s");
     }
     return sb.toString();
@@ -962,15 +957,13 @@ public final class AntBuildMessageView extends JPanel
     }
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return myTreeView.getNextOccurenceActionName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return myTreeView.getPreviousOccurenceActionName();
   }
 

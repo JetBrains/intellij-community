@@ -7,6 +7,7 @@ import com.google.gson.stream.JsonReader
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -14,6 +15,7 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.*
 import org.jetbrains.intellij.build.jpsCache.*
+import org.jetbrains.intellij.build.impl.Git
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.intellij.build.telemetry.withTracer
@@ -154,7 +156,7 @@ private suspend fun doDownload(
 ): Int {
   return withContext(Dispatchers.IO) {
     val zstdDecompressContextPool = ZstdDecompressContextPool()
-    launch {
+    launch(CoroutineName("download JPS Cache")) {
       downloadAndUnpackJpsCache(
         urlPathPrefix = urlPathPrefix,
         commitHash = lastCachedCommit,

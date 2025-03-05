@@ -25,6 +25,9 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.focused
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
@@ -163,14 +166,19 @@ private fun RadioButtonImpl(
     }
 
     val wrapperModifier =
-        modifier.selectable(
-            selected = selected,
-            onClick = onClick,
-            enabled = enabled,
-            role = Role.RadioButton,
-            interactionSource = interactionSource,
-            indication = null,
-        )
+        modifier
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                enabled = enabled,
+                role = Role.RadioButton,
+                interactionSource = interactionSource,
+                indication = null,
+            )
+            .semantics(mergeDescendants = true) {
+                role = Role.RadioButton
+                focused = radioButtonState.isFocused
+            }
 
     val colors = style.colors
     val metrics = style.metrics

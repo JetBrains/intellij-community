@@ -19,7 +19,7 @@
         </clientProperties>
         <border type="none"/>
         <children>
-          <component id="3d515" class="com.intellij.openapi.ui.LabeledComponent" binding="methodField">
+          <component id="3d515" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="methodField">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -28,7 +28,7 @@
               <text resource-bundle="messages/TestngBundle" key="testng.configuration.method.label"/>
             </properties>
           </component>
-          <component id="93b2" class="com.intellij.openapi.ui.LabeledComponent" binding="suiteField">
+          <component id="93b2" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="suiteField">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -52,7 +52,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="c819c" class="com.intellij.openapi.ui.LabeledComponent" binding="packageField">
+              <component id="c819c" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="packageField">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="5" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                   <forms/>
@@ -91,7 +91,7 @@
               </component>
             </children>
           </grid>
-          <component id="ecafd" class="com.intellij.openapi.ui.LabeledComponent" binding="classField">
+          <component id="ecafd" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="classField">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -100,7 +100,7 @@
               <text resource-bundle="messages/TestngBundle" key="testng.configuration.class.label"/>
             </properties>
           </component>
-          <component id="d1d3" class="com.intellij.openapi.ui.LabeledComponent" binding="outputDirectory">
+          <component id="d1d3" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="outputDirectory">
             <constraints>
               <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -109,7 +109,7 @@
               <text resource-bundle="messages/TestngBundle" key="testng.configuration.output.directory"/>
             </properties>
           </component>
-          <component id="ba631" class="com.intellij.openapi.ui.LabeledComponent" binding="groupField">
+          <component id="ba631" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="groupField">
             <constraints>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -118,7 +118,7 @@
               <text resource-bundle="messages/TestngBundle" key="testng.configuration.group.label"/>
             </properties>
           </component>
-          <component id="d64d9" class="com.intellij.openapi.ui.LabeledComponent" binding="myPattern">
+          <component id="d64d9" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myPattern">
             <constraints>
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -129,7 +129,7 @@
               <visible value="true"/>
             </properties>
           </component>
-          <component id="7e297" class="com.intellij.openapi.ui.LabeledComponent" binding="myAsyncStackTraceForExceptions" default-binding="true">
+          <component id="7e297" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myAsyncStackTraceForExceptions" default-binding="true">
             <constraints>
               <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -158,7 +158,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="86d21" class="com.intellij.openapi.ui.LabeledComponent" binding="myShortenCommandLineCombo" custom-create="true" default-binding="true">
+              <component id="86d21" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myShortenCommandLineCombo" custom-create="true" default-binding="true">
                 <constraints>
                   <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -193,7 +193,7 @@
                 </constraints>
                 <properties/>
               </component>
-              <component id="6ab4" class="com.intellij.openapi.ui.LabeledComponent" binding="moduleClasspath">
+              <component id="6ab4" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="moduleClasspath">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -203,7 +203,7 @@
                   <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
                 </properties>
               </component>
-              <component id="8042a" class="com.intellij.openapi.ui.LabeledComponent" binding="myUseModulePath">
+              <component id="8042a" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myUseModulePath">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -222,7 +222,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="64fad" class="com.intellij.openapi.ui.LabeledComponent" binding="propertiesFile">
+              <component id="64fad" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="propertiesFile">
                 <constraints border-constraint="North"/>
                 <properties>
                   <labelLocation value="West"/>

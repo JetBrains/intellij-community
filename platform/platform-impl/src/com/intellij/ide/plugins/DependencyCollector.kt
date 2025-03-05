@@ -15,7 +15,6 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
 internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollector>() {
-
   @Attribute("kind")
   @JvmField
   @RequiredElement
@@ -27,6 +26,7 @@ internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollect
   var implementation: String = ""
 
   companion object {
+    @JvmField
     val EP_NAME: ExtensionPointName<DependencyCollectorBean> = ExtensionPointName("com.intellij.dependencyCollector")
   }
 
@@ -54,7 +54,6 @@ interface DependencyCollector {
  * library/dependency, in the same format as returned from [DependencyCollector.collectDependencies] for the respective dependency kind.
  */
 internal class DependencySupportBean() : PluginAware {
-
   private var pluginDescriptor: PluginDescriptor? = null
 
   @Attribute("kind")
@@ -106,7 +105,7 @@ internal val DependencySupportBean.id: @NlsSafe String
   get() = "$kind:$coordinate"
 
 private val DEPENDENCY_COLLECTOR_EP_NAME: ExtensionPointName<DependencySupportBean> =
-  ExtensionPointName.create("com.intellij.dependencySupport")
+  ExtensionPointName("com.intellij.dependencySupport")
 
 internal val DependencySupportBean.displayNameOrId: @NlsSafe String
   get() = displayName.ifEmpty { id }

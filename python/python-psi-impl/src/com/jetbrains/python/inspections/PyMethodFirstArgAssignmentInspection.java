@@ -21,11 +21,10 @@ import java.util.List;
  */
 public final class PyMethodFirstArgAssignmentInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -44,8 +43,7 @@ public final class PyMethodFirstArgAssignmentInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private static String extractFirstParamName(PyElement node) {
+    private static @Nullable String extractFirstParamName(PyElement node) {
       // are we a method?
       List<? extends PsiElement> place = PyUtil.searchForWrappingMethod(node, true);
       if (place == null || place.size() < 2) return null;
@@ -58,7 +56,7 @@ public final class PyMethodFirstArgAssignmentInspection extends PyInspection {
       if (first_parm == null) return null;
       if (first_parm.isKeywordContainer() || first_parm.isPositionalContainer()) return null; // legal but crazy cases; back off
       final String first_param_name = first_parm.getName();
-      if (first_param_name == null || first_param_name.length() < 1) return null; // ignore cases of incorrect code
+      if (first_param_name == null || first_param_name.isEmpty()) return null; // ignore cases of incorrect code
       // is it a static method?
       PyFunction.Modifier modifier = method.getModifier();
       if (modifier == PyAstFunction.Modifier.STATICMETHOD) return null; // these may do whatever they please

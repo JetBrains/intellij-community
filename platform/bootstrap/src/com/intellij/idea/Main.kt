@@ -102,7 +102,7 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
       }
     }
 
-    if (AppMode.isRemoteDevHost()) {
+    if (AppMode.isRemoteDevHost() || java.lang.Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
       span("cwm host init") {
         initRemoteDev(args)
       }

@@ -74,7 +74,7 @@ public final class SaveProjectAsTemplateDialog extends DialogWrapper {
       }
     }
 
-    boolean showReplaceParameters = ProjectTemplateParameterFactory.EP_NAME.getExtensionList().size() > 0;
+    boolean showReplaceParameters = !ProjectTemplateParameterFactory.EP_NAME.getExtensionList().isEmpty();
     myReplaceParameters.setVisible(showReplaceParameters);
     myReplaceParameters.setSelected(showReplaceParameters);
 

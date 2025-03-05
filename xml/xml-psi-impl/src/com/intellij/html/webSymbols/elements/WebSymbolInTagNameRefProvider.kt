@@ -4,18 +4,18 @@ package com.intellij.html.webSymbols.elements
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.references.WebSymbolReferenceProvider
+import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.xml.util.XmlTagUtil
 
-class WebSymbolInTagNameRefProvider : WebSymbolReferenceProvider<XmlTag>() {
+class WebSymbolInTagNameRefProvider : PsiWebSymbolReferenceProvider<XmlTag> {
 
-  override fun getSymbol(psiElement: XmlTag): WebSymbol? =
+  override fun getReferencedSymbol(psiElement: XmlTag): WebSymbol? =
     psiElement.descriptor
       ?.asSafely<WebSymbolElementDescriptor>()
       ?.symbol
 
-  override fun getOffsetsToSymbols(psiElement: XmlTag): Map<Int, WebSymbol> =
-    getSymbol(psiElement)
+  override fun getOffsetsToReferencedSymbols(psiElement: XmlTag): Map<Int, WebSymbol> =
+    getReferencedSymbol(psiElement)
       ?.let { symbol ->
         listOfNotNull(
           XmlTagUtil.getStartTagNameElement(psiElement)?.startOffsetInParent,

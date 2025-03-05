@@ -286,7 +286,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
 
     boolean accepted = false;
-    Set<X509Certificate> selectedCerts = new HashSet<>();
+    CertificateProvider certificateProvider = new CertificateProvider();
     if (parameters.myAskUser) {
       String acceptLogMessage = "Going to ask user about certificate for: " + endPoint.getSubjectX500Principal().toString() +
                        ", issuer: " + endPoint.getIssuerX500Principal().toString();
@@ -300,7 +300,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       } else {
         accepted = CertificateManager.Companion.showAcceptDialog(() -> {
           // TODO may be another kind of warning, if default trust store is missing
-          return dialogProvider.createCertificateWarningDialog(Arrays.stream(chain).toList(), myCustomManager, remoteHost, authType, selectedCerts);
+          return dialogProvider.createCertificateWarningDialog(Arrays.stream(chain).toList(), myCustomManager, remoteHost, authType, certificateProvider);
         });
       }
     }
@@ -315,13 +315,19 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     if (accepted) {
       LOG.info("Certificate was accepted by user");
       if (parameters.myAddToKeyStore) {
-        selectedCerts.forEach(myCustomManager::addCertificate);
+        if (certificateProvider.getSelectedCertificate() == null) {
+          LOG.warn("Certificate wasn't selected, but accepted");
+          accepted = false;
+        } else {
+          myCustomManager.addCertificate(certificateProvider.getSelectedCertificate());
+        }
+      }
+      if (certificateProvider.isChainRemainUnsafe()) {
+        LOG.info("The certificate chain remains untrusted. The request execution will not proceed");
+        accepted = false;
       }
       if (parameters.myOnUserAcceptCallback != null) {
         parameters.myOnUserAcceptCallback.run();
-      }
-      if (!selectedCerts.contains(endPoint)) {
-        accepted = false;
       }
     }
     return accepted;

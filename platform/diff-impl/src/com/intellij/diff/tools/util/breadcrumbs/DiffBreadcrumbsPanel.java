@@ -63,10 +63,7 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
 
   protected abstract boolean updateCollectors(boolean enabled);
 
-  @Nullable
-  protected FileBreadcrumbsCollector findCollector(@Nullable VirtualFile file) {
-    if (file == null) return null;
-
+  private @Nullable FileBreadcrumbsCollector findCollector(@NotNull VirtualFile file) {
     FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
     if (viewProvider == null) return null;
 
@@ -75,7 +72,7 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
       return null;
     }
 
-    return findCollectorFor(myProject, file, this);
+    return FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, file);
   }
 
   @Override
@@ -84,5 +81,35 @@ public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
       return 0;
     }
     return super.getLeftOffset();
+  }
+
+  protected class DiffBreadcrumbCollectorHolder {
+    private volatile FileBreadcrumbsCollector myBreadcrumbsCollector;
+    private @NotNull Disposable myCollectorListenerDisposable = Disposer.newDisposable();
+
+    public DiffBreadcrumbCollectorHolder() {
+    }
+
+    public boolean update(@Nullable VirtualFile file, boolean enable) {
+      Disposer.dispose(myCollectorListenerDisposable);
+
+      FileBreadcrumbsCollector newCollector = enable && file != null ? findCollector(file) : null;
+
+      if (newCollector != null) {
+        Disposable newDisposable = Disposer.newDisposable(DiffBreadcrumbsPanel.this);
+        newCollector.watchForChanges(file, myEditor, newDisposable, () -> queueUpdate());
+        myBreadcrumbsCollector = newCollector;
+        myCollectorListenerDisposable = newDisposable;
+        return true;
+      }
+      else {
+        myBreadcrumbsCollector = null;
+        return false;
+      }
+    }
+
+    public @Nullable FileBreadcrumbsCollector getBreadcrumbsCollector() {
+      return myBreadcrumbsCollector;
+    }
   }
 }

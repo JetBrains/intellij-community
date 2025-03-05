@@ -26,6 +26,7 @@ import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +42,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -313,6 +314,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
+  @Contract(mutates = "param1")
   private void sortPropertiesAndCreateGroups(List<Property> rootProperties) {
     if (!mySorted && !myShowGroups) return;
 

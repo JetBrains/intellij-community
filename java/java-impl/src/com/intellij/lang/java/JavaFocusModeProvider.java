@@ -5,12 +5,13 @@ import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
 import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public final class JavaFocusModeProvider implements FocusModeProvider {
   @Override
-  public @NotNull List<? extends Segment> calcFocusZones(@NotNull PsiFile file) {
+  public @Unmodifiable @NotNull List<? extends Segment> calcFocusZones(@NotNull PsiFile file) {
     return SyntaxTraverser.psiTraverser(file)
       .postOrderDfsTraversal()
       .filter(e -> e instanceof PsiClass || e instanceof PsiMethod || e instanceof PsiClassInitializer)

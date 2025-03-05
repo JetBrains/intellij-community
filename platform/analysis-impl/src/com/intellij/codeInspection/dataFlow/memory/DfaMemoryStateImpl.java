@@ -92,6 +92,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return copy;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (!(obj instanceof DfaMemoryStateImpl that)) return false;
@@ -120,6 +121,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private Integer myCachedHash;
+  @Override
   public int hashCode() {
     if (myCachedHash != null) return myCachedHash;
 
@@ -129,6 +131,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myCachedHash = hash;
   }
 
+  @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
     result.append('<');
@@ -201,7 +204,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (var == value) return;
 
     value = handleStackValueOnVariableFlush(value, var, null);
-    flushVariable(var, var.getDfType().isMergeable(var.getInherentType()));
+    flushVariable(var, var.getDfType().isMergeable(var.getInherentType()), true);
     flushQualifiedMethods(var);
 
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
@@ -1412,11 +1415,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    flushVariable(variable, true);
+    flushVariable(variable, true, true);
   }
 
   @Override
   public void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter) {
+    flushVariables(filter, false);
+  }
+
+  @Override
+  public void forgetVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter) {
+    flushVariables(filter, true);
+  }
+
+  private void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter, boolean onlyThis) {
     Set<DfaVariableValue> vars = new HashSet<>();
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
@@ -1427,11 +1439,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     vars.addAll(myVariableTypes.keySet());
     vars.removeIf(filter.negate());
-    vars.forEach(this::flushVariable);
+    vars.forEach(variable -> flushVariable(variable, !onlyThis, !onlyThis));
   }
 
-  @Override
-  public void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize) {
+  /**
+   * Flush given variable (forget any knowledge about it)
+   *
+   * @param variable     to flush
+   * @param canonicalize whether to canonicalize the variable before flushing. Flushing canonical variable allows to forget
+   *                     about all known aliases as well. Flushing without canonicalization could be necessary only
+   *                     to simplify memory state, if it's known that given variable is never used anymore.
+   * @param flushDeps    whether to flush dependencies
+   */
+  private void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize, boolean flushDeps) {
     DfaVariableValue canonical = canonicalize ? canonicalize(variable) : variable;
     EqClass eqClass = canonical.getDependentVariables().isEmpty() ? null : getEqClass(canonical);
     DfaVariableValue newCanonical =
@@ -1441,7 +1461,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myStack.replaceAll(value -> handleStackValueOnVariableFlush(value, canonical, newCanonical));
 
     doFlush(canonical, false);
-    flushDependencies(canonical);
+    if (flushDeps) {
+      flushDependencies(canonical);
+    }
     myCachedHash = null;
   }
 
@@ -1747,7 +1769,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     private @NotNull QualifierStatus calculate(@NotNull DfaValue qualifier) {
       final DfType dfType = getDfType(qualifier);
       if (dfType.isImmutableQualifier()) return QualifierStatus.SHOULD_NOT_FLUSH;
-      if (dfType.isLocal()) {
+      if (dfType.isLocal() && !myClosure) {
         return myQualifiersToFlush != null && myQualifiersToFlush.contains(qualifier) ?
                QualifierStatus.SHOULD_FLUSH_ALWAYS : QualifierStatus.SHOULD_NOT_FLUSH;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import org.apache.maven.model.*;
@@ -17,7 +17,6 @@ import org.apache.maven.model.profile.activation.OperatingSystemProfileActivator
 import org.apache.maven.model.profile.activation.ProfileActivator;
 import org.apache.maven.model.profile.activation.PropertyProfileActivator;
 import org.apache.maven.model.root.DefaultRootLocator;
-import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -137,24 +136,6 @@ public final class Maven40ProfileUtil {
       new OperatingSystemProfileActivator()};
   }
 
-  public static Collection<String> collectActivatedProfiles(MavenProject mavenProject) {
-    // for some reason project's active profiles do not contain parent's profiles - only local and settings'.
-    // parent's profiles do not contain settings' profiles.
-
-    List<Profile> profiles = new ArrayList<>();
-    try {
-      while (mavenProject != null) {
-        profiles.addAll(mavenProject.getActiveProfiles());
-        mavenProject = mavenProject.getParent();
-      }
-    }
-    catch (Exception e) {
-      // don't bother user if maven failed to build parent project
-      MavenServerGlobals.getLogger().info(e);
-    }
-    return collectProfilesIds(profiles);
-  }
-
   private static Collection<String> collectProfilesIds(List<Profile> profiles) {
     Collection<String> result = new HashSet<>();
     for (Profile each : profiles) {
@@ -165,9 +146,13 @@ public final class Maven40ProfileUtil {
     return result;
   }
 
-  @NotNull
-  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
+  public static @NotNull MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
     Model nativeModel = Maven40ModelConverter.toNativeModel(model);
+    Model result = interpolateAndAlignModel(nativeModel, basedir, pomDir);
+    return Maven40ModelConverter.convertModel(result);
+  }
+
+  public static @NotNull Model interpolateAndAlignModel(Model nativeModel, File basedir, File pomDir) {
     DefaultPathTranslator pathTranslator = new DefaultPathTranslator();
     DefaultUrlNormalizer urlNormalizer = new DefaultUrlNormalizer();
     DefaultRootLocator rootLocator = new DefaultRootLocator();
@@ -175,7 +160,7 @@ public final class Maven40ProfileUtil {
     Model result = doInterpolate(interpolator, nativeModel, basedir);
     MyDefaultPathTranslator myPathTranslator = new MyDefaultPathTranslator(pathTranslator);
     myPathTranslator.alignToBaseDirectory(result, pomDir);
-    return Maven40ModelConverter.convertModel(result);
+    return result;
   }
 
   private static Model doInterpolate(StringVisitorModelInterpolator interpolator, @NotNull Model result, File basedir) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.icons.AllIcons;
@@ -8,8 +8,8 @@ import com.intellij.ide.util.importProject.ProjectDescriptor;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
@@ -55,9 +55,8 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     }
   }
 
-  @NotNull
   @Override
-  public Set<String> getExistingModuleNames() {
+  public @NotNull Set<String> getExistingModuleNames() {
     if (myModuleNames == null) {
       myModuleNames = new HashSet<>();
       for (Module module : myModulesProvider.getModules()) {
@@ -67,9 +66,8 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     return myModuleNames;
   }
 
-  @NotNull
   @Override
-  public Set<String> getExistingProjectLibraryNames() {
+  public @NotNull Set<String> getExistingProjectLibraryNames() {
     if (myProjectLibrariesNames == null) {
       myProjectLibrariesNames = new HashSet<>();
       LibrariesContainer container = LibrariesContainerFactory.createContainer(myContext, myModulesProvider);
@@ -80,9 +78,8 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     return myProjectLibrariesNames;
   }
 
-  @NotNull
   @Override
-  public WizardContext getContext() {
+  public @NotNull WizardContext getContext() {
     return myContext;
   }
 
@@ -102,15 +99,13 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     }
   }
 
-  @NotNull
   @Override
-  public Collection<DetectedProjectRoot> getProjectRoots(@NotNull ProjectStructureDetector detector) {
+  public @NotNull Collection<DetectedProjectRoot> getProjectRoots(@NotNull ProjectStructureDetector detector) {
     return myRoots.get(detector);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return JavaUiBundle.message("existing.sources");
   }
 
@@ -202,9 +197,8 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     return srcRoot.getPackagePrefix();
   }
 
-  @NotNull
   @Override
-  public ProjectDescriptor getProjectDescriptor(@NotNull ProjectStructureDetector detector) {
+  public @NotNull ProjectDescriptor getProjectDescriptor(@NotNull ProjectStructureDetector detector) {
     return myProjectDescriptors.get(detector);
   }
 
@@ -238,8 +232,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     return true;
   }
 
-  @Nullable
-  private static ModuleType<?> getModuleType(ModuleDescriptor moduleDescriptor) throws InvalidDataException, JDOMException, IOException {
+  private static @Nullable ModuleType<?> getModuleType(ModuleDescriptor moduleDescriptor) throws InvalidDataException, JDOMException, IOException {
     if (moduleDescriptor.isReuseExistingElement()) {
       File file = new File(moduleDescriptor.computeModuleFilePath());
       if (file.exists()) {

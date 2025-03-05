@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -357,7 +358,7 @@ fun main() {
         val zoomPane = BorderLayoutPanel()
         val zoom = zoom()
         zoomPane.addToCenter(zoom.component)
-        val box = Box(BoxLayout.X_AXIS)
+        val box = JBBox(BoxLayout.X_AXIS)
         box .add(JButton("Zoom in (+)").apply {
           addActionListener {
             val xChange = (zoom.grid.xMax - zoom.grid.xMin) / 4

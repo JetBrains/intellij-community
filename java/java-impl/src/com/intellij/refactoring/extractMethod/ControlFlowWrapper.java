@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -211,7 +211,7 @@ public final class ControlFlowWrapper {
     Variables:
     for (Iterator<PsiVariable> iterator = inputVariables.iterator(); iterator.hasNext();) {
       PsiVariable variable = iterator.next();
-      for (PsiReference ref : ReferencesSearch.search(variable, scope)) {
+      for (PsiReference ref : ReferencesSearch.search(variable, scope).asIterable()) {
         PsiElement element = ref.getElement();
         int elementOffset = myControlFlow.getStartOffset(element);
         if (elementOffset == -1) {

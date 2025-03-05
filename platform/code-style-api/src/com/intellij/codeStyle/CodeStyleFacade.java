@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeStyle;
 
 import com.intellij.lang.Language;
@@ -28,16 +28,14 @@ public abstract class CodeStyleFacade {
   /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getLineIndent(Editor, Language, int, boolean)} instead.
    */
-  @Nullable
   @Deprecated(forRemoval = true)
-  public abstract String getLineIndent(@NotNull Document document, int offset);
+  public abstract @Nullable String getLineIndent(@NotNull Document document, int offset);
 
   /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getLineIndent(Editor, Language, int, boolean)}
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+  public @Nullable String getLineIndent(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
     return getLineIndent(editor.getDocument(), offset);
   }
 

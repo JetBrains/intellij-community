@@ -153,6 +153,7 @@ class EditorWindow internal constructor(
     get() = currentCompositeFlow.value
 
   @Suppress("DEPRECATION")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use getSelectedComposite", ReplaceWith("getSelectedComposite(ignorePopup)"), level = DeprecationLevel.ERROR)
   fun getSelectedEditor(@Suppress("UNUSED_PARAMETER") ignorePopup: Boolean): EditorWithProviderComposite? {
     return selectedComposite as EditorWithProviderComposite?
@@ -424,7 +425,9 @@ class EditorWindow internal constructor(
         withContext(Dispatchers.EDT) {
           if (tab.tabPaneActions != tabActions) {
             tab.setTabPaneActions(tabActions)
-            tabbedPane.editorTabs.updateEntryPointToolbar(tabActionGroup = tabActions)
+            if (tab == tabbedPane.editorTabs.selectedInfo) {
+              tabbedPane.editorTabs.updateEntryPointToolbar(tabActionGroup = tabActions)
+            }
           }
         }
       }

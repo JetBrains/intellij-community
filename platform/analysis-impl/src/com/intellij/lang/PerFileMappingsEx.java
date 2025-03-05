@@ -5,6 +5,7 @@ package com.intellij.lang;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 public interface PerFileMappingsEx<T> extends PerFileMappings<T> {
 
   @NotNull
+  @Unmodifiable
   Map<VirtualFile, T> getMappings();
 
   void setMappings(@NotNull Map<VirtualFile, T> mappings);

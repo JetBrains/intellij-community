@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
@@ -27,18 +27,17 @@ import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlTag
+import com.intellij.psi.xml.XmlTokenType
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
 
-val attributeKeyMapping: Map<TextAttributesKey, TextAttributesKey> = mapOf<TextAttributesKey, TextAttributesKey>(
+private val attributeKeyMapping: Map<TextAttributesKey, TextAttributesKey> = mapOf<TextAttributesKey, TextAttributesKey>(
   XmlHighlighterColors.HTML_TAG_NAME to XmlHighlighterColors.HTML_CUSTOM_TAG_NAME,
   XmlHighlighterColors.XML_TAG_NAME to XmlHighlighterColors.XML_CUSTOM_TAG_NAME
 )
 
-class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEditorHighlightingPass(file.project, editor.document, true) {
-
+internal class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEditorHighlightingPass(file.project, editor.document, true) {
   private val myHolder: HighlightInfoHolder = HighlightInfoHolder(file)
   private val myHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.language, file.project, file.virtualFile)
 
@@ -72,7 +71,7 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
 
   private fun applyHighlighting(originalXmlTag: XmlTag, node: ASTNode, elementType: IElementType) {
     if (node !is LeafElement) return
-    val effectiveElementType = if (elementType == XmlElementType.XML_NAME) XmlElementType.XML_TAG_NAME else elementType
+    val effectiveElementType = if (elementType == XmlTokenType.XML_NAME) XmlTokenType.XML_TAG_NAME else elementType
 
     val attributesKeys = myHighlighter.getTokenHighlights(effectiveElementType)
     val newAttributesKeys = replaceTextAttributeKeys(originalXmlTag, attributesKeys)
@@ -98,7 +97,8 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     //debug only
     @NlsSafe val description = if (ApplicationManager.getApplication().isUnitTestMode) {
       getCustomAttributeKey(originalXmlTag)?.externalName ?: "Custom tag name"
-    } else null
+    }
+    else null
     var textAttributes = HighlightInfo.newHighlightInfo(INFORMATION)
       .severity(SYMBOL_TYPE_SEVERITY)
       .range(node)

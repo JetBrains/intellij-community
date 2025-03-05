@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.openapi.module.Module;
@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
@@ -22,7 +23,7 @@ public final class ModuleCompilerUtil {
     return ModuleRootManager.getInstance(module).getDependencies();
   }
 
-  public static @NotNull List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<? extends Module> modules) {
+  public static @Unmodifiable @NotNull List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<? extends Module> modules) {
     Collection<Chunk<ModuleSourceSet>> chunks = computeSourceSetCycles(new DefaultModulesProvider(project));
     final Set<Module> modulesSet = new HashSet<>(modules);
     return ContainerUtil.filter(chunks, chunk -> {
@@ -68,7 +69,7 @@ public final class ModuleCompilerUtil {
     }));
   }
 
-  public static @NotNull List<Chunk<ModuleSourceSet>> computeSourceSetCycles(@NotNull ModulesProvider provider) {
+  public static @Unmodifiable @NotNull List<Chunk<ModuleSourceSet>> computeSourceSetCycles(@NotNull ModulesProvider provider) {
     Graph<ModuleSourceSet> graph = createModuleSourceDependenciesGraph(provider);
     Collection<Chunk<ModuleSourceSet>> chunks = GraphAlgorithms.getInstance().computeStronglyConnectedComponents(graph);
     return removeSingleElementChunks(removeDummyNodes(filterDuplicates(removeSingleElementChunks(chunks)), provider));
@@ -99,14 +100,14 @@ public final class ModuleCompilerUtil {
     return true;
   }
 
-  private static List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<? extends Chunk<ModuleSourceSet>> chunks) {
+  private static @Unmodifiable List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<? extends Chunk<ModuleSourceSet>> chunks) {
     return ContainerUtil.filter(chunks, chunk -> chunk.getNodes().size() > 1);
   }
 
   /**
    * Remove cycles in tests included in cycles between production parts
    */
-  private static @NotNull List<Chunk<ModuleSourceSet>> filterDuplicates(@NotNull Collection<? extends Chunk<ModuleSourceSet>> sourceSetCycles) {
+  private static @Unmodifiable @NotNull List<Chunk<ModuleSourceSet>> filterDuplicates(@NotNull Collection<? extends Chunk<ModuleSourceSet>> sourceSetCycles) {
     final List<Set<Module>> productionCycles = new ArrayList<>();
 
     for (Chunk<ModuleSourceSet> cycle : sourceSetCycles) {

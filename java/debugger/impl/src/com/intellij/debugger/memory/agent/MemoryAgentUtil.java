@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -34,8 +34,7 @@ public final class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
   private static final String MEMORY_AGENT_EXTRACT_DIRECTORY = "memory.agent.extract.dir";
 
-  @Nullable
-  static String getAgentFilePathAsString(boolean isInDebugMode, @NotNull AgentExtractor.AgentLibraryType libraryType)
+  static @Nullable String getAgentFilePathAsString(boolean isInDebugMode, @NotNull AgentExtractor.AgentLibraryType libraryType)
     throws ExecutionException, InterruptedException, TimeoutException {
     Path agentFile = getAgentFile(isInDebugMode, libraryType);
     return JavaExecutionUtil.handleSpacesInAgentPath(
@@ -56,11 +55,10 @@ public final class MemoryAgentUtil {
     throw new IllegalStateException("Unsupported OS and arch: " + SystemInfo.getOsNameAndVersion() + " " + arch);
   }
 
-  @NotNull
-  public static List<JavaReferenceInfo> calculateSizes(@NotNull EvaluationContextImpl context,
-                                                       @NotNull ReferenceType classType,
-                                                       long objectsLimit,
-                                                       @NotNull ProgressIndicator progressIndicator) {
+  public static @NotNull List<JavaReferenceInfo> calculateSizes(@NotNull EvaluationContextImpl context,
+                                                                @NotNull ReferenceType classType,
+                                                                long objectsLimit,
+                                                                @NotNull ProgressIndicator progressIndicator) {
     MemoryAgent agent = MemoryAgent.get(context);
     agent.setProgressIndicator(progressIndicator);
     try {
@@ -117,8 +115,7 @@ public final class MemoryAgentUtil {
            SystemInfo.isLinux && (CpuArch.isIntel64() || CpuArch.isArm64());
   }
 
-  @NotNull
-  private static Path getAgentFile(boolean isInDebugMode, @NotNull AgentExtractor.AgentLibraryType libraryType)
+  private static @NotNull Path getAgentFile(boolean isInDebugMode, @NotNull AgentExtractor.AgentLibraryType libraryType)
     throws InterruptedException, ExecutionException, TimeoutException {
     if (isInDebugMode) {
       String debugAgentPath = Registry.get("debugger.memory.agent.debug.path").asString();

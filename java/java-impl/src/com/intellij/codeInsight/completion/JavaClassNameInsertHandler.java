@@ -54,6 +54,10 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     PsiJavaCodeReferenceElement ref = position != null && position.getParent() instanceof PsiJavaCodeReferenceElement ?
                                       (PsiJavaCodeReferenceElement) position.getParent() : null;
     PsiClass psiClass = item.getObject();
+    //psiClass after completion can be broken and not parseable, but it is expected
+    if (!psiClass.isValid()) {
+      return;
+    }
     SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.createPointer(psiClass);
     final Project project = context.getProject();
 

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class ImplicitResolveResult extends RatedResolveResult {
-  public ImplicitResolveResult(@Nullable final PsiElement element, final int rate) {
+  public ImplicitResolveResult(final @Nullable PsiElement element, final int rate) {
     super(rate, element);
   }
 }

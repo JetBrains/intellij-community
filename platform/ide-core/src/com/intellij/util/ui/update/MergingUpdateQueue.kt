@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.util.ui.update
@@ -8,8 +8,6 @@ import com.intellij.ide.UiActivity
 import com.intellij.ide.UiActivity.AsyncBgOperation
 import com.intellij.ide.UiActivityMonitor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -30,12 +28,11 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
-import kotlin.concurrent.Volatile
 import kotlin.coroutines.coroutineContext
 
 private val priorityComparator = Comparator.comparingInt<Update> { it.priority }
@@ -217,7 +214,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     }
 
     private val queues: MutableSet<MergingUpdateQueue>? = if (SystemProperties.getBooleanProperty("intellij.MergingUpdateQueue.enable.global.flusher", false)) {
-      ConcurrentCollectionFactory.createConcurrentSet()
+      ConcurrentHashMap.newKeySet()
     }
     else {
       null
@@ -246,7 +243,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         try {
           each.setRejected()
         }
-        catch (ignored: CancellationException) {
+        catch (_: CancellationException) {
         }
       }
       scheduledUpdates.clear()
@@ -324,14 +321,10 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
     waiterForMerge.scheduleTask(
       delay = mergingTimeSpan.toLong(),
-      customModality = (if (!executeInDispatchThread) {
-        null
-      }
-      else if (modalityStateComponent === ANY_COMPONENT) {
-        ModalityState.any()
-      }
-      else {
-        getModalityState()
+      customModality = (when {
+        !executeInDispatchThread -> null
+        modalityStateComponent === ANY_COMPONENT -> ModalityState.any()
+        else -> getModalityState()
       })?.asContextElement(),
     ) {
       if (isSuspended || isEmpty || isFlushing || !isModalityStateCorrect()) {
@@ -440,7 +433,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
     val current = ModalityState.current()
     val modalityState = getModalityState()
-    return !current.dominates(modalityState)
+    return current.accepts(modalityState)
   }
 
   @Internal
@@ -532,6 +525,7 @@ open class MergingUpdateQueue @JvmOverloads constructor(
     return false
   }
 
+  @Deprecated("Use {@link #execute(listOf(Update))} instead", ReplaceWith("execute(listOf(update))"), DeprecationLevel.ERROR)
   fun run(update: Update) {
     execute(listOf(update))
   }

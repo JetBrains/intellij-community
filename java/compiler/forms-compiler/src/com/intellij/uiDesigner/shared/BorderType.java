@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.shared;
 
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
@@ -36,12 +36,12 @@ public final class BorderType {
     return myName;
   }
 
-  public Border createBorder(@Nls(capitalization = Nls.Capitalization.Title) final String title,
+  public Border createBorder(final @Nls(capitalization = Nls.Capitalization.Title) String title,
                              final int titleJustification,
                              final int titlePosition,
                              final Font titleFont,
                              final Color titleColor,
-                             final Insets borderSize, 
+                             final Insets borderSize,
                              final Color borderColor) {
     Border baseBorder = myBorder;
     if (equals(EMPTY) && borderSize != null) {
@@ -63,6 +63,7 @@ public final class BorderType {
     return myBorderFactoryMethodName;
   }
 
+  @Override
   public boolean equals(final Object o){
     if (o instanceof BorderType){
       return myId.equals(((BorderType)o).myId);
@@ -70,6 +71,7 @@ public final class BorderType {
     return false;
   }
 
+  @Override
   public int hashCode(){
     return 0;
   }

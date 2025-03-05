@@ -30,7 +30,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
                                                   int endOffset,
                                                   CodeStyleSettings codeStyleSettings) {
     CharSequence whiteSpace =  super.adjustWhiteSpaceIfNecessary(whiteSpaceText, startElement, startOffset, endOffset, codeStyleSettings);
-    if (whiteSpace.length() > 0 && whiteSpace.charAt(0) == '\n' && !Strings.contains(whiteSpace, 0, whiteSpace.length(), '\\') &&
+    if (!whiteSpace.isEmpty() && whiteSpace.charAt(0) == '\n' && !Strings.contains(whiteSpace, 0, whiteSpace.length(), '\\') &&
         needInsertBackslash(startElement.getContainingFile(), startOffset, false)) {
       return addBackslashPrefix(whiteSpace, codeStyleSettings);
     }
@@ -55,9 +55,8 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
    * @param codeStyleSettings the code style settings
    * @return                  symbols to use for replacing {@code [startOffset; endOffset)} sub-sequence of the given text
    */
-  @NotNull
   @Override
-  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
+  public @NotNull CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
                                                   @NotNull CharSequence text,
                                                   int startOffset,
                                                   int endOffset,
@@ -65,8 +64,8 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     // the general idea is that '\' symbol before line feed should be preserved
     Int2IntMap initialBackSlashes = countBackSlashes(text, startOffset, endOffset);
     if (initialBackSlashes.isEmpty()) {
-      if (nodeAfter != null && whiteSpaceText.length() > 0 && whiteSpaceText.charAt(0) == '\n' &&
-        needInsertBackslash(nodeAfter, false)) {
+      if (nodeAfter != null && !whiteSpaceText.isEmpty() && whiteSpaceText.charAt(0) == '\n' &&
+          needInsertBackslash(nodeAfter, false)) {
         return addBackslashPrefix(whiteSpaceText, codeStyleSettings);
       }
       return whiteSpaceText;
@@ -203,8 +202,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     return wrappableBefore != wrappableAfter;
   }
 
-  @Nullable
-  private static PsiElement findWrappable(ASTNode nodeAtCaret, boolean before) {
+  private static @Nullable PsiElement findWrappable(ASTNode nodeAtCaret, boolean before) {
     PsiElement wrappable = before
                                  ? findBeforeCaret(nodeAtCaret, PyEditorHandlerConfig.WRAPPABLE_CLASSES)
                                  : findAfterCaret(nodeAtCaret, PyEditorHandlerConfig.WRAPPABLE_CLASSES);
@@ -219,13 +217,11 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     return wrappable;
   }
 
-  @Nullable
-  private static PsiElement findStatementBeforeCaret(ASTNode node) {
+  private static @Nullable PsiElement findStatementBeforeCaret(ASTNode node) {
     return findBeforeCaret(node, PyAstStatement.class, PyAstStatementPart.class);
   }
 
-  @Nullable
-  private static PsiElement findStatementAfterCaret(ASTNode node) {
+  private static @Nullable PsiElement findStatementAfterCaret(ASTNode node) {
     return findAfterCaret(node, PyAstStatement.class, PyAstStatementPart.class);
   }
 
@@ -249,8 +245,7 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     return null;
   }
 
-  @Nullable
-  private static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, Class<? extends T> @NotNull ... classes) {
+  private static @Nullable <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, Class<? extends T> @NotNull ... classes) {
     PsiElement run = element;
     while (run != null) {
       for (Class<? extends T> aClass : classes) {

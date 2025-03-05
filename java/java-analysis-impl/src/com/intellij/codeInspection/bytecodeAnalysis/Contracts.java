@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.Direction.ParamValueBasedDirection;
@@ -25,7 +25,7 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 abstract class ContractAnalysis extends Analysis<Result> {
   static final ResultUtil resultUtil = new ResultUtil(new ELattice<>(Value.Bot, Value.Top));
 
-  final private ExpandableArray<State> pending;
+  private final ExpandableArray<State> pending;
   final InOutInterpreter interpreter;
   final Value inValue;
   private final int generalizeShift;
@@ -59,8 +59,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
   }
 
   @Override
-  @NotNull
-  protected Equation analyze() throws AnalyzerException {
+  protected @NotNull Equation analyze() throws AnalyzerException {
     pendingPush(createStartState());
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeProjectAsync
@@ -127,11 +127,11 @@ abstract class GradleReloadProjectBaseTestCase {
     override fun setUp() {
       runBlocking {
         projectName = "project"
-        projectRoot = writeAction {
+        projectRoot = edtWriteAction {
           testFixture.testRoot.createDirectory(projectName)
         }
-        writeAction {
-          projectRoot.createSettingsFile {
+        edtWriteAction {
+          projectRoot.createSettingsFile(testFixture.gradleVersion) {
             setProjectName(projectName)
           }
         }

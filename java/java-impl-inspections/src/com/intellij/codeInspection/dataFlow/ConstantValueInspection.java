@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
@@ -399,6 +399,13 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
       if (element instanceof PsiThrowStatement) {
         ref.set(true);
         return false;
+      }
+      if (element instanceof PsiMethodCallExpression methodCallExpression) {
+        List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(methodCallExpression);
+        if (ContainerUtil.exists(contracts, contract -> contract.isTrivial() && contract.getReturnValue().isFail())) {
+          ref.set(true);
+          return false;
+        }
       }
       return true;
     });

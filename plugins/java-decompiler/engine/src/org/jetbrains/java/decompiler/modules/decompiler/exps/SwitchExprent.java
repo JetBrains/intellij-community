@@ -42,9 +42,8 @@ public class SwitchExprent extends Exprent {
     return swExpr;
   }
 
-  @NotNull
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     return value.getExprType();
   }
 

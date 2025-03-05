@@ -31,7 +31,8 @@ class KtClassDef(
     private val hash: Int,
     val pointer: KaSymbolPointer<KaClassSymbol>,
     private val kind: KaClassKind,
-    private val modality: KaSymbolModality?
+    private val modality: KaSymbolModality?,
+    internal val inline: Boolean
 ) : TypeConstraints.ClassDef {
 
   override fun isInheritor(superType: TypeConstraints.ClassDef): Boolean =
@@ -83,8 +84,7 @@ class KtClassDef(
     override fun superTypes(): Stream<TypeConstraints.ClassDef> =
         analyze(module) {
             val classLikeSymbol = pointer.restoreSymbol() ?: return@analyze Stream.empty<TypeConstraints.ClassDef>()
-            val list: List<TypeConstraints.ClassDef> =
-                ((classLikeSymbol as? KaNamedClassSymbol)?.defaultType?.allSupertypes ?: emptySequence())
+            val list: List<TypeConstraints.ClassDef> = classLikeSymbol.defaultType.allSupertypes
                 .filterIsInstance<KaClassType>()
                 .mapNotNull { type -> type.expandedSymbol }
                 .map { symbol -> symbol.classDef() }
@@ -101,9 +101,11 @@ class KtClassDef(
             buildClassType(classLikeSymbol).asPsiType(psi, true)
         }
 
-    override fun equals(other: Any?): Boolean {
-        return other is KtClassDef && other.pointer.pointsToTheSameSymbolAs(pointer)
-    }
+    override fun equals(other: Any?): Boolean =
+        other === this ||
+                other is KtClassDef &&
+                other.hash == hash &&
+                other.pointer.pointsToTheSameSymbolAs(pointer)
 
     override fun hashCode(): Int = hash
 
@@ -121,7 +123,7 @@ class KtClassDef(
         context(KaSession)
         fun KaClassSymbol.classDef(): KtClassDef = KtClassDef(
             useSiteModule, classId?.hashCode() ?: name.hashCode(), createPointer(),
-            classKind, modality
+            classKind, modality, this is KaNamedClassSymbol && this.isInline
         )
 
         fun fromJvmClassName(context: KtElement, jvmClassName: String): KtClassDef? {

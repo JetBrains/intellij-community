@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ListenerUiUtil")
 
 package com.intellij.openapi.observable.util
@@ -7,15 +7,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.EditorTextComponent
-import com.intellij.ui.PopupMenuListenerAdapter
-import com.intellij.ui.SearchTextField
+import com.intellij.ui.*
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.TableViewModel
 import com.intellij.util.ui.tree.TreeModelAdapter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import java.awt.Dimension
@@ -131,6 +129,12 @@ fun EditorTextComponent.whenDocumentChanged(parentDisposable: Disposable? = null
   })
 }
 
+@ApiStatus.Internal
+fun UserActivityProviderComponent.whenChanged(parentDisposable: Disposable? = null, listener: ChangeListener) {
+  addChangeListener(listener)
+  parentDisposable?.whenDisposed { removeChangeListener(listener) }
+}
+
 fun JTextComponent.whenCaretMoved(parentDisposable: Disposable? = null, listener: (CaretEvent) -> Unit) {
   addCaretListener(parentDisposable, CaretListener { event ->
     listener(event)
@@ -214,14 +218,37 @@ inline fun <reified T> Component.whenPropertyChanged(
   }
 }
 
+/**
+ * In compare with [whenItemChangedFromUi], it triggers only on [ItemEvent.SELECTED].
+ *
+ * @see whenItemChangedFromUi
+ */
 @Experimental
 fun <T> JComboBox<T>.whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
+  whenItemChangedFromUi(parentDisposable) {
+    it?.let { listener(it) }
+  }
+}
+
+/**
+ * Registers a listener that gets triggered when the [JComboBox.selectedItem] (can be `null`)
+ * is changed (selected or deselected) through UI interaction.
+ *
+ * @param T The type of items in the `JComboBox`.
+ * @param parentDisposable An optional `Disposable` to manage the lifecycle of the listener.
+ *                         If provided, the listener will automatically be removed
+ *                         when the `parentDisposable` is disposed.
+ * @param listener The callback function that gets invoked with the newly selected item or `null`.
+ *
+ * @see ItemEvent.SELECTED
+ * @see ItemEvent.DESELECTED
+ */
+@Experimental
+fun <T> JComboBox<T>.whenItemChangedFromUi(parentDisposable: Disposable? = null, listener: (T?) -> Unit) {
   whenPopupMenuWillBecomeInvisible(parentDisposable) {
     invokeLater(ModalityState.stateForComponent(this)) {
-      selectedItem?.let {
-        @Suppress("UNCHECKED_CAST")
-        listener(it as T)
-      }
+      @Suppress("UNCHECKED_CAST")
+      listener(selectedItem as T)
     }
   }
 }

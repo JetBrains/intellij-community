@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -18,12 +17,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -39,10 +40,8 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
 
   public boolean reportNotAnnotatedInterfaces = true;
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -51,9 +50,8 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
     return true;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "Convert2Lambda";
   }
 
@@ -69,9 +67,8 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
     return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
@@ -102,22 +99,27 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-      String fqn;
-      if (ref != null &&
-          ref.resolve() instanceof PsiClass annotationClass &&
-          ((fqn = annotationClass.getQualifiedName()) == null ||
-          !runtimeAnnotationsToIgnore.contains(fqn))) {
-        final PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation(annotationClass, Retention.class.getName());
-        // Default retention is CLASS: keep it
-        if (retentionAnno == null) return true;
-        if (retentionAnno.findAttributeValue("value") instanceof PsiReferenceExpression retentionValue &&
-            retentionValue.resolve() instanceof PsiField retentionField &&
-            (RetentionPolicy.RUNTIME.name().equals(retentionField.getName()) ||
-             RetentionPolicy.CLASS.name().equals(retentionField.getName()))) {
-          final PsiClass containingClass = retentionField.getContainingClass();
-          if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
-            return true;
-          }
+      if (ref == null || !(ref.resolve() instanceof PsiClass annotationClass)) continue;
+      String fqn = annotationClass.getQualifiedName();
+      if (fqn != null && runtimeAnnotationsToIgnore.contains(fqn)) continue;
+      if (fqn != null && listOwner instanceof PsiMethod method &&
+          ContainerUtil.all(method.findSuperMethods(), sm -> {
+            PsiAnnotation superAnno = sm.getModifierList().findAnnotation(fqn);
+            return superAnno != null && AnnotationUtil.equal(superAnno, annotation);
+          })) {
+        // The same annotation exists in super method: assume that it's safe to omit it in sub-method
+        continue;
+      }
+      PsiAnnotation retentionAnno = AnnotationUtil.findAnnotation(annotationClass, Retention.class.getName());
+      // Default retention is CLASS: keep it
+      if (retentionAnno == null) return true;
+      if (retentionAnno.findAttributeValue("value") instanceof PsiReferenceExpression retentionValue &&
+          retentionValue.resolve() instanceof PsiField retentionField &&
+          (RetentionPolicy.RUNTIME.name().equals(retentionField.getName()) ||
+           RetentionPolicy.CLASS.name().equals(retentionField.getName()))) {
+        PsiClass containingClass = retentionField.getContainingClass();
+        if (containingClass != null && RetentionPolicy.class.getName().equals(containingClass.getQualifiedName())) {
+          return true;
         }
       }
     }
@@ -274,8 +276,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
    * @param forceIgnoreTypeCast if false, type cast might be added if necessary
    * @return newly-generated lambda expression (possibly with typecast)
    */
-  @NotNull
-  static PsiExpression generateLambdaByMethod(PsiAnonymousClass anonymousClass,
+  static @NotNull PsiExpression generateLambdaByMethod(PsiAnonymousClass anonymousClass,
                                               PsiMethod method,
                                               UnaryOperator<PsiLambdaExpression> replacer,
                                               boolean forceIgnoreTypeCast) {
@@ -339,8 +340,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
     return (PsiExpression)javaCodeStyleManager.shortenClassReferences(typeCast);
   }
 
-  @NotNull
-  static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
+  static @NotNull @Unmodifiable Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
     final Collection<PsiComment> psiComments = ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class),
     comment -> !PsiTreeUtil.isAncestor(body, comment, false));
     return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());
@@ -383,9 +383,8 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
   }
 
   private static class ReplaceWithLambdaFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("replace.with.lambda");
     }
 
@@ -571,7 +570,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
               try {
                 final PsiCodeBlock constructorBody = method.getBody();
                 if (constructorBody != null) {
-                  final ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(constructorBody);
+                  final ControlFlow flow = ControlFlowFactory.getControlFlowNoConstantEvaluate(constructorBody);
                   final int startOffset = flow.getStartOffset(myAnonymousClass);
                   final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, startOffset, false);
                   if (!writtenVariables.contains(resolved)) {

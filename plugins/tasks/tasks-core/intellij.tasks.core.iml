@@ -9,9 +9,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.tasks" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.tasks" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
@@ -28,15 +28,15 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="XmlRPC" level="project" />
-    <orderEntry type="library" exported="" name="gson" level="project" />
-    <orderEntry type="module" module-name="intellij.xml.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.core" exported="" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="library" name="http-client" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.tasks.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.tasks" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.tasks.impl" />
+    <orderEntry type="module" module-name="intellij.platform.tasks" />
     <orderEntry type="module" module-name="intellij.tasks.compatibility" />
     <orderEntry type="module-library">
       <library name="commons-discovery" type="repository">
@@ -57,7 +57,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="javax.annotation-api" level="project" />
-    <orderEntry type="module" module-name="intellij.tasks.jira" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="jsonpath" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />

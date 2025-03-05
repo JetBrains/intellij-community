@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
@@ -79,7 +79,8 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
     int exceptCaretOffset = myEditor.getCaretModel().getOffset();
 
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
-      if (info.isUnresolvedReference() && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(exceptCaretOffset, true)) {
+      if ((info.hasLazyQuickFixes() || info.type.getAttributesKey().equals(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES))// auto import fix can be either "lazy fix" or the regular fix attached to the info for unresolved reference
+          && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(exceptCaretOffset, true)) {
         infos.add(info);
       }
       return true;
@@ -158,12 +159,6 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
     return isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
            (ApplicationManager.getApplication().isUnitTestMode() ||
             DaemonListeners.canChangeFileSilently(psiFile, isInContent, extensionsAllowToChangeFileSilently)) &&
-           isInModelessContext(psiFile.getProject());
-  }
-
-  private static boolean isInModelessContext(@NotNull Project project) {
-    return Registry.is("ide.perProjectModality") ?
-           !LaterInvocator.isInModalContextForProject(project) :
            !LaterInvocator.isInModalContext();
   }
 

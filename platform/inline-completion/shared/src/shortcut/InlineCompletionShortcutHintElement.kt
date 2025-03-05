@@ -3,7 +3,6 @@ package com.intellij.codeInsight.inline.completion.shortcut
 
 import com.intellij.codeInsight.inline.completion.MessageBundle
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
-import com.intellij.codeInsight.inline.completion.shortcut.InlineCompletionShortcutHint.entries
 import com.intellij.codeInsight.inline.hint.InlineShortcutHintRendererBase
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.Shortcut

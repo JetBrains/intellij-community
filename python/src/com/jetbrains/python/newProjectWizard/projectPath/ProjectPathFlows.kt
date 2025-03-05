@@ -3,7 +3,6 @@ package com.jetbrains.python.newProjectWizard.projectPath
 
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.CHECK_NO_RESERVED_WORDS
-import com.intellij.openapi.ui.validation.CHECK_NO_WHITESPACES
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle

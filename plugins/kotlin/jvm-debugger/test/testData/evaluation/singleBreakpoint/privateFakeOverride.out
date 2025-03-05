@@ -1,9 +1,12 @@
-LineBreakpoint created at privateFakeOverride.kt:11
+LineBreakpoint created at privateFakeOverride.kt:20
 Run Java
 Connected to the target VM
-privateFakeOverride.kt:11
+privateFakeOverride.kt:20
 Compile bytecode for child.privateVal
 Compile bytecode for child.privateFun()
+Compile bytecode for child.privateValCustomGetter
+Compile bytecode for child.privateVar
+Compile bytecode for child.privateVarCustomAccessors = 1; child.privateVarCustomAccessors
 Disconnected from the target VM
 
 Process finished with exit code 0

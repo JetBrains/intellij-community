@@ -502,8 +502,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
      * Returns annotation typePath, as specified in XML. See {@link com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer} 
      * for syntax description;
      */
-    @Nullable
-    public String getTypePath() {
+    public @Nullable String getTypePath() {
       return typePath;
     }
 

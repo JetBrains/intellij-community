@@ -19,8 +19,8 @@ public class Test<A, B extends Number>  {
 
     public static void main(String[] args) {
         Inner<Number, Double> inn = new Inner<>();
-        inn.<error descr="Ambiguous method call: both 'Inner.m8(IO<? extends Number>)' and 'Inner.m8(IN<? extends Double>)' match">m8</error>(<warning descr="Parameter 'p' is never used">p</warning> -> 1.0);
-        new Test<Number, Integer>().<error descr="Ambiguous method call: both 'Test.foo(IO<? extends Number>)' and 'Test.foo(IN<? extends Integer>)' match">foo</error>(<warning descr="Parameter 'p' is never used">p</warning> -> 1.0);
+        inn.m8<error descr="Ambiguous method call: both 'Inner.m8(IO<? extends Number>)' and 'Inner.m8(IN<? extends Double>)' match">(<warning descr="Parameter 'p' is never used">p</warning> -> 1.0)</error>;
+        new Test<Number, Integer>().foo<error descr="Ambiguous method call: both 'Test.foo(IO<? extends Number>)' and 'Test.foo(IN<? extends Integer>)' match">(<warning descr="Parameter 'p' is never used">p</warning> -> 1.0)</error>;
 
     }
 }

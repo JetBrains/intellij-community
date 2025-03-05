@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage
 
 import com.intellij.util.SystemProperties
 import org.assertj.core.api.Assertions.assertThat
 import org.h2.mvstore.MVStoreTool
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -37,17 +36,17 @@ class StorageManagerTest {
     try {
       val mapping = ExperimentalSourceToOutputMapping.createSourceToOutputMap(
         storageManager = storageManager,
-        relativizer = PathRelativizerService(),
+        relativizer = TestPathTypeAwareRelativizer,
         targetId = "test-module",
         targetTypeId = "java",
         outputToTargetMapping = null,
       )
 
       mapping.appendOutput("foo/bar/Baz.java", "out/bar/Baz.class")
-      assertThat(mapping.getOutputs("foo/bar/Baz.java")).containsExactly("out/bar/Baz.class")
+      assertThat(mapping.getOutputs(Path.of("foo/bar/Baz.java"))).containsExactly(Path.of("out/bar/Baz.class"))
 
       storageManager.removeMaps(targetId = "test-module", targetTypeId = "java")
-      assertThat(mapping.getOutputs("foo/bar/Baz.java")).isNull()
+      assertThat(mapping.getOutputs(Path.of("foo/bar/Baz.java"))).isNull()
     }
     finally {
       storageManager.close()

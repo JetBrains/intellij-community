@@ -114,7 +114,7 @@ internal class SettingsHistoryTableModel(val logData: VcsLogData, refresher: Vis
 
   override val dataProvider: VcsLogDataProvider get() = logData
 
-  override fun getId(row: Int): Int {
+  override fun getId(row: Int): Int? {
     return visiblePack.visibleGraph.getRowInfo(row).getCommit()
   }
 

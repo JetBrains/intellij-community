@@ -1,25 +1,26 @@
 package ru.adelf.idea.dotenv.extension;
 
-import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.adelf.idea.dotenv.grammars.DotEnvLexerAdapter;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
-import ru.adelf.idea.dotenv.psi.DotEnvTypes;
 
 public class DotEnvFindUsagesProvider implements FindUsagesProvider {
-    @Nullable
     @Override
-    public WordsScanner getWordsScanner() {
+    public @Nullable WordsScanner getWordsScanner() {
+        throw new UnsupportedOperationException("Not yet implemented");
+        /*
+         TODO commented out because `DefaultWordsScanner` requires intellij.platform.indexing.impl dependency
+              but this class is unused
         return new DefaultWordsScanner(new DotEnvLexerAdapter(),
                 TokenSet.create(DotEnvTypes.PROPERTY),
                 TokenSet.create(DotEnvTypes.COMMENT),
                 TokenSet.EMPTY);
+        */
     }
 
     @Override
@@ -27,37 +28,33 @@ public class DotEnvFindUsagesProvider implements FindUsagesProvider {
         return psiElement instanceof PsiNamedElement;
     }
 
-    @Nullable
     @Override
-    public String getHelpId(@NotNull PsiElement psiElement) {
+    public @Nullable String getHelpId(@NotNull PsiElement psiElement) {
         return null;
     }
 
-    @NotNull
     @Override
-    public String getType(@NotNull PsiElement element) {
+    public @NotNull String getType(@NotNull PsiElement element) {
         if (element instanceof DotEnvProperty) {
-            return "Environment variable";
+            return DotEnvBundle.message("environment.variable");
         } else {
             return "";
         }
     }
 
-    @NotNull
     @Override
-    public String getDescriptiveName(@NotNull PsiElement element) {
-        if (element instanceof DotEnvProperty) {
-            return ((DotEnvProperty) element).getKeyText();
+    public @NotNull String getDescriptiveName(@NotNull PsiElement element) {
+        if (element instanceof DotEnvProperty property) {
+            return property.getKeyText();
         } else {
             return "";
         }
     }
 
-    @NotNull
     @Override
-    public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
-        if (element instanceof DotEnvProperty) {
-            return ((DotEnvProperty) element).getKeyText() + ":" + ((DotEnvProperty) element).getValueText();
+    public @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+        if (element instanceof DotEnvProperty property) {
+            return property.getKeyText() + ":" + property.getValueText();
         } else {
             return "";
         }

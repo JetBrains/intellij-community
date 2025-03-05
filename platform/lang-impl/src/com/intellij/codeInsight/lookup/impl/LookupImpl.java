@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.CommonBundle;
@@ -26,7 +26,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientProjectSession;
-import com.intellij.openapi.client.ClientSessionsManager;
+import com.intellij.openapi.client.ClientSessionsUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -66,10 +66,7 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -78,9 +75,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
@@ -93,7 +91,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final Editor editor;
   private final Object uiLock = new Object();
   private final JBList<LookupElement> list = new LookupList();
-  final LookupCellRenderer cellRenderer;
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public final LookupCellRenderer cellRenderer;
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<PrefixChangeListener> myPrefixChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -122,6 +122,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
   private boolean myFirstElementAdded = false;
+  private boolean myShowIfMeaningless = false;
 
   final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
 
@@ -188,7 +189,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void setArranger(LookupArranger arranger) {
+    Predicate<LookupElement> previousMatcher = null;
+    if (myArranger != null) {
+      previousMatcher = myArranger.getAdditionalMatcher();
+    }
     myArranger = arranger;
+    if (previousMatcher != null) {
+      myArranger.registerAdditionalMatcher(previousMatcher);
+    }
   }
 
   @ApiStatus.Internal
@@ -320,6 +328,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public boolean isShowIfMeaningless() {
+    return myShowIfMeaningless;
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public void showIfMeaningless() {
+    myShowIfMeaningless = true;
+  }
+
   private static boolean containsDummyIdentifier(final @Nullable String s) {
     return s != null && s.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
   }
@@ -349,7 +369,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
-  public List<LookupElement> getItems() {
+  public @Unmodifiable List<LookupElement> getItems() {
     synchronized (uiLock) {
       return ContainerUtil.findAll(getListModel().toList(), element -> !(element instanceof EmptyLookupItem));
     }
@@ -715,7 +735,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   public boolean vetoesHiding() {
     // the second condition means that the Lookup belongs to another connected client
-    return myGuardedChanges > 0 || mySession != ClientSessionsManager.getProjectSession(mySession.getProject()) || LookupImplVetoPolicy.anyVetoesHiding(this);
+    return myGuardedChanges > 0 || mySession != ClientSessionsUtil.getCurrentSessionOrNull(mySession.getProject()) || LookupImplVetoPolicy.anyVetoesHiding(this);
   }
 
   public boolean isAvailableToUser() {
@@ -1178,7 +1198,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
 
   @Override
-  public List<String> getAdvertisements() {
+  public @Unmodifiable List<String> getAdvertisements() {
     return myAdComponent.getAdvertisements();
   }
 
@@ -1270,7 +1290,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void markReused() {
     EDT.assertIsEdt();
-    myArranger = myArranger.createEmptyCopy();
+    LookupArranger copy = myArranger.createEmptyCopy();
+    Predicate<LookupElement> additionalMatcher = myArranger.getAdditionalMatcher();
+    if (additionalMatcher != null) {
+      copy.registerAdditionalMatcher(additionalMatcher);
+    }
+    myArranger = copy;
+
     requestResize();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog", "OVERRIDE_DEPRECATION", "RemoveRedundantQualifierName")
 
 package com.intellij.openapi.actionSystem.impl
@@ -101,7 +101,6 @@ private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.nam
 
 open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx() {
   private val notRegisteredInternalActionIds = ArrayList<String>()
-  private val actionListeners = ContainerUtil.createLockFreeCopyOnWriteList<AnActionListener>()
   private val actionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList<ActionPopupMenuListener>()
   private val popups = ArrayList<Any>()
   private var timer: MyTimer? = null
@@ -120,8 +119,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   init {
     val app = ApplicationManager.getApplication()
-    if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine) {
-      ThreadingAssertions.assertBackgroundThread()
+    if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine && app.isDispatchThread) {
+      LOG.error("Instantiating ActionManager in EDT is prohibited")
     }
 
     val idToAction = HashMap<String, AnAction>(5_000, 0.5f)
@@ -398,7 +397,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                                    bundleSupplier = bundleSupplier,
                                                                    actionRegistrar = actionRegistrar)
             ActionDescriptorName.unregister -> processUnregisterNode(element = element, module = module, actionRegistrar = actionRegistrar)
-            ActionDescriptorName.prohibit -> processProhibitNode(element = element, module = module)
+            ActionDescriptorName.prohibit -> processProhibitNode(element = element, module = module, actionRegistrar = actionRegistrar)
             else -> LOG.error("${descriptor.name} is unknown")
           }
         }
@@ -845,13 +844,13 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  private fun processProhibitNode(element: XmlElement, module: IdeaPluginDescriptor) {
+  private fun processProhibitNode(element: XmlElement, module: IdeaPluginDescriptor, actionRegistrar: ActionRegistrar) {
     val id = element.attributes.get(ID_ATTR_NAME)
     if (id == null) {
       reportActionError(module, "'id' attribute is required for 'unregister' elements")
       return
     }
-    prohibitAction(id)
+    prohibitAction(id, actionRegistrar)
   }
 
   private fun processUnregisterNode(element: XmlElement, module: IdeaPluginDescriptor, actionRegistrar: ActionRegistrar) {
@@ -981,17 +980,29 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
    */
   @Internal
   fun prohibitAction(actionId: String) {
-    val state = actionPostInitRegistrar.state
+    prohibitAction(actionId = actionId, actionPostInitRegistrar)
+  }
+
+  private fun prohibitAction(actionId: String, actionRegistrar: ActionRegistrar) {
+    val state = actionRegistrar.state
     synchronized(state.lock) {
       state.prohibitedActionIds = HashSet(state.prohibitedActionIds).let {
         it.add(actionId)
         it
       }
     }
-    val action = getAction(actionId)
+    val action = getAction(
+      id = actionId,
+      canReturnStub = false,
+      actionRegistrar = actionRegistrar
+    )
     if (action != null) {
-      AbbreviationManager.getInstance().removeAllAbbreviations(actionId)
-      unregisterAction(actionId)
+      if (actionRegistrar == actionPostInitRegistrar) {
+        AbbreviationManager.getInstance().removeAllAbbreviations(actionId)
+      }
+      synchronized(state.lock) {
+        unregisterAction(actionId = actionId, actionRegistrar = actionRegistrar)
+      }
     }
   }
 
@@ -1052,11 +1063,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   fun getParentGroupIds(actionId: String): Collection<String> = actionPostInitRegistrar.state.getParentGroupIds(actionId)
 
-  @Suppress("removal", "OVERRIDE_DEPRECATION")
-  override fun addAnActionListener(listener: AnActionListener) {
-    actionListeners.add(listener)
-  }
-
   override fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent) {
     // Android Studio: approximate measure of user activity
     if (action.javaClass != com.intellij.openapi.editor.actions.BackspaceAction::class.java) {
@@ -1069,9 +1075,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
     IdeaLogger.ourLastActionId = lastPreformedActionId
     ProhibitAWTEvents.start("fireBeforeActionPerformed").use {
-      for (listener in actionListeners) {
-        listener.beforeActionPerformed(action, event)
-      }
       publisher().beforeActionPerformed(action, event)
       onBeforeActionInvoked(action, event)
     }
@@ -1083,9 +1086,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     IdeaLogger.ourLastActionId = lastPreformedActionId
     ProhibitAWTEvents.start("fireAfterActionPerformed").use {
       onAfterActionInvoked(action, event, result)
-      for (listener in actionListeners) {
-        listener.afterActionPerformed(action, event, result)
-      }
       publisher().afterActionPerformed(action, event, result)
     }
   }
@@ -1104,9 +1104,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   override fun fireBeforeEditorTyping(c: Char, dataContext: DataContext) {
     lastTimeEditorWasTypedIn = System.currentTimeMillis()
-    for (listener in actionListeners) {
-      listener.beforeEditorTyping(c, dataContext)
-    }
     //maybe readaction
     WriteIntentReadAction.run {
       publisher().beforeEditorTyping(c, dataContext)
@@ -1114,9 +1111,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   override fun fireAfterEditorTyping(c: Char, dataContext: DataContext) {
-    for (listener in actionListeners) {
-      listener.afterEditorTyping(c, dataContext)
-    }
     //maybe readaction
     WriteIntentReadAction.run {
       publisher().afterEditorTyping(c, dataContext)
@@ -1420,7 +1414,7 @@ private class CapturingListener(@JvmField val timerListener: TimerListener) : Ti
 private fun runListenerAction(listener: TimerListener) {
   val modalityState = listener.modalityState ?: return
   LOG.debug { "notify $listener" }
-  if (!ModalityState.current().dominates(modalityState)) {
+  if (ModalityState.current().accepts(modalityState)) {
     runCatching {
       listener.run()
     }.getOrLogException(LOG)
@@ -1779,7 +1773,7 @@ private fun addToMap(actionId: String,
     }
     existing != null -> {
       // we need to create ChameleonAction even if 'projectType==null', in case 'ActionStub.getProjectType() != null'
-      val chameleonAction = ChameleonAction(existing, null) { registrar.getAction(it) }
+      val chameleonAction = ChameleonAction(actionId, existing, null, actionSupplier)
       if (chameleonAction.addAction(action, projectType, actionSupplier)) {
         registrar.putAction(actionId, chameleonAction)
         return true
@@ -1787,7 +1781,7 @@ private fun addToMap(actionId: String,
       return false
     }
     projectType != null -> {
-      registrar.putAction(actionId, ChameleonAction(action, projectType, actionSupplier))
+      registrar.putAction(actionId, ChameleonAction(actionId, action, projectType, actionSupplier))
       return true
     }
     else -> {
@@ -1857,6 +1851,9 @@ private class PostInitActionRegistrar(
   fun getId(action: AnAction): String? {
     if (action is ActionStubBase) {
       return action.id
+    }
+    if (action is ChameleonAction) {
+      return action.actionId
     }
     synchronized(state.lock) {
       return state.actionToId.get(action)
@@ -2131,8 +2128,12 @@ private fun replaceStub(stub: ActionStubBase, convertedAction: AnAction, actionR
   updateHandlers(convertedAction)
 
   actionRegistrar.state.actionToId.put(convertedAction, stub.id)
-  val result = (if (stub is ActionStub) stub.projectType else null)
-                 ?.let { ChameleonAction(convertedAction, it) { actionRegistrar.getAction(it) } } ?: convertedAction
+
+  val projectType = (stub as? ActionStub)?.projectType
+  val result = when {
+    projectType != null -> ChameleonAction(stub.id, convertedAction, projectType) { actionRegistrar.getAction(it) }
+    else -> convertedAction
+  }
   actionRegistrar.putAction(stub.id, result)
   return result
 }

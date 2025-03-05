@@ -2,15 +2,15 @@
 
 package org.jetbrains.kotlin.j2k.k2
 
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.Conversion
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.conversions.*
 import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
 import org.jetbrains.kotlin.nj2k.tree.JKParameter
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("DuplicatedCode")
-internal fun getK2J2KConversions(context: NewJ2kConverterContext): List<Conversion> = listOf(
+internal fun getK2J2KConversions(context: ConverterContext): List<Conversion> = listOf(
     NullabilityConversion(context),
     ParenthesizeBitwiseOperationConversion(context),
     ParenthesizeMultilineBinaryExpressionConversion(context),

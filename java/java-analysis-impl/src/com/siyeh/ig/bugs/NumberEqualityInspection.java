@@ -34,8 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil.isEffectivelyFinal;
 import static com.intellij.psi.JavaTokenType.*;
+import static com.intellij.psi.controlFlow.ControlFlowUtil.isEffectivelyFinal;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprUp;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -43,8 +43,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class NumberEqualityInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "number.comparison.problem.descriptor");
   }
@@ -186,8 +185,8 @@ public final class NumberEqualityInspection extends BaseInspection {
       final PsiVariable rVariable = tryCast(rReference.resolve(), PsiVariable.class);
       if (rVariable == null) return false;
 
-      final boolean isEffectivelyFinal = isEffectivelyFinal(lVariable, elementContainsNumberEquality, null) &&
-                                         isEffectivelyFinal(rVariable, elementContainsNumberEquality, null);
+      final boolean isEffectivelyFinal = isEffectivelyFinal(lVariable, elementContainsNumberEquality) &&
+                                         isEffectivelyFinal(rVariable, elementContainsNumberEquality);
       if (!isEffectivelyFinal) return false;
 
       return (checker.expressionsMatch(lhs, lValue).isExactMatch() && checker.expressionsMatch(rhs, rValue).isExactMatch()) ||

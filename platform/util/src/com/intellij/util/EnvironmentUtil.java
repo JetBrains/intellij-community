@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.process.UnixProcessManager;
@@ -128,7 +128,7 @@ public final class EnvironmentUtil {
     }
 
     // execution time of 'envFuture' handlers should not be included in the "load environment" activity
-    if (result == Boolean.FALSE) {
+    if (!result) {
       envFuture.complete(getSystemEnv());
     }
     return result;

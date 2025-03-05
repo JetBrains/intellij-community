@@ -42,9 +42,8 @@ public final class ShowAltEnter extends AbstractCommand implements Disposable {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     String extractCommandList = extractCommandArgument(PREFIX);
     String[] commandList = extractCommandList.split("\\|");

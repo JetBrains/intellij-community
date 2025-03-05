@@ -37,8 +37,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class RevisionsList {
   public static final int RECENT_PERIOD = 12;
@@ -552,7 +552,7 @@ public final class RevisionsList {
           String time = DateFormatUtil.formatDateTime(r.revision.getTimestamp());
           String title = labelsAndColor.title;
           String filesCount = labelsAndColor.filesCount;
-          if (sb.length() != 0) sb.append("\n");
+          if (!sb.isEmpty()) sb.append("\n");
           sb.append(time).append(", ")
             .append(filesCount).append(": ")
             .append(title);

@@ -1,16 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio.telemetry
 
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import io.opentelemetry.api.trace.Span
 import java.util.concurrent.atomic.AtomicLong
 
 private val eventsCounter: AtomicLong = AtomicLong()
 
-internal val ijentMetricsScope = Scope("ijent", PlatformMetrics)
+internal val ijentMetricsScope = Scope("ijent", PlatformMetrics, verbose = true)
 internal val ijentTracer by lazy { TelemetryManager.getTracer(ijentMetricsScope) }
 internal val ijentMeter = TelemetryManager.getMeter(ijentMetricsScope)
 
@@ -58,7 +58,7 @@ object Measurer {
 }
 
 internal inline fun <T> Measurer.measure(operation: Measurer.Operation, body: () -> T): T {
-  return ijentTracer.spanBuilder("ijent.${operation.name}").use {
+  return ijentTracer.spanBuilder("ijent.${operation.name}", TracerLevel.DETAILED).use {
     eventsCounter.incrementAndGet()
     body()
   }

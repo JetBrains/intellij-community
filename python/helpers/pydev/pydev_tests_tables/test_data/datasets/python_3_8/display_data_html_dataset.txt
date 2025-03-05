@@ -1,0 +1,76 @@
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>A</th>
+      <th>B</th>
+      <th>C</th>
+      <th>D</th>
+      <th>E</th>
+      <th>lists</th>
+      <th>dicts</th>
+      <th>tuples</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1.00</td>
+      <td>foo</td>
+      <td>None</td>
+      <td>1</td>
+      <td>True</td>
+      <td>[1, 2]</td>
+      <td>{'key': 'value'}</td>
+      <td>[first, second]</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1.00</td>
+      <td>bar</td>
+      <td>None</td>
+      <td>2</td>
+      <td>False</td>
+      <td>[3, 4]</td>
+      <td>{'key': 'value'}</td>
+      <td>[first, second]</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1.00</td>
+      <td>baz</td>
+      <td>None</td>
+      <td>3</td>
+      <td>True</td>
+      <td>[5, 6]</td>
+      <td>{'key': 'value'}</td>
+      <td>[first, second]</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1.00</td>
+      <td>qux</td>
+      <td>None</td>
+      <td>4</td>
+      <td>False</td>
+      <td>[7, 8]</td>
+      <td>{'key': 'value'}</td>
+      <td>[first, second]</td>
+    </tr>
+  </tbody>
+</table>
+</div>

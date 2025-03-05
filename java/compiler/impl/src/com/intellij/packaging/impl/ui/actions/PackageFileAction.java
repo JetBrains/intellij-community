@@ -54,8 +54,7 @@ public final class PackageFileAction extends AnAction {
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull
-  private static List<VirtualFile> getFilesToPackage(@NotNull AnActionEvent e, @NotNull Project project) {
+  private static @NotNull List<VirtualFile> getFilesToPackage(@NotNull AnActionEvent e, @NotNull Project project) {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null) return Collections.emptyList();
 

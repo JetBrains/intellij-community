@@ -1,6 +1,7 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
 
   <extensionPoints>
@@ -181,130 +182,130 @@
 
     <group id="Vcs.Log.BranchActionsGroup" popup="false">
       <separator key="action.vcs.log.branches.separator"/>
-      <reference id="Vcs.Log.CollapseAll"/>
-      <reference id="Vcs.Log.ExpandAll"/>
+      <reference ref="Vcs.Log.CollapseAll"/>
+      <reference ref="Vcs.Log.ExpandAll"/>
     </group>
 
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.GroupBy" popup="true">
       <separator key="action.vcs.log.show.separator"/>
-      <reference id="Vcs.Log.ShowRootsColumnAction"/>
-      <reference id="Vcs.Log.CompactReferencesView"/>
-      <reference id="Vcs.Log.ShowTagNames"/>
-      <reference id="Vcs.Log.ShowLongEdges"/>
-      <reference id="Vcs.Log.PreferCommitDate"/>
-      <reference id="Vcs.Log.AlignLabels"/>
-      <reference id="Vcs.Log.ToggleColumns"/>
+      <reference ref="Vcs.Log.ShowRootsColumnAction"/>
+      <reference ref="Vcs.Log.CompactReferencesView"/>
+      <reference ref="Vcs.Log.ShowTagNames"/>
+      <reference ref="Vcs.Log.ShowLongEdges"/>
+      <reference ref="Vcs.Log.PreferCommitDate"/>
+      <reference ref="Vcs.Log.AlignLabels"/>
+      <reference ref="Vcs.Log.ToggleColumns"/>
       <separator/>
-      <reference id="Vcs.Log.HighlightersActionGroup"/>
+      <reference ref="Vcs.Log.HighlightersActionGroup"/>
     </group>
     <group id="Vcs.Log.TextFilterSettings"
            icon="AllIcons.General.GearPlain">
-      <reference id="Vcs.Log.EnableFilterByRegexAction"/>
-      <reference id="Vcs.Log.MatchCaseAction"/>
+      <reference ref="Vcs.Log.EnableFilterByRegexAction"/>
+      <reference ref="Vcs.Log.MatchCaseAction"/>
     </group>
     <group id="Vcs.Log.Toolbar.Internal">
       <reference ref="Vcs.Log.OpenAnotherTabInEditor"/>
     </group>
     <group id="Vcs.Log.ContextMenu">
-      <reference id="Vcs.CopyRevisionNumberAction"/>
-      <reference id="ChangesView.CreatePatchFromChanges"/>
+      <reference ref="Vcs.CopyRevisionNumberAction"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
       <separator/>
-      <reference id="Vcs.Log.CompareRevisions"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Vcs.Log.CompareRevisions"/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
       <separator/>
-      <reference id="Vcs.Log.GoToChild"/>
-      <reference id="Vcs.Log.GoToParent"/>
+      <reference ref="Vcs.Log.GoToChild"/>
+      <reference ref="Vcs.Log.GoToParent"/>
       <separator/>
     </group>
     <group id="Vcs.Log.Toolbar.RightCorner">
-      <reference id="Vcs.Log.ResumeIndexing"/>
-      <reference id="Vcs.Log.Refresh"/>
+      <reference ref="Vcs.Log.ResumeIndexing"/>
+      <reference ref="Vcs.Log.Refresh"/>
       <group id="Vcs.Log.Toolbar"/>
-      <reference id="Vcs.Log.PresentationSettings"/>
-      <reference id="Vcs.Log.GoToRef"/>
+      <reference ref="Vcs.Log.PresentationSettings"/>
+      <reference ref="Vcs.Log.GoToRef"/>
     </group>
     <group id="Vcs.Log.Diff.Preview.Location" popup="true" class="com.intellij.vcs.log.ui.actions.DiffPreviewLocationActionGroup">
-      <reference id="Vcs.Log.MoveDiffPreviewToBottom"/>
-      <reference id="Vcs.Log.MoveDiffPreviewToRight"/>
+      <reference ref="Vcs.Log.MoveDiffPreviewToBottom"/>
+      <reference ref="Vcs.Log.MoveDiffPreviewToRight"/>
     </group>
     <group id="Vcs.Log.LayoutConfiguration" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Debugger.RestoreLayout" popup="false">
       <separator key="group.Vcs.Log.LayoutConfiguration.separator.text"/>
-      <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference id="Vcs.Log.ShowDiffPreview"/>
-      <reference id="Vcs.Log.Diff.Preview.Location"/>
+      <reference ref="Vcs.Log.ShowDetailsAction"/>
+      <reference ref="Vcs.Log.ShowDiffPreview"/>
+      <reference ref="Vcs.Log.Diff.Preview.Location"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.PresentationSettings"
            icon="AllIcons.Actions.GroupBy"
            popup="true">
-      <reference id="ChangesView.GroupBy"/>
-      <reference id="ChangesBrowser.FiltererGroup"/>
-      <reference id="Vcs.Log.LayoutConfiguration"/>
+      <reference ref="ChangesView.GroupBy"/>
+      <reference ref="ChangesBrowser.FiltererGroup"/>
+      <reference ref="Vcs.Log.LayoutConfiguration"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
-      <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
-      <reference id="Vcs.Log.ShowOnlyAffectedChanges"/>
-      <reference id="Vcs.Log.ChangesBrowser.PresentationSettings"/>
+      <reference ref="Vcs.RepositoryChangesBrowserToolbar"/>
+      <reference ref="Vcs.Log.ShowOnlyAffectedChanges"/>
+      <reference ref="Vcs.Log.ChangesBrowser.PresentationSettings"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Popup">
-      <reference id="Vcs.RepositoryChangesBrowserMenu"/>
-      <reference id="Vcs.Log.ShowChangesFromParents"/>
+      <reference ref="Vcs.RepositoryChangesBrowserMenu"/>
+      <reference ref="Vcs.Log.ShowChangesFromParents"/>
     </group>
     <group id="Vcs.Log.ToolWindow.TabActions">
-      <reference id="Vcs.Log.OpenAnotherTab"/>
+      <reference ref="Vcs.Log.OpenAnotherTab"/>
       <group id="Vcs.Log.ToolWindow.TabActions.DropDown" icon="AllIcons.Toolbar.Expand" popup="true"
              class="com.intellij.vcs.log.ui.actions.VcsLogToolWindowDropdownActionGroup">
-        <reference id="Vcs.Log.OpenAnotherTabInEditor"/>
-        <reference id="Vcs.ShowTabbedFileHistory"/>
-        <reference id="Vcs.ShowConsoleTab"/>
+        <reference ref="Vcs.Log.OpenAnotherTabInEditor"/>
+        <reference ref="Vcs.ShowTabbedFileHistory"/>
+        <reference ref="Vcs.ShowConsoleTab"/>
         <separator/>
-        <reference id="Vcs.Log.ShowSettingsAction"/>
+        <reference ref="Vcs.Log.ShowSettingsAction"/>
       </group>
       <add-to-group group-id="LocalChangesView.TabActions"/>
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
-      <reference id="Vcs.CopyRevisionNumberAction"/>
-      <reference id="ChangesView.CreatePatchFromChanges"/>
+      <reference ref="Vcs.CopyRevisionNumberAction"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
       <separator/>
-      <reference id="Vcs.GetVersion"/>
-      <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
-      <reference id="Diff.ShowDiff"/>
+      <reference ref="Vcs.GetVersion"/>
+      <reference ref="Vcs.Log.OpenRepositoryVersion"/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="Diff.ShowDiff"/>
       <reference ref="Diff.ShowStandaloneDiff"/>
-      <reference id="Vcs.Log.ShowAllAffected"/>
-      <reference id="Vcs.Log.AnnotateRevisionAction"/>
-      <reference id="Vcs.Log.SelectInLog"/>
-      <reference id="VcsHistoryActionsGroup"/>
+      <reference ref="Vcs.Log.ShowAllAffected"/>
+      <reference ref="Vcs.Log.AnnotateRevisionAction"/>
+      <reference ref="Vcs.Log.SelectInLog"/>
+      <reference ref="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.PresentationSettings"
            class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.GroupBy"
            popup="true">
       <separator key="action.vcs.log.show.separator"/>
-      <reference id="Vcs.Log.PreferCommitDate"/>
-      <reference id="Vcs.Log.ToggleColumns"/>
-      <reference id="Vcs.Log.LayoutConfiguration"/>
+      <reference ref="Vcs.Log.PreferCommitDate"/>
+      <reference ref="Vcs.Log.ToggleColumns"/>
+      <reference ref="Vcs.Log.LayoutConfiguration"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
-      <reference id="Vcs.Log.Refresh"/>
-      <reference id="Diff.ShowDiff"/>
-      <reference id="Vcs.Log.ShowAllAffected"/>
+      <reference ref="Vcs.Log.Refresh"/>
+      <reference ref="Diff.ShowDiff"/>
+      <reference ref="Vcs.Log.ShowAllAffected"/>
       <separator/>
-      <reference id="Vcs.FileHistory.PresentationSettings"/>
+      <reference ref="Vcs.FileHistory.PresentationSettings"/>
       <separator/>
-      <reference id="VcsHistoryActionsGroup.Toolbar"/>
-      <reference id="Vcs.Log.ResumeIndexing"/>
+      <reference ref="VcsHistoryActionsGroup.Toolbar"/>
+      <reference ref="Vcs.Log.ResumeIndexing"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar.RightCorner">
-      <reference id="Vcs.Log.SelectInLog"/>
+      <reference ref="Vcs.Log.SelectInLog"/>
     </group>
 
     <group id="Vcs.Log.Internal" internal="true" popup="true">
-      <reference id="Vcs.Log.InvalidateCaches"/>
-      <reference id="Vcs.Log.CheckFirstCommitsIndexData"/>
-      <reference id="Vcs.Log.CheckSelectedCommitsIndexData"/>
-      <reference id="Vcs.Log.ShowBigRepositories"/>
+      <reference ref="Vcs.Log.InvalidateCaches"/>
+      <reference ref="Vcs.Log.CheckFirstCommitsIndexData"/>
+      <reference ref="Vcs.Log.CheckSelectedCommitsIndexData"/>
+      <reference ref="Vcs.Log.ShowBigRepositories"/>
       <add-to-group group-id="Internal"/>
     </group>
 
@@ -331,27 +332,27 @@
       <reference ref="Vcs.Log.OpenAnotherTabInEditor"/>
       <reference ref="Vcs.Log.ResumeIndexing"/>
 
-      <reference id="Log.Unsorted.KeymapGroup"/>
+      <reference ref="Log.Unsorted.KeymapGroup"/>
 
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
 
     <group id="Log.FileHistory.KeymapGroup" popup="false">
-      <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Diff.ShowDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
-      <reference id="ChangesView.CreatePatchFromChanges"/>
-      <reference id="Vcs.Log.AnnotateRevisionAction"/>
-      <reference id="Vcs.Log.ShowAllAffected"/>
-      <reference id="Vcs.CopyRevisionNumberAction"/>
+      <reference ref="Vcs.Log.OpenRepositoryVersion"/>
+      <reference ref="Diff.ShowDiff"/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
+      <reference ref="Vcs.Log.AnnotateRevisionAction"/>
+      <reference ref="Vcs.Log.ShowAllAffected"/>
+      <reference ref="Vcs.CopyRevisionNumberAction"/>
       <separator/>
-      <reference id="Vcs.Log.Refresh"/>
-      <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference id="Vcs.Log.ShowDiffPreview"/>
-      <reference id="Vcs.FileHistory.ContextMenu"/>
-      <reference id="Vcs.FileHistory.Toolbar"/>
-      <reference id="VcsHistoryActionsGroup"/>
-      <reference id="VcsHistoryActionsGroup.Toolbar"/>
+      <reference ref="Vcs.Log.Refresh"/>
+      <reference ref="Vcs.Log.ShowDetailsAction"/>
+      <reference ref="Vcs.Log.ShowDiffPreview"/>
+      <reference ref="Vcs.FileHistory.ContextMenu"/>
+      <reference ref="Vcs.FileHistory.Toolbar"/>
+      <reference ref="VcsHistoryActionsGroup"/>
+      <reference ref="VcsHistoryActionsGroup.Toolbar"/>
 
       <add-to-group group-id="FileHistory.KeymapGroup"/>
     </group>

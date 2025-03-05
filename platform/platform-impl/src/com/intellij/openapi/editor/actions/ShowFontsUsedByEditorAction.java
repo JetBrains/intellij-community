@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -25,10 +25,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import sun.font.CompositeFont;
 import sun.font.Font2D;
 import sun.font.FontSubstitution;
@@ -164,7 +161,7 @@ final class AccessingInternalJdkFontApi {
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
 
   @SuppressWarnings("InstanceofIncompatibleInterface")
-  static List<String> getRelevantComponents(@NotNull Font font, @NotNull CharSequence text, int startOffset, int endOffset)
+  static @Unmodifiable List<String> getRelevantComponents(@NotNull Font font, @NotNull CharSequence text, int startOffset, int endOffset)
     throws Exception {
     if (GET_FONT_2D_METHOD != null) {
       Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);

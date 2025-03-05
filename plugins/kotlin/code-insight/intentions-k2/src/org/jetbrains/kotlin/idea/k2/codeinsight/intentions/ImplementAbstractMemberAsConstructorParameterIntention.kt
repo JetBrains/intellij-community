@@ -3,10 +3,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ImplementAbstractMemberIntentionBase.ImplementableMember.KtImplementableMember
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 
@@ -21,14 +20,13 @@ internal class ImplementAbstractMemberAsConstructorParameterIntention : Implemen
         return super.applicabilityRange(element)
     }
 
-    override fun KaSession.createImplementableMember(
+    override fun createImplementableMember(
         targetClass: PsiElement,
         abstractMember: KtNamedDeclaration,
     ): ImplementableMember? {
         return when (targetClass) {
-            is KtLightClass -> {
+            is KtClass -> {
                 KtImplementableMember.from(
-                    analysisSession = this,
                     targetClass = targetClass,
                     abstractMember = abstractMember,
                     preferConstructorParameters = true,

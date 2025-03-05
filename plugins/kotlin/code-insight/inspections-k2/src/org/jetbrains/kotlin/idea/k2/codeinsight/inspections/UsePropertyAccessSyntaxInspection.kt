@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
@@ -308,7 +308,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
             val psiFactory = KtPsiFactory(callToConvert.project)
 
-            if (qualifiedExpression != null) {
+            return if (qualifiedExpression != null) {
                 val pattern = when (qualifiedExpression) {
                     is KtDotQualifiedExpression -> "$0.$1=$2"
                     is KtSafeQualifiedExpression -> "$0?.$1=$2"
@@ -322,10 +322,10 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
                     valueArgument,
                     reformat = true
                 )
-                return qualifiedExpression.replaced(newExpression)
+                qualifiedExpression.replaced(newExpression)
             } else {
                 val newExpression = psiFactory.createExpressionByPattern("$0=$1", propertyName, valueArgument)
-                return callToConvert.replaced(newExpression)
+                callToConvert.replaced(newExpression)
             }
         }
 
@@ -354,12 +354,12 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
     private fun unquoteMethodNameIfNeeded(expression: KtExpression, methodName: String): String? {
         return SharedImplUtil.getChildrenOfType(expression.node, KtTokens.IDENTIFIER).singleOrNull()?.let {
-            if (isRedundantBackticks(it)) {
-                return methodName.unquoteKotlinIdentifier()
+            return if (isRedundantBackticks(it)) {
+                methodName.unquoteKotlinIdentifier()
             } else {
-                return methodName
+                methodName
             }
-        } ?: return null
+        }
     }
 
     /**
@@ -374,23 +374,25 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
         val valueArguments = call.valueArguments
         if (isSetUsage) {
-            if (valueArguments.size == 1) {
+            return if (valueArguments.size == 1) {
                 val valueArgumentExpression = valueArguments.singleOrNull()?.getArgumentExpression()?.takeUnless {
                     it is KtLambdaExpression || it is KtNamedFunction || it is KtCallableReferenceExpression
                 } ?: return null
-                return PropertyAccessorKind.Setter(valueArgumentExpression)
+                PropertyAccessorKind.Setter(valueArgumentExpression)
             } else {
-                return null
+                null
             }
         }
 
-        if (valueArguments.isEmpty()) {
-            if (PropertyUtilBase.isIsGetterName(methodName)) {
-                return PropertyAccessorKind.Getter.IsGetter
-            } else return PropertyAccessorKind.Getter.GetGetter
+        return if (valueArguments.isEmpty()) {
+            return if (PropertyUtilBase.isIsGetterName(methodName)) {
+                PropertyAccessorKind.Getter.IsGetter
+            } else {
+                PropertyAccessorKind.Getter.GetGetter
+            }
         } else {
             // More than 1 argument for getter
-            return null
+            null
         }
     }
 
@@ -428,9 +430,10 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType: KaType, propertyName: String): Boolean {
-        val fieldWithSameName = receiverType.scope?.declarationScope?.callables
-            ?.filter { it is KaJavaFieldSymbol && it.name.toString() == propertyName && !it.visibility.isPrivateOrPrivateToThis() }
+        val fieldWithSameName = receiverType.scope?.declarationScope?.callables(Name.identifier(propertyName))
+            ?.filter { it is KaJavaFieldSymbol && it.visibility != KaSymbolVisibility.PRIVATE }
             ?.singleOrNull()
+
         return fieldWithSameName != null
     }
 

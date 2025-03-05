@@ -11,6 +11,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.popup.util.*;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,7 @@ public class BreakpointChooser {
     void breakpointChosen(Project project, BreakpointItem breakpointItem);
   }
 
+  @Contract(mutates = "param4")
   public BreakpointChooser(final Project project, Delegate delegate, Object baseBreakpoint, List<BreakpointItem> breakpointItems) {
     myDelegate = delegate;
     myBreakpointItems = breakpointItems;
@@ -137,8 +139,7 @@ public class BreakpointChooser {
     });
   }
 
-  @Nullable
-  private static BreakpointItem findItem(Object baseBreakpoint, List<? extends BreakpointItem> breakpointItems) {
+  private static @Nullable BreakpointItem findItem(Object baseBreakpoint, List<? extends BreakpointItem> breakpointItems) {
     BreakpointItem breakpointItem = null;
     for (BreakpointItem item : breakpointItems) {
       if (item.getBreakpoint() == baseBreakpoint) {

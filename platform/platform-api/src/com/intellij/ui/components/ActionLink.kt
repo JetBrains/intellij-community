@@ -70,10 +70,12 @@ open class ActionLink() : JButton() {
     return this
   }
 
-  override fun getAccessibleContext(): AccessibleContext = myAccessibleContext
-  private val myAccessibleContext: AccessibleContext by lazy {
-    object : AccessibleAbstractButton() {
-      override fun getAccessibleRole() = HYPERLINK
+  override fun getAccessibleContext(): AccessibleContext {
+    if (accessibleContext == null) {
+      accessibleContext = object : AccessibleAbstractButton() {
+        override fun getAccessibleRole() = HYPERLINK
+      }
     }
+    return accessibleContext
   }
 }

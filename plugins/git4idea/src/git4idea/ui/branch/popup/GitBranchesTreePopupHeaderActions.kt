@@ -20,7 +20,6 @@ import git4idea.GitUtil
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.BranchGroupingAction
 
 internal class GitBranchesTreePopupSettings :

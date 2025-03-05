@@ -10,13 +10,11 @@ import static com.jetbrains.python.ast.PyAstElementKt.findChildByClass;
 
 @ApiStatus.Experimental
 public interface PyAstClassPattern extends PyAstPattern {
-  @NotNull
-  default PyAstReferenceExpression getClassNameReference() {
+  default @NotNull PyAstReferenceExpression getClassNameReference() {
     return Objects.requireNonNull(findChildByClass(this, PyAstReferenceExpression.class));
   }
 
-  @NotNull
-  default PyAstPatternArgumentList getArgumentList() {
+  default @NotNull PyAstPatternArgumentList getArgumentList() {
     return Objects.requireNonNull(findChildByClass(this, PyAstPatternArgumentList.class));
   }
 

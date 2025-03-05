@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -21,10 +21,8 @@ public class MakeDefaultLastCaseFix extends PsiUpdateModCommandAction<PsiSwitchL
     super(labelStatementBase);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("make.default.the.last.case.family.name");
   }
 

@@ -157,17 +157,45 @@ object EventsSchemeBuilder {
                                                   "it should have the same version (group=${group.id})")
       }
       val existingScheme = existingGroup?.schema ?: HashSet()
+      // why group by eventId?? eventId is unique within the group
       val eventsDescriptors = existingScheme + group.events.groupBy { it.eventId }
-        .map { (eventName, events) ->
-          EventDescriptor(eventName,
-                          buildFields(events, eventName, group.id),
-                          getEventDescription(events, eventName, group.id))
+        .map { (eventId, events) ->
+
+          val arrays = events.flatMap { event ->
+            event.getFields().flatMap { field ->
+              // From each field, we extract the paths of its object arrays
+              getObjectArrays(null, field)
+            }
+          }
+
+          EventDescriptor(eventId,
+                          buildFields(events, eventId, group.id),
+                          getEventDescription(events, eventId, group.id),
+                          objectArrays = arrays)
         }
         .toSet()
       result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name, group.recorder,
                                          PluginSchemeDescriptor(plugin.id), group.description, collector.fileName)
     }
     return result.values
+  }
+
+  // path: top_object.inner_object.field_name
+  fun getObjectArrays(parentPath: String?, field: EventField<*>): List<String> {
+    val path = parentPath?.let { it + "." + field.name } ?: field.name
+    val objectArrays = mutableListOf<String>()
+    if (field is ObjectListEventField) {
+      objectArrays.add(path)
+      field.fields.forEach {
+        objectArrays += getObjectArrays(path, it)
+      }
+    }
+    if (field is ObjectEventField) {
+      field.fields.forEach {
+        objectArrays += getObjectArrays(path, it)
+      }
+    }
+    return objectArrays
   }
 
   /**

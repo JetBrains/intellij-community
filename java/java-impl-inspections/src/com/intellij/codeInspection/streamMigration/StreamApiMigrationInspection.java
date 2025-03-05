@@ -1,17 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -62,10 +59,8 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     );
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -74,9 +69,8 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     return true;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -85,9 +79,8 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     return Set.of(JavaFeature.STREAM_OPTIONAL);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new StreamApiMigrationVisitor(holder, isOnTheFly);
   }
 
@@ -105,14 +98,12 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
    * @param assignment assignment expression to extract an addend from
    * @return extracted addend expression or null if supplied assignment statement is not an addition
    */
-  @Nullable
-  static PsiExpression extractAddend(PsiAssignmentExpression assignment) {
+  static @Nullable PsiExpression extractAddend(PsiAssignmentExpression assignment) {
     return extractOperand(assignment, JavaTokenType.PLUSEQ);
   }
 
 
-  @Nullable
-  static PsiExpression extractOperand(PsiAssignmentExpression assignment, IElementType compoundAssignmentOp) {
+  static @Nullable PsiExpression extractOperand(PsiAssignmentExpression assignment, IElementType compoundAssignmentOp) {
     if (compoundAssignmentOp.equals(assignment.getOperationTokenType())) {
       return assignment.getRExpression();
     }
@@ -133,14 +124,12 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
   }
 
 
-  @Nullable
-  static PsiVariable extractSumAccumulator(PsiAssignmentExpression assignment) {
+  static @Nullable PsiVariable extractSumAccumulator(PsiAssignmentExpression assignment) {
     return extractAccumulator(assignment, JavaTokenType.PLUSEQ);
   }
 
 
-  @Nullable
-  static PsiVariable extractAccumulator(PsiAssignmentExpression assignment, IElementType compoundAssignmentOp) {
+  static @Nullable PsiVariable extractAccumulator(PsiAssignmentExpression assignment, IElementType compoundAssignmentOp) {
     PsiReferenceExpression lExpr = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
     if (lExpr == null) return null;
     PsiVariable var = tryCast(lExpr.resolve(), PsiVariable.class);
@@ -182,8 +171,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  @Nullable
-  private static PsiLocalVariable getIncrementedVariable(PsiExpression expression, TerminalBlock tb, List<PsiVariable> variables) {
+  private static @Nullable PsiLocalVariable getIncrementedVariable(PsiExpression expression, TerminalBlock tb, List<PsiVariable> variables) {
     // have only one non-final variable
     if (variables.size() != 1) return null;
 
@@ -199,10 +187,9 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  @Nullable
-  private static PsiVariable getAccumulatedVariable(TerminalBlock tb,
-                                                    List<PsiVariable> variables,
-                                                    OperationReductionMigration.ReductionOperation operation) {
+  private static @Nullable PsiVariable getAccumulatedVariable(TerminalBlock tb,
+                                                              List<PsiVariable> variables,
+                                                              OperationReductionMigration.ReductionOperation operation) {
     IElementType compoundAssignmentOp = operation.getCompoundAssignmentOp();
     // have only one non-final variable
     if (variables.size() != 1) return null;
@@ -282,8 +269,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     return method == null;
   }
 
-  @Nullable
-  private static PsiClassType createDefaultConsumerType(Project project, PsiVariable variable) {
+  private static @Nullable PsiClassType createDefaultConsumerType(Project project, PsiVariable variable) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiClass consumerClass = psiFacade.findClass(CommonClassNames.JAVA_UTIL_FUNCTION_CONSUMER, variable.getResolveScope());
     return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, variable.getType()) : null;
@@ -298,7 +284,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
                                                    tb.operations().noneMatch(op -> op.isWriteAllowed(variable, ref));
       if (PsiTreeUtil.processElements(block, notAllowedWrite.negate()::test)) return true;
     }
-    return HighlightControlFlowUtil.isEffectivelyFinal(variable, statement, null);
+    return ControlFlowUtil.isEffectivelyFinal(variable, statement);
   }
 
   static String tryUnbox(PsiVariable variable) {
@@ -406,12 +392,11 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
   }
 
 
-  @Nullable
-  static BaseStreamApiMigration findMigration(PsiStatement loop,
-                                              PsiElement body,
-                                              TerminalBlock tb,
-                                              boolean suggestForeach,
-                                              boolean replaceTrivialForEach) {
+  static @Nullable BaseStreamApiMigration findMigration(PsiStatement loop,
+                                                        PsiElement body,
+                                                        TerminalBlock tb,
+                                                        boolean suggestForeach,
+                                                        boolean replaceTrivialForEach) {
     final ControlFlow controlFlow;
     try {
       controlFlow = ControlFlowFactory.getInstance(loop.getProject())
@@ -496,11 +481,10 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  @Nullable
-  private static BaseStreamApiMigration findMigrationForBreak(TerminalBlock tb,
-                                                              List<PsiVariable> nonFinalVariables,
-                                                              PsiStatement statement,
-                                                              boolean replaceTrivialForEach) {
+  private static @Nullable BaseStreamApiMigration findMigrationForBreak(TerminalBlock tb,
+                                                                        List<PsiVariable> nonFinalVariables,
+                                                                        PsiStatement statement,
+                                                                        boolean replaceTrivialForEach) {
     boolean shouldWarn = replaceTrivialForEach || tb.hasOperations();
     if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statement)).findFirst() == null) {
       return new MatchMigration(shouldWarn, "anyMatch()/noneMatch()/allMatch");
@@ -523,8 +507,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  @Nullable
-  private static BaseStreamApiMigration findMigrationForReturn(PsiStatement statement, TerminalBlock tb, boolean replaceTrivialForEach) {
+  private static @Nullable BaseStreamApiMigration findMigrationForReturn(PsiStatement statement, TerminalBlock tb, boolean replaceTrivialForEach) {
     boolean shouldWarn = replaceTrivialForEach || tb.hasOperations();
     PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
     if (returnStatement == null) return null;
@@ -564,8 +547,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  @NotNull
-  private static TextRange getRange(boolean shouldWarn, PsiStatement statement, boolean isOnTheFly) {
+  private static @NotNull TextRange getRange(boolean shouldWarn, PsiStatement statement, boolean isOnTheFly) {
     boolean wholeStatement =
       isOnTheFly && (!shouldWarn || InspectionProjectProfileManager.isInformationLevel(SHORT_NAME, statement));
     if (statement instanceof PsiForeachStatement) {
@@ -598,8 +580,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  @Nullable
-  static PsiLocalVariable extractArray(TerminalBlock tb) {
+  static @Nullable PsiLocalVariable extractArray(TerminalBlock tb) {
     CountingLoopSource loop = tb.getLastOperation(CountingLoopSource.class);
     if (loop == null || loop.myIncluding) return null;
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
@@ -642,7 +623,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
   /**
    * Intermediate stream operation representation
    */
-  static abstract class Operation {
+  abstract static class Operation {
     final PsiExpression myExpression;
     final PsiVariable myVariable;
 
@@ -944,8 +925,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
       return false;
     }
 
-    @Nullable
-    public static BufferedReaderLines from(PsiLoopStatement loopStatement) {
+    public static @Nullable BufferedReaderLines from(PsiLoopStatement loopStatement) {
       BufferedReaderLines whileSimple = extractWhileSimple(loopStatement);
       if (whileSimple != null) return whileSimple;
       BufferedReaderLines forSimple = extractForSimple(loopStatement);
@@ -957,8 +937,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
      * Extracts BufferedReaderSource from condition (for update or while condition), but additional checks may be required
      * Condition must look like: (line = reader.readLine()) != null
      */
-    @Nullable
-    private static BufferedReaderLines extractReaderFromCondition(@Nullable PsiExpression condition,
+    private static @Nullable BufferedReaderLines extractReaderFromCondition(@Nullable PsiExpression condition,
                                                                   @NotNull PsiLoopStatement loopStatement) {
       PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiBinaryExpression.class);
       if (binOp == null) return null;
@@ -981,8 +960,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     }
 
     // for (String line; (line = reader.readLine()) != null; )
-    @Nullable
-    private static BufferedReaderLines extractForReadInCondition(PsiLoopStatement loopStatement) {
+    private static @Nullable BufferedReaderLines extractForReadInCondition(PsiLoopStatement loopStatement) {
       PsiForStatement forLoop = tryCast(loopStatement, PsiForStatement.class);
       if (forLoop == null || forLoop.getUpdate() != null) return null;
 
@@ -999,8 +977,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     }
 
     // for (String line = reader.readLine(); line != null; line = reader.readLine()) ...
-    @Nullable
-    private static BufferedReaderLines extractForSimple(PsiLoopStatement loopStatement) {
+    private static @Nullable BufferedReaderLines extractForSimple(PsiLoopStatement loopStatement) {
       PsiForStatement forLoop = tryCast(loopStatement, PsiForStatement.class);
       if (forLoop == null) return null;
 
@@ -1038,8 +1015,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
     }
 
     // while ((line = br.readLine()) != null)
-    @Nullable
-    private static BufferedReaderLines extractWhileSimple(PsiLoopStatement loopStatement) {
+    private static @Nullable BufferedReaderLines extractWhileSimple(PsiLoopStatement loopStatement) {
       PsiWhileStatement whileLoop = tryCast(loopStatement, PsiWhileStatement.class);
       if (whileLoop == null) return null;
       BufferedReaderLines reader = extractReaderFromCondition(whileLoop.getCondition(), loopStatement);
@@ -1077,8 +1053,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
       return CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + ct.text(myExpression) + ")";
     }
 
-    @Nullable
-    public static ArrayStream from(PsiForeachStatement statement) {
+    public static @Nullable ArrayStream from(PsiForeachStatement statement) {
       PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) return null;
 
@@ -1111,8 +1086,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
                                       TypeConversionUtil.getSuperClassSubstitutor(collectionClass, (PsiClassType)iteratedValueType));
     }
 
-    @Nullable
-    public static CollectionStream from(PsiForeachStatement statement) {
+    public static @Nullable CollectionStream from(PsiForeachStatement statement) {
       PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) return null;
 
@@ -1181,8 +1155,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
       return variable != myVariable;
     }
 
-    @Nullable
-    public static CountingLoopSource from(PsiForStatement forStatement) {
+    public static @Nullable CountingLoopSource from(PsiForStatement forStatement) {
       CountingLoop loop = CountingLoop.from(forStatement);
       if (loop == null || loop.isDescending()) return null;
       return new CountingLoopSource(forStatement, loop.getCounter(), loop.getInitializer(), loop.getBound(), loop.isIncluding());
@@ -1194,9 +1167,9 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
    */
   static class IterateStreamSource extends StreamSource {
     private final PsiExpression myInitializer;
-    private @Nullable final PsiExpression myCondition;
-    private @Nullable final IElementType myOpType;
-    private @Nullable final PsiUnaryExpression myUnaryExpression;
+    private final @Nullable PsiExpression myCondition;
+    private final @Nullable IElementType myOpType;
+    private final @Nullable PsiUnaryExpression myUnaryExpression;
 
     /**
      * @param type            if not null, equivalent form of update is: variable type= expression;
@@ -1216,9 +1189,8 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
       myUnaryExpression = unaryExpression;
     }
 
-    @Nullable
     @Contract(pure = true)
-    private static String getOperationSign(IElementType op) {
+    private static @Nullable String getOperationSign(IElementType op) {
       if (op == JavaTokenType.AND) {
         return "&";
       }
@@ -1297,8 +1269,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
       return variable != myVariable;
     }
 
-    @Nullable
-    static IterateStreamSource from(@NotNull PsiForStatement forStatement) {
+    static @Nullable IterateStreamSource from(@NotNull PsiForStatement forStatement) {
       PsiExpression condition = forStatement.getCondition();
       if (!PsiUtil.isLanguageLevel9OrHigher(forStatement) && condition != null) return null;
       PsiStatement initialization = forStatement.getInitialization();
@@ -1338,8 +1309,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
       return new IterateStreamSource(forStatement, variable, updateExpr, initializer, condition, op, unaryExpression);
     }
 
-    @Nullable
-    private static IElementType getOperation(IElementType tokenType) {
+    private static @Nullable IElementType getOperation(IElementType tokenType) {
       if (tokenType == JavaTokenType.PLUSPLUS) {
         return JavaTokenType.PLUS;
       }

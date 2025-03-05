@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.util.ReflectionUtilRt;
@@ -19,8 +19,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public final class Maven40ApiModelConverter {
-  @NotNull
-  public static MavenModel convertModel(Model model) {
+  public static @NotNull MavenModel convertModel(Model model) {
     Build build = model.getBuild();
     return convertModel(
       model,
@@ -28,10 +27,9 @@ public final class Maven40ApiModelConverter {
       asSourcesList(build.getTestSourceDirectory()));
   }
 
-  @NotNull
-  public static MavenModel convertModel(Model model,
-                                        List<String> sources,
-                                        List<String> testSources) {
+  public static @NotNull MavenModel convertModel(Model model,
+                                                 List<String> sources,
+                                                 List<String> testSources) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 

@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.core.config
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.ui.DialogPanel
@@ -137,11 +138,13 @@ internal class SettingsSyncPanelHolder() {
                 .onIsModified {
                   holder.isModified()
                 }
+                .enabled(isModifiable(holder))
               comment(holder.description)
             }
             else {
               val topCheckBox = ThreeStateCheckBox(holder.name)
               topCheckBox.isThirdStateEnabled = false
+              topCheckBox.isEnabled = isModifiable(holder)
               cell(topCheckBox)
                 .onReset {
                   holder.reset()
@@ -175,6 +178,11 @@ internal class SettingsSyncPanelHolder() {
         }
       }
     }
+  }
+
+  // IJPL-173541 Disable everything except for plugins from Setting Sync in Remote Development
+  private fun isModifiable(holder: SyncCategoryHolder) : Boolean {
+    return !AppMode.isRemoteDevHost() || holder.descriptor.category == SettingsCategory.PLUGINS
   }
 
   private fun getGroupState(descriptor: SyncCategoryHolder): State {

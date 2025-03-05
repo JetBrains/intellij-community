@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling
 
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.MainFunctionDetector
@@ -14,10 +15,9 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import javax.swing.Icon
 
-class Fe10NativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() {
+private class Fe10NativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() {
     override val testIconProvider: AbstractGenericTestIconProvider
         get() = Fe10GenericTestIconProvider
 
@@ -25,6 +25,7 @@ class Fe10NativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() 
         return function.isMainFunction() && super.acceptsAsEntryPoint(function)
     }
 
+    @OptIn(IntellijInternalApi::class)
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         if (!allowSlowOperations) {
             return null

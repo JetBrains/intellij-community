@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 val array = Array(2) { it }
 
 val a = <selection>array[1]</selection>

@@ -39,5 +39,6 @@ public interface ElementFilter {
   boolean isClassAcceptable(Class<?> hintClass);
 
   // To be used only for debug purposes!
+  @Override
   String toString();
 }

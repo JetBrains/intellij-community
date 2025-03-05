@@ -11,6 +11,7 @@ import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
@@ -21,10 +22,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.implCommon.ActualCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -42,7 +42,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 @OptIn(KaExperimentalApi::class)
 internal class ActualKeywordHandler(
-    private val basicContext: FirBasicCompletionContext
+    private val importStrategyDetector: ImportStrategyDetector,
+    private val declaration: KtNamedDeclaration? = null,
 ) : CompletionKeywordHandler<KaSession>(KtTokens.ACTUAL_KEYWORD) {
 
     context(KaSession)
@@ -51,11 +52,17 @@ internal class ActualKeywordHandler(
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project
-    ): Collection<LookupElement> = createActualLookups(parameters, project) + lookup
+    ): Collection<LookupElement> {
+        val parameters = KotlinFirCompletionParameters.create(parameters)
+            ?: return listOf(lookup)
+
+        return createActualLookups(parameters, project) +
+                lookup
+    }
 
     context(KaSession)
     fun createActualLookups(
-        parameters: CompletionParameters,
+        parameters: KotlinFirCompletionParameters,
         project: Project
     ): Collection<LookupElement> {
         val position = parameters.position
@@ -67,7 +74,7 @@ internal class ActualKeywordHandler(
         if (!isTopLevelDeclaration) return emptyList()
 
         val module = position.module ?: return emptyList()
-        val kaModule = position.moduleInfo.toKaModule()
+        val kaModule = KotlinProjectStructureProvider.getModule(project, position, useSiteModule = null)
         val dependsOnModules = kaModule.transitiveDependsOnDependencies
         if (dependsOnModules.isEmpty()) return emptyList()
 
@@ -91,7 +98,7 @@ internal class ActualKeywordHandler(
         val expectDeclarationPackageQualifiedName = expectDeclaration.packageDirective?.qualifiedName ?: return false
         if (expectDeclarationPackageQualifiedName != packageFqnForActual) return false
 
-        val actualsForExpected = expectDeclaration.actualsForExpected(targetModule)
+        val actualsForExpected = expectDeclaration.actualsForExpect(targetModule)
         return actualsForExpected.isEmpty()
     }
 
@@ -105,7 +112,7 @@ internal class ActualKeywordHandler(
 
         val baseLookupElement = KotlinFirLookupElementFactory.createLookupElement(
             symbol = declarationSymbol,
-            importStrategyDetector = basicContext.importStrategyDetector,
+            importStrategyDetector = importStrategyDetector,
         )
 
         val pointer = declarationSymbol.createPointer()
@@ -122,7 +129,8 @@ internal class ActualKeywordHandler(
             },
             shortenReferences = { element ->
                 shortenReferencesInRange(element.containingKtFile, element.textRange)
-            }
+            },
+            declaration = declaration,
         )
     }
 

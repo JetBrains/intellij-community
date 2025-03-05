@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -36,7 +36,7 @@ import java.util.Set;
 import static com.intellij.openapi.vfs.LocalFileSystem.PROTOCOL_PREFIX;
 
 public final class FindUnusedTestDataAction extends DumbAwareAction {
-  private final static Logger LOG = Logger.getInstance(FindUnusedTestDataAction.class);
+  private static final Logger LOG = Logger.getInstance(FindUnusedTestDataAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {

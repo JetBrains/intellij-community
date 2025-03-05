@@ -12,7 +12,6 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 import com.intellij.openapi.vcs.changes.SingleFileDiffPreviewProcessor
 import com.intellij.platform.lvcs.impl.ActivityScope
@@ -20,7 +19,7 @@ import com.intellij.platform.lvcs.impl.ActivitySelection
 import com.intellij.platform.lvcs.impl.filePath
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.util.EventDispatcher
-import com.intellij.util.ui.update.Activatable
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 import org.jetbrains.annotations.Nls
 
 internal class SingleFileActivityDiffPreview(project: Project, private val model: ActivityViewModel, disposable: Disposable) : EditorTabDiffPreview(project) {

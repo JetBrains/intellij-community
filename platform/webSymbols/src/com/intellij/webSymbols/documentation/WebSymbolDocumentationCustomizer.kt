@@ -10,7 +10,7 @@ interface WebSymbolDocumentationCustomizer {
   fun customize(symbol: WebSymbol, location: PsiElement?, documentation: WebSymbolDocumentation): WebSymbolDocumentation
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<WebSymbolDocumentationCustomizer>(
+    val EP_NAME: ExtensionPointName<WebSymbolDocumentationCustomizer> = ExtensionPointName.create<WebSymbolDocumentationCustomizer>(
       "com.intellij.webSymbols.documentationCustomizer")
   }
 }

@@ -11,10 +11,12 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class GitShallowCloneViewModel {
-  val shallowClone = AtomicBooleanProperty(false)
-  val depth = AtomicProperty("1")
+  val shallowClone: AtomicBooleanProperty = AtomicBooleanProperty(false)
+  val depth: AtomicProperty<String> = AtomicProperty("1")
 
-  fun getShallowCloneOptions() = if (shallowClone.get()) GitShallowCloneOptions(depth.get().toIntOrNull() ?: 1) else null
+  fun getShallowCloneOptions(): GitShallowCloneOptions? {
+    return if (shallowClone.get()) GitShallowCloneOptions(depth.get().toIntOrNull() ?: 1) else null
+  }
 }
 
 @ApiStatus.Internal

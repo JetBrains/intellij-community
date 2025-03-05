@@ -20,8 +20,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements SteppingBreakpoint {
   private final boolean myRestoreBreakpoints;
-  @NotNull
-  protected final SourcePosition myCustomPosition;
+  protected final @NotNull SourcePosition myCustomPosition;
 
   protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
     super(project);
@@ -29,9 +28,8 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
     myRestoreBreakpoints = restoreBreakpoints;
   }
 
-  @NotNull
   @Override
-  public SourcePosition getSourcePosition() {
+  public @NotNull SourcePosition getSourcePosition() {
     return myCustomPosition;
   }
 
@@ -60,9 +58,8 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
     return JavaDebuggerBundle.message("status.stopped.at.cursor");
   }
 
-  @Nullable
   @Override
-  protected JavaLineBreakpointType getXBreakpointType() {
+  protected @Nullable JavaLineBreakpointType getXBreakpointType() {
     SourcePosition position = getSourcePosition();
     VirtualFile file = position.getFile().getVirtualFile();
     int line = position.getLine();
@@ -74,10 +71,9 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
     return null;
   }
 
-  @Nullable
-  protected static RunToCursorBreakpoint create(@NotNull Project project,
-                                                @NotNull XSourcePosition position,
-                                                boolean restoreBreakpoints) {
+  protected static @Nullable RunToCursorBreakpoint create(@NotNull Project project,
+                                                          @NotNull XSourcePosition position,
+                                                          boolean restoreBreakpoints) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
     if (psiFile == null) {
       return null;

@@ -56,13 +56,13 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   private static final ExecutorService redrawInlaysExecutor =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
 
-  @Nullable private RangeMarker myHighlighter;
+  private @Nullable RangeMarker myHighlighter;
   private final XLineBreakpointType<P> myType;
   private XSourcePosition mySourcePosition;
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type,
                              XBreakpointManagerImpl breakpointManager,
-                             @Nullable final P properties, LineBreakpointState<P> state) {
+                             final @Nullable P properties, LineBreakpointState<P> state) {
     super(type, breakpointManager, properties, state);
     myType = type;
   }
@@ -194,14 +194,12 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     }).executeSynchronously();
   }
 
-  @Nullable
-  public VirtualFile getFile() {
+  public @Nullable VirtualFile getFile() {
     return VirtualFileManager.getInstance().findFileByUrl(getFileUrl());
   }
 
   @Override
-  @NotNull
-  public XLineBreakpointType<P> getType() {
+  public @NotNull XLineBreakpointType<P> getType() {
     return myType;
   }
 
@@ -238,8 +236,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return new File(VfsUtilCore.urlToPath(getFileUrl())).getName();
   }
 
-  @Nullable
-  public RangeHighlighter getHighlighter() {
+  public @Nullable RangeHighlighter getHighlighter() {
     return myHighlighter instanceof RangeHighlighter ? (RangeHighlighter)myHighlighter : null;
   }
 

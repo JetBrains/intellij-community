@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -37,8 +36,7 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
   }
 
   @Override
-  @Nullable
-  public String getTypeExpressionText() {
+  public @Nullable String getTypeExpressionText() {
     PyTypeAliasStatementStub stub = getStub();
 
     if (stub != null) {
@@ -51,8 +49,7 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
   }
 
   @Override
-  @Nullable
-  public PyTypeParameterList getTypeParameterList() {
+  public @Nullable PyTypeParameterList getTypeParameterList() {
     return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
@@ -82,8 +79,7 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
   }
 
   @Override
-  @Nullable
-  public PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
     PyPsiFacade facade = PyPsiFacade.getInstance(this.getProject());
     PyClass typeAliasTypeClass = facade.createClassByQName(PyTypingTypeProvider.TYPE_ALIAS_TYPE, this);
     if (typeAliasTypeClass != null) {

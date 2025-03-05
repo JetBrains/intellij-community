@@ -15,8 +15,7 @@
  */
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.util.Pair
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -24,7 +23,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.junit.Test
 import java.util.*
@@ -610,7 +608,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
       embeddersManager.releaseInTests()
     }
     assertEquals(log().add("resolved", "project"), listener.log)
-    assertTrue(mavenProject.hasReadingProblems())
+    assertFalse(mavenProject.problems.isEmpty())
   }
 
   @Test
@@ -1809,7 +1807,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     finally {
       embeddersManager.releaseInTests()
     }
-    val f = dir.toPath().resolve("tree.dat")
+    val f = dir.resolve("tree.dat")
     tree.save(f)
     val read = MavenProjectsTree.read(project, f)
     val roots = read!!.rootProjects
@@ -2083,7 +2081,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     updateAll(mutableListOf<String?>("one", "two"), projectPom)
     assertUnorderedElementsAreEqual(
       tree.explicitProfiles.enabledProfiles, "one", "two")
-    writeAction {
+    edtWriteAction {
       m.delete(this)
     }
     deleteProject(m)

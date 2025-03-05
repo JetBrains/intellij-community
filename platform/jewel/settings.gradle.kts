@@ -12,6 +12,7 @@ pluginManagement {
         gradlePluginPortal()
         mavenCentral()
     }
+    plugins { kotlin("jvm") version "2.1.0" }
 }
 
 dependencyResolutionManagement {
@@ -38,15 +39,19 @@ include(
     ":ide-laf-bridge-tests",
     ":int-ui:int-ui-decorated-window",
     ":int-ui:int-ui-standalone",
+    ":detekt-plugin",
     ":markdown:core",
     ":markdown:extension:autolink",
     ":markdown:extension:gfm-alerts",
+    ":markdown:extension:gfm-strikethrough",
+    ":markdown:extension:gfm-tables",
     ":markdown:int-ui-standalone-styling",
     ":markdown:ide-laf-bridge-styling",
     ":samples:ide-plugin",
+    ":samples:showcase",
     ":samples:standalone",
     ":ui",
-    ":ui-test",
+    ":ui-tests",
 )
 
 gradleEnterprise {
@@ -61,25 +66,27 @@ val isWindows
     get() = System.getProperty("os.name").contains("win", true)
 
 val gradleCommand: String by
-    lazy(LazyThreadSafetyMode.NONE) {
-        val gradlewFilename =
-            if (isWindows) {
-                "gradlew.bat"
-            } else {
-                "gradlew"
-            }
-
-        val gradlew = File(rootProject.projectDir, gradlewFilename)
-        if (gradlew.exists() && gradlew.isFile && gradlew.canExecute()) {
-            logger.info("Using gradlew wrapper at ${gradlew.invariantSeparatorsPath}")
-            gradlew.invariantSeparatorsPath
+lazy(LazyThreadSafetyMode.NONE) {
+    val gradlewFilename =
+        if (isWindows) {
+            "gradlew.bat"
         } else {
-            "gradle"
+            "gradlew"
         }
+
+    val gradlew = File(rootProject.projectDir, gradlewFilename)
+    if (gradlew.exists() && gradlew.isFile && gradlew.canExecute()) {
+        logger.info("Using gradlew wrapper at ${gradlew.invariantSeparatorsPath}")
+        gradlew.invariantSeparatorsPath
+    } else {
+        "gradle"
     }
+}
 
 val shebang = if (isWindows) "" else "#!/bin/sh"
 
+/*
+// This is broken on Windows, please do not enable it again until it is fixed.
 gitHooks {
     hook("pre-push") {
         from(shebang) {
@@ -99,5 +106,4 @@ gitHooks {
     }
 
     createHooks(overwriteExisting = true)
-}
-include("ui-tests")
+}*/

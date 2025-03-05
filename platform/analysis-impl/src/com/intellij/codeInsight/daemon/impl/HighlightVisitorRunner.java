@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
@@ -159,6 +158,7 @@ class HighlightVisitorRunner {
         HighlightInfo info = holder.get(i);
         newInfos.add(info);
         info.toolId = toolId;
+        info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
       }
     }
     else {
@@ -194,7 +194,10 @@ class HighlightVisitorRunner {
         try {
           visitor.visit(psiElement);
         }
-        catch (ProcessCanceledException | IndexNotReadyException | AlreadyDisposedException e) {
+        catch (IndexNotReadyException e) {
+          break;
+        }
+        catch (ProcessCanceledException e) {
           throw e;
         }
         catch (Exception e) {
@@ -215,6 +218,7 @@ class HighlightVisitorRunner {
             //myErrorFound = true;
           }
           info.toolId = toolId;
+          info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
           infos.add(info);
         }
       }

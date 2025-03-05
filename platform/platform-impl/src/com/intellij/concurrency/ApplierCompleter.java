@@ -8,12 +8,11 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.BlockingJob;
 import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
-import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,8 +45,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   private final boolean failFastOnAcquireReadAction;
   private final ProgressIndicator progressIndicator;
   private final @NotNull List<? extends T> array;
-  @NotNull
-  private final Processor<?> processor;
+  private final @NotNull Processor<?> processor;
   private final int lo;
   private final int hi;
   /**
@@ -94,10 +92,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     this.lo = lo;
     this.hi = hi;
     this.failedSubTasks = failedSubTasks;
-    CoroutineContext nonStructuredContext = ThreadContext.currentThreadContext().minusKey(BlockingJob.Companion);
-    try (AccessToken ignored = ThreadContext.installThreadContext(nonStructuredContext, true)) {
-      this.childContext = Propagation.createChildContext("ApplierCompleter");
-    }
+    this.childContext = Propagation.createChildContextIgnoreStructuredConcurrency("ApplierCompleter");
   }
 
   @Override
@@ -145,7 +140,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     }
     return result;
   }
-  void wrapAndRun(@NotNull final Runnable process) {
+  void wrapAndRun(final @NotNull Runnable process) {
     if (failFastOnAcquireReadAction) {
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(process));
     }
@@ -153,7 +148,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
       wrapInReadActionAndIndicator(process);
     }
   }
-  private void wrapInReadActionAndIndicator(@NotNull final Runnable process) {
+  private void wrapInReadActionAndIndicator(final @NotNull Runnable process) {
     Runnable toRun = runInReadAction ? () -> {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(process)) {
         failedSubTasks.add(this);
@@ -175,6 +170,8 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     try {
       processArray();
     }
+    catch (IndexNotReadyException ignore) {
+    }
     catch (Throwable e) {
       e = accumulateException(myThrown, e);
       cancelProgress();
@@ -185,6 +182,8 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       helpOthers();
     }
+    catch (IndexNotReadyException ignore) {
+    }
     catch (Throwable e) {
       e = accumulateException(myThrown, e);
       cancelProgress();
@@ -192,8 +191,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     }
   }
 
-  @NotNull
-  static Throwable accumulateException(@NotNull AtomicReference<Throwable> thrown, @NotNull Throwable e) {
+  static @NotNull Throwable accumulateException(@NotNull AtomicReference<Throwable> thrown, @NotNull Throwable e) {
     Throwable throwable = thrown.accumulateAndGet(e, (throwable1, throwable2) -> moreImportant(throwable1, throwable2));
     return throwable;
   }
@@ -257,8 +255,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "(" + lo + "-" + hi + ")" + (isFinishedAll() ? " finished" : "");
   }
 }

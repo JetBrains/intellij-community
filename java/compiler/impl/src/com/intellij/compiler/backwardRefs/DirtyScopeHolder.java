@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -167,8 +167,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myFileTypes, myProject);
   }
 
-  @NotNull
-  public GlobalSearchScope getDirtyScope() {
+  public @NotNull GlobalSearchScope getDirtyScope() {
     final Project project = myProject;
     return ReadAction.compute(() -> {
       synchronized (myLock) {
@@ -184,8 +183,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     });
   }
 
-  @NotNull
-  private GlobalSearchScope calculateDirtyScope() {
+  private @NotNull GlobalSearchScope calculateDirtyScope() {
     final Set<Module> dirtyModules = getAllDirtyModules();
     if (dirtyModules.isEmpty()) return myExcludedFilesScope;
     if (dirtyModules.size() == ModuleManager.getInstance(myProject).getModules().length) {
@@ -229,9 +227,8 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     return getDirtyScope().contains(file);
   }
 
-  @Nullable
   @Override
-  public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+  public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     if (myProject.isDisposed()) return null;
     List<Module> modulesToBeMarkedDirty = getModulesToBeMarkedDirtyBefore(events);
 
@@ -277,8 +274,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
   }
 
   @Contract(pure = true)
-  @NotNull
-  private List<Module> getModulesToBeMarkedDirtyBefore(@NotNull List<? extends VFileEvent> events) {
+  private @NotNull List<Module> getModulesToBeMarkedDirtyBefore(@NotNull List<? extends VFileEvent> events) {
     final List<Module> modulesToBeMarkedDirty = new ArrayList<>();
 
     for (VFileEvent event : events) {
@@ -347,8 +343,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     return null;
   }
 
-  @NotNull
-  public DirtyScopeTestInfo getState() {
+  public @NotNull DirtyScopeTestInfo getState() {
     synchronized (myLock) {
       final Module[] vfsChangedModules = myVFSChangedModules.toArray(Module.EMPTY_ARRAY);
       final List<Module> unsavedChangedModuleList = new ArrayList<>(getAllDirtyModules());

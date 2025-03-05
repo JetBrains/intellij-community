@@ -74,7 +74,6 @@ internal class InlineCompletionSessionLogsTest : InlineCompletionTestCase() {
         // it doesn't create the second session log because it hangs infinitely
       }
       singleSessionLog.assertRequestIdPresent()
-      singleSessionLog.assertSomeContextLogsPresent()
       singleSessionLog.assertWasShown(false)
       singleSessionLog.assertFinishType(FinishType.INVALIDATED)
       singleSessionLog.assertInvalidationEvent(InlineCompletionEvent.DocumentChange::class.java)

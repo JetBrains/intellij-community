@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.requests.DiffRequest;
@@ -25,8 +25,8 @@ public final class InitialScrollPositionSupport {
   public abstract static class InitialScrollHelperBase {
     protected boolean myShouldScroll = true;
 
-    @Nullable protected ScrollToPolicy myScrollToChange;
-    @Nullable protected EditorsVisiblePositions myEditorsPosition;
+    protected @Nullable ScrollToPolicy myScrollToChange;
+    protected @Nullable EditorsVisiblePositions myEditorsPosition;
     protected LogicalPosition @Nullable [] myCaretPosition;
 
     public void processContext(@NotNull DiffRequest request) {
@@ -47,20 +47,18 @@ public final class InitialScrollPositionSupport {
     protected abstract LogicalPosition @Nullable [] getCaretPositions();
 
     @ApiStatus.Internal
-    @Nullable
-    protected abstract EditorsVisiblePositions getVisiblePositions();
+    protected abstract @Nullable EditorsVisiblePositions getVisiblePositions();
   }
 
-  private static abstract class SideInitialScrollHelper extends InitialScrollHelperBase {
+  private abstract static class SideInitialScrollHelper extends InitialScrollHelperBase {
     @Override
     protected LogicalPosition @Nullable [] getCaretPositions() {
       return doGetCaretPositions(getEditors());
     }
 
     @ApiStatus.Internal
-    @Nullable
     @Override
-    protected EditorsVisiblePositions getVisiblePositions() {
+    protected @Nullable EditorsVisiblePositions getVisiblePositions() {
       return doGetVisiblePositions(getEditors());
     }
 
@@ -87,15 +85,14 @@ public final class InitialScrollPositionSupport {
       return true;
     }
 
-    @NotNull
-    protected abstract List<? extends Editor> getEditors();
+    protected abstract @NotNull List<? extends Editor> getEditors();
 
     protected abstract void disableSyncScroll(boolean value);
   }
 
-  public static abstract class TwosideInitialScrollHelper extends SideInitialScrollHelper {
-    @Nullable protected Pair<Side, Integer> myScrollToLine;
-    @Nullable protected DiffNavigationContext myNavigationContext;
+  public abstract static class TwosideInitialScrollHelper extends SideInitialScrollHelper {
+    protected @Nullable Pair<Side, Integer> myScrollToLine;
+    protected @Nullable DiffNavigationContext myNavigationContext;
 
     @Override
     public void processContext(@NotNull DiffRequest request) {
@@ -148,8 +145,8 @@ public final class InitialScrollPositionSupport {
     protected abstract boolean doScrollToLine(boolean onSlowRediff);
   }
 
-  public static abstract class ThreesideInitialScrollHelper extends SideInitialScrollHelper {
-    @Nullable protected Pair<ThreeSide, Integer> myScrollToLine;
+  public abstract static class ThreesideInitialScrollHelper extends SideInitialScrollHelper {
+    protected @Nullable Pair<ThreeSide, Integer> myScrollToLine;
 
     @Override
     public void processContext(@NotNull DiffRequest request) {
@@ -209,8 +206,7 @@ public final class InitialScrollPositionSupport {
     return carets;
   }
 
-  @Nullable
-  public static EditorsVisiblePositions doGetVisiblePositions(@NotNull List<? extends Editor> editors) {
+  public static @Nullable EditorsVisiblePositions doGetVisiblePositions(@NotNull List<? extends Editor> editors) {
     LogicalPosition[] carets = doGetCaretPositions(editors);
     Point[] points = doGetScrollingPositions(editors);
     return new EditorsVisiblePositions(carets, points);

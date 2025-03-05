@@ -74,6 +74,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
                 runTest("../../idea/tests/testData/shortenRefsFir/calls/classInSameFile.kt");
             }
 
+            @TestMetadata("dblShorterned.kt")
+            public void testDblShorterned() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/calls/dblShorterned.kt");
+            }
+
             @TestMetadata("explicitlyImportedFunctionFromLocalObject.kt")
             public void testExplicitlyImportedFunctionFromLocalObject() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/calls/explicitlyImportedFunctionFromLocalObject.kt");
@@ -387,6 +392,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             @TestMetadata("ParameterTypeImportAlias.kt")
             public void testParameterTypeImportAlias() throws Exception {
                 runTest("../../idea/tests/testData/shortenRefsFir/types/ParameterTypeImportAlias.kt");
+            }
+
+            @TestMetadata("ParameterTypeImportAliasWithGenerics.kt")
+            public void testParameterTypeImportAliasWithGenerics() throws Exception {
+                runTest("../../idea/tests/testData/shortenRefsFir/types/ParameterTypeImportAliasWithGenerics.kt");
             }
 
             @TestMetadata("ParameterTypeImportedNestedClass.kt")

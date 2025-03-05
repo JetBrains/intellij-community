@@ -22,7 +22,7 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 28)
+  private val GROUP = EventLogGroup(GROUP_ID, 29)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -180,7 +180,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  internal fun triggerBlockTerminalSwitched(project: Project, enabled: Boolean, place: BlockTerminalSwitchPlace) {
+  fun triggerBlockTerminalSwitched(project: Project, enabled: Boolean, place: BlockTerminalSwitchPlace) {
     blockTerminalSwitchedEvent.log(project, enabled, place)
   }
 
@@ -212,7 +212,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 }
 
-internal enum class BlockTerminalSwitchPlace {
+@ApiStatus.Internal
+enum class BlockTerminalSwitchPlace {
   SETTINGS, TOOLWINDOW_OPTIONS
 }
 

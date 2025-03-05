@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -39,8 +39,7 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
     return result != null ? new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, result) : null;
   }
 
-  @Nullable
-  private static PsiElement findExpression(PsiElement element) {
+  private static @Nullable PsiElement findExpression(PsiElement element) {
     PsiElement e = PsiTreeUtil.getParentOfType(element, PsiVariable.class, PsiExpression.class, PsiMethod.class);
     if (e instanceof PsiVariable) {
       // return e;
@@ -68,8 +67,7 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
   }
 
   @Override
-  @Nullable
-  public Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
+  public @Nullable Pair<PsiElement, TextRange> findExpression(PsiElement element, boolean allowMethodCalls) {
     PsiElement expression = null;
     PsiElement parent = element.getParent();
     if (parent instanceof PsiLiteralExpression) {
@@ -168,8 +166,7 @@ public final class JavaEditorTextProviderImpl implements EditorTextProvider {
     return null;
   }
 
-  @Nullable
-  private static String qualifyEnumConstant(PsiElement resolved, @Nullable String def) {
+  private static @Nullable String qualifyEnumConstant(PsiElement resolved, @Nullable String def) {
     if (resolved instanceof PsiEnumConstant enumConstant) {
       final PsiClass enumClass = enumConstant.getContainingClass();
       if (enumClass != null) {

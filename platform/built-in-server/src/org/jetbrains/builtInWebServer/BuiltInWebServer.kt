@@ -1,328 +1,240 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
 package org.jetbrains.builtInWebServer
 
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.net.InetAddresses
-import com.intellij.ide.SpecialConfigFiles.USER_WEB_TOKEN
-import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.NotificationType
-import com.intellij.notification.SingletonNotificationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
+import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.ui.ProductIcons
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.endsWithName
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.util.io.*
-import com.intellij.util.io.DigestUtil.randomToken
 import com.intellij.util.net.NetUtils
+import com.intellij.util.ui.ImageUtil
+import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
-import io.netty.handler.codec.http.cookie.DefaultCookie
-import io.netty.handler.codec.http.cookie.ServerCookieDecoder
-import io.netty.handler.codec.http.cookie.ServerCookieEncoder
-import org.jetbrains.ide.BuiltInServerBundle
-import org.jetbrains.ide.BuiltInServerManagerImpl
+import org.apache.commons.imaging.ImageFormats
+import org.apache.commons.imaging.Imaging
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.ide.orInSafeMode
+import org.jetbrains.io.FileResponses
+import org.jetbrains.io.addNoCache
+import org.jetbrains.io.response
 import org.jetbrains.io.send
-import java.awt.datatransfer.StringSelection
+import java.awt.image.BufferedImage
 import java.io.IOException
 import java.net.InetAddress
 import java.net.URI
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.attribute.PosixFileAttributeView
-import java.nio.file.attribute.PosixFilePermission
-import java.util.*
-import java.util.concurrent.TimeUnit
-import javax.swing.SwingUtilities
-import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
-import kotlin.io.path.readText
+
+const val TOKEN_PARAM_NAME: String = "_ijt"
+const val TOKEN_HEADER_NAME: String = "x-ijt"
 
 internal val LOG = logger<BuiltInWebServer>()
 
-private val notificationManager by lazy {
-  SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP, NotificationType.INFORMATION)
+/**
+ * Path handlers help the [BuiltInWebServer] serve requests composed by[com.intellij.ide.browsers.WebBrowserService.getUrlsToOpen].
+ *
+ * By default, [WebServerPathToFileManager] will be used to map the request to a file.
+ * If a file physically exists in the file system, you must use [WebServerRootsProvider].
+ */
+interface WebServerPathHandler {
+  /**
+   * Processes the given path request for the specified project
+   * (e.g., `http://localhost:63342/<project>/<path>` or `http://<project>.localhost:63342/<path>`).
+   *
+   * @param path the path of the request; does not include the project name
+   * @param project the project associated with the request
+   * @param projectName the name of the project
+   * @param authHeaders HTTP headers containing authentication information (should be added to a response)
+   * @param isCustomHost `false` when a project name is a part of the request path (`/project/path`), `true` otherwise
+   * @return `true` if a response has been sent, `false` otherwise
+   */
+  fun process(
+    path: String,
+    project: Project,
+    request: FullHttpRequest,
+    context: ChannelHandlerContext,
+    projectName: String,
+    authHeaders: HttpHeaders,
+    isCustomHost: Boolean,
+  ): Boolean
 }
 
-private val WEB_SERVER_PATH_HANDLER_EP_NAME = ExtensionPointName.create<WebServerPathHandler>("org.jetbrains.webServerPathHandler")
+internal class BuiltInWebServer : HttpRequestHandler() {
+  private val PATH_HANDLER_EP_NAME = ExtensionPointName.create<WebServerPathHandler>("org.jetbrains.webServerPathHandler")
 
-class BuiltInWebServer : HttpRequestHandler() {
-  override fun isAccessible(request: HttpRequest): Boolean {
-    return BuiltInServerOptions.getInstance().builtInServerAvailableExternally ||
-           request.isLocalOrigin(onlyAnyOrLoopback = false, hostsOnly = true)
-  }
+  private val authService = service<BuiltInWebServerAuth>()
 
-  override fun isSupported(request: FullHttpRequest): Boolean = super.isSupported(request) || request.method() == HttpMethod.POST
+  override fun isAccessible(request: HttpRequest): Boolean =
+    BuiltInServerOptions.getInstance().builtInServerAvailableExternally ||
+    request.isLocalOrigin(onlyAnyOrLoopback = false, hostsOnly = true)
+
+  override fun isSupported(request: FullHttpRequest): Boolean = super.isSupported(request) || request.method() === HttpMethod.POST
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
+    val decodedPath = urlDecoder.path()
+    if (sendDefaultFavIcon(decodedPath, request, context)) {
+      return true
+    }
+
     var hostName = getHostName(request) ?: return false
-    val projectName: String?
-    val isIpv6 = hostName[0] == '[' && hostName.length > 2 && hostName[hostName.length - 1] == ']'
+    val isIpv6 = hostName.startsWith('[') && hostName.endsWith(']')
     if (isIpv6) {
       hostName = hostName.substring(1, hostName.length - 1)
     }
-
-    if (isIpv6 || InetAddresses.isInetAddress(hostName) || isOwnHostName(hostName) || hostName.endsWith(".ngrok.io")) {
-      if (urlDecoder.path().length < 2) {
-        return false
-      }
-
-      projectName = null
-    }
-    else {
-      if (hostName.endsWith(".localhost")) {
-        projectName = hostName.substring(0, hostName.lastIndexOf('.'))
-      }
-      else {
-        projectName = hostName
-      }
-    }
-    return doProcess(urlDecoder, request, context, projectName)
-  }
-}
-
-internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
-
-const val TOKEN_PARAM_NAME = "_ijt"
-const val TOKEN_HEADER_NAME = "x-ijt"
-
-private val STANDARD_COOKIE by lazy {
-  val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
-  val configPath = PathManager.getConfigPath()
-  val file = Path.of(configPath, USER_WEB_TOKEN)
-  var token: String? = null
-  if (file.exists()) {
-    try {
-      token = UUID.fromString(file.readText()).toString()
-    }
-    catch (e: Exception) {
-      LOG.warn(e)
-    }
-  }
-  if (token == null) {
-    token = UUID.randomUUID().toString()
-    file.write(token!!)
-    Files.getFileAttributeView(file, PosixFileAttributeView::class.java)
-      ?.setPermissions(EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE))
-  }
-
-  // explicit setting domain cookie on localhost doesn't work for chrome
-  // http://stackoverflow.com/questions/8134384/chrome-doesnt-create-cookie-for-domain-localhost-in-broken-https
-  val cookie = DefaultCookie(productName + "-" + Integer.toHexString(configPath.hashCode()), token!!)
-  cookie.isHttpOnly = true
-  cookie.setMaxAge(TimeUnit.DAYS.toSeconds(365 * 10))
-  cookie.setPath("/")
-  cookie
-}
-
-// expire after access because we reuse tokens
-private val tokens = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
-
-fun acquireToken(): String {
-  var token = tokens.asMap().keys.firstOrNull()
-  if (token == null) {
-    token = randomToken()
-    tokens.put(token, true)
-  }
-  return token
-}
-
-private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
-  val decodedPath = urlDecoder.path()
-  var offset: Int
-  var isEmptyPath: Boolean
-  val isCustomHost = projectNameAsHost != null
-  var projectName: String
-  if (isCustomHost) {
-    projectName = projectNameAsHost!!
-    // host mapped to us
-    offset = 0
-    isEmptyPath = decodedPath.isEmpty()
-  }
-  else {
-    offset = decodedPath.indexOf('/', 1)
-    projectName = decodedPath.substring(1, if (offset == -1) decodedPath.length else offset)
-    isEmptyPath = offset == -1
-  }
-
-  val referer = request.headers().get(HttpHeaderNames.REFERER)
-  val projectNameFromReferer =
-    if (!isCustomHost && referer != null) {
-      try {
-        val uri = URI.create(referer)
-        val refererPath = uri.path
-        if (refererPath != null && refererPath.startsWith('/')) {
-          val secondSlashOffset = refererPath.indexOf('/', 1)
-          if (secondSlashOffset > 1) refererPath.substring(1, secondSlashOffset)
-          else null
+    val projectNameAsHost =
+      if (isIpv6 || InetAddresses.isInetAddress(hostName) || isOwnHostName(hostName) || hostName.endsWith(".ngrok.io")) {
+        if (decodedPath.length < 2) {
+          return false
         }
-        else null
-      }
-      catch (t: Throwable) {
         null
       }
-    }
-    else null
+      else if (hostName.endsWith(".localhost")) {
+        hostName.substring(0, hostName.lastIndexOf('.'))
+      }
+      else {
+        hostName
+      }
 
-  var candidateByDirectoryName: Project? = null
-  var isCandidateFromReferer = false
-  val project = ProjectManager.getInstance().openProjects.firstOrNull(fun(project: Project): Boolean {
-    if (project.isDisposed) {
+    val isCustomHost = projectNameAsHost != null
+    var offset = if (isCustomHost) 0 else decodedPath.indexOf('/', 1)
+    var projectName = if (isCustomHost) projectNameAsHost else decodedPath.substring(1, if (offset == -1) decodedPath.length else offset)
+    var isEmptyPath = if (isCustomHost) decodedPath.isEmpty() else offset == -1
+
+    val referer = request.headers().get(HttpHeaderNames.REFERER)
+    val projectNameFromReferer =
+      if (!isCustomHost && referer != null) {
+        try {
+          val uri = URI.create(referer)
+          val refererPath = uri.path
+          if (refererPath != null && refererPath.startsWith('/')) {
+            val secondSlashOffset = refererPath.indexOf('/', 1)
+            if (secondSlashOffset > 1) refererPath.substring(1, secondSlashOffset)
+            else null
+          }
+          else null
+        }
+        catch (_: Throwable) {
+          null
+        }
+      }
+      else null
+
+    var candidateByDirectoryName: Project? = null
+    var isCandidateFromReferer = false
+    val project = ProjectManager.getInstance().openProjects.firstOrNull(fun(project: Project): Boolean {
+      if (project.isDisposed) return false
+
+      val name = project.name
+      if (isCustomHost) {
+        // domain name is case-insensitive
+        if (projectName.equals(name, ignoreCase = true)) {
+          if (!SystemInfo.isFileSystemCaseSensitive) {
+            // may be passed path is not correct
+            projectName = name
+          }
+          return true
+        }
+      }
+      else {
+        // WEB-17839 Internal web server reports 404 when serving files from a project with slashes in name
+        if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfo.isFileSystemCaseSensitive)) {
+          val isEmptyPathCandidate = decodedPath.length == (name.length + 1)
+          if (isEmptyPathCandidate || decodedPath[name.length + 1] == '/') {
+            projectName = name
+            offset = name.length + 1
+            isEmptyPath = isEmptyPathCandidate
+            return true
+          }
+        }
+      }
+
+      if (candidateByDirectoryName == null && compareNameAndProjectBasePath(projectName, project)) {
+        candidateByDirectoryName = project
+      }
+      if (candidateByDirectoryName == null &&
+          projectNameFromReferer != null &&
+          (projectNameFromReferer == name || compareNameAndProjectBasePath(projectNameFromReferer, project))) {
+        candidateByDirectoryName = project
+        isCandidateFromReferer = true
+      }
+      return false
+    }) ?: candidateByDirectoryName
+
+    if (isCandidateFromReferer) {
+      projectName = projectNameFromReferer!!
+      offset = 0
+      isEmptyPath = false
+    }
+
+    if (isEmptyPath) {
+      // we must redirect "jsdebug" to "jsdebug/" as Nginx does -
+      // otherwise the browser will treat it as a file instead of a directory, so a relative path won't work
+      redirectToDirectory(request, context.channel(), extraHeaders = null)
+      return true
+    }
+
+    val authHeaders = authService.validateToken(request) ?: return false
+
+    if (project == null) return false
+
+    if (request.headers().get("Service-Worker") == "script" && !project.isTrusted()) {
       return false
     }
 
-    val name = project.name
-    if (isCustomHost) {
-      // domain name is case-insensitive
-      if (projectName.equals(name, ignoreCase = true)) {
-        if (!SystemInfo.isFileSystemCaseSensitive) {
-          // may be passed path is not correct
-          projectName = name
-        }
-        return true
-      }
+    val path = decodedPath.substring(offset).takeIf { it.startsWith('/') }?.let { FileUtil.toCanonicalPath(it).substring(1) } ?: run {
+      HttpResponseStatus.NOT_FOUND.send(context.channel(), request, extraHeaders = authHeaders)
+      return true
     }
-    else {
-      // WEB-17839 Internal web server reports 404 when serving files from a project with slashes in name
-      if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfo.isFileSystemCaseSensitive)) {
-        val isEmptyPathCandidate = decodedPath.length == (name.length + 1)
-        if (isEmptyPathCandidate || decodedPath[name.length + 1] == '/') {
-          projectName = name
-          offset = name.length + 1
-          isEmptyPath = isEmptyPathCandidate
+
+    for (pathHandler in PATH_HANDLER_EP_NAME.extensionList) {
+      LOG.runAndLogException {
+        if (pathHandler.process(path, project, request, context, projectName, authHeaders, isCustomHost)) {
           return true
         }
       }
     }
 
-    if (candidateByDirectoryName == null && compareNameAndProjectBasePath(projectName, project)) {
-      candidateByDirectoryName = project
-    }
-    if (candidateByDirectoryName == null &&
-        projectNameFromReferer != null &&
-        (projectNameFromReferer == name || compareNameAndProjectBasePath(projectNameFromReferer, project))) {
-      candidateByDirectoryName = project
-      isCandidateFromReferer = true
-    }
-    return false
-  }) ?: candidateByDirectoryName
-
-  if (isActivatable() && !PropertiesComponent.getInstance().getBoolean("ide.built.in.web.server.active")) {
-    notificationManager.notify("", BuiltInServerBundle.message("notification.content.built.in.web.server.is.deactivated"), project) { }
-    return false
-  }
-
-  if (isCandidateFromReferer) {
-    projectName = projectNameFromReferer!!
-    offset = 0
-    isEmptyPath = false
-  }
-
-  if (isEmptyPath) {
-    // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise the browser will treat it as a file instead of a directory, so, a relative path will not work
-    redirectToDirectory(request, context.channel(), projectName, null)
+    // we registered as a last handler, so we should just return `404` and send extra headers
+    HttpResponseStatus.NOT_FOUND.send(context.channel(), request, extraHeaders = authHeaders)
     return true
   }
 
-  val path = toIdeaPath(decodedPath, offset)
-  if (path == null) {
-    HttpResponseStatus.BAD_REQUEST.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(context.channel(), request)
-    return true
-  }
-
-  for (pathHandler in WEB_SERVER_PATH_HANDLER_EP_NAME.extensionList) {
-    LOG.runAndLogException {
-      if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
-        return true
-      }
-    }
-  }
-  return false
-}
-
-fun HttpRequest.isSignedRequest(): Boolean {
-  if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
-    return true
-  }
-
-  // we must check referrer - if html cached, browser will send a request without a query
-  val token = headers().get(TOKEN_HEADER_NAME)
-      ?: QueryStringDecoder(uri()).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
-      ?: referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
-
-  // we don't invalidate token - allow making subsequent requests using it (it is required for our javadoc DocumentationComponent)
-  return token != null && tokens.getIfPresent(token) != null
-}
-
-@Suppress("SpellCheckingInspection")
-private val KNOWN_ICON_PATHS = listOf("favicon.ico", "apple-touch-icon.png", "apple-touch-icon-precomposed.png")
-
-fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean): HttpHeaders? {
-  if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
-    return EmptyHttpHeaders.INSTANCE
-  }
-
-  request.headers().get(HttpHeaderNames.COOKIE)?.let {
-    for (cookie in ServerCookieDecoder.STRICT.decode(it)) {
-      if (cookie.name() == STANDARD_COOKIE.name()) {
-        if (cookie.value() == STANDARD_COOKIE.value()) {
-          return EmptyHttpHeaders.INSTANCE
+  private fun sendDefaultFavIcon(rawPath: String, request: FullHttpRequest, context: ChannelHandlerContext): Boolean = when (rawPath) {
+    "/favicon.ico" -> {
+      val icon = ProductIcons.getInstance().productIcon
+      val image =
+        (icon as? CachedImageIcon)?.getRealImage() as? BufferedImage
+        ?: ImageUtil.createImage(icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB).apply {
+          icon.paintIcon(null, graphics, 0, 0)
         }
-        break
-      }
+      val icoBytes = Imaging.writeImageToBytes(image, ImageFormats.ICO, null)
+      response(FileResponses.getContentType(rawPath), Unpooled.wrappedBuffer(icoBytes))
+        .addNoCache()
+        .send(context.channel(), request)
+      true
     }
-  }
-
-  if (isSignedRequest) {
-    return DefaultHttpHeaders().set(HttpHeaderNames.SET_COOKIE, ServerCookieEncoder.STRICT.encode(STANDARD_COOKIE) + "; SameSite=strict")
-  }
-
-  val urlDecoder = QueryStringDecoder(request.uri())
-  if (KNOWN_ICON_PATHS.none { urlDecoder.path().endsWith("/$it") || !urlDecoder.path().endsWith("/$it/") }) {
-    val url = "${channel.uriScheme}://${request.host!!}${urlDecoder.path()}"
-    SwingUtilities.invokeAndWait {
-      ProjectUtil.focusProjectWindow(null, true)
-
-      if (MessageDialogBuilder
-          // escape - see https://youtrack.jetbrains.com/issue/IDEA-287428
-          .yesNo("", Strings.escapeXmlEntities(BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50))))
-          .icon(Messages.getWarningIcon())
-          .yesText(BuiltInServerBundle.message("dialog.button.copy.authorization.url.to.clipboard"))
-          .guessWindowAndAsk()) {
-        CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
-      }
+    "/apple-touch-icon.png", "/apple-touch-icon-precomposed.png" -> {
+      HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
+      true
     }
+    else -> false
   }
-
-  HttpResponseStatus.UNAUTHORIZED.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
-  return null
 }
 
-private fun toIdeaPath(decodedPath: String, offset: Int): String? {
-  // must be absolute path (relative to DOCUMENT_ROOT, i.e. scheme://authority/) to properly canonicalize
-  val path = decodedPath.substring(offset)
-  if (!path.startsWith('/')) {
-    return null
-  }
-  return FileUtil.toCanonicalPath(path, '/').substring(1)
-}
+@Deprecated("Please use `BuiltInWebServerAuth.acquireToken` instead")
+fun acquireToken(): String = service<BuiltInWebServerAuth>().acquireToken()
 
 fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {
   val basePath = project.basePath
@@ -398,11 +310,18 @@ internal fun isOwnHostName(host: String): Boolean {
     }
 
     val localHostName = InetAddress.getLocalHost().hostName
-    // WEB-8889
-    // develar.local is own host name: develar. equals to "develar.labs.intellij.net" (canonical host name)
-    return localHostName.equals(host, ignoreCase = true) || (host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length - ".local".length, true))
+    // WEB-8889: "host.local" is an own host name; "host." equals to "host.domain" (canonical host name)
+    return localHostName.equals(host, ignoreCase = true) ||
+           host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length - ".local".length, ignoreCase = true)
   }
-  catch (ignored: IOException) {
+  catch (_: IOException) {
     return false
   }
+}
+
+internal fun redirectToDirectory(request: HttpRequest, channel: Channel, extraHeaders: HttpHeaders?) {
+  val response = HttpResponseStatus.MOVED_PERMANENTLY.response(request)
+  val url = VfsUtil.toUri("${channel.uriScheme}://${request.host!!}${URI(request.uri()).path}/")!!
+  response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString())
+  response.send(channel, request, extraHeaders)
 }

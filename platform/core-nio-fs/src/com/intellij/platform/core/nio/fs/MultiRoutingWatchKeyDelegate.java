@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.ListIterator;
 
 class MultiRoutingWatchKeyDelegate implements WatchKey {
-  @NotNull private final WatchKey myDelegate;
-  @NotNull private final MultiRoutingFileSystemProvider myProvider;
+  private final @NotNull WatchKey myDelegate;
+  private final @NotNull MultiRoutingFileSystemProvider myProvider;
 
   MultiRoutingWatchKeyDelegate(@NotNull WatchKey delegate, @NotNull MultiRoutingFileSystemProvider provider) {
     myDelegate = delegate;

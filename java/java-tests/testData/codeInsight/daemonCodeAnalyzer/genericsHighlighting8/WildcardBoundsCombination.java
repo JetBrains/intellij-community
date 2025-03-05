@@ -10,7 +10,7 @@ class NachCollections<K,V> {
                       Collection<? super Map.Entry<K,V>> c2,
                       Consumer<Map.Entry<K, V>> a) {
     c1.forEach(consumer(a));
-    c2.forEach(<error descr="Incompatible types. Found: 'java.util.function.Consumer<java.util.Map.Entry<K,V>>', required: 'java.util.function.Consumer<? super capture<? super java.util.Map.Entry<K,V>>>'">consumer(a)</error>);
+    c2.forEach(<error descr="Incompatible types. Found: 'java.util.function.Consumer<java.util.Map.Entry<K,V>>', required: 'java.util.function.Consumer<? super capture<? super java.util.Map.Entry<K,V>>>'">consumer</error>(a));
   }
 }
 

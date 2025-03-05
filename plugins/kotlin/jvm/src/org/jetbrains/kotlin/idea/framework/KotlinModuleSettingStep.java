@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.framework;
 
@@ -17,7 +17,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
@@ -33,11 +32,11 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinJvmBundle;
+import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle;
+import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter;
 import org.jetbrains.kotlin.idea.projectConfiguration.CustomLibraryDescriptionWithDeferredConfig;
 import org.jetbrains.kotlin.idea.projectConfiguration.JSLibraryStdDescription;
 import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription;
-import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle;
-import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter;
 import org.jetbrains.kotlin.platform.JsPlatformKt;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatformKt;
@@ -52,8 +51,7 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
 
     private final TargetPlatform targetPlatform;
 
-    @Nullable
-    private final ModuleWizardStep myJavaStep;
+    private final @Nullable ModuleWizardStep myJavaStep;
 
     private final CustomLibraryDescription customLibraryDescription;
     private final LibrariesContainer librariesContainer;
@@ -125,16 +123,13 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
         return panel;
     }
 
-    @NlsContexts.BorderTitle
-    @NotNull
-    protected String getLibraryLabelText() {
+    protected @NlsContexts.BorderTitle @NotNull String getLibraryLabelText() {
         if (JvmPlatformKt.isJvm(targetPlatform)) return KotlinJvmBundle.message("library.label.jvm");
         if (JsPlatformKt.isJs(targetPlatform)) return KotlinJvmBundle.message("library.label.javascript");
         throw new IllegalStateException("Only JS and JVM target are supported");
     }
 
-    @NotNull
-    protected CustomLibraryDescription getCustomLibraryDescription(@Nullable Project project) {
+    protected @NotNull CustomLibraryDescription getCustomLibraryDescription(@Nullable Project project) {
         if (JvmPlatformKt.isJvm(targetPlatform)) return new JavaRuntimeLibraryDescription(project);
         if (JsPlatformKt.isJs(targetPlatform)) return new JSLibraryStdDescription(project);
         throw new IllegalStateException("Only JS and JVM target are supported");

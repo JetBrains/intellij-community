@@ -36,14 +36,12 @@ import org.jetbrains.annotations.NotNull;
 public final class LengthOneStringsInConcatenationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "SingleCharacterStringConcatenation";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final String string = (String)infos[0];
     final String escapedString = StringUtil.escapeStringCharacters(string);
     return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor", escapedString);
@@ -57,8 +55,7 @@ public final class LengthOneStringsInConcatenationInspection extends BaseInspect
   private static class ReplaceStringsWithCharsFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix");
     }
 

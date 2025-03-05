@@ -113,9 +113,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getHelpTopic() {
+  public @NotNull @NonNls String getHelpTopic() {
     return "copyright.profiles";
   }
 
@@ -243,9 +241,8 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
                     return doFinalStep(() -> importProfile(selectedValue));
                   }
 
-                  @NotNull
                   @Override
-                  public String getTextFor(CopyrightProfile value) {
+                  public @NotNull String getTextFor(CopyrightProfile value) {
                     return value.getName();
                   }
                 })
@@ -328,8 +325,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
     }
   }
 
-  @Nullable
-  private String askForProfileName(@NlsContexts.DialogTitle String title, String initialName) {
+  private @Nullable String askForProfileName(@NlsContexts.DialogTitle String title, String initialName) {
     return Messages.showInputDialog(CopyrightBundle.message("dialog.message.new.copyright.profile.name"), title, Messages.getQuestionIcon(), initialName, new InputValidator() {
       @Override
       public boolean checkInput(String s) {
@@ -352,8 +348,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
     reloadAvailableProfiles();
   }
 
-  @NotNull
-  private static MyNode createCopyrightNode(CopyrightConfigurable copyrightConfigurable) {
+  private static @NotNull MyNode createCopyrightNode(CopyrightConfigurable copyrightConfigurable) {
     return new MyNode(copyrightConfigurable) {
       @Override
       public String getLocationString() {
@@ -411,8 +406,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 }

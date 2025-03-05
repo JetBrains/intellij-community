@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -28,8 +28,7 @@ import java.util.List;
 
 public final class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
 
-  @NotNull
-  private static List<PsiClass> getDerivingClassCandidates(PsiClass clazz, GlobalSearchScope scope, boolean includeAnonymous) {
+  private static @NotNull List<PsiClass> getDerivingClassCandidates(PsiClass clazz, GlobalSearchScope scope, boolean includeAnonymous) {
     final String name = clazz.getName();
     if (name == null) return Collections.emptyList();
     final ArrayList<PsiClass> inheritors = new ArrayList<>();
@@ -47,7 +46,7 @@ public final class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiCl
   }
 
   @Override
-  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiClass> consumer) {
+  public boolean execute(final @NotNull DirectClassInheritorsSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiClass> consumer) {
     final PsiClass clazz = queryParameters.getClassToProcess();
     SearchScope scope = ReadAction.compute(() -> queryParameters.getScope().intersectWith(clazz.getUseScope()));
     Project project = PsiUtilCore.getProjectInReadAction(clazz);

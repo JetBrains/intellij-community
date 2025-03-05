@@ -18,7 +18,7 @@ class AddJdkAction : AnAction() {
 
     SdkConfigurationUtil.selectSdkHome(sdk) { path ->
       service<AddJdkService>().createJdkFromPath(path) {
-        e.project?.service<ConfigureJdkService>()?.setProjectJdkIfNull(it)
+        e.project?.service<ConfigureJdkService>()?.setProjectJdkIfNull(it, true)
       }
     }
   }

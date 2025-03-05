@@ -29,6 +29,7 @@ public final class IndentImpl implements Indent{
     return mySpaceCount;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof IndentImpl indent)) return false;
 
@@ -39,6 +40,7 @@ public final class IndentImpl implements Indent{
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myIndentLevel + mySpaceCount;
   }

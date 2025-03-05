@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -19,6 +20,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.AnimatedIcon;
@@ -81,7 +83,9 @@ public final class ParameterInfoTaskRunnerUtil {
             if (promise != null && promise.isSucceeded()) {
               Component owner = getFocusOwner(project);
               if (Objects.equals(focusOwner, owner) || owner instanceof ParameterInfoController.WrapperPanel) {
-                continuationConsumer.accept(continuation);
+                try (AccessToken ignore = SlowOperations.knownIssue("IJPL-173194")) {
+                  continuationConsumer.accept(continuation);
+                }
               }
             }
           })

@@ -19,10 +19,9 @@ internal class CompoundVisiblePack private constructor(private val newPack: Visi
     return compoundVisibleGraph
   }
 
-  override fun getRoot(row: Int): VirtualFile? {
-    val head = visibleGraph.getRowInfo(row).getOneOfHeads()
-    return newPack.dataPack.refsModel.rootAtHead(head)
-           ?: oldPack.dataPack.refsModel.rootAtHead(head)
+  override fun getRootAtHead(headCommitIndex: Int): VirtualFile? {
+    return newPack.dataPack.refsModel.rootAtHead(headCommitIndex)
+           ?: oldPack.dataPack.refsModel.rootAtHead(headCommitIndex)
   }
 
   private fun getOldNotCompoundVisiblePack(): VisiblePack {

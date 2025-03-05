@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -74,7 +73,7 @@ public final class FindAllAction extends AnAction implements ShortcutProvider, D
   private static @NotNull Icon getIcon(@Nullable Project project) {
     ToolWindowManager toolWindowManager = project != null ? ToolWindowManager.getInstance(project) : null;
     if (toolWindowManager != null) {
-      return toolWindowManager.getLocationIcon(ToolWindowId.FIND, getFindIcon());
+      return toolWindowManager.getShowInFindToolWindowIcon();
     }
     return getFindIcon();
   }

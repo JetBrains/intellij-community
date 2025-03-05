@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -150,8 +150,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
     myChildren = children;
   }
 
-  @Nullable
-  public static EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
+  public static @Nullable EnumerationChildrenRenderer getCurrent(ValueDescriptorImpl valueDescriptor) {
     Renderer renderer = valueDescriptor.getLastRenderer();
     if (renderer instanceof CompoundReferenceRenderer &&
         NodeRendererSettings.getInstance().getCustomRenderers().contains((NodeRenderer)renderer)) {

@@ -80,8 +80,7 @@ public class PyKeywordArgumentReference extends PsiReferenceBase.Poly<PyKeywordA
     return resultList.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private static PyFunction resolveToFunction(PsiElement element, HashSet<PsiElement> visited) {
+  private static @Nullable PyFunction resolveToFunction(PsiElement element, HashSet<PsiElement> visited) {
     if (visited.contains(element)) {
       return null;
     }

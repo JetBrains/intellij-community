@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,10 +9,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -48,7 +45,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return configurable;
   }
 
-  public static <T extends UnnamedConfigurable> List<T> createConfigurables(@NotNull ExtensionPointName<? extends ConfigurableEP<T>> name) {
+  public static @Unmodifiable <T extends UnnamedConfigurable> List<T> createConfigurables(@NotNull ExtensionPointName<? extends ConfigurableEP<T>> name) {
     Collection<? extends ConfigurableEP<T>> collection = name.getExtensionList();
     if (collection.isEmpty()) {
       return Collections.emptyList();

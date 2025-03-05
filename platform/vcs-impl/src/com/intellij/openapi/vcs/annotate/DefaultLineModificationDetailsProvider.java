@@ -33,10 +33,10 @@ import java.util.List;
 import static java.util.Collections.singletonList;
 
 public final class DefaultLineModificationDetailsProvider implements FileAnnotation.LineModificationDetailsProvider {
-  @NotNull private final FileAnnotation myAnnotation;
-  @NotNull private final FilePath myFilePath;
-  @NotNull private final FileAnnotation.CurrentFileRevisionProvider myCurrentRevisionProvider;
-  @NotNull private final FileAnnotation.PreviousFileRevisionProvider myPreviousRevisionProvider;
+  private final @NotNull FileAnnotation myAnnotation;
+  private final @NotNull FilePath myFilePath;
+  private final @NotNull FileAnnotation.CurrentFileRevisionProvider myCurrentRevisionProvider;
+  private final @NotNull FileAnnotation.PreviousFileRevisionProvider myPreviousRevisionProvider;
 
   private DefaultLineModificationDetailsProvider(@NotNull FileAnnotation annotation,
                                                  @NotNull FilePath filePath,
@@ -48,8 +48,7 @@ public final class DefaultLineModificationDetailsProvider implements FileAnnotat
     myPreviousRevisionProvider = previousRevisionProvider;
   }
 
-  @Nullable
-  public static FileAnnotation.LineModificationDetailsProvider create(@NotNull FileAnnotation annotation) {
+  public static @Nullable FileAnnotation.LineModificationDetailsProvider create(@NotNull FileAnnotation annotation) {
     VirtualFile file = annotation.getFile();
     if (file == null) return null;
 
@@ -85,10 +84,9 @@ public final class DefaultLineModificationDetailsProvider implements FileAnnotat
     return createDetailsFor(beforeContent, afterContent, originalLine);
   }
 
-  @Nullable
-  public static String loadRevision(@Nullable Project project,
-                                    @Nullable VcsFileRevision revision,
-                                    @NotNull FilePath filePath) throws VcsException {
+  public static @Nullable String loadRevision(@Nullable Project project,
+                                              @Nullable VcsFileRevision revision,
+                                              @NotNull FilePath filePath) throws VcsException {
     try {
       if (revision == null) return null;
       byte[] bytes = revision.loadContent();
@@ -102,10 +100,9 @@ public final class DefaultLineModificationDetailsProvider implements FileAnnotat
   }
 
 
-  @Nullable
-  public static AnnotatedLineModificationDetails createDetailsFor(@NotNull String beforeContent,
-                                                                  @NotNull String afterContent,
-                                                                  @NotNull String originalLine) {
+  public static @Nullable AnnotatedLineModificationDetails createDetailsFor(@NotNull String beforeContent,
+                                                                            @NotNull String afterContent,
+                                                                            @NotNull String originalLine) {
     List<LineFragment> fragments = compareContents(beforeContent, afterContent);
 
     LineOffsets afterLineOffsets = LineOffsetsUtil.create(afterContent);
@@ -126,10 +123,9 @@ public final class DefaultLineModificationDetailsProvider implements FileAnnotat
     return createFragmentDetails(lineContentAfter, afterLineOffsets, fragments, originalLineNumber);
   }
 
-  @Nullable
-  public static AnnotatedLineModificationDetails createDetailsFor(@Nullable String beforeContent,
-                                                                  @NotNull String afterContent,
-                                                                  int originalLineNumber) {
+  public static @Nullable AnnotatedLineModificationDetails createDetailsFor(@Nullable String beforeContent,
+                                                                            @NotNull String afterContent,
+                                                                            int originalLineNumber) {
     LineOffsets afterLineOffsets = LineOffsetsUtil.create(afterContent);
     if (originalLineNumber >= afterLineOffsets.getLineCount()) {
       return null; // invalid line or content
@@ -148,11 +144,10 @@ public final class DefaultLineModificationDetailsProvider implements FileAnnotat
     return createFragmentDetails(lineContentAfter, afterLineOffsets, fragments, originalLineNumber);
   }
 
-  @Nullable
-  private static AnnotatedLineModificationDetails createFragmentDetails(@NotNull String lineContentAfter,
-                                                                        @NotNull LineOffsets afterLineOffsets,
-                                                                        @NotNull List<? extends LineFragment> fragments,
-                                                                        int originalLineNumber) {
+  private static @Nullable AnnotatedLineModificationDetails createFragmentDetails(@NotNull String lineContentAfter,
+                                                                                  @NotNull LineOffsets afterLineOffsets,
+                                                                                  @NotNull List<? extends LineFragment> fragments,
+                                                                                  int originalLineNumber) {
     LineFragment lineFragment = ContainerUtil.find(fragments.iterator(), fragment -> {
       return fragment.getStartLine2() <= originalLineNumber && originalLineNumber < fragment.getEndLine2();
     });
@@ -189,20 +184,17 @@ public final class DefaultLineModificationDetailsProvider implements FileAnnotat
     return new AnnotatedLineModificationDetails(lineContentAfter, changes);
   }
 
-  @NotNull
-  public static AnnotatedLineModificationDetails createNewLineDetails(@NotNull String lineContentAfter) {
+  public static @NotNull AnnotatedLineModificationDetails createNewLineDetails(@NotNull String lineContentAfter) {
     InnerChange innerChange = new InnerChange(0, lineContentAfter.length(), InnerChangeType.INSERTED);
     return new AnnotatedLineModificationDetails(lineContentAfter, singletonList(innerChange));
   }
 
-  @NotNull
-  public static AnnotatedLineModificationDetails createModifiedLineDetails(@NotNull String lineContentAfter) {
+  public static @NotNull AnnotatedLineModificationDetails createModifiedLineDetails(@NotNull String lineContentAfter) {
     InnerChange innerChange = new InnerChange(0, lineContentAfter.length(), InnerChangeType.MODIFIED);
     return new AnnotatedLineModificationDetails(lineContentAfter, singletonList(innerChange));
   }
 
-  @NotNull
-  private static List<LineFragment> compareContents(@NotNull String beforeContent, @NotNull String afterContent) {
+  private static @NotNull List<LineFragment> compareContents(@NotNull String beforeContent, @NotNull String afterContent) {
     ProgressIndicator indicator = ObjectUtils.chooseNotNull(ProgressIndicatorProvider.getGlobalProgressIndicator(),
                                                             DumbProgressIndicator.INSTANCE);
     return ComparisonManager.getInstance().compareLinesInner(beforeContent, afterContent, ComparisonPolicy.DEFAULT, indicator);
@@ -227,8 +219,7 @@ public final class DefaultLineModificationDetailsProvider implements FileAnnotat
     return -1; // line not found
   }
 
-  @NotNull
-  private static String getLine(@NotNull String text, @NotNull LineOffsets lineOffsets, int line) {
+  private static @NotNull String getLine(@NotNull String text, @NotNull LineOffsets lineOffsets, int line) {
     int lineStart = lineOffsets.getLineStart(line);
     int lineEnd = lineOffsets.getLineEnd(line);
     return text.substring(lineStart, lineEnd);

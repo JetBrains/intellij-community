@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -35,8 +35,7 @@ public class GrWildcardTypeArgumentImpl extends GroovyPsiElementImpl implements 
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     final GrTypeElement boundTypeElement = getBoundTypeElement();
     if (boundTypeElement == null) return PsiWildcardType.createUnbounded(getManager());
     if (isExtends()) return PsiWildcardType.createExtends(getManager(), boundTypeElement.getType());

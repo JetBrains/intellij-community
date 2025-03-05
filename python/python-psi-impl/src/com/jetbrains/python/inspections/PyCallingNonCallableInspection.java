@@ -33,11 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 public final class PyCallingNonCallableInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -83,8 +82,7 @@ public final class PyCallingNonCallableInspection extends PyInspection {
     }
   }
 
-  @Nullable
-  private static Boolean isCallable(@NotNull PyExpression element, @NotNull TypeEvalContext context) {
+  private static @Nullable Boolean isCallable(@NotNull PyExpression element, @NotNull TypeEvalContext context) {
     if (element instanceof PyQualifiedExpression && PyNames.__CLASS__.equals(element.getName())) {
       return true;
     }

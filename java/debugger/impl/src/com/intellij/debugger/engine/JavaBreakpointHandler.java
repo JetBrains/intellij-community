@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.impl.PrioritizedTask;
@@ -17,8 +17,7 @@ public class JavaBreakpointHandler extends XBreakpointHandler {
     myProcess = process;
   }
 
-  @Nullable
-  protected Breakpoint createJavaBreakpoint(@NotNull XBreakpoint xBreakpoint) {
+  protected @Nullable Breakpoint createJavaBreakpoint(@NotNull XBreakpoint xBreakpoint) {
     return null;
   }
 
@@ -38,7 +37,7 @@ public class JavaBreakpointHandler extends XBreakpointHandler {
   }
 
   @Override
-  public void unregisterBreakpoint(@NotNull final XBreakpoint breakpoint, boolean temporary) {
+  public void unregisterBreakpoint(final @NotNull XBreakpoint breakpoint, boolean temporary) {
     final Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
       // use schedule not to block initBreakpoints

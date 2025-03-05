@@ -2,7 +2,6 @@
 package git4idea.update
 
 import com.intellij.notification.NotificationAction
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import git4idea.repo.GitRepository

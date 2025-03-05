@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
@@ -34,8 +34,7 @@ public final class JavaProjectRootsUtil {
   /**
    * @return list of all java source roots in the project which can be suggested as a target directory for a class created by user
    */
-  @NotNull
-  public static List<VirtualFile> getSuitableDestinationSourceRoots(@NotNull Project project) {
+  public static @NotNull List<VirtualFile> getSuitableDestinationSourceRoots(@NotNull Project project) {
     List<VirtualFile> roots = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       collectSuitableDestinationSourceRoots(module, roots);
@@ -63,13 +62,12 @@ public final class JavaProjectRootsUtil {
     return ProjectFileIndex.getInstance(project).isInGeneratedSources(file);
   }
 
-  @NotNull
-  public static GlobalSearchScope getScopeWithoutGeneratedSources(@NotNull GlobalSearchScope baseScope, @NotNull Project project) {
+  public static @NotNull GlobalSearchScope getScopeWithoutGeneratedSources(@NotNull GlobalSearchScope baseScope, @NotNull Project project) {
     return new NonGeneratedSourceScope(baseScope, project);
   }
 
   private static final class NonGeneratedSourceScope extends DelegatingGlobalSearchScope {
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
 
     private NonGeneratedSourceScope(@NotNull GlobalSearchScope baseScope, @NotNull Project project) {
       super(baseScope);

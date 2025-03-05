@@ -28,6 +28,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
@@ -82,11 +83,11 @@ public class ProjectViewDirectoryHelper {
     }
 
     if (includeUrl) {
-      if (result.length() > 0) result.append(",").append(FontUtil.spaceAndThinSpace());
+      if (!result.isEmpty()) result.append(",").append(FontUtil.spaceAndThinSpace());
       result.append(FileUtil.getLocationRelativeToUserHome(directory.getPresentableUrl()));
     }
 
-    return result.length() == 0 ? null : result.toString();
+    return result.isEmpty() ? null : result.toString();
   }
 
 
@@ -247,6 +248,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   @NotNull
+  @Unmodifiable
   List<VirtualFile> getTopLevelModuleRoots(Module module, ViewSettings settings) {
     return ContainerUtil.filter(ModuleRootManager.getInstance(module).getContentRoots(), root -> {
       if (!shouldBeShown(root, settings)) return false;

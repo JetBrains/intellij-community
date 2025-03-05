@@ -2,11 +2,9 @@ package com.jetbrains.performancePlugin.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
-import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.profilers.Profiler
 import com.jetbrains.performancePlugin.profilers.ProfilerHandlerUtils
 import java.io.File

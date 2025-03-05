@@ -46,21 +46,19 @@ public class RenameFix extends GroovyFix implements RefactoringQuickFix {
     return new IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, textBefore, textAfter);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("intention.family.name.rename");
   }
 
   @Override
-  public void doFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+  public void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     doFix(element);
   }
 
-  @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public @NotNull RefactoringActionHandler getHandler() {
     return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
   }
 }

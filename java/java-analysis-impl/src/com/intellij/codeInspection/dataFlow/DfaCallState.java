@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -6,9 +6,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.NotNull;
 
 public final class DfaCallState {
-  @NotNull final DfaMemoryState myMemoryState;
-  @NotNull final DfaCallArguments myCallArguments;
-  @NotNull final DfaValue myReturnValue;
+  final @NotNull DfaMemoryState myMemoryState;
+  final @NotNull DfaCallArguments myCallArguments;
+  final @NotNull DfaValue myReturnValue;
 
   public DfaCallState(@NotNull DfaMemoryState state,
                @NotNull DfaCallArguments arguments,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -9,6 +9,8 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.statistics.JavaDebuggerEvaluatorStatisticsCollector;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -21,6 +23,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.TimeUnit;
 
 public class LabelRenderer extends ReferenceRenderer implements ValueLabelRenderer, OnDemandRenderer {
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
@@ -61,10 +65,11 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
 
     EvaluationContextImpl evaluationContextImpl = (EvaluationContextImpl)evaluationContext;
     DebugProcessImpl debugProcess = evaluationContextImpl.getDebugProcess();
-    debugProcess.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
+    evaluationContextImpl.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
         ExpressionEvaluator evaluator = null;
+        long startNs = System.nanoTime();
         try {
           evaluator = myLabelExpression.getEvaluator(debugProcess.getProject());
 
@@ -82,6 +87,14 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
           descriptor.setValueLabelFailed(
             new EvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + " " + ex.getMessage(), ex));
         }
+        finally {
+          long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
+          if (descriptor instanceof ValueDescriptorImpl valueDescriptor
+              && valueDescriptor.getLastRenderer() instanceof NodeRendererImpl nodeRenderer
+              && nodeRenderer.hasOverhead()) {
+            OverheadTimings.add(debugProcess, new NodeRendererImpl.Overhead(nodeRenderer), 0, timeMs);
+          }
+        }
         labelListener.labelChanged();
       }
     });
@@ -92,9 +105,8 @@ public class LabelRenderer extends ReferenceRenderer implements ValueLabelRender
     return myPrefix != null ? myPrefix + result : result;
   }
 
-  @NotNull
   @Override
-  public String getLinkText() {
+  public @NotNull String getLinkText() {
     return "… " + getLabelExpression().getText();
   }
 

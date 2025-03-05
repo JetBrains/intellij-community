@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode;
 import com.intellij.ide.util.scopeChooser.ScopeService;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -66,6 +66,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 /**
  * see {@link com.intellij.find.impl.FindManagerImpl#getFindUsagesManager()}
@@ -159,39 +160,37 @@ public final class FindUsagesManager {
   }
 
   public @Nullable FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, @NotNull OperationMode operationMode) {
-    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401 IDEA-353115")) {
-        if (!factory.canFindUsages(element)) continue;
-      }
-      FindUsagesHandler handler;
-      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401")) {
-        handler = factory.createFindUsagesHandler(element, operationMode);
-      }
-      if (handler == FindUsagesHandler.NULL_HANDLER) return null;
-      if (handler != null) {
-        return handler;
-      }
-    }
-    return null;
+    return getFindUsagesHandler(element, factory -> factory.createFindUsagesHandler(element, operationMode));
   }
 
   public @Nullable FindUsagesHandler getNewFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
-    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensionList(myProject)) {
-      if (!factory.canFindUsages(element)) {
-        continue;
-      }
-
+    return getFindUsagesHandler(element, factory -> {
       Class<? extends FindUsagesHandlerFactory> aClass = factory.getClass();
       FindUsagesHandlerFactory copy = myProject.instantiateClass(aClass, factory.pluginDescriptor.getPluginId());
-      FindUsagesHandler handler = copy.createFindUsagesHandler(element, forHighlightUsages);
-      if (handler == FindUsagesHandler.NULL_HANDLER) {
-        return null;
+      return copy.createFindUsagesHandler(element, forHighlightUsages);
+    });
+  }
+
+  private @Nullable FindUsagesHandler getFindUsagesHandler(
+    @NotNull PsiElement element,
+    @NotNull Function<FindUsagesHandlerFactory, FindUsagesHandler> createHandler
+  ) {
+    return ReadAction.compute(() -> {
+      for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensionList(myProject)) {
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401 IDEA-353115")) {
+          if (!factory.canFindUsages(element)) continue;
+        }
+        FindUsagesHandler handler;
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162401")) {
+          handler = createHandler.apply(factory);
+        }
+        if (handler == FindUsagesHandler.NULL_HANDLER) return null;
+        if (handler != null) {
+          return handler;
+        }
       }
-      if (handler != null) {
-        return handler;
-      }
-    }
-    return null;
+      return null;
+    });
   }
 
   public void findUsages(@NotNull PsiElement psiElement, @Nullable PsiFile scopeFile, FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
@@ -252,7 +251,7 @@ public final class FindUsagesManager {
                          editor);
     }
     else {
-      boolean skipResultsWithOneUsage = FindSettings.getInstance().isSkipResultsWithOneUsage();
+      boolean skipResultsWithOneUsage = FindUsagesSettings.getInstance().isSkipResultsWithOneUsage();
       findUsages(primaryElements, secondaryElements, handler, findUsagesOptions, skipResultsWithOneUsage);
     }
   }
@@ -324,17 +323,17 @@ public final class FindUsagesManager {
   public @NotNull UsageViewPresentation createPresentation(@NotNull FindUsagesHandlerBase handler, @NotNull FindUsagesOptions findUsagesOptions) {
     PsiElement element = handler.getPsiElement();
     LOG.assertTrue(element.isValid());
-    return createPresentation(element, findUsagesOptions, FindSettings.getInstance().isShowResultsInSeparateView());
+    return createPresentation(element, findUsagesOptions, FindUsagesSettings.getInstance().isShowResultsInSeparateView());
   }
 
   private void setOpenInNewTab(boolean toOpenInNewTab) {
     if (!mustOpenInNewTab()) {
-      FindSettings.getInstance().setShowResultsInSeparateView(toOpenInNewTab);
+      FindUsagesSettings.getInstance().setShowResultsInSeparateView(toOpenInNewTab);
     }
   }
 
   private boolean shouldOpenInNewTab() {
-    return mustOpenInNewTab() || FindSettings.getInstance().isShowResultsInSeparateView();
+    return mustOpenInNewTab() || FindUsagesSettings.getInstance().isShowResultsInSeparateView();
   }
 
   private boolean mustOpenInNewTab() {

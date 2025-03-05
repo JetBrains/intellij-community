@@ -57,8 +57,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
         "jar",
         "install",
         "deploy",
-        "site",
-        maven4orNull("wrapper"))
+        "site")
       assertSameElements(groupedValues.keys, *expectedValues)
       assertSameElements(groupedValues[""]!!, MavenConstants.BASIC_PHASES)
       assertSameElements(groupedValues["clean"]!!, "clean:clean", "clean:help")

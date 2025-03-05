@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.overrideImplement;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -23,7 +23,7 @@ public final class GroovyImplementMethodsHandler implements LanguageCodeInsightA
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
     if (aClass instanceof GrTypeDefinition typeDefinition) {

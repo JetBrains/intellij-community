@@ -21,7 +21,7 @@ public abstract class SchemeExporter<T extends Scheme> {
    */
   @SuppressWarnings({"unused", "RedundantThrows"})
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void exportScheme(@NotNull T scheme, @NotNull OutputStream outputStream) throws Exception {
   }
 

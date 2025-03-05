@@ -1,0 +1,3 @@
+public void m(LocalDate value) {
+  java.sql.Date(value)<spot></spot>
+}

@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
 import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,15 +54,13 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
                                                                                  PyElementTypes.STRING_LITERAL_EXPRESSION,
                                                                                  PyElementTypes.NONE_LITERAL_EXPRESSION);
 
-  @Nullable
   @Override
-  public PyTypingAliasStub createStub(@NotNull PyTargetExpression psi) {
+  public @Nullable PyTypingAliasStub createStub(@NotNull PyTargetExpression psi) {
     final PyExpression value = getAssignedValueIfTypeAliasLike(psi, true);
     return value != null ? new PyTypingTypeAliasStubImpl(value.getText()) : null;
   }
 
-  @Nullable
-  private static PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
+  private static @Nullable PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
     if (!PyUtil.isTopLevel(target) || !looksLikeTypeAliasTarget(target)) {
       return null;
     }
@@ -111,7 +110,8 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
     return typeHintText.equals("TypeAlias") || typeHintText.endsWith(".TypeAlias");
   }
 
-  private static boolean looksLikeTypeHint(@NotNull PyExpression expression) {
+  @ApiStatus.Internal
+  public static boolean looksLikeTypeHint(@NotNull PyExpression expression) {
     final PyCallExpression call = as(expression, PyCallExpression.class);
     if (call != null) {
       final PyReferenceExpression callee = as(call.getCallee(), PyReferenceExpression.class);
@@ -153,9 +153,8 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
     });
   }
 
-  @Nullable
   @Override
-  public PyTypingAliasStub deserializeStub(@NotNull StubInputStream stream) throws IOException {
+  public @Nullable PyTypingAliasStub deserializeStub(@NotNull StubInputStream stream) throws IOException {
     String ref = stream.readNameString();
     return ref != null ? new PyTypingTypeAliasStubImpl(ref) : null;
   }
@@ -169,8 +168,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
    *
    * @see PyTypingAliasStub
    */
-  @Nullable
-  public static PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
+  public static @Nullable PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
     final PyTargetExpressionStub stub = target.getStub();
     PyExpression result = null;
     if (stub != null) {

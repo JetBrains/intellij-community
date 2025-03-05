@@ -1,4 +1,4 @@
-<idea-plugin implementation-detail="true" package="com.intellij.configurationScript">
+<idea-plugin package="com.intellij.configurationScript">
   <name>Configuration Script</name>
   <id>com.intellij.configurationScript</id>
   <vendor>JetBrains</vendor>
@@ -18,7 +18,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
                     serviceImplementation="com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager"
-                    preload="notHeadless" overrides="true"/>
+                    overrides="true"/>
 
     <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.providers.MyRunConfigurationTemplateProvider"/>
 

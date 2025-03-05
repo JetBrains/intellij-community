@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.analysis;
 
@@ -36,8 +36,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   }
 
   @Override
-  @NotNull
-  public AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
+  public @NotNull AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     if (myType == FILE) {
       if (myElement instanceof PsiJavaFile psiJavaFile && !FileTypeUtils.isInServerPageFile(myElement)) {
@@ -69,27 +68,24 @@ public class JavaAnalysisScope extends AnalysisScope {
   }
 
 
-  @NotNull
   @Override
-  public String getShortenName() {
+  public @NotNull String getShortenName() {
     if (myType == PACKAGE) {
       return JavaAnalysisBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
     }
     return super.getShortenName();
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     if (myType == PACKAGE) {
       return JavaAnalysisBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
     }
     return super.getDisplayName();
   }
 
-  @NotNull
   @Override
-  protected VirtualFileSet createFilesSet() {
+  protected @NotNull VirtualFileSet createFilesSet() {
     if (myType == PACKAGE) {
       VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet();
       accept(createFileSearcher(fileSet));
@@ -114,9 +110,8 @@ public class JavaAnalysisScope extends AnalysisScope {
     return super.accept(processor);
   }
 
-  @NotNull
   @Override
-  public SearchScope toSearchScope() {
+  public @NotNull SearchScope toSearchScope() {
     if (myType == PACKAGE) {
       return new PackageScope((PsiPackage)myElement, true, true);
     }

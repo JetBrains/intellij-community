@@ -27,7 +27,7 @@ class B extends A {
     super(<error descr="Cannot call 'A.f()' before superclass constructor is called">f</error>());
   }
   B(int i, int j, int k) {
-    super(<error descr="Cannot call 'A.f()' before superclass constructor is called">super.f</error>());
+    super(<error descr="Cannot reference 'super' before superclass constructor is called">super</error>.f());
   }
 
   B(String s, int i) {
@@ -35,7 +35,7 @@ class B extends A {
   }
 
   B(int s, int i, char j) {
-    super(<error descr="Cannot reference 'A.fi' before superclass constructor is called">super.fi</error> );
+    super(<error descr="Cannot reference 'super' before superclass constructor is called">super</error>.fi );
   }
 
   B(double d) {

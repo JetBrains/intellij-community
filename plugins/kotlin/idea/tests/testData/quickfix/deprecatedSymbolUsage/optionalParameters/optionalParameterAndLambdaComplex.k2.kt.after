@@ -33,10 +33,14 @@ inline fun <A : Any> MutableList<A>.addA(a: A, dummyParam: Unit): A = a.also { a
 fun createHi(any: Any) = "Hi $any"
 
 val unDeprecateMe = mutableListOf("Hello").apply {
-    addA(d(::createHi, 1, initDummy = fun String.() {
+    addA(
         // Run the quick fix from the IDE and watch it produce broken code.
-        println("Yo")
-    }), Unit)
+        d(
+            ::createHi, 1, // Run the quick fix from the IDE and watch it produce broken code.
+            initDummy = { -> // Run the quick fix from the IDE and watch it produce broken code.
+                println("Yo")
+            }), Unit
+        )
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

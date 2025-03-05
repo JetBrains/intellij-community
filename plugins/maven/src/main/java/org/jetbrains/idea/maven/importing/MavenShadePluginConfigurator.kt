@@ -15,6 +15,7 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
@@ -175,7 +176,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
                                module: ModuleEntity,
                                dependencyMavenId: MavenId,
                                dependencyJarPath: String) {
-    val libraryName = "Maven Shade: ${dependencyMavenId.displayString}"
+    val libraryName = SHADED_MAVEN_LIBRARY_NAME_PREFIX + dependencyMavenId.displayString
     val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
 
     val jarUrl = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl("jar://$dependencyJarPath!/")
@@ -222,6 +223,8 @@ private data class MavenProjectShadingData(
   val dependentMavenProjects: Collection<MavenProject>,
 )
 
+@ApiStatus.Internal
+internal val SHADED_MAVEN_LIBRARY_NAME_PREFIX = "Maven Shade: "
 private val SHADED_MAVEN_PROJECTS = Key.create<Map<MavenProject, MavenProjectShadingData>>("SHADED_MAVEN_PROJECTS")
 
 internal class MavenShadeFacetGeneratePostTaskConfigurator : MavenAfterImportConfigurator {

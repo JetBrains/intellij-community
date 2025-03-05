@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.lang;
 
@@ -36,8 +36,7 @@ public interface RefManagerExtension<T> {
    * @deprecated override {@link #getLanguages()}
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  default Language getLanguage() {
+  default @NotNull Language getLanguage() {
     throw new UnsupportedOperationException("'getLanguages' method must be overriden in " + getClass());
   }
 

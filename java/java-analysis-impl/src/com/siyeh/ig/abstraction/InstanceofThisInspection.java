@@ -30,8 +30,7 @@ public final class InstanceofThisInspection extends BaseInspection {
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0);
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
 
     return InspectionGadgetsBundle.message(infos[0] instanceof PsiInstanceOfExpression
                                            ? "instanceof.check.for.this.problem.descriptor"

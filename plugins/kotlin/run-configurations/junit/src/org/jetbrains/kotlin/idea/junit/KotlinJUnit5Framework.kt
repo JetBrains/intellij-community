@@ -77,8 +77,8 @@ class KotlinJUnit5Framework: JUnit5Framework(), KotlinPsiBasedTestFramework {
             }
 
         private fun checkIsJUnit5LikeTestClass(declaration: KtClassOrObject, isPotential: Boolean): ThreeState =
-            if (isPotential && isUnderTestSources(declaration)) {
-                UNSURE
+            if (isPotential) {
+                if (isUnderTestSources(declaration)) UNSURE else NO
             } else if (!isFrameworkAvailable(declaration)) {
                 NO
             } else if (declaration is KtClass && declaration.isInner()) {
@@ -191,7 +191,8 @@ private val METHOD_ANNOTATION_FQN = setOf(
     "org.junit.jupiter.params.ParameterizedTest",
     "org.junit.jupiter.api.RepeatedTest",
     "org.junit.jupiter.api.TestFactory",
-    "org.junit.jupiter.api.TestTemplate"
+    "org.junit.jupiter.api.TestTemplate",
+    "org.junitpioneer.jupiter.RetryingTest"
 )
 
 private val setUpAnnotations = setOf(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, KotlinPsiBasedTestFramework.KOTLIN_TEST_BEFORE_TEST)

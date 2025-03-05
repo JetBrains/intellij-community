@@ -32,6 +32,7 @@ import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -188,19 +189,16 @@ public final class PyMoveFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public List<UsageInfo> findUsages(PsiFile file, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
-    if (file != null) {
-      file.putUserData(ORIGINAL_FILE_LOCATION, file.getVirtualFile().getUrl());
-      final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(file, false);
-      return ContainerUtil.map(usages, usage -> {
-        final PsiElement element = usage.getElement();
-        if (element != null) {
-          return new PyUsageInfo(element, file);
-        }
-        return usage;
-      });
-    }
-    return null;
+  public @Unmodifiable @NotNull List<UsageInfo> findUsages(@NotNull PsiFile file, @NotNull PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
+    file.putUserData(ORIGINAL_FILE_LOCATION, file.getVirtualFile().getUrl());
+    final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(file, false);
+    return ContainerUtil.map(usages, usage -> {
+      final PsiElement element = usage.getElement();
+      if (element != null) {
+        return new PyUsageInfo(element, file);
+      }
+      return usage;
+    });
   }
 
   static final class PyUsageInfo extends UsageInfo {
@@ -213,7 +211,7 @@ public final class PyMoveFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public void retargetUsages(List<UsageInfo> usages, Map<PsiElement, PsiElement> oldToNewMap) {
+  public void retargetUsages(@Unmodifiable @NotNull List<? extends UsageInfo> usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     final Set<PsiFile> updatedFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -78,10 +64,9 @@ public class GradleExecutionErrorHandler {
     return myRootCauseAndLocation.second;
   }
 
-  @Nullable
-  private ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
-                                                       @NotNull String projectPath,
-                                                       @Nullable String buildFilePath) {
+  private @Nullable ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
+                                                                 @NotNull String projectPath,
+                                                                 @Nullable String buildFilePath) {
     if (error instanceof ExternalSystemException) {
       // This is already a user-friendly error.
       return (ExternalSystemException)error;
@@ -100,8 +85,7 @@ public class GradleExecutionErrorHandler {
     return null;
   }
 
-  @NotNull
-  public static Pair<Throwable, String> getRootCauseAndLocation(@NotNull Throwable error) {
+  public static @NotNull Pair<Throwable, String> getRootCauseAndLocation(@NotNull Throwable error) {
     Throwable rootCause = error;
     String location = null;
 
@@ -126,8 +110,7 @@ public class GradleExecutionErrorHandler {
   /**
    * Retrieves the error location in build.gradle files or in settings.gradle file.
    */
-  @Nullable
-  public static String getLocationFrom(@NotNull Throwable error) {
+  public static @Nullable String getLocationFrom(@NotNull Throwable error) {
     String errorToString = error.toString();
     if (errorToString.contains("LocationAwareException")) {
       // LocationAwareException is never passed, but converted into a PlaceholderException
@@ -143,8 +126,7 @@ public class GradleExecutionErrorHandler {
   }
 
 
-  @Nullable
-  private static String searchForLocationInStacks(@NotNull Throwable error) {
+  private static @Nullable String searchForLocationInStacks(@NotNull Throwable error) {
     var current = error;
     while (true) {
       var location = getLocationFromStack(current);
@@ -164,8 +146,7 @@ public class GradleExecutionErrorHandler {
   /**
    * Retrieves the error location in build.gradle file from stack frames
    */
-  @Nullable
-  private static String getLocationFromStack(@NotNull Throwable error) {
+  private static @Nullable String getLocationFromStack(@NotNull Throwable error) {
     // run through stacktrace and see if it has frames pointing to specific groovy script
     StackTraceElement scriptFrame = ContainerUtil.find(error.getStackTrace(),
                                                        (element -> {
@@ -178,10 +159,9 @@ public class GradleExecutionErrorHandler {
     return null;
   }
 
-  @NotNull
-  public static ExternalSystemException createUserFriendlyError(@NotNull String msg,
-                                                                @Nullable String location,
-                                                                String @NotNull ... quickFixes) {
+  public static @NotNull ExternalSystemException createUserFriendlyError(@NotNull String msg,
+                                                                         @Nullable String location,
+                                                                         String @NotNull ... quickFixes) {
     String newMsg = msg;
     if (!newMsg.isEmpty() && Character.isLowerCase(newMsg.charAt(0))) {
       // Message starts with lower case letter. Sentences should start with uppercase.
@@ -197,8 +177,7 @@ public class GradleExecutionErrorHandler {
     return new ExternalSystemException(newMsg, null, quickFixes);
   }
 
-  @Nullable
-  public static Pair<String, Integer> getErrorLocation(@NotNull String location) {
+  public static @Nullable Pair<String, Integer> getErrorLocation(@NotNull String location) {
     Matcher matcher = ERROR_LOCATION_IN_FILE_PATTERN.matcher(location);
     if (matcher.matches()) {
       String filePath = matcher.group(1);

@@ -1,21 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
-import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.label
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.awt.BorderLayout
-import java.awt.Cursor
-import java.awt.event.MouseEvent
-import java.awt.event.MouseListener
-import javax.swing.BorderFactory
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 interface ValidationIndicator {
     fun updateValidationState(newState: ValidationResult)

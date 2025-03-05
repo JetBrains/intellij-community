@@ -16,6 +16,7 @@ import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +41,7 @@ public abstract class CompletionAutoPopupTesterBase {
     }
   }
 
-  @Nullable
-  protected abstract Editor getEditor();
+  protected abstract @Nullable Editor getEditor();
 
   public void joinCompletion() {
     waitPhase(phase -> {
@@ -71,8 +71,7 @@ public abstract class CompletionAutoPopupTesterBase {
     TestCase.fail("Too long completion: " + CompletionServiceImpl.getCompletionPhase());
   }
 
-  @NotNull
-  protected abstract Project getProject();
+  protected abstract @NotNull Project getProject();
 
   public void joinCommit(Runnable c1) {
     AtomicBoolean committed = new AtomicBoolean();
@@ -85,8 +84,8 @@ public abstract class CompletionAutoPopupTesterBase {
         committed.set(true);
       });
     })));
-    ApplicationManager.getApplication().assertReadAccessNotAllowed();
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertNoOwnReadAccess();
     long start = System.currentTimeMillis();
     while (!committed.get()) {
       if (System.currentTimeMillis() - start >= 20000) {

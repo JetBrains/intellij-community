@@ -8,15 +8,9 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.tree.TokenSet
-import com.intellij.util.indexing.DataIndexer
-import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
-import com.intellij.util.indexing.FileBasedIndexExtension
-import com.intellij.util.indexing.FileContent
-import com.intellij.util.indexing.ID
-import com.intellij.util.indexing.PsiDependentFileContent
+import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.CollectionDataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
-import com.intellij.util.text.StringSearcher
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.KotlinFileType

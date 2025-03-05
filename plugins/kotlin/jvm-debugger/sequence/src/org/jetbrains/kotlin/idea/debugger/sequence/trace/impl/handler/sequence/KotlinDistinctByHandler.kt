@@ -2,15 +2,15 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.sequence
 
-import com.intellij.debugger.streams.trace.dsl.*
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl
-import com.intellij.debugger.streams.trace.impl.handler.unified.HandlerBase
-import com.intellij.debugger.streams.trace.impl.handler.unified.PeekTraceHandler
-import com.intellij.debugger.streams.wrapper.CallArgument
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl
-import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl
+import com.intellij.debugger.streams.core.trace.dsl.*
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ClassTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.HandlerBase
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.PeekTraceHandler
+import com.intellij.debugger.streams.core.wrapper.CallArgument
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
+import com.intellij.debugger.streams.core.wrapper.impl.IntermediateStreamCallImpl
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
 
 /**
@@ -72,9 +72,8 @@ class KotlinDistinctByHandler(callNumber: Int, private val call: IntermediateStr
             integerIteration(keys.size(), this) {
                 val key = declare(variable(KotlinSequenceTypes.NULLABLE_ANY, "key"), keys.get(loopVariable), false)
                 val lst = list(dsl.types.INT, "lst")
-                declare(lst, keys2TimesBefore.computeIfAbsent(key, lambda("k") {
-                    doReturn(newList(types.INT))
-                }), false)
+                declare(lst, true)
+                add(keys2TimesBefore.computeIfAbsent(dsl, key, newList(types.INT), lst))
                 statement { lst.add(beforeTimes.get(loopVariable)) }
             }
 
@@ -122,5 +121,5 @@ class KotlinDistinctByHandler(callNumber: Int, private val call: IntermediateStr
     }
 
     private fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall =
-        IntermediateStreamCallImpl("distinctBy", args, typeBefore, typeAfter, textRange)
+        IntermediateStreamCallImpl("distinctBy", genericArguments, args, typeBefore, typeAfter, textRange)
 }

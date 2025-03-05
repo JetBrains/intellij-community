@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.psi.*;
@@ -91,8 +91,7 @@ class BooleanReturnModel {
     return false;
   }
 
-  @NotNull
-  private InlineTransformer getTransformer(PsiStatement earlyStatement, PsiStatement finalStatement) {
+  private @NotNull InlineTransformer getTransformer(PsiStatement earlyStatement, PsiStatement finalStatement) {
     return (methodCopy, callSite, returnType) -> {
       PsiCodeBlock block = Objects.requireNonNull(methodCopy.getBody());
       PsiReturnStatement[] returns = PsiUtil.findReturnStatements(methodCopy);
@@ -119,8 +118,7 @@ class BooleanReturnModel {
     };
   }
 
-  @Nullable
-  static BooleanReturnModel from(@NotNull PsiCodeBlock body, PsiReturnStatement @NotNull [] returns) {
+  static @Nullable BooleanReturnModel from(@NotNull PsiCodeBlock body, PsiReturnStatement @NotNull [] returns) {
     List<PsiExpression> terminal = new ArrayList<>();
     boolean earlyValue = false;
     int earlyCount = 0;

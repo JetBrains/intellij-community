@@ -28,15 +28,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 public final class GroovyLoopStatementThatDoesntLoopInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.code.ref.code.statement.doesnt.loop");
 
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

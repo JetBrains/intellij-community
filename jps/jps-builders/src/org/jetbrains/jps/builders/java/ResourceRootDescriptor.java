@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.io.FileFilters;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -72,8 +72,8 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
 
   @Override
   public @NotNull FileFilter createFileFilter() {
-    final JpsProject project = getTarget().getModule().getProject();
-    final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCompilerExcludes();
+    JpsProject project = getTarget().getModule().getProject();
+    JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getCompilerExcludes();
     return file -> !excludes.isExcluded(file) && myFilterForExcludedPatterns.accept(file);
   }
 
@@ -83,12 +83,7 @@ public class ResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public boolean canUseFileCache() {
-    return true;
-  }
-
-  @Override
   public @NotNull String getRootId() {
-    return FileUtil.toSystemIndependentName(root.getPath());
+    return FileUtilRt.toSystemIndependentName(root.getPath());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.icons.AllIcons;
@@ -39,10 +39,10 @@ public class NotificationMessageElement extends NavigatableMessageElement {
   public static final String MSG_STYLE = "messageStyle";
   public static final String LINK_STYLE = "linkStyle";
 
-  @NotNull private final CustomizeColoredTreeCellRenderer myLeftTreeCellRenderer;
-  @NotNull private final CustomizeColoredTreeCellRenderer myRightTreeCellRenderer;
+  private final @NotNull CustomizeColoredTreeCellRenderer myLeftTreeCellRenderer;
+  private final @NotNull CustomizeColoredTreeCellRenderer myRightTreeCellRenderer;
 
-  public NotificationMessageElement(@NotNull final ErrorTreeElementKind kind,
+  public NotificationMessageElement(final @NotNull ErrorTreeElementKind kind,
                                     @Nullable GroupingElement parent,
                                     String[] message,
                                     @NotNull Navigatable navigatable,
@@ -64,8 +64,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
         renderer.append(NewErrorTreeRenderer.calcPrefix(NotificationMessageElement.this));
       }
 
-      @NotNull
-      private static Icon getIcon(@NotNull ErrorTreeElementKind kind) {
+      private static @NotNull Icon getIcon(@NotNull ErrorTreeElementKind kind) {
         return switch (kind) {
           case INFO -> AllIcons.General.Information;
           case ERROR -> AllIcons.General.Error;
@@ -79,15 +78,13 @@ public class NotificationMessageElement extends NavigatableMessageElement {
     myRightTreeCellRenderer = new MyCustomizeColoredTreeCellRendererReplacement();
   }
 
-  @Nullable
   @Override
-  public CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
+  public @Nullable CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
     return myRightTreeCellRenderer;
   }
 
-  @Nullable
   @Override
-  public CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
+  public @Nullable CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
     return myLeftTreeCellRenderer;
   }
 
@@ -127,8 +124,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
   }
 
   private final class MyCustomizeColoredTreeCellRendererReplacement extends CustomizeColoredTreeCellRendererReplacement {
-    @NotNull
-    private final JEditorPane myEditorPane;
+    private final @NotNull JEditorPane myEditorPane;
 
     private MyCustomizeColoredTreeCellRendererReplacement() {
       myEditorPane = installJep(new MyEditorPane());

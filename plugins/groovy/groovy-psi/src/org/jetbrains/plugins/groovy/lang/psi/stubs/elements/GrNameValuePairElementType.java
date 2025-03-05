@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.psi.stubs.StubElement;
@@ -29,9 +29,8 @@ public class GrNameValuePairElementType extends GrStubElementType<GrNameValuePai
     }
   }
 
-  @NotNull
   @Override
-  public GrNameValuePairStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull GrNameValuePairStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrNameValuePairStub(
       parentStub,
       dataStream.readNameString(),
@@ -44,9 +43,8 @@ public class GrNameValuePairElementType extends GrStubElementType<GrNameValuePai
     return new GrAnnotationNameValuePairImpl(stub);
   }
 
-  @NotNull
   @Override
-  public GrNameValuePairStub createStub(@NotNull GrAnnotationNameValuePair psi, StubElement parentStub) {
+  public @NotNull GrNameValuePairStub createStub(@NotNull GrAnnotationNameValuePair psi, StubElement parentStub) {
     String name = psi.getName();
     GrAnnotationMemberValue value = psi.getValue();
     return new GrNameValuePairStub(parentStub, name, value == null ? null : value.getText());

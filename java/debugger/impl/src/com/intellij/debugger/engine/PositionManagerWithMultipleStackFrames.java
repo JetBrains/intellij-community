@@ -13,8 +13,7 @@ public interface PositionManagerWithMultipleStackFrames extends PositionManagerW
    * Allows to replace a jvm frame with one or several frames, or skip a frame
    * @return a list of frames to replace the original frame with, or null to use the default mapping
    */
-  @Nullable
-  default List<XStackFrame> createStackFrames(@NotNull StackFrameDescriptorImpl descriptor) {
+  default @Nullable List<XStackFrame> createStackFrames(@NotNull StackFrameDescriptorImpl descriptor) {
     return null;
   }
 }

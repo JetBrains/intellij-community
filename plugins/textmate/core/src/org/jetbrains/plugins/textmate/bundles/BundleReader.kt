@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.textmate.bundles
 
-import com.intellij.openapi.diagnostic.LoggerRt
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil
 import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistReader
+import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -17,7 +17,7 @@ import kotlin.io.path.pathString
 
 interface TextMateBundleReader {
   companion object {
-    internal val logger = LoggerRt.getInstance(TextMateBundleReader::class.java)
+    internal val logger = LoggerFactory.getLogger(TextMateBundleReader::class.java)
   }
 
   val bundleName: String
@@ -49,7 +49,7 @@ fun readTextMateBundle(path: Path): TextMateBundleReader {
   val plistReader = CompositePlistReader()
   val infoPlistPath = path.resolve(Constants.BUNDLE_INFO_PLIST_NAME)
   val infoPlist = infoPlistPath.inputStream().buffered().use { plistReader.read(it) }
-  val bundleName = infoPlist.getPlistValue(Constants.NAME_KEY, path.name).string
+  val bundleName = infoPlist.getPlistValue(Constants.NAME_KEY, path.name).string!!
 
   return object : TextMateBundleReader {
     override val bundleName: String = bundleName
@@ -57,7 +57,7 @@ fun readTextMateBundle(path: Path): TextMateBundleReader {
     override fun readGrammars(): Sequence<TextMateGrammar> {
       return readPlistInDirectory(path.resolve("Syntaxes"), plistReader = plistReader,
                                   glob = "*.{tmLanguage,plist,tmLanguage.json}").map { plist ->
-        val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
+        val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.filterNotNull().flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
         val firstLinePattern = plist.getPlistValue(Constants.FIRST_LINE_MATCH)?.string
@@ -91,7 +91,7 @@ fun readSublimeBundle(path: Path): TextMateBundleReader {
 
     override fun readGrammars(): Sequence<TextMateGrammar> {
       return readPlistInDirectory(path, plistReader = plistReader, glob = "*.{tmLanguage,plist,tmLanguage.json}").map { plist ->
-        val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
+        val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.filterNotNull().flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
         val firstLinePattern = plist.getPlistValue(Constants.FIRST_LINE_MATCH)?.string
@@ -118,12 +118,12 @@ fun readSublimeBundle(path: Path): TextMateBundleReader {
 }
 
 private fun readSnippetFromPlist(plist: Plist, explicitUuid: String): TextMateSnippet? {
-  val key = plist.getPlistValue(Constants.TAB_TRIGGER_KEY, "").string.takeIf { it.isNotEmpty() } ?: return null
-  val content = plist.getPlistValue(Constants.StringKey.CONTENT.value, "").string.takeIf { it.isNotEmpty() } ?: return null
-  val name = plist.getPlistValue(Constants.NAME_KEY, "").string.takeIf { it.isNotEmpty() } ?: key
-  val scope = plist.getPlistValue(Constants.SCOPE_KEY, "").string
-  val description = plist.getPlistValue(Constants.DESCRIPTION_KEY, "").string //NON-NLS
-  val uuid = plist.getPlistValue(Constants.UUID_KEY, explicitUuid).string
+  val key = plist.getPlistValue(Constants.TAB_TRIGGER_KEY, "").string.takeIf { !it.isNullOrEmpty() } ?: return null
+  val content = plist.getPlistValue(Constants.StringKey.CONTENT.value, "").string.takeIf { !it.isNullOrEmpty() } ?: return null
+  val name = plist.getPlistValue(Constants.NAME_KEY, "").string.takeIf { !it.isNullOrEmpty() } ?: key
+  val scope = plist.getPlistValue(Constants.SCOPE_KEY, "").string!!
+  val description = plist.getPlistValue(Constants.DESCRIPTION_KEY, "").string!! //NON-NLS
+  val uuid = plist.getPlistValue(Constants.UUID_KEY, explicitUuid).string!!
   return TextMateSnippet(key, content, scope, name, description, uuid)
 }
 
@@ -132,15 +132,15 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
     plist.getPlistValue(Constants.SETTINGS_KEY)?.plist?.let { settings ->
       val highlightingPairs = PreferencesReadUtil.readPairs(settings.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY))
       val smartTypingPairs = PreferencesReadUtil.readPairs(settings.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY))
-        ?.map { TextMateAutoClosingPair(it.left, it.right, null) }
+        ?.map { TextMateAutoClosingPair(it.left, it.right, 0) }
         ?.toSet()
       val indentationRules = PreferencesReadUtil.loadIndentationRules(settings)
       val variables = settings.getPlistValue(Constants.SHELL_VARIABLES_KEY)?.let { variables ->
         variables.array.map { variable ->
           val variablePlist = variable.plist
           TextMateShellVariable(scopeName,
-                                variablePlist.getPlistValue(Constants.NAME_KEY, "").string,
-                                variablePlist.getPlistValue(Constants.VALUE_KEY, "").string)
+                                variablePlist.getPlistValue(Constants.NAME_KEY, "").string!!,
+                                variablePlist.getPlistValue(Constants.VALUE_KEY, "").string!!)
         }
       } ?: emptyList()
       val customHighlightingAttributes = TextMateTextAttributes.fromPlist(settings)
@@ -165,7 +165,7 @@ private fun readPlistInDirectory(directory: Path, plistReader: PlistReader, glob
   }.getOrElse { e ->
     when (e) {
       is NoSuchFileException -> {}
-      else -> TextMateBundleReader.logger.warn("Can't load plists from directory: " + directory.pathString, e)
+      else -> TextMateBundleReader.logger.warn("Can't load plists from directory: ${directory.pathString}", e)
     }
     emptySequence()
   }

@@ -606,6 +606,14 @@ def array_to_meta_xml(array, name, format):
     slice = name
     l = len(array.shape)
 
+    try:
+        import numpy as np
+        if isinstance(array, np.recarray) and l > 1:
+            slice = "{}['{}']".format(slice, array.dtype.names[0])
+            array = array[array.dtype.names[0]]
+    except ImportError:
+        pass
+
     # initial load, compute slice
     if format == '%':
         if l > 2:
@@ -666,13 +674,13 @@ def get_formatted_row_elements(row, iat, dim, cols, format, dtypes):
     for c in range(cols):
         val = iat[row, c] if dim > 1 else iat[row]
         col_formatter = get_column_formatter_by_type(format, dtypes[c])
-        if val != val:
-            yield "nan"
-        else:
-            try:
+        try:
+            if val != val:
+                yield "nan"
+            else:
                 yield ("%" + col_formatter) % (val,)
-            except TypeError:
-                yield ("%" + DEFAULT_DF_FORMAT) % (val,)
+        except TypeError:
+            yield ("%" + DEFAULT_DF_FORMAT) % (val,)
 
 
 def array_default_format(type):
@@ -836,6 +844,7 @@ def is_able_to_format_number(format):
 
 TYPE_TO_XML_CONVERTERS = {
     "ndarray": array_to_xml,
+    "recarray": array_to_xml,
     "DataFrame": dataframe_to_xml,
     "Series": dataframe_to_xml,
     "GeoDataFrame": dataframe_to_xml,

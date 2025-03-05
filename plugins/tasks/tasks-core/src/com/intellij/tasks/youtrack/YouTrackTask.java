@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.google.gson.JsonElement;
@@ -32,8 +32,7 @@ public class YouTrackTask extends Task {
     return myType;
   }
 
-  @NotNull
-  private TaskType mapIssueTypeToPredefinedValue() {
+  private @NotNull TaskType mapIssueTypeToPredefinedValue() {
     String typeName = getCustomFieldStringValue("Type");
     if (typeName != null) {
       try {
@@ -50,8 +49,7 @@ public class YouTrackTask extends Task {
     return myIssueState;
   }
 
-  @Nullable
-  private TaskState mapIssueStateToPredefinedValue() {
+  private @Nullable TaskState mapIssueStateToPredefinedValue() {
     // TODO Make state field name configurable
     String stateName = getCustomFieldStringValue("State");
     if (stateName == null) {
@@ -68,8 +66,7 @@ public class YouTrackTask extends Task {
     return TaskState.OTHER;
   }
 
-  @Nullable
-  private String getCustomFieldStringValue(@NotNull String fieldName) {
+  private @Nullable String getCustomFieldStringValue(@NotNull String fieldName) {
     YouTrackIssue.CustomField stateField = ContainerUtil.find(myIssue.getCustomFields(), cf -> cf.getName().equals(fieldName));
     if (stateField != null) {
       JsonElement fieldValueElem = stateField.getValue();

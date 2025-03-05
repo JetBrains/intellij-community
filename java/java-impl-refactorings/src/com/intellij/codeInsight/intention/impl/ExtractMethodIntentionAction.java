@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -27,15 +27,13 @@ import javax.swing.*;
 
 
 public final class ExtractMethodIntentionAction implements IntentionAction, Iconable {
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaBundle.message("intention.extract.method.text");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -71,9 +69,8 @@ public final class ExtractMethodIntentionAction implements IntentionAction, Icon
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 

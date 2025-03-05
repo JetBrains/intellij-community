@@ -4,15 +4,19 @@ package com.intellij.openapi.vfs.newvfs.persistent.indexes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.Input;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator;
-import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator.Input;
-import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.ManyEntriesPerFileInputGenerator;
-import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.MocksBuildingBlocks.ManyKeysIntegerToIntegerIndexExtension;
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.ManyEntriesPerFileInputGenerator;
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.ManyKeysIntegerToIntegerIndexExtension;
+import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
@@ -21,6 +25,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -110,13 +115,13 @@ public class IndexStorageLayoutBenchmark {
     public void setupBenchmark() throws Exception {
       IndexDebugProperties.IS_IN_STRESS_TESTS = true;
 
-      extension = new ManyKeysIntegerToIntegerIndexExtension(cacheSize);
+      extension = new SampleIndexExtension(cacheSize);
 
       @SuppressWarnings("unchecked")
       Class<FileBasedIndexLayoutProvider> providerClass = (Class)Class.forName(storageLayoutProviderClassName);
       storageLayoutProviderToTest = providerClass.getDeclaredConstructor().newInstance();
 
-      storageLayout = storageLayoutProviderToTest.getLayout(extension);
+      storageLayout = storageLayoutProviderToTest.getLayout(extension, Collections.emptyList());
     }
 
     @Setup(Level.Iteration)
@@ -139,6 +144,18 @@ public class IndexStorageLayoutBenchmark {
       }
       if (storageLayout != null) {
         storageLayout.clearIndexData();
+      }
+    }
+
+    public static class SampleIndexExtension extends ManyKeysIntegerToIntegerIndexExtension implements ShardableIndexExtension {
+
+      public SampleIndexExtension(int cacheSize) {
+        super(cacheSize);
+      }
+
+      @Override
+      public int shardsCount() {
+        return 2;
       }
     }
   }
@@ -196,14 +213,16 @@ public class IndexStorageLayoutBenchmark {
   }
 
   @Benchmark
-  public int indexStorage_readContainer(InputContext inputContext,
+  public boolean indexStorage_readContainer(InputContext inputContext,
                                         StorageContext storageContext,
                                         ReadContext readContext) throws StorageException {
     IndexStorage<Integer, Integer> indexStorage = storageContext.indexStorage;
 
     Integer key = readContext.nextKey();
-    //.size() forces load/merge data:
-    return indexStorage.read(key).size();
+    return indexStorage.read(key, container -> {
+      container.size();//.size() forces load/merge data:
+      return true;
+    });
   }
 
   private static final GlobalSearchScope SCOPE_EVERYTHING = new GlobalSearchScope() {

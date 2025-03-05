@@ -2,6 +2,7 @@
 package com.intellij.commandInterface.commandLine;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,27 +16,25 @@ public final class CommandLineFileType extends LanguageFileType {
   /**
    * Command line extension
    */
-  static final String EXTENSION = "cmdline";
+  @ApiStatus.Internal
+  public static final String EXTENSION = "cmdline";
 
   private CommandLineFileType() {
     super(CommandLineLanguage.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return CommandLineLanguage.INSTANCE.getID();
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return CommandLineLanguage.INSTANCE.getID();
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return EXTENSION;
   }
 

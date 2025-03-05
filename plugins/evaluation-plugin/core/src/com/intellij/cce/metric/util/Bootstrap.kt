@@ -17,5 +17,5 @@ internal object Bootstrap {
     return bootstrapSample[(SAMPLE_SIZE * 0.025).toInt()] to bootstrapSample[(SAMPLE_SIZE * 0.975).toInt()]
   }
 
-  private const val SAMPLE_SIZE = 100000
+  private const val SAMPLE_SIZE = 10000
 }

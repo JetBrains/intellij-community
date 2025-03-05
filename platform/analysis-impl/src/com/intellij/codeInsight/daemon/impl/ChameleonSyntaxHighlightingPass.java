@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.lang.Language;
@@ -35,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighlightingPass {
-  @NotNull private final ProperTextRange myPriorityRange;
+  private final @NotNull ProperTextRange myPriorityRange;
   private volatile List<HighlightInfo> myHighlights = List.of();
 
   static final class Factory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
@@ -45,12 +46,12 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
     }
 
     @Override
-    public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-      Project project = file.getProject();
-      TextRange restrict = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL);
+    public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+      Project project = psiFile.getProject();
+      TextRange restrict = FileStatusMap.getDirtyTextRange(editor.getDocument(), psiFile, Pass.UPDATE_ALL);
       if (restrict == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, editor.getDocument());
-      ProperTextRange priority = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
-      return new ChameleonSyntaxHighlightingPass(file, editor.getDocument(), ProperTextRange.create(restrict), priority, editor);
+      ProperTextRange priority = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).getVisibleRange();
+      return new ChameleonSyntaxHighlightingPass(psiFile, editor.getDocument(), ProperTextRange.create(restrict), priority, editor);
     }
 
     @Override
@@ -67,7 +68,7 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
                                           @NotNull ProperTextRange restrictRange,
                                           @NotNull ProperTextRange priorityRange,
                                           @Nullable Editor editor) {
-    super(file.getProject(), document, "chameleon", file, editor, restrictRange, false, HighlightInfoProcessor.getEmpty());
+    super(file.getProject(), document, AnalysisBundle.message("pass.chameleon"), file, editor, restrictRange, false, HighlightInfoProcessor.getEmpty());
     myPriorityRange = priorityRange;
   }
 
@@ -142,7 +143,7 @@ final class ChameleonSyntaxHighlightingPass extends ProgressableTextEditorHighli
   }
 
   @Override
-  protected @Nullable String getPresentableName() {
+  public @Nullable String getPresentableName() {
     return null; // do not show progress for
   }
 }

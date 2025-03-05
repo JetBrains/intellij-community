@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.psi.*;
@@ -25,20 +25,18 @@ public final class GuavaPredicateConversionRule extends GuavaLambdaConversionRul
     super(GuavaLambda.PREDICATE);
   }
 
-  @NotNull
   @Override
-  protected Set<String> getAdditionalUtilityClasses() {
+  protected @NotNull Set<String> getAdditionalUtilityClasses() {
     return Collections.singleton(GUAVA_PREDICATES_UTILITY);
   }
 
-  @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForMethod(PsiType from,
-                                                                 PsiType to,
-                                                                 @NotNull PsiMethod method,
-                                                                 @NotNull String methodName,
-                                                                 PsiExpression context,
-                                                                 TypeMigrationLabeler labeler) {
+  protected @Nullable TypeConversionDescriptorBase findConversionForMethod(PsiType from,
+                                                                           PsiType to,
+                                                                           @NotNull PsiMethod method,
+                                                                           @NotNull String methodName,
+                                                                           PsiExpression context,
+                                                                           TypeMigrationLabeler labeler) {
     if (!(context instanceof PsiMethodCallExpression)) {
       return null;
     }

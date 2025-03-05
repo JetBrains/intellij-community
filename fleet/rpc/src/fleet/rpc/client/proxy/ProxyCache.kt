@@ -5,7 +5,7 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.core.InstanceId
 import fleet.util.UID
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashMap
 
 interface ProxyCache<K : Any> {
   fun <T : Any> proxy(remoteApiDescriptor: RemoteApiDescriptor<*>, key: K, proxy: () -> T): T

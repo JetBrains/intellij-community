@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -74,12 +74,12 @@ public final class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   }
 
   @Override
-  protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager,
-                                                @NotNull final GlobalJavaInspectionContext globalContext,
-                                                @NotNull final ProblemDescriptionsProcessor processor) {
+  protected boolean queryExternalUsagesRequests(final @NotNull RefManager manager,
+                                                final @NotNull GlobalJavaInspectionContext globalContext,
+                                                final @NotNull ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitMethod(@NotNull final RefMethod refMethod) {
+      public void visitMethod(final @NotNull RefMethod refMethod) {
         if (processor.getDescriptions(refMethod) == null) return;
         if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
         globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
@@ -96,26 +96,22 @@ public final class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "UnusedReturnValue";
   }
 
   @Override
-  @Nullable
-  public QuickFix getQuickFix(String hint) {
+  public @Nullable QuickFix getQuickFix(String hint) {
     return new MakeVoidQuickFix(null);
   }
 
-  @Nullable
   @Override
-  public LocalInspectionTool getSharedLocalInspectionTool() {
+  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
     return new UnusedReturnValueLocalInspection(this);
   }
 

@@ -17,7 +17,7 @@ import com.maddyhome.idea.copyright.psi.UpdatePsiFileCopyright
 import java.util.function.Predicate
 import java.util.regex.Pattern
 
-class PyUpdateCopyrightsProvider : UpdateCopyrightsProvider() {
+private class PyUpdateCopyrightsProvider : UpdateCopyrightsProvider() {
   override fun createInstance(project: Project,
                               module: Module?,
                               file: VirtualFile,
@@ -32,8 +32,7 @@ class PyUpdateCopyrightsProvider : UpdateCopyrightsProvider() {
   }
 }
 
-
-class PyUpdateFileCopyright(project: Project, module: Module?, root: VirtualFile, options: CopyrightProfile?) : UpdatePsiFileCopyright(
+private class PyUpdateFileCopyright(project: Project, module: Module?, root: VirtualFile, options: CopyrightProfile?) : UpdatePsiFileCopyright(
   project, module, root, options) {
 
   override fun accept() = file is PyFile

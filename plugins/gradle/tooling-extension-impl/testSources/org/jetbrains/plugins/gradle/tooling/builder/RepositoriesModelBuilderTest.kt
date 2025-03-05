@@ -13,22 +13,22 @@ class RepositoriesModelBuilderTest(gradleVersion: String) : AbstractModelBuilder
     createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
       .addRepository("""
         maven { 
-          name 'YYY'
-          url file('lib') 
+          name = 'YYY'
+          url = file('lib') 
         }
       """.trimIndent())
       .addRepository("mavenCentral()")
       .addRepository("""
         maven { 
-          name 'MyTestRepo'
-          url file('lib') 
+          name = 'MyTestRepo'
+          url = file('lib') 
         }
       """.trimIndent())
       .addRepository("mavenLocal()")
       .addRepository("""
         maven { 
-          name 'AAA'
-          url file('lib') 
+          name = 'AAA'
+          url = file('lib') 
         }
       """.trimIndent())
       .generate()

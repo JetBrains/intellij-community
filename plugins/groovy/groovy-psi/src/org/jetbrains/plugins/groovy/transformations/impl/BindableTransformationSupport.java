@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -21,10 +21,10 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DOCUMENTATIO
 
 public final class BindableTransformationSupport implements AstTransformationSupport {
 
-  @NlsSafe private static final String BINDABLE_FQN = "groovy.beans.Bindable";
-  @NlsSafe private static final String PCL_FQN = "java.beans.PropertyChangeListener";
-  @NlsSafe private static final String PCS_FQN = "java.beans.PropertyChangeSupport";
-  @NonNls public static final String ORIGIN_INFO = "via @Bindable";
+  private static final @NlsSafe String BINDABLE_FQN = "groovy.beans.Bindable";
+  private static final @NlsSafe String PCL_FQN = "java.beans.PropertyChangeListener";
+  private static final @NlsSafe String PCS_FQN = "java.beans.PropertyChangeSupport";
+  public static final @NonNls String ORIGIN_INFO = "via @Bindable";
 
   private static boolean isApplicable(@NotNull GrTypeDefinition clazz) {
     PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, true, BINDABLE_FQN);

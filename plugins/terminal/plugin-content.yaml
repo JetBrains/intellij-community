@@ -11,4 +11,6 @@
       terminal-completion-spec:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0/completion-spec-0.jar
   contentModules:
+  - name: intellij.terminal.backend
+  - name: intellij.terminal.frontend
   - name: intellij.terminal.sh

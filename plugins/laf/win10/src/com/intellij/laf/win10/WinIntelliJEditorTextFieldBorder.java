@@ -130,9 +130,8 @@ final class WinIntelliJEditorTextFieldBorder extends DarculaEditorTextFieldBorde
             isComboBoxEditor(c) ? JBInsets.create(1, 6) : JBInsets.create(4, 6)).asUIResource();
   }
 
-  @Nullable
   @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
+  public @Nullable Insets getVisualPaddings(@NotNull Component component) {
     return JBUI.insets(1);
   }
 }

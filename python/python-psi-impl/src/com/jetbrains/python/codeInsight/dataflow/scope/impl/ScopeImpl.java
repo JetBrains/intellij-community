@@ -16,11 +16,7 @@ import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsSemilattice;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
-import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyVersionAwareElementVisitor;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +46,9 @@ public class ScopeImpl implements Scope {
   }
 
   @Override
-  public ScopeVariable getDeclaredVariable(@NotNull final PsiElement anchorElement,
-                                           @NotNull final String name,
-                                           @NotNull final TypeEvalContext typeEvalContext) throws DFALimitExceededException {
+  public ScopeVariable getDeclaredVariable(final @NotNull PsiElement anchorElement,
+                                           final @NotNull String name,
+                                           final @NotNull TypeEvalContext typeEvalContext) throws DFALimitExceededException {
     computeScopeVariables(typeEvalContext);
     for (int i = 0; i < myFlow.length; i++) {
       Instruction instruction = myFlow[i];
@@ -155,18 +151,16 @@ public class ScopeImpl implements Scope {
     return false;
   }
 
-  @NotNull
   @Override
-  public List<PyImportedNameDefiner> getImportedNameDefiners() {
+  public @NotNull List<PyImportedNameDefiner> getImportedNameDefiners() {
     if (myImportedNameDefiners == null) {
       collectDeclarations();
     }
     return myImportedNameDefiners;
   }
 
-  @NotNull
   @Override
-  public Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
+  public @NotNull Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
     if (myNamedElements == null) {
       collectDeclarations();
     }
@@ -187,9 +181,8 @@ public class ScopeImpl implements Scope {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<PsiNamedElement> getNamedElements() {
+  public @NotNull Collection<PsiNamedElement> getNamedElements() {
     if (myNamedElements == null) {
       collectDeclarations();
     }
@@ -200,9 +193,8 @@ public class ScopeImpl implements Scope {
     return results;
   }
 
-  @NotNull
   @Override
-  public Collection<PyTargetExpression> getTargetExpressions() {
+  public @NotNull Collection<PyTargetExpression> getTargetExpressions() {
     if (myTargetExpressions == null) {
       collectDeclarations();
     }

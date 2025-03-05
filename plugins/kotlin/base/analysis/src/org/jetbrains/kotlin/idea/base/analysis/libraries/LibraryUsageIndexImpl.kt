@@ -17,11 +17,13 @@ import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryUsageIndex
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.project.canDependOn
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 
+@K1ModeProjectStructureApi
 class LibraryUsageIndexImpl(private val project: Project) : LibraryUsageIndex {
     private val moduleDependentsByLibrary: CachedValue<MultiMap<Library, Module>> =
         CachedValuesManager.getManager(project).createCachedValue {
@@ -40,12 +42,6 @@ class LibraryUsageIndexImpl(private val project: Project) : LibraryUsageIndex {
                 yield(module)
             }
         }
-    }
-
-    override fun hasDependentModule(libraryInfo: LibraryInfo, module: Module): Boolean {
-        // TODO: probably it is not fully true in the case of hmpp (as in getDependentModules)
-        // but we accept it as a more performant
-        return module in moduleDependentsByLibrary.value[libraryInfo.library]
     }
 
     private fun computeLibraryModuleDependents(): MultiMap<Library, Module> = runReadAction {

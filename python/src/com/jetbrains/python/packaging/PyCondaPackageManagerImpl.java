@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.VirtualEnvReader;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,14 +23,6 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   public static final String PYTHON = "python";
   public boolean useConda = true;
-
-  public boolean useConda() {
-    return useConda;
-  }
-
-  public void useConda(boolean conda) {
-    useConda = conda;
-  }
 
   PyCondaPackageManagerImpl(final @NotNull Sdk sdk) {
     super(sdk);

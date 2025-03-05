@@ -439,7 +439,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
         repeat(1000) {
           val builderSnapshot = (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).getBuilderSnapshot()
           builderSnapshot.builder addEntity ModuleEntity("Module$it", emptyList(), MySource)
-          (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceProjectModel(builderSnapshot.getStorageReplacement())
+          (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceWorkspaceModel("update storage via replaceProjectModel", builderSnapshot.getStorageReplacement())
         }
       }
     }

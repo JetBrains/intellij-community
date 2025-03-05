@@ -25,7 +25,7 @@ public class JavaCompiledPattern extends CompiledPattern {
   }
 
   @Override
-  public boolean isTypedVar(@NotNull final String str) {
+  public boolean isTypedVar(final @NotNull String str) {
     return str.startsWith(TYPED_VAR_PREFIX, (!str.isEmpty() && str.charAt(0) == '@') ? 1 : 0);
   }
 

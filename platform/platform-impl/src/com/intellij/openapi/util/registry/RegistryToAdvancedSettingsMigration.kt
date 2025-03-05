@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.openapi.util.registry
 
 import com.intellij.ide.util.PropertiesComponent
@@ -9,7 +7,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.impl.TabCharacterPaintMode
 import com.intellij.openapi.options.advanced.AdvancedSettingBean
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -74,9 +72,9 @@ private fun migrateVcsIgnoreProcessing(userProperties: MutableMap<String, ValueW
 }
 
 private fun migrateNativeChooser(userProperties: MutableMap<String, ValueWithSource>, setting: AdvancedSettingBean) {
-  val enabled = when {
-    SystemInfo.isWindows -> userProperties.get("ide.win.file.chooser.native")?.value ?: System.getProperty("ide.win.file.chooser.native")
-    SystemInfo.isMac -> userProperties.get("ide.mac.file.chooser.native")?.value ?: System.getProperty("ide.mac.file.chooser.native") ?: "true"
+  val enabled = when (OS.CURRENT) {
+    OS.Windows -> userProperties["ide.win.file.chooser.native"]?.value ?: System.getProperty("ide.win.file.chooser.native")
+    OS.macOS -> userProperties["ide.mac.file.chooser.native"]?.value ?: System.getProperty("ide.mac.file.chooser.native")
     else -> null
   } ?: return
   userProperties.remove("ide.win.file.chooser.native")

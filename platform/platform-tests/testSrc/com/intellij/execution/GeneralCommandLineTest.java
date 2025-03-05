@@ -1,10 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CapturingProcessRunner;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -22,7 +26,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +34,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
+@SuppressWarnings("SystemGetProperty")
 public class GeneralCommandLineTest {
   public static final String[] ARGUMENTS = {
     "with space",
@@ -185,7 +189,7 @@ public class GeneralCommandLineTest {
 
     var command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     var javaPath = command.first.getExePath();
-    command.first.setExePath(ExecUtil.getWindowsShellName());
+    command.first.setExePath(CommandLineUtil.getWinShellName());
     command.first.getParametersList().prependAll("/D", "/C", "call", javaPath);
     var output = execHelper(command);
     checkParamPassing(output, ARGUMENTS);
@@ -197,10 +201,10 @@ public class GeneralCommandLineTest {
 
     var command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     var javaPath = command.first.getExePath();
-    command.first.setExePath(ExecUtil.getWindowsShellName());
+    command.first.setExePath(CommandLineUtil.getWinShellName());
     command.first.getParametersList().prependAll("/D", "/C", "call",
-                                                 ExecUtil.getWindowsShellName(), "/D", "/C", "call",
-                                                 ExecUtil.getWindowsShellName(), "/D", "/C", "@call",
+                                                 CommandLineUtil.getWinShellName(), "/D", "/C", "call",
+                                                 CommandLineUtil.getWinShellName(), "/D", "/C", "@call",
                                                  javaPath);
     var output = execHelper(command);
     checkParamPassing(output, ARGUMENTS);
@@ -213,7 +217,7 @@ public class GeneralCommandLineTest {
     var command = makeHelperCommand(null, CommandTestHelper.ARG);
     var script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*").toPath();
     try {
-      var commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "call", script.toString());
+      var commandLine = createCommandLine(CommandLineUtil.getWinShellName(), "/D", "/C", "call", script.toString());
       commandLine.addParameters(ARGUMENTS);
       var output = execHelper(new Pair<>(commandLine, command.second));
       checkParamPassing(output, ARGUMENTS);
@@ -230,9 +234,9 @@ public class GeneralCommandLineTest {
     var command = makeHelperCommand(null, CommandTestHelper.ARG);
     var script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*").toPath();
     try {
-      var commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "call",
-                                          ExecUtil.getWindowsShellName(), "/D", "/C", "@call",
-                                          ExecUtil.getWindowsShellName(), "/D", "/C", "call",
+      var commandLine = createCommandLine(CommandLineUtil.getWinShellName(), "/D", "/C", "call",
+                                          CommandLineUtil.getWinShellName(), "/D", "/C", "@call",
+                                          CommandLineUtil.getWinShellName(), "/D", "/C", "call",
                                           script.toString());
       commandLine.addParameters(ARGUMENTS);
       var output = execHelper(new Pair<>(commandLine, command.second));
@@ -248,8 +252,8 @@ public class GeneralCommandLineTest {
     IoTestUtil.assumeWindows();
 
     for (var argument : ARGUMENTS) {
-      if (argument.trim().isEmpty()) continue;  // would report "ECHO is on"
-      var commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", argument);
+      if (argument.trim().isEmpty()) continue;  // causes "ECHO is on"
+      var commandLine = createCommandLine(CommandLineUtil.getWinShellName(), "/D", "/C", "echo", argument);
       var output = execAndGetOutput(commandLine);
       assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput(argument) + "\n", output);
     }
@@ -287,7 +291,7 @@ public class GeneralCommandLineTest {
     IoTestUtil.assumeWindows();
 
     var string = "http://localhost/wtf?a=b&c=d";
-    var echo = ExecUtil.execAndReadLine(createCommandLine(ExecUtil.getWindowsShellName(), "/c", "echo", string));
+    var echo = ExecUtil.execAndReadLine(createCommandLine(CommandLineUtil.getWinShellName(), "/c", "echo", string));
     assertEquals(string, echo);
   }
 
@@ -316,7 +320,7 @@ public class GeneralCommandLineTest {
     IoTestUtil.assumeWindows();
 
     var param = "a&b";
-    var output = execAndGetOutput(createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", param));
+    var output = execAndGetOutput(createCommandLine(CommandLineUtil.getWinShellName(), "/D", "/C", "echo", param));
     assertEquals(param, output.trim());
   }
 
@@ -442,11 +446,9 @@ public class GeneralCommandLineTest {
 
   private Pair<GeneralCommandLine, Path> makeHelperCommand(@Nullable Path copyTo,
                                                            @MagicConstant(stringValues = {CommandTestHelper.ARG, CommandTestHelper.ENV}) String mode,
-                                                           String... args) throws IOException, URISyntaxException {
-    var className = CommandTestHelper.class.getName();
-    var url = GeneralCommandLine.class.getClassLoader().getResource(className.replace(".", "/") + ".class");
-    assertNotNull(url);
-
+                                                           String... args) throws IOException {
+    var mainClass = CommandTestHelper.class;
+    var className = mainClass.getName();
     var commandLine = createCommandLine(PlatformTestUtil.getJavaExe());
 
     var encoding = System.getProperty("file.encoding");
@@ -456,18 +458,19 @@ public class GeneralCommandLineTest {
     if (lang != null) commandLine.withEnvironment("LANG", lang);
 
     commandLine.addParameter("-cp");
-    var packages = className.split("\\.");
-    var classFile = Path.of(url.toURI());
     if (copyTo == null) {
-      var dir = classFile;
-      for (var ignored : packages) dir = dir.getParent();
-      commandLine.addParameter(dir.toString());
+      var jar = PathManager.getJarPathForClass(mainClass);
+      assertNotNull(jar);
+      commandLine.addParameter(jar);
     }
     else {
-      var dir = copyTo;
-      for (int i = 0; i < packages.length - 1; i++) dir = dir.resolve(packages[i]);
-      Files.createDirectories(dir);
-      Files.copy(classFile, dir.resolve(classFile.getFileName()));
+      String resourceName = className.replace(".", "/") + ".class";
+      Path outFile = copyTo.resolve(resourceName);
+      Files.createDirectories(outFile.getParent());
+      try (var inputStream = GeneralCommandLine.class.getClassLoader().getResourceAsStream(resourceName)) {
+        assertNotNull(inputStream);
+        Files.copy(inputStream, outFile);
+      }
       commandLine.addParameter(copyTo.toString());
     }
     commandLine.addParameter(className);

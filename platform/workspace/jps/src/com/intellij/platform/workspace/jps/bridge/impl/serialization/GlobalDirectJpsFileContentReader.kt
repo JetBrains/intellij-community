@@ -4,7 +4,6 @@ package com.intellij.platform.workspace.jps.bridge.impl.serialization
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import org.jdom.Element
-import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.JpsComponentLoader
 import org.jetbrains.jps.model.serialization.JpsMacroExpander
 import org.jetbrains.jps.util.JpsPathUtil

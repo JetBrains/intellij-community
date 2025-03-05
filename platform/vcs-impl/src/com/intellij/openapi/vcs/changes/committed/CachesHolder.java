@@ -29,7 +29,7 @@ import static com.intellij.util.io.DigestUtilKt.hashToHexString;
 
 @ApiStatus.Internal
 public final class CachesHolder {
-  @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
+  private static final @NonNls String VCS_CACHE_PATH = "vcsCache";
 
   private final @NotNull Project myProject;
   private final @NotNull Map<String, ChangesCacheFile> cacheFiles = new ConcurrentHashMap<>();

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi.collections
 
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.CallTypeExtractor
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil

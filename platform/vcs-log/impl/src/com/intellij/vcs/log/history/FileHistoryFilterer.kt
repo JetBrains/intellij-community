@@ -83,8 +83,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                                     commitCount: CommitCountStage): RevisionCollectorTask<CommitMetadataWithPath> {
     val oldHistoryTask = fileHistoryTask
     val oldCollector = oldHistoryTask?.collector
-    if (!commitCount.isInitial &&
-        oldHistoryTask != null && !oldHistoryTask.isCancelled && oldCollector is FileHistoryCollector &&
+    if (oldHistoryTask != null && !oldHistoryTask.isCancelled && oldCollector is FileHistoryCollector &&
         oldCollector.filePath == filePath &&
         oldCollector.hash == hash &&
         oldCollector.filters == filters) {
@@ -123,15 +122,13 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
       val start = System.currentTimeMillis()
       TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogHistory.Computing.getName()).use { scope ->
-        val isInitial = commitCount.isInitial
-
         scope.setAttribute("filePath", filePath.toString())
-        scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_IS_INITIAL.key, isInitial)
+        scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_IS_INITIAL.key, commitCount.isInitial)
         scope.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(vcsKey))
 
         if (canFilterWithIndex(index, root, dataPack)) {
           cancelLastTask(false)
-          val visiblePack = filterWithIndex(index.dataGetter!!, dataPack, oldVisiblePack, graphOptions, filters, isInitial)
+          val visiblePack = filterWithIndex(index.dataGetter!!, dataPack, oldVisiblePack, graphOptions, filters)
 
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for $filePath with index")
           scope.setAttribute(VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE.key, "index")
@@ -235,10 +232,9 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                                 dataPack: DataPack,
                                 oldVisiblePack: VisiblePack,
                                 graphOptions: PermanentGraph.Options,
-                                filters: VcsLogFilterCollection,
-                                isInitial: Boolean): VisiblePack {
+                                filters: VcsLogFilterCollection): VisiblePack {
       val oldFileHistory = oldVisiblePack.fileHistory
-      if (isInitial) {
+      if (oldVisiblePack.filters != filters) {
         return filterWithIndex(indexDataGetter, dataPack, filters, graphOptions,
                                oldFileHistory.commitToRename,
                                FileHistory(emptyMap(), processedAdditionsDeletions = oldFileHistory.processedAdditionsDeletions))

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.diagnostic.ScanningType;
+import kotlinx.coroutines.CompletableDeferredKt;
 import org.jetbrains.annotations.NotNull;
 
 final class ForceIndexRescanningAction extends DumbAwareAction {
@@ -13,14 +14,22 @@ final class ForceIndexRescanningAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
+    var scanningParameters = CompletableDeferredKt.CompletableDeferred(
+      new ScanningIterators(
+        "Force re-scanning",
+        null,
+        null,
+        ScanningType.FULL_FORCED
+      )
+    );
     UnindexedFilesScanner task = new UnindexedFilesScanner(project,
                                                            false,
                                                            false,
-                                                            null,
                                                            null,
-                                                           "Force re-scanning",
-                                                           ScanningType.FULL_FORCED,
-                                                           null);
+                                                           null,
+                                                           null,
+                                                           false,
+                                                           scanningParameters);
     task.queue();
   }
 

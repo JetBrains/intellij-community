@@ -85,15 +85,16 @@ internal fun collectLibraries(project: Project, predicate: (Library) -> Boolean)
   return result
 }
 
-internal fun isLibraryNeedToBeReloaded(library: LibraryEx, properties: RepositoryLibraryProperties): Boolean {
+internal fun isLibraryHasFixedVersion(properties: RepositoryLibraryProperties): Boolean {
   val version = properties.version ?: return false
-  if (version == RepositoryLibraryDescription.LatestVersionId ||
-      version == RepositoryLibraryDescription.ReleaseVersionId ||
-      version.endsWith(RepositoryLibraryDescription.SnapshotVersionSuffix)) {
-    return true
-  }
+  return version != RepositoryLibraryDescription.LatestVersionId &&
+         version != RepositoryLibraryDescription.ReleaseVersionId &&
+         !version.endsWith(RepositoryLibraryDescription.SnapshotVersionSuffix)
+}
 
-  return OrderRootType.getAllTypes().any { library.getFiles(it).size != library.getUrls(it).size }
+internal fun isLibraryNeedToBeReloaded(library: LibraryEx, properties: RepositoryLibraryProperties): Boolean {
+  return !isLibraryHasFixedVersion(properties) ||
+         OrderRootType.getAllTypes().any { library.getFiles(it).size != library.getUrls(it).size }
 }
 
 internal fun removeDuplicatedUrlsFromRepositoryLibraries(project: Project) {

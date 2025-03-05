@@ -69,8 +69,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
@@ -471,7 +471,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return unloadedModules(myProject, getSelectedValues(selectedUserObjects));
   }
 
-  private <T> @NotNull List<@NotNull T> getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects, @NotNull Class<T> aClass) {
+  private @Unmodifiable <T> @NotNull List<@NotNull T> getSelectedValues(@Nullable Object @NotNull [] selectedUserObjects, @NotNull Class<T> aClass) {
     return ContainerUtil.filterIsInstance(getSelectedValues(selectedUserObjects), aClass);
   }
 
@@ -497,7 +497,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     return ContainerUtil.getFirstItem(getElementsFromNode(node));
   }
 
-  public @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
+  public @Unmodifiable @NotNull List<PsiElement> getElementsFromNode(@Nullable Object node) {
     Object value = getValueFromNode(node);
     JBIterable<?> it = value instanceof PsiElement || value instanceof VirtualFile || value instanceof PsiAwareObject ? JBIterable.of(value) :
                        value instanceof Object[] ? JBIterable.of((Object[])value) :
@@ -1220,5 +1220,9 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
 
     @Override
     public void treeCollapsed(TreeExpansionEvent event) { }
+  }
+
+  public interface ProjectViewPaneWithAsyncSelect {
+    @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
   }
 }

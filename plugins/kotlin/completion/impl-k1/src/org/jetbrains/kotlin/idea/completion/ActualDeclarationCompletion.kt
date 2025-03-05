@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLooku
 import org.jetbrains.kotlin.idea.core.expectActual.ExpectActualGenerationUtils
 import org.jetbrains.kotlin.idea.highlighter.markers.toDescriptor
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
@@ -60,7 +60,7 @@ internal class ActualDeclarationCompletion(
         includeAdditionalModifiers = false
     }
 
-    fun complete(position: PsiElement) {
+    fun complete(position: PsiElement, declaration: KtNamedDeclaration?) {
         val module = position.module ?: return
         val kaModule = position.moduleInfo.toKaModule()
         val dependsOnModules = kaModule.transitiveDependsOnDependencies
@@ -74,7 +74,7 @@ internal class ActualDeclarationCompletion(
         val notImplementedExpectDeclarations = ExpectActualUtils.collectTopLevelExpectDeclarations(project, dependsOnModules)
             .filter { expectDeclaration -> canImplementActualForExpect(expectDeclaration, module, packageQualifiedName) }
         val actualDeclarationLookupElements = notImplementedExpectDeclarations
-            .mapNotNull { expectDeclaration -> expectDeclaration.createLookupElement(position, module) }
+            .mapNotNull { expectDeclaration -> expectDeclaration.createLookupElement(position, module, declaration) }
 
         actualDeclarationLookupElements.forEach { lookupElement -> collector.addElement(lookupElement) }
     }
@@ -87,11 +87,11 @@ internal class ActualDeclarationCompletion(
         val expectDeclarationPackageQualifiedName = expectDeclaration.packageDirective?.qualifiedName ?: return false
         if (expectDeclarationPackageQualifiedName != packageFqnForActual) return false
 
-        val actualsForExpected = expectDeclaration.actualsForExpected(targetModule)
+        val actualsForExpected = expectDeclaration.actualsForExpect(targetModule)
         return actualsForExpected.isEmpty()
     }
 
-    private fun KtNamedDeclaration.createLookupElement(position: PsiElement, module: Module): LookupElement? {
+    private fun KtNamedDeclaration.createLookupElement(position: PsiElement, module: Module, declaration: KtNamedDeclaration?): LookupElement? {
         val expectDeclaration = this
 
         val descriptor = expectDeclaration.toDescriptor() as? CallableMemberDescriptor ?: return null
@@ -115,6 +115,7 @@ internal class ActualDeclarationCompletion(
             generateMember = { ExpectActualGenerationUtils.generateActualDeclaration(project, module, expectDeclaration) },
             shortenReferences = ShortenReferences.DEFAULT::process,
             declarationLookupObject = descriptorBasedDeclarationLookupObject.withOverridedDescription(),
+            declaration = declaration,
         )
     }
 

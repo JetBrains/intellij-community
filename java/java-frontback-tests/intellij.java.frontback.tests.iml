@@ -12,13 +12,13 @@
     <orderEntry type="library" exported="" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.java.frontback.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.frontback.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework.shared" scope="TEST" />
   </component>
 </module>

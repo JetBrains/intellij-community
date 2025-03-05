@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
@@ -53,7 +53,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
       if (ApplicationManager.getApplication().isWriteIntentLockAcquired
           && (!TransactionGuard.getInstance().isWriteSafeModality(modality)
               || TransactionGuard.getInstance().isWritingAllowed)
-          && !ModalityState.current().dominates(modality)) {
+          && ModalityState.current().accepts(modality)) {
         command.run()
       }
       else {
@@ -70,7 +70,7 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
           && ApplicationManager.getApplication().isWriteIntentLockAcquired
           && (!TransactionGuard.getInstance().isWriteSafeModality(modality)
               || TransactionGuard.getInstance().isWritingAllowed)
-          && !ModalityState.current().dominates(modality)) {
+          && ModalityState.current().accepts(modality)) {
         command.run()
       }
       else {

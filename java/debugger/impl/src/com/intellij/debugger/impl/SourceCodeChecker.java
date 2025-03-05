@@ -54,7 +54,7 @@ public final class SourceCodeChecker {
     if (suspendContext == null) {
       return;
     }
-    suspendContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {

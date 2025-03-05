@@ -32,7 +32,7 @@ import java.util.Set;
 
 public final class NonReproducibleMathCallInspection extends BaseInspection {
 
-  @NonNls private static final Set<String> nonReproducibleMethods = Set.of(
+  private static final @NonNls Set<String> nonReproducibleMethods = Set.of(
     "acos",
     "asin",
     "atan",
@@ -54,8 +54,7 @@ public final class NonReproducibleMathCallInspection extends BaseInspection {
   );
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.reproducible.math.call.problem.descriptor");
   }
@@ -68,8 +67,7 @@ public final class NonReproducibleMathCallInspection extends BaseInspection {
   private static class MakeStrictFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "non.reproducible.math.call.replace.quickfix");
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity;
@@ -34,14 +34,13 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     super(ProductionModuleOutputElementType.ELEMENT_TYPE, project, modulePointer);
   }
 
-  @NonNls @Override
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "module:" + getModuleName();
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getSourceRoots(PackagingElementResolvingContext context) {
+  public @NotNull Collection<VirtualFile> getSourceRoots(PackagingElementResolvingContext context) {
     Module module = findModule(context);
     if (module == null) return Collections.emptyList();
 
@@ -50,8 +49,7 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
   }
 
   @Override
-  @NotNull
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, ProductionModuleOutputElementType.ELEMENT_TYPE));
   }
 

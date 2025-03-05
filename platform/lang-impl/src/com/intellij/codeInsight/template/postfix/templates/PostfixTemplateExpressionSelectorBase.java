@@ -10,6 +10,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -40,7 +41,7 @@ public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTe
   }
 
   @Override
-  public @NotNull List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+  public @Unmodifiable @NotNull List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
     return ContainerUtil.filter(getNonFilteredExpressions(context, document, offset), getFilters(offset));
   }
 
@@ -49,7 +50,7 @@ public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTe
     return element -> element.getText();
   }
 
-  protected abstract List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
+  protected abstract @Unmodifiable List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
 
   protected Condition<PsiElement> getFilters(int offset) {
     return Conditions.and(getBorderOffsetFilter(offset), myAdditionalCondition);

@@ -1,6 +1,1 @@
-<idea-plugin package="com.intellij.notebooks.ui">
-  <actions>
-    <!-- This group appears in the lower right corner of cell and typically contains tags. -->
-    <group id="NotebookBelowCellPanelRightGroup"/>
-  </actions>
-</idea-plugin>
+<idea-plugin package="com.intellij.notebooks.ui"/>

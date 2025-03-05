@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.gitlab;
 
 import com.intellij.tasks.Comment;
@@ -34,29 +35,25 @@ public class GitlabTask extends Task {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     // Will be in form <projectId>:<issueId>
     //return myIssue.getProjectId() + ":" + myIssue.getId();
     return String.valueOf(myIssue.getId());
   }
 
-  @NotNull
   @Override
-  public String getPresentableId() {
+  public @NotNull String getPresentableId() {
     return "#" + myIssue.getLocalId();
   }
 
-  @NotNull
   @Override
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return myIssue.getTitle();
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return null;
   }
 
@@ -65,27 +62,23 @@ public class GitlabTask extends Task {
     return Comment.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Gitlab;
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     return TaskType.BUG;
   }
 
-  @Nullable
   @Override
-  public Date getUpdated() {
+  public @Nullable Date getUpdated() {
     return myIssue.getUpdatedAt();
   }
 
-  @Nullable
   @Override
-  public Date getCreated() {
+  public @Nullable Date getCreated() {
     return myIssue.getCreatedAt();
   }
 
@@ -99,30 +92,26 @@ public class GitlabTask extends Task {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getNumber() {
+  public @NotNull String getNumber() {
     return String.valueOf(myIssue.getLocalId());
   }
 
-  @Nullable
   @Override
-  public String getProject() {
+  public @Nullable String getProject() {
     return myProject == null ? null : myProject.getName();
   }
 
-  @Nullable
   @Override
-  public String getIssueUrl() {
+  public @Nullable String getIssueUrl() {
     if (myProject != null) {
       return myProject.getWebUrl() + "/issues/" + myIssue.getLocalId();
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public TaskRepository getRepository() {
+  public @Nullable TaskRepository getRepository() {
     return myRepository;
   }
 }

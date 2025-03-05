@@ -11,16 +11,45 @@ import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
 import com.intellij.util.io.IOUtil.readUTF
 import com.intellij.util.io.IOUtil.writeUTF
+import org.jetbrains.annotations.ApiStatus
 import java.io.DataInput
 import java.io.DataOutput
 
+/**
+ * Describes completely a single inlay hint from some [InlayHintsProvider].
+ *
+ * Note that an instance of this class does not necessarily map one-to-one to an [com.intellij.openapi.editor.Inlay]
+ * (see [DeclarativeInlayRendererBase.toInlayData][com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRendererBase.toInlayData]).
+ * This is mainly due to interline inlays
+ * (e.g. [AboveLineIndentedPosition][com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition]),
+ * where, to display multiple inlay hints on a single interline,
+ * a single [com.intellij.openapi.editor.InlayModel.addBlockElement] must be used.
+ */
+@ApiStatus.Internal
 data class InlayData(
   val position: InlayPosition,
   @NlsContexts.HintText val tooltip: String?,
   val hintFormat: HintFormat,
+  /**
+   * Constraints:
+   *
+   * [TinyTree.getDataPayload] returns one of:
+   * - [String]
+   * - [com.intellij.codeInsight.hints.declarative.InlayActionData]
+   * - [com.intellij.codeInsight.hints.declarative.impl.ActionWithContent]
+   * - null
+   *
+   * [TinyTree.getBytePayload] returns one of the tags defined in [com.intellij.codeInsight.hints.declarative.impl.InlayTags]
+   */
   val tree: TinyTree<Any?>,
   val providerId: String,
-  val disabled: Boolean,
+  /** Strikethrough text. Used in settings to indicate disabled inlay hints. */
+  val disabled: Boolean, // todo: make this a formatting option
+  /**
+   * Payloads available to inlay actions available in the right-click popup menu (via "InlayMenu" action group)
+   *
+   * @see DeclarativeInlayActionService
+   */
   val payloads: List<InlayPayload>?,
   val providerClass: Class<*>, // Just for debugging purposes
   val sourceId: String,
@@ -28,7 +57,7 @@ data class InlayData(
 
 internal object InlayDataExternalizer : DataExternalizer<InlayData> {
   // increment on format changed
-  private const val SERDE_VERSION = 7
+  private const val SERDE_VERSION = 8
 
   private val treeExternalizer: PresentationTreeExternalizer = PresentationTreeExternalizer
 
@@ -69,6 +98,13 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
       is EndOfLinePosition -> {
         writeINT(output, 1)
         writeINT(output, position.line)
+        writeINT(output, position.priority)
+      }
+      is AboveLineIndentedPosition -> {
+        writeINT(output, 2)
+        writeINT(output, position.offset)
+        writeINT(output, position.verticalPriority)
+        writeINT(output, position.priority)
       }
     }
   }
@@ -82,7 +118,13 @@ internal object InlayDataExternalizer : DataExternalizer<InlayData> {
       return InlineInlayPosition(offset, related, priority)
     } else if (type == 1) {
       val line = readINT(input)
-      return EndOfLinePosition(line)
+      val priority = readINT(input)
+      return EndOfLinePosition(line, priority)
+    } else if (type == 2) {
+      val offset = readINT(input)
+      val verticalPriority = readINT(input)
+      val priority = readINT(input)
+      return AboveLineIndentedPosition(offset, verticalPriority, priority)
     }
     throw IllegalStateException("unknown inlay position type: $type")
   }

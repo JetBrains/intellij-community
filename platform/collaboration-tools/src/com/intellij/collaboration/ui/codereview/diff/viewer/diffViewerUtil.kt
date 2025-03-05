@@ -125,6 +125,7 @@ private fun <VM : DiffMapped> TwosideTextDiffViewer.controlInlaysIn(
  * @param I - inlay model
  */
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Using a suspend function is safer for threading",
             ReplaceWith("cs.launch { controlReview(modelFactory, modelKey, rendererFactory) }"))
 fun <M : CodeReviewEditorModel<I>, I : CodeReviewInlayModel> DiffViewerBase.controlReviewIn(
@@ -282,7 +283,7 @@ private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation
 }
 
 /**
- * @see com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
+ * @see com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers
  * @see com.intellij.openapi.vcs.history.VcsDiffUtil.putFilePathsIntoChangeContext
  */
 @Deprecated("Path of changed files is shown via DiffTitleFilePathCustomizer")

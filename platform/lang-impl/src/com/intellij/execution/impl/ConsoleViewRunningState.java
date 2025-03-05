@@ -88,7 +88,7 @@ public final class ConsoleViewRunningState extends ConsoleState {
 
   @Override
   public boolean isCommandLine(@NotNull String line) {
-    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler<?>)myProcessHandler).getCommandLine());
+    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler<?>)myProcessHandler).getCommandLineForLog());
   }
 
   @Override

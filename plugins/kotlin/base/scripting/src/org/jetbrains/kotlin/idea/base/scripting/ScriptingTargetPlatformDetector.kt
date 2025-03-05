@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -59,15 +60,18 @@ internal class ScriptingTargetPlatformDetector : TargetPlatformDetector {
     }
 }
 
-internal fun getLanguageVersionSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): LanguageVersionSettings {
+@ApiStatus.Internal
+ fun getLanguageVersionSettings(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): LanguageVersionSettings {
     return getScriptSettings(project, virtualFile, definition).languageVersionSettings
 }
 
-internal fun getTargetPlatformVersion(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): TargetPlatformVersion {
+@ApiStatus.Internal
+fun getTargetPlatformVersion(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): TargetPlatformVersion {
     return getScriptSettings(project, virtualFile, definition).targetPlatformVersion
 }
 
-internal fun getPlatform(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): TargetPlatform {
+@ApiStatus.Internal
+fun getPlatform(project: Project, virtualFile: VirtualFile, definition: ScriptDefinition): TargetPlatform {
     val targetPlatformVersion = getScriptSettings(project, virtualFile, definition).targetPlatformVersion
     if (targetPlatformVersion != TargetPlatformVersion.NoVersion) {
         for (compilerPlatform in CommonPlatforms.allSimplePlatforms) {

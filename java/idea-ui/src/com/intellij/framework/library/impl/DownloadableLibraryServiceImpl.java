@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.library.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
@@ -38,13 +24,11 @@ import java.net.URL;
 public final class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
   private static final Logger LOG = Logger.getInstance(DownloadableLibraryServiceImpl.class);
 
-  @NotNull
   @Override
-  public DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, final URL @NotNull ... localUrls) {
+  public @NotNull DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, final URL @NotNull ... localUrls) {
     return new LibraryVersionsFetcher(groupId, localUrls) {
       @Override
-      @NotNull
-      protected FrameworkAvailabilityCondition createAvailabilityCondition(Artifact version) {
+      protected @NotNull FrameworkAvailabilityCondition createAvailabilityCondition(Artifact version) {
         RequiredFrameworkVersion groupVersion = version.getRequiredFrameworkVersion();
         if (groupVersion != null) {
           return new FrameworkLibraryAvailabilityCondition(groupVersion.myGroupId, groupVersion.myVersion);
@@ -54,19 +38,17 @@ public final class DownloadableLibraryServiceImpl extends DownloadableLibrarySer
     };
   }
 
-  @NotNull
   @Override
-  public CustomLibraryDescription createDescriptionForType(Class<? extends DownloadableLibraryType> typeClass) {
+  public @NotNull CustomLibraryDescription createDescriptionForType(Class<? extends DownloadableLibraryType> typeClass) {
     final DownloadableLibraryType libraryType = LibraryType.EP_NAME.findExtension(typeClass);
     LOG.assertTrue(libraryType != null, typeClass);
     return new CustomLibraryDescriptionImpl(libraryType);
   }
 
-  @NotNull
   @Override
-  public LibraryPropertiesEditor createDownloadableLibraryEditor(@NotNull DownloadableLibraryDescription description,
-                                                                 @NotNull LibraryEditorComponent<LibraryVersionProperties> editorComponent,
-                                                                 @NotNull DownloadableLibraryType libraryType) {
+  public @NotNull LibraryPropertiesEditor createDownloadableLibraryEditor(@NotNull DownloadableLibraryDescription description,
+                                                                          @NotNull LibraryEditorComponent<LibraryVersionProperties> editorComponent,
+                                                                          @NotNull DownloadableLibraryType libraryType) {
     return new DownloadableLibraryPropertiesEditor(description, editorComponent, libraryType);
   }
 

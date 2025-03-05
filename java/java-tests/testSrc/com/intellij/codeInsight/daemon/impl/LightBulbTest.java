@@ -15,6 +15,7 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -55,6 +56,7 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -66,9 +68,10 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * test light bulb behaviour, intention action update and application
@@ -83,7 +86,6 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     super.setUp();
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    DaemonProgressIndicator.setDebug(true);
   }
 
   @Override
@@ -105,6 +107,11 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -224,6 +231,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
   }
 
   public void testLightBulbDoesNotUpdateIntentionsInEDT() {
+    AtomicInteger updateCount = new AtomicInteger();
     IntentionAction longLongUpdate = new AbstractIntentionAction() {
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
@@ -238,6 +246,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
 
       @Override
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+        updateCount.incrementAndGet();
         ApplicationManager.getApplication().assertIsNonDispatchThread();
         return true;
       }
@@ -247,24 +256,31 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, "class X { <caret>  }");
     DaemonRespondToChangesTest.makeEditorWindowVisible(new Point(0, 0), myEditor);
     doHighlighting();
-    myDaemonCodeAnalyzer.restart();
+    assertTrue("updateCount:"+updateCount, updateCount.get() > 0);
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     DaemonRespondToChangesTest.runWithReparseDelay(0, () -> {
       for (int i = 0; i < 1000; i++) {
+        LOG.debug("i = " + i);
+        int updateCount0 = updateCount.get();
         caretRight();
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
-        Object updateProgress = new HashMap<>(myDaemonCodeAnalyzer.getUpdateProgress());
-        long waitForDaemonStart = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress) && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until the daemon started
+        myDaemonCodeAnalyzer.restart();
+        assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)));
+        long daemonStartDeadline = System.currentTimeMillis() + 5000;
+        while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument(), EditorContextManager.getEditorContext(myEditor, myProject)) && System.currentTimeMillis() < daemonStartDeadline) { // wait until the daemon started
           UIUtil.dispatchAllInvocationEvents();
         }
-        if (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress)) {
+        if (System.currentTimeMillis() > daemonStartDeadline) {
           throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
+        while (myDaemonCodeAnalyzer.isRunning()) {
           UIUtil.dispatchAllInvocationEvents(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
         }
+        long finish = System.currentTimeMillis();
+        LOG.debug("start: "+(daemonStartDeadline-5000)+"; started: "+start+"; finished: "+finish+"; updateCount:"+updateCount);
+        assertTrue("updateCount0: "+updateCount0+"; updateCount:"+updateCount, updateCount.get() > updateCount0);
       }
     });
   }
@@ -346,7 +362,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, text);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText(text));
     doHighlighting();
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     doHighlighting();
   }
 
@@ -366,8 +382,8 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     }
     class DumbFac implements TextEditorHighlightingPassFactory, DumbAware {
       @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-        return new TestDumbAwareHighlightingPassesStartEvenInDumbModePass(editor, file);
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+        return new TestDumbAwareHighlightingPassesStartEvenInDumbModePass(editor, psiFile);
       }
 
       class TestDumbAwareHighlightingPassesStartEvenInDumbModePass extends EditorBoundHighlightingPass implements DumbAware {
@@ -484,7 +500,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
 
       myDaemonCodeAnalyzer.mustWaitForSmartMode(false, getTestRootDisposable());
       DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
-        myDaemonCodeAnalyzer.restart();
+        myDaemonCodeAnalyzer.restart(getTestName(false));
         HighlightInfo info2 = assertOneElement(highlightErrors());
         assertEquals(MyDumbAnnotator.ERR_MSG, info2.getDescription());
 

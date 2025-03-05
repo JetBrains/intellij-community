@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -30,6 +29,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiPrecedenceUtil;
@@ -247,7 +247,7 @@ public final class ConditionCoveredByFurtherConditionInspection extends Abstract
         if (psi instanceof PsiPatternVariable) return true;
         if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
           PsiElement block = PsiUtil.getVariableCodeBlock(psi, null);
-          return block == null || !HighlightControlFlowUtil.isEffectivelyFinal(psi, block, null);
+          return block == null || !ControlFlowUtil.isEffectivelyFinal(psi, block);
         }
         return true;
       })

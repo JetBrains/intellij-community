@@ -4,5 +4,5 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class GenerateHashCodeFix(function: String) : GenerateFunctionFix(function) {
-    override fun getName() = KotlinBundle.message("hash.code.text")
+    override fun getName(): String = KotlinBundle.message("hash.code.text")
 }

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
@@ -11,11 +10,12 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.platform.modification.createAllLibrariesModificationTracker
+import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.classes.KtDescriptorBasedFakeLightClass
@@ -28,11 +28,7 @@ import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
@@ -93,14 +89,8 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         else -> false
     }
 
-    override fun projectWideOutOfBlockModificationTracker(): ModificationTracker =
-        KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
-
-    override fun outOfBlockModificationTracker(element: PsiElement): ModificationTracker =
-        KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
-
-    override fun librariesTracker(element: PsiElement): ModificationTracker =
-        JavaLibraryModificationTracker.getInstance(project)
+    override fun projectWideOutOfBlockModificationTracker(): ModificationTracker = project.createProjectWideOutOfBlockModificationTracker()
+    override fun librariesTracker(element: PsiElement): ModificationTracker = project.createAllLibrariesModificationTracker()
 
     override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> =
         KotlinPackageIndexUtils.getSubPackageFqNames(

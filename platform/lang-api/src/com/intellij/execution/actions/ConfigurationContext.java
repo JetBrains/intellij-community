@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -30,6 +30,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -147,7 +148,7 @@ public class ConfigurationContext {
   private static boolean isMultipleSelection(@NotNull DataContext dataContext) {
     Location<?> location = Location.DATA_KEY.getData(dataContext);
     Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     return location != null && locations != null && locations.length > 1 ||
            elements != null && elements.length > 1 ||
@@ -348,7 +349,7 @@ public class ConfigurationContext {
       }
     }
     if (element == null) {
-      final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      final PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       element = elements != null && elements.length > 0 ? elements[0] : null;
     }
     if (element == null) {
@@ -422,7 +423,7 @@ public class ConfigurationContext {
   /**
    * The same as {@link #getConfigurationsFromContext()} but this method doesn't search among existing run configurations
    */
-  public @Nullable List<ConfigurationFromContext> createConfigurationsFromContext() {
+  public @Unmodifiable @Nullable List<ConfigurationFromContext> createConfigurationsFromContext() {
     // At the moment of writing, caching is not needed here, the result is cached outside.
     return PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, false);
   }

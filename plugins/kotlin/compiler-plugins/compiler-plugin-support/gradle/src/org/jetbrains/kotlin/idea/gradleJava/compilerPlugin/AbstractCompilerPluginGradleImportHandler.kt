@@ -7,14 +7,13 @@ import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.gradleTooling.model.annotation.AnnotationBasedPluginModel
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
+import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
-import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
+import org.jetbrains.kotlin.idea.gradleTooling.model.annotation.AnnotationBasedPluginModel
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
-import java.io.File
 
 abstract class AbstractAnnotationBasedCompilerPluginGradleImportHandler<T : AnnotationBasedPluginModel> : AbstractCompilerPluginGradleImportHandler<T>() {
     abstract val annotationOptionName: String

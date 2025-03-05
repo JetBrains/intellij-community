@@ -83,7 +83,7 @@ public class BuilderInfo {
     final BuilderInfo result = fromPsiElement(psiField);
 
     final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
-    result.fieldInBuilderName = accessorsInfo.removePrefix(psiField.getName());
+    result.fieldInBuilderName = accessorsInfo.removePrefixWithDefault(psiField.getName());
     result.capitalizationStrategy = accessorsInfo.getCapitalizationStrategy();
 
     return result;
@@ -150,9 +150,11 @@ public class BuilderInfo {
       }
     }
 
-    //Skip fields that start with $
-    result &= !fieldInBuilderName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-
+    result &= null != fieldInBuilderName;
+    if (result) {
+      //Skip fields that start with $
+      result = !fieldInBuilderName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+    }
     return result;
   }
 

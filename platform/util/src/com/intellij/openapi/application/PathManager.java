@@ -106,6 +106,7 @@ public final class PathManager {
         }
       }
       else if (insideIde) {
+        //noinspection TestOnlyProblems
         result = getHomePathFor(PathManager.class);
         if (result == null) {
           String advice = SystemInfoRt.isMac ? "reinstall the software." : "make sure product-info.json is present in the installation directory.";
@@ -238,18 +239,15 @@ public final class PathManager {
       if (binDirs.contains(dir) || !Files.isDirectory(dir)) {
         continue;
       }
-
       binDirs.add(dir);
       dir = dir.resolve(osSuffix);
       if (Files.isDirectory(dir)) {
         binDirs.add(dir);
-        if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
-          String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
-          if (arch != null) {
-            dir = dir.resolve(arch);
-            if (Files.isDirectory(dir)) {
-              binDirs.add(dir);
-            }
+        String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
+        if (arch != null) {
+          dir = dir.resolve(arch);
+          if (Files.isDirectory(dir)) {
+            binDirs.add(dir);
           }
         }
       }
@@ -488,7 +486,35 @@ public final class PathManager {
    * Returns the path to the directory where caches are stored by default for IDE with the given path selector.
    */
   public static @NotNull String getDefaultSystemPathFor(@NotNull String selector) {
-    return platformPath(selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", "");
+    return getDefaultSystemPathFor(getLocalOS(), System.getProperty("user.home"), selector).toString();
+  }
+
+  @ApiStatus.Internal
+  public enum OS {
+    LINUX,
+    WINDOWS,
+    MACOS,
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull OS getLocalOS() {
+    if (SystemInfoRt.isMac) {
+      return OS.MACOS;
+    }
+    else if (SystemInfoRt.isWindows) {
+      return OS.WINDOWS;
+    }
+    else if (SystemInfoRt.isLinux) {
+      return OS.LINUX;
+    }
+    else {
+      throw new UnsupportedOperationException("Unsupported OS:" + SystemInfoRt.OS_NAME);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Path getDefaultSystemPathFor(@NotNull OS os, @NotNull String userHome, @NotNull String selector) {
+    return Paths.get(platformPath(os, userHome, selector, "Caches", "", "LOCALAPPDATA", "", "XDG_CACHE_HOME", ".cache", ""));
   }
 
   @ApiStatus.Internal
@@ -908,17 +934,25 @@ public final class PathManager {
                                      String macDir, String macSub,
                                      String winVar, String winSub,
                                      String xdgVar, String xdgDfl, String xdgSub) {
-    String userHome = System.getProperty("user.home");
+    return platformPath(getLocalOS(), System.getProperty("user.home"), selector, macDir, macSub, winVar, winSub, xdgVar, xdgDfl, xdgSub);
+  }
+
+  private static String platformPath(@NotNull OS os,
+                                     String userHome,
+                                     String selector,
+                                     String macDir, String macSub,
+                                     String winVar, String winSub,
+                                     String xdgVar, String xdgDfl, String xdgSub) {
     String vendorName = vendorName();
 
-    if (SystemInfoRt.isMac) {
+    if (os == OS.MACOS) {
       String dir = userHome + "/Library/" + macDir + '/' + vendorName;
       if (!selector.isEmpty()) dir = dir + '/' + selector;
       if (!macSub.isEmpty()) dir = dir + '/' + macSub;
       return dir;
     }
 
-    if (SystemInfoRt.isWindows) {
+    if (os == OS.WINDOWS) {
       String dir = System.getenv(winVar);
       if (dir == null || dir.isEmpty()) dir = userHome + "\\AppData\\" + (winVar.startsWith("LOCAL") ? "Local" : "Roaming");
       dir = dir + '\\' + vendorName;
@@ -927,7 +961,7 @@ public final class PathManager {
       return dir;
     }
 
-    if (SystemInfoRt.isUnix) {
+    if (os == OS.LINUX) {
       return getUnixPlatformPath(userHome, selector, xdgVar, xdgDfl, xdgSub);
     }
 
@@ -968,7 +1002,7 @@ public final class PathManager {
   }
 
   /**
-   * Returns map of IntelliJ modules to jar absolute paths, e.g.:
+   * Returns a map of IntelliJ modules to .jar absolute paths, e.g.:
    * "production/intellij.platform.util" => ".../production/intellij.platform.util/$hash.jar"
    */
   @ApiStatus.Internal

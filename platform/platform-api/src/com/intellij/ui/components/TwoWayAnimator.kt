@@ -21,7 +21,7 @@ abstract class TwoWayAnimator(
   durationBackward: Int,
   private val coroutineScope: CoroutineScope,
 ) {
-  private val animateRequests = MutableSharedFlow<MyAnimator>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val animateRequests = MutableSharedFlow<MyAnimator?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val forwardAnimator = lazy(LazyThreadSafetyMode.NONE) {
     MyAnimator(
@@ -60,6 +60,7 @@ abstract class TwoWayAnimator(
       val context = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()
       job = coroutineScope.launch {
         animateRequests.collectLatest { animator ->
+          if (animator == null) return@collectLatest
           delay(animator.pauseInMs.toLong())
           withContext(context) {
             animator.reset()
@@ -71,14 +72,22 @@ abstract class TwoWayAnimator(
 
     suspendAnimation()
     val animator = (if (forward) forwardAnimator else backwardAnimator).value
-    if (if (forward) frame < maxFrame else frame > 0) {
-      if (if (forward) frame > 0 else frame < maxFrame) {
-        animator.reset()
-        animator.resume()
-      }
-      else {
-        check(animateRequests.tryEmit(animator))
-      }
+    val atStart = if (forward) frame == 0 else frame == maxFrame
+    val atEnd = if (forward) frame == maxFrame else frame == 0
+    if (atStart) {
+      // Start a new animation from idle: react with a delay.
+      check(animateRequests.tryEmit(animator))
+    }
+    else if (atEnd) {
+      // We've already reached the desired state: cancel whatever animation requests are pending.
+      // Note: this code runs on the EDT, requests are also executed on the EDT,
+      // so it's guaranteed that after we cancel here, the pending request, if any, won't even start.
+      check(animateRequests.tryEmit(null))
+    }
+    else {
+      // Change the direction in the middle of an animation: react immediately.
+      animator.reset()
+      animator.resume()
     }
   }
 

@@ -7,6 +7,7 @@
 // ACTION: Convert to also
 // ACTION: Convert to apply
 // ACTION: Put arguments on separate lines
+// K2_AFTER_ERROR: Argument type mismatch: actual type is 'Array<CapturedType(out Int)>', but 'Array<out String>' was expected.
 
 //this test checks that there is no ArrayIndexOutOfBoundsException when there are more arguments than parameters
 fun <T> array1(vararg a : T) = a

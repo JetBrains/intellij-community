@@ -65,17 +65,9 @@ f:com.intellij.util.MergeQuery
 - forEachAsync(com.intellij.util.Processor):com.intellij.concurrency.AsyncFuture
 c:com.intellij.util.TimedReference
 - com.intellij.openapi.Disposable
-- psf:SERVICE_DELAY:I
-- p:myT:java.lang.Object
 - <init>(com.intellij.openapi.Disposable):V
-- p:checkLocked():Z
-- dispose():V
 - s:disposeTimed():V
 - get():java.lang.Object
-- isCached():Z
-- p:isLocked():Z
-- pf:poll():V
-- pf:remove():V
 - set(java.lang.Object):V
 f:com.intellij.util.concurrency.AtomicFieldUpdater
 - compareAndSet(java.lang.Object,java.lang.Object,java.lang.Object):Z

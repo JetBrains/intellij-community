@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
@@ -25,18 +11,18 @@ import org.zmlx.hg4idea.HgNameWithHashInfo;
 import java.util.*;
 
 public class HgRepoInfo {
-  @NotNull private final String myCurrentBranch;
-  @Nullable private final String myTipRevision;
-  @Nullable private final String myCurrentRevision;
-  @NotNull private final Repository.State myState;
-  @Nullable private final String myCurrentBookmark;
-  @NotNull private final Map<String, LinkedHashSet<Hash>> myBranches;
-  @NotNull private final Set<HgNameWithHashInfo> myBookmarks;
-  @NotNull private final Set<HgNameWithHashInfo> myTags;
-  @NotNull private final Set<HgNameWithHashInfo> myLocalTags;
-  @NotNull private final Set<HgNameWithHashInfo> mySubrepos;
-  @NotNull private final List<HgNameWithHashInfo> myMQApplied;
-  @NotNull private final List<String> myMqNames;
+  private final @NotNull String myCurrentBranch;
+  private final @Nullable String myTipRevision;
+  private final @Nullable String myCurrentRevision;
+  private final @NotNull Repository.State myState;
+  private final @Nullable String myCurrentBookmark;
+  private final @NotNull Map<String, LinkedHashSet<Hash>> myBranches;
+  private final @NotNull Set<HgNameWithHashInfo> myBookmarks;
+  private final @NotNull Set<HgNameWithHashInfo> myTags;
+  private final @NotNull Set<HgNameWithHashInfo> myLocalTags;
+  private final @NotNull Set<HgNameWithHashInfo> mySubrepos;
+  private final @NotNull List<HgNameWithHashInfo> myMQApplied;
+  private final @NotNull List<String> myMqNames;
 
   public HgRepoInfo(@NotNull String currentBranch,
                     @Nullable String currentRevision,
@@ -62,53 +48,43 @@ public class HgRepoInfo {
     myMqNames = mqNames;
   }
 
-  @NotNull
-  public String getCurrentBranch() {
+  public @NotNull String getCurrentBranch() {
     return myCurrentBranch;
   }
 
-  @NotNull
-  public Map<String, LinkedHashSet<Hash>> getBranches() {
+  public @NotNull Map<String, LinkedHashSet<Hash>> getBranches() {
     return myBranches;
   }
 
-  @NotNull
-  public Collection<HgNameWithHashInfo> getBookmarks() {
+  public @NotNull Collection<HgNameWithHashInfo> getBookmarks() {
     return myBookmarks;
   }
 
-  @NotNull
-  public Collection<HgNameWithHashInfo> getTags() {
+  public @NotNull Collection<HgNameWithHashInfo> getTags() {
     return myTags;
   }
 
-  @NotNull
-  public Collection<HgNameWithHashInfo> getLocalTags() {
+  public @NotNull Collection<HgNameWithHashInfo> getLocalTags() {
     return myLocalTags;
   }
 
-  @Nullable
-  public String getTipRevision() {
+  public @Nullable String getTipRevision() {
     return myTipRevision;
   }
 
-  @Nullable
-  public String getCurrentRevision() {
+  public @Nullable String getCurrentRevision() {
     return myCurrentRevision;
   }
 
-  @Nullable
-  public String getCurrentBookmark() {
+  public @Nullable String getCurrentBookmark() {
     return myCurrentBookmark;
   }
 
-  @NotNull
-  public Repository.State getState() {
+  public @NotNull Repository.State getState() {
     return myState;
   }
 
-  @NotNull
-  public List<HgNameWithHashInfo> getMQApplied() {
+  public @NotNull List<HgNameWithHashInfo> getMQApplied() {
     return myMQApplied;
   }
 
@@ -145,10 +121,8 @@ public class HgRepoInfo {
                         myLocalTags, mySubrepos, myMQApplied, myMqNames);
   }
 
-  @NonNls
   @Override
-  @NotNull
-  public String toString() {
+  public @NonNls @NotNull String toString() {
     return String.format("HgRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s}",
                          myCurrentBranch, myCurrentRevision, myState);
   }
@@ -157,8 +131,7 @@ public class HgRepoInfo {
     return !mySubrepos.isEmpty();
   }
 
-  @NotNull
-  public Collection<HgNameWithHashInfo> getSubrepos() {
+  public @NotNull Collection<HgNameWithHashInfo> getSubrepos() {
     return mySubrepos;
   }
 }

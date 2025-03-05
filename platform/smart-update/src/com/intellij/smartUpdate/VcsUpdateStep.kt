@@ -13,9 +13,9 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import javax.swing.JComponent
 
-const val VCS_UPDATE = "vcs.update"
+private const val VCS_UPDATE = "vcs.update"
 
-class VcsUpdateStep : SmartUpdateStep {
+internal class VcsUpdateStep : SmartUpdateStep {
   private lateinit var showOptionsListener: (Boolean) -> Unit
   override val id: String = VCS_UPDATE
   override val stepName = SmartUpdateBundle.message("checkbox.update.project")

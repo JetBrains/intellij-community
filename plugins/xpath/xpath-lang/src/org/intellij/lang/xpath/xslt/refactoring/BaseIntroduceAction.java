@@ -40,8 +40,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> extends XsltRefactoringActionBase {
-    @NlsContexts.Command
-    protected abstract String getCommandName();
+    protected abstract @NlsContexts.Command String getCommandName();
 
     protected abstract Settings getSettings(XPathExpression expression, Set<XPathExpression> matchingExpressions);
 
@@ -112,7 +111,7 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
         final Set<XPathExpression> matchingExpressions = RefactoringUtil.collectMatchingExpressions(expression);
         final List<XmlTag> otherMatches = new ArrayList<>(matchingExpressions.size());
         final ArrayList<RangeHighlighter> highlighters = new ArrayList<>(matchingExpressions.size() + 1);
-        if (matchingExpressions.size() > 0) {
+        if (!matchingExpressions.isEmpty()) {
             final SelectionModel selectionModel = editor.getSelectionModel();
           highlightManager.addRangeHighlight(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(),
                                              EditorColors.SEARCH_RESULT_ATTRIBUTES, false, highlighters);

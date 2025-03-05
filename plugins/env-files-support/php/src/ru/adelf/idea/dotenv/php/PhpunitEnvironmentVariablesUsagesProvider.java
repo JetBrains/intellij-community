@@ -15,15 +15,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
-public class PhpunitEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
+final class PhpunitEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
     @Override
     public boolean acceptFile(VirtualFile file) {
         return file.getFileType().equals(XmlFileType.INSTANCE) && file.getName().equals("phpunit.xml");
     }
 
-    @NotNull
     @Override
-    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
+    public @NotNull Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if (!(psiFile instanceof XmlFile)) return Collections.emptyList();
 
         if (!(psiFile.getFirstChild() instanceof XmlDocument)) return Collections.emptyList();

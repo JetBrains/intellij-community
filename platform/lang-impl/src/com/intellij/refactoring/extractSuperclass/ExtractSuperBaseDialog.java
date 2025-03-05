@@ -15,9 +15,11 @@ import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.RecentsManager;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +33,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   private final @NlsContexts.DialogTitle String myRefactoringName;
   protected final ClassType mySourceClass;
   protected PsiDirectory myTargetDirectory;
-  protected final List<MemberInfoType> myMemberInfos;
+  protected final @Unmodifiable List<MemberInfoType> myMemberInfos;
 
   private JRadioButton myRbExtractSuperclass;
   private JRadioButton myRbExtractSubclass;
@@ -80,7 +82,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract String getDestinationPackageRecentKey();
 
-  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, List<MemberInfoType> members, @NlsContexts.DialogTitle String refactoringName) {
+  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, @Unmodifiable List<MemberInfoType> members, @NlsContexts.DialogTitle String refactoringName) {
     super(project, true);
     myRefactoringName = refactoringName;
 
@@ -110,7 +112,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   }
 
   protected JComponent createActionComponent() {
-    Box box = Box.createHorizontalBox();
+    JBBox box = JBBox.createHorizontalBox();
     final String s = StringUtil.decapitalize(getEntityName());
     myRbExtractSuperclass = new JRadioButton();
     myRbExtractSuperclass.setText(RefactoringBundle.message("extractSuper.extract", s));
@@ -146,7 +148,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   @Override
   protected JComponent createNorthPanel() {
-      Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
 
       JPanel _panel = new JPanel(new BorderLayout());
       _panel.add(new JLabel(getTopLabelText()), BorderLayout.NORTH);
@@ -246,7 +248,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
       }
     }
     if (errorString[0] != null) {
-      if (errorString[0].length() > 0) {
+      if (!errorString[0].isEmpty()) {
         CommonRefactoringUtil.showErrorMessage(myRefactoringName, errorString[0], getHelpId(), myProject);
       }
       return;

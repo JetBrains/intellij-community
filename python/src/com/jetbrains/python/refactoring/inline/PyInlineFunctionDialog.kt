@@ -7,7 +7,6 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.inline.InlineOptionsDialog
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyImportStatementBase

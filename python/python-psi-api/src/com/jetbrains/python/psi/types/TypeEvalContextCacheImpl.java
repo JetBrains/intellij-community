@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.project.Project;
@@ -14,18 +14,15 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Kazakevich
  */
 final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
-  @NotNull
-  private static final Function<TypeEvalContext, TypeEvalContext> VALUE_PROVIDER = new MyValueProvider();
-  @NotNull
-  private final TypeEvalContextBasedCache<TypeEvalContext> myCache;
+  private static final @NotNull Function<TypeEvalContext, TypeEvalContext> VALUE_PROVIDER = new MyValueProvider();
+  private final @NotNull TypeEvalContextBasedCache<TypeEvalContext> myCache;
 
   TypeEvalContextCacheImpl(@NotNull Project project) {
     myCache = new TypeEvalContextBasedCache<>(CachedValuesManager.getManager(project), VALUE_PROVIDER);
   }
 
-  @NotNull
   @Override
-  public TypeEvalContext getContext(@NotNull final TypeEvalContext standard) {
+  public @NotNull TypeEvalContext getContext(final @NotNull TypeEvalContext standard) {
     return myCache.getValue(standard);
   }
 

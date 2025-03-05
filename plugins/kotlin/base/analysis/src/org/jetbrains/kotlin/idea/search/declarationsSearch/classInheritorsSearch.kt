@@ -9,9 +9,8 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.EmptyQuery
 import com.intellij.util.Query
-import org.jetbrains.kotlin.asJava.toLightClassWithBuiltinMapping
-import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.toFakeLightClass
+import org.jetbrains.kotlin.asJava.toLightClassWithBuiltinMapping
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 fun HierarchySearchRequest<*>.searchInheritors(): Query<PsiClass> {

@@ -9,15 +9,14 @@ import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.testFramework.PsiTestUtil
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.K2IdeKotlinAnchorModuleProvider
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheServiceImpl
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.util.sourceRoots
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 
 abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest() {
@@ -49,7 +48,8 @@ abstract class AbstractK2MultiModuleHighlightingTest : AbstractMultiModuleTest()
 
         val anchorMapping = mapOf(libraryName to anchorModule.name)
 
-        ResolutionAnchorCacheService.getInstance(project).safeAs<ResolutionAnchorCacheServiceImpl>()!!.setAnchors(anchorMapping)
+        val anchorModuleProvider = KotlinAnchorModuleProvider.getInstance(project) as K2IdeKotlinAnchorModuleProvider
+        anchorModuleProvider.setAnchors(anchorMapping)
     }
 
     protected fun doTest(filePath: String) {

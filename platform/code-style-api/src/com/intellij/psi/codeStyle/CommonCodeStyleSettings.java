@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.codeStyle.properties.CommaSeparatedValues;
@@ -48,7 +48,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
   // - New options should be added to CodeStyleSettingsCustomizable as well.
   // - Covered by CodeStyleConfigurationsTest.
 
-  @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
+  private static final @NonNls String ARRANGEMENT_ELEMENT_NAME = "arrangement";
 
   private final @NotNull String myLangId;
 
@@ -59,10 +59,10 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
 
   private final SoftMargins mySoftMargins = new SoftMargins();
 
-  @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
+  private static final @NonNls String INDENT_OPTIONS_TAG = "indentOptions";
 
 
-  private final static Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
+  private static final Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
 
   public CommonCodeStyleSettings(@Nullable Language language) {
     this(ObjectUtils.notNull(language, Language.ANY).getID());
@@ -76,8 +76,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
     myRootSettings = rootSettings;
   }
 
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     Language language = Language.findLanguageByID(myLangId);
     if (language == null) {
       LOG.error("Can't find the language with ID " + myLangId);
@@ -86,24 +85,20 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
     return language;
   }
 
-  @NotNull
-  public IndentOptions initIndentOptions() {
+  public @NotNull IndentOptions initIndentOptions() {
     myIndentOptions = new IndentOptions();
     return myIndentOptions;
   }
 
-  @NotNull
-  public CodeStyleSettings getRootSettings() {
+  public @NotNull CodeStyleSettings getRootSettings() {
     return myRootSettings;
   }
 
-  @Nullable
-  public IndentOptions getIndentOptions() {
+  public @Nullable IndentOptions getIndentOptions() {
     return myIndentOptions;
   }
 
-  @Nullable
-  public ArrangementSettings getArrangementSettings() {
+  public @Nullable ArrangementSettings getArrangementSettings() {
     return myArrangementSettings;
   }
 
@@ -980,7 +975,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
   // region Chained Builder Method Calls
   //----------------------------------------------------------------------------------------
 
-  public @NonNls @CommaSeparatedValues String BUILDER_METHODS = "";
+  @CommaSeparatedValues public @NonNls String BUILDER_METHODS = "";
   public boolean KEEP_BUILDER_METHODS_INDENTS = false;
 
   private final @NotNull Set<String> myBuilderMethodsNameCache = new HashSet<>();
@@ -1136,8 +1131,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
       myOverrideLanguageOptions = other.myOverrideLanguageOptions;
     }
 
-    @Nullable
-    public FileIndentOptionsProvider getFileIndentOptionsProvider() {
+    public @Nullable FileIndentOptionsProvider getFileIndentOptionsProvider() {
       return myFileIndentOptionsProvider;
     }
 
@@ -1152,15 +1146,13 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
     /**
      * @deprecated Use {@link #retrieveFromAssociatedDocument(Document)}
      */
-    @Nullable
     @Deprecated
-    public static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
+    public static @Nullable IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
     }
 
-    @Nullable
-    public static IndentOptions retrieveFromAssociatedDocument(@NotNull Document document) {
+    public static @Nullable IndentOptions retrieveFromAssociatedDocument(@NotNull Document document) {
       return document.getUserData(INDENT_OPTIONS_KEY);
     }
 
@@ -1211,8 +1203,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
     return Comparing.equal(theseSettings, obj.getArrangementSettings());
   }
 
-  @NotNull
-  public List<Integer> getSoftMargins() {
+  public @NotNull List<Integer> getSoftMargins() {
     return mySoftMargins.getValues();
   }
 

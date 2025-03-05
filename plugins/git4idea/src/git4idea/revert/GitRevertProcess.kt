@@ -34,11 +34,9 @@ import org.jetbrains.annotations.NonNls
 internal class GitRevertProcess(
   project: Project,
   commits: List<VcsFullCommitDetails>,
-  autoCommit: Boolean,
 ) : GitApplyChangesProcess(
   project = project,
   commits = commits,
-  forceAutoCommit = autoCommit,
   operationName = GitBundle.message("revert.operation.name"),
   appliedWord = GitBundle.message("revert.operation.applied"),
   abortCommand = GitAbortOperationAction.Revert(),
@@ -54,12 +52,16 @@ internal class GitRevertProcess(
     "Revert \"${commit.subject}\"\n\nThis reverts commit ${commit.id.toShortString()}"
 
   override fun applyChanges(repository: GitRepository, commit: VcsCommitMetadata, listeners: List<GitLineHandlerListener>): GitCommandResult {
-    return git.revert(repository, commit.id.asString(), autoCommit, *listeners.toTypedArray<GitLineHandlerListener>())
+    return git.revert(repository, commit.id.asString(), AUTO_COMMIT, *listeners.toTypedArray<GitLineHandlerListener>())
   }
 
   override fun isEmptyCommit(result: GitCommandResult): Boolean {
     val stdout = result.outputAsJoinedString
     return stdout.contains("nothing to commit") ||
            stdout.contains("nothing added to commit but untracked files present");
+  }
+
+  companion object {
+    private const val AUTO_COMMIT = true
   }
 }

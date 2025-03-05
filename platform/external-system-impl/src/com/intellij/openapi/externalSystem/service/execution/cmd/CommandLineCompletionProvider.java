@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution.cmd;
 
 import com.intellij.codeInsight.TailTypes;
@@ -21,9 +21,8 @@ public abstract class CommandLineCompletionProvider extends TextFieldCompletionP
     myOptions = options;
   }
 
-  @NotNull
   @Override
-  protected String getPrefix(@NotNull String currentTextPrefix) {
+  protected @NotNull String getPrefix(@NotNull String currentTextPrefix) {
     ParametersListLexer lexer = new ParametersListLexer(currentTextPrefix);
     while (lexer.nextToken()) {
       if (lexer.getTokenEnd() == currentTextPrefix.length()) {

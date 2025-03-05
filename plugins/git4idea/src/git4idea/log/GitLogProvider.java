@@ -40,6 +40,7 @@ import git4idea.commands.Git;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitCommitRequirements;
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits;
+import git4idea.history.GitLogCommandParameters;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -410,24 +411,26 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     return new ArrayList<>(commits);
   }
 
-  private @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
-                                                                 @Nullable VcsLogRangeFilter.RefRange range,
-                                                                 @NotNull PermanentGraph.Options options,
-                                                                 int maxCount) throws VcsException {
-
-    GitRepository repository = getRepository(root);
+  public static @Nullable GitLogCommandParameters getGitLogParameters(
+    @NotNull Project project,
+    @NotNull VirtualFile root,
+    @NotNull VcsLogFilterCollection filterCollection,
+    @Nullable VcsLogRangeFilter.RefRange range,
+    @NotNull PermanentGraph.Options options,
+    int maxCount
+  ) {
+    GitRepository repository = getRepository(GitRepositoryManager.getInstance(project), root);
     if (repository == null) {
-      return Collections.emptyList();
+      return null;
     }
 
     List<String> configParameters = new ArrayList<>();
-    List<String> filterParameters = new ArrayList<>();
 
     List<String> branchLikeFilterParameters = getBranchLikeFilterParameters(repository, filterCollection, range);
     if (branchLikeFilterParameters.isEmpty()) {
-      return Collections.emptyList(); // no such branches in this repository => filter matches nothing
+      return null; // no such branches in this repository => filter matches nothing
     }
-    filterParameters.addAll(branchLikeFilterParameters);
+    List<String> filterParameters = new ArrayList<>(branchLikeFilterParameters);
 
     VcsLogDateFilter dateFilter = filterCollection.get(DATE_FILTER);
     if (dateFilter != null) {
@@ -451,7 +454,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       Collection<String> names = ContainerUtil.map(userFilter.getUsers(root), VcsUserUtil::toExactString);
       if (regexp) {
         List<String> authors = ContainerUtil.map(names, UserNameRegex.EXTENDED_INSTANCE);
-        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myProject)) {
+        if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(project)) {
           filterParameters.add(prepareParameter("author", StringUtil.join(authors, "|")));
         }
         else {
@@ -492,8 +495,21 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       }
     }
 
+    return new GitLogCommandParameters(configParameters, filterParameters);
+  }
+
+  private @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root,
+                                                                 @NotNull VcsLogFilterCollection filterCollection,
+                                                                 @Nullable VcsLogRangeFilter.RefRange range,
+                                                                 @NotNull PermanentGraph.Options options,
+                                                                 int maxCount) throws VcsException {
+    GitLogCommandParameters parameters = getGitLogParameters(myProject, root, filterCollection, range, options, maxCount);
+    if (parameters == null) {
+      return Collections.emptyList();
+    }
+
     List<TimedVcsCommit> commits = new ArrayList<>();
-    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, null, null, new CollectConsumer<>(commits));
+    GitLogUtil.readTimedCommits(myProject, root, parameters.getConfigParameters(), parameters.getFilterParameters(), null, null, new CollectConsumer<>(commits));
     return commits;
   }
 

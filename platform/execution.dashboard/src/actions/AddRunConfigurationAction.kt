@@ -6,6 +6,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.LocatableConfiguration
 import com.intellij.execution.configurations.LocatableConfigurationBase
+import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.impl.RunConfigurable
 import com.intellij.execution.impl.RunDialog
@@ -17,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.containers.ContainerUtil
 import java.util.function.Consumer
@@ -55,19 +57,21 @@ class AddRunConfigurationAction : DumbAwareAction() {
       }
     }
 
+    var configuration: RunConfiguration? = null
     if (!addedTypes.isEmpty()) {
       if (RunManager.getInstance(project).allSettings.none { addedTypes.contains(it.type) }) {
         val type = addedTypes.minWithOrNull(IGNORE_CASE_DISPLAY_NAME_COMPARATOR) ?: return
-        if (!addRunConfiguration(type, project)) {
-          return
-        }
+        configuration = addRunConfiguration(type, project) ?: return
       }
 
       runDashboardManager.types = updatedTypes
     }
     else {
       val type = selectedTypes.minWithOrNull(IGNORE_CASE_DISPLAY_NAME_COMPARATOR) ?: return
-      addRunConfiguration(type, project)
+      configuration = addRunConfiguration(type, project)
+    }
+    if (configuration != null && !runDashboardManager.isShowInDashboard(configuration)) {
+      (runDashboardManager as RunDashboardManagerImpl).restoreConfigurations(listOf(configuration))
     }
   }
 
@@ -99,7 +103,7 @@ class AddRunConfigurationAction : DumbAwareAction() {
   }
 }
 
-private fun addRunConfiguration(type: ConfigurationType, project: Project): Boolean {
+private fun addRunConfiguration(type: ConfigurationType, project: Project): RunConfiguration? {
   val runManager = RunManager.getInstance(project)
   val settings = runManager.createConfiguration("", type.configurationFactories[0])
 
@@ -114,8 +118,9 @@ private fun addRunConfiguration(type: ConfigurationType, project: Project): Bool
                                           ExecutionBundle.message("add.new.run.configuration.action2.name"))
   if (added) {
     runManager.addConfiguration(settings)
+    return settings.configuration
   }
-  return added
+  return null
 }
 
 private fun getTypesPopupList(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): ArrayList<Any> {

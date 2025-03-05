@@ -18,10 +18,12 @@ public final class ActionsBundle {
   private ActionsBundle() {
   }
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.containsKey(key) ? ourInstance.getMessage(key, params) : ActionsDeprecatedMessagesBundle.message(key, params);
   }
 
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.containsKey(key) ? ourInstance.getLazyMessage(key, params) : ActionsDeprecatedMessagesBundle.messagePointer(key, params);
   }

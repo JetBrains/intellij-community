@@ -70,8 +70,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor",
                                            calculateReplacementExpression((PsiPolyadicExpression)infos[0], null));
   }
@@ -151,8 +150,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
   private class PointlessArithmeticFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 

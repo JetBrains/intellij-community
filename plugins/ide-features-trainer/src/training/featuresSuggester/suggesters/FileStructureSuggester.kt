@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.suggesters
 
 import com.intellij.find.FindManager
@@ -14,7 +15,7 @@ import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFindAction
 import training.featuresSuggester.actions.EditorFocusGainedAction
 
-class FileStructureSuggester : AbstractFeatureSuggester() {
+private class FileStructureSuggester : AbstractFeatureSuggester() {
   override val id: String = "File structure"
   override val suggestingActionDisplayName: String = FeatureSuggesterBundle.message("file.structure.name")
 

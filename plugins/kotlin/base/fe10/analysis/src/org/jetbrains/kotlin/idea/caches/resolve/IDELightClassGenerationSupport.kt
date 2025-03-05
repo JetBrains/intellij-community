@@ -12,22 +12,17 @@ import org.jetbrains.kotlin.asJava.classes.KtUltraLightSupport
 import org.jetbrains.kotlin.asJava.classes.cleanFromAnonymousTypes
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.classes.tryGetPredefinedName
-import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
-import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.jvm.JdkPlatform
-import org.jetbrains.kotlin.platform.subplatformsOfType
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
@@ -39,7 +34,7 @@ class IDELightClassGenerationSupport : LightClassGenerationSupport() {
         private val module = ModuleUtilCore.findModuleForPsiElement(element)
 
         override val languageVersionSettings: LanguageVersionSettings
-            get() = module?.languageVersionSettings ?: KotlinTypeMapper.LANGUAGE_VERSION_SETTINGS_DEFAULT
+            get() = module?.languageVersionSettings ?: LanguageVersionSettingsImpl.DEFAULT
 
         private val resolutionFacade get() = element.getResolutionFacade()
 
@@ -67,16 +62,10 @@ class IDELightClassGenerationSupport : LightClassGenerationSupport() {
         override val deprecationResolver: DeprecationResolver
             get() = resolutionFacade.getFrontendService(DeprecationResolver::class.java)
 
-        override val jvmTarget: JvmTarget by lazyPub {
-            module?.platform?.subplatformsOfType<JdkPlatform>()?.firstOrNull()?.targetVersion ?: JvmTarget.DEFAULT
-        }
-
         override val typeMapper: KotlinTypeMapper by lazyPub {
             KotlinTypeMapper(
-                BindingContext.EMPTY, ClassBuilderMode.LIGHT_CLASSES,
                 moduleName, languageVersionSettings,
                 useOldInlineClassesManglingScheme = false,
-                jvmTarget = jvmTarget,
                 typePreprocessor = KotlinType::cleanFromAnonymousTypes,
                 namePreprocessor = ::tryGetPredefinedName
             )

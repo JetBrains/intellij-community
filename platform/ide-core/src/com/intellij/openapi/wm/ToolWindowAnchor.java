@@ -33,6 +33,7 @@ public final class ToolWindowAnchor {
     myText = text;
   }
 
+  @Override
   public @NotNull String toString() {
     return myText;
   }

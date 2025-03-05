@@ -1,29 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.util.io.FileAccessorCache;
 import com.intellij.util.io.ResourceHandle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.zip.ZipFile;
 
 public class ZipHandler extends ZipHandlerBase {
-  private static final FileAccessorCache<ZipHandler, ZipFile> ourZipFileFileAccessorCache = new FileAccessorCache<ZipHandler, ZipFile>(20, 10) {
+  private static final FileAccessorCache<ZipHandler, GenericZipFile> ourZipFileFileAccessorCache = new FileAccessorCache<ZipHandler, GenericZipFile>(20, 10) {
     @Override
-    protected @NotNull ZipFile createAccessor(ZipHandler handler) throws IOException {
-      File file = handler.getFile();
-      BasicFileAttributes attrs = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+    protected @NotNull GenericZipFile createAccessor(ZipHandler handler) throws IOException {
+      Path file = handler.getPath();
+      BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class);
       handler.myFileStamp = attrs.lastModifiedTime().toMillis();
       handler.myFileLength = attrs.size();
-      return new ZipFile(file);
+      return getZipFileWrapper(file);
     }
 
     @Override
-    protected void disposeAccessor(@NotNull ZipFile fileAccessor) throws IOException {
+    protected void disposeAccessor(@NotNull GenericZipFile fileAccessor) throws IOException {
       fileAccessor.close();
     }
 
@@ -41,13 +41,13 @@ public class ZipHandler extends ZipHandlerBase {
   }
 
   @Override
-  protected @NotNull ResourceHandle<ZipFile> acquireZipHandle() throws IOException {
+  protected @NotNull ResourceHandle<GenericZipFile> acquireZipHandle() throws IOException {
     try {
-      FileAccessorCache.Handle<ZipFile> handle = ourZipFileFileAccessorCache.get(this);
+      FileAccessorCache.Handle<GenericZipFile> handle = ourZipFileFileAccessorCache.get(this);
 
       // IDEA-148458, JDK-4425695 (JVM crashes on accessing an open ZipFile after it was modified)
-      File file = getFile();
-      BasicFileAttributes attrs = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+      Path file = getPath();
+      BasicFileAttributes attrs = Files.readAttributes(file, BasicFileAttributes.class);
       if (attrs.lastModifiedTime().toMillis() != myFileStamp || attrs.size() != myFileLength) {
         // Note that zip_util.c#ZIP_Get_From_Cache will allow us to have duplicated ZipFile instances without a problem
         clearCaches();
@@ -75,7 +75,7 @@ public class ZipHandler extends ZipHandlerBase {
     return myFileStamp;
   }
 
-  // also used in Kotlin
+  @ApiStatus.Internal
   public static void clearFileAccessorCache() {
     ourZipFileFileAccessorCache.clear();
   }

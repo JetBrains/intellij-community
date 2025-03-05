@@ -180,15 +180,13 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     return myDisposed;
   }
 
-  @NotNull
   @Override
-  public Window getWindow() {
+  public @NotNull Window getWindow() {
     return this;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return myDecorator.getToolWindowId();
   }
 
@@ -198,9 +196,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     myBoundsHelper.setBounds(getBounds());
   }
 
-  @NotNull
   @Override
-  public Rectangle getVisibleWindowBounds() {
+  public @NotNull Rectangle getVisibleWindowBounds() {
     var result = getBounds();
     JBInsets.removeFrom(result, ToolWindowExternalDecoratorKt.getInvisibleInsets(this));
     return result;
@@ -214,9 +211,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     super.setBounds(newBounds);
   }
 
-  @NotNull
   @Override
-  public ToolWindowType getToolWindowType() {
+  public @NotNull ToolWindowType getToolWindowType() {
     return ToolWindowType.FLOATING;
   }
 
@@ -510,9 +506,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     super.reshape(x, y, width, height);
   }
 
-  @NotNull
   @Override
-  public Logger log() {
+  public @NotNull Logger log() {
     return LOG;
   }
 }

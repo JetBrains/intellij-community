@@ -6,16 +6,18 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import kotlin.jvm.java
 
 internal object WhatsNewCounterUsageCollector : CounterUsagesCollector() {
-  private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew", 1)
+  private val eventLogGroup: EventLogGroup = EventLogGroup("whatsnew", 3)
+  
+  private val visionActionId = EventFields.String("vision_action_id", listOf("whatsnew.vision.zoom", "whatsnew.vision.gif"))
 
   private val opened = eventLogGroup.registerEvent("tab_opened", EventFields.Enum(("type"), OpenedType::class.java))
   private val closed = eventLogGroup.registerEvent("tab_closed")
   private val actionId = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
   private val perform = eventLogGroup.registerEvent("action_performed", actionId)
   private val failed = eventLogGroup.registerEvent("action_failed", actionId, EventFields.Enum(("type"), ActionFailedReason::class.java))
+  private val visionAction = eventLogGroup.registerEvent("vision_action_performed", visionActionId)
 
   fun openedPerformed(project: Project?, byClient: Boolean) {
     opened.log(project, if (byClient) OpenedType.ByClient else OpenedType.Auto)
@@ -40,6 +42,10 @@ internal object WhatsNewCounterUsageCollector : CounterUsagesCollector() {
   fun actionNotFound(project: Project?, id: String) {
     failed.log(project, id, ActionFailedReason.Not_Found)
     LegacyRiderWhatsNewCounterUsagesCollector.failed.log(project, id, ActionFailedReason.Not_Found)
+  }
+
+  fun visionActionPerformed(project: Project?, id: String) {
+    visionAction.log(project, id)
   }
 
   override fun getGroup(): EventLogGroup {

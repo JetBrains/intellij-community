@@ -8,6 +8,10 @@ import com.intellij.util.PathUtil
 import junit.framework.TestCase
 import java.io.File
 
+internal fun ModifiableRootModel.addTestNGLibrary(version: String = "7.10.2") {
+  MavenDependencyUtil.addFromMaven(this, "org.testng:testng:$version")
+}
+
 internal fun ModifiableRootModel.addJUnit3Library() {
   val jar = File(PathUtil.getJarPathForClass(TestCase::class.java))
   PsiTestUtil.addLibrary(this, "junit3", jar.parent, jar.name)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
@@ -24,9 +24,8 @@ import java.util.Optional;
 public final class TargetDebuggerConnectionUtil {
   private TargetDebuggerConnectionUtil() { }
 
-  @Nullable
-  private static Integer requiredDebuggerTargetPort(@NotNull JavaCommandLineState javaCommandLineState,
-                                                    @NotNull TargetEnvironmentRequest request) {
+  private static @Nullable Integer requiredDebuggerTargetPort(@NotNull JavaCommandLineState javaCommandLineState,
+                                                              @NotNull TargetEnvironmentRequest request) {
     // TODO Checking for a specific target is a gap in the idea of API. This check was introduced because the Java debugger
     //  runs in the server mode for local targets and in the client mode for other targets. But why?
     //  Anyway, the server mode requires a remote TCP forwarding that can't always be acquired for the Docker target.
@@ -60,8 +59,7 @@ public final class TargetDebuggerConnectionUtil {
    * in the case of inappropriate {@link Executor} or the local type of the
    * {@code request}.
    */
-  @Nullable
-  public static TargetDebuggerConnection prepareDebuggerConnection(@NotNull JavaCommandLineState javaCommandLineState,
+  public static @Nullable TargetDebuggerConnection prepareDebuggerConnection(@NotNull JavaCommandLineState javaCommandLineState,
                                                                    @NotNull TargetEnvironmentRequest request) {
     final int remotePort;
     JavaParameters javaParameters;

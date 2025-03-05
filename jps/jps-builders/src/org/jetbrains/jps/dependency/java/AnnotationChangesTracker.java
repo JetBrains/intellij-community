@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +57,13 @@ public interface AnnotationChangesTracker {
    */
   Set<Recompile> RECOMPILE_NONE = Collections.unmodifiableSet(EnumSet.noneOf(Recompile.class));
 
+  /**
+   * @param annotationType the annotation class type to check. DependencyGraph will parse and store only those annotations,
+   *                       if there exists at least one registered AnnotationTracker that can track annotations of this type
+   * @return true if this AnnotationTracker can track annotations of this type, false otherwise.
+   */
+  boolean isAnnotationTracked(@NotNull TypeRepr.ClassType annotationType);
+  
   /**
    * Invoked when changes in annotation list or parameter annotations for some method are detected
    * @param method the method in question

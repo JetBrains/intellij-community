@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.execution.console.ConsoleExecuteAction;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.xdebugger.impl.actions.handlers.XEvaluateInConsoleFromEditorActionHandler;
@@ -27,8 +26,7 @@ class EvaluateInConsoleFromTreeAction extends XAddToWatchesTreeAction {
     }
   }
 
-  @Nullable
-  private static ConsoleExecuteAction getConsoleExecuteAction(@NotNull AnActionEvent e) {
+  private static @Nullable ConsoleExecuteAction getConsoleExecuteAction(@NotNull AnActionEvent e) {
     return XEvaluateInConsoleFromEditorActionHandler.getConsoleExecuteAction(e.getData(LangDataKeys.CONSOLE_VIEW));
   }
 

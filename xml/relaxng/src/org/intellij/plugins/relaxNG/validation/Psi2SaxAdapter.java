@@ -35,7 +35,7 @@ import org.xml.sax.ext.Locator2Impl;
 
 import java.util.Map;
 
-class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<PsiElement> {
+final class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<PsiElement> {
   private final ContentHandler myHandler;
 
   Psi2SaxAdapter(ContentHandler handler) {

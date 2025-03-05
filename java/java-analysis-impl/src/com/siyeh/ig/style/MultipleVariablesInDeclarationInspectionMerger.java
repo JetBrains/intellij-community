@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
@@ -11,17 +11,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class MultipleVariablesInDeclarationInspectionMerger extends InspectionElementsMergerBase {
 
-  @NonNls private static final String MULTIPLE_DECLARATION = "MultipleDeclaration";
-  @NonNls private static final String MULTIPLE_TYPED_DECLARATION = "MultipleTypedDeclaration";
+  private static final @NonNls String MULTIPLE_DECLARATION = "MultipleDeclaration";
+  private static final @NonNls String MULTIPLE_TYPED_DECLARATION = "MultipleTypedDeclaration";
 
   @Override
   protected boolean isEnabledByDefault(@NotNull String sourceToolName) {
     return false;
   }
 
-  @NotNull
   @Override
-  public String getMergedToolName() {
+  public @NotNull String getMergedToolName() {
     return "MultipleVariablesInDeclaration";
   }
 

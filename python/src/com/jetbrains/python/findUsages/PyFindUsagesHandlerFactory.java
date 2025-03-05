@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.findUsages;
 
 import com.intellij.find.findUsages.*;
@@ -45,7 +45,7 @@ public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory i
 
         @Override
         protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
-          return ((PyFindUsagesHandler)base).isSearchForTextOccurrencesAvailable(psiElement, isSingleFile);
+          return FindUsagesHelper.isSearchForTextOccurrencesAvailable(base, psiElement, isSingleFile);
         }
 
         @Override
@@ -74,7 +74,7 @@ public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory i
       };
     }
     else {
-      @NonNls String msg = base.toString() + " is of unexpected type.";
+      @NonNls String msg = base + " is of unexpected type.";
       throw new IllegalArgumentException(msg);
     }
   }
@@ -92,8 +92,8 @@ public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory i
   /**
    * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
    */
-  static class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
-    protected PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
+  private static final class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
+    PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
       super(file);
     }
 

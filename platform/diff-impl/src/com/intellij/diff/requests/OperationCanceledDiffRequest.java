@@ -20,12 +20,13 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
 public class OperationCanceledDiffRequest extends MessageDiffRequest {
+  @ApiStatus.Internal
   public OperationCanceledDiffRequest(@Nullable @NlsContexts.DialogTitle String title) {
     super(title, DiffBundle.message("error.operation.canceled"));
   }
 
+  @ApiStatus.Internal
   public OperationCanceledDiffRequest() {
     super(DiffBundle.message("error.operation.canceled"));
   }

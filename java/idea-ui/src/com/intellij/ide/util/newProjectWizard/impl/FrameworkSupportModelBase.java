@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard.impl;
 
 import com.intellij.facet.impl.ui.libraries.FrameworkLibraryProvider;
@@ -46,10 +46,9 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     myLibrariesContainer = librariesContainer;
   }
 
-  @NotNull
-  public abstract String getBaseDirectoryForLibrariesPath();
+  public abstract @NotNull String getBaseDirectoryForLibrariesPath();
 
-  public void registerComponent(@NotNull final FrameworkSupportInModuleProvider provider, @NotNull final FrameworkSupportNode node) {
+  public void registerComponent(final @NotNull FrameworkSupportInModuleProvider provider, final @NotNull FrameworkSupportNode node) {
     mySettingsMap.put(provider.getFrameworkType().getId(), node);
   }
 
@@ -68,18 +67,18 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   }
 
   @Override
-  public boolean isFrameworkSelected(@NotNull @NonNls final String providerId) {
+  public boolean isFrameworkSelected(final @NotNull @NonNls String providerId) {
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
     return node != null && node.isChecked();
   }
 
   @Override
-  public void addFrameworkListener(@NotNull final FrameworkSupportModelListener listener) {
+  public void addFrameworkListener(final @NotNull FrameworkSupportModelListener listener) {
     myDispatcher.addListener(listener);
   }
 
   @Override
-  public void addFrameworkListener(@NotNull final FrameworkSupportModelListener listener, @NotNull Disposable parentDisposable) {
+  public void addFrameworkListener(final @NotNull FrameworkSupportModelListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
@@ -88,12 +87,12 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   }
 
   @Override
-  public void removeFrameworkListener(@NotNull final FrameworkSupportModelListener listener) {
+  public void removeFrameworkListener(final @NotNull FrameworkSupportModelListener listener) {
     myDispatcher.removeListener(listener);
   }
 
   @Override
-  public void setFrameworkComponentEnabled(@NotNull @NonNls final String providerId, final boolean enable) {
+  public void setFrameworkComponentEnabled(final @NotNull @NonNls String providerId, final boolean enable) {
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
     if (node != null && enable != node.isChecked()) {
       node.setChecked(enable);
@@ -126,9 +125,8 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     return configurable;
   }
 
-  @Nullable
   @Override
-  public FrameworkSupportConfigurable findFrameworkConfigurable(@NotNull @NonNls String providerId) {
+  public @Nullable FrameworkSupportConfigurable findFrameworkConfigurable(@NotNull @NonNls String providerId) {
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
     if (node == null) {
       return null;
@@ -175,8 +173,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  public <V extends FrameworkVersion> V getSelectedVersion(@NotNull String frameworkOrGroupId) {
+  public @Nullable <V extends FrameworkVersion> V getSelectedVersion(@NotNull String frameworkOrGroupId) {
     return (V)mySelectedVersions.get(frameworkOrGroupId);
   }
 
@@ -209,8 +206,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     myDispatcher.getMulticaster().wizardStepUpdated();
   }
 
-  @NotNull
-  public LibrariesContainer getLibrariesContainer() {
+  public @NotNull LibrariesContainer getLibrariesContainer() {
     return myLibrariesContainer;
   }
 

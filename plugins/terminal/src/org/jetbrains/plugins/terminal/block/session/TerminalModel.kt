@@ -9,8 +9,9 @@ import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalLine
-import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
@@ -19,7 +20,8 @@ import kotlin.math.min
  * Keeps the whole state of a single terminal session.
  * TODO rename to BlockTerminalSessionModel?
  */
-internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
+@ApiStatus.Internal
+class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   val width: Int
     get() = textBuffer.width
   val height: Int
@@ -167,13 +169,9 @@ internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   internal val terminalListeners: MutableList<TerminalListener> = CopyOnWriteArrayList()
   private val cursorListeners: MutableList<CursorListener> = CopyOnWriteArrayList()
 
-  fun addContentListener(listener: ContentListener, parentDisposable: Disposable? = null) {
-    val terminalListener = TerminalModelListener { listener.onContentChanged() }
-    textBuffer.addModelListener(terminalListener)
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable) {
-        textBuffer.removeModelListener(terminalListener)
-      }
+  fun addContentListener(listener: ContentListener, parentDisposable: Disposable) {
+    textBuffer.addModelListener(parentDisposable) {
+      listener.onContentChanged()
     }
   }
 
@@ -226,16 +224,6 @@ internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   companion object {
     const val MIN_WIDTH = 5
     const val MIN_HEIGHT = 2
-
-    inline fun <T> TerminalTextBuffer.withLock(callable: (TerminalTextBuffer) -> T): T {
-      lock()
-      return try {
-        callable(this)
-      }
-      finally {
-        unlock()
-      }
-    }
 
     internal fun clearAllAndMoveCursorToTopLeftCorner(terminal: Terminal) {
       terminal.eraseInDisplay(3)

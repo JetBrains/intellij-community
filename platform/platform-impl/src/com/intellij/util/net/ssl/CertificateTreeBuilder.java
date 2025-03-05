@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.ide.IdeBundle;
@@ -17,10 +17,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -86,7 +83,7 @@ public final class CertificateTreeBuilder implements Disposable {
     myStructureTreeModel.invalidateAsync();
   }
 
-  public List<X509Certificate> getCertificates() {
+  public @Unmodifiable List<X509Certificate> getCertificates() {
     return ContainerUtil.map(myCertificates.values(), wrapper -> wrapper.getCertificate());
   }
 
@@ -134,7 +131,7 @@ public final class CertificateTreeBuilder implements Disposable {
     return certificates.isEmpty() ? null : certificates.iterator().next();
   }
 
-  public @NotNull List<X509Certificate> getCertificatesByOrganization(@NotNull String organizationName) {
+  public @Unmodifiable @NotNull List<X509Certificate> getCertificatesByOrganization(@NotNull String organizationName) {
     Collection<CertificateWrapper> wrappers = myCertificates.get(organizationName);
     return extract(wrappers);
   }
@@ -144,7 +141,7 @@ public final class CertificateTreeBuilder implements Disposable {
 
   }
 
-  private static List<X509Certificate> extract(Collection<CertificateWrapper> wrappers) {
+  private static @Unmodifiable List<X509Certificate> extract(Collection<CertificateWrapper> wrappers) {
     return ContainerUtil.map(wrappers, wrapper -> wrapper.getCertificate());
   }
 

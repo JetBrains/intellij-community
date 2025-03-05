@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +41,7 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
   private final List<ProjectExternalDependency> myDependencies = new ArrayList<>();
 
   @Override
-  public @NotNull <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass) {
+  public @Unmodifiable @NotNull <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass) {
     return ContainerUtil.filterIsInstance(myDependencies, aClass);
   }
 

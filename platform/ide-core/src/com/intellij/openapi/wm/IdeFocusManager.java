@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -49,18 +50,27 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract @Nullable JComponent getFocusTargetFor(@NotNull JComponent comp);
 
   /**
-   * Executes {@code runnable} after all focus activities are finished, immediately or later with the {@code ModalityState.defaultModalityState()} state.
+   * @deprecated See deprecation notice for {@link #doWhenFocusSettlesDown(Runnable, ModalityState)}
    */
+  @Deprecated
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
 
   /**
-   * Executes {@code runnable} after all focus activities are finished, immediately or later with the {@code modality} state.
+   * @deprecated This method doesn't do what it's expected to do.
+   *   If called in EDT, it just invokes the target runnable directly, after performing expiration check for {@link ExpirableRunnable}
+   *   and wrapping the execution into {@link WriteIntentReadAction}.<br>
+   *   If you want to postpone the execution until focus transfers, requested in this or previous EDT events, will be completed, just use
+   *   {@link SwingUtilities#invokeLater(Runnable)} or {@link Application#invokeLater(Runnable, ModalityState)}.
+   *   Note that requests to transfer focus between windows cannot be reliably handled in this manner, as they are asynchronous in nature,
+   *   and one cannot know when OS will grant them, if at all, at least on Linux.
    */
+  @Deprecated
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality);
 
   /**
-   * Executes {@code runnable} after all focus activities are finished, immediately or later with the {@code ModalityState.defaultModalityState()} state.
+   * @deprecated See deprecation notice for {@link #doWhenFocusSettlesDown(Runnable, ModalityState)}
    */
+  @Deprecated
   public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
 
   /**

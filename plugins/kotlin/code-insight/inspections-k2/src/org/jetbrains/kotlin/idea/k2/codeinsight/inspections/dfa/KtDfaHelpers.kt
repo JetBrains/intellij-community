@@ -11,7 +11,6 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
-import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -191,19 +190,6 @@ internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = w
     KtTokens.DIVEQ -> LongRangeBinOp.DIV
     KtTokens.PERCEQ -> LongRangeBinOp.MOD
     else -> null
-}
-
-context(KaSession)
-internal fun KaType.toPsiPrimitiveType(): PsiPrimitiveType = when ((this as? KaClassType)?.classId) {
-    DefaultTypeClassIds.BOOLEAN -> PsiTypes.booleanType()
-    DefaultTypeClassIds.BYTE -> PsiTypes.byteType()
-    DefaultTypeClassIds.CHAR -> PsiTypes.charType()
-    DefaultTypeClassIds.SHORT -> PsiTypes.shortType()
-    DefaultTypeClassIds.INT -> PsiTypes.intType()
-    DefaultTypeClassIds.LONG -> PsiTypes.longType()
-    DefaultTypeClassIds.FLOAT -> PsiTypes.floatType()
-    DefaultTypeClassIds.DOUBLE -> PsiTypes.doubleType()
-    else -> throw IllegalArgumentException("Not a primitive analog: $this")
 }
 
 context(KaSession)

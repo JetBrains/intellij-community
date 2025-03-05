@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -20,18 +20,19 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public abstract class DvcsBranchPopup<Repo extends Repository> {
-  @NotNull protected final Project myProject;
-  @NotNull protected final AbstractRepositoryManager<Repo> myRepositoryManager;
-  @NotNull protected final DvcsSyncSettings myVcsSettings;
-  @NotNull protected final AbstractVcs myVcs;
-  @NotNull protected final DvcsMultiRootBranchConfig<Repo> myMultiRootBranchConfig;
+  protected final @NotNull Project myProject;
+  protected final @NotNull AbstractRepositoryManager<Repo> myRepositoryManager;
+  protected final @NotNull DvcsSyncSettings myVcsSettings;
+  protected final @NotNull AbstractVcs myVcs;
+  protected final @NotNull DvcsMultiRootBranchConfig<Repo> myMultiRootBranchConfig;
 
-  @NotNull protected final Repo myCurrentRepository;
-  @NotNull protected final BranchActionGroupPopup myPopup;
+  protected final @NotNull Repo myCurrentRepository;
+  protected final @NotNull BranchActionGroupPopup myPopup;
   protected final boolean myInSpecificRepository;
 
   protected DvcsBranchPopup(@NotNull Repo currentRepository,
@@ -57,8 +58,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     }
   }
 
-  @Nullable
-  private @Nls String buildTitle(@NotNull Repo currentRepository) {
+  private @Nullable @Nls String buildTitle(@NotNull Repo currentRepository) {
     if (ExperimentalUI.isNewUI()) return null;
 
     String vcsName = myVcs.getDisplayName();
@@ -67,13 +67,11 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
            DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", vcsName, DvcsUtil.getShortRepositoryName(currentRepository));
   }
 
-  @NotNull
-  public ListPopup asListPopup() {
+  public @NotNull ListPopup asListPopup() {
     return myPopup;
   }
 
-  @NotNull
-  private ActionGroup createActions() {
+  private @NotNull ActionGroup createActions() {
     LightActionGroup popupGroup = new LightActionGroup(false);
     AbstractRepositoryManager<Repo> repositoryManager = myRepositoryManager;
     if (repositoryManager.moreThanOneRoot()) {
@@ -98,9 +96,8 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   protected abstract void fillWithCommonRepositoryActions(@NotNull LightActionGroup popupGroup,
                                                           @NotNull AbstractRepositoryManager<Repo> repositoryManager);
 
-  @NotNull
-  protected List<Repo> filterRepositoriesNotOnThisBranch(@NotNull final String branch,
-                                                         @NotNull List<? extends Repo> allRepositories) {
+  protected @NotNull @Unmodifiable List<Repo> filterRepositoriesNotOnThisBranch(final @NotNull String branch,
+                                                                                @NotNull List<? extends Repo> allRepositories) {
     return ContainerUtil.filter(allRepositories, repository -> !branch.equals(repository.getCurrentBranchName()));
   }
 
@@ -114,8 +111,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     return myRepositoryManager.moreThanOneRoot() && myMultiRootBranchConfig.diverged() && userWantsSyncControl();
   }
 
-  @NotNull
-  protected abstract LightActionGroup createRepositoriesActions();
+  protected abstract @NotNull LightActionGroup createRepositoriesActions();
 
   protected abstract void fillPopupWithCurrentRepositoryActions(@NotNull LightActionGroup popupGroup,
                                                                 @Nullable LightActionGroup actions);

@@ -14,7 +14,8 @@ import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskSeria
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.DefaultExternalProject;
+import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.ObjectFactory;
@@ -22,7 +23,7 @@ import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.gradle.tooling.serialization.ToolingStreamApiUtils.*;
@@ -96,8 +97,7 @@ public final class GradleExternalProjectSerializationService implements Serializ
     });
   }
 
-  @Nullable
-  private static DefaultExternalProject readProject(@NotNull IonReader reader, @NotNull ReadContext context) {
+  private static @Nullable DefaultExternalProject readProject(@NotNull IonReader reader, @NotNull ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 

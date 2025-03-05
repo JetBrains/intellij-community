@@ -27,7 +27,6 @@ import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.CommonActionsPanel
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SlowOperationCanceledException
 import com.intellij.util.SlowOperations
@@ -43,7 +42,6 @@ import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.KeyStroke
-import kotlin.Throws
 
 private val LOG = logger<ActionUtil>()
 private val InputEventDummyAction = EmptyAction.createEmptyAction(null, null, true)
@@ -121,6 +119,18 @@ object ActionUtil {
   @JvmField
   val COMPONENT_PROVIDER: Key<CustomComponentAction> = Key.create("COMPONENT_PROVIDER")
 
+  @ApiStatus.Internal
+  @JvmField
+  val ACTION_GROUP_POPUP_CAPTION: Key<ActionGroupPopupCaption> = Key.create("ACTION_GROUP_POPUP_CAPTION")
+
+  @ApiStatus.Internal
+  enum class ActionGroupPopupCaption {
+    /** No popup caption */
+    NONE,
+    /** Use the text of ActionGroup presentation as a popup caption */
+    FROM_ACTION_TEXT,
+  }
+
   // Internal keys
 
   @JvmStatic
@@ -140,7 +150,7 @@ object ActionUtil {
     vararg events: AnActionEvent,
   ) {
     val actionNames = events.asSequence()
-      .map { it.presentation.text }.filter { it.isNotEmpty() }.toList()
+      .mapNotNull { it.presentation.text }.filter { it.isNotEmpty() }.toList()
     if (LOG.isDebugEnabled) {
       LOG.debug("Showing dumb mode warning for ${events.asList()}", Throwable())
     }
@@ -354,20 +364,19 @@ object ActionUtil {
     if (action is ActionGroup && !e.presentation.isPerformGroup) {
       val dataContext = e.dataContext
       val place = ActionPlaces.getActionGroupPopupPlace(e.place)
+      val caption = when (e.presentation.getClientProperty(ACTION_GROUP_POPUP_CAPTION)) {
+        ActionGroupPopupCaption.NONE -> null
+        ActionGroupPopupCaption.FROM_ACTION_TEXT, null -> e.presentation.text
+      }
       val popup: ListPopup = JBPopupFactory.getInstance().createActionGroupPopup(
-        e.presentation.text, action, dataContext,
+        caption, action, dataContext,
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
         false, null, -1, null, place)
-      val toolbarPopupLocation = CommonActionsPanel.getPreferredPopupPoint(
-        action, dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))
-      if (toolbarPopupLocation != null) {
-        popup.show(toolbarPopupLocation)
-      }
-      else if (popupShow != null) {
+      if (popupShow != null) {
         popupShow.accept(popup)
       }
       else {
-        popup.showInBestPositionFor(dataContext)
+        popup.show(JBPopupFactory.getInstance().guessBestPopupLocation(action, e))
       }
     }
     else {

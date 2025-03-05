@@ -7,8 +7,10 @@ import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.JComponent
 
-val Insets.width: Int get() = left + right
-val Insets.height: Int get() = top + bottom
+val Insets.width: Int
+  get() = left + right
+val Insets.height: Int
+  get() = top + bottom
 
 var JBPopup.width: Int
   get() = size.width

@@ -22,7 +22,7 @@ interface ii {
  int f();
 }
 
-<error descr="'f()' in 'a1' clashes with 'f()' in 'ii'; attempting to use incompatible return type">abstract class c_a1_ii extends a1 implements ii</error> {
+<error descr="'f()' in 'a1' clashes with 'f()' in 'ii'; incompatible return type">abstract class c_a1_ii extends a1 implements ii</error> {
 }
 
 interface i2 {
@@ -94,7 +94,7 @@ class StA {
   }
 }
 class StB extends StA {
-  public static <error descr="'createInstance()' in 'StB' clashes with 'createInstance()' in 'StA'; attempting to use incompatible return type">String</error> createInstance() {
+  public static <error descr="'createInstance()' in 'StB' clashes with 'createInstance()' in 'StA'; incompatible return type">String</error> createInstance() {
     return null;
   }
 }

@@ -35,6 +35,7 @@ public final class Chunk<Node> {
     return myNodes.contains(node);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof Chunk)) return false;
@@ -46,10 +47,12 @@ public final class Chunk<Node> {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myNodes.hashCode();
   }
 
+  @Override
   public String toString() { // for debugging only
     final StringBuilder buf = new StringBuilder();
     buf.append("[");

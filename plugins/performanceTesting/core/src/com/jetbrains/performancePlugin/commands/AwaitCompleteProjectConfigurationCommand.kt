@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.configuration.ConfigurationResult
 import com.intellij.openapi.project.configuration.awaitCompleteProjectConfiguration
 import com.intellij.openapi.ui.playback.PlaybackContext
-import kotlinx.coroutines.runBlocking
 
 
 private val LOG: Logger

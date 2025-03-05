@@ -29,7 +29,7 @@ public class GitMessageWithFilesDetector implements GitLineEventDetector {
 
   protected final @NotNull Set<String> myAffectedFiles = new HashSet<>();
   protected boolean myMessageDetected;
-  private @Nullable Key myMessageOutputType;
+  protected @Nullable Key myMessageOutputType;
 
   public GitMessageWithFilesDetector(@NotNull Event event, @NotNull VirtualFile root) {
     myEvent = event;

@@ -35,8 +35,7 @@ public final class ForLoopWithMissingComponentInspection extends BaseInspection 
   public boolean ignoreCollectionLoops = false;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final boolean hasInitializer = ((Boolean)infos[0]).booleanValue();
     final boolean hasCondition = ((Boolean)infos[1]).booleanValue();
     final boolean hasUpdate = ((Boolean)infos[2]).booleanValue();

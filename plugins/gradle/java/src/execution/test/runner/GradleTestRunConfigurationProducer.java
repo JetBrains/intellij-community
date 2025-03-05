@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.RunManager;
@@ -146,8 +146,7 @@ public abstract class GradleTestRunConfigurationProducer extends GradleRunConfig
    * @param project is a project with the source
    * @return any of possible tasks to run tests for specified source
    */
-  @NotNull
-  public static TasksToRun findTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
+  public static @NotNull TasksToRun findTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
     List<TasksToRun> tasksToRun = findAllTestsTaskToRun(source, project);
     if (tasksToRun.isEmpty()) return TasksToRun.EMPTY;
     return tasksToRun.get(0);
@@ -160,8 +159,7 @@ public abstract class GradleTestRunConfigurationProducer extends GradleRunConfig
    * @param project is a project with the source
    * @return all of possible tasks to run tests for specified source
    */
-  @NotNull
-  public static List<TasksToRun> findAllTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
+  public static @NotNull List<TasksToRun> findAllTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
     String sourcePath = source.getPath();
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     Module module = ReadAction.compute(() -> projectFileIndex.getModuleForFile(source));

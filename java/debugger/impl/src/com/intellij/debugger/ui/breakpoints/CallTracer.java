@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -179,8 +179,7 @@ public class CallTracer implements OverheadProducer {
     renderer.append(JavaDebuggerBundle.message("call.tracer"));
   }
 
-  @NotNull
-  public static CallTracer get(DebugProcessImpl debugProcess) {
+  public static @NotNull CallTracer get(DebugProcessImpl debugProcess) {
     CallTracer tracer = debugProcess.getUserData(CALL_TRACER_KEY);
     if (tracer == null) {
       tracer = new CallTracer(debugProcess);

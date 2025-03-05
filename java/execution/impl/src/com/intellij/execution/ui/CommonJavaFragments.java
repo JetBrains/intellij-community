@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -132,8 +132,7 @@ public final class CommonJavaFragments {
     return fragment;
   }
 
-  @NotNull
-  public static <T extends CommonJavaRunConfigurationParameters> SettingsEditorFragment<T, JrePathEditor> createJrePath(DefaultJreSelector defaultJreSelector) {
+  public static @NotNull <T extends CommonJavaRunConfigurationParameters> SettingsEditorFragment<T, JrePathEditor> createJrePath(DefaultJreSelector defaultJreSelector) {
     JrePathEditor jrePathEditor = new JrePathEditor(false);
     jrePathEditor.setDefaultJreSelector(defaultJreSelector);
     ComboBox<JrePathEditor.JreComboBoxItem> comboBox = jrePathEditor.getComponent();
@@ -225,8 +224,7 @@ public final class CommonJavaFragments {
     return jrePath;
   }
 
-  @NotNull
-  public static <T extends JavaRunConfigurationBase> SettingsEditorFragment<T, RawCommandLineEditor> vmOptions(Computable<Boolean> hasModule) {
+  public static @NotNull <T extends JavaRunConfigurationBase> SettingsEditorFragment<T, RawCommandLineEditor> vmOptions(Computable<Boolean> hasModule) {
     String group = ExecutionBundle.message("group.java.options");
     RawCommandLineEditor vmOptions = new RawCommandLineEditor();
     setMinimumWidth(vmOptions, 400);
@@ -239,10 +237,9 @@ public final class CommonJavaFragments {
     return createVmOptionsFragment(group, vmOptions, RawCommandLineEditor::getEditorField);
   }
 
-  @NotNull
-  public static <T extends JavaRunConfigurationBase> SettingsEditorFragment<T, VmOptionsEditor> vmOptionsEx(JavaRunConfigurationBase settings,
-                                                                                                            Computable<Boolean> hasModule,
-                                                                                                            @Nullable JrePathEditor pathEditor) {
+  public static @NotNull <T extends JavaRunConfigurationBase> SettingsEditorFragment<T, VmOptionsEditor> vmOptionsEx(JavaRunConfigurationBase settings,
+                                                                                                                     Computable<Boolean> hasModule,
+                                                                                                                     @Nullable JrePathEditor pathEditor) {
     String group = ExecutionBundle.message("group.java.options");
     VmOptionsEditor vmOptions = new VmOptionsEditor(settings) {
       @Override

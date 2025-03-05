@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.patterns;
 
@@ -16,20 +16,18 @@ public final class PsiNameValuePairPattern extends PsiElementPattern<PsiNameValu
   }
 
   @Override
-  @NotNull
-  public PsiNameValuePairPattern withName(@NotNull @NonNls final String requiredName) {
+  public @NotNull PsiNameValuePairPattern withName(final @NotNull @NonNls String requiredName) {
     return with(new PatternCondition<PsiNameValuePair>("withName") {
       @Override
-      public boolean accepts(@NotNull final PsiNameValuePair psiNameValuePair, final ProcessingContext context) {
+      public boolean accepts(final @NotNull PsiNameValuePair psiNameValuePair, final ProcessingContext context) {
         String actualName = psiNameValuePair.getName();
         return requiredName.equals(actualName) || actualName == null && "value".equals(requiredName);
       }
     });
   }
 
-  @NotNull
   @Override
-  public PsiNameValuePairPattern withName(@NotNull final ElementPattern<String> name) {
+  public @NotNull PsiNameValuePairPattern withName(final @NotNull ElementPattern<String> name) {
     return with(new PsiNamePatternCondition<PsiNameValuePair>("withName", name) {
       @Override
       public String getPropertyValue(@NotNull Object o) {

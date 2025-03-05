@@ -8,6 +8,13 @@
 7(8) READ ACCESS: x
 8(9) READ ACCESS: int
 9(10) element: PyCallExpression: isinstance
-10(11) ASSERTTYPE ACCESS: s
-11(12) ASSERTTYPE ACCESS: x
-12() element: null
+10(11) READ ACCESS: isinstance
+11(12) READ ACCESS: s
+12(13) READ ACCESS: basestring
+13(14,16) element: PyCallExpression: isinstance
+14(15) element: null. Condition: isinstance(s, basestring):false
+15(18) ASSERTTYPE ACCESS: s
+16(17) element: null. Condition: isinstance(s, basestring):true
+17(19) ASSERTTYPE ACCESS: s
+18(19) raise: PyAssertStatement
+19() element: null

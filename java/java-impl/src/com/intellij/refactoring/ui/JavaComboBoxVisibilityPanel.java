@@ -15,9 +15,7 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.AccessModifier;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;

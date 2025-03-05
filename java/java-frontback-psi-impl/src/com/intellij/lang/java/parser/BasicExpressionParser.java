@@ -38,8 +38,7 @@ public class BasicExpressionParser {
     myParser = parser;
   }
 
-  @Nullable
-  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     if (useNewImplementation) {
       return myNewExpressionParser.parse(builder);
     }
@@ -89,9 +88,8 @@ public class BasicExpressionParser {
   /**
    * @deprecated plugin compatibility, use the one from the StatementParser
    */
-  @Nullable
   @Deprecated
-  public PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
     return myParser.getStatementParser().parseCaseLabel(builder).first;
   }
 }

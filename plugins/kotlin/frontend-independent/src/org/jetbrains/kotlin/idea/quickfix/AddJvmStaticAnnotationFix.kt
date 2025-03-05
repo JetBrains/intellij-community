@@ -12,9 +12,8 @@ import org.jetbrains.kotlin.psi.KtProperty
 class AddJvmStaticAnnotationFix(declaration: KtCallableDeclaration) : AddAnnotationFix(
     declaration,
     ClassId.topLevel(FqName("kotlin.jvm.JvmStatic")),
-    Kind.Declaration(declaration.nameAsSafeName.asString())
+    Kind.Declaration(declaration.nameAsSafeName.asString()),
 ) {
-    override fun getFamilyName(): String = text
 
     companion object {
         fun createIfApplicable(element: KtNameReferenceExpression): AddJvmStaticAnnotationFix? {

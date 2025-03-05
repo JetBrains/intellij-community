@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.navigation.NavigationItem;
@@ -54,8 +54,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
   }
 
   @Override
-  @NotNull
-  public String getPresentableGroupText() {
+  public @NotNull String getPresentableGroupText() {
     return myName;
   }
 
@@ -88,7 +87,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
   }
 
   @Override
-  public int compareTo(@NotNull final UsageGroup o) {
+  public int compareTo(final @NotNull UsageGroup o) {
     String name;
     if (o instanceof NamedPresentably) {
       name = ((NamedPresentably)o).getPresentableName();
@@ -113,8 +112,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myName;
   }
 }

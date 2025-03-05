@@ -5,10 +5,13 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.LcrRow
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Graphics2D
 import java.awt.Insets
+import java.awt.RenderingHints
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JList
 
 @ApiStatus.Internal
 internal sealed class LcrCellBaseImpl<T : LcrInitParams>(val initParams: T, val baselineAlign: Boolean, val beforeGap: LcrRow.Gap) {
@@ -30,10 +33,20 @@ internal sealed class LcrCellBaseImpl<T : LcrInitParams>(val initParams: T, val 
 
   abstract val type: Type
 
-  abstract fun apply(component: JComponent, enabled: Boolean)
+  abstract fun apply(component: JComponent, enabled: Boolean, list: JList<*>, isSelected: Boolean)
 }
 
-private class PatchedSimpleColoredComponent : SimpleColoredComponent() {
+internal class PatchedSimpleColoredComponent : SimpleColoredComponent() {
+
+  var renderingHints: Map<RenderingHints.Key, Any?>? = null
+
+  override fun applyAdditionalHints(g: Graphics2D) {
+    super.applyAdditionalHints(g)
+
+    renderingHints?.let {
+      g.addRenderingHints(it)
+    }
+  }
 
   override fun getAccessibleContext(): AccessibleContext {
     if (accessibleContext == null) {

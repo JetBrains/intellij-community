@@ -36,7 +36,7 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   @Override
-  public void addReferencesTo(@NotNull final UElement decl, @NotNull final RefJavaElement ref, final UElement @Nullable ... findIn) {
+  public void addReferencesTo(final @NotNull UElement decl, final @NotNull RefJavaElement ref, final UElement @Nullable ... findIn) {
     final RefJavaElementImpl refFrom = (RefJavaElementImpl)ref;
     final RefManagerImpl refManager = refFrom.getRefManager();
     if (findIn == null) {
@@ -561,8 +561,7 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   @Override
-  @Nullable
-  public String getPackageName(RefEntity refEntity) {
+  public @Nullable String getPackageName(RefEntity refEntity) {
     if (refEntity instanceof RefProject || refEntity instanceof RefJavaModule) {
       return null;
     }
@@ -574,9 +573,8 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
     return refPackage == null ? JavaAnalysisBundle.message("inspection.reference.default.package") : refPackage.getQualifiedName();
   }
 
-  @NotNull
   @Override
-  public String getAccessModifier(@NotNull PsiModifierListOwner psiElement) {
+  public @NotNull String getAccessModifier(@NotNull PsiModifierListOwner psiElement) {
     if (psiElement instanceof PsiParameter) return PsiModifier.PACKAGE_LOCAL;
 
     PsiModifierList list = psiElement.getModifierList();
@@ -601,8 +599,7 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   @Override
-  @Nullable
-  public RefClass getOwnerClass(RefManager refManager, UElement uElement) {
+  public @Nullable RefClass getOwnerClass(RefManager refManager, UElement uElement) {
     while (uElement != null && !(uElement instanceof UClass)) {
       uElement = uElement.getUastParent();
     }
@@ -616,8 +613,7 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   @Override
-  @Nullable
-  public RefClass getOwnerClass(RefElement refElement) {
+  public @Nullable RefClass getOwnerClass(RefElement refElement) {
     LOG.assertTrue(refElement.isInitialized(), refElement.getName() + " not initialized");
     RefEntity parent = refElement.getOwner();
 

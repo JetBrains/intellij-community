@@ -15,6 +15,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.*;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -49,8 +51,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
   // provides ctrl+hover info
   @Override
-  @Nullable
-  public @Nls String getQuickNavigateInfo(PsiElement element, @NotNull PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, @NotNull PsiElement originalElement) {
     final PsiElement referenceElement = originalElement.getParent(); // identifier -> expression
     for (PythonDocumentationQuickInfoProvider point : PythonDocumentationQuickInfoProvider.EP_NAME.getExtensions()) {
       final String info = point.getQuickInfo(referenceElement);
@@ -106,15 +107,13 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  @NotNull
-  static HtmlChunk describeFunction(@NotNull PyFunction function,
-                                    @NotNull TypeEvalContext context,
-                                    boolean forTooltip) {
+  static @NotNull HtmlChunk describeFunction(@NotNull PyFunction function,
+                                             @NotNull TypeEvalContext context,
+                                             boolean forTooltip) {
     return HtmlChunk.raw(describeFunctionWithTypes(function, context, forTooltip));
   }
 
-  @NotNull
-  static HtmlChunk describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+  static @NotNull HtmlChunk describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
     final HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan(StringUtil.notNullize(target.getName()), DefaultLanguageHighlighterColors.IDENTIFIER));
     result.append(styledSpan(": ", PyHighlighter.PY_OPERATION_SIGN));
@@ -137,8 +136,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return result.toFragment();
   }
 
-  @NotNull
-  static HtmlChunk describeParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
+  static @NotNull HtmlChunk describeParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
     final HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan(StringUtil.notNullize(parameter.getName()), paramNameTextAttribute(parameter.isSelf())));
     result.append(styledSpan(": ", PyHighlighter.PY_OPERATION_SIGN));
@@ -146,8 +144,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return result.toFragment();
   }
 
-  @NotNull
-  static HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter, boolean showKind, @NotNull TypeEvalContext context) {
+  static @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter, boolean showKind, @NotNull TypeEvalContext context) {
     HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan(StringUtil.notNullize(typeParameter.getName()), PyHighlighter.PY_TYPE_PARAMETER));
     PyExpression boundExpression = typeParameter.getBoundExpression();
@@ -167,8 +164,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
 
-  @NotNull
-  static HtmlChunk describeTypeAlias(@NotNull PyTypeAliasStatement typeAliasStatement, @NotNull TypeEvalContext context) {
+  static @NotNull HtmlChunk describeTypeAlias(@NotNull PyTypeAliasStatement typeAliasStatement, @NotNull TypeEvalContext context) {
     HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan("type ", PyHighlighter.PY_KEYWORD)); //NON-NLS
     result.append(styledSpan(StringUtil.notNullize(typeAliasStatement.getName()), DefaultLanguageHighlighterColors.IDENTIFIER));
@@ -190,11 +186,9 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return result.toFragment();
   }
 
-  @NlsSafe
-  @NotNull
-  private static String describeFunctionWithTypes(@NotNull PyFunction function,
-                                                  @NotNull TypeEvalContext context,
-                                                  boolean forTooltip) {
+  private static @NlsSafe @NotNull String describeFunctionWithTypes(@NotNull PyFunction function,
+                                                                    @NotNull TypeEvalContext context,
+                                                                    boolean forTooltip) {
     final StringBuilder result = new StringBuilder();
     int firstParamOffset = 0;
     // TODO wrapping of long signatures
@@ -256,11 +250,11 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         }
       }
       else if (parameter.getParameter() instanceof PySlashParameter) {
-        paramName = PySlashParameter.TEXT;
+        paramName = PyAstSlashParameter.TEXT;
         showType = false;
       }
       else if (parameter.getParameter() instanceof PySingleStarParameter) {
-        paramName = PySingleStarParameter.TEXT;
+        paramName = PyAstSingleStarParameter.TEXT;
         showType = false;
       }
       else {
@@ -299,10 +293,9 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return result.toString();
   }
 
-  @Nullable
-  private static @Nls String describeExpression(@NotNull PyExpression expression,
-                                                @NotNull PsiElement originalElement,
-                                                @NotNull TypeEvalContext context) {
+  private static @Nullable @Nls String describeExpression(@NotNull PyExpression expression,
+                                                          @NotNull PsiElement originalElement,
+                                                          @NotNull TypeEvalContext context) {
     final String name = expression.getName();
     if (name != null) {
       final HtmlBuilder result = new HtmlBuilder();
@@ -340,17 +333,14 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @param context type evaluation context
    * @return string representation of the type
    */
-  @NotNull
-  @NlsSafe
-  public static String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return buildTypeModel(type, context).asString();
   }
 
   /**
    * Returns the provided type in PEP 484 compliant format.
    */
-  @NotNull
-  public static String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  public static @NotNull String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return buildTypeModel(type, context).asPep484TypeHint();
   }
 
@@ -362,8 +352,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return string representation of the type similar to {@link #getTypeName(PyType, TypeEvalContext)}, but with additional information,
    * such as bounds for TypeVar types in ' ≤: *bound*' format
    */
-  @NotNull
-  public static String getVerboseTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  public static @NotNull String getVerboseTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return buildTypeModel(type, context).asStringWithAdditionalInfo();
   }
 
@@ -398,19 +387,16 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return more user-friendly description than result of {@link PythonDocumentationProvider#getTypeName(PyType, TypeEvalContext)}.
    * {@code Any} is excluded from {@code Union[Any, ...]}-like types.
    */
-  @NotNull
-  public static String getTypeDescription(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  public static @NotNull String getTypeDescription(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return buildTypeModel(type, context).asDescription();
   }
 
-  @NotNull
-  private static PyTypeModelBuilder.TypeModel buildTypeModel(@Nullable PyType type, @NotNull TypeEvalContext context) {
+  private static @NotNull PyTypeModelBuilder.TypeModel buildTypeModel(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return new PyTypeModelBuilder(context).build(type, true);
   }
 
-  @NotNull
-  static HtmlChunk describeDecorators(@NotNull PyDecoratable decoratable,
-                                      @NotNull HtmlChunk separator) {
+  static @NotNull HtmlChunk describeDecorators(@NotNull PyDecoratable decoratable,
+                                               @NotNull HtmlChunk separator) {
     final HtmlBuilder result = new HtmlBuilder();
     final PyDecoratorList decoratorList = decoratable.getDecoratorList();
     if (decoratorList != null) {
@@ -430,9 +416,8 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return result.toFragment();
   }
 
-  @NotNull
-  static HtmlChunk describeClass(@NotNull PyClass cls,
-                                 @NotNull TypeEvalContext context) {
+  static @NotNull HtmlChunk describeClass(@NotNull PyClass cls,
+                                          @NotNull TypeEvalContext context) {
     final HtmlBuilder result = new HtmlBuilder();
     final @NlsSafe String name = StringUtil.notNullize(cls.getName(), PyNames.UNNAMED_ELEMENT);
     result.append(styledSpan("class ", PyHighlighter.PY_KEYWORD)); //NON-NLS
@@ -458,8 +443,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return result.toFragment();
   }
 
-  @NotNull
-  private static HtmlChunk describeSuperClass(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  private static @NotNull HtmlChunk describeSuperClass(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final @NlsSafe String expressionText = expression.getText();
     if (expression instanceof PyReferenceExpression referenceExpression) {
       if (!referenceExpression.isQualified()) {
@@ -515,8 +499,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return HtmlChunk.text(expressionText);
   }
 
-  @NotNull
-  private static HtmlChunk describeDecorator(@NotNull PyDecorator decorator) {
+  private static @NotNull HtmlChunk describeDecorator(@NotNull PyDecorator decorator) {
     final HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan("@" + PyUtil.getReadableRepr(decorator.getCallee(), false), PyHighlighter.PY_DECORATOR));
 
@@ -573,12 +556,11 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return url == null ? null : Collections.singletonList(url);
   }
 
-  @Nullable
   @Override
-  public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
-                                                  @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement,
-                                                  int targetOffset) {
+  public @Nullable PsiElement getCustomDocumentationElement(@NotNull Editor editor,
+                                                            @NotNull PsiFile file,
+                                                            @Nullable PsiElement contextElement,
+                                                            int targetOffset) {
     if (contextElement != null) {
       final IElementType elementType = contextElement.getNode().getElementType();
       if (PythonDialectsTokenSetProvider.getInstance().getKeywordTokens().contains(elementType)) {
@@ -615,8 +597,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return builder.toFragment();
   }
 
-  @Nullable
-  public static QualifiedName getFullQualifiedName(@Nullable final PsiElement element) {
+  public static @Nullable QualifiedName getFullQualifiedName(final @Nullable PsiElement element) {
     final String name =
       (element instanceof PsiNamedElement) ? ((PsiNamedElement)element).getName() : element != null ? element.getText() : null;
     if (name != null) {
@@ -658,14 +639,12 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  @Nullable
-  protected static PsiFileSystemItem getFile(PsiElement element) {
+  protected static @Nullable PsiFileSystemItem getFile(PsiElement element) {
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
     return (PsiFileSystemItem)PyUtil.turnInitIntoDir(file);
   }
 
-  @Nullable
-  public static PsiNamedElement getNamedElement(@Nullable PsiElement element) {
+  public static @Nullable PsiNamedElement getNamedElement(@Nullable PsiElement element) {
     PsiNamedElement namedElement = (element instanceof PsiNamedElement) ? (PsiNamedElement)element : null;
     final PyClass containingClass = PyUtil.turnConstructorIntoClass(as(namedElement, PyFunction.class));
     if (containingClass != null) {
@@ -677,8 +656,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return namedElement;
   }
 
-  @Nullable
-  public static String getOnlyUrlFor(PsiElement element, PsiElement originalElement) {
+  public static @Nullable String getOnlyUrlFor(PsiElement element, PsiElement originalElement) {
     PsiFileSystemItem file = getFile(element);
     if (file == null) return null;
     final Sdk sdk = PyBuiltinCache.findSdkForFile(file);
@@ -705,8 +683,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return null;
   }
 
-  @Nullable
-  public static String pyVersion(@Nullable String versionString) {
+  public static @Nullable String pyVersion(@Nullable String versionString) {
     final String prefix = "Python ";
     if (versionString != null && versionString.startsWith(prefix)) {
       final String version = versionString.substring(prefix.length());

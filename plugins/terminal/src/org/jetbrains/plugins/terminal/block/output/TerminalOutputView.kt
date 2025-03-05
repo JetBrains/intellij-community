@@ -13,17 +13,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.block.ui.stickScrollBarToBottom
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
-import javax.swing.JScrollBar
-import javax.swing.event.ChangeEvent
-import javax.swing.event.ChangeListener
 import kotlin.math.min
 
 /**
@@ -32,11 +31,12 @@ import kotlin.math.min
  * @see TerminalOutputView
  * @see TerminalOutputController
  */
-internal class TerminalOutputView(
+@ApiStatus.Internal
+class TerminalOutputView(
   private val project: Project,
   session: BlockTerminalSession,
   settings: JBTerminalSystemSettingsProviderBase,
-  focusModel: TerminalFocusModel
+  focusModel: TerminalFocusModel,
 ) : Disposable {
   val controller: TerminalOutputController
   val component: JComponent
@@ -67,45 +67,11 @@ internal class TerminalOutputView(
 
   private fun createEditor(settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
     val document = DocumentImpl("", true)
-    val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
+    val editor = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = true)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(this)
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
     return editor
-  }
-
-  private fun stickScrollBarToBottom(verticalScrollBar: JScrollBar) {
-    verticalScrollBar.model.addChangeListener(object : ChangeListener {
-      var preventRecursion: Boolean = false
-      var prevValue: Int = 0
-      var prevMaximum: Int = 0
-      var prevExtent: Int = 0
-
-      override fun stateChanged(e: ChangeEvent?) {
-        if (preventRecursion) return
-
-        val model = verticalScrollBar.model
-        val maximum = model.maximum
-        val extent = model.extent
-
-        if (extent != prevExtent || maximum != prevMaximum) {
-          // stay at the bottom if the previous position was at the bottom
-          if (prevValue == prevMaximum - prevExtent) {
-            preventRecursion = true
-            try {
-              model.value = maximum - extent
-            }
-            finally {
-              preventRecursion = false
-            }
-          }
-        }
-
-        prevValue = model.value
-        prevMaximum = model.maximum
-        prevExtent = model.extent
-      }
-    })
   }
 
   override fun dispose() {

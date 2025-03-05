@@ -22,7 +22,7 @@ public interface WelcomeTabFactory {
    * @deprecated use createWelcomeTabs instead
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default WelcomeScreenTab createWelcomeTab(@NotNull Disposable parentDisposable) { return null; }
 
   /**

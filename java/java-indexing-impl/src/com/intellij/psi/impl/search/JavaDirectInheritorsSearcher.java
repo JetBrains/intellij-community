@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> processor) {
+  public boolean execute(final @NotNull DirectClassInheritorsSearch.SearchParameters parameters, final @NotNull Processor<? super PsiClass> processor) {
     if (!parameters.shouldSearchInLanguage(JavaLanguage.INSTANCE)) {
       return true;
     }

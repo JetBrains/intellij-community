@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -64,8 +50,7 @@ public abstract class IndexedContainer {
    * @return the qualifier of the expression which was used to create this {@code IndexedContainer}. The extracted qualifier might be
    * non-physical if it was implicit in the original code (e.g. "this" could be returned if original call was simply "size()")
    */
-  @NotNull
-  public PsiExpression getQualifier() {
+  public @NotNull PsiExpression getQualifier() {
     return myQualifier;
   }
 
@@ -85,8 +70,7 @@ public abstract class IndexedContainer {
    * @param expression expression to create an IndexedContainer from
    * @return newly created IndexedContainer or null if the supplied expression is not length retrieval expression
    */
-  @Nullable
-  public static IndexedContainer fromLengthExpression(@Nullable PsiExpression expression) {
+  public static @Nullable IndexedContainer fromLengthExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     PsiExpression arrayExpression = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getArrayFromLengthExpression(expression));
     if (arrayExpression != null) {
@@ -117,8 +101,7 @@ public abstract class IndexedContainer {
    * @param bound                 reference to arrayLength
    * @return newly created IndexedContainer or null if it is impossible to resolve it
    */
-  @Nullable
-  public static IndexedContainer arrayContainerWithBound(@NotNull PsiArrayAccessExpression arrayAccessExpression,
+  public static @Nullable IndexedContainer arrayContainerWithBound(@NotNull PsiArrayAccessExpression arrayAccessExpression,
                                                          @NotNull PsiExpression bound) {
     PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
     if (!(arrayExpression instanceof PsiReferenceExpression reference) ||

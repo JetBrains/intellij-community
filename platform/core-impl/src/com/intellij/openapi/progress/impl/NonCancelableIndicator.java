@@ -1,14 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class NonCancelableIndicator implements StandardProgressIndicator {
-
+@ApiStatus.Internal
+public final class NonCancelableIndicator implements StandardProgressIndicator {
   static final NonCancelableIndicator INSTANCE = new NonCancelableIndicator();
 
   private NonCancelableIndicator() {
@@ -122,5 +123,10 @@ final class NonCancelableIndicator implements StandardProgressIndicator {
   @Override
   public boolean isShowing() {
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return "NonCancelableIndicator.INSTANCE: "+super.toString();
   }
 }

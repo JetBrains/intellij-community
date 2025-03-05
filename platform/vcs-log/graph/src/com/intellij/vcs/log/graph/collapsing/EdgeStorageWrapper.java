@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.openapi.util.Pair;
@@ -18,11 +18,11 @@ import java.util.function.Function;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.intEqual;
 
 public class EdgeStorageWrapper {
-  @NotNull private final EdgeStorage myEdgeStorage;
-  @NotNull private final Function<? super Integer, Integer> myGetNodeIndexById;
-  @NotNull private final Function<? super Integer, Integer> myGetNodeIdByIndex;
+  private final @NotNull EdgeStorage myEdgeStorage;
+  private final @NotNull Function<? super Integer, Integer> myGetNodeIndexById;
+  private final @NotNull Function<? super Integer, Integer> myGetNodeIdByIndex;
 
-  public EdgeStorageWrapper(@NotNull EdgeStorage edgeStorage, @NotNull final LinearGraph graph) {
+  public EdgeStorageWrapper(@NotNull EdgeStorage edgeStorage, final @NotNull LinearGraph graph) {
     this(edgeStorage, nodeId -> graph.getNodeIndex(nodeId), nodeIndex -> graph.getNodeId(nodeIndex));
   }
 
@@ -52,8 +52,7 @@ public class EdgeStorageWrapper {
     return false;
   }
 
-  @NotNull
-  public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
+  public @NotNull List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
     List<GraphEdge> result = new SmartList<>();
     for (Pair<Integer, GraphEdgeType> retrievedEdge : myEdgeStorage.getEdges(myGetNodeIdByIndex.apply(nodeIndex))) {
       GraphEdge edge = decompressEdge(nodeIndex, retrievedEdge.first, retrievedEdge.second);
@@ -62,8 +61,7 @@ public class EdgeStorageWrapper {
     return result;
   }
 
-  @NotNull
-  public Set<GraphEdge> getEdges() {
+  public @NotNull Set<GraphEdge> getEdges() {
     Set<GraphEdge> result = new HashSet<>();
     for (int id : myEdgeStorage.getKnownIds()) {
       result.addAll(getAdjacentEdges(myGetNodeIndexById.apply(id), EdgeFilter.ALL));
@@ -71,8 +69,7 @@ public class EdgeStorageWrapper {
     return result;
   }
 
-  @NotNull
-  private Pair<Integer, Integer> getNodeIds(@NotNull GraphEdge graphEdge) {
+  private @NotNull Pair<Integer, Integer> getNodeIds(@NotNull GraphEdge graphEdge) {
     if (graphEdge.getUpNodeIndex() != null) {
       Integer mainId = myGetNodeIdByIndex.apply(graphEdge.getUpNodeIndex());
       if (graphEdge.getDownNodeIndex() != null) {
@@ -88,8 +85,7 @@ public class EdgeStorageWrapper {
     }
   }
 
-  @Nullable
-  private GraphEdge decompressEdge(int nodeIndex, @Nullable Integer targetId, @NotNull GraphEdgeType edgeType) {
+  private @Nullable GraphEdge decompressEdge(int nodeIndex, @Nullable Integer targetId, @NotNull GraphEdgeType edgeType) {
     if (edgeType.isNormalEdge()) {
       assert targetId != null;
       Integer anotherNodeIndex = myGetNodeIndexById.apply(targetId);

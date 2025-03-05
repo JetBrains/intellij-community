@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.script.experimental.api.*
 
 /**
  * Holds uploaded cache definitions.

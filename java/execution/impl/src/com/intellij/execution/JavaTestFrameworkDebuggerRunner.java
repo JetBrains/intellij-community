@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -23,23 +23,20 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public abstract class JavaTestFrameworkDebuggerRunner extends GenericDebuggerRunner {
-  @NotNull
   @Override
-  public abstract String getRunnerId();
+  public abstract @NotNull String getRunnerId();
 
   protected abstract boolean validForProfile(@NotNull RunProfile profile);
   
-  @NotNull
-  protected abstract String getThreadName();
+  protected abstract @NotNull String getThreadName();
 
   @Override
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) && validForProfile(profile);
   }
 
-  @Nullable
   @Override
-  protected RunContentDescriptor createContentDescriptor(@NotNull final RunProfileState state, @NotNull final ExecutionEnvironment environment)
+  protected @Nullable RunContentDescriptor createContentDescriptor(final @NotNull RunProfileState state, final @NotNull ExecutionEnvironment environment)
     throws ExecutionException {
     final RunContentDescriptor res = super.createContentDescriptor(state, environment);
     final ServerSocket socket = ((JavaTestFrameworkRunnableState<?>)state).getForkSocket();

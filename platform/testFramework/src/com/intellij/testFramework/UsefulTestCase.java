@@ -763,8 +763,7 @@ Most likely there was an uncaught exception in asynchronous execution that resul
     assertSameElements(messageForCollection(message, collection), collection, expected);
   }
 
-  @NotNull
-  private static <T> String messageForCollection(@NotNull String message, @NotNull Collection<? extends T> collection) {
+  private static @NotNull <T> String messageForCollection(@NotNull String message, @NotNull Collection<? extends T> collection) {
     return (message.isBlank() ? "" : message + "\n") + toString(collection);
   }
 

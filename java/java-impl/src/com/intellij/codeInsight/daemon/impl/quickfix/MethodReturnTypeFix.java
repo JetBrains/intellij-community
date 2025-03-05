@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -32,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -77,6 +77,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       PsiSubstitutor.EMPTY, showClassName ? PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS : PsiFormatUtilBase.SHOW_NAME,
       0
     );
+    returnType = PsiTypesUtil.removeExternalAnnotations(returnType);
     myReturnTypePointer = SmartTypePointerManager.getInstance(method.getProject()).createSmartTypePointer(returnType);
     myFixWholeHierarchy = fixWholeHierarchy;
     mySuggestSuperTypes = suggestSuperTypes;
@@ -296,7 +297,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
         ControlFlow controlFlow;
         try {
-          controlFlow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(method.getBody());
+          controlFlow = ControlFlowFactory.getControlFlowNoConstantEvaluate(method.getBody());
         }
         catch (AnalysisCanceledException e) {
           return null; //must be an error
@@ -377,7 +378,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     PsiMethod[] hierarchyMethods = methods;
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       for (PsiMethod psiMethod : hierarchyMethods) {
-        OverridingMethodsSearch.search(psiMethod).forEach(m -> {
+        OverridingMethodsSearch.search(psiMethod).asIterable().forEach(m -> {
           affectedMethods.add(m);
         });
       }

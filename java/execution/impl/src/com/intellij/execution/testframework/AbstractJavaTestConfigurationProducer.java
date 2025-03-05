@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -12,7 +12,7 @@ import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -220,7 +220,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
                                            boolean checkIsTest,
                                            LinkedHashSet<? super String> classes,
                                            PsiElementProcessor.CollectElements<PsiElement> processor) {
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
       return collectTestMembers(elements, checkAbstract, checkIsTest, processor, classes);
     }
@@ -334,13 +334,11 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     return null;
   }
 
-  @Nullable
-  public String getQName(PsiElement psiMember) {
+  public @Nullable String getQName(PsiElement psiMember) {
     return getQName(psiMember, null);
   }
 
-  @Nullable
-  public String getQName(PsiElement psiMember, @Nullable Location location) {
+  public @Nullable String getQName(PsiElement psiMember, @Nullable Location location) {
     if (psiMember instanceof PsiClass) {
       return ClassUtil.getJVMClassName((PsiClass)psiMember);
     }
@@ -388,8 +386,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     }
   }
 
-  @Nullable
-  public static PsiPackage checkPackage(final PsiElement element) {
+  public static @Nullable PsiPackage checkPackage(final PsiElement element) {
     if (element == null || !element.isValid()) return null;
     final Project project = element.getProject();
     DumbService dumbService = DumbService.getInstance(project);

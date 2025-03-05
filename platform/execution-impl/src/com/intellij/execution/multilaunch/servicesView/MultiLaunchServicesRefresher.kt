@@ -1,6 +1,5 @@
 package com.intellij.execution.multilaunch.servicesView
 
-import com.intellij.execution.multilaunch.servicesView.MultiLaunchServiceContributor
 import com.intellij.execution.services.ServiceEventListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

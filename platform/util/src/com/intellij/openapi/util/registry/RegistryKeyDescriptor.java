@@ -44,8 +44,7 @@ public final class RegistryKeyDescriptor {
     return myOverrides;
   }
 
-  @Nullable
-  public String getPluginId() {
+  public @Nullable String getPluginId() {
     return myPluginId;
   }
 }

@@ -211,7 +211,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
 
     configureByExistingFile(virtualFile);
 
-    TrafficLightRenderer renderer = ReadAction.nonBlocking(()->new TrafficLightRenderer(getProject(), getDocument(psiFile))).submit(
+    TrafficLightRenderer renderer = ReadAction.nonBlocking(()->new TrafficLightRenderer(getProject(), getEditor())).submit(
       AppExecutorUtil.getAppExecutorService()).get();
     Disposer.register(getTestRootDisposable(), renderer);
     while (true) {

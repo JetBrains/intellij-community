@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +25,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 public class SvnRevisionsNavigationMediator implements CommittedChangesNavigation {
   private static final Logger LOG = Logger.getInstance(SvnRevisionsNavigationMediator.class);
 
-  public final static int CHUNK_SIZE = 50;
+  public static final int CHUNK_SIZE = 50;
 
   private final InternallyCachedProvider myInternallyCached;
   private final VisuallyCachedProvider myVisuallyCached;

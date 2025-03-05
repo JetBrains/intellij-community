@@ -48,8 +48,7 @@ import java.util.function.Supplier;
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends HeavyPlatformTestCase {
   protected static final String DEFAULT_SDK = "default";
   protected T myWizard;
-  @Nullable
-  private Project myCreatedProject;
+  private @Nullable Project myCreatedProject;
   private Sdk myOldDefaultProjectSdk;
   private File contentRoot;
 

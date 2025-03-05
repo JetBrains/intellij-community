@@ -17,7 +17,6 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,10 +28,10 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class ThrowFromFinallyBlockInspection extends BaseInspection {
 
@@ -51,8 +50,7 @@ public final class ThrowFromFinallyBlockInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     if (infos.length == 0) {
       return InspectionGadgetsBundle.message("throw.from.finally.block.problem.descriptor");
     }
@@ -151,8 +149,7 @@ public final class ThrowFromFinallyBlockInspection extends BaseInspection {
       return !assigned;
     }
 
-    @Nullable
-    public <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, @NotNull PsiElement stopAt) {
+    public @Nullable <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, @NotNull PsiElement stopAt) {
       if (element == null || element instanceof PsiFile) return null;
       element = element.getParent();
 

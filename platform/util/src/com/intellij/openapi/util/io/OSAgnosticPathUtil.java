@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -12,10 +12,10 @@ import java.util.Comparator;
 
 /**
  * <p>Utility methods for operations with file path strings. Unlike {@link java.io IO}, {@link java.nio.file NIO2} and {@link FileUtil},
- * these methods are platform-agnostic - i.e. able to work with Windows paths on Unix systems and vice versa.
+ * these methods are platform-agnostic - i.e., able to work with Windows paths on Unix systems and vice versa.
  * Both forward- and backward-slashes are legal separators.</p>
  *
- * <p><strong>Warning:</strong> the methods are by definition less strict, and in some cases may produce incorrect results.
+ * <p><strong>Warning:</strong> the methods are by definition less strict and in some cases may produce incorrect results.
  * Unless you're certain you need the relaxed handling, prefer {@link java.nio.file NIO2} instead.</p>
  */
 public final class OSAgnosticPathUtil {
@@ -24,7 +24,7 @@ public final class OSAgnosticPathUtil {
   /**
    * Comparing paths by elements and without taking separators into account.
    * The key difference from {@link String#compareTo} is that "a/b" is less than "a.b":
-   * instead of character-vs-character matching, the paths are compared as ["a", "b"] vs. ["a.b"].
+   * instead of character-to-character matching, the paths are compared as ["a", "b"] vs. ["a.b"].
    */
   public static final Comparator<String> COMPARATOR = (@Nullable String path1, @Nullable String path2) -> {
     if (Strings.areSameInstance(path1, path2)) return 0;
@@ -72,7 +72,7 @@ public final class OSAgnosticPathUtil {
   }
 
   /**
-   * @return true when the path starts with a drive letter followed by colon, e.g., "C:"
+   * @return true when the path starts with a drive letter followed by colon, e.g., {@code "C:"}.
    */
   public static boolean startsWithWindowsDrive(@NotNull String path) {
     return path.length() >= 2 && path.charAt(1) == ':' && isDriveLetter(path.charAt(0));
@@ -125,7 +125,7 @@ public final class OSAgnosticPathUtil {
    * <p>Returns a parent path according to the rules applicable to the given path,
    * or {@code null} when the path is a file system root or unrecognized.</p>
    * <p>A path should not contain duplicated separators (except at the beginning of a UNC path), otherwise the result could be incorrect.</p>
-   * <p>Directory traversals are not processed ({@code getParent("/a/b/..")} returns {@code "/a/b"} instead of {@code "/a"}, etc).</p>
+   * <p>Directory traversals are not processed ({@code getParent("/a/b/..")} returns {@code "/a/b"} instead of {@code "/a"}, etc.)</p>
    *
    * @see OSAgnosticPathUtil applicability warning
    */

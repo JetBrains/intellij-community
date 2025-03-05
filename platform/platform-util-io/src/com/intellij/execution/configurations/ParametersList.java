@@ -53,8 +53,7 @@ public final class ParametersList implements Cloneable {
     return getPropertyValue(propertyName) != null;
   }
 
-  @Nullable
-  public String getPropertyValue(@NotNull @NonNls String propertyName) {
+  public @Nullable String getPropertyValue(@NotNull @NonNls String propertyName) {
     String exact = "-D" + propertyName;
     String prefix = "-D" + propertyName + "=";
     int index = indexOfLocalParameter(o -> o.equals(exact) || o.startsWith(prefix));
@@ -63,13 +62,11 @@ public final class ParametersList implements Cloneable {
     return str.length() == exact.length() ? "" : str.substring(prefix.length());
   }
 
-  @NotNull
-  public Map<String, String> getProperties() {
+  public @NotNull Map<String, String> getProperties() {
     return getProperties("");
   }
 
-  @NotNull
-  public Map<String, String> getProperties(@NonNls String valueIfMissing) {
+  public @NotNull Map<String, String> getProperties(@NonNls String valueIfMissing) {
     Map<String, String> result = new LinkedHashMap<>();
     JBIterable<Matcher> matchers =
       JBIterable.from(myParameters).map(CompositeParameterTargetedValue::getLocalValue).map(PROPERTY_PATTERN::matcher).filter(Matcher::matches);
@@ -79,8 +76,7 @@ public final class ParametersList implements Cloneable {
     return result;
   }
 
-  @NotNull
-  public String getParametersString() {
+  public @NotNull String getParametersString() {
     return join(getList());
   }
 
@@ -88,8 +84,7 @@ public final class ParametersList implements Cloneable {
     return ArrayUtilRt.toStringArray(getList());
   }
 
-  @NotNull
-  public List<String> getList() {
+  public @NotNull @Unmodifiable List<String> getList() {
     if (myGroups.isEmpty()) {
       return getLocalParameters();
     }
@@ -101,9 +96,8 @@ public final class ParametersList implements Cloneable {
     return Collections.unmodifiableList(params);
   }
 
-  @NotNull
   @ApiStatus.Experimental
-  public List<CompositeParameterTargetedValue> getTargetedList() {
+  public @NotNull List<CompositeParameterTargetedValue> getTargetedList() {
     if (myGroups.isEmpty()) {
       return Collections.unmodifiableList(myParameters);
     }
@@ -115,13 +109,11 @@ public final class ParametersList implements Cloneable {
     return Collections.unmodifiableList(params);
   }
 
-  @NotNull
-  private List<String> getLocalParameters() {
+  private @NotNull @Unmodifiable List<String> getLocalParameters() {
     return ContainerUtil.map(myParameters, CompositeParameterTargetedValue::getLocalValue);
   }
 
-  @NotNull
-  private CompositeParameterTargetedValue createExpandedLocalValue(String param) {
+  private @NotNull CompositeParameterTargetedValue createExpandedLocalValue(String param) {
     return new CompositeParameterTargetedValue(expandMacros(param));
   }
 
@@ -162,25 +154,21 @@ public final class ParametersList implements Cloneable {
     myParameters.add(parameterTargetedValue);
   }
 
-  @NotNull
-  public ParamsGroup addParamsGroup(@NotNull @NonNls String groupId) {
+  public @NotNull ParamsGroup addParamsGroup(@NotNull @NonNls String groupId) {
     return addParamsGroup(new ParamsGroup(groupId));
   }
 
-  @NotNull
-  public ParamsGroup addParamsGroup(@NotNull ParamsGroup group) {
+  public @NotNull ParamsGroup addParamsGroup(@NotNull ParamsGroup group) {
     myGroups.add(group);
     return group;
   }
 
-  @NotNull
-  public ParamsGroup addParamsGroupAt(int index, @NotNull ParamsGroup group) {
+  public @NotNull ParamsGroup addParamsGroupAt(int index, @NotNull ParamsGroup group) {
     myGroups.add(index, group);
     return group;
   }
 
-  @NotNull
-  public ParamsGroup addParamsGroupAt(int index, @NotNull @NonNls String groupId) {
+  public @NotNull ParamsGroup addParamsGroupAt(int index, @NotNull @NonNls String groupId) {
     ParamsGroup group = new ParamsGroup(groupId);
     myGroups.add(index, group);
     return group;
@@ -194,31 +182,26 @@ public final class ParametersList implements Cloneable {
     return myGroups.size();
   }
 
-  @NotNull
-  public List<String> getParameters() {
+  public @NotNull @Unmodifiable List<String> getParameters() {
     return getLocalParameters();
   }
 
-  @NotNull
-  public List<ParamsGroup> getParamsGroups() {
+  public @NotNull List<ParamsGroup> getParamsGroups() {
     return Collections.unmodifiableList(myGroups);
   }
 
-  @NotNull
-  public ParamsGroup getParamsGroupAt(int index) {
+  public @NotNull ParamsGroup getParamsGroupAt(int index) {
     return myGroups.get(index);
   }
 
-  @Nullable
-  public ParamsGroup getParamsGroup(@NotNull @NonNls String name) {
+  public @Nullable ParamsGroup getParamsGroup(@NotNull @NonNls String name) {
     for (ParamsGroup group : myGroups) {
       if (name.equals(group.getId())) return group;
     }
     return null;
   }
 
-  @Nullable
-  public ParamsGroup removeParamsGroup(int index) {
+  public @Nullable ParamsGroup removeParamsGroup(int index) {
     return myGroups.remove(index);
   }
 
@@ -320,9 +303,8 @@ public final class ParametersList implements Cloneable {
     return myParameters.get(ind).getLocalValue();
   }
 
-  @Nullable
-  public String getLast() {
-    return myParameters.size() > 0 ? myParameters.get(myParameters.size() - 1).getLocalValue() : null;
+  public @Nullable String getLast() {
+    return !myParameters.isEmpty() ? myParameters.get(myParameters.size() - 1).getLocalValue() : null;
   }
 
   public void add(@NotNull @NonNls String name, @NotNull @NonNls String value) {
@@ -347,8 +329,7 @@ public final class ParametersList implements Cloneable {
     return copyTo(new ParametersList());
   }
 
-  @NotNull
-  public ParametersList copyTo(@NotNull ParametersList target) {
+  public @NotNull ParametersList copyTo(@NotNull ParametersList target) {
     target.myParameters.addAll(myParameters);
     for (ParamsGroup group : myGroups) {
       target.myGroups.add(group.clone());
@@ -359,16 +340,14 @@ public final class ParametersList implements Cloneable {
   /**
    * @see ParametersListUtil#join(List)
    */
-  @NotNull
-  public static String join(@NotNull @NonNls List<String> parameters) {
+  public static @NotNull String join(@NotNull @NonNls List<String> parameters) {
     return ParametersListUtil.join(parameters);
   }
 
   /**
    * @see ParametersListUtil#join(List)
    */
-  @NotNull
-  public static String join(@NonNls String @NotNull ... parameters) {
+  public static @NotNull String join(@NonNls String @NotNull ... parameters) {
     return ParametersListUtil.join(parameters);
   }
 
@@ -379,8 +358,7 @@ public final class ParametersList implements Cloneable {
     return ParametersListUtil.parseToArray(string);
   }
 
-  @NotNull
-  public String expandMacros(@NotNull @NonNls String text) {
+  public @NotNull String expandMacros(@NotNull @NonNls String text) {
     int start = text.indexOf("${");
     if (start < 0) return text;
     Map<String, String> macroMap = myMacroMap.getValue();
@@ -436,9 +414,8 @@ public final class ParametersList implements Cloneable {
     return map;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return myParameters + (myGroups.isEmpty() ? "" : " and " + myGroups);
   }
 }

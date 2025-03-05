@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -23,7 +23,7 @@ import java.util.List;
 
 public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
-  @NotNull private final VirtualFileList myFileList;
+  private final @NotNull VirtualFileList myFileList;
   private final boolean myDeletableFiles;
 
   protected SelectFilesDialog(Project project,
@@ -37,39 +37,36 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
     myFileList = new VirtualFileList(project, selectableFiles, deletableFiles, files);
   }
 
-  @NotNull
   @Deprecated(forRemoval = true)
-  public static SelectFilesDialog init(Project project,
-                                       @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable @NlsContexts.Label String prompt,
-                                       @Nullable VcsShowConfirmationOption confirmationOption,
-                                       boolean selectableFiles,
-                                       boolean showDoNotAskOption,
-                                       boolean deletableFiles) {
+  public static @NotNull SelectFilesDialog init(Project project,
+                                                @NotNull List<? extends VirtualFile> originalFiles,
+                                                @Nullable @NlsContexts.Label String prompt,
+                                                @Nullable VcsShowConfirmationOption confirmationOption,
+                                                boolean selectableFiles,
+                                                boolean showDoNotAskOption,
+                                                boolean deletableFiles) {
     return init(project, originalFiles, prompt, showDoNotAskOption ? confirmationOption : null, selectableFiles, deletableFiles);
   }
 
-  @NotNull
-  public static SelectFilesDialog init(Project project,
-                                       @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable @NlsContexts.Label String prompt,
-                                       @Nullable VcsShowConfirmationOption confirmationOption,
-                                       boolean selectableFiles,
-                                       boolean deletableFiles) {
+  public static @NotNull SelectFilesDialog init(Project project,
+                                                @NotNull List<? extends VirtualFile> originalFiles,
+                                                @Nullable @NlsContexts.Label String prompt,
+                                                @Nullable VcsShowConfirmationOption confirmationOption,
+                                                boolean selectableFiles,
+                                                boolean deletableFiles) {
     SelectFilesDialog dialog = new SelectFilesDialog(project, originalFiles, prompt, confirmationOption, selectableFiles, deletableFiles);
     dialog.init();
     return dialog;
   }
 
-  @NotNull
-  public static SelectFilesDialog init(Project project,
-                                       @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable @NlsContexts.Label String prompt,
-                                       @Nullable VcsShowConfirmationOption confirmationOption,
-                                       boolean selectableFiles,
-                                       boolean deletableFiles,
-                                       @NotNull @NlsContexts.Button String okActionName,
-                                       @NotNull @NlsContexts.Button String cancelActionName) {
+  public static @NotNull SelectFilesDialog init(Project project,
+                                                @NotNull List<? extends VirtualFile> originalFiles,
+                                                @Nullable @NlsContexts.Label String prompt,
+                                                @Nullable VcsShowConfirmationOption confirmationOption,
+                                                boolean selectableFiles,
+                                                boolean deletableFiles,
+                                                @NotNull @NlsContexts.Button String okActionName,
+                                                @NotNull @NlsContexts.Button String cancelActionName) {
     final SelectFilesDialog dlg = init(project, originalFiles, prompt, confirmationOption, selectableFiles, deletableFiles);
     dlg.setOKButtonText(okActionName);
     dlg.setCancelButtonText(cancelActionName);
@@ -80,20 +77,18 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
     return myFileList.getIncludedChanges();
   }
 
-  public void setSelectedFiles(@NotNull final Collection<VirtualFile> selected) {
+  public void setSelectedFiles(final @NotNull Collection<VirtualFile> selected) {
     myFileList.setIncludedChanges(selected);
     myFileList.rebuildTree();
   }
 
-  @NotNull
   @Override
-  protected ChangesTree getFileList() {
+  protected @NotNull ChangesTree getFileList() {
     return myFileList;
   }
 
-  @NotNull
   @Override
-  protected DefaultActionGroup createToolbarActions() {
+  protected @NotNull DefaultActionGroup createToolbarActions() {
     DefaultActionGroup defaultGroup = super.createToolbarActions();
     if (myDeletableFiles) {
       AnAction deleteAction = new DeleteAction(null, null, IconUtil.getRemoveIcon()) {
@@ -111,7 +106,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   }
 
   public static class VirtualFileList extends AsyncChangesTreeImpl.VirtualFiles {
-    @Nullable private final DeleteProvider myDeleteProvider;
+    private final @Nullable DeleteProvider myDeleteProvider;
 
     public VirtualFileList(Project project, boolean selectableFiles, boolean deletableFiles, @NotNull List<? extends VirtualFile> files) {
       super(project, selectableFiles, true, files);

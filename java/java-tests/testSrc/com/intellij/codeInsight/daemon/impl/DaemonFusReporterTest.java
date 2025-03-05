@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.internal.statistic.FUCollectorTestCase;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -39,7 +38,7 @@ public class DaemonFusReporterTest extends BasePlatformTestCase {
     assertTrue("There must be an event with highlighting_completed=true after typing", highlightingCompletedExistsAfterTyping);
 
     List<LogEvent> events3 = collectFUSEvents(() -> {
-      DaemonCodeAnalyzer.getInstance(myFixture.getProject()).restart();
+      DaemonCodeAnalyzerEx.getInstanceEx(myFixture.getProject()).restart(getTestName(false));
       assertNotEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
     });
 

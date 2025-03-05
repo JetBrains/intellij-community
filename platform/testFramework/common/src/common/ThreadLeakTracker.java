@@ -13,10 +13,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
-import java.util.concurrent.locks.LockSupport;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.io.NettyUtil;
 
 import java.lang.invoke.MethodHandle;
@@ -25,6 +25,7 @@ import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -77,6 +78,7 @@ public final class ThreadLeakTracker {
       "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
       "embeddings-server",
+      "EventQueueMonitor-ComponentEvtDispatch", // com.sun.java.accessibility.util.ComponentEvtDispatchThread
       "External compiler",
       FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
@@ -161,7 +163,7 @@ public final class ThreadLeakTracker {
   }
 
   private static void waitForThread(Thread thread,
-                                    Map<Thread, StackTraceElement[]> stackTraces,
+                                    @Unmodifiable Map<Thread, StackTraceElement[]> stackTraces,
                                     Map<String, Thread> all,
                                     Map<String, Thread> after) {
     if (!shouldWaitForThread(thread)) {
@@ -191,7 +193,6 @@ public final class ThreadLeakTracker {
     }
 
     // check once more because the thread name may be set via race
-    stackTraces.put(thread, stackTrace);
     if (shouldIgnore(thread, stackTrace)) {
       return;
     }
@@ -203,11 +204,13 @@ public final class ThreadLeakTracker {
     String traceBefore = PerformanceWatcher.printStacktrace("", thread, traceBeforeWait);
 
     String internalDiagnostic = internalDiagnostic(stackTrace);
+    Map<Thread, StackTraceElement[]> newStackTraces = new HashMap<>(stackTraces);
+    newStackTraces.put(thread, stackTrace);
 
     throw new AssertionError(
       "Thread leaked: " + traceBefore + (trace.equals(traceBefore) ? "" : "(its trace after " + WAIT_SEC + " seconds wait:) " + trace) +
       internalDiagnostic +
-      "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, stackTraces) +
+      "\n\nLeaking threads dump:\n" + dumpThreadsToString(after, newStackTraces) +
       "\n----\nAll other threads dump:\n" + dumpThreadsToString(all, otherStackTraces)
     );
   }
@@ -236,7 +239,14 @@ public final class ThreadLeakTracker {
            || isKotlinCIOSelector(stackTrace)
            || isStarterTestFramework(stackTrace)
            || isJMXRemoteCall(stackTrace)
-           || isBuildLogCall(stackTrace);
+           || isBuildLogCall(stackTrace)
+           || isIjentMediatorThread(stackTrace)
+           || isSwingAccessibilityThread(stackTrace);
+  }
+
+  private static boolean isSwingAccessibilityThread(StackTraceElement[] trace) {
+    return trace.length > 0 && trace[0].getClassName().equals("com.sun.java.accessibility.internal.AccessBridge") &&
+           trace[0].getMethodName().equals("runDLL");
   }
 
   private static boolean isWellKnownOffender(String threadName) {
@@ -381,6 +391,36 @@ public final class ThreadLeakTracker {
     //at com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor$exportCurrentBatch$2.invokeSuspend(BatchSpanProcessor.kt:155)
 
     return ContainerUtil.exists(stackTrace, element -> element.getClassName().contains("org.jetbrains.intellij.build.ConsoleSpanExporter"));
+  }
+
+  /**
+   * We permit leaking IJent threads if IJent is intended to be shared for the whole application
+   * Normally IJent needs to be destroyed after each test. It is relatively cheap to set it up.
+   */
+  private static boolean isIjentMediatorThread(StackTraceElement[] stackTrace) {
+    // at java.base@17.0.9/java.io.FileInputStream.readBytes(Native Method)
+    // at java.base@17.0.9/java.io.FileInputStream.read(FileInputStream.java:276)
+    // at java.base@17.0.9/java.io.BufferedInputStream.read1(BufferedInputStream.java:282)
+    // at java.base@17.0.9/java.io.BufferedInputStream.read(BufferedInputStream.java:343)
+    // at java.base@17.0.9/sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:270)
+    // at java.base@17.0.9/sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:313)
+    // at java.base@17.0.9/sun.nio.cs.StreamDecoder.read(StreamDecoder.java:188)
+    // at java.base@17.0.9/java.io.InputStreamReader.read(InputStreamReader.java:177)
+    // at java.base@17.0.9/java.io.BufferedReader.fill(BufferedReader.java:162)
+    // at java.base@17.0.9/java.io.BufferedReader.readLine(BufferedReader.java:329)
+    // at java.base@17.0.9/java.io.BufferedReader.readLine(BufferedReader.java:396)
+    // at kotlin.io.LinesSequence$iterator$1.hasNext(ReadWrite.kt:85)
+    // at com.intellij.platform.ijent.spi.IjentSessionMediatorKt.ijentProcessStderrLogger(IjentSessionMediator.kt:186)
+    // at com.intellij.platform.ijent.spi.IjentSessionMediatorKt.access$ijentProcessStderrLogger(IjentSessionMediator.kt:1)
+    // at com.intellij.platform.ijent.spi.IjentSessionMediatorKt$ijentProcessStderrLogger$1.invokeSuspend(IjentSessionMediator.kt)
+    // at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+    // at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:104)
+    if (System.getProperty("ide.testFramework.share.ijent.application.wide", "false").equals("true")) {
+      return ContainerUtil.exists(stackTrace, element ->
+        element.getClassName().contains("com.intellij.platform.ijent.spi.IjentSessionMediatorKt") ||
+        element.getClassName().contains("com.intellij.platform.ijent.spi.IjentThreadPool$IjentThreadFactory"));
+    }
+    return false;
   }
 
   private static CharSequence dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {

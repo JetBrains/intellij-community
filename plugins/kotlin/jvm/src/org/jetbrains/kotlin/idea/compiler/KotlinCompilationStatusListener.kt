@@ -13,9 +13,9 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.config.CompilerRunnerConstants
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.js.JavaScript
 import java.io.PrintStream
 import java.io.PrintWriter
+import java.util.Locale
 
 internal class KotlinCompilationStatusListener : CompilationStatusListener {
     // Extending PluginException ensures that Exception Analyzer recognizes this as a Kotlin exception
@@ -59,7 +59,7 @@ internal class KotlinCompilationStatusListener : CompilationStatusListener {
     override fun fileGenerated(outputRoot: String, relativePath: String) {
         if (isUnitTestMode()) return
 
-        val ext = FileUtilRt.getExtension(relativePath).toLowerCase()
+        val ext = FileUtilRt.getExtension(relativePath).lowercase(Locale.getDefault())
         if (FILE_EXTS_WHICH_NEEDS_REFRESH.contains(ext)) {
             val outFile = "$outputRoot/$relativePath"
             val virtualFile = LocalFileSystem.getInstance().findFileByPath(outFile)
@@ -75,6 +75,6 @@ internal class KotlinCompilationStatusListener : CompilationStatusListener {
         // Comes from external make
         private const val PREFIX_WITH_COMPILER_NAME =
             CompilerRunnerConstants.KOTLIN_COMPILER_NAME + ": " + CompilerRunnerConstants.INTERNAL_ERROR_PREFIX
-        private val FILE_EXTS_WHICH_NEEDS_REFRESH = setOf(JavaScript.DOT_EXTENSION, ".map")
+        private val FILE_EXTS_WHICH_NEEDS_REFRESH = setOf(".js", ".map")
     }
 }

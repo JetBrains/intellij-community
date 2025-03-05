@@ -211,7 +211,7 @@ public final class ObjectValidation implements JsonSchemaValidation {
     var instancePropertyName = propertyAdapter.getName();
     if (instancePropertyName != null && schemaNode.getPropertyByName(instancePropertyName) != null) return true;
     if (instancePropertyName != null && schemaNode.getMatchingPatternPropertySchema(instancePropertyName) != null) return true;
-    if (Boolean.FALSE.equals(schemaNode.getAdditionalPropertiesAllowed())) return true;
+    if (!schemaNode.getAdditionalPropertiesAllowed()) return true;
     JsonSchemaObject additionalPropertiesSchema = schemaNode.getAdditionalPropertiesSchema();
     if (additionalPropertiesSchema != null && Boolean.TRUE.equals(additionalPropertiesSchema.getConstantSchema())) return true;
     JsonValueAdapter propertyNameAdapter = propertyAdapter.getNameValueAdapter();

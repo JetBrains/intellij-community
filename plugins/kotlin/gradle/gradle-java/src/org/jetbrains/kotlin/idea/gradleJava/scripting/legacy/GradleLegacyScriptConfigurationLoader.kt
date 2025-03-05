@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting.legacy
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -66,7 +66,7 @@ class GradleLegacyScriptConfigurationLoader(project: Project, private val corout
 
         // Gradle read files from FS, so let's save all docs
         coroutineScope.launch(Dispatchers.EDT) {
-            writeAction {
+            edtWriteAction {
                 FileDocumentManager.getInstance().saveAllDocuments()
             }
         }

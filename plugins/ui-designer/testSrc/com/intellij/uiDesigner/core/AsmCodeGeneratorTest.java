@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.core;
 
 import com.intellij.DynamicBundle;
@@ -352,7 +352,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals("Test Value", border.getTitle());
     assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
     assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
-    assertEquals(border.getClass().getName(), "javax.swing.border.TitledBorder");
+    assertEquals("javax.swing.border.TitledBorder", border.getClass().getName());
   }
 
   public void testTitledBorderInternal() throws Exception {
@@ -363,7 +363,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
       TitledBorder border = (TitledBorder)panel.getBorder();
       assertEquals("Test Value", border.getTitle());
       assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
-      assertEquals(border.getClass().getName(), "com.intellij.ui.border.IdeaTitledBorder");
+      assertEquals("com.intellij.ui.border.IdeaTitledBorder", border.getClass().getName());
     });
   }
 

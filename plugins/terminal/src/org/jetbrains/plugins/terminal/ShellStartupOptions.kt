@@ -24,8 +24,12 @@ class ShellStartupOptions private constructor(builder: Builder) {
   }
 
   override fun toString(): String {
-    return "workingDirectory=$workingDirectory, shellCommand=$shellCommand" +
-           ", commandHistoryFileProvider=${commandHistoryFileProvider != null}, initialTermSize=[$initialTermSize]" +
+    return "workingDirectory=$workingDirectory" +
+           ", shellCommand=$shellCommand" +
+           ", commandHistoryFileProvider=${commandHistoryFileProvider != null}" +
+           ", initialTermSize=[$initialTermSize]" +
+           ", shellIntegration=$shellIntegration" +
+           ", envVariables=$envVariables" +
            ", widget=${widget != null}"
   }
 

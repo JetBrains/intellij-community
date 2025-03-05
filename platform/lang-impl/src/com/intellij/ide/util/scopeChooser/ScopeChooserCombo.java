@@ -5,21 +5,17 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.*;
+import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -111,7 +107,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     ComboBox<ScopeDescriptor> combo = getComboBox();
     combo.setMinimumAndPreferredWidth(JBUIScale.scale(300));
-    combo.setRenderer(createRenderer());
+    combo.setRenderer(ScopeSeparatorKt.createScopeDescriptorRenderer(() -> scopes));
     combo.setSwingPopup(false);
 
     if (selection != null) {
@@ -134,37 +130,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     initPromise = new AsyncPromise<>();
     rebuildModelAndSelectScopeOnSuccess(selection);
     return initPromise;
-  }
-
-  private @NotNull ListCellRenderer<ScopeDescriptor> createRenderer() {
-    return new GroupedComboBoxRenderer<>(this) {
-      @Override
-      public @NotNull @NlsContexts.ListItem String getText(ScopeDescriptor item) {
-        String text = item.getDisplayName();
-        return text == null ? super.getText(item) : text;
-      }
-
-      @Override
-      public @Nullable Icon getIcon(ScopeDescriptor item) {
-        return item.getIcon();
-      }
-
-      @Override
-      public @Nullable ListSeparator separatorFor(ScopeDescriptor value) {
-        if (scopes != null) return scopes.getSeparatorFor(value);
-        return null;
-      }
-
-      @Override
-      public void customize(@NotNull SimpleColoredComponent item,
-                            ScopeDescriptor value,
-                            int index,
-                            boolean isSelected,
-                            boolean cellHasFocus) {
-        if (value == null) return;
-        super.customize(item, value, index, isSelected, cellHasFocus);
-      }
-    };
   }
 
   @Override
@@ -293,31 +258,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   public void waitWithModalProgressUntilInitialized() {
     if (myProject != null && initPromise != null) {
       ScopeServiceKt.waitForPromiseWithModalProgress(myProject, initPromise);
-    }
-  }
-
-  private static final class MyRenderer extends SimpleListCellRenderer<ScopeDescriptor> {
-    final TitledSeparator separator = new TitledSeparator();
-
-    @Override
-    public void customize(@NotNull JList<? extends ScopeDescriptor> list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
-      if (value == null) return;
-      setIcon(value.getIcon());
-      setText(value.getDisplayName());
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends ScopeDescriptor> list,
-                                                  ScopeDescriptor value,
-                                                  int index,
-                                                  boolean selected,
-                                                  boolean hasFocus) {
-      if (value instanceof ScopeSeparator) {
-        separator.setText(value.getDisplayName());
-        separator.setBorder(index == -1 ? null : new JBEmptyBorder(UIUtil.DEFAULT_VGAP, 2, UIUtil.DEFAULT_VGAP, 0));
-        return separator;
-      }
-      return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
     }
   }
 

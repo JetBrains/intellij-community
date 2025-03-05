@@ -11,7 +11,6 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.idea.AppMode
-import com.intellij.idea.LoggerFactory
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -32,6 +31,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
+import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.tools.ide.starter.bus.EventsBus
@@ -57,8 +57,6 @@ import java.net.ConnectException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.sql.Timestamp
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 import kotlin.time.Duration.Companion.minutes
@@ -215,6 +213,14 @@ private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
 @Internal
 class ProjectLoaded : ApplicationInitializedListener {
   override suspend fun execute() {
+    // Under flag since a proper solution should be implemented in the platform later
+    // https://youtrack.jetbrains.com/issue/IJPL-176231/ProductionWslIjentAvailabilityService-Registry-key-wsl.use.remote.agent.for.nio.filesystem-is-not-defined
+    if (System.getenv("STARTER_TESTS_SUPPORT_TARGETS").toBoolean()) {
+      IntegrationTestApplicationLoadListener.projectPathFromCommandLine?.run {
+        EelInitialization.runEelInitialization(this)
+      }
+    }
+
     if (System.getProperty("com.sun.management.jmxremote") == "true") {
       serviceAsync<InvokerService>().register({ PerformanceTestSpan.TRACER },
                                                { PerformanceTestSpan.getContext() },
@@ -366,14 +372,30 @@ private fun reportScriptError(errorMessage: AbstractMessage) {
     Files.writeString(errorDir.resolve("message.txt"), causeMessage)
     Files.writeString(errorDir.resolve("stacktrace.txt"), errorMessage.throwableText)
     val attachments = errorMessage.allAttachments
+    val nameConflicts = attachments.groupBy { it.name }.filter { it.value.size > 1 }.keys
+
     for (j in attachments.indices) {
       val attachment = attachments[j]
-      writeAttachmentToErrorDir(attachment, errorDir.resolve("$j-${attachment.name}"))
+      val fileName = if (attachment.name in nameConflicts) {
+        addSuffixBeforeExtension(attachment.name, "-$j")
+      } else {
+        attachment.name
+      }
+      writeAttachmentToErrorDir(attachment, errorDir.resolve(fileName))
     }
     return
   }
 
   LOG.error("Too many errors have been reported during script execution. See $scriptErrorsDir")
+}
+
+private fun addSuffixBeforeExtension(fileName: String, suffix: String): String {
+  val lastDotIndex = fileName.lastIndexOf('.')
+  return if (lastDotIndex != -1) {
+    fileName.substring(0, lastDotIndex) + suffix + fileName.substring(lastDotIndex)
+  } else {
+    fileName + suffix
+  }
 }
 
 private fun writeAttachmentToErrorDir(attachment: Attachment, path: Path) {
@@ -413,7 +435,7 @@ private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFa
     .exceptionally(Function { e ->
       ApplicationManager.getApplication().executeOnPooledThread {
         if (ApplicationManagerEx.isInIntegrationTest()) {
-          storeFailureToFile(e.message)
+          storeFailureToFile(e)
         }
         runBlocking {
           takeScreenshotOfAllWindows("onFailure")
@@ -431,18 +453,13 @@ private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFa
     })
 }
 
-private fun storeFailureToFile(errorMessage: String?) {
-  //TODO: if errorMessage = null -> very unclear message about 'String.codec()' is printed
+/**
+ * Starter framework reads the file failure_cause.txt to fail the test if a command failed.
+ */
+private fun storeFailureToFile(errorMessage: Throwable) {
   try {
-    val logDir = Path.of(PathManager.getLogPath())
-    val ideaLogContent = Files.readString(logDir.resolve(LoggerFactory.LOG_FILE_NAME))
-    val substringBegin = ideaLogContent.substring(ideaLogContent.indexOf(errorMessage!!))
-    val timestamp = Timestamp(System.currentTimeMillis())
-    val date = timestamp.toString().substring(0, 10)
-    val endIndex = substringBegin.indexOf(date)
-    val errorMessageFromLog = if (endIndex == -1) substringBegin else substringBegin.substring(0, endIndex)
-    val failureCause = logDir.resolve("failure_cause.txt")
-    Files.writeString(failureCause, errorMessageFromLog)
+    val failureCauseFile = Path.of(PathManager.getLogPath()).resolve("failure_cause.txt")
+    Files.writeString(failureCauseFile, errorMessage.message + "\n" + errorMessage.stackTraceToString())
   }
   catch (e: Exception) {
     LOG.error(e.message)

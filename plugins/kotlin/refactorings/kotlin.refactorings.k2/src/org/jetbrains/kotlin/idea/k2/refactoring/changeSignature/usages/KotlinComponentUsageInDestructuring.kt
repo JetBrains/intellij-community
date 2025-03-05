@@ -38,9 +38,9 @@ internal class KotlinComponentUsageInDestructuring(element: KtDestructuringDecla
                     KtPsiFactory(element.project).buildDestructuringDeclaration {
                         val lastIndex = newParameterInfos.indexOfLast { it.oldIndex in currentEntries.indices }
                         val nameValidator = KotlinDeclarationNameValidator(
-                            ktCallableDeclaration,
-                            true,
-                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
+                          ktCallableDeclaration,
+                          true,
+                          KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
                         )
                         appendFixedText("val (")
                         for (i in 0..lastIndex) {

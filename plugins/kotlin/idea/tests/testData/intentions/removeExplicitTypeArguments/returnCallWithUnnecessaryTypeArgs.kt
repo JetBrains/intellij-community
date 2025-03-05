@@ -1,4 +1,4 @@
-// IS_APPLICABLE: true
+// FIX: Remove explicit type arguments
 
 fun bar(): Foo<Int> {
     return foo<caret><Int>()

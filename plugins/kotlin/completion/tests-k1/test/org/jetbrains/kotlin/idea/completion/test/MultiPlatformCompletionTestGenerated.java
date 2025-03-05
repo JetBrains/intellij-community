@@ -32,29 +32,39 @@ public abstract class MultiPlatformCompletionTestGenerated extends AbstractMulti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("actualFromSeveralFiles")
-        public void testActualFromSeveralFiles() throws Exception {
-            runTest("../testData/multiPlatform/actualDeclaration/actualFromSeveralFiles/");
-        }
-
         @TestMetadata("actualFun")
         public void testActualFun() throws Exception {
             runTest("../testData/multiPlatform/actualDeclaration/actualFun/");
         }
 
-        @TestMetadata("actualModuleTargetIsNotVisibleInAnotherModule")
-        public void testActualModuleTargetIsNotVisibleInAnotherModule() throws Exception {
-            runTest("../testData/multiPlatform/actualDeclaration/actualModuleTargetIsNotVisibleInAnotherModule/");
+        @TestMetadata("actualKeywordFromSeveralFiles")
+        public void testActualKeywordFromSeveralFiles() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualKeywordFromSeveralFiles/");
+        }
+
+        @TestMetadata("actualKeywordFun")
+        public void testActualKeywordFun() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualKeywordFun/");
+        }
+
+        @TestMetadata("actualKeywordModuleTargetIsNotVisibleInAnotherModule")
+        public void testActualKeywordModuleTargetIsNotVisibleInAnotherModule() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualKeywordModuleTargetIsNotVisibleInAnotherModule/");
+        }
+
+        @TestMetadata("actualKeywordVal")
+        public void testActualKeywordVal() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualKeywordVal/");
+        }
+
+        @TestMetadata("actualKeywordWithSamePackage")
+        public void testActualKeywordWithSamePackage() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualKeywordWithSamePackage/");
         }
 
         @TestMetadata("actualVal")
         public void testActualVal() throws Exception {
             runTest("../testData/multiPlatform/actualDeclaration/actualVal/");
-        }
-
-        @TestMetadata("actualWithSamePackage")
-        public void testActualWithSamePackage() throws Exception {
-            runTest("../testData/multiPlatform/actualDeclaration/actualWithSamePackage/");
         }
     }
 

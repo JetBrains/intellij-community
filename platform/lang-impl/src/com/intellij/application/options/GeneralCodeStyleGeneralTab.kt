@@ -6,11 +6,11 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.psi.codeStyle.CodeStyleConstraints
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField
 import com.intellij.ui.components.fields.IntegerField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 
 internal class GeneralCodeStyleGeneralTab(settings: CodeStyleSettings) {
 
@@ -41,7 +41,7 @@ internal class GeneralCodeStyleGeneralTab(settings: CodeStyleSettings) {
   @JvmField
   val panel = panel {
     row(ApplicationBundle.message("combobox.line.separator.for.new.files")) {
-      myLineSeparatorCombo = comboBox(EnumComboBoxModel(LineSeparator::class.java), SimpleListCellRenderer.create("") { it.text })
+      myLineSeparatorCombo = comboBox(EnumComboBoxModel(LineSeparator::class.java), textListCellRenderer { it?.text })
         .comment(ApplicationBundle.message("combobox.lineseparator.for.new.files.hint"))
         .component
     }

@@ -111,7 +111,8 @@ open class EditorComposite internal constructor(
    * Currently selected editor
    */
   @JvmField
-  internal val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
+  @Internal
+  val selectedEditorWithProvider: StateFlow<FileEditorWithProvider?> = _selectedEditorWithProvider.asStateFlow()
 
   private val topComponents = HashMap<FileEditor, JComponent>()
   private val bottomComponents = HashMap<FileEditor, JComponent>()
@@ -379,6 +380,7 @@ open class EditorComposite internal constructor(
         }
       }
     }
+    component.validate()
 
     fileEditorWithProviderToSelect?.fileEditor?.selectNotify()
 

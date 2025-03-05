@@ -36,8 +36,7 @@ import org.jetbrains.annotations.NotNull;
 public final class BooleanConstructorInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "BooleanConstructorCall";
   }
 
@@ -47,8 +46,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("boolean.constructor.problem.descriptor");
   }
 
@@ -68,8 +66,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
     private static final String FALSE = '\"' + PsiKeyword.FALSE + '\"';
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("boolean.constructor.simplify.quickfix");
     }
 
@@ -91,7 +88,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
       final String text = argument.getText();
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
       CommentTracker tracker = new CommentTracker();
-      @NonNls final String newExpression;
+      final @NonNls String newExpression;
       if (PsiKeyword.TRUE.equals(text) || TRUE.equalsIgnoreCase(text)) {
         newExpression = "java.lang.Boolean.TRUE";
       }
@@ -125,8 +122,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
       PsiReplacementUtil.replaceExpression(expression, newExpression, tracker);
     }
 
-    @NonNls
-    private static String buildText(PsiExpression argument, boolean useValueOf) {
+    private static @NonNls String buildText(PsiExpression argument, boolean useValueOf) {
       final String text = argument.getText();
       final PsiType argumentType = argument.getType();
       if (!useValueOf && PsiTypes.booleanType().equals(argumentType)) {

@@ -6,7 +6,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.utils.getParameterNames
+import org.jetbrains.kotlin.idea.codeinsight.utils.extractParameterNames
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
 
@@ -16,7 +16,7 @@ internal class DestructuringWrongNameInspection : LocalInspectionTool() {
     }
 
     private fun processDestructuringDeclaration(holder: ProblemsHolder, declaration: KtDestructuringDeclaration) {
-        val parameterNames = getParameterNames(declaration) ?: return
+        val parameterNames = extractParameterNames(declaration) ?: return
         declaration.entries
             .asSequence()
             .withIndex()

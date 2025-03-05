@@ -12,6 +12,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint
 import com.intellij.debugger.ui.breakpoints.SteppingBreakpoint
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -27,8 +28,9 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
-import org.jetbrains.kotlin.idea.debugger.core.isInSuspendMethod
 import org.jetbrains.kotlin.idea.debugger.core.isInvokeSuspendMethod
+import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.isSyntheticDefaultMethodPossiblyConvertedToStatic
+import org.jetbrains.kotlin.idea.debugger.core.stepping.isSyntheticMethodForDefaultParameters
 
 class KotlinLambdaAsyncMethodFilter(
     element: PsiElement?,
@@ -131,6 +133,12 @@ class KotlinLambdaAsyncMethodFilter(
     }
 
     private fun StackFrameProxyImpl.getLambdaReference(): ObjectReference? {
+        var index = lambdaInfo.parameterIndex
+        val location = location()
+        if (location.safeMethod()?.isSyntheticMethodForDefaultParameters() == true
+            && isSyntheticDefaultMethodPossiblyConvertedToStatic(location)) {
+            index += 1
+        }
         if (DexDebugFacility.isDex(virtualMachine.virtualMachine)) {
             // We could fetch the lambda reference from the caller function arguments
             // using `argumentValues.getOrNull(lambdaInfo.parameterIndex)`. However, this call
@@ -139,10 +147,10 @@ class KotlinLambdaAsyncMethodFilter(
             // should be located on the first available line number of a function that calls the
             // lambda we are looking for. It means that the only visible variables are arguments
             // of this function.
-            val lambdaArgumentVariable = visibleVariables().getOrNull(lambdaInfo.parameterIndex) ?: return null
+            val lambdaArgumentVariable = visibleVariables().getOrNull(index) ?: return null
             return getValue(lambdaArgumentVariable) as? ObjectReference
         }
-        return argumentValues.getOrNull(lambdaInfo.parameterIndex) as? ObjectReference
+        return argumentValues.getOrNull(index) as? ObjectReference
     }
 
     private inner class AsyncSuspendLambdaBreakpoint(
@@ -159,7 +167,7 @@ class KotlinLambdaAsyncMethodFilter(
             val suspendContext = action.suspendContext ?: return false
             val location = suspendContext.location ?: return false
             if (isInvokeSuspendMethod(location.method())) {
-                thisLogger().debug("Hit AsyncSuspendLambdaBreakpoint and STOPPED at ${context.location?.method()}")
+                thisLogger().debug { "Hit AsyncSuspendLambdaBreakpoint and STOPPED at ${context.location?.method()}" }
                 // Stop if we are inside invokeSuspend of the correct lambda instance
                 return true
             }
@@ -187,7 +195,10 @@ class KotlinLambdaAsyncMethodFilter(
                                     if (location != null && location.method().name() == "<init>" && location.method().declaringType() == lambdaReference.referenceType()) {
                                         val lambdaReferenceCopy = context.thread?.frame(0)?.safeThisObject()
                                         if (lambdaReferenceCopy == null) {
-                                            thisLogger().debug("Could not extract the copied instance of a lambda from the stack frame of <init> invocation, location = ${location.method()}.")
+                                            thisLogger().debug {
+                                                "Could not extract the copied instance of a lambda from the stack frame of <init> invocation, " +
+                                                        "location = ${location.method()}."
+                                            }
                                             return RESUME
                                         }
                                         val invokeSuspendMethod = lambdaReferenceCopy.referenceType().methods().single { it.name() == INVOKE_SUSPEND }
@@ -212,7 +223,7 @@ class KotlinLambdaAsyncMethodFilter(
     ) : StepIntoBreakpoint(context.debugProcess.project, pos, lambdaFilter) {
 
         override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
-            thisLogger().debug("Hit the KotlinLambdaInstanceBreakpoint at ${context.location}")
+            thisLogger().debug { "Hit the KotlinLambdaInstanceBreakpoint at ${context.location}" }
             return super.processLocatableEvent(action, event).also { stopped ->
                 if (stopped) context.debugProcess.requestsManager.deleteRequest(this)
             }
@@ -228,7 +239,7 @@ class KotlinLambdaAsyncMethodFilter(
         if (isAsyncSuspendLambda) return name == CREATE || name == INVOKE_SUSPEND
         return lambdaFilter.isTargetLambdaName(name)
     }
-    
+
     private fun ObjectReference.checkLambdaBreakpoint(context: EvaluationContextImpl, location: Location): Boolean {
         val thread = context.suspendContext.thread ?: return false
         val methodName = location.safeMethod()?.name() ?: return false
@@ -239,7 +250,7 @@ class KotlinLambdaAsyncMethodFilter(
         val frameIndex = if (methodName.isGeneratedIrBackendLambdaMethodName()) 1 else 0
         return isTargetLambda(thread, frameIndex)
                 // On ART SAM converted lambdas get an additional stack frame from r8 in their stack trace
-                || DexDebugFacility.isDex(context.debugProcess) && isTargetLambda(thread, 2)
+                || DexDebugFacility.isDex(location.virtualMachine()) && isTargetLambda(thread, 2)
                 // For lambdas passed to Java functions, the lambda could be additionally wrapped for type compatibility.
                 // One of the previous frames (heuristically 3rd frame) should contain the original lambda.
                 || isTargetLambda(thread, 3)

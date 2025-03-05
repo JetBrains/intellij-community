@@ -131,6 +131,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
     changesView.isShowCheckboxes = true
     isVisible = true
     commitActionsPanel.isActive = true
+    changesViewHost.statusComponent?.isVisible = true
 
     toolbar.updateActionsImmediately()
 
@@ -148,6 +149,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
     changesView.isShowCheckboxes = false
     isVisible = false
     commitActionsPanel.isActive = false
+    changesViewHost.statusComponent?.isVisible = false
 
     toolbar.updateActionsImmediately()
   }

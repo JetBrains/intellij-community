@@ -1,9 +1,16 @@
 // "Implement members" "true"
-// DISABLE-ERRORS
-// IGNORE_K2
+// DISABLE_ERRORS
 
-actual class C : I {
+interface Interf {
+    fun m()
+}
+
+actual class C : I, Interf {
     actual override fun f() {
+        TODO("Not yet implemented")
+    }
+
+    override fun m() {
         TODO("Not yet implemented")
     }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,12 +18,17 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+
 
 /**
  * Inherit from this class and register implementation as {@code sdkType} extension in plugin.xml to provide a custom type of
@@ -32,6 +38,7 @@ import java.util.List;
  */
 public abstract class SdkType implements SdkTypeId {
   public static final ExtensionPointName<SdkType> EP_NAME = new ExtensionPointName<>("com.intellij.sdkType");
+  private static final Logger LOG = Logger.getInstance(SdkType.class);
 
   private static final Comparator<Sdk> ALPHABETICAL_COMPARATOR = (sdk1, sdk2) -> StringUtil.compare(sdk1.getName(), sdk2.getName(), true);
 
@@ -42,6 +49,13 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   /**
+   * @deprecated Please use {@link SdkType#suggestHomePath(Path)}.
+   * Sometimes a project is not located on the same file system where the IDE is running, and in this case
+   */
+  @Deprecated
+  public abstract @Nullable String suggestHomePath();
+
+  /**
    * Returns a recommended starting path for a file chooser (where SDKs of this type are usually may be found),
    * or {@code null} if not applicable/no SDKs found.
    * <p/>
@@ -50,9 +64,15 @@ public abstract class SdkType implements SdkTypeId {
    * <p/>
    * This method should work fast and allow running from the EDT thread. See the {@link #suggestHomePaths()}
    * for more advanced scenarios
+   *
+   * @param path Any path which belongs to the file system where the search for SDK should occur.
+   *             It can be any local path, but when JDK should be searched for in a containerized environment,
+   *             then it should be a path pointing to somewhere within that environment.
    * @see #suggestHomePaths()
    */
-  public abstract @Nullable String suggestHomePath();
+  public @Nullable String suggestHomePath(@NotNull Path path) {
+    return suggestHomePath();
+  }
 
   /**
    * Returns a list of all valid SDKs found on this host.
@@ -63,10 +83,71 @@ public abstract class SdkType implements SdkTypeId {
    * for possible interruption request. It is not recommended to call this method from a ETD thread. See
    * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
    * @see #suggestHomePath()
+   *
+   * @deprecated Use {@link #suggestHomePaths(Project)}
    */
-  public @NotNull Collection<String> suggestHomePaths() {
+  @Deprecated
+  public @Unmodifiable @NotNull Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
     return ContainerUtil.createMaybeSingletonList(home);
+  }
+
+  /**
+   * Returns a list of all valid SDKs found on the host where {@code project} is located.
+   * If {@code project} is null, returns a list of all valid SDKs found on the host.
+   * <p/>
+   * E.g. for Python SDK on Unix the method may return {@code ["/usr/bin/python2", "/usr/bin/python3"]}.
+   * <p/>
+   * This method may take significant time to execute. The implementation may check {@link ProgressManager#checkCanceled()}
+   * for possible interruption request. It is not recommended to call this method from a ETD thread. See
+   * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
+   */
+  public @Unmodifiable @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
+    return suggestHomePaths();
+  }
+
+  /**
+   * Contains information about a detected SDK.
+   * @param isSymlink true iff the SDK path contains a symlink
+   */
+  public record SdkEntry(@NotNull String homePath, @NotNull String versionString, boolean isSymlink) {
+    public SdkEntry(@NotNull String homePath, @NotNull String versionString) {
+      this(homePath, versionString, isSymlink(homePath));
+    }
+
+    private static boolean isSymlink(@NotNull String path) {
+      try {
+        final var p = Paths.get(path);
+        return !p.toRealPath().equals(p);
+      }
+      catch (IOException e) {
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Returns a list of all valid SDKs found on the host where {@code project} is located, with additional information.
+   * Use {@link #suggestHomePaths(Project)} to only collect paths.
+   */
+  public @Unmodifiable @NotNull Collection<SdkEntry> collectSdkEntries(@Nullable Project project) {
+    return ContainerUtil.mapNotNull(suggestHomePaths(project), homePath -> {
+      final String versionString;
+
+      try {
+        versionString = getVersionString(homePath);
+      }
+      catch (Exception e) {
+        LOG.warn("Failed to get the detected SDK version for " + this + " at " + homePath + ". " + e.getMessage(), e);
+        return null;
+      }
+      if (versionString == null) {
+        LOG.warn("No version is returned for detected SDK " + this + " at " + homePath);
+        return null;
+      }
+
+      return new SdkEntry(homePath, versionString);
+    });
   }
 
   /**

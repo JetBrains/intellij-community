@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -28,7 +27,7 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
 
     private fun findTargetCallable(c: KtNamedDeclaration): KtNamedDeclaration {
 
-        fun getCallable(): KtNamedDeclaration = (ExpectActualUtils.liftToExpected(c) ?: c) as KtNamedDeclaration
+        fun getCallable(): KtNamedDeclaration = (ExpectActualUtils.liftToExpect(c) ?: c) as KtNamedDeclaration
 
         return if (ApplicationManager.getApplication().isDispatchThread && !ApplicationManager.getApplication().isWriteAccessAllowed) {
             runWithModalProgressBlocking(

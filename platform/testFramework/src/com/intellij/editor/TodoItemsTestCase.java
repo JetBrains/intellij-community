@@ -33,6 +33,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +58,7 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     }
   }
 
-  @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     int[] toIgnore = {Pass.UPDATE_FOLDING, Pass.LOCAL_INSPECTIONS};

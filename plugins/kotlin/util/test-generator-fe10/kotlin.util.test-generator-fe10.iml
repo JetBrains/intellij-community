@@ -20,13 +20,15 @@
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.scripting-support" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.maven.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.k1" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.performance-tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" scope="TEST" />

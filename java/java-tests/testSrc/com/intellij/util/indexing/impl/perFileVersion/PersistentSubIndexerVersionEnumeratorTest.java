@@ -169,7 +169,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     VirtualFile file = file(attribute);
     file.putUserData(ATTRIBUTE_KEY, attribute);
     try {
-      return myMap.getSubIndexerState(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject())) == FileIndexingState.UP_TO_DATE;
+      return myMap.getSubIndexerState(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject())).isUpToDate();
     }
     catch (IOException e) {
       LOG.error(e);

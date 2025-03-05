@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -29,9 +29,8 @@ public final class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLo
   private static final CallMatcher CHARSET_FOR_NAME = CallMatcher.staticCall("java.nio.charset.Charset", "forName")
     .parameterTypes(CommonClassNames.JAVA_LANG_STRING);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     LanguageLevel level = PsiUtil.getLanguageLevel(holder.getFile());
     if (level.isLessThan(LanguageLevel.JDK_11)) {
       return PsiElementVisitor.EMPTY_VISITOR;
@@ -82,10 +81,8 @@ public final class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLo
 
   private static class ReplaceWithReadStringFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Files.readString()");
     }
 
@@ -117,17 +114,13 @@ public final class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLo
       myMayNotWork = mayNotWork;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return myMayNotWork ? JavaBundle.message("quickfix.text.0.may.not.work.before.jdk.11.0.2", getFamilyName()) : getFamilyName();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Files.writeString()");
     }
 

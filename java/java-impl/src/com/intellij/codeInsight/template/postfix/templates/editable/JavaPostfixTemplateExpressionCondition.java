@@ -248,4 +248,34 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
       return getClass().hashCode();
     }
   }
+
+  class JavaPostfixTemplateArrayReferenceExpressionCondition implements JavaPostfixTemplateExpressionCondition {
+    public static final @NonNls String ID = "arrayReference";
+
+    @Override
+    public boolean value(@NotNull PsiExpression element) {
+      return JavaPostfixTemplatesUtils.isArrayReference(element.getType());
+    }
+
+    @Override
+    public @NotNull String getId() {
+      return ID;
+    }
+
+    @Override
+    public @NotNull @Nls String getPresentableName() {
+      return JavaBundle.message("postfix.template.condition.array.reference.name");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode();
+    }
+  }
 }

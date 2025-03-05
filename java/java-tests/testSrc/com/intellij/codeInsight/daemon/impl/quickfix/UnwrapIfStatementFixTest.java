@@ -10,6 +10,9 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see SimplifyBooleanExpressionFixTest -- more tests for the same quickfix
+ */
 public class UnwrapIfStatementFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {

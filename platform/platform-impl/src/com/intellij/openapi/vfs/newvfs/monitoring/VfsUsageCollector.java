@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter.VFSInitKind;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,80 +14,78 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
-
 @ApiStatus.Internal
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
   private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 18);
 
-  private static final LongEventField FIELD_WAIT_MS = Long("wait_ms");  // -1 for synchronous refresh/events
+  private static final LongEventField FIELD_WAIT_MS = EventFields.Long("wait_ms");  // -1 for synchronous refresh/events
 
   /* ================== EVENT_INITIAL_REFRESH: ====================================================== */
 
-  private static final EventId1<Long> EVENT_INITIAL_REFRESH = GROUP_VFS.registerEvent("initial_refresh", DurationMs);
+  private static final EventId1<Long> EVENT_INITIAL_REFRESH = GROUP_VFS.registerEvent("initial_refresh", EventFields.DurationMs);
 
   /* ================== EVENT_BACKGROUND_REFRESH: ====================================================== */
 
-  private static final RoundedIntEventField FIELD_BG_REFRESH_SESSIONS = RoundedInt("sessions");
-  private static final RoundedIntEventField FIELD_BG_REFRESH_EVENTS = RoundedInt("events");
+  private static final RoundedIntEventField FIELD_BG_REFRESH_SESSIONS = EventFields.RoundedInt("sessions");
+  private static final RoundedIntEventField FIELD_BG_REFRESH_EVENTS = EventFields.RoundedInt("events");
 
   private static final EventId3<Long, Integer, Integer> EVENT_BACKGROUND_REFRESH = GROUP_VFS.registerEvent(
-    "background_refresh", DurationMs, FIELD_BG_REFRESH_SESSIONS, FIELD_BG_REFRESH_EVENTS);
+    "background_refresh", EventFields.DurationMs, FIELD_BG_REFRESH_SESSIONS, FIELD_BG_REFRESH_EVENTS);
 
   /* ================== EVENT_REFRESH_SESSION: ====================================================== */
 
-  private static final BooleanEventField FIELD_REFRESH_RECURSIVE = Boolean("recursive");
-  private static final RoundedIntEventField FIELD_REFRESH_LOCAL_ROOTS = RoundedInt("roots_local");
-  private static final RoundedIntEventField FIELD_REFRESH_ARCHIVE_ROOTS = RoundedInt("roots_arc");
-  private static final RoundedIntEventField FIELD_REFRESH_OTHER_ROOTS = RoundedInt("roots_other");
-  private static final BooleanEventField FIELD_REFRESH_CANCELLED = Boolean("cancelled");
-  private static final IntEventField FIELD_REFRESH_TRIES = Int("tries");
+  private static final BooleanEventField FIELD_REFRESH_RECURSIVE = EventFields.Boolean("recursive");
+  private static final RoundedIntEventField FIELD_REFRESH_LOCAL_ROOTS = EventFields.RoundedInt("roots_local");
+  private static final RoundedIntEventField FIELD_REFRESH_ARCHIVE_ROOTS = EventFields.RoundedInt("roots_arc");
+  private static final RoundedIntEventField FIELD_REFRESH_OTHER_ROOTS = EventFields.RoundedInt("roots_other");
+  private static final BooleanEventField FIELD_REFRESH_CANCELLED = EventFields.Boolean("cancelled");
+  private static final IntEventField FIELD_REFRESH_TRIES = EventFields.Int("tries");
 
   private static final VarargEventId EVENT_REFRESH_SESSION = GROUP_VFS.registerVarargEvent(
     "refresh_session",
     FIELD_REFRESH_RECURSIVE, FIELD_REFRESH_LOCAL_ROOTS, FIELD_REFRESH_ARCHIVE_ROOTS, FIELD_REFRESH_OTHER_ROOTS,
-    FIELD_REFRESH_CANCELLED, FIELD_WAIT_MS, DurationMs, FIELD_REFRESH_TRIES
+    FIELD_REFRESH_CANCELLED, FIELD_WAIT_MS, EventFields.DurationMs, FIELD_REFRESH_TRIES
   );
 
   /* ================== EVENT_REFRESH_SCAN: ====================================================== */
 
-  private static final IntEventField FIELD_REFRESH_FULL_SCANS = Int("full_scans");
-  private static final IntEventField FIELD_REFRESH_PARTIAL_SCANS = Int("partial_scans");
-  private static final IntEventField FIELD_REFRESH_RETRIES = Int("retries");
-  private static final LongEventField FIELD_REFRESH_VFS_TIME_MS = Long("vfs_time_ms");
-  private static final LongEventField FIELD_REFRESH_IO_TIME_MS = Long("io_time_ms");
+  private static final IntEventField FIELD_REFRESH_FULL_SCANS = EventFields.Int("full_scans");
+  private static final IntEventField FIELD_REFRESH_PARTIAL_SCANS = EventFields.Int("partial_scans");
+  private static final IntEventField FIELD_REFRESH_RETRIES = EventFields.Int("retries");
+  private static final LongEventField FIELD_REFRESH_VFS_TIME_MS = EventFields.Long("vfs_time_ms");
+  private static final LongEventField FIELD_REFRESH_IO_TIME_MS = EventFields.Long("io_time_ms");
 
   private static final VarargEventId EVENT_REFRESH_SCAN = GROUP_VFS.registerVarargEvent(
     "refresh_scan",
-    FIELD_REFRESH_FULL_SCANS, FIELD_REFRESH_PARTIAL_SCANS, FIELD_REFRESH_RETRIES, DurationMs, FIELD_REFRESH_VFS_TIME_MS,
+    FIELD_REFRESH_FULL_SCANS, FIELD_REFRESH_PARTIAL_SCANS, FIELD_REFRESH_RETRIES, EventFields.DurationMs, FIELD_REFRESH_VFS_TIME_MS,
     FIELD_REFRESH_IO_TIME_MS
   );
 
   /* ================== EVENT_EVENTS: ====================================================== */
 
-  private static final LongEventField FIELD_EVENT_LISTENERS_MS = Long("listeners_ms");
-  private static final IntEventField FIELD_EVENT_TRIES = Int("tries");
-  private static final IntEventField FIELD_EVENT_NUMBER = Int("events");
+  private static final LongEventField FIELD_EVENT_LISTENERS_MS = EventFields.Long("listeners_ms");
+  private static final IntEventField FIELD_EVENT_TRIES = EventFields.Int("tries");
+  private static final IntEventField FIELD_EVENT_NUMBER = EventFields.Int("events");
 
   private static final VarargEventId EVENT_EVENTS = GROUP_VFS.registerVarargEvent(
     "events",
-    FIELD_WAIT_MS, FIELD_EVENT_LISTENERS_MS, FIELD_EVENT_TRIES, DurationMs, FIELD_EVENT_NUMBER
+    FIELD_WAIT_MS, FIELD_EVENT_LISTENERS_MS, FIELD_EVENT_TRIES, EventFields.DurationMs, FIELD_EVENT_NUMBER
   );
 
   /* ================== EVENT_VFS_INITIALIZATION: ====================================================== */
 
   /** What causes VFS rebuild (if any) */
-  private static final EnumEventField<VFSInitKind> FIELD_INITIALIZATION_KIND = Enum("init_kind", VFSInitKind.class);
+  private static final EnumEventField<VFSInitKind> FIELD_INITIALIZATION_KIND = EventFields.Enum("init_kind", VFSInitKind.class);
   /** A number of attempts to init VFS. Usually =1, but could be more if VFS was rebuilt. */
-  private static final IntEventField FIELD_INITIALIZATION_ATTEMPTS = Int("init_attempts");
+  private static final IntEventField FIELD_INITIALIZATION_ATTEMPTS = EventFields.Int("init_attempts");
   /** Timestamp current VFS was created & initialized (ms, unix origin) */
-  private static final LongEventField FIELD_CREATION_TIMESTAMP = Long("creation_timestamp");
+  private static final LongEventField FIELD_CREATION_TIMESTAMP = EventFields.Long("creation_timestamp");
   /** Current VFS implementation version, see {@link com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl#getVersion()} */
-  private static final IntEventField FIELD_IMPL_VERSION = Int("impl_version");
-  private static final LongEventField FIELD_TOTAL_INIT_DURATION_MS = Long("init_duration_ms");
-  private static final StringListEventField FIELD_ERRORS_HAPPENED = StringList(
+  private static final IntEventField FIELD_IMPL_VERSION = EventFields.Int("impl_version");
+  private static final LongEventField FIELD_TOTAL_INIT_DURATION_MS = EventFields.Long("init_duration_ms");
+  private static final StringListEventField FIELD_ERRORS_HAPPENED = EventFields.StringList(
     "errors_happened",
     Stream.of(VFSInitException.ErrorCategory.values()).map(Enum::name).toList()
   );
@@ -102,47 +99,47 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   /* ================== EVENT_VFS_HEALTH_CHECK: ====================================================== */
 
   /** ={@link FSRecords#getCreationTimestamp()} */
-  private static final LongEventField FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS = Long("vfs_creation_timestamp_ms");
+  private static final LongEventField FIELD_HEALTH_CHECK_VFS_CREATION_TIMESTAMP_MS = EventFields.Long("vfs_creation_timestamp_ms");
   /** How long the check have taken */
-  private static final LongEventField FIELD_HEALTH_CHECK_DURATION_MS = Long("check_duration_ms");
+  private static final LongEventField FIELD_HEALTH_CHECK_DURATION_MS = EventFields.Long("check_duration_ms");
 
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHECKED = Int("file_records_checked");
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED = Int("file_records_deleted");
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL = Int("file_records_name_null");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHECKED = EventFields.Int("file_records_checked");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_DELETED = EventFields.Int("file_records_deleted");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_NULL = EventFields.Int("file_records_name_null");
   /** Number of file-records there nameId can't be resolved against NamesEnumerator */
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE = Int("file_records_name_unresolvable");
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE = Int("file_records_attribute_unresolvable");
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL = Int("file_records_content_not_null");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NAME_UNRESOLVABLE = EventFields.Int("file_records_name_unresolvable");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_ATTRIBUTE_ID_UNRESOLVABLE = EventFields.Int("file_records_attribute_unresolvable");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_NOT_NULL = EventFields.Int("file_records_content_not_null");
   /** Number of file-records there contentId can't be resolved against NamesEnumerator */
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE = Int("file_records_content_unresolvable");
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS = Int("file_records_null_parents");
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED = Int("file_records_children_checked");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CONTENT_UNRESOLVABLE = EventFields.Int("file_records_content_unresolvable");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_NULL_PARENTS = EventFields.Int("file_records_null_parents");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_CHECKED = EventFields.Int("file_records_children_checked");
   /** Number of file-records with children.parent != this */
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT = Int("file_records_children_inconsistent");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_CHILDREN_INCONSISTENT = EventFields.Int("file_records_children_inconsistent");
   /** Total errors in file-records */
-  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_GENERAL_ERRORS = Int("file_records_general_errors");
+  private static final IntEventField FIELD_HEALTH_CHECK_FILE_RECORDS_GENERAL_ERRORS = EventFields.Int("file_records_general_errors");
 
   /** Total records from NamesEnumerator checked */
-  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_CHECKED = Int("names_checked");
+  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_CHECKED = EventFields.Int("names_checked");
   /** Number of names from enumerator that doesn't resolve against the same enumerator */
-  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_RESOLVED_TO_NULL = Int("names_resolved_to_null");
+  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_RESOLVED_TO_NULL = EventFields.Int("names_resolved_to_null");
   /** Number of ids from enumerator that doesn't resolve against the same enumerator */
-  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_IDS_RESOLVED_TO_NULL = Int("names_ids_resolved_to_null");
+  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_IDS_RESOLVED_TO_NULL = EventFields.Int("names_ids_resolved_to_null");
   /** Number of (name -> id -> name') resolutions there (name!=name') */
-  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_INCONSISTENT_RESOLUTIONS = Int("names_inconsistent_resolution");
+  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_INCONSISTENT_RESOLUTIONS = EventFields.Int("names_inconsistent_resolution");
   /** General errors in a name resolution */
-  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_GENERAL_ERRORS = Int("names_general_errors");
+  private static final IntEventField FIELD_HEALTH_CHECK_NAMES_GENERAL_ERRORS = EventFields.Int("names_general_errors");
 
-  private static final IntEventField FIELD_HEALTH_CHECK_CONTENTS_CHECKED = Int("contents_checked");
-  private static final IntEventField FIELD_HEALTH_CHECK_CONTENTS_ERRORS = Int("contents_errors");
+  private static final IntEventField FIELD_HEALTH_CHECK_CONTENTS_CHECKED = EventFields.Int("contents_checked");
+  private static final IntEventField FIELD_HEALTH_CHECK_CONTENTS_ERRORS = EventFields.Int("contents_errors");
 
-  private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_CHECKED = Int("roots_checked");
-  private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_WITH_PARENTS = Int("roots_with_parents");
+  private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_CHECKED = EventFields.Int("roots_checked");
+  private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_WITH_PARENTS = EventFields.Int("roots_with_parents");
   /** root.isDeleted=true, but record is still in ROOTS catalog */
-  private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_DELETED_BUT_NOT_REMOVED = Int("roots_deleted_but_not_removed");
-  private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_ERRORS = Int("roots_errors");
+  private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_DELETED_BUT_NOT_REMOVED = EventFields.Int("roots_deleted_but_not_removed");
+  private static final IntEventField FIELD_HEALTH_CHECK_ROOTS_ERRORS = EventFields.Int("roots_errors");
 
-  private static final IntEventField FIELD_HEALTH_CHECK_ATTRIBUTES_ERRORS = Int("attributes_errors");
+  private static final IntEventField FIELD_HEALTH_CHECK_ATTRIBUTES_ERRORS = EventFields.Int("attributes_errors");
 
   private static final VarargEventId EVENT_VFS_HEALTH_CHECK = GROUP_VFS.registerVarargEvent(
     "health_check",
@@ -185,8 +182,8 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
    * Not any errors, but errors that are likely internal VFS errors, i.e., corruptions or code bugs.
    * E.g., error due to illegal argument passed from the outside is not counted.
    */
-  private static final IntEventField FIELD_ACCUMULATED_VFS_ERRORS = Int("accumulated_errors");
-  private static final LongEventField FIELD_TIME_SINCE_STARTUP = Long("time_since_startup_ms");
+  private static final IntEventField FIELD_ACCUMULATED_VFS_ERRORS = EventFields.Int("accumulated_errors");
+  private static final LongEventField FIELD_TIME_SINCE_STARTUP = EventFields.Long("time_since_startup_ms");
 
   private static final VarargEventId EVENT_VFS_INTERNAL_ERRORS = GROUP_VFS.registerVarargEvent(
     "internal_errors",
@@ -223,7 +220,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_REFRESH_OTHER_ROOTS.with(otherRoots),
         FIELD_REFRESH_CANCELLED.with(cancelled),
         FIELD_WAIT_MS.with(wait),
-        DurationMs.with(duration),
+        EventFields.DurationMs.with(duration),
         FIELD_REFRESH_TRIES.with(tries));
     }
   }
@@ -234,7 +231,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_REFRESH_FULL_SCANS.with(fullScans),
         FIELD_REFRESH_PARTIAL_SCANS.with(partialScans),
         FIELD_REFRESH_RETRIES.with(retries),
-        DurationMs.with(duration),
+        EventFields.DurationMs.with(duration),
         FIELD_REFRESH_VFS_TIME_MS.with(vfsTime),
         FIELD_REFRESH_IO_TIME_MS.with(ioTime));
     }
@@ -246,7 +243,7 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
         FIELD_WAIT_MS.with(wait),
         FIELD_EVENT_LISTENERS_MS.with(listenerTime),
         FIELD_EVENT_TRIES.with(listenerTries),
-        DurationMs.with(edtTime),
+        EventFields.DurationMs.with(edtTime),
         FIELD_EVENT_NUMBER.with(events));
     }
   }

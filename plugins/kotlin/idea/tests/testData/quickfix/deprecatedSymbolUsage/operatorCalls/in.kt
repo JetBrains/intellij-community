@@ -20,4 +20,4 @@ fun g(c: C) {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix
-/* IGNORE_K2 */
+// IGNORE_K2

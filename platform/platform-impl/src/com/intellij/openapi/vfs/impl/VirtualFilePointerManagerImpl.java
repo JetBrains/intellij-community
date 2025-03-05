@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -391,13 +391,13 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       toUpdate = root.findOrCreateByFile(file);
     }
     FilePartNode node = toUpdate.node;
-    if (fs != node.myFS) {
+    if (fs != node.fs) {
       if (url != null && (IS_UNDER_UNIT_TEST || IS_INTERNAL)) {
         throw new IllegalArgumentException("Invalid url: '" + url + "'. " +
                                            "Its protocol '" + VirtualFileManager.extractProtocol(url) + "' is from " + fsFromFile +
-                                           " but the path part points to " + node.myFS);
+                                           " but the path part points to " + node.fs);
       }
-      LOG.error("fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file+"; node="+node);
+      LOG.error("fs=" + fs + "; node.myFS=" + node.fs + "; url=" + url + "; file=" + file + "; node=" + node);
     }
 
     VirtualFilePointerImpl pointer = node.getPointer(listener);
@@ -542,8 +542,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private record CollectedEvents(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
-                                 @NotNull List<? extends NodeToUpdate> toUpdateNodes,
-                                 @NotNull List<? extends EventDescriptor> eventList,
+                                 @NotNull List<NodeToUpdate> toUpdateNodes,
+                                 @NotNull List<EventDescriptor> eventList,
                                  long startModCount,
                                  long prepareElapsedMs) {
   }
@@ -736,7 +736,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         FilePartNode parent = toUpdate.parent;
         FilePartNode node = toUpdate.node;
 
-        node.update(parent, getRoot(node.myFS), "VFPMI invalidated VFP during update", toUpdate.myEvent);
+        node.update(parent, getRoot(node.fs), "VFPMI invalidated VFP during update", toUpdate.myEvent);
       }
     }
 
@@ -760,7 +760,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     if (!shouldKill) {
       return false;
     }
-    getRoot(pointer.myNode.myFS).removePointer(pointer);
+    getRoot(pointer.getNode().fs).removePointer(pointer);
     pointer.myNode = null;
     assertConsistency();
     myPointerSetModCount++;
@@ -813,7 +813,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           Reference2IntMap.Entry<VirtualFilePointerImpl> entry = iterator.next();
           VirtualFilePointerImpl pointer = entry.getKey();
           int disposeCount = entry.getIntValue();
-          boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.myNode == null;
+          boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.getNode() == null;
           if (isDisposed) {
             pointer.throwDisposalError("Already disposed:\n" + pointer.getStackTrace());
           }

@@ -21,7 +21,7 @@ object CreateLocalVariableUtil {
         return ConvertToBlockBodyContext(
           returnTypeIsUnit = false,
           returnTypeIsNothing = false,
-          returnTypeString = "",
+          returnTypeString = "kotlin.Any?",
           bodyTypeIsUnit = false,
           bodyTypeIsNothing = false,
           reformat = reformat,

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.VcsBundle;
@@ -15,13 +15,14 @@ import java.util.Date;
 import java.util.Locale;
 
 public final class DateChangeListGroupingStrategy implements ChangeListGroupingStrategy {
-  @NonNls private final SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
+  private final @NonNls SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
   private long myTimeToRecalculateAfter;
   private Calendar myCurrentCalendar;
   private final Calendar myCalendar;
   private final WeekDayFormatCache myWeekDayFormatCache;
   private final MonthsCache myMonthsCache;
 
+  @Override
   public String toString() {
     return VcsBundle.message("date.group.title");
   }
@@ -54,8 +55,7 @@ public final class DateChangeListGroupingStrategy implements ChangeListGroupingS
     return getGroupName(changeList.getCommitDate());
   }
 
-  @Nls
-  public String getGroupName(final Date date) {
+  public @Nls String getGroupName(final Date date) {
     myCalendar.setTime(date);
     if (myCurrentCalendar.get(Calendar.YEAR) == myCalendar.get(Calendar.YEAR)) {
       if (myCurrentCalendar.get(Calendar.DAY_OF_YEAR) == myCalendar.get(Calendar.DAY_OF_YEAR)) {
@@ -88,8 +88,7 @@ public final class DateChangeListGroupingStrategy implements ChangeListGroupingS
       }
     }
 
-    @Nls
-    public String get(int month) {
+    public @Nls String get(int month) {
       return myCache.get(month);
     }
   }
@@ -105,8 +104,7 @@ public final class DateChangeListGroupingStrategy implements ChangeListGroupingS
       }
     }
 
-    @Nls
-    public String get(int dayOfWeek) {
+    public @Nls String get(int dayOfWeek) {
       return myCache.get(dayOfWeek);
     }
   }

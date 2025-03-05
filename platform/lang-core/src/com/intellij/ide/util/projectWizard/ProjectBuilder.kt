@@ -8,8 +8,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Consumer
 
 abstract class ProjectBuilder {
   open val isUpdate: Boolean
@@ -43,5 +43,10 @@ abstract class ProjectBuilder {
    * Configure project when it's added to workspace as module.
    */
   @ApiStatus.Internal
-  open fun createModuleConfigurator(): Consumer<Module>? = null
+  open fun createProjectConfigurator(): ProjectConfigurator? = null
+}
+
+@ApiStatus.Internal
+interface ProjectConfigurator {
+  fun configureProject(workspace: Project, projectDir: VirtualFile)
 }

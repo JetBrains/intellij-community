@@ -125,7 +125,7 @@ public class JDComment {
         sb.delete(nlen, sb.length());
       }
     }
-    else if (sb.length() == 0 && !StringUtil.isEmpty(myEndLine)) {
+    else if (sb.isEmpty() && !StringUtil.isEmpty(myEndLine)) {
       sb.append(prefix).append('\n');
     }
 

@@ -38,7 +38,7 @@ object DefaultGradlePreviewCustomizer : GradlePreviewCustomizer {
     val projectPath = resolverContext.projectPath
     val projectName = File(projectPath).name
 
-    val ideProjectPath = resolverContext.settings?.ideProjectPath
+    val ideProjectPath = resolverContext.ideProjectPath
     val mainModuleFileDirectoryPath = ideProjectPath ?: projectPath
 
     val projectData = ProjectData(GradleConstants.SYSTEM_ID, projectName, projectPath, projectPath)

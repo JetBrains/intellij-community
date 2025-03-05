@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
@@ -32,15 +32,15 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  * @see OverrideKeywordHandler
  */
 internal class FirDeclarationFromOverridableMembersContributor(
-    basicContext: FirBasicCompletionContext,
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         val declaration = when (positionContext) {
             is KotlinValueParameterPositionContext -> positionContext.ktParameter
@@ -50,7 +50,7 @@ internal class FirDeclarationFromOverridableMembersContributor(
         } ?: return
 
         if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            val elements = OverrideKeywordHandler(basicContext).createOverrideMemberLookups(parameters, declaration, project)
+            val elements = OverrideKeywordHandler(importStrategyDetector).createOverrideMemberLookups(parameters, declaration, project)
             sink.addAllElements(elements)
         }
     }

@@ -10,7 +10,7 @@ public class UnnamedVariables {
   }
   
   int _ = 123;
-  <error descr="Incompatible types. Found: 'int', required: 'java.lang.String'">String s = _;</error>
+  String s = <error descr="Incompatible types. Found: 'int', required: 'java.lang.String'">_</error>;
   
   void testLocal() {
     int _ = 10;

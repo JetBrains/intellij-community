@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.jupyter.core.jupyter
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -27,8 +28,8 @@ class JupyterCorePluginListener : DynamicPluginListener {
   }
 
   companion object {
-    val filesToRestore = mutableListOf<Pair<Project, VirtualFile>>()
+    val filesToRestore: MutableList<Pair<Project, VirtualFile>> = mutableListOf<Pair<Project, VirtualFile>>()
 
-    const val JUPYTER_PLUGIN_ID = "intellij.jupyter"
+    const val JUPYTER_PLUGIN_ID: String = "intellij.jupyter"
   }
 }

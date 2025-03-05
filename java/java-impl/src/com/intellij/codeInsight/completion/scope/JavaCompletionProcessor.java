@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.scope;
 
-import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstanceBase;
+import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -28,10 +28,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.SealedUtils;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -238,8 +235,8 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     return LambdaUtil.performWithTargetType(referenceExpression, expectedType, () -> {
       JavaResolveResult result = referenceExpression.advancedResolve(false);
       return method.getManager().areElementsEquivalent(method, result.getElement()) &&
-             PsiMethodReferenceUtil.isReturnTypeCompatible(referenceExpression, result, expectedType) &&
-             PsiMethodReferenceHighlightingUtil.checkMethodReferenceContext(referenceExpression, method, expectedType) == null;
+             PsiMethodReferenceUtil.isReturnTypeCompatible(referenceExpression, result, expectedType) && 
+             JavaErrorCollector.findSingleError(referenceExpression) == null;
     });
   }
 
@@ -351,7 +348,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     }
   }
 
-  public Iterable<CompletionElement> getResults() {
+  public @Unmodifiable Iterable<CompletionElement> getResults() {
     if (mySecondRateResults.size() == myResults.size()) {
       return mySecondRateResults;
     }

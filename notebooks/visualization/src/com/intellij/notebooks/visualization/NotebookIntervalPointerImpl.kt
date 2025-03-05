@@ -6,7 +6,8 @@ import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.event.BulkAwareDocumentListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.*
@@ -37,8 +38,9 @@ class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactor
  * Intervals should be restored after the text and corresponding DocumentEvent,
  * that's why this listener should always be after DocumentUndoProvider.
  */
-class UndoableActionListener : BulkAwareDocumentListener.Simple {
-  override fun afterDocumentChange(document: Document) {
+class UndoableActionListener : DocumentListener {
+  override fun documentChanged(event: DocumentEvent) {
+    val document = event.document
     document.removeUserData(POSTPONED_CHANGES_KEY)?.let { changes ->
       val eventChanges = changes.eventChanges
       val shiftChanges = changes.shiftChanges
@@ -126,17 +128,17 @@ class NotebookIntervalPointerFactoryImpl(
         ThreadingAssertions.assertWriteAccess()
         val invertedChanges = invertChanges(eventChanges)
         updatePointersByChanges(invertedChanges)
-        onUpdated(NotebookIntervalPointersEvent(invertedChanges))
+        onUpdated(NotebookIntervalPointersEvent(document.isInBulkUpdate, invertedChanges))
       }
 
       override fun redo() {
         ThreadingAssertions.assertWriteAccess()
         updatePointersByChanges(eventChanges)
-        onUpdated(NotebookIntervalPointersEvent(eventChanges))
+        onUpdated(NotebookIntervalPointersEvent(document.isInBulkUpdate, eventChanges))
       }
     })
 
-    onUpdated(NotebookIntervalPointersEvent(eventChanges))
+    onUpdated(NotebookIntervalPointersEvent(document.isInBulkUpdate, eventChanges))
   }
 
   override fun documentChanged(event: NotebookCellLinesEvent) {
@@ -155,14 +157,19 @@ class NotebookIntervalPointerFactoryImpl(
     }
   }
 
+  override fun bulkUpdateFinished() {
+    changeListeners.multicaster.bulkUpdateFinished()
+  }
+
   private fun documentChangedByAction(event: NotebookCellLinesEvent) {
     val eventChanges = updateChangedIntervals(event)
     val shiftChanges = updateShiftedIntervals(event)
 
-    setupUndoRedoAndFireEvent(eventChanges, shiftChanges)
+    setupUndoRedoAndFireEvent(document.isInBulkUpdate, eventChanges, shiftChanges)
   }
 
   private fun setupUndoRedoAndFireEvent(
+    isInBulkUpdate: Boolean,
     eventChanges: NotebookIntervalPointersEventChanges,
     shiftChanges: NotebookIntervalPointersEventChanges,
   ) {
@@ -181,7 +188,7 @@ class NotebookIntervalPointerFactoryImpl(
     //Postpone UndoableAction registration until DocumentUndoProvider registers its own action.
     document.putUserData(POSTPONED_CHANGES_KEY, PostponedChanges(eventChanges, shiftChanges))
 
-    onUpdated(NotebookIntervalPointersEvent(eventChanges))
+    onUpdated(NotebookIntervalPointersEvent(isInBulkUpdate, eventChanges))
   }
 
   private fun applyPostponedChanges(event: NotebookCellLinesEvent) {
@@ -189,7 +196,7 @@ class NotebookIntervalPointerFactoryImpl(
     ThreadingAssertions.assertWriteAccess()
     updatePointersByChanges(postponedChanges.eventChanges)
     updatePointersByChanges(postponedChanges.shiftChanges)
-    onUpdated(NotebookIntervalPointersEvent(postponedChanges.eventChanges))
+    onUpdated(NotebookIntervalPointersEvent(document.isInBulkUpdate, postponedChanges.eventChanges))
   }
 
   private fun updatePointersByChanges(changes: List<Change>) {

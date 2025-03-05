@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
@@ -17,22 +17,18 @@ public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements
     this.projectPath = projectPath;
   }
 
-  @NotNull
   @Override
-  public String getProjectName() {
+  public @NotNull String getProjectName() {
     return projectName;
   }
 
-  @NotNull
   @Override
-  public String getProjectPath() {
+  public @NotNull String getProjectPath() {
     return projectPath;
   }
 
-  @NonNls
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NonNls @NotNull String getDisplayName() {
     return "project " + projectName;
   }
 }

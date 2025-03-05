@@ -2,8 +2,10 @@ package com.intellij.driver.sdk.remoteDev
 
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRowList
-import com.intellij.driver.sdk.ui.components.JTreeFixtureRef
-import com.intellij.driver.sdk.ui.components.JTreeUiComponent
+import com.intellij.driver.sdk.ui.CellRendererReader
+import com.intellij.driver.sdk.ui.components.elements.JTreeFixtureRef
+import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
+import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Robot
 import java.awt.Point
 import javax.swing.JTree
@@ -93,5 +95,13 @@ class JTreeFixtureAdapter(robot: Robot, component: BeControlComponentBase) :
 
   override fun getRowPoint(row: Int): Point {
     return fixture.getRowPoint(row)
+  }
+
+  override fun replaceCellRendererReader(reader: CellRendererReader) {
+    fixture.replaceCellRendererReader(reader)
+  }
+
+  override fun getComponentAtRow(row: Int): Component {
+    return fixture.getComponentAtRow(row)
   }
 }

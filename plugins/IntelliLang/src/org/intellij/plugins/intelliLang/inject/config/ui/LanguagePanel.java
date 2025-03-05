@@ -113,14 +113,13 @@ public final class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
     }
   }
 
-  @NotNull
-  public String getLanguage() {
+  public @NotNull String getLanguage() {
     return (String)myLanguage.getSelectedItem();
   }
 
   public void setLanguage(@NlsSafe String id) {
     final DefaultComboBoxModel<String> model = (DefaultComboBoxModel)myLanguage.getModel();
-    if (model.getIndexOf(id) == -1 && id.length() > 0) {
+    if (model.getIndexOf(id) == -1 && !id.isEmpty()) {
       model.insertElementAt(id, 0);
     }
     myLanguage.setSelectedItem(id);

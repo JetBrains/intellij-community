@@ -56,7 +56,8 @@ import kotlin.Result
 @get:Internal
 val isIdeStartupWizardEnabled: Boolean
   get() {
-    return !ApplicationManagerEx.isInIntegrationTest() &&
+    return (!ApplicationManagerEx.isInIntegrationTest() ||
+            System.getProperty("show.wizard.in.test", "false").toBoolean()) &&
            !AppMode.isRemoteDevHost() &&
            System.getProperty("intellij.startup.wizard", "true").toBoolean()
   }

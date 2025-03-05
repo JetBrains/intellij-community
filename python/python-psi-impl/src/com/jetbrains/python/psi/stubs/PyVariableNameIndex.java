@@ -21,8 +21,7 @@ public final class PyVariableNameIndex extends StringStubIndexExtension<PyTarget
   }
 
   @Override
-  @NotNull
-  public StubIndexKey<String, PyTargetExpression> getKey() {
+  public @NotNull StubIndexKey<String, PyTargetExpression> getKey() {
     return KEY;
   }
 

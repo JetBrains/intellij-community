@@ -1,3 +1,5 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the
+// Apache 2.0 license.
 package org.jetbrains.jewel.intui.markdown.standalone
 
 import androidx.compose.runtime.Composable
@@ -10,6 +12,7 @@ import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.markdown.standalone.styling.dark
 import org.jetbrains.jewel.intui.markdown.standalone.styling.light
+import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownProcessor
 import org.jetbrains.jewel.markdown.extensions.LocalMarkdownStyling
@@ -29,7 +32,8 @@ public fun ProvideMarkdownStyling(
                 MarkdownStyling.light()
             }
         },
-    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
+    markdownMode: MarkdownMode = MarkdownMode.Standalone,
+    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) {
             if (isDark) {
@@ -57,7 +61,8 @@ public fun ProvideMarkdownStyling(
     markdownStyling: MarkdownStyling,
     markdownBlockRenderer: MarkdownBlockRenderer,
     codeHighlighter: CodeHighlighter,
-    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor() },
+    markdownMode: MarkdownMode = MarkdownMode.Standalone,
+    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
     content: @Composable () -> Unit,
 ) {
     CompositionLocalProvider(

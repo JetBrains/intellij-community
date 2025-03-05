@@ -17,7 +17,6 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.orNull
@@ -40,15 +39,15 @@ import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.fir.extensions.FirAssignExpressionAltererExtension
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
-import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
-import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
+import org.jetbrains.kotlin.idea.facet.isKotlinFacet
+import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 import org.jetbrains.kotlin.util.ServiceLoaderLite
 import java.io.File
 import java.nio.file.Path
@@ -73,8 +72,11 @@ internal class KtCompilerPluginsProviderIdeImpl(
     init {
         cs.launch {
             WorkspaceModel.getInstance(project).eventLog.collect { event ->
-                val hasChanges = event.getChanges<FacetEntity>().any { change ->
-                    change.facetTypes.any { it == KotlinFacetType.ID }
+                val facetChanges = event.getChanges<FacetEntity>() + event.getChanges<KotlinSettingsEntity>()
+
+                val hasChanges = facetChanges.any { change ->
+                    val entities = listOfNotNull(change.oldEntity, change.newEntity)
+                    entities.any { it.isKotlinFacet() }
                 }
                 if (hasChanges) {
                     resetPluginsCache()
@@ -99,13 +101,6 @@ internal class KtCompilerPluginsProviderIdeImpl(
             this
         )
     }
-
-    private val EntityChange<FacetEntity>.facetTypes: List<String>
-        get() = when (this) {
-            is EntityChange.Added -> listOf(newEntity.typeId.name)
-            is EntityChange.Removed -> listOf(oldEntity.typeId.name)
-            is EntityChange.Replaced -> listOf(oldEntity.typeId.name, newEntity.typeId.name)
-        }
 
     private fun createNewCache(): PluginsCache? {
         if (!project.isTrusted()) return null
@@ -149,10 +144,9 @@ internal class KtCompilerPluginsProviderIdeImpl(
             .any { it.extensions[extension]?.isNotEmpty() == true }
     }
 
-    @OptIn(Frontend10ApiUsage::class)
     private fun computeExtensionStorage(module: KaSourceModule): CompilerPluginRegistrar.ExtensionStorage? {
         val classLoader = pluginsCache?.pluginsClassLoader ?: return null
-        val compilerArguments = module.ideaModule.getCompilerArguments()
+        val compilerArguments = module.openapiModule.getCompilerArguments()
         val pluginClasspaths = collectSubstitutedPluginClasspaths(listOf(compilerArguments)).map { it.toFile() }
         if (pluginClasspaths.isEmpty()) return null
 
@@ -177,15 +171,14 @@ internal class KtCompilerPluginsProviderIdeImpl(
             // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
             // (or even a platform-agnostic alternative) should be added.
             if (compilerArguments is K2JVMCompilerArguments) {
-                val compilerExtension = CompilerModuleExtension.getInstance(module.ideaModule)
-                val outputUrl = when (module.moduleInfo) {
-                    is ModuleTestSourceInfo -> compilerExtension?.compilerOutputUrlForTests
-                    else -> compilerExtension?.compilerOutputUrl
+                val compilerExtension = CompilerModuleExtension.getInstance(module.openapiModule)
+                val outputUrl = when (module.sourceModuleKind) {
+                    KaSourceModuleKind.TEST -> compilerExtension?.compilerOutputUrlForTests
+                    KaSourceModuleKind.PRODUCTION, null -> compilerExtension?.compilerOutputUrl
                 }
 
                 putIfNotNull(JVMConfigurationKeys.JVM_TARGET, compilerArguments.jvmTarget?.let(JvmTarget::fromString))
                 putIfNotNull(JVMConfigurationKeys.OUTPUT_DIRECTORY, outputUrl?.let { File(it) })
-                put(JVMConfigurationKeys.IR, true) // FIR cannot work with the old backend
             }
 
             processCompilerPluginsOptions(this, compilerArguments.pluginOptions?.toList(), commandLineProcessors)
@@ -197,7 +190,10 @@ internal class KtCompilerPluginsProviderIdeImpl(
 
             with(pluginRegistrar) {
                 try {
-                    storage.registerExtensions(compilerConfiguration)
+                    val configuration = KotlinFirCompilerPluginConfigurationForIdeProvider.getCompilerConfigurationWithCustomOptions(
+                        pluginRegistrar, compilerConfiguration
+                    ) ?: compilerConfiguration
+                    storage.registerExtensions(configuration)
                 }
                 catch (e : ProcessCanceledException) {
                     throw e
@@ -251,7 +247,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
     private fun substitutePluginJar(userSuppliedPluginJar: Path): Path? {
         ProgressManager.checkCanceled()
 
-        val bundledPlugin = KotlinBundledFirCompilerPluginProvider.provideBundledPluginJar(userSuppliedPluginJar)
+        val bundledPlugin = KotlinBundledFirCompilerPluginProvider.provideBundledPluginJar(project, userSuppliedPluginJar)
         if (bundledPlugin != null) return bundledPlugin
 
         return userSuppliedPluginJar.takeUnless { onlyBundledPluginsEnabled }

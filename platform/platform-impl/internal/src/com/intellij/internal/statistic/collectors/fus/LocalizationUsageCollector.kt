@@ -9,10 +9,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.l10n.LocalizationUtil
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class LocalizationUsageCollector : ApplicationUsagesCollector() {
+internal class LocalizationUsageCollector : ApplicationUsagesCollector() {
   private val LOCALES = listOf("am", "ar", "as", "az", "bn", "cs", "da", "de", "el", "en", "es", "fa", "fr", "gu",
                                "ha", "hi", "hu", "ig", "in", "it", "ja", "kk", "kn", "ko", "ml", "mr", "my", "nb",
                                "ne", "nl", "nn", "no", "or", "pa", "pl", "pt", "ro", "ru", "rw", "sd", "si", "so",

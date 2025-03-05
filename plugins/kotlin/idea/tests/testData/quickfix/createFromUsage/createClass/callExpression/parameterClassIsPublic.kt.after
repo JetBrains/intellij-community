@@ -1,5 +1,5 @@
 // "Create class 'Bar'" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class Foo
 
 val bar = Bar(Foo())

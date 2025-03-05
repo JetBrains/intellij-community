@@ -15,13 +15,17 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class SerializationUtils {
+
+  private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
 
   private SerializationUtils() {}
 
@@ -162,5 +166,29 @@ public final class SerializationUtils {
       return false;
     }
     return false;
+  }
+
+  /**
+   * @param field field to check
+   * @return true if the field is implicitly used in Java serialization protocol
+   */
+  public static boolean isSerializationImplicitlyUsedField(@NotNull PsiField field) {
+    String name = field.getName();
+    if (CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(name)) {
+      if (!PsiTypes.longType().equals(field.getType())) return false;
+    }
+    else if (SERIAL_PERSISTENT_FIELDS_FIELD_NAME.equals(name)) {
+      if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+      if (!(field.getType() instanceof PsiArrayType arrayType) || arrayType.getArrayDimensions() != 1) return false;
+      PsiType componentType = arrayType.getComponentType();
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
+      if (aClass != null && !"java.io.ObjectStreamField".equals(aClass.getQualifiedName())) return false;
+    }
+    else {
+      return false;
+    }
+    if (!field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) return false;
+    PsiClass aClass = field.getContainingClass();
+    return aClass == null || JavaHighlightUtil.isSerializable(aClass);
   }
 }

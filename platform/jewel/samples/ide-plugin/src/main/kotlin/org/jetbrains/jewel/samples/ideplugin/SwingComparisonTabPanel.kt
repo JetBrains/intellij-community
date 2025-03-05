@@ -3,7 +3,6 @@ package org.jetbrains.jewel.samples.ideplugin
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -50,21 +49,21 @@ import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.medium
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.ListComboBox
-import org.jetbrains.jewel.ui.component.ListItemState
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Typography
-import org.jetbrains.jewel.ui.theme.simpleListItemStyle
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     private val mainContent =
         panel {
+                separator()
                 buttonsRow()
                 separator()
                 labelsRows()
@@ -129,7 +128,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         row("Long text (Swing)") { text(longText, maxLineLength = 100) }
         row("Long text (Compose)") {
             compose {
-                BoxWithConstraints {
+                Box {
                     Text(
                         longText,
                         modifier =
@@ -150,7 +149,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
         }
         row("Titles (Compose)") {
             compose {
-                BoxWithConstraints {
+                Box {
                     val style = Typography.h1TextStyle()
                     Text(
                         "This will wrap over a couple rows",
@@ -177,7 +176,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                 compose {
                     Icon(
                         key = IdeSampleIconKeys.jewelToolWindow,
-                        contentDescription = null,
+                        contentDescription = "Jewel Tool Window Icon",
                         modifier = Modifier.border(1.dp, Color.Red),
                     )
                 }
@@ -274,23 +273,23 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                     var selectedComboBox1: String? by remember { mutableStateOf(comboBoxItems.first()) }
                     var selectedComboBox2: String? by remember { mutableStateOf(comboBoxItems.first()) }
                     var selectedComboBox3: String? by remember { mutableStateOf(comboBoxItems.first()) }
+                    var selectedComboBox4: String? by remember { mutableStateOf(comboBoxItems.first()) }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Column {
                             Text("Not editable")
-                            Text(text = "Selected item: $selectedComboBox2")
+                            Text(text = "Selected item: $selectedComboBox1")
 
                             ListComboBox(
                                 items = comboBoxItems,
                                 modifier = Modifier.width(200.dp),
-                                isEditable = false,
-                                onSelectedItemChange = { selectedComboBox2 = it },
-                                listItemContent = { item, isSelected, isFocused, isItemHovered, isListHovered ->
+                                onSelectedItemChange = { _, text -> selectedComboBox1 = text },
+                                itemContent = { item, isSelected, isActive ->
                                     SimpleListItem(
                                         text = item,
-                                        style = JewelTheme.simpleListItemStyle,
-                                        state = ListItemState(isSelected, isListHovered, isItemHovered),
-                                        contentDescription = item,
+                                        isSelected = isSelected,
+                                        isActive = isActive,
+                                        iconContentDescription = item,
                                     )
                                 },
                             )
@@ -303,15 +302,14 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                             ListComboBox(
                                 items = comboBoxItems,
                                 modifier = Modifier.width(200.dp),
-                                isEditable = false,
                                 isEnabled = false,
-                                onSelectedItemChange = { selectedComboBox2 = it },
-                                listItemContent = { item, isSelected, isFocused, isItemHovered, isListHovered ->
+                                onSelectedItemChange = { _, text -> selectedComboBox2 = text },
+                                itemContent = { item, isSelected, isActive ->
                                     SimpleListItem(
                                         text = item,
-                                        style = JewelTheme.simpleListItemStyle,
-                                        state = ListItemState(isSelected, isListHovered, isItemHovered),
-                                        contentDescription = item,
+                                        isSelected = isSelected,
+                                        isActive = isActive,
+                                        iconContentDescription = item,
                                     )
                                 },
                             )
@@ -319,18 +317,18 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
 
                         Column {
                             Text("Editable")
-                            Text(text = "Selected item: $selectedComboBox1")
-                            ListComboBox(
+                            Text(text = "Selected item: $selectedComboBox3")
+                            EditableListComboBox(
                                 items = comboBoxItems,
                                 modifier = Modifier.width(200.dp),
                                 maxPopupHeight = 150.dp,
-                                onSelectedItemChange = { selectedComboBox1 = it },
-                                listItemContent = { item, isSelected, isFocused, isItemHovered, isListHovered ->
+                                onSelectedItemChange = { _, text -> selectedComboBox3 = text },
+                                itemContent = { item, isSelected, isActive ->
                                     SimpleListItem(
                                         text = item,
-                                        style = JewelTheme.simpleListItemStyle,
-                                        state = ListItemState(isSelected, isListHovered, isItemHovered),
-                                        contentDescription = item,
+                                        isSelected = isSelected,
+                                        isActive = isActive,
+                                        iconContentDescription = item,
                                     )
                                 },
                             )
@@ -338,19 +336,18 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
 
                         Column {
                             Text("Editable + disabled")
-                            Text(text = "Selected item: $selectedComboBox3")
-                            ListComboBox(
+                            Text(text = "Selected item: $selectedComboBox4")
+                            EditableListComboBox(
                                 items = comboBoxItems,
                                 modifier = Modifier.width(200.dp),
-                                isEditable = true,
                                 isEnabled = false,
-                                onSelectedItemChange = { selectedComboBox3 = it },
-                                listItemContent = { item, isSelected, isFocused, isItemHovered, isListHovered ->
+                                onSelectedItemChange = { _, text -> selectedComboBox4 = text },
+                                itemContent = { item, isSelected, isActive ->
                                     SimpleListItem(
                                         text = item,
-                                        style = JewelTheme.simpleListItemStyle,
-                                        state = ListItemState(isSelected, isListHovered, isItemHovered),
-                                        contentDescription = item,
+                                        isSelected = isSelected,
+                                        isActive = isActive,
+                                        iconContentDescription = item,
                                     )
                                 },
                             )

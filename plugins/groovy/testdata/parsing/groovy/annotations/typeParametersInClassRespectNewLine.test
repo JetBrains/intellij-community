@@ -1,0 +1,88 @@
+class A<
+@Anno1
+T,
+   @Anno2(a=b)
+ V,  @Anno1
+   @Anno2(a=b)
+    U   > {
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Type parameter list
+      PsiElement(<)('<')
+      PsiElement(new line)('\n')
+      Type parameter
+        Annotation
+          PsiElement(@)('@')
+          Reference element
+            PsiElement(identifier)('Anno1')
+          Annotation arguments
+            <empty list>
+        PsiElement(new line)('\n')
+        PsiElement(identifier)('T')
+        Type extends bounds list
+          <empty list>
+      PsiElement(,)(',')
+      PsiElement(new line)('\n   ')
+      Type parameter
+        Annotation
+          PsiElement(@)('@')
+          Reference element
+            PsiElement(identifier)('Anno2')
+          Annotation arguments
+            PsiElement(()('(')
+            Annotation member value pair
+              PsiElement(identifier)('a')
+              PsiElement(=)('=')
+              Reference expression
+                PsiElement(identifier)('b')
+            PsiElement())(')')
+        PsiElement(new line)('\n ')
+        PsiElement(identifier)('V')
+        Type extends bounds list
+          <empty list>
+      PsiElement(,)(',')
+      PsiWhiteSpace('  ')
+      Type parameter
+        Annotation
+          PsiElement(@)('@')
+          Reference element
+            PsiElement(identifier)('Anno1')
+          Annotation arguments
+            <empty list>
+        PsiElement(new line)('\n   ')
+        Annotation
+          PsiElement(@)('@')
+          Reference element
+            PsiElement(identifier)('Anno2')
+          Annotation arguments
+            PsiElement(()('(')
+            Annotation member value pair
+              PsiElement(identifier)('a')
+              PsiElement(=)('=')
+              Reference expression
+                PsiElement(identifier)('b')
+            PsiElement())(')')
+        PsiElement(new line)('\n    ')
+        PsiElement(identifier)('U')
+        Type extends bounds list
+          <empty list>
+      PsiWhiteSpace('   ')
+      PsiElement(>)('>')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
+    Permits clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n')
+      PsiElement(})('}')

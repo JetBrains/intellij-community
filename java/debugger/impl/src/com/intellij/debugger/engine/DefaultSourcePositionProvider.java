@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -27,12 +27,11 @@ import java.util.Collection;
 import java.util.List;
 
 public final class DefaultSourcePositionProvider extends SourcePositionProvider {
-  @Nullable
   @Override
-  protected SourcePosition computeSourcePosition(@NotNull NodeDescriptor descriptor,
-                                                 @NotNull Project project,
-                                                 @NotNull DebuggerContextImpl context,
-                                                 boolean nearest) {
+  protected @Nullable SourcePosition computeSourcePosition(@NotNull NodeDescriptor descriptor,
+                                                           @NotNull Project project,
+                                                           @NotNull DebuggerContextImpl context,
+                                                           boolean nearest) {
     StackFrameProxyImpl frame = context.getFrameProxy();
     if (frame == null) {
       return null;
@@ -59,11 +58,10 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
     return null;
   }
 
-  @Nullable
-  private static SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
-                                                          @NotNull Project project,
-                                                          @NotNull DebuggerContextImpl context,
-                                                          boolean nearest) {
+  private static @Nullable SourcePosition getSourcePositionForField(@NotNull FieldDescriptor descriptor,
+                                                                    @NotNull Project project,
+                                                                    @NotNull DebuggerContextImpl context,
+                                                                    boolean nearest) {
     final ReferenceType type = descriptor.getField().declaringType();
     final String fieldName = descriptor.getField().name();
     if (fieldName.startsWith(FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
@@ -129,11 +127,10 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
     }
   }
 
-  @Nullable
-  private static SourcePosition getSourcePositionForLocalVariable(String name,
-                                                                  @NotNull Project project,
-                                                                  @NotNull DebuggerContextImpl context,
-                                                                  boolean nearest) {
+  private static @Nullable SourcePosition getSourcePositionForLocalVariable(String name,
+                                                                            @NotNull Project project,
+                                                                            @NotNull DebuggerContextImpl context,
+                                                                            boolean nearest) {
     PsiElement place = PositionUtil.getContextElement(context);
     if (place == null) return null;
 

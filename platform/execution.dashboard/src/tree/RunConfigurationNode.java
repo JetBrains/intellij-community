@@ -44,22 +44,19 @@ public final class RunConfigurationNode extends AbstractTreeNode<RunDashboardSer
   }
 
   @Override
-  @NotNull
-  public RunnerAndConfigurationSettings getConfigurationSettings() {
+  public @NotNull RunnerAndConfigurationSettings getConfigurationSettings() {
     //noinspection ConstantConditions ???
     return getValue().getSettings();
   }
 
-  @Nullable
   @Override
-  public RunContentDescriptor getDescriptor() {
+  public @Nullable RunContentDescriptor getDescriptor() {
     //noinspection ConstantConditions ???
     return getValue().getDescriptor();
   }
 
-  @Nullable
   @Override
-  public Content getContent() {
+  public @Nullable Content getContent() {
     //noinspection ConstantConditions ???
     return getValue().getContent();
   }
@@ -102,9 +99,8 @@ public final class RunConfigurationNode extends AbstractTreeNode<RunDashboardSer
     return icon;
   }
 
-  @NotNull
   @Override
-  public Collection<? extends AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     for (RunDashboardCustomizer customizer : myCustomizers) {
       Collection<? extends AbstractTreeNode<?>> children = customizer.getChildren(this);
       if (children != null) {
@@ -117,9 +113,8 @@ public final class RunConfigurationNode extends AbstractTreeNode<RunDashboardSer
     return Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
     return myUserDataHolder.getUserData(key);
   }
 
@@ -128,15 +123,13 @@ public final class RunConfigurationNode extends AbstractTreeNode<RunDashboardSer
     myUserDataHolder.putUserData(key, value);
   }
 
-  @NotNull
   @Override
-  public List<RunDashboardCustomizer> getCustomizers() {
+  public @NotNull List<RunDashboardCustomizer> getCustomizers() {
     return myCustomizers;
   }
 
-  @NotNull
   @Override
-  public RunDashboardRunConfigurationStatus getStatus() {
+  public @NotNull RunDashboardRunConfigurationStatus getStatus() {
     for (RunDashboardCustomizer customizer : myCustomizers) {
       RunDashboardRunConfigurationStatus status = customizer.getStatus(this);
       if (status != null) {
@@ -146,8 +139,7 @@ public final class RunConfigurationNode extends AbstractTreeNode<RunDashboardSer
     return RunDashboardRunConfigurationStatus.getStatus(this);
   }
 
-  @Nullable
-  private Icon getExecutorIcon() {
+  private @Nullable Icon getExecutorIcon() {
     Content content = getContent();
     if (content != null) {
       if (!RunContentManagerImpl.isTerminated(content)) {

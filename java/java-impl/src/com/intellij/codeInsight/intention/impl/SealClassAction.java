@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -70,7 +70,7 @@ public final class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
       }
     }
 
-    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
+    PsiJavaModule module = JavaPsiModuleUtil.findDescriptorByElement(psiClass);
 
     List<PsiClass> inheritors = new ArrayList<>();
     Ref<String> message = new Ref<>();

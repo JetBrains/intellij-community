@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,13 +74,13 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implement
     }
   }
 
-  public abstract @NotNull List<T> getTargets();
+  public abstract @Unmodifiable @NotNull List<T> getTargets();
 
   public @Nullable String getFeatureId() {
     return null;
   }
 
-  protected abstract void selectTargets(@NotNull List<? extends T> targets, @NotNull Consumer<? super List<? extends T>> selectionConsumer);
+  protected abstract void selectTargets(@NotNull @Unmodifiable List<? extends T> targets, @NotNull Consumer<? super List<? extends T>> selectionConsumer);
 
   public abstract void computeUsages(@NotNull List<? extends T> targets);
 

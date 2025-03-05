@@ -149,7 +149,7 @@ public final class FormatDecode {
       final String width = matcher.group("width");
       final String precision = matcher.group("precision");
       final String dateSpec = matcher.group("dateSpec");
-      @NonNls final String conversion = matcher.group("conversion");
+      final @NonNls String conversion = matcher.group("conversion");
 
       int flagBits = 0;
       for (int j = 0; j < flags.length(); j++) {
@@ -542,9 +542,8 @@ public final class FormatDecode {
   public static class MultiValidator extends Validator {
     private final Set<Validator> validators = new HashSet<>(3);
 
-    @Nullable
     @Override
-    public String getInvalidSpecifier(PsiType type) {
+    public @Nullable String getInvalidSpecifier(PsiType type) {
       for (Validator validator : validators) {
         if (!validator.valid(type)) {
           return validator.getInvalidSpecifier(type);
@@ -578,8 +577,7 @@ public final class FormatDecode {
 
   public abstract static class Validator {
 
-    @Nullable
-    public String getInvalidSpecifier(PsiType type){
+    public @Nullable String getInvalidSpecifier(PsiType type){
       if (valid(type)) {
         return null;
       }
@@ -653,16 +651,14 @@ public final class FormatDecode {
       return myExpression;
     }
 
-    @Nullable
-    public static FormatArgument extract(@NotNull PsiCallExpression expression, @NotNull List<String> methodNames, @NotNull List<String> classNames) {
+    public static @Nullable FormatArgument extract(@NotNull PsiCallExpression expression, @NotNull List<String> methodNames, @NotNull List<String> classNames) {
       return extract(expression, methodNames, classNames, false);
     }
 
-    @Nullable
-    public static FormatArgument extract(@NotNull PsiCallExpression expression,
-                                         @NotNull List<String> methodNames,
-                                         @NotNull List<String> classNames,
-                                         boolean allowNotConstant) {
+    public static @Nullable FormatArgument extract(@NotNull PsiCallExpression expression,
+                                                   @NotNull List<String> methodNames,
+                                                   @NotNull List<String> classNames,
+                                                   boolean allowNotConstant) {
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) return null;
       PsiExpression[] arguments = argumentList.getExpressions();

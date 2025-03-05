@@ -39,8 +39,7 @@ public final class ReplaceAllDotInspection extends BaseInspection {
   private static final String REGEX_META_CHARS = ".$|()[{^?*+\\";
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     final PsiExpression expression = (PsiExpression)infos[1];
     final String methodName = methodCallExpression.getMethodExpression().getReferenceName();
@@ -56,21 +55,18 @@ public final class ReplaceAllDotInspection extends BaseInspection {
   }
 
   @Pattern(VALID_ID_PATTERN)
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return "SuspiciousRegexArgument";
   }
 
-  @Nullable
   @Override
-  public String getAlternativeID() {
+  public @Nullable String getAlternativeID() {
     return "ReplaceAllDot";
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[1];
     if (!(expression instanceof PsiLiteralExpression)) {
       return null;
@@ -80,10 +76,8 @@ public final class ReplaceAllDotInspection extends BaseInspection {
 
   private static class EscapeCharacterFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.all.dot.quickfix");
     }
 

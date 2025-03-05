@@ -1,3 +1,4 @@
+// K2_ERROR: 'when' expression must be exhaustive. Add the 'C' branch or an 'else' branch.
 // ERROR: 'when' expression must be exhaustive, add necessary 'C' branch or 'else' branch instead
 // PROBLEM: none
 

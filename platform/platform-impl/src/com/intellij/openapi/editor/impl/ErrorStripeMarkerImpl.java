@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -49,8 +49,8 @@ final class ErrorStripeMarkerImpl extends RangeMarkerImpl {
       else if (intervalStart() != myHighlighter.getStartOffset() || intervalEnd() != myHighlighter.getEndOffset()) {
         String extendedHighlighterInfo = "";
         if (myHighlighter instanceof PersistentRangeHighlighterImpl h) {
-          extendedHighlighterInfo = "(prev state: " + h.prevStartOffset + "-" + h.prevEndOffset + ", stamps match: " +
-                                    (h.modificationStamp == (byte)e.getDocument().getModificationStamp()) + ")";
+          extendedHighlighterInfo = "(prev state: " + h.getPrevStartOffset() + "-" + h.getPrevEndOffset() + ", stamps match: " +
+                                    (h.getModificationStamp() == (byte)e.getDocument().getModificationStamp()) + ")";
         }
         reportError("Mirror highlighter " + this + "(prev state: " + oldStart + "-" + oldEnd +
                     ") diverged from base one " + myHighlighter + extendedHighlighterInfo + " after " + e);

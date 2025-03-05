@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -40,7 +40,7 @@ import java.util.*;
  * <ul>
  *   <li>Application/Project/Module-component class - {@link Component#getInterfaceClass()} / {@link Component#getImplementationClass()} / {@link Component#getHeadlessImplementationClass()}</li>
  *   <li>Action/ActionGroup class - {@link Action#getClazz()}/{@link Group#getClazz()}</li>
- *   <li>Action/ActionGroup ID - {@link ActionOrGroup#getId()}</li>
+ *   <li>Action/ActionGroup ID - {@link ActionOrGroup#getEffectiveId()}</li>
  *   <li>Application/Project Listener class - {@link Listeners.Listener#getListenerClassName()}</li>
  *   <li>Listener topic class - {@link Listeners.Listener#getTopicClassName()}</li>
  * </ul>
@@ -48,7 +48,7 @@ import java.util.*;
 @SuppressWarnings("UnusedReturnValue")
 public final class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
-  private static final int INDEX_VERSION = 8;
+  private static final int INDEX_VERSION = 9;
 
   private static final ID<String, List<RegistrationEntry>> NAME = ID.create("IdeaPluginRegistrationIndex");
 
@@ -72,9 +72,8 @@ public final class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String
     }
   };
 
-  @NotNull
   @Override
-  public ID<String, List<RegistrationEntry>> getName() {
+  public @NotNull ID<String, List<RegistrationEntry>> getName() {
     return NAME;
   }
 
@@ -83,15 +82,13 @@ public final class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String
     return new RegistrationIndexer(plugin).indexFile();
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<List<RegistrationEntry>> getValueExternalizer() {
+  public @NotNull DataExternalizer<List<RegistrationEntry>> getValueExternalizer() {
     return myValueExternalizer;
   }
 

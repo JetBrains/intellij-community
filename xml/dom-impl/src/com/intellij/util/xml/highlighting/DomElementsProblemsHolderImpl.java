@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -12,6 +12,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,9 +81,9 @@ public final class DomElementsProblemsHolderImpl implements DomElementsProblemsH
   }
 
   @Override
-  public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
-                                                       boolean includeXmlProblems,
-                                                       boolean withChildren) {
+  public @Unmodifiable List<DomElementProblemDescriptor> getProblems(DomElement domElement,
+                                                                     boolean includeXmlProblems,
+                                                                     boolean withChildren) {
     if (!withChildren || domElement == null || !domElement.isValid()) {
       return getProblems(domElement);
     }
@@ -90,15 +91,15 @@ public final class DomElementsProblemsHolderImpl implements DomElementsProblemsH
     return ContainerUtil.concat(getProblemsMap(domElement).values());
   }
 
-  public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
-                                                       final boolean includeXmlProblems,
-                                                       final boolean withChildren,
-                                                       final HighlightSeverity minSeverity) {
+  public @Unmodifiable List<DomElementProblemDescriptor> getProblems(DomElement domElement,
+                                                                     final boolean includeXmlProblems,
+                                                                     final boolean withChildren,
+                                                                     final HighlightSeverity minSeverity) {
     return getProblems(domElement, withChildren, minSeverity);
   }
 
   @Override
-  public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, final boolean withChildren, final HighlightSeverity minSeverity) {
+  public @Unmodifiable List<DomElementProblemDescriptor> getProblems(final DomElement domElement, final boolean withChildren, final HighlightSeverity minSeverity) {
     return ContainerUtil.findAll(getProblems(domElement, true, withChildren),
                                  object -> SeverityRegistrar.getSeverityRegistrar(domElement.getManager().getProject()).compare(object.getHighlightSeverity(), minSeverity) >= 0);
 
@@ -143,7 +144,7 @@ public final class DomElementsProblemsHolderImpl implements DomElementsProblemsH
   }
 
   @Override
-  public List<DomElementProblemDescriptor> getAllProblems() {
+  public @Unmodifiable List<DomElementProblemDescriptor> getAllProblems() {
     return getProblems(myElement, false, true);
   }
 

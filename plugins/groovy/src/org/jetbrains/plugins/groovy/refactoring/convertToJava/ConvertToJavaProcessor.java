@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToSeparateFileFix;
@@ -40,9 +40,8 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     myFiles = files;
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
       @Override
       public PsiElement @NotNull [] getElements() {
@@ -145,9 +144,8 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     return UniqueNameGenerator.generateUniqueName(prefix, "", ".java", fileNames);
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return GroovyRefactoringBundle.message("converting.files.to.java");
   }
 }

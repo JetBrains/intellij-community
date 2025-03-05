@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections
 
-import com.intellij.debugger.streams.trace.IntermediateCallHandler
-import com.intellij.debugger.streams.trace.TerminatorCallHandler
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
+import com.intellij.debugger.streams.core.trace.IntermediateCallHandler
+import com.intellij.debugger.streams.core.trace.TerminatorCallHandler
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 
 /**
  * Unlike java streams, most operations in kotlin collections are intermediate and terminal simultaneously.

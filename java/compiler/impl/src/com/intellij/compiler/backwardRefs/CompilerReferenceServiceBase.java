@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -60,6 +60,7 @@ import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -124,7 +125,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   private boolean hasIndex() {
-    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
+    Path buildDir = BuildManager.getInstance().getProjectSystemDir(project);
     return !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
   }
 
@@ -164,8 +165,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     BY_OS,
     BY_ROOT;
 
-    @NotNull
-    static FsCompilerReferenceType from(@Nullable String text) {
+    static @NotNull FsCompilerReferenceType from(@Nullable String text) {
       for (FsCompilerReferenceType type : values()) {
         if (type.name().equalsIgnoreCase(text)) {
           return type;

@@ -7,4 +7,4 @@ fun useSite() {
     val bar = Bar()
     bar.buz<caret>("1", "2")
 }
-/* IGNORE_K2 */
+// IGNORE_K2

@@ -352,3 +352,34 @@ function buildValues(diff, lastComponent, newString, oldString, useLongestToken)
 
   return components;
 }
+
+class HighlightResistantDiff extends Diff {
+  highlighters;
+
+  constructor(highlighters) {
+    super();
+    this.highlighters = highlighters;
+  }
+
+  equals(left, right, options) {
+    for (const highlighter of this.highlighters) {
+      const indexOf = left.indexOf(highlighter);
+      if (indexOf >= 0) {
+        const endsWithNewline = left.endsWith("\n");
+        left = left.substring(0, indexOf) + (endsWithNewline ? "\n" : "");
+        break;
+      }
+    }
+
+    for (const highlighter of this.highlighters) {
+      const indexOf = right.indexOf(highlighter);
+      if (indexOf >= 0) {
+        const endsWithNewline = right.endsWith("\n");
+        right = right.substring(0, indexOf) + (endsWithNewline ? "\n" : "");
+        break;
+      }
+    }
+
+    return super.equals(left, right, options);
+  }
+}

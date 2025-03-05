@@ -65,7 +65,7 @@ class WorkspaceModelTest {
 
       val replacement = builderSnapshot.getStorageReplacement()
 
-      val updated = model.replaceProjectModel(replacement)
+      val updated = model.replaceWorkspaceModel("async model update", replacement)
 
       assertTrue(updated)
 
@@ -89,7 +89,7 @@ class WorkspaceModelTest {
     }
 
     val updated = runWriteActionAndWait {
-      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceProjectModel(replacement)
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceWorkspaceModel("async model update with fail", replacement)
     }
 
     assertFalse(updated)

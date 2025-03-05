@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -83,8 +83,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
                                new ReplaceWithRemoveIfQuickFix());
       }
 
-      @Nullable
-      private static PsiExpression checkAndExtractCondition(IterableTraversal traversal, PsiIfStatement ifStatement) {
+      private static @Nullable PsiExpression checkAndExtractCondition(IterableTraversal traversal, PsiIfStatement ifStatement) {
         PsiExpression condition = ifStatement.getCondition();
         if (condition == null || ifStatement.getElseBranch() != null) return null;
         PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
@@ -128,10 +127,8 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
   }
 
   private static class ReplaceWithRemoveIfQuickFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return QuickFixBundle.message("java.8.collection.removeif.inspection.fix.name");
     }
 
@@ -185,9 +182,8 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
       CodeStyleManager.getInstance(project).reformat(result);
     }
 
-    @NotNull
-    private static String generateRemoveIf(IterableTraversal traversal, CommentTracker ct,
-                                           PsiExpression condition, String paramName) {
+    private static @NotNull String generateRemoveIf(IterableTraversal traversal, CommentTracker ct,
+                                                    PsiExpression condition, String paramName) {
       return (traversal.getIterable() == null ? "" : ct.text(traversal.getIterable()) + ".") +
              "removeIf(" + paramName + "->" + ct.text(condition) + ");";
     }

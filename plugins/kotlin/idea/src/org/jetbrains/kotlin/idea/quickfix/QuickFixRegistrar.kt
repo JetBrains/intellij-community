@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -116,7 +116,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         USELESS_CAST.registerFactory(RemoveUselessCastFix)
 
-        USELESS_IS_CHECK.registerFactory(RemoveUselessIsCheckFix, RemoveUselessIsCheckFixForWhen)
+        USELESS_IS_CHECK.registerFactory(RemoveUselessIsCheckFixFactory, RemoveUselessIsCheckFixForWhenFactory)
 
         WRONG_SETTER_PARAMETER_TYPE.registerFactory(ChangeAccessorTypeFixFactory)
         WRONG_GETTER_RETURN_TYPE.registerFactory(ChangeAccessorTypeFixFactory)
@@ -266,7 +266,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         UNUSED_DESTRUCTURED_PARAMETER_ENTRY.registerFactory(RenameToUnderscoreFix.Factory)
 
-        SENSELESS_COMPARISON.registerFactory(SimplifyComparisonFix)
+        SENSELESS_COMPARISON.registerFactory(SimplifyComparisonFixFactory)
 
         UNNECESSARY_SAFE_CALL.registerFactory(Fe10ReplaceWithDotCallFixFactory)
         UNSAFE_CALL.registerFactory(ReplaceWithSafeCallFixFactory)
@@ -545,7 +545,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         INFIX_MODIFIER_REQUIRED.registerFactory(AddModifierFixFactory(INFIX_KEYWORD))
 
-        UNDERSCORE_IS_RESERVED.registerFactory(RenameUnderscoreFix)
+        UNDERSCORE_IS_RESERVED.registerFactory(RenameUnderscoreFixFactory)
 
         DEPRECATED_TYPE_PARAMETER_SYNTAX.registerFactory(MigrateTypeParameterListFixFactory)
         DEPRECATED_JAVA_ANNOTATION.registerFactory(DeprecatedJavaAnnotationFix)
@@ -659,7 +659,7 @@ class QuickFixRegistrar : QuickFixContributor {
         NO_CONSTRUCTOR.registerFactory(AddDefaultConstructorFixFactory)
         NO_CONSTRUCTOR_WARNING.registerFactory(RemoveNoConstructorFixFactory)
 
-        ANNOTATION_USED_AS_ANNOTATION_ARGUMENT.registerFactory(RemoveAtFromAnnotationArgument)
+        ANNOTATION_USED_AS_ANNOTATION_ARGUMENT.registerFactory(RemoveAtFromAnnotationArgumentFactory)
 
         ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION.registerFactory(ReplaceWithArrayCallInAnnotationFix)
         ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION.registerFactory(SurroundWithArrayOfWithSpreadOperatorInFunctionFix)
@@ -723,6 +723,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         NO_VALUE_FOR_PARAMETER.registerFactory(AddConstructorParameterFromSuperTypeCallFixFactory)
         NO_VALUE_FOR_PARAMETER.registerFactory(SpecifyRemainingArgumentsByNameFixFactory)
+        NONE_APPLICABLE.registerFactory(SpecifyRemainingArgumentsByNameFixFactory)
 
         UNEXPECTED_TRAILING_LAMBDA_ON_A_NEW_LINE.registerFactory(AddSemicolonBeforeLambdaExpressionFix.Factory)
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -27,20 +27,16 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.dom.*;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
 import java.util.List;
 import java.util.Set;
 
-final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
-
+@ApiStatus.Internal
+public final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionBase {
   @Override
   protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (!isAllowed(holder)) return;
@@ -216,7 +212,7 @@ final class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspectionB
                                               @Nullable Property property) {
     if (StringUtil.isEmptyOrSpaces(value)) return;
 
-    @NlsSafe final String escapedValue = XmlUtil.unescape(value).replace("_", "");
+    final @NlsSafe String escapedValue = XmlUtil.unescape(value).replace("_", "");
     if (NlsCapitalizationUtil.isCapitalizationSatisfied(escapedValue, capitalization)) {
       return;
     }

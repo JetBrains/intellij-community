@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.HelpID;
@@ -50,9 +50,9 @@ public final class CompilerMessagesService implements BuildViewService {
   private static final Key<Object> CONTENT_ID_KEY = Key.create("CONTENT_ID");
   private static final Key<Object> SESSION_ID_KEY = Key.create("SESSION_ID");
 
-  @NotNull private final Project myProject;
-  @NotNull private final Object myContentId;
-  private @NlsContexts.TabTitle final String myContentName;
+  private final @NotNull Project myProject;
+  private final @NotNull Object myContentId;
+  private final @NlsContexts.TabTitle String myContentName;
   private Runnable myRestartWork;
   private final boolean myHeadlessMode;
   private boolean myMessagesAutoActivated = false;

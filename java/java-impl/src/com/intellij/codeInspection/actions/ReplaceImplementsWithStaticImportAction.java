@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -64,7 +64,7 @@ public final class ReplaceImplementsWithStaticImportAction implements ModCommand
       final Map<PsiJavaFile, Map<PsiField, Set<PsiElement>>> refs = new HashMap<>();
       for (PsiField field : targetClass.getAllFields()) {
         final PsiClass containingClass = field.getContainingClass();
-        for (PsiReference reference : ReferencesSearch.search(field)) {
+        for (PsiReference reference : ReferencesSearch.search(field).asIterable()) {
           if (reference == null) continue;
           final PsiElement refElement = updater.getWritable(reference.getElement());
           if (encodeQualifier(containingClass, refElement, targetClass)) continue;
@@ -78,7 +78,7 @@ public final class ReplaceImplementsWithStaticImportAction implements ModCommand
       }
 
       final Set<PsiJavaCodeReferenceElement> refs2Unimplement = new HashSet<>();
-      for (PsiClass psiClass : DirectClassInheritorsSearch.search(targetClass)) {
+      for (PsiClass psiClass : DirectClassInheritorsSearch.search(targetClass).asIterable()) {
         PsiFile containingFile = psiClass.getContainingFile();
         if (!(containingFile instanceof PsiJavaFile javaFile)) continue;
         refs.computeIfAbsent(updater.getWritable(javaFile), k -> new HashMap<>());

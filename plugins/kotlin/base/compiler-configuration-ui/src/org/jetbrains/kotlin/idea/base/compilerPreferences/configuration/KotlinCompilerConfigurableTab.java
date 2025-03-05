@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.MutableCollectionComboBoxModel;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -87,8 +87,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                 "configuration.description.when.inlining.a.function.from.other.module.with.embedded.sources"));
     }
 
-    @Nullable
-    private final KotlinCompilerWorkspaceSettings compilerWorkspaceSettings;
+    private final @Nullable KotlinCompilerWorkspaceSettings compilerWorkspaceSettings;
     private final Project project;
     private final boolean isProjectSettings;
     private CommonCompilerArguments commonCompilerArguments;
@@ -234,8 +233,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         return size;
     }
 
-    @NotNull
-    private static @NlsSafe String buildOverridingModulesWarning(List<String> modulesOverridingProjectSettings) {
+    private static @NotNull @NlsSafe String buildOverridingModulesWarning(List<String> modulesOverridingProjectSettings) {
         int nameCountToShow = calculateNameCountToShowInWarning(modulesOverridingProjectSettings);
         int allNamesCount = modulesOverridingProjectSettings.size();
         if (nameCountToShow == 0) {
@@ -267,8 +265,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         return builder.toString();
     }
 
-    @NotNull
-    private static @Nls
+    @Nls
+    private static @NotNull
     String getModuleKindDescription(@Nullable String moduleKind) {
         if (moduleKind == null) return "";
         String result = moduleKindDescriptions.get(moduleKind);
@@ -276,8 +274,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         return result;
     }
 
-    @NotNull
-    private static @Nls
+    @Nls
+    private static @NotNull
     String getSourceMapSourceEmbeddingDescription(@Nullable String sourceMapSourceEmbeddingId) {
         if (sourceMapSourceEmbeddingId == null) return "";
         String result = sourceMapSourceEmbeddingDescriptions.get(sourceMapSourceEmbeddingId);
@@ -286,16 +284,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         return result;
     }
 
-    @NotNull
-    private static @NlsSafe String getModuleKindOrDefault(@Nullable String moduleKindId) {
+    private static @NotNull @NlsSafe String getModuleKindOrDefault(@Nullable String moduleKindId) {
         if (moduleKindId == null) {
             moduleKindId = K2JsArgumentConstants.MODULE_PLAIN;
         }
         return moduleKindId;
     }
 
-    @NotNull
-    private static @NlsSafe String getSourceMapSourceEmbeddingOrDefault(@Nullable String sourceMapSourceEmbeddingId) {
+    private static @NotNull @NlsSafe String getSourceMapSourceEmbeddingOrDefault(@Nullable String sourceMapSourceEmbeddingId) {
         if (sourceMapSourceEmbeddingId == null) {
             sourceMapSourceEmbeddingId = K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_INLINING;
         }
@@ -559,7 +555,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             moduleKindComboBox.addItem(moduleKind);
         }
 
-        moduleKindComboBox.setRenderer(SimpleListCellRenderer.create("", o -> getModuleKindDescription(o)));
+        moduleKindComboBox.setRenderer(BuilderKt.textListCellRenderer("", o -> getModuleKindDescription(o)));
     }
 
     private void fillSourceMapSourceEmbeddingList() {
@@ -567,18 +563,16 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             sourceMapEmbedSources.addItem(moduleKind);
         }
 
-        sourceMapEmbedSources.setRenderer(SimpleListCellRenderer.create("", o -> getSourceMapSourceEmbeddingDescription(o)));
+        sourceMapEmbedSources.setRenderer(BuilderKt.textListCellRenderer("", o -> getSourceMapSourceEmbeddingDescription(o)));
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
         return "project.kotlinCompiler";
     }
 
-    @Nullable
     @Override
-    public JComponent createComponent() {
+    public @Nullable JComponent createComponent() {
         if (validatorsDisposable != null) {
             LOG.error(new IllegalStateException("validatorsDisposable is not null. Disposing and rewriting it."));
             Disposer.dispose(validatorsDisposable);
@@ -616,8 +610,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                !getSelectedJvmVersion().equals(getJvmVersionOrDefault(k2jvmCompilerArguments.getJvmTarget()));
     }
 
-    @NotNull
-    private String getSelectedModuleKind() {
+    private @NotNull String getSelectedModuleKind() {
         return getModuleKindOrDefault((String) moduleKindComboBox.getSelectedItem());
     }
 
@@ -625,19 +618,16 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         return getSourceMapSourceEmbeddingOrDefault((String) sourceMapEmbedSources.getSelectedItem());
     }
 
-    @NotNull
-    public String getSelectedJvmVersion() {
+    public @NotNull String getSelectedJvmVersion() {
         return getJvmVersionOrDefault((String) jvmVersionComboBox.getSelectedItem());
     }
 
-    @NotNull
-    public VersionView getSelectedLanguageVersionView() {
+    public @NotNull VersionView getSelectedLanguageVersionView() {
         Object item = languageVersionComboBox.getSelectedItem();
         return item != null ? (VersionView) item : getLatestStableVersion();
     }
 
-    @NotNull
-    private VersionView getSelectedAPIVersionView() {
+    private @NotNull VersionView getSelectedAPIVersionView() {
         Object item = apiVersionComboBox.getSelectedItem();
         return item != null ? (VersionView) item : getLatestStableVersion();
     }
@@ -816,9 +806,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         return KotlinBaseCompilerConfigurationUiBundle.message("configuration.name.kotlin.compiler");
     }
 
-    @Nullable
     @Override
-    public String getHelpTopic() {
+    public @Nullable String getHelpTopic() {
         return "reference.compiler.kotlin";
     }
 

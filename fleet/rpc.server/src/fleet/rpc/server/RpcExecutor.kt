@@ -24,36 +24,38 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashSet
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
-class RpcExecutor private constructor(private val serialization: () -> Serialization,
-                                      private val services: RpcServiceLocator,
-                                      private val route: UID,
-                                      private val queue: SendChannel<Pair<TransportMessage, ((Throwable?) -> Unit)?>>,
-                                      private val coroutineScope: CoroutineScope,
-                                      private val rpcInterceptor: RpcExecutorMiddleware,
-                                      private val rpcCallDispatcher: CoroutineDispatcher?) {
+class RpcExecutor private constructor(
+  private val services: RpcServiceLocator,
+  private val route: UID,
+  private val queue: SendChannel<Pair<TransportMessage, ((Throwable?) -> Unit)?>>,
+  private val fallbackCoroutineScope: CoroutineScope,
+  private val rpcInterceptor: RpcExecutorMiddleware,
+  private val rpcCallDispatcher: CoroutineDispatcher?,
+) {
 
   private val remoteObjects = ConcurrentHashMap<InstanceId, ServiceImplementation>()
 
   companion object {
     internal val logger = KLoggers.logger(RpcExecutor::class)
 
-    suspend fun serve(services: RpcServiceLocator,
-                      json: () -> Serialization,
-                      route: UID,
-                      sendChannel: SendChannel<TransportMessage>,
-                      receiveChannel: ReceiveChannel<TransportMessage>,
-                      rpcInterceptor: RpcExecutorMiddleware,
-                      rpcCallDispatcher: CoroutineDispatcher? = null) {
+    suspend fun serve(
+      services: RpcServiceLocator,
+      route: UID,
+      sendChannel: SendChannel<TransportMessage>,
+      receiveChannel: ReceiveChannel<TransportMessage>,
+      rpcInterceptor: RpcExecutorMiddleware,
+      rpcCallDispatcher: CoroutineDispatcher? = null,
+    ) {
       val queueChannel = Channel<Pair<TransportMessage, ((Throwable?) -> Unit)?>>(Channel.UNLIMITED)
       val rpcScope = CoroutineScope(coroutineContext + SupervisorJob(coroutineContext[Job]))
-      val executor = RpcExecutor(serialization = json,
-                                 services = services,
+      val executor = RpcExecutor(services = services,
                                  queue = queueChannel,
-                                 coroutineScope = rpcScope,
+                                 fallbackCoroutineScope = rpcScope,
                                  rpcInterceptor = rpcInterceptor,
                                  rpcCallDispatcher = rpcCallDispatcher,
                                  route = route)
@@ -119,21 +121,20 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
   }
 
   private suspend fun processRpcMessage(clientId: UID, message: RpcMessage) {
-    val serialization = serialization()
-    val json = rpcJsonImplementationDetail(serialization)
+    val json = rpcJsonImplementationDetail()
 
     when (message) {
       is RpcMessage.CallRequest -> {
-        val (remoteApiDescriptor, service) = proxyDesc(message.service) ?: run {
+        val impl = proxyDesc(message.service) ?: run {
           logger.trace { "Failed to find rpc method for $message" }
           send(RpcMessage.CallFailure(message.requestId,
                                       FailureInfo(unresolvedService = "API for ${message.classMethodDisplayName()} could not be found"))
                  .seal(destination = clientId, origin = route, otelData = null))
           return
         }
-
-        val requestJob = Job(coroutineScope.coroutineContext[Job])
-        val signature = remoteApiDescriptor.getSignature(message.method)
+        val serviceScope = impl.serviceScope ?: fallbackCoroutineScope
+        val requestJob = Job(serviceScope.coroutineContext[Job])
+        val signature = impl.remoteApiDescriptor.getSignature(message.method)
         val args = try {
           signature.parameters.map { p ->
             val parameterName = p.parameterName
@@ -141,12 +142,12 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
             requireNotNull(arg) { "missing parameter $parameterName in ${message.service}/${message.method}" }
             val displayName = methodParamDisplayName(message.classMethodDisplayName(), parameterName)
             val kser = p.parameterKind.serializer(message.classMethodDisplayName())
-            val (`object`, streamDescriptors) = withSerializationContext(displayName, null, coroutineScope, requestJob) {
+            val (`object`, streamDescriptors) = withSerializationContext(displayName, null, serviceScope) {
               json.decodeFromJsonElement(kser, arg)
             }
             streamDescriptors.forEach {
-              registerStream(it, clientId)
-              serveStream(requireNotNull(channels[it.uid]), serialization, clientId)
+              registerStream(serviceScope, it, clientId)
+              serveStream(serviceScope, requireNotNull(channels[it.uid]), clientId)
             }
             `object`
           }
@@ -167,26 +168,31 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
         registerRequest(message.requestId, span, requestJob, clientId)
         val requestContext = requestJob +
                              span.asContextElement() +
-                             coroutineScope.coroutineContext.coroutineNameAppended(message.displayName) +
+                             serviceScope.coroutineContext.coroutineNameAppended(message.displayName) +
                              (rpcCallDispatcher ?: EmptyCoroutineContext)
-        coroutineScope.launch(requestContext) {
+        serviceScope.launch(requestContext) {
           try {
             val registeredStreams = mutableListOf<InternalStreamDescriptor>()
             logger.trace { "Executing interceptor for request  ${message.requestId}" }
             val result = rpcInterceptor.execute(message) { request ->
               logger.trace { "Executing method for request  ${message.requestId}" }
-              val result = (remoteApiDescriptor as RemoteApiDescriptor<RemoteApi<*>>).call(service, message.method, args.toTypedArray())
+              val result = (impl.remoteApiDescriptor as RemoteApiDescriptor<RemoteApi<*>>).call(impl.instance, message.method, args.toTypedArray())
               logger.trace { "Got result for request  ${message.requestId}" }
               val remoteObjectId = InstanceId(UID.random().toString())
               if (result is RemoteObject) {
-                registerRemoteObject(remoteObjectId, (signature.returnType as RemoteKind.RemoteObject).descriptor, result)
+                registerRemoteObject(
+                  path = remoteObjectId,
+                  remoteApiDescriptor = (signature.returnType as RemoteKind.RemoteObject).descriptor,
+                  inst = result,
+                  serviceScope = serviceScope,
+                )
               }
 
-              if (service is RemoteObject && request.method == "clientDispose") {
+              if (impl.instance is RemoteObject && request.method == "clientDispose") {
                 unregisterRemoteObject(message.service)
               }
 
-              val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.requestId}", null, coroutineScope) {
+              val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.requestId}", null, serviceScope) {
                 if (result is RemoteObject) {
                   Json.encodeToJsonElement(InstanceId.serializer(), remoteObjectId)
                 }
@@ -197,7 +203,7 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
               }
 
               streamDescriptors.forEach {
-                registeredStreams.add(registerStream(it, clientId))
+                registeredStreams.add(registerStream(serviceScope, it, clientId))
               }
 
               logger.trace { "Sending result: requestId=${request.requestId}, result=$result" }
@@ -207,7 +213,7 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
             sendAsync(result.seal(destination = clientId, origin = route, otelData = null)) { ex ->
               if (ex == null) {
                 registeredStreams.forEach {
-                  serveStream(it, serialization, clientId)
+                  serveStream(serviceScope, it, clientId)
                 }
               }
             }
@@ -234,12 +240,12 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
       is RpcMessage.StreamData -> {
         val stream = channels[message.streamId]
         if (stream != null) {
-          val (de, streamDescriptors) = withSerializationContext("sub-channel of ${message.streamId}", null, coroutineScope) {
+          val (de, streamDescriptors) = withSerializationContext("sub-channel of ${message.streamId}", null, stream.serviceScope) {
             json.decodeFromJsonElement(stream.elementSerializer, message.data)
           }
 
-          streamDescriptors.forEach { stream ->
-            serveStream(registerStream(stream, clientId), serialization, clientId)
+          streamDescriptors.forEach {
+            serveStream(stream.serviceScope, registerStream(stream.serviceScope, it, clientId), clientId)
           }
           runCatching { stream.requireBufferedChannel().send(InternalStreamMessage.Payload(de)) }
             .onFailure { ex ->
@@ -279,12 +285,11 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
     routeChannels[clientId]?.onEach { channelId -> closeChannel(channelId, clientId) }
   }
 
-  private fun serveStream(descriptor: InternalStreamDescriptor, json: Serialization, clientId: UID) {
+  private fun serveStream(coroutineScope: CoroutineScope, descriptor: InternalStreamDescriptor, clientId: UID) {
     serveStream(origin = route,
                 coroutineScope = coroutineScope,
                 descriptor = descriptor,
-                serialization = { json },
-                registerStream = { stream -> registerStream(stream, clientId) },
+                registerStream = { stream -> registerStream(coroutineScope, stream, clientId) },
                 unregisterStream = { streamId ->
                   channels.remove(streamId)?.also { s -> routeChannels[s.route]?.remove(s.uid) }
                 },
@@ -292,23 +297,34 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
                 prefetchStrategy = PrefetchStrategy.Default)
   }
 
-  private fun registerStream(descriptor: StreamDescriptor, route: UID): InternalStreamDescriptor {
-    val registeredStream = InternalStreamDescriptor.fromDescriptor(descriptor, route, PrefetchStrategy.Default)
+  private fun registerStream(
+    serviceScope: CoroutineScope,
+    descriptor: StreamDescriptor,
+    route: UID,
+  ): InternalStreamDescriptor {
+    val registeredStream = InternalStreamDescriptor.fromDescriptor(
+      desc = descriptor,
+      route = route,
+      prefetchStrategy = PrefetchStrategy.Default,
+      scope = serviceScope,
+    )
     val previous = channels.put(descriptor.uid, registeredStream)
     require(previous == null) {
       "There is no way you can use the same channel twice ${descriptor.displayName}"
     }
-    routeChannels.computeIfAbsent(route) { ConcurrentHashMap.newKeySet() }.add(descriptor.uid)
+    routeChannels.computeIfAbsent(route) { ConcurrentHashSet() }.add(descriptor.uid)
     return registeredStream
   }
 
-  private fun registerRequest(requestId: UID,
-                              span: Span,
-                              requestJob: CompletableJob,
-                              route: UID?) {
+  private fun registerRequest(
+    requestId: UID,
+    span: Span,
+    requestJob: CompletableJob,
+    route: UID?,
+  ) {
     requestJobs[requestId] = requestJob
     spans[requestId] = span
-    if (route != null) routeRequests.computeIfAbsent(route) { ConcurrentHashMap.newKeySet() }.add(requestId)
+    if (route != null) routeRequests.computeIfAbsent(route) { ConcurrentHashSet() }.add(requestId)
   }
 
   private fun removeRequest(requestId: UID, route: UID?, spanAction: Span.() -> Unit = {}, jobAction: CompletableJob.() -> Unit) {
@@ -336,8 +352,13 @@ class RpcExecutor private constructor(private val serialization: () -> Serializa
     return true
   }
 
-  private fun registerRemoteObject(path: InstanceId, remoteApiDescriptor: RemoteApiDescriptor<*>, inst: RemoteApi<*>) {
-    val impl = ServiceImplementation(remoteApiDescriptor, inst)
+  private fun registerRemoteObject(
+    path: InstanceId,
+    remoteApiDescriptor: RemoteApiDescriptor<*>,
+    inst: RemoteApi<*>,
+    serviceScope: CoroutineScope,
+  ) {
+    val impl = ServiceImplementation(remoteApiDescriptor, inst, serviceScope)
     remoteObjects.putIfAbsent(path, impl)?.let { old ->
       if (old.instance !== inst) {
         error(

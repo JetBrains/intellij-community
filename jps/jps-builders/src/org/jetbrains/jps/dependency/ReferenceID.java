@@ -6,7 +6,9 @@ package org.jetbrains.jps.dependency;
  * For example, is a Node represents a java class, a full qualified name of the class can be used as the Node's ReferenceID
  */
 public interface ReferenceID extends ExternalizableGraphElement {
+  @Override
   boolean equals(Object other);
 
+  @Override
   int hashCode();
 }

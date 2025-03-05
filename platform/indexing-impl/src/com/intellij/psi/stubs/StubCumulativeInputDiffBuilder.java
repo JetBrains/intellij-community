@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,12 +11,14 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.DirectInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.UpdatedEntryProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer, SerializedStubTree> {
+@ApiStatus.Internal
+public final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer, SerializedStubTree> {
   private static final Logger LOG = Logger.getInstance(SerializedStubTree.class);
   private final @Nullable SerializedStubTree myCurrentTree;
 
@@ -82,7 +84,8 @@ final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<In
   }
 
   @Nullable
-  SerializedStubTree getSerializedStubTree() {
+  @ApiStatus.Internal
+  public SerializedStubTree getSerializedStubTree() {
     return myCurrentTree;
   }
 

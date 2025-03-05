@@ -25,6 +25,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@ApiStatus.Obsolete
 class ComputingDiffRequestProcessor(project: Project, cs: CoroutineScope, private val vm: ComputedDiffViewModel)
   : CacheDiffRequestProcessor.Simple(project) {
 

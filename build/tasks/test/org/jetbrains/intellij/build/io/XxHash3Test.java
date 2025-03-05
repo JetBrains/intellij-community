@@ -15,16 +15,15 @@
  */
 package org.jetbrains.intellij.build.io;
 
-import com.intellij.util.lang.Xx3UnencodedString;
+import com.dynatrace.hash4j.hashing.Hashing;
+import com.intellij.util.lang.CharSequenceAccess;
 import com.intellij.util.lang.Xxh3;
-import org.assertj.core.api.AssertionsForClassTypes;
+import com.intellij.util.lang.Xxh3Impl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -50,7 +49,6 @@ public class XxHash3Test {
   }
 
   private static void testString(String s, long expected) {
-    assertThat(Xxh3.hash(s)).describedAs("Hash as string of: " + s).isEqualTo(expected);
     assertThat(Xxh3.hash(s.getBytes(StandardCharsets.UTF_8))).describedAs("Hash as bytes of: " + s).isEqualTo(expected);
   }
 
@@ -99,19 +97,17 @@ public class XxHash3Test {
   }
 
   private static void checkPackage(String s, long expected) {
-    AssertionsForClassTypes.assertThat(Xx3UnencodedString.hashUnencodedString(s.replace('.', '/'))).describedAs("Hash as string of: " + s).isEqualTo(expected);
+    String input = s.replace('.', '/');
+    assertThat(Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, 0)).describedAs("Hash as string of: " + s).isEqualTo(expected);
   }
 
   private static void testUnencodedString(String s, long expected) {
-    assertThat(Xx3UnencodedString.hashUnencodedString(s)).describedAs("Hash as string of: " + s).isEqualTo(expected);
+    assertThat(Xxh3Impl.hash(s, CharSequenceAccess.INSTANCE, 0, s.length() * 2, 0)).describedAs("Hash as string of: " + s).isEqualTo(expected);
+    assertThat(Hashing.xxh3_64().hashCharsToLong(s)).describedAs("Hash as string of: " + s).isEqualTo(expected);
   }
 
   private static void checkHashing(byte[] bytes) throws IOException {
-    long newHashValue;
-    try (InputStream inputStream = new ByteArrayInputStream(bytes)){
-      newHashValue = Xxh3.hash(inputStream, bytes.length);
-    }
-    assertThat(newHashValue).isEqualTo(Xxh3.hash(bytes));
+    assertThat(Xxh3.hash(bytes)).isEqualTo(Hashing.xxh3_64().hashBytesToLong(bytes));
   }
 
   @SuppressWarnings("SameParameterValue")

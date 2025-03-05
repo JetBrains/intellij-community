@@ -630,6 +630,7 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
 
 TYPE_TO_THRIFT_STRUCT_CONVERTERS = {
     "ndarray": array_to_thrift_struct,
+    "recarray": array_to_thrift_struct,
     "EagerTensor": tensor_to_thrift_struct,
     "ResourceVariable": tensor_to_thrift_struct,
     "SparseTensor": sparse_tensor_to_thrift_struct,

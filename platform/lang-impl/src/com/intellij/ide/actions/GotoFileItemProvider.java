@@ -34,9 +34,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.HashMap;
 import java.util.*;
+import java.util.HashMap;
 import java.util.function.Function;
 
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
@@ -238,9 +239,9 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }).append(dirs);
   }
 
-  private @NotNull Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
-                                                                                     @NotNull List<? extends MatchResult> matchResults,
-                                                                                     @NotNull Function<? super String, Object[]> indexResult) {
+  private @Unmodifiable @NotNull Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
+                                                                                                   @NotNull List<? extends MatchResult> matchResults,
+                                                                                                   @NotNull Function<? super String, Object[]> indexResult) {
     List<PsiFileSystemItem> group = new ArrayList<>();
     Map<PsiFileSystemItem, Integer> nesting = new HashMap<>();
     Map<PsiFileSystemItem, Integer> matchDegrees = new HashMap<>();

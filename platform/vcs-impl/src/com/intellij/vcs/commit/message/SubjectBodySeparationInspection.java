@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -19,10 +19,8 @@ import static com.intellij.util.containers.ContainerUtil.ar;
 
 @ApiStatus.Internal
 public class SubjectBodySeparationInspection extends BaseCommitMessageInspection {
-  @Nls
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     return VcsBundle.message("inspection.SubjectBodySeparationInspection.display.name");
   }
 

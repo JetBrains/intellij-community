@@ -1,0 +1,15 @@
+<html>
+<body>
+<p>Reports Kotlinx Coroutines Flows that are created but never consumed or passed to other functions.</p>
+<p>The code defining a Flow does not run unless the Flow is collected by using a terminal operator.</p>
+
+<p><b>Example:</b></p>
+<pre><code>
+fun foo() {
+    flowOf(1).onEach { println(it) }
+}
+</code></pre>
+
+<p>See <a href="https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/-flow/">some examples</a> of terminal operators.</p>
+</body>
+</html>

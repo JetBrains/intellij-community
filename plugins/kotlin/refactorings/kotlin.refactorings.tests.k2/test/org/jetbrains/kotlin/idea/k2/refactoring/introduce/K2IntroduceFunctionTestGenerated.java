@@ -854,6 +854,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValue.kt");
             }
 
+            @TestMetadata("singleOutputValueBracesRequired.kt")
+            public void testSingleOutputValueBracesRequired() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueBracesRequired.kt");
+            }
+
             @TestMetadata("singleOutputValueWithIf.kt")
             public void testSingleOutputValueWithIf() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithIf.kt");
@@ -1749,6 +1754,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             @TestMetadata("implicitThisWithSmartCast.kt")
             public void testImplicitThisWithSmartCast() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/extractThis/implicitThisWithSmartCast.kt");
+            }
+
+            @TestMetadata("importedCall.kt")
+            public void testImportedCall() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/extractThis/importedCall.kt");
             }
 
             @TestMetadata("javaSyntheticProperty.kt")

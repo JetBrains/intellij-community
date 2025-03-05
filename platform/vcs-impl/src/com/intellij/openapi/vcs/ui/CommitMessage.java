@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -70,8 +71,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     editor.setColorsScheme(getCommitMessageColorScheme(editor));
   };
 
-  @NotNull
-  private static EditorColorsScheme getCommitMessageColorScheme(EditorEx editor) {
+  private static @NotNull EditorColorsScheme getCommitMessageColorScheme(EditorEx editor) {
     boolean isLaFDark = ColorUtil.isDark(UIUtil.getPanelBackground());
     boolean isEditorDark = EditorColorsManager.getInstance().isDarkEditor();
     EditorColorsScheme colorsScheme = isLaFDark == isEditorDark
@@ -85,8 +85,8 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     return colorsScheme;
   }
 
-  @NotNull private final EditorTextField myEditorField;
-  @Nullable private final TitledSeparator mySeparator;
+  private final @NotNull EditorTextField myEditorField;
+  private final @Nullable TitledSeparator mySeparator;
 
   public CommitMessage(@NotNull Project project) {
     this(project, true, true, true);
@@ -168,8 +168,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     if (editor instanceof EditorEx) COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION.customize((EditorEx)editor);
   }
 
-  @NotNull
-  public JComponent createToolbar(boolean horizontal) {
+  public @NotNull JComponent createToolbar(boolean horizontal) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CommitMessage", getToolbarActions(), horizontal);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setBorder(createEmptyBorder());
@@ -196,8 +195,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     setText(currentDescription);
   }
 
-  @NotNull
-  private static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
+  private static @NotNull EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
     Set<EditorCustomization> features = new HashSet<>();
 
     features.add(new RightMarginCustomization(project));
@@ -229,25 +227,21 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     return document.getUserData(DATA_KEY) != null;
   }
 
-  @Nullable
-  public static Editor getEditor(@NotNull Document document) {
+  public static @Nullable Editor getEditor(@NotNull Document document) {
     CommitMessage commitMessage = document.getUserData(DATA_KEY);
     return commitMessage != null ? commitMessage.getEditorField().getEditor() : null;
   }
 
-  @NotNull
-  private static ActionGroup getToolbarActions() {
+  private static @NotNull ActionGroup getToolbarActions() {
     return (ActionGroup)ActionManager.getInstance().getAction("Vcs.MessageActionGroup");
   }
 
-  @NotNull
-  public EditorTextField getEditorField() {
+  public @NotNull EditorTextField getEditorField() {
     return myEditorField;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return getComment();
   }
 
@@ -261,8 +255,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     requestFocusInMessage();
   }
 
-  @NotNull
-  public String getComment() {
+  public @NotNull String getComment() {
     return trimTrailing(myEditorField.getDocument().getCharsSequence().toString());
   }
 
@@ -286,7 +279,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
   }
 
   private static final class RightMarginCustomization implements EditorCustomization {
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
 
     private RightMarginCustomization(@NotNull Project project) {
       myProject = project;
@@ -307,7 +300,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
   }
 
   private static class InspectionCustomization implements EditorCustomization {
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
 
     InspectionCustomization(@NotNull Project project) {
       myProject = project;
@@ -326,16 +319,14 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
   }
 
   private static final class ConditionalTrafficLightRenderer extends TrafficLightRenderer {
-    ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
-      super(project, document);
+    ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Editor editor) {
+      super(project, editor);
     }
 
     @Override
-    public void refresh(@Nullable EditorMarkupModel editorMarkupModel) {
+    public void refresh(@NotNull EditorMarkupModel editorMarkupModel) {
       super.refresh(editorMarkupModel);
-      if (editorMarkupModel != null) {
-        editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(getErrorCounts()));
-      }
+      editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(getErrorCounts()));
     }
 
     @Override
@@ -346,8 +337,9 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     private boolean hasHighSeverities(int @NotNull [] errorCounts) {
       HighlightSeverity minSeverity = notNull(HighlightDisplayLevel.find("TYPO"), HighlightDisplayLevel.DO_NOT_SHOW).getSeverity();
 
+      SeverityRegistrar registrar = SeverityRegistrar.getSeverityRegistrar(getProject());
       for (int i = 0; i < errorCounts.length; i++) {
-        if (errorCounts[i] > 0 && getSeverityRegistrar().compare(getSeverityRegistrar().getSeverityByIndex(i), minSeverity) > 0) {
+        if (errorCounts[i] > 0 && registrar.compare(registrar.getSeverityByIndex(i), minSeverity) > 0) {
           return true;
         }
       }
@@ -360,7 +352,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     public @Nullable TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
       Project project = editor.getProject();
       if (project == null || !isCommitMessage(editor.getDocument())) return null;
-      return new ConditionalTrafficLightRenderer(project, editor.getDocument());
+      return new ConditionalTrafficLightRenderer(project, editor);
     }
   }
 }

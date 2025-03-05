@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath;
 
 import com.intellij.lang.ASTNode;
@@ -17,9 +17,8 @@ import org.jetbrains.annotations.NotNull;
 public class XPath2ParserDefinition extends XPathParserDefinition {
   public static final IFileElementType FILE = new IFileElementType("XPATH2_FILE", XPathFileType.XPATH2.getLanguage());
 
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return XPathLexer.create(true);
   }
 
@@ -33,9 +32,8 @@ public class XPath2ParserDefinition extends XPathParserDefinition {
     return new XPath2Parser();
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.create(XPath2TokenTypes.COMMENT);
   }
 

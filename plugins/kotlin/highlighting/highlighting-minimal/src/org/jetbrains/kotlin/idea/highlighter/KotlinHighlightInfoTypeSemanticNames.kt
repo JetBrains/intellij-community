@@ -35,6 +35,8 @@ object KotlinHighlightInfoTypeSemanticNames {
   val ENUM: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.ENUM)
   val ENUM_ENTRY: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.ENUM_ENTRY)
   val TYPE_ALIAS: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.TYPE_ALIAS)
+  val DATA_CLASS: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.DATA_CLASS)
+  val DATA_OBJECT: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.DATA_OBJECT)
 
   // variable kinds
   val MUTABLE_VARIABLE: HighlightInfoType = createSymbolTypeInfo(KotlinHighlightingColors.MUTABLE_VARIABLE)

@@ -8,6 +8,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -197,11 +198,24 @@ public class DarculaButtonUI extends BasicButtonUI {
     Color backgroundColor = (Color)c.getClientProperty("JButton.backgroundColor");
 
     return backgroundColor != null ? backgroundColor :
-           isDefaultButton(c) ? UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
+           isDefaultButton(c) ? getDefaultButtonPaint(c, r) :
            isSmallVariant(c) ? JBColor.namedColor("ComboBoxButton.background",
                                                   JBColor.namedColor("Button.darcula.smallComboButtonBackground", UIUtil.getPanelBackground())) :
            isGotItButton(c) ? UIUtil.getGradientPaint(0, 0, getGotItButtonColorStart(c), 0, r.height, getGotItButtonColorEnd(c)) :
            UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd());
+  }
+
+  private Paint getDefaultButtonPaint(JComponent c, Rectangle r) {
+    InternalUICustomization service = InternalUICustomization.getInstanceOrNull();
+    Paint paint = UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd());
+    if (service != null) {
+      Paint maybePaint = service.getCustomDefaultFillPaint(c, r);
+      if (maybePaint != null) {
+        paint = maybePaint;
+      }
+    }
+
+    return paint;
   }
 
   @Override
@@ -306,18 +320,10 @@ public class DarculaButtonUI extends BasicButtonUI {
       int width = isComboAction(c) ? prefSize.width :
                   Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, minimumSize.width + i.left + i.right);
       int height = Math.max(prefSize.height,
-                            (isSmallVariant(c) ? ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height : getMinimumHeight()) + i.top + i.bottom);
+                            (isSmallVariant(c) ? ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height : JBUI.CurrentTheme.Button.minimumSize().height) + i.top + i.bottom);
 
       return new Dimension(width, height);
     }
-  }
-
-  /**
-   * @deprecated Use correspondent to {@link JBUI.CurrentTheme.Button#minimumSize()} property
-   */
-  @Deprecated(forRemoval = true)
-  protected int getMinimumHeight() {
-    return JBUI.CurrentTheme.Button.minimumSize().height;
   }
 
   @Override

@@ -145,6 +145,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     @NotNull
     public String getPresentableGroupText() { return String.valueOf(myPower); }
 
+    @Override
     public String toString() {
       return getPresentableGroupText();
     }
@@ -155,9 +156,11 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       return myPower - ((LogUsageGroup)o).myPower;
     }
 
+    @Override
     public boolean equals(Object o) {
       return o instanceof LogUsageGroup && myPower == ((LogUsageGroup)o).myPower;
     }
+    @Override
     public int hashCode() { return myPower; }
   }
 
@@ -170,6 +173,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
       @Override
       public int compareTo(@NotNull UsageGroup o) { return o == ODD ? -1 : 0; }
+      @Override
       public String toString() { return getPresentableGroupText(); }
     };
 
@@ -252,6 +256,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     public void highlightInEditor() {
     }
 
+    @Override
     public String toString() {
       return String.valueOf(myId);
     }

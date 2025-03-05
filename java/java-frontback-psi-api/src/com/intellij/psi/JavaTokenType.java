@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
@@ -151,6 +151,7 @@ public interface JavaTokenType extends TokenType {
   IElementType YIELD_KEYWORD = new IJavaElementType("YIELD");
   IElementType RECORD_KEYWORD = new IJavaElementType("RECORD");
 
+  IElementType VALUE_KEYWORD = new IJavaElementType("VALUE_KEYWORD");
   IElementType SEALED_KEYWORD = new IJavaElementType("SEALED");
   IElementType NON_SEALED_KEYWORD = new IKeywordElementType("NON_SEALED");
   IElementType PERMITS_KEYWORD = new IJavaElementType("PERMITS");
@@ -299,6 +300,7 @@ public interface JavaTokenType extends TokenType {
                                                  YIELD_KEYWORD,
                                                  RECORD_KEYWORD,
 
+                                                 VALUE_KEYWORD,
                                                  SEALED_KEYWORD,
                                                  NON_SEALED_KEYWORD,
                                                  PERMITS_KEYWORD,

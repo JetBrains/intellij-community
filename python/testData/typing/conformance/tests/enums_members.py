@@ -5,7 +5,7 @@ Tests that the type checker can distinguish enum members from non-members.
 # Specification: https://typing.readthedocs.io/en/latest/spec/enums.html#defining-members
 
 from enum import Enum, member, nonmember
-from typing import Literal, assert_type
+from typing import Literal, assert_type, reveal_type
 
 # > If an attribute is defined in the class body with a type annotation but
 # > with no assigned value, a type checker should assume this is a non-member

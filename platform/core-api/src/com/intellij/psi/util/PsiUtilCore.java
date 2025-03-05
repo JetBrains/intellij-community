@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -474,20 +474,17 @@ public class PsiUtilCore {
     return name;
   }
 
-  @NotNull
-  public static String getQualifiedNameAfterRename(String qName, @NotNull String newName) {
+  public static @NotNull String getQualifiedNameAfterRename(String qName, @NotNull String newName) {
     if (qName == null) return newName;
     int index = qName.lastIndexOf('.');
     return index < 0 ? newName : qName.substring(0, index + 1) + newName;
   }
 
-  @NotNull
-  public static Language getDialect(@NotNull PsiElement element) {
+  public static @NotNull Language getDialect(@NotNull PsiElement element) {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  @NotNull
-  protected static Language narrowLanguage(@NotNull Language language, @NotNull Language candidate) {
+  protected static @NotNull Language narrowLanguage(@NotNull Language language, @NotNull Language candidate) {
     return candidate.isKindOf(language) ? candidate : language;
   }
 
@@ -524,7 +521,17 @@ public class PsiUtilCore {
   public static @NotNull PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiManager psiManager = PsiManager.getInstance(project);
     PsiFile psi = psiManager.findFile(file);
-    if (psi != null) return psi;
+    if (psi == null) {
+      logFileIsNotFound(file, psiManager, project);
+      throw new AssertionError();
+    }
+
+    return psi;
+  }
+
+  private static void logFileIsNotFound(@NotNull VirtualFile file,
+                                        @NotNull PsiManager psiManager,
+                                        @NotNull Project project) {
     FileType fileType = file.getFileType();
     FileViewProvider viewProvider = psiManager.findViewProvider(file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
@@ -557,7 +564,6 @@ public class PsiUtilCore {
       }
     }
     LOG.error("no PSI for file '" + file.getName() + "'", new Attachment(file.getPresentableUrl(), sb.toString()));
-    throw new AssertionError();
   }
 
 
@@ -620,7 +626,7 @@ public class PsiUtilCore {
   @Contract("null -> null")
   public static IElementType getElementType(@Nullable PsiElement element) {
     return element == null ? null :
-           element instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)element).getElementType() :
+           element instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)element).getIElementType() :
            element instanceof PsiFile ? ((PsiFile)element).getFileElementType() :
            getElementType(element.getNode());
   }

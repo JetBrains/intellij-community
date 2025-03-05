@@ -47,12 +47,65 @@ public class SegmentedControlColors(
             }
         )
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SegmentedControlColors
+
+        if (border != other.border) return false
+        if (borderDisabled != other.borderDisabled) return false
+        if (borderPressed != other.borderPressed) return false
+        if (borderHovered != other.borderHovered) return false
+        if (borderFocused != other.borderFocused) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = border.hashCode()
+        result = 31 * result + borderDisabled.hashCode()
+        result = 31 * result + borderPressed.hashCode()
+        result = 31 * result + borderHovered.hashCode()
+        result = 31 * result + borderFocused.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "SegmentedControlColors(" +
+            "border=$border, " +
+            "borderDisabled=$borderDisabled, " +
+            "borderPressed=$borderPressed, " +
+            "borderHovered=$borderHovered, " +
+            "borderFocused=$borderFocused" +
+            ")"
+    }
+
     public companion object
 }
 
 @Stable
 @GenerateDataFunctions
 public class SegmentedControlMetrics(public val cornerSize: CornerSize, public val borderWidth: Dp) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SegmentedControlMetrics
+
+        if (cornerSize != other.cornerSize) return false
+        if (borderWidth != other.borderWidth) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = cornerSize.hashCode()
+        result = 31 * result + borderWidth.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "SegmentedControlMetrics(cornerSize=$cornerSize, borderWidth=$borderWidth)"
 
     public companion object
 }

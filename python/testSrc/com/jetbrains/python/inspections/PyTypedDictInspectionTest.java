@@ -35,11 +35,11 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    from typing import TypedDict
                    class Movie(TypedDict):
                        name: str
-                       def <weak_warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">my_method</weak_warning>(self):
-                           pass
-                       class <weak_warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">Horror</weak_warning>:
+                       <warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">def my_method(self):
+                           pass</warning>
+                       <warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">class Horror:
                            def __init__(self):
-                               ...""");
+                               ...</warning>""");
   }
 
   public void testInitializer() {
@@ -54,7 +54,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import TypedDict
                    class Movie(TypedDict):
-                       <weak_warning descr="Invalid statement in TypedDict definition; expected 'field_name: field_type'">...</weak_warning>
+                       ...
                    class HorrorMovie(TypedDict):
                        pass""");
   }
@@ -82,6 +82,16 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   public void testKeyTypesAlternativeSyntax() {
     doTestByText("from typing import TypedDict, Any, Optional\n" +
                  "Movie = TypedDict('Movie', {'name': Optional[int], 'smth': type, 'smthElse': Any, 'year': <weak_warning descr=\"Value must be a type\">2</weak_warning>}, total=False)");
+  }
+
+  public void testTypeHintInParenthesis() {
+    doTestByText(
+      """
+        class B(TypedDict):
+            a: (
+                int
+                | str
+            )""");
   }
 
   public void testKeyTypes() {
@@ -121,7 +131,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
 
   public void testDelStatement() {
     doTestByText("""
-                   from typing import TypedDict
+                   from typing import TypedDict, Literal
                    class Movie(TypedDict):
                        name: str
                        year: int
@@ -131,10 +141,21 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    year2 = year
                    m = HorrorMovie(name='Alien', year=1979)
                    del (m['based_on_book'], m[<warning descr="Key 'name' of TypedDict 'HorrorMovie' cannot be deleted">'name'</warning>])
-                   del m[<warning descr="Key 'year' of TypedDict 'HorrorMovie' cannot be deleted">year2</warning>], m['based_on_book']""");
+                   del m[<warning descr="Key 'year' of TypedDict 'HorrorMovie' cannot be deleted">year2</warning>], m['based_on_book']
+                   def foo(k1: Literal['name', 'year', 'based_on_book'], k2: Literal['based_on_book']):
+                       del m[<warning descr="Key 'name' of TypedDict 'HorrorMovie' cannot be deleted"><warning descr="Key 'year' of TypedDict 'HorrorMovie' cannot be deleted">k1</warning></warning>]
+                       del m[k2]""");
   }
 
   public void testDictModificationMethods() {
+    doTestByText("""
+                   from typing import TypedDict
+                   class Movie(TypedDict, total=False):
+                       name: str
+                       year: int
+                   m = Movie(name='Alien', year=1979)
+                   m.<warning descr="This operation might break TypedDict consistency">clear</warning>()
+                   m.<warning descr="This operation might break TypedDict consistency">popitem</warning>()""");
     doTestByText("""
                    from typing import TypedDict
                    class Movie(TypedDict):
@@ -147,7 +168,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    name = 'name'
                    m.pop('based_on_book')
                    m.<warning descr="Key 'year' of TypedDict 'Horror' cannot be deleted">pop</warning>('year')
-                   m.<weak_warning descr="This operation might break TypedDict consistency">popitem</weak_warning>()
+                   m.<warning descr="This operation might break TypedDict consistency">popitem</warning>()
                    m.setdefault('based_on_book', <warning descr="Expected type 'bool', got 'int' instead">42</warning>)""");
   }
 
@@ -188,8 +209,13 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   }
 
   public void testIncorrectTypedDictArguments() {
-    doTestByText("from typing import TypedDict\n" +
-                 "c = TypedDict(\"c\", [1, 2, 3])");
+    doTestByText("""
+                   from typing import TypedDict
+                   BadTD1 = TypedDict("BadTD1", <warning descr="Expected dictionary literal">[1, 2, 3]</warning>)
+                   
+                   fields = {"v": int}
+                   BadTD2 = TypedDict("BadTD2", <warning descr="Expected dictionary literal">fields</warning>)
+                   """);
   }
 
   public void testTypedDictNonStringKey() {
@@ -240,6 +266,18 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   public void testIncorrectTotalityValueAlternativeSyntax() {
     doTestByText("from typing import TypedDict\n" +
                  "X = TypedDict('X', {'x': int}, total=<warning descr=\"Value of 'total' must be True or False\">1</warning>)");
+  }
+
+  public void testUnexpectedInitClassArgument() {
+    doTestByText("""
+                   from typing import TypedDict
+                   class A(TypedDict, <warning descr="Unexpected argument 'ab' for __init_subclass__ of TypedDict">ab=False</warning>):
+                       i: int""");
+  }
+
+  public void testUnexpectedArgumentAlternativeSyntax() {
+    doTestByText("from typing import TypedDict\n" +
+                 "X = TypedDict('X', {'x': int}, abb=False)");
   }
 
   public void testGetWithIncorrectKeyType() {
@@ -344,22 +382,24 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-53611
-  public void testRequiredNotRequiredAtTheSameTime() {
-    doTestByText("""
-                   from typing_extensions import TypedDict, Required, NotRequired
-                   class A(TypedDict):
-                       x: <warning descr="Key cannot be required and not required at the same time">Required[NotRequired[int]]</warning>
-                       y: Required[int]
-                       z: NotRequired[int]
-                   A = TypedDict('A', {'x': <warning descr="Key cannot be required and not required at the same time">Required[NotRequired[int]]</warning>, 'y': NotRequired[int]})""");
-  }
-
-  public void testRequiredNotRequiredWithReadOnly() {
+  public void testNestedQualifiers() {
     doTestByText("""
                    from typing_extensions import TypedDict, Required, NotRequired, ReadOnly
+                   
                    class A(TypedDict):
-                       x: <warning descr="Key cannot be required and not required at the same time">Required[ReadOnly[NotRequired[int]]]</warning>
-                   """);
+                       x: <warning descr="Required[] and NotRequired[] cannot be nested">Required[NotRequired[int]]</warning>
+                       y: Required[int]
+                       z: NotRequired[int]
+                       a: <warning descr="Required[] and NotRequired[] cannot be nested">Required[ReadOnly[NotRequired[int]]]</warning>
+                       b: <warning descr="Required[] and NotRequired[] cannot be nested">Required[Required[int]]</warning>
+                       c: <warning descr="Required[] and NotRequired[] cannot be nested">Required[ReadOnly[Required[int]]]</warning>
+                   
+                   A = TypedDict('A', {'x': <warning descr="Required[] and NotRequired[] cannot be nested">Required[NotRequired[int]]</warning>, 'y': NotRequired[int]})
+                   
+                   class B(TypedDict):
+                       x: <warning descr="ReadOnly[] cannot be nested">ReadOnly[ReadOnly[int]]</warning>
+                       y: <warning descr="ReadOnly[] cannot be nested">ReadOnly[Required[ReadOnly[int]]]</warning>
+                       z: ReadOnly[int]""");
   }
 
   // PY-53611
@@ -409,14 +449,19 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   // PY-73099
   public void testReadOnly() {
     doTestByText("""
-                   from typing_extensions import TypedDict, Required, ReadOnly
+                   from typing_extensions import TypedDict, Required, ReadOnly, Literal
                    
                    class Movie(TypedDict):
                        name: ReadOnly[Required[str]]
+                       director: str
                    
                    m: Movie = {"name": "Blur"}
                    print(m["name"])
                    <warning descr="TypedDict key \\"name\\" is ReadOnly">m["name"]</warning> = "new name"
+                   
+                   def foo(k1: Literal["name", "director"], k2: Literal["director"]):
+                       <warning descr="TypedDict key \\"name\\" is ReadOnly">m[k1]</warning> = "new name"
+                       m[k2] = ""
                    """);
   }
 
@@ -484,6 +529,15 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
             year: int
         """
     );
+  }
+
+  // PY-78174
+  public void testRawDictTypeInferredForDictLiteral() {
+    doTestByText("""
+                   d = {'name': 'Matrix', 'year': 1999}
+                   def f():
+                       d['name'] = 1
+                   """);
   }
 
   @NotNull

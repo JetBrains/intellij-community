@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -23,15 +23,13 @@ public class ReplaceEmptyArrayToConstantFix extends PsiUpdateModCommandQuickFix 
     myName = CommonQuickFixBundle.message("fix.replace.with.x", aClass.getName() + "." + field.getName());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("constant.for.zero.length.array.quickfix.family");
   }
 

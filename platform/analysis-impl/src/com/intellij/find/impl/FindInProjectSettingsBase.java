@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.openapi.application.PathMacroFilter;
@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +90,8 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
     return replaceStrings.isEmpty() ? "" : replaceStrings.get(replaceStrings.size() - 1);
   }
 
-  static void addRecentStringToList(@Nullable @NlsSafe String str, @NotNull List<? super String> list) {
+  @ApiStatus.Internal
+  public static void addRecentStringToList(@Nullable @NlsSafe String str, @NotNull List<? super String> list) {
     if (str == null) {
       return;
     }

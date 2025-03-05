@@ -2,17 +2,17 @@
 
 package org.jetbrains.kotlin.idea.completion.impl.k2
 
-import com.intellij.codeInsight.completion.CompletionInitializationContext
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
+import org.jetbrains.kotlin.idea.base.codeInsight.duration
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
@@ -23,15 +23,26 @@ import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import kotlin.time.Duration
 
 internal class LookupElementSink(
     private val resultSet: CompletionResultSet,
     private val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
+    private val contributorClass: Class<FirCompletionContributor<*>>? = null,
 ) {
 
-    fun withPriority(priority: Int): LookupElementSink =
-        LookupElementSink(resultSet, parameters, priority)
+    var duration: Duration = Duration.ZERO
+        private set
+
+    val prefixMatcher: PrefixMatcher
+        get() = resultSet.prefixMatcher
+
+    fun withPriority(groupPriority: Int): LookupElementSink =
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
+
+    fun withContributorClass(contributorClass: Class<FirCompletionContributor<*>>): LookupElementSink =
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
 
     fun addElement(element: LookupElement) {
         resultSet.addElement(decorateLookupElement(element))
@@ -48,10 +59,12 @@ internal class LookupElementSink(
     private fun decorateLookupElement(
         element: LookupElement,
     ): LookupElementDecorator<LookupElement> {
-        element.groupPriority = groupPriority
+        duration += element.duration
 
-        val actualParameters = parameters.ijParameters
-        if (isAtFunctionLiteralStart(actualParameters.position)) {
+        element.groupPriority = groupPriority
+        element.contributorClass = contributorClass
+
+        if (isAtFunctionLiteralStart(parameters.position)) {
             element.suppressItemSelectionByCharsOnTyping = true
         }
 
@@ -62,7 +75,7 @@ internal class LookupElementSink(
 
         return LookupElementDecorator.withDelegateInsertHandler(
             LookupElementDecorator.withDelegateInsertHandler(element, bracesInsertHandler),
-            CompletionCharInsertHandler(actualParameters),
+            CompletionCharInsertHandler(parameters.delegate),
         )
     }
 }

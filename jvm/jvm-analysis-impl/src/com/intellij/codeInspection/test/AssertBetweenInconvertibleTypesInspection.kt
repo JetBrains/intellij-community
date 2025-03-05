@@ -7,17 +7,16 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_VOID
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.intellij.util.asSafely
 import com.siyeh.ig.callMatcher.CallMatcher
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker.Convertible
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker.LookForMutualSubclass
+import com.siyeh.ig.psiutils.StreamApiUtil
 import com.siyeh.ig.psiutils.TypeUtils
 import com.siyeh.ig.testFrameworks.UAssertHint
 import com.siyeh.ig.testFrameworks.UAssertHint.Companion.createAssertEqualsHint
@@ -30,21 +29,26 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    // Disable for kotlin for now because retrieving types from expressions doesn't always result in the correct type
-    if (holder.file.language == Language.findLanguageByID("kotlin")) return PsiElementVisitor.EMPTY_VISITOR
     return UastHintedVisitorAdapter.create(
-      holder.file.language, AssertEqualsBetweenInconvertibleTypesVisitor(holder), arrayOf(UCallExpression::class.java), true
+      language = holder.file.language,
+      visitor = AssertEqualsBetweenInconvertibleTypesVisitor(holder),
+      uElementTypesHint = arrayOf(UCallExpression::class.java),
+      directOnly = true,
     )
   }
 }
 
 private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
   override fun visitCallExpression(node: UCallExpression): Boolean {
+
+    // Process asserts from JUnit and TestNG
     processAssertHint(createAssertEqualsHint(node), node)
     processAssertHint(createAssertNotEqualsHint(node), node)
     processAssertHint(createAssertSameHint(node), node)
     processAssertHint(createAssertNotSameHint(node), node)
-    //processAssertJ(node) // TODO fix issues and enable see IDEA-348567
+
+    // Process asserts from AssertJ
+    processAssertJ(node)
     return true
   }
 
@@ -63,10 +67,15 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     if (firstArgument.isNullLiteral() || secondArgument.isNullLiteral()) return
     val type1 = firstArgument.getExpressionType() ?: return
     val type2 = secondArgument.getExpressionType() ?: return
+
+    // Workaround for Kotlin's Nothing type becoming Void in UAST and causing false positives. Workaround for IDEA-361908.
+    val isKotlin = expression.lang == Language.findLanguageByID("kotlin")
+    if (isKotlin && (type1.equalsToText(JAVA_LANG_VOID) || type2.equalsToText(JAVA_LANG_VOID))) return
+
     checkMismatch(expression, type1, type2)
   }
 
-  private fun checkMismatch(expression: UCallExpression, firstType: PsiType, secondType: PsiType) {
+  private fun checkMismatch(expression: UCallExpression, firstType: PsiType, secondType: PsiType, originalSourceType: PsiType? = null, originalCheckType: PsiType? = null) {
     val mismatch = InconvertibleTypesChecker.checkTypes(firstType, secondType, LookForMutualSubclass.IF_CHEAP)
     if (mismatch != null) {
       val name = expression.methodIdentifier?.sourcePsi ?: return
@@ -77,7 +86,7 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
         val methodName = expression.methodName ?: return
         val highlightType = if (isAssertNotEqualsMethod(methodName)) ProblemHighlightType.WEAK_WARNING
         else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-        val errorString = buildErrorString(methodName, mismatch.left, mismatch.right)
+        val errorString = buildErrorString(methodName, originalSourceType ?: mismatch.left, originalCheckType ?: mismatch.right)
         holder.registerProblem(name, errorString, highlightType)
       }
     }
@@ -85,27 +94,57 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
 
   private fun processAssertJ(call: UCallExpression) {
     if (!ASSERTJ_ASSERT_THAT_MATCHER.uCallMatches(call)) return
-    val chain = call.getOutermostQualified().getQualifiedChain()
-    val isEqualsCall = chain.findLast {
+    val expressions = call.getOutermostQualified().getQualifiedChain()
+    val isEqualsCall = expressions.findLast {
       it is UCallExpression && ASSERTJ_IS_EQUALS_MATCHER.uCallMatches(it)
-    }.asSafely<UCallExpression>()
-    val checkType = isEqualsCall?.valueArguments?.firstOrNull()?.getExpressionType() ?: return
-    var sourceType = call.valueArguments.firstOrNull()?.getExpressionType() ?: return
-    for (elem in chain) {
-      if (elem !is UCallExpression) continue
-      sourceType = when {
-        ASSERTJ_EXTRACTING_REF_MATCHER.uCallMatches(elem) -> return // not supported
-        ASSERTJ_EXTRACTING_FUN_MATCHER.uCallMatches(elem) -> return // not supported
-        ASSERTJ_EXTRACTING_ITER_FUN_MATCHER.uCallMatches(elem) -> return // not supported
-        elem.resolve()?.containingClass?.qualifiedName == "org.assertj.core.api.AbstractThrowableAssert" -> return // not supported
-        ASSERTJ_SINGLE_ELEMENT_MATCHER.uCallMatches(elem) || ASSERTJ_FIRST_ELEMENT_MATCHER.uCallMatches(elem) -> {
-          if (!InheritanceUtil.isInheritor(sourceType, CommonClassNames.JAVA_LANG_ITERABLE)) return
-          sourceType.asSafely<PsiClassType>()?.parameters?.firstOrNull() ?: return
-        }
-        else -> sourceType
+    } as? UCallExpression
+    var checkType = isEqualsCall?.valueArguments?.firstOrNull()?.getExpressionType() ?: return
+    if (checkType is UastErrorType) return
+    val receiverType = GenericsUtil.getVariableTypeByExpressionType(isEqualsCall.receiverType)
+    var sourceType = GenericsUtil.getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(receiverType, ASSERTJ_ASSERT, 1, false))
+                     ?: return
+    sourceType = normalizeType(sourceType, receiverType)
+
+
+    if (sourceType is PsiClassType) {
+      val sourceClass = sourceType.resolve()
+      // If this class has @JvmInline annotation, then it's a value class in Kotlin and has exactly one field. Workaround for IDEA-364405.
+      if (sourceClass?.annotations?.any { it.hasQualifiedName("kotlin.jvm.JvmInline") } == true) {
+        // Handle the possibility of a companion object being present
+        sourceType = sourceClass.fields.singleOrNull { !it.hasModifierProperty(PsiModifier.STATIC) }?.type ?: sourceType
       }
     }
-    checkMismatch(isEqualsCall, sourceType, checkType)
+
+    // Handle implicit unwrapping of Stream<T> into List<T>. Learn more at:
+    //  https://www.javadoc.io/doc/org.assertj/assertj-core/latest/org/assertj/core/api/Assertions.html#assertThat(java.util.stream.Stream)
+    val streamElementType = StreamApiUtil.getStreamElementType(checkType)
+
+    if (streamElementType != null && sourceType is PsiClassType) {
+      val sourceClass = sourceType.resolve()
+      if (sourceClass != null && sourceClass.qualifiedName == CommonClassNames.JAVA_UTIL_LIST) {
+        val boxedElementType = (streamElementType as? PsiPrimitiveType)?.getBoxedType(sourceClass) ?: streamElementType
+        val originalCheckType = checkType
+        checkType = JavaPsiFacade.getElementFactory(sourceClass.project).createType(sourceClass, boxedElementType)
+        val originalStreamSourceType = call.valueArguments.firstOrNull()?.getExpressionType()
+
+        checkMismatch(isEqualsCall, sourceType, checkType, originalSourceType = originalStreamSourceType, originalCheckType = originalCheckType)
+        return
+      }
+    }
+
+    val originalStreamSourceType = call.valueArguments.firstOrNull()?.getExpressionType()
+    val sourceTypeWasStream = StreamApiUtil.getStreamElementType(originalStreamSourceType) != null
+    val originalSourceType = if (sourceTypeWasStream) originalStreamSourceType else null
+
+    checkMismatch(isEqualsCall, sourceType, checkType, originalSourceType = originalSourceType)
+  }
+
+  private fun normalizeType(sourceType: PsiType, receiverType: PsiType?): PsiType {
+    val unboxedType = PsiPrimitiveType.getUnboxedType(sourceType)
+    if (unboxedType != null && InheritanceUtil.isInheritor(receiverType, "org.assertj.core.api.Abstract${sourceType.presentableText}Assert")) {
+      return unboxedType
+    }
+    return sourceType
   }
 
   private fun buildErrorString(methodName: String, left: PsiType, right: PsiType): @Nls String {
@@ -137,29 +176,11 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
   private fun isAssertNotSameMethod(methodName: String): Boolean = "assertNotSame" == methodName || "isNotSameAs" == methodName
 
   private companion object {
+    private const val ASSERTJ_ASSERT = "org.assertj.core.api.Assert"
+
     private val ASSERTJ_IS_EQUALS_MATCHER: CallMatcher = CallMatcher.instanceCall(
-      "org.assertj.core.api.Assert", "isEqualTo", "isSameAs", "isNotEqualTo", "isNotSameAs"
+      ASSERTJ_ASSERT, "isEqualTo", "isSameAs", "isNotEqualTo", "isNotSameAs"
     ).parameterTypes(CommonClassNames.JAVA_LANG_OBJECT)
-
-    private val ASSERTJ_EXTRACTING_REF_MATCHER: CallMatcher = CallMatcher.instanceCall(
-      "org.assertj.core.api.AbstractObjectAssert", "extracting"
-    ).parameterTypes("java.lang.String")
-
-    private val ASSERTJ_EXTRACTING_FUN_MATCHER: CallMatcher = CallMatcher.instanceCall(
-      "org.assertj.core.api.AbstractObjectAssert", "extracting"
-    )
-
-    private val ASSERTJ_SINGLE_ELEMENT_MATCHER: CallMatcher = CallMatcher.instanceCall(
-      "org.assertj.core.api.AbstractIterableAssert", "singleElement"
-    )
-
-    private val ASSERTJ_FIRST_ELEMENT_MATCHER: CallMatcher = CallMatcher.instanceCall(
-      "org.assertj.core.api.AbstractIterableAssert", "first"
-    )
-
-    private val ASSERTJ_EXTRACTING_ITER_FUN_MATCHER: CallMatcher = CallMatcher.instanceCall(
-      "org.assertj.core.api.AbstractIterableAssert", "extracting"
-    )
 
     private val ASSERTJ_ASSERT_THAT_MATCHER: CallMatcher = CallMatcher.staticCall(
       "org.assertj.core.api.Assertions", "assertThat"

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.uiDslShowcase
 
+import com.intellij.internal.Module
 import com.intellij.internal.showSources
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -78,7 +79,7 @@ private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
       val fileName = (simpleName.substring(0..simpleName.length - 3) + ".kt")
       row {
         link("View source") {
-          showSources(project, fileName)
+          showSources(project, Module.INTERNAL, fileName)
         }
       }.bottomGap(BottomGap.MEDIUM)
 

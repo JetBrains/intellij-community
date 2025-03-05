@@ -16,9 +16,9 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -41,14 +41,12 @@ public final class NegatedIfElseInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean m_ignoreNegatedZeroComparison = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "IfStatementWithNegatedCondition";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "negated.if.else.problem.descriptor");
   }
@@ -73,8 +71,7 @@ public final class NegatedIfElseInspection extends BaseInspection {
   private static class NegatedIfElseFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("negated.if.else.invert.quickfix");
     }
 
@@ -104,7 +101,7 @@ public final class NegatedIfElseInspection extends BaseInspection {
           elseText += '\n';
         }
       }
-      @NonNls final String newStatement = "if(" + negatedCondition + ')' + elseText + " else " + tracker.text(thenBranch);
+      final @NonNls String newStatement = "if(" + negatedCondition + ')' + elseText + " else " + tracker.text(thenBranch);
       PsiReplacementUtil.replaceStatement(ifStatement, newStatement, tracker);
     }
   }

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -64,16 +65,14 @@ public abstract class ModuleStructureExtension {
   public void addRootNodes(final MasterDetailsComponent.MyNode parent, final Project project, final Runnable treeUpdater) {
   }
 
-  @Nullable
-  public Comparator<MasterDetailsComponent.MyNode> getNodeComparator() {
+  public @Nullable Comparator<MasterDetailsComponent.MyNode> getNodeComparator() {
     return null;
   }
 
   /**
    * @return callback or {@code null} if not handled
    */
-  @Nullable
-  public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry entry) {
+  public @Nullable ActionCallback selectOrderEntry(final @NotNull Module module, final @Nullable OrderEntry entry) {
     return null;
   }
 

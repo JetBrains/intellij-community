@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
@@ -6,10 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CompositeValidationRulesStorage implements IntellijValidationRulesStorage, ValidationTestRulesStorageHolder {
-  @NotNull
-  private final IntellijValidationRulesStorage myRulesStorage;
-  @NotNull
-  private final ValidationTestRulesPersistedStorage myTestRulesStorage;
+  private final @NotNull IntellijValidationRulesStorage myRulesStorage;
+  private final @NotNull ValidationTestRulesPersistedStorage myTestRulesStorage;
 
   CompositeValidationRulesStorage(@NotNull IntellijValidationRulesStorage rulesStorage,
                                   @NotNull ValidationTestRulesPersistedStorage testRulesStorage) {
@@ -17,9 +15,8 @@ public class CompositeValidationRulesStorage implements IntellijValidationRulesS
     myTestRulesStorage = testRulesStorage;
   }
 
-  @Nullable
   @Override
-  public EventGroupRules getGroupRules(@NotNull String groupId) {
+  public @Nullable EventGroupRules getGroupRules(@NotNull String groupId) {
     final EventGroupRules testGroupRules = myTestRulesStorage.getGroupRules(groupId);
     if (testGroupRules != null) {
       return testGroupRules;
@@ -44,9 +41,8 @@ public class CompositeValidationRulesStorage implements IntellijValidationRulesS
     myTestRulesStorage.reload();
   }
 
-  @NotNull
   @Override
-  public ValidationTestRulesPersistedStorage getTestGroupStorage() {
+  public @NotNull ValidationTestRulesPersistedStorage getTestGroupStorage() {
     return myTestRulesStorage;
   }
 }

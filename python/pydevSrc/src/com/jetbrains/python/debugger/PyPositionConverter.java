@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.xdebugger.XSourcePosition;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PyPositionConverter {
   @Deprecated
   @NotNull
-  PySourcePosition create(@NotNull final String file, final int line);
+  PySourcePosition create(final @NotNull String file, final int line);
 
   /**
    * @param file filepath in position on Python side
@@ -19,8 +19,7 @@ public interface PyPositionConverter {
    * Python side, but also navigatable in the IDE editor.
    */
   @ApiStatus.Experimental
-  @NotNull
-  default PySourcePosition convertPythonToFrame(@NotNull final String file, final int line) {
+  default @NotNull PySourcePosition convertPythonToFrame(final @NotNull String file, final int line) {
     return create(file, line);
   }
 
@@ -29,8 +28,7 @@ public interface PyPositionConverter {
    * @return position on Python side
    */
   @ApiStatus.Experimental
-  @NotNull
-  default PySourcePosition convertFrameToPython(@NotNull PySourcePosition position) {
+  default @NotNull PySourcePosition convertFrameToPython(@NotNull PySourcePosition position) {
     return position;
   }
 
@@ -39,19 +37,17 @@ public interface PyPositionConverter {
    * @return position on Python side
    */
   @NotNull
-  PySourcePosition convertToPython(@NotNull final XSourcePosition position);
+  PySourcePosition convertToPython(final @NotNull XSourcePosition position);
 
   /**
    * @param position on Python side
    * @return position in the IDE editor
    */
-  @Nullable
-  default XSourcePosition convertFromPython(@NotNull final PySourcePosition position) {
+  default @Nullable XSourcePosition convertFromPython(final @NotNull PySourcePosition position) {
     return null;
   }
 
-  @Nullable
-  default XSourcePosition convertFromPython(@NotNull final PySourcePosition position, String frameName) {
+  default @Nullable XSourcePosition convertFromPython(final @NotNull PySourcePosition position, String frameName) {
     return convertFromPython(position);
   }
 

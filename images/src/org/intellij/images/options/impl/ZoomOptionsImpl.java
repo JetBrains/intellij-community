@@ -72,6 +72,7 @@ final class ZoomOptionsImpl implements ZoomOptions {
     return true;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;

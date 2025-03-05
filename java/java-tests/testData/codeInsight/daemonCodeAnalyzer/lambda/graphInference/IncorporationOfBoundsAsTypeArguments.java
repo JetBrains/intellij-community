@@ -6,7 +6,7 @@ class Test {
     Factory factory = new Factory();
     final Class<? extends ClassB> bClass = null;
     ClassB b   = factory.create(bClass);
-    String str = <error descr="Incompatible types. Found: 'capture<? extends Test.ClassB>', required: 'java.lang.String'">factory.create(bClass);</error>
+    String str = factory.<error descr="Incompatible types. Found: 'capture<? extends Test.ClassB>', required: 'java.lang.String'">create</error>(bClass);
   }
 
   public static class Factory {

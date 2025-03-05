@@ -101,6 +101,7 @@ public class DisabledAutodetectionByTypeElement {
     return null;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -110,6 +111,7 @@ public class DisabledAutodetectionByTypeElement {
 
   }
 
+  @Override
   public int hashCode() {
     return myFacetTypeId.hashCode()+ 31 * myModuleElements.hashCode();
   }
@@ -143,6 +145,6 @@ public class DisabledAutodetectionByTypeElement {
         break;
       }
     }
-    return myModuleElements.size() > 0;
+    return !myModuleElements.isEmpty();
   }
 }

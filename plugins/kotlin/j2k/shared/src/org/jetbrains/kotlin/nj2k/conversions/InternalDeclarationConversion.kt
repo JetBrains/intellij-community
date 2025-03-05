@@ -4,12 +4,13 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Visibility.*
 
-class InternalDeclarationConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class InternalDeclarationConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKVisibilityOwner || element !is JKModalityOwner) return recurse(element)

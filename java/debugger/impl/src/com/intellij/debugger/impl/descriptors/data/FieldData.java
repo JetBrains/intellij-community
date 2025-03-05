@@ -21,10 +21,12 @@ public final class FieldData extends DescriptorData<FieldDescriptorImpl> {
     return new FieldDescriptorImpl(project, myObjRef, myField);
   }
 
+  @Override
   public boolean equals(Object object) {
     return object instanceof FieldData fieldData && fieldData.myField == myField && fieldData.myObjRef.equals(myObjRef);
   }
 
+  @Override
   public int hashCode() {
     return myObjRef.hashCode() + myField.hashCode();
   }

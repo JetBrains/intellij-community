@@ -3,11 +3,9 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
@@ -51,6 +49,16 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     _groupingKeys += newGroupingKeys.filter { groupingKey -> isAvailable(groupingKey) }
   }
 
+  @ApiStatus.Internal
+  @RequiresEdt
+  fun setGroupingKeys(groupingKeys: Collection<String>) {
+    val oldGroupingKeys = _groupingKeys.toSet()
+    setGroupingKeysOrSkip(groupingKeys)
+    if (oldGroupingKeys != _groupingKeys) {
+      changeSupport.firePropertyChange(PROP_GROUPING_KEYS, oldGroupingKeys, _groupingKeys.toSet())
+    }
+  }
+
   open fun isAvailable(groupingKey: String) = findFactory(groupingKey) != null
 
   fun addPropertyChangeListener(listener: PropertyChangeListener) {
@@ -75,6 +83,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     override fun isAvailable(groupingKey: String): Boolean = false
   }
 
+  @Suppress("SSBasedInspection")
   companion object {
     @JvmField
     val KEY = DataKey.create<ChangesGroupingSupport>("ChangesTree.GroupingSupport")
@@ -85,12 +94,6 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     const val REPOSITORY_GROUPING = "repository" // NON-NLS
     const val NONE_GROUPING = "none" // NON-NLS
 
-    private val FACTORIES: ClearableLazyValue<AvailableFactories> = ClearableLazyValue.create { buildFactories() }
-
-    init {
-      ChangesGroupingPolicyFactory.EP_NAME.addChangeListener({ FACTORIES.drop() }, null)
-    }
-
     @JvmStatic
     fun getFactory(key: String): ChangesGroupingPolicyFactory {
       return findFactory(key) ?: NoneChangesGroupingFactory
@@ -98,42 +101,17 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
 
     @JvmStatic
     fun findFactory(key: String): ChangesGroupingPolicyFactory? {
-      val availableFactories = FACTORIES.value
+      val availableFactories = GroupingPolicyFactoryHolder.getInstance().factories
       return availableFactories.keyToFactory[key]
     }
 
     private fun sortedFactoriesFor(keys: Collection<String>): List<ChangesGroupingPolicyFactory> {
-      val availableFactories = FACTORIES.value
+      val availableFactories = GroupingPolicyFactoryHolder.getInstance().factories
       return keys
         .sortedByDescending { availableFactories.keyToWeight[it] ?: ChangesGroupingPolicyFactoryEPBean.DEFAULT_WEIGHT }
         .map { groupingKey ->
           availableFactories.keyToFactory[groupingKey] ?: throw IllegalArgumentException("Unknown grouping: $groupingKey") // NON-NLS
         }
     }
-
-    private fun buildFactories(): AvailableFactories {
-      val keyToFactory = mutableMapOf<String, ChangesGroupingPolicyFactory>()
-      val keyToWeight = mutableMapOf<String, Int>()
-
-      for (bean in ChangesGroupingPolicyFactory.EP_NAME.extensionList) {
-        val key = bean.key ?: continue
-        try {
-          keyToFactory[key] = bean.getInstance()
-          keyToWeight[key] = bean.weight
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          logger<ChangesGroupingSupport>().error(e)
-        }
-      }
-      return AvailableFactories(keyToFactory, keyToWeight)
-    }
-
-    private class AvailableFactories(
-      val keyToFactory: Map<String, ChangesGroupingPolicyFactory>,
-      val keyToWeight: Map<String, Int>
-    )
   }
 }

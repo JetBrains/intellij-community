@@ -9,10 +9,12 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
@@ -24,7 +26,6 @@ import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.j2k.copyPaste.ConversionData
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
-import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -47,7 +48,12 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
     private val importsToAddToKotlinFile: MutableList<PsiImportStatementBase> = mutableListOf()
 
     override fun generateRequiredImports(): List<PsiImportStatementBase> {
-        addImportsToJavaFileFromKotlinFile()
+        ThreadingAssertions.assertBackgroundThread()
+
+        if (javaFileImportList !in conversionData.elementsAndTexts.toList()) {
+            addImportsToJavaFileFromKotlinFile()
+            ProgressManager.checkCanceled()
+        }
         tryToResolveShortReferencesByAddingImports()
         return importsToAddToKotlinFile
     }
@@ -55,21 +61,6 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
     // TODO removing this function doesn't affect existing tests
     //  investigate is this needed or not
     private fun addImportsToJavaFileFromKotlinFile() {
-        if (javaFileImportList in conversionData.elementsAndTexts.toList()) return
-
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            addImportsTask, KotlinNJ2KBundle.message("copy.text.adding.imports"), /* canBeCanceled = */ true, project
-        )
-    }
-
-    private fun tryToResolveShortReferencesByAddingImports() {
-        ProgressManager.checkCanceled()
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-            resolveReferencesTask, KotlinNJ2KBundle.message("copy.text.resolving.references"), /* canBeCanceled = */ true, project
-        )
-    }
-
-    private val addImportsTask: () -> Unit = {
         val collectedJavaImports = mutableListOf<PsiImportStatementBase>()
 
         runReadAction {
@@ -134,7 +125,7 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
         if (shouldAddToKotlinFile) importsToAddToKotlinFile.add(javaImport)
     }
 
-    private val resolveReferencesTask: () -> Unit = {
+    private fun tryToResolveShortReferencesByAddingImports() {
         val progressIndicator = ProgressManager.getInstance().progressIndicator
         progressIndicator?.isIndeterminate = false
         val elementPointersWithUnresolvedReferences = findUnresolvedReferencesInFile()
@@ -216,10 +207,12 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
     private fun PsiQualifiedReference.isResolved(): Boolean =
         runReadAction { this.resolve() } != null
 
+    @OptIn(KaExperimentalApi::class)
     private fun findClassesByShortName(name: String): List<PsiClass> {
         return runReadAction {
             analyze(targetKotlinFile) {
                 val candidateClasses = shortNameCache.getClassesByName(name, scope)
+                val visibilityChecker = createUseSiteVisibilityChecker(targetKotlinFile.symbol, position = targetKotlinFile)
                 candidateClasses.filter { psiClass ->
                     if (!RootKindFilter.everything.matches(psiClass.containingFile)) return@filter false
                     val declarationSymbol = if (psiClass is KtLightClass) {
@@ -227,29 +220,32 @@ internal class K2PlainTextPasteImportResolver(private val conversionData: Conver
                     } else {
                         psiClass.namedClassSymbol
                     }
-                    declarationSymbol != null && canBeImported(declarationSymbol)
+                    declarationSymbol != null && canBeImported(declarationSymbol, visibilityChecker)
                 }
             }
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun findUniqueMemberByShortName(name: String): PsiMember? {
         return runReadAction {
             analyze(targetKotlinFile) {
                 val candidateMembers: List<PsiMember> =
                     shortNameCache.getMethodsByName(name, scope).asList() + shortNameCache.getFieldsByName(name, scope).asList()
+                if (candidateMembers.isEmpty()) return@analyze null
+                val visibilityChecker = createUseSiteVisibilityChecker(targetKotlinFile.symbol, position = targetKotlinFile)
                 candidateMembers.filter { member ->
                     if (member.module == null) return@filter false
                     val callableSymbol = member.callableSymbol ?: return@filter false
-                    canBeImported(callableSymbol)
+                    canBeImported(callableSymbol, visibilityChecker)
                 }.singleOrNull()
             }
         }
     }
 
     @OptIn(KaExperimentalApi::class, KaIdeApi::class)
-    private fun KaSession.canBeImported(symbol: KaDeclarationSymbol): Boolean {
-        return symbol.importableFqName != null && isVisible(symbol, targetKotlinFile.symbol, position = targetKotlinFile)
+    private fun KaSession.canBeImported(symbol: KaDeclarationSymbol, visibilityChecker: KaUseSiteVisibilityChecker): Boolean {
+        return symbol.importableFqName != null && visibilityChecker.isVisible(symbol)
     }
 
     private fun runWriteActionOnEDTSync(runnable: () -> Unit) {

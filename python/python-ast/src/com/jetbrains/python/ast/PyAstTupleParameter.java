@@ -29,20 +29,17 @@ import org.jetbrains.annotations.Nullable;
 public interface PyAstTupleParameter extends PyAstParameter {
 
   @Override
-  @Nullable
-  default PyAstNamedParameter getAsNamed() {
+  default @Nullable PyAstNamedParameter getAsNamed() {
     return null;  // we're not named
   }
 
   @Override
-  @NotNull
-  default PyAstTupleParameter getAsTuple() {
+  default @NotNull PyAstTupleParameter getAsTuple() {
     return this;
   }
 
   @Override
-  @Nullable
-  default PyAstExpression getDefaultValue() {
+  default @Nullable PyAstExpression getDefaultValue() {
     ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     if (nodes.length > 0) {
       return (PyAstExpression)nodes[0].getPsi();
@@ -56,8 +53,7 @@ public interface PyAstTupleParameter extends PyAstParameter {
   }
 
   @Override
-  @Nullable
-  default String getDefaultValueText() {
+  default @Nullable String getDefaultValueText() {
     return ParamHelperCore.getDefaultValueText(getDefaultValue());
   }
 

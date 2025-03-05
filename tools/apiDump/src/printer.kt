@@ -28,14 +28,14 @@ private fun PrintWriter.printClassHeader(className: String, flags: ApiFlags) {
     print(":")
   }
   print(className.dottedClassName())
-  println()
+  printNewLine()
 }
 
 private fun PrintWriter.printSupers(supers: List<String>) {
   for (`super` in supers) {
     print("- ")
     print(`super`.dottedClassName())
-    println()
+    printNewLine()
   }
 }
 
@@ -56,8 +56,12 @@ private fun PrintWriter.printMembers(members: List<ApiMember>) {
       print(':')
       print(type.typeString())
     }
-    println()
+    printNewLine()
   }
+}
+
+private fun PrintWriter.printNewLine() {
+  print('\n')
 }
 
 private fun Type.typeString(): String = when (sort) {

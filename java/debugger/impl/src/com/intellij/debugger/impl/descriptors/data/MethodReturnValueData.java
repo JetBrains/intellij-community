@@ -35,6 +35,7 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
   }
 
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -47,6 +48,7 @@ public final class MethodReturnValueData extends DescriptorData<MethodReturnValu
     return true;
   }
 
+  @Override
   public int hashCode() {
     return Objects.hash(myReturnValue, myMethod);
   }

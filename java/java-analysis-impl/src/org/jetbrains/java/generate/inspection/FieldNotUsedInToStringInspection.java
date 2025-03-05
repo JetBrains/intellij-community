@@ -37,8 +37,7 @@ import java.util.Set;
  */
 public final class FieldNotUsedInToStringInspection extends AbstractToStringInspection {
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "FieldNotUsedInToString";
   }
 
@@ -47,9 +46,8 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
     return true;
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new FieldNotUsedInToStringVisitor(holder);
   }
 
@@ -64,7 +62,7 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
-      @NonNls final String methodName = method.getName();
+      final @NonNls String methodName = method.getName();
       if (!"toString".equals(methodName)) {
         return;
       }
@@ -143,12 +141,12 @@ public final class FieldNotUsedInToStringInspection extends AbstractToStringInsp
     }
 
     private static boolean usesReflection(PsiMethod method) {
-      @NonNls final String name = method.getName();
+      final @NonNls String name = method.getName();
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
         return false;
       }
-      @NonNls final String qualifiedName = containingClass.getQualifiedName();
+      final @NonNls String qualifiedName = containingClass.getQualifiedName();
       if ("getDeclaredFields".equals(name)) {
         return "java.lang.Class".equals(qualifiedName);
       }

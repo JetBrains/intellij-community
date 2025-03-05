@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
-import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
@@ -46,8 +45,14 @@ interface CompilationContext {
 
   fun findModule(name: String): JpsModule?
 
+  /**
+   * A directory or a .jar file.
+   */
   suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path
 
+  /**
+   * A directory or a .jar file.
+   */
   suspend fun getModuleTestsOutputDir(module: JpsModule): Path
 
   suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
@@ -55,6 +60,9 @@ interface CompilationContext {
   fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean = false): Path?
 
   fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean = false): Path?
+
+  @ApiStatus.Internal
+  suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String): ByteArray?
 
   fun notifyArtifactBuilt(artifactPath: Path)
 
@@ -94,4 +102,3 @@ interface CompilationTasks {
   
   suspend fun generateRuntimeModuleRepository()
 }
-

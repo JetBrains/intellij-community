@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
@@ -35,9 +35,8 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     return this;
   }
 
-  @NotNull
   @Override
-  public DfType meet(@NotNull DfType other) {
+  public @NotNull DfType meet(@NotNull DfType other) {
     if (other.isSuperType(this)) return this;
     if (other instanceof DfEphemeralReferenceType) return BOTTOM;
     if (other instanceof DfGenericObjectType) {
@@ -52,33 +51,28 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     return BOTTOM;
   }
 
-  @NotNull
   @Override
-  public DfaNullability getNullability() {
+  public @NotNull DfaNullability getNullability() {
     return DfaNullability.NOT_NULL;
   }
 
-  @NotNull
   @Override
-  public TypeConstraint getConstraint() {
+  public @NotNull TypeConstraint getConstraint() {
     return myConstraint;
   }
 
-  @NotNull
   @Override
-  public Mutability getMutability() {
+  public @NotNull Mutability getMutability() {
     return myMutability;
   }
 
-  @Nullable
   @Override
-  public SpecialField getSpecialField() {
+  public @Nullable SpecialField getSpecialField() {
     return myJvmSpecialField;
   }
 
-  @NotNull
   @Override
-  public DfType getSpecialFieldType() {
+  public @NotNull DfType getSpecialFieldType() {
     return mySpecialFieldType;
   }
 
@@ -88,9 +82,8 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
                                    null, BOTTOM, false);
   }
 
-  @NotNull
   @Override
-  public DfReferenceType dropNullability() {
+  public @NotNull DfReferenceType dropNullability() {
     // Nullable constant is not constant anymore
     return new DfGenericObjectType(
       Set.of(), myConstraint, DfaNullability.UNKNOWN, myMutability, myJvmSpecialField, mySpecialFieldType, false);
@@ -101,9 +94,8 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     return new DfReferenceConstantType(getValue(), myConstraint.convert(factory), myDropConstantOnWiden);
   }
 
-  @NotNull
   @Override
-  public DfType join(@NotNull DfType other) {
+  public @NotNull DfType join(@NotNull DfType other) {
     if (other instanceof DfGenericObjectType || other instanceof DfEphemeralReferenceType) {
       return other.join(this);
     }

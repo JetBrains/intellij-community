@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,8 +27,7 @@ public final class StatisticsRecorderUtil {
     return false;
   }
 
-  @NotNull
-  public static List<String> getRecordersInTestMode() {
+  public static @NotNull @Unmodifiable List<String> getRecordersInTestMode() {
     if (isAnyTestModeEnabled()) {
       if (isFusInternalTestMode()) {
         return ContainerUtil.map(StatisticsEventLogProviderUtil.getEventLogProviders(), it -> it.getRecorderId());
@@ -55,7 +55,7 @@ public final class StatisticsRecorderUtil {
     return StatisticsEventLogProviderUtil.getEventLogProvider(recorderId).isCharsEscapingRequired();
   }
 
-  private static @NotNull List<String> getCustomTestModeRecorders() {
+  private static @Unmodifiable @NotNull List<String> getCustomTestModeRecorders() {
     String additional = System.getProperty(IDEA_RECORDER_INTERNAL_MODE);
     if (!StringUtil.isEmptyOrSpaces(additional)) {
       String[] split = additional.split(";");

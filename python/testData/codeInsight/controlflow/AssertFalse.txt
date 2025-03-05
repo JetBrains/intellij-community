@@ -1,5 +1,6 @@
 0(1) element: null
 1(2) element: PyAssertStatement
-2(4) READ ACCESS: False
-3(4) element: PyPrintStatement
-4() element: null
+2(3) READ ACCESS: False
+3(5) raise: PyAssertStatement
+4(5) element: PyPrintStatement
+5() element: null

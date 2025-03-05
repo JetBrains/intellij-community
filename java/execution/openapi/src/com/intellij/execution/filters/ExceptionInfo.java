@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.editor.Document;
@@ -33,8 +33,7 @@ public class ExceptionInfo {
   /**
    * @return a predicate that matches an element within the source line that is likely an exception source
    */
-  @NotNull
-  public ExceptionLineRefiner getPositionRefiner() {
+  public @NotNull ExceptionLineRefiner getPositionRefiner() {
     return new AfterExceptionRefiner(this);
   }
 
@@ -59,8 +58,7 @@ public class ExceptionInfo {
     return myExceptionMessage;
   }
 
-  @Nullable
-  public static ExceptionInfo parseMessage(String line, int textEndOffset) {
+  public static @Nullable ExceptionInfo parseMessage(String line, int textEndOffset) {
     int firstSpace = line.indexOf(' ');
     int colonPos = -1;
     TextRange classRange = null;
@@ -199,10 +197,9 @@ public class ExceptionInfo {
   private static boolean isEmpty(@NotNull PsiElement element) {
     return StringUtil.isEmptyOrSpaces(element.getText());
   }
-  @Nullable
-  static ExceptionLineRefiner.RefinerMatchResult onTheSameLineFor(@Nullable PsiElement from,
-                                                                  @Nullable PsiElement reason,
-                                                                  boolean forward) {
+  static @Nullable ExceptionLineRefiner.RefinerMatchResult onTheSameLineFor(@Nullable PsiElement from,
+                                                                            @Nullable PsiElement reason,
+                                                                            boolean forward) {
     if (from == null || reason == null) {
       return null;
     }

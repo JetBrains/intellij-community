@@ -88,8 +88,8 @@ public class XVariablesView extends XVariablesViewBase {
     super.dispose();
   }
 
-  @Nullable
-  protected final XDebugSessionImpl getSession() {
+  @ApiStatus.Internal
+  public final @Nullable XDebugSessionImpl getSession() {
     return mySession.get();
   }
 
@@ -136,8 +136,7 @@ public class XVariablesView extends XVariablesViewBase {
 
     private List<InlineDebugRenderer> myInlays = null;
 
-    @Nullable
-    public static InlineVariablesInfo get(@Nullable XDebugSession session) {
+    public static @Nullable InlineVariablesInfo get(@Nullable XDebugSession session) {
       if (session != null) {
         return DEBUG_VARIABLES.get(((XDebugSessionImpl)session).getSessionData());
       }
@@ -154,8 +153,7 @@ public class XVariablesView extends XVariablesViewBase {
       myInlays = inlays;
     }
 
-    @NotNull
-    public List<InlineDebugRenderer> getInlays() {
+    public @NotNull List<InlineDebugRenderer> getInlays() {
       return ObjectUtils.notNull(myInlays, Collections::emptyList);
     }
   }

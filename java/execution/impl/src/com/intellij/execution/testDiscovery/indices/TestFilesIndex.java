@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,27 +50,23 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
   }
 
   private static final IndexExtension<Integer, Void, UsedSources> INDEX_EXTENSION = new IndexExtension<>() {
-    @NotNull
     @Override
-    public IndexId<Integer, Void> getName() {
+    public @NotNull IndexId<Integer, Void> getName() {
       return IndexId.create("jvm.discovered.test.files");
     }
 
-    @NotNull
     @Override
-    public DataIndexer<Integer, Void, UsedSources> getIndexer() {
+    public @NotNull DataIndexer<Integer, Void, UsedSources> getIndexer() {
       return inputData -> inputData.myUsedFiles;
     }
 
-    @NotNull
     @Override
-    public KeyDescriptor<Integer> getKeyDescriptor() {
+    public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
       return EnumeratorIntegerDescriptor.INSTANCE;
     }
 
-    @NotNull
     @Override
-    public DataExternalizer<Void> getValueExternalizer() {
+    public @NotNull DataExternalizer<Void> getValueExternalizer() {
       return VoidDataExternalizer.INSTANCE;
     }
 

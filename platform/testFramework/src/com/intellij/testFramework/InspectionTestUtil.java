@@ -162,8 +162,8 @@ public final class InspectionTestUtil {
 
   @TestOnly
   public static void runTool(@NotNull InspectionToolWrapper<?,?> toolWrapper,
-                             @NotNull final AnalysisScope scope,
-                             @NotNull final GlobalInspectionContextForTests globalContext) {
+                             final @NotNull AnalysisScope scope,
+                             final @NotNull GlobalInspectionContextForTests globalContext) {
     IndexingTestUtil.waitUntilIndexesAreReady(scope.getProject());
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
@@ -179,8 +179,7 @@ public final class InspectionTestUtil {
     while (!globalContext.isFinished());
   }
 
-  @NotNull
-  public static <T extends InspectionProfileEntry> List<InspectionProfileEntry> instantiateTools(@NotNull Collection<Class<? extends T>> inspections) {
+  public static @NotNull <T extends InspectionProfileEntry> List<InspectionProfileEntry> instantiateTools(@NotNull Collection<Class<? extends T>> inspections) {
     Set<String> classNames = JBIterable.from(inspections).transform(Class::getName).toSet();
     return instantiateTools(classNames);
   }
@@ -190,8 +189,7 @@ public final class InspectionTestUtil {
     return (T)instantiateTools(Collections.singleton(inspection)).get(0);
   }
 
-  @NotNull
-  public static List<InspectionProfileEntry> instantiateTools(Set<String> classNames) {
+  public static @NotNull List<InspectionProfileEntry> instantiateTools(Set<String> classNames) {
     List<InspectionProfileEntry> tools = JBIterable.of(LocalInspectionEP.LOCAL_INSPECTION, InspectionEP.GLOBAL_INSPECTION)
       .flatten(o -> o.getExtensionList())
       .filter(o -> classNames.contains(o.implementationClass))

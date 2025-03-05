@@ -28,6 +28,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
@@ -58,12 +59,12 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
   protected final @NlsContexts.ColumnName String myAbstractColumnHeader;
   private @NotNull CancellablePromise<List<MemberInfoData>> myCancellablePromise;
-  protected List<M> myMemberInfos;
+  protected @Unmodifiable List<M> myMemberInfos;
   protected final boolean myAbstractEnabled;
   protected MemberInfoModel<T, M> myMemberInfoModel;
   protected MyTableModel<T, M> myTableModel;
 
-  public AbstractMemberSelectionTable(Collection<M> memberInfos,
+  public AbstractMemberSelectionTable(@Unmodifiable Collection<M> memberInfos,
                                       @Nullable MemberInfoModel<T, M> memberInfoModel,
                                       @Nullable @NlsContexts.ColumnName String abstractColumnHeader) {
     myAbstractEnabled = abstractColumnHeader != null;
@@ -197,7 +198,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     myTableModel.fireTableDataChanged();
   }
 
-  public void setMemberInfos(Collection<M> memberInfos) {
+  public void setMemberInfos(@Unmodifiable Collection<M> memberInfos) {
     myMemberInfos = new ArrayList<>(memberInfos);
     fireMemberInfoChange(memberInfos);
     myTableModel.fireTableDataChanged();
@@ -207,7 +208,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     listenerList.add(MemberInfoChangeListener.class, l);
   }
 
-  protected void fireMemberInfoChange(Collection<M> changedMembers) {
+  protected void fireMemberInfoChange(@Unmodifiable Collection<M> changedMembers) {
     Object[] list = listenerList.getListenerList();
 
     MemberInfoChange<T, M> event = new MemberInfoChange<>(changedMembers);

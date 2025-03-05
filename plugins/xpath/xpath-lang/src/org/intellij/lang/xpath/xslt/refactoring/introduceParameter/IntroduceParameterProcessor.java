@@ -63,8 +63,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
 
     @Override
-    @NotNull
-    protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
+    protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
         return new MyUsageViewDescriptorAdapter();
     }
 
@@ -161,8 +160,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    @NotNull
-    protected String getCommandName() {
+    protected @NotNull String getCommandName() {
         return XPathBundle.message("command.name.introduce.xslt.parameter");
     }
 

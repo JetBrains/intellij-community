@@ -9,9 +9,9 @@ And lists
 - *POINT THREE <TYPO descr="Typo: In word 'azaza'">azaza</TYPO>!* and thing  **here <TYPO descr="Typo: In word 'asdfgh'">asdfgh</TYPO>**.
 
 
-1. <TYPO descr="Typo: In word 'parapara'">parapara</TYPO>
+1. <TYPO descr="Typo: In word 'paraparag'">paraparag</TYPO>
 1. <TYPO descr="Typo: In word 'tralala'">tralala</TYPO>
-1. text <TYPO descr="Typo: In word 'normale'">normale</TYPO>
+1. text <TYPO descr="Typo: In word 'normalee'">normalee</TYPO>
 - <TYPO descr="Typo: In word 'papapapa'">papapapa</TYPO>
 
 www.vk.com/link_azazaza

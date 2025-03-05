@@ -23,12 +23,14 @@
           </vspacer>
         </children>
       </grid>
-      <grid id="d3271" layout-manager="GridLayoutManager" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="d3271" layout-manager="GridLayoutManager" row-count="5" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="10" left="10" bottom="10" right="10"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties/>
+        <properties>
+          <opaque value="true"/>
+        </properties>
         <border type="none"/>
         <children>
           <component id="767d3" class="com.intellij.ui.components.JBLabel">
@@ -41,7 +43,7 @@
           </component>
           <component id="b4945" class="com.intellij.ui.components.JBCheckBox" binding="myAddTrailingBlankLineCheckbox" default-binding="true">
             <constraints>
-              <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/PySyntaxBundle" key="formatter.panel.add.trailing.line.feed"/>
@@ -86,6 +88,39 @@
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/PySyntaxBundle" key="formatter.panel.use.continuation.indent.for.collection.literals"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="967d2" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <clientProperties>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+              <html.disable class="java.lang.Boolean" value="false"/>
+            </clientProperties>
+            <border type="etched" title-resource-bundle="messages/PySyntaxBundle" title-key="formatter.panel.injected.fragments">
+              <font/>
+              <title-color color="-4211011"/>
+            </border>
+            <children>
+              <component id="3f110" class="com.intellij.ui.components.JBCheckBox" binding="myAddIndentInsideInjections">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/PySyntaxBundle" key="formatter.panel.injected.fragments.use.continuation.indent"/>
+                </properties>
+              </component>
+              <component id="80ca8" class="com.intellij.ui.components.JBCheckBox" binding="myFormatInjectedFragments">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/PySyntaxBundle" key="formatter.panel.format.injected.fragments"/>
                 </properties>
               </component>
             </children>

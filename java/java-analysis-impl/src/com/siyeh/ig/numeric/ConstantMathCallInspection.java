@@ -35,7 +35,7 @@ import java.util.Set;
 
 public final class ConstantMathCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NonNls static final Set<String> constantMathCall = Set.of(
+  static final @NonNls Set<String> constantMathCall = Set.of(
     "abs", "acos", "asin", "atan",
     "cbrt", "ceil", "cos", "cosh",
     "exp", "expm1",
@@ -47,8 +47,7 @@ public final class ConstantMathCallInspection extends BaseInspection implements 
     "toDegrees", "toRadians");
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "constant.math.call.problem.descriptor");
   }
@@ -61,8 +60,7 @@ public final class ConstantMathCallInspection extends BaseInspection implements 
   private static class MakeStrictFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "constant.conditional.expression.simplify.quickfix");
     }
@@ -118,9 +116,7 @@ public final class ConstantMathCallInspection extends BaseInspection implements 
   }
 
   @SuppressWarnings({"NestedMethodCall", "FloatingPointEquality"})
-  @Nullable
-  @NonNls
-  static String createValueString(@NonNls String name, double value) {
+  static @Nullable @NonNls String createValueString(@NonNls String name, double value) {
     if ("abs".equals(name)) {
       return Double.toString(Math.abs(value));
     }
@@ -275,9 +271,7 @@ public final class ConstantMathCallInspection extends BaseInspection implements 
     return null;
   }
 
-  @Nullable
-  @NonNls
-  static String createValueString(@NonNls String name, long value) {
+  static @Nullable @NonNls String createValueString(@NonNls String name, long value) {
     if ("abs".equals(name)) {
       return Long.toString(Math.abs(value));
     }

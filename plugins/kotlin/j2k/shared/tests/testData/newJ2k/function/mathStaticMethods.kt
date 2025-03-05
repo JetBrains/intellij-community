@@ -18,7 +18,6 @@ import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.nextDown
-import kotlin.math.nextTowards
 import kotlin.math.nextUp
 import kotlin.math.pow
 import kotlin.math.round
@@ -52,7 +51,10 @@ class J {
         log10(x)
         max(x, y)
         min(x, y)
-        x.nextTowards(y)
+
+        // Don't convert `Math.nextAfter`, because Kotlin's `nextTowards` overloads have slightly different signatures
+        Math.nextAfter(x, y)
+
         x.nextDown()
         x.nextUp()
         x.pow(y)
@@ -66,5 +68,72 @@ class J {
         sqrt(x)
         tan(x)
         tanh(x)
+    }
+
+    fun overloads(s: Short, b: Byte, i: Int, l: Long, f: Float, d: Double) {
+        abs(s.toInt())
+        abs(b.toInt())
+        abs(i)
+        abs(l)
+        abs(f)
+        abs(d)
+        abs(1)
+        abs(1.0)
+
+        max(s.toInt(), i)
+        max(b.toInt(), i)
+        max(i, i)
+        max(i.toLong(), l)
+        max(i.toFloat(), f)
+        max(i.toDouble(), d)
+        max(1, 2)
+        max(1.0, 2.0)
+
+        min(s.toInt(), i)
+        min(b.toInt(), i)
+        min(i, i)
+        min(i.toLong(), l)
+        min(i.toFloat(), f)
+        min(i.toDouble(), d)
+        min(1, 2)
+        min(1.0, 2.0)
+    }
+
+    fun floatingPointOverloads(i: Int, f: Float, d: Double) {
+        i.toFloat().withSign(f)
+        f.withSign(f)
+        i.toDouble().withSign(d)
+        d.withSign(d)
+        1.0f.withSign(f)
+        1.0.withSign(2.0)
+
+        // Don't convert `Math.nextAfter`, because Kotlin's `nextTowards` overloads have slightly different signatures
+        Math.nextAfter(i.toFloat(), f.toDouble())
+        Math.nextAfter(f, f.toDouble())
+        Math.nextAfter(i.toFloat(), d)
+        Math.nextAfter(d, d)
+        Math.nextAfter(1.0f, f.toDouble())
+        Math.nextAfter(1.0, 2.0)
+
+        i.toFloat().nextDown()
+        f.nextDown()
+        d.nextDown()
+        1f.nextDown()
+        1.0f.nextDown()
+        1.0.nextDown()
+
+        i.toFloat().nextUp()
+        f.nextUp()
+        d.nextUp()
+        1f.nextUp()
+        1.0f.nextUp()
+        1.0.nextUp()
+
+        sign(i.toFloat())
+        sign(f)
+        sign(d)
+        sign(1f)
+        sign(1.0f)
+        sign(1.0)
     }
 }

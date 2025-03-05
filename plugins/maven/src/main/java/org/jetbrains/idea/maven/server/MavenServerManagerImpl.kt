@@ -38,17 +38,20 @@ import org.jetbrains.idea.maven.server.MavenServerManager.MavenServerConnectorFa
 import org.jetbrains.idea.maven.server.MavenServerManagerEx.Companion.stopConnectors
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.MavenWslUtil.getLocalRepo
-import org.jetbrains.idea.maven.utils.MavenWslUtil.getUserSettings
-import org.jetbrains.idea.maven.utils.MavenWslUtil.tryGetWslDistributionForPath
+import org.jetbrains.idea.maven.utils.MavenEelUtil.getLocalRepo
+import org.jetbrains.idea.maven.utils.MavenEelUtil.getUserSettings
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import java.util.function.Predicate
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 internal class MavenServerManagerImpl : MavenServerManager {
   private val myMultimoduleDirToConnectorMap: MutableMap<String, MavenServerConnector> = HashMap()
@@ -58,7 +61,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
   private var myIndexingConnector: MavenIndexingConnectorImpl? = null
   private var myIndexerWrapper: MavenIndexerWrapper? = null
 
-  private var eventListenerJar: File? = null
+  private var eventListenerJar: Path? = null
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect(this)
@@ -307,16 +310,16 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
 
   override fun getMavenEventListener(): File {
-    return getEventListenerJar()!!
+    return getEventListenerJar()!!.toFile()
   }
 
-  private fun getEventListenerJar(): File? {
+  private fun getEventListenerJar(): Path? {
     if (eventListenerJar != null) {
       return eventListenerJar
     }
-    val pluginFileOrDir = File(PathUtil.getJarPathForClass(MavenServerManager::class.java))
+    val pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
     val root = pluginFileOrDir.parent
-    if (pluginFileOrDir.isDirectory) {
+    if (pluginFileOrDir.isDirectory()) {
       eventListenerJar = eventSpyPathForLocalBuild
       if (!eventListenerJar!!.exists()) {
         MavenLog.LOG.warn("""
@@ -327,7 +330,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
       }
     }
     else {
-      eventListenerJar = File(root, "maven-event-listener.jar")
+      eventListenerJar = root.resolve("maven-event-listener.jar")
       if (!eventListenerJar!!.exists()) {
         MavenLog.LOG.warn("Event listener does not exist at " + eventListenerJar +
                           ". It should be built as part of plugin layout process and bundled along with maven plugin jars")
@@ -475,23 +478,6 @@ internal class MavenServerManagerImpl : MavenServerManager {
       path = File(".").path
     }
     val finalPath = path
-    if (tryGetWslDistributionForPath(path) != null) {
-      return object : MavenIndexerWrapper() {
-        override fun createMavenIndices(project: Project): MavenIndices {
-          val indices = MavenIndices(this, getInstance().getIndicesDir().toFile(), project)
-          Disposer.register(MavenDisposable.getInstance(project), indices)
-          return indices
-        }
-
-        override fun createBlocking(): MavenServerIndexer {
-          return DummyIndexer()
-        }
-
-        override suspend fun create(): MavenServerIndexer {
-          return DummyIndexer()
-        }
-      }
-    }
     return object : MavenIndexerWrapper() {
       override fun createMavenIndices(project: Project): MavenIndices {
         val indices = MavenIndices(this, getInstance().getIndicesDir().toFile(), project)
@@ -586,10 +572,10 @@ internal class MavenServerManagerImpl : MavenServerManager {
       return connector.isCompatibleWith(jdk, vmOptions, distribution)
     }
 
-    private val eventSpyPathForLocalBuild: File
+    private val eventSpyPathForLocalBuild: Path
       get() {
-        val root = File(PathUtil.getJarPathForClass(MavenServerManager::class.java))
-        return File(root.parent, "intellij.maven.server.eventListener")
+        val root = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
+        return root.parent.resolve("intellij.maven.server.eventListener")
       }
 
     private fun convertSettings(
@@ -612,19 +598,19 @@ internal class MavenServerManagerImpl : MavenServerManager {
       result.mavenHomePath = remotePath
 
       val userSettings = getUserSettings(project, settings.userSettingsFile, settings.mavenConfig)
-      val userSettingsPath = userSettings.toPath().toAbsolutePath().toString()
+      val userSettingsPath = userSettings.toAbsolutePath().toString()
       result.userSettingsPath = transformer.toRemotePath(userSettingsPath)
 
       val localRepository =
-        getLocalRepo(project, settings.localRepository, MavenInSpecificPath(mavenDistribution.mavenHome.toFile()),
+        getLocalRepo(project, settings.localRepository, MavenInSpecificPath(mavenDistribution.mavenHome),
                      settings.userSettingsFile,
-                     settings.mavenConfig).absolutePath
+                     settings.mavenConfig).toAbsolutePath().toString()
       result.localRepositoryPath = transformer.toRemotePath(localRepository)
       var file = getGlobalConfigFromMavenConfig(project, settings, transformer)
       if (file == null) {
-        file = MavenUtil.resolveGlobalSettingsFile(mavenDistribution.mavenHome.toFile())
+        file = MavenUtil.resolveGlobalSettingsFile(mavenDistribution.mavenHome)
       }
-      result.globalSettingsPath = transformer.toRemotePath(file.absolutePath)
+      result.globalSettingsPath = transformer.toRemotePath(file.absolutePathString())
       return result
     }
 
@@ -632,12 +618,12 @@ internal class MavenServerManagerImpl : MavenServerManager {
       project: Project,
       settings: MavenGeneralSettings,
       transformer: RemotePathTransformerFactory.Transformer,
-    ): File? {
+    ): Path? {
       val mavenConfig = settings.mavenConfig
       if (mavenConfig == null) return null
       val filePath = mavenConfig.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS)
       if (filePath == null) return null
-      return File(filePath)
+      return Path.of(filePath)
     }
   }
 }

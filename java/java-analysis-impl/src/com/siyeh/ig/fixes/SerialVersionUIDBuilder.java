@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.openapi.project.Project;
@@ -23,7 +23,7 @@ import java.util.*;
 
 public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
 
-  @NonNls private static final String ACCESS_METHOD_NAME_PREFIX = "access$";
+  private static final @NonNls String ACCESS_METHOD_NAME_PREFIX = "access$";
 
   private final PsiClass clazz;
   private int index = -1;
@@ -197,7 +197,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       writeSignatures(methodSignatures, dataOutputStream);
 
       dataOutputStream.flush();
-      @NonNls final String algorithm = "SHA";
+      final @NonNls String algorithm = "SHA";
       final MessageDigest digest = MessageDigest.getInstance(algorithm);
       final byte[] digestBytes = digest.digest(byteArrayOutputStream.toByteArray());
       long serialVersionUID = 0L;
@@ -372,7 +372,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
         }
         final String returnTypeSignature = ClassUtil.getClassObjectPresentation(type);
         final String className = clazz.getQualifiedName();
-        @NonNls final StringBuilder signatureBuffer =
+        final @NonNls StringBuilder signatureBuffer =
           new StringBuilder("(");
         if (!isStatic) {
           signatureBuffer.append('L').append(className).append(';');
@@ -430,7 +430,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
         }
         else {
           final String returnTypeSignature = ClassUtil.getClassObjectPresentation(method.getReturnType());
-          @NonNls final StringBuilder signatureBuffer =
+          final @NonNls StringBuilder signatureBuffer =
             new StringBuilder();
           signatureBuffer.append("(L");
           signatureBuffer.append(clazz.getQualifiedName()).append(';');

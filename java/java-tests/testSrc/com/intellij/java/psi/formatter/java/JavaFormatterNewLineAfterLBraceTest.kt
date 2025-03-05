@@ -1,14 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java
 
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 
-class JavaFormatterNewLineAfterLBraceTest : JavaFormatterTestCase() {
+class JavaFormatterNewLineAfterLBraceTest : JavaFormatterIdempotencyTestCase() {
   override fun getBasePath(): String = "psi/formatter/java/newLineAfterLBrace"
-
-  private val commonSettings: CommonCodeStyleSettings
-    get() = getSettings(JavaLanguage.INSTANCE)
 
   override fun setUp() {
     super.setUp()
@@ -71,12 +67,6 @@ class JavaFormatterNewLineAfterLBraceTest : JavaFormatterTestCase() {
     setupWrapType(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM)
     setupAlignWhenMultiline()
     doIdempotentTest()
-  }
-
-  private fun doIdempotentTest() {
-    val testName = getTestName(false)
-    doTest(testName, "${testName}_after")
-    doTest("${testName}_after", "${testName}_after")
   }
 
   private fun setupAlignWhenMultiline() {

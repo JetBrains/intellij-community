@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
+// This quick fix is not topical for any language version > 1.3, see https://youtrack.jetbrains.com/issue/KT-33413
 class AddLoopLabelFix(
     loop: KtLoopExpression,
     jumpExpression: KtExpressionWithLabel

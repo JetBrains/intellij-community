@@ -11,39 +11,39 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.psi.util.PsiModificationTracker
-import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinImportQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
-import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.isOneSegmentFQN
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
+@ApiStatus.Internal
 class ImportQuickFix(
     element: KtElement,
     @IntentionName private val text: String,
-    private val importVariants: List<AutoImportVariant>
-) : KotlinImportQuickFixAction<KtElement>(element), HintAction, HighPriorityAction {
-    init {
-        require(importVariants.isNotEmpty())
-    }
-
+    importVariants: List<AutoImportVariant>
+) : ImportLikeQuickFix(element, importVariants), HintAction, HighPriorityAction {
     override fun getText(): String = text
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.import")
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        if (editor == null) return
-
-        createImportAction(editor, file)?.execute()
-    }
-
-    override fun createImportAction(editor: Editor, file: KtFile): QuestionAction? =
-        if (element != null) ImportQuestionAction(file.project, editor, file, importVariants) else null
 
     override fun createAutoImportAction(
         editor: Editor,
@@ -85,66 +85,74 @@ class ImportQuickFix(
         return true
     }
 
-    private val modificationCountOnCreate: Long = PsiModificationTracker.getInstance(element.project).modificationCount
 
-    /**
-     * This is a safe-guard against showing hint after the quickfix have been applied.
-     *
-     * Inspired by the org.jetbrains.kotlin.idea.quickfix.ImportFixBase.isOutdated
-     */
-    private fun isOutdated(project: Project): Boolean {
-        return modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
-    }
+    override fun fix(importVariant: AutoImportVariant, file: KtFile, project: Project) {
+        require(importVariant is SymbolBasedAutoImportVariant)
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
-        !isOutdated(project)
+        StatisticsManager.getInstance().incUseCount(importVariant.statisticsInfo)
 
-    private class ImportQuestionAction(
-        private val project: Project,
-        private val editor: Editor,
-        private val file: KtFile,
-        private val importVariants: List<AutoImportVariant>,
-        private val onTheFly: Boolean = false,
-    ) : QuestionAction {
+        val element = element ?: return
 
-        init {
-            require(importVariants.isNotEmpty())
-        }
-
-        override fun execute(): Boolean {
-            file.executeListener?.onExecute(importVariants)
-            when (importVariants.size) {
-                1 -> {
-                    addImport(importVariants.single())
-                    return true
-                }
-
-                0 -> {
-                    return false
-                }
-
-                else -> {
-                    if (onTheFly) return false
-
-                    if (ApplicationManager.getApplication().isUnitTestMode) {
-                        addImport(importVariants.first())
-                        return true
-                    }
-                    ImportFixHelper.createListPopupWithImportVariants(project, importVariants, ::addImport).showInBestPositionFor(editor)
-
-                    return true
+        @OptIn(
+            KaAllowAnalysisOnEdt::class, 
+            KaAllowAnalysisFromWriteAction::class
+        )
+        val useShortening = allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(element) {
+                    shouldBeImportedWithShortening(element, importVariant)
                 }
             }
         }
 
-        private fun addImport(importVariant: AutoImportVariant) {
-            require(importVariant is SymbolBasedAutoImportVariant)
-
-            StatisticsManager.getInstance().incUseCount(importVariant.statisticsInfo)
-
-            project.executeWriteCommand(QuickFixBundle.message("add.import")) {
+        project.executeWriteCommand(QuickFixBundle.message("add.import")) {
+            if (useShortening) {
+                (element.mainReference as? KtSimpleNameReference)?.bindToFqName(
+                    importVariant.fqName.withRootPrefixIfNeeded(), // TODO remove this as soon as KTIJ-32932 is fixed
+                    KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
+                )
+            } else {
                 file.addImport(importVariant.fqName)
             }
         }
+    }
+    
+    context(KaSession)
+    private fun shouldBeImportedWithShortening(element: KtElement, importVariant: SymbolBasedAutoImportVariant): Boolean {
+        if (element !is KtSimpleNameExpression) return false
+
+        // Declarations from the root package cannot be imported by FQN, hence cannot be shortened
+        if (importVariant.fqName.isOneSegmentFQN()) return false
+        
+        val restoredCandidate = importVariant.candidatePointer.restore() ?: return false
+
+        // for class or enum entry we use ShortenReferences because we do not necessarily add an import but may want to
+        // insert a partially qualified name
+        if (
+            restoredCandidate.symbol !is KaClassLikeSymbol &&
+            restoredCandidate.symbol !is KaEnumEntrySymbol
+        ) {
+            return false
+        }
+        
+        // callable references cannot be fully qualified
+        if (element.parent is KtCallableReferenceExpression) return false
+        
+        return true
+    }
+
+    override fun isClassDefinitelyPositivelyImportedAlready(containingFile: KtFile, classFqName: FqName): Boolean {
+        val importList = containingFile.importList
+        if (importList == null) return false
+        for (statement in importList.imports) {
+            val importRefFqName = statement.importedFqName ?: continue// rely on the optimization: no resolve while getting import statement canonical text
+            if (importRefFqName == classFqName) {
+                return true
+            }
+            if (importRefFqName.shortName() == Name.identifier("*") && importRefFqName.parent() == classFqName.parent()) {
+                return true
+            }
+        }
+        return false
     }
 }

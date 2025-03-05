@@ -10,7 +10,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
-import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions

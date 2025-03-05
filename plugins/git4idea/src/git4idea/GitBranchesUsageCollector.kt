@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.intellij.internal.statistic.IdeActivityDefinition
@@ -11,10 +11,12 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 object GitBranchesUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private const val VERSION = 1
+  private const val VERSION = 2
   private val GROUP: EventLogGroup = EventLogGroup("git.branches", VERSION)
 
   private val POPUP_CLICKED: EventId = GROUP.registerEvent("popup_widget_clicked")
+
+  private val REPOSITORY_MANUALLY_SELECTED: EventId = GROUP.registerEvent("repository.manually.selected")
 
   @JvmField
   val IS_BRANCH_PROTECTED: BooleanEventField = EventFields.Boolean("is_protected")
@@ -41,5 +43,10 @@ object GitBranchesUsageCollector : CounterUsagesCollector() {
   @JvmStatic
   fun branchWidgetClicked() {
     POPUP_CLICKED.log()
+  }
+
+  @JvmStatic
+  fun branchDialogRepositoryManuallySelected() {
+    REPOSITORY_MANUALLY_SELECTED.log()
   }
 }

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.completion.ml">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.intellij.completion.ml">
   <id>com.intellij.completion.ml.ranking</id>
   <name>Machine Learning Code Completion</name>
   <vendor>JetBrains</vendor>
@@ -12,6 +12,10 @@
       <p>To enable the feature for your programming language, check settings in
       Editor | General | Code Completion | "Machine Learning Assistant Code Completion" section.</p>
     ]]></description>
+
+  <xi:include href="/META-INF/ml-ranking-ultimate.xml">
+    <xi:fallback/>
+  </xi:include>
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
@@ -42,6 +46,7 @@
     <extensionPoint qualifiedName="com.intellij.completion.ml.featuresOverride" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.completion.ml.features.RankingFeaturesOverrides"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.completion.ml.experimentFetcher" interface="com.intellij.completion.ml.experiments.MLRankingExperimentFetcher" dynamic="true"/>
   </extensionPoints>
 
   <resource-bundle>messages.MlCompletionBundle</resource-bundle>
@@ -51,11 +56,6 @@
             class="com.intellij.completion.ml.actions.MLCompletionFeaturesUtil$CopyFeaturesToClipboard">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt 9"/>
       <add-to-group group-id="MaintenanceGroup" anchor="before" relative-to-action="DumpLookupElementWeights"/>
-    </action>
-    <action id="DumpMLExperimentGroups"
-            class="com.intellij.completion.ml.actions.DumpMLExperimentsGroupsAction"
-            internal="true">
-      <add-to-group group-id="MaintenanceGroup" anchor="after" relative-to-action="DumpMLCompletionFeatures"/>
     </action>
   </actions>
 
@@ -72,8 +72,8 @@
     <applicationService serviceInterface="com.intellij.completion.ml.personalization.UserFactorsManager"
                         serviceImplementation="com.intellij.completion.ml.personalization.impl.UserFactorsManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.completion.ml.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"/>
+    <applicationService serviceInterface="com.intellij.completion.ml.experiments.ExperimentStatus"
+                        serviceImplementation="com.intellij.completion.ml.experiments.ExperimentStatusV2"/>
 
     <projectService serviceImplementation="com.intellij.completion.ml.common.CurrentProjectInfo"/>
 

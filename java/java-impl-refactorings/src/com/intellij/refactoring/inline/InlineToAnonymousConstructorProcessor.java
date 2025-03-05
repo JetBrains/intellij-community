@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -354,7 +354,7 @@ class InlineToAnonymousConstructorProcessor {
   }
 
   private PsiElement replaceParameterReferences(PsiElement argument,
-                                                @Nullable final List<? super PsiReferenceExpression> localVarRefs,
+                                                final @Nullable List<? super PsiReferenceExpression> localVarRefs,
                                                 final boolean replaceFieldsWithInitializers) throws IncorrectOperationException {
     if (argument instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiParameter parameter) {
       if (myLocalsForParameters.containsKey(parameter)) {

@@ -26,7 +26,7 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
+import org.jetbrains.kotlin.idea.base.util.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import java.io.File
 import java.util.*
+import kotlin.Throws
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.refactoring.move.MoveUtil")
 

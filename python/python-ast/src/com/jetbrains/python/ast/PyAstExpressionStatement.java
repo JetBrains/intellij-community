@@ -9,8 +9,7 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Experimental
 public interface PyAstExpressionStatement extends PyAstStatement {
 
-  @NotNull
-  default PyAstExpression getExpression() {
+  default @NotNull PyAstExpression getExpression() {
     return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 

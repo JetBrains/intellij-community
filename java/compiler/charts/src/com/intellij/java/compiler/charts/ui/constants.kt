@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
-import com.intellij.ui.ColorUtil
+import com.intellij.icons.AllIcons
 import com.intellij.ui.JBColor
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil.FontSize
 import java.util.concurrent.TimeUnit
+import javax.swing.Icon
 
 object Colors {
   object Background {
@@ -15,6 +16,9 @@ object Colors {
 
     fun getRowColor(row: Int): JBColor = if (row % 2 == 0) EVEN else ODD
   }
+
+  const val NO_ALPHA: Double = 1.0
+  const val FILTERED_ALPHA: Double = 0.35
 
   @Suppress("PropertyName")
   interface Block {
@@ -62,17 +66,14 @@ object Colors {
   private fun exact(propertyName: String): JBColor {
     return JBColor.namedColor(propertyName)
   }
-
-  private fun JBColor.alpha(alpha: Double): JBColor {
-    return ColorUtil.withAlpha(this, alpha) as JBColor
-  }
 }
 
 object Settings {
   object Block {
     const val PADDING: Double = 1.0
     const val BORDER: Double = 2.0
-    val HEIGHT = JBTable().rowHeight * 1.5
+    val HEIGHT: Double = JBTable().rowHeight * 1.5
+    const val MIN_SIZE: Int = 7
   }
 
   object Axis {
@@ -116,6 +117,15 @@ object Settings {
   }
 
   object Toolbar {
-    const val ID = "CompilationChartsToolbar"
+    const val ID: String = "CompilationChartsToolbar"
   }
+
+  object Popup {
+    fun rootIcon(test: Boolean): Icon = if(test)  AllIcons.Modules.TestRoot else  AllIcons.Modules.SourceRoot
+    val EDIT_ICON: Icon = AllIcons.Actions.EditSource
+  }
+}
+
+object Constants {
+  const val COMPILATION_CHARTS_MAGNIFICATION_KEY: String = "compilation.charts.mac.magnificationGesture"
 }

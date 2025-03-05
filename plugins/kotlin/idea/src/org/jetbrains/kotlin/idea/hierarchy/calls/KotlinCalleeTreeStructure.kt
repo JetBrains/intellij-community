@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.hierarchy.calls
 
@@ -60,7 +60,7 @@ class KotlinCalleeTreeStructure(
             )
         }
 
-        for (it in HierarchySearchRequest(element, element.useScope).searchOverriders()) {
+        for (it in HierarchySearchRequest(element, element.useScope).searchOverriders().asIterable()) {
             val overrider = it.unwrapped as? KtElement ?: continue
             if (!isInScope(baseClass, overrider, scopeType)) continue
             result += KotlinCallHierarchyNodeDescriptor(nodeDescriptor, overrider, false, false)

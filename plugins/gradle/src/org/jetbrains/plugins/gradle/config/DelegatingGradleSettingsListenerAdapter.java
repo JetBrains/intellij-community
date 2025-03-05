@@ -18,11 +18,8 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.openapi.externalSystem.settings.DelegatingExternalSystemSettingsListener;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
-import org.jetbrains.plugins.gradle.settings.TestRunner;
 
 public class DelegatingGradleSettingsListenerAdapter extends DelegatingExternalSystemSettingsListener<GradleProjectSettings>
   implements GradleSettingsListener

@@ -29,9 +29,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.JavaModuleTestCase;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -395,24 +393,6 @@ public class RootsChangedTest extends JavaModuleTestCase {
     void assertNoEvents() {
       assertNoEvents(false);
     }
-  }
-
-  public void testRootsChangedPerformanceInPresenceOfManyVirtualFilePointers() {
-    VirtualFile temp = getTempDir().createVirtualDir();
-    String dirName = "xxx";
-    VirtualFilePointerManager virtualFilePointerManager = VirtualFilePointerManager.getInstance();
-    for (int i = 0; i < 10_000; i++) {
-      virtualFilePointerManager.create(temp.getUrl() + "/" + dirName + "/" + i, getTestRootDisposable(), null);
-    }
-
-    VirtualFile xxx = createChildDirectory(temp, dirName);
-
-    Benchmark.newBenchmark("time wasted in ProjectRootManagerComponent.before/afterValidityChanged()", ()->{
-      for (int i = 0; i < 100; i++) {
-        rename(xxx, "yyy");
-        rename(xxx, dirName);
-      }
-    }).start();
   }
 
   // create ".idea" - based project because it's 1) needed for testShelveChangesMustNotLeadToRootsChangedEvent and 2) is more common

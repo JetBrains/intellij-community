@@ -75,6 +75,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return myDefaultType;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof ExpectedTypeInfoImpl that)) return false;
@@ -87,6 +88,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = myType.hashCode();
     result = 31 * result + myDefaultType.hashCode();
@@ -100,6 +102,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return equals((Object)obj);
   }
 
+  @Override
   public String toString() {
     return "ExpectedTypeInfo[type='" + myType + "' kind='" + myKind + "']";
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.*;
@@ -89,8 +89,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
     return ActionUpdateThread.BGT;
   }
 
-  @Nullable
-  protected abstract VirtualFile getFile(@NotNull Project project);
+  protected abstract @Nullable VirtualFile getFile(@NotNull Project project);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -256,9 +255,8 @@ public abstract class AbstractImportTestsAction extends AnAction {
       return DefaultExecutionTarget.INSTANCE;
     }
 
-    @Nullable
     @Override
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws
+    public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws
                                                                                                            ExecutionException {
       if (!myImported) {
         myImported = true;
@@ -284,15 +282,13 @@ public abstract class AbstractImportTestsAction extends AnAction {
       throw new ExecutionException(SmRunnerBundle.message("dialog.message.unable.to.run.configuration.failed.to.detect.test.framework"));
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myImported && myConfiguration != null ? myConfiguration.getName() : myFile.getNameWithoutExtension();
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return myConfiguration != null ? myConfiguration.getIcon() : null;
     }
 

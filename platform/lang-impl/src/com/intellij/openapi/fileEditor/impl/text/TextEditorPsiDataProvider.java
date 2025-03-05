@@ -3,6 +3,8 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeView;
 import com.intellij.injected.editor.EditorWindow;
@@ -256,7 +258,8 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (project == null) {
       return null;
     }
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    CodeInsightContext context = EditorContextManager.getEditorContext(e, project);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file, context);
     return psiFile != null && psiFile.isValid() ? psiFile : null;
   }
 }

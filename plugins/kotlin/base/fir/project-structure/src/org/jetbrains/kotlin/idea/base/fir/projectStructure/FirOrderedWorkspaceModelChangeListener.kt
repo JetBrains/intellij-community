@@ -7,6 +7,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
 /**
  * [FirOrderedWorkspaceModelChangeListener] delegates to other components which process workspace model change events in a pre-defined
@@ -32,6 +33,7 @@ internal class FirOrderedWorkspaceModelChangeListener(private val project: Proje
         //
         // In the worst case, this will cause session invalidation to skip invalidation for all dependent modules as well, because it might
         // think that `L` has already been invalidated.
+        @OptIn(K1ModeProjectStructureApi::class)
         project.serviceIfCreated<LibraryInfoCache>()?.beforeWorkspaceModelChanged(event)
     }
 }

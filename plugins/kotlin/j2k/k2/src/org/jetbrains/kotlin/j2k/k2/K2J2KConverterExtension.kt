@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.j2k.copyPaste.TargetData
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.j2k.k2.copyPaste.K2J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.k2.copyPaste.K2PlainTextPasteImportResolver
 import org.jetbrains.kotlin.nj2k.Conversion
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
@@ -45,13 +45,14 @@ class K2J2KConverterExtension : J2kConverterExtension() {
         // TODO: rename/refactor
         NewJ2kWithProgressProcessor(progress, files, phasesCount)
 
-    override fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
+    override fun getConversions(context: ConverterContext): List<Conversion> =
         getK2J2KConversions(context)
 
     override fun createPlainTextPasteImportResolver(
         conversionData: ConversionData,
         targetKotlinFile: KtFile
     ): PlainTextPasteImportResolver {
+        ThreadingAssertions.assertBackgroundThread()
         return K2PlainTextPasteImportResolver(conversionData, targetKotlinFile)
     }
 

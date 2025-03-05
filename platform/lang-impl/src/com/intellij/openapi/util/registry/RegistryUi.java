@@ -34,6 +34,7 @@ import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -299,13 +300,13 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  private static List<String> getRecent() {
+  private static @Unmodifiable List<String> getRecent() {
     String value = PropertiesComponent.getInstance().getValue(RECENT_PROPERTIES_KEY);
     return StringUtil.isEmpty(value) ? new ArrayList<>(0) : StringUtil.split(value, "=");
   }
 
   private static void keyChanged(String key) {
-    final List<String> recent = getRecent();
+    final List<String> recent = new ArrayList<>(getRecent());
     recent.remove(key);
     recent.add(0, key);
     PropertiesComponent.getInstance().setValue(RECENT_PROPERTIES_KEY, StringUtil.join(recent, "="), "");
@@ -370,6 +371,10 @@ public class RegistryUi implements Disposable {
         myCloseAction = new AbstractAction(IdeBundle.message("registry.close.action.text")) {
           @Override
           public void actionPerformed(@NotNull ActionEvent e) {
+            final TableCellEditor cellEditor = myTable.getCellEditor();
+            if (cellEditor != null) {
+              cellEditor.stopCellEditing();
+            }
             processClose();
             doOKAction();
           }
@@ -381,7 +386,7 @@ public class RegistryUi implements Disposable {
       public void doCancelAction() {
         final TableCellEditor cellEditor = myTable.getCellEditor();
         if (cellEditor != null) {
-          cellEditor.stopCellEditing();
+          cellEditor.cancelCellEditing();
         }
         processClose();
         super.doCancelAction();

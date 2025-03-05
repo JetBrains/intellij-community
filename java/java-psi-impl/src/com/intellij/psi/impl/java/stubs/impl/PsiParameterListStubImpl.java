@@ -12,6 +12,7 @@ public class PsiParameterListStubImpl extends StubBase<PsiParameterList> impleme
     super(parent, JavaStubElementTypes.PARAMETER_LIST);
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "PsiParameterListStub";

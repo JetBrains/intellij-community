@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -13,6 +13,7 @@ public class CustomRegExpInspectionToolWrapper extends LocalInspectionToolWrappe
     super(new CustomRegExpFakeInspection(configuration));
   }
 
+  @Override
   public int hashCode() {
     return myTool.getShortName().hashCode();
   }
@@ -23,9 +24,8 @@ public class CustomRegExpInspectionToolWrapper extends LocalInspectionToolWrappe
            ((CustomRegExpInspectionToolWrapper)obj).myTool.getShortName().equals(myTool.getShortName());
   }
 
-  @NotNull
   @Override
-  public LocalInspectionToolWrapper createCopy() {
+  public @NotNull LocalInspectionToolWrapper createCopy() {
     final CustomRegExpFakeInspection inspection = (CustomRegExpFakeInspection)getTool();
     RegExpInspectionConfiguration configuration = inspection.getConfiguration().copy();
     return new CustomRegExpInspectionToolWrapper(configuration);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,6 +23,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
@@ -309,7 +310,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     myRbFieldPrivate.setSelected(true);
     myRbAccessorPublic.setSelected(true);
 
-    Box leftBox = Box.createVerticalBox();
+    JBBox leftBox = JBBox.createVerticalBox();
     myCbEncapsulateGet.setPreferredSize(myCbUseAccessorsWhenAccessible.getPreferredSize());
     leftBox.add(myCbEncapsulateGet);
     leftBox.add(myCbEncapsulateSet);
@@ -334,7 +335,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     }
     myJavadocPolicy.setVisible(hasJavadoc);
 
-    Box fieldsBox = Box.createVerticalBox();
+    JBBox fieldsBox = JBBox.createVerticalBox();
     fieldsBox.add(myRbFieldPrivate);
     fieldsBox.add(myRbFieldPackageLocal);
     fieldsBox.add(myRbFieldProtected);
@@ -345,7 +346,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     fieldsVisibilityPanel.add(fieldsBox, BorderLayout.CENTER);
     fieldsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
-    Box methodsBox = Box.createVerticalBox();
+    JBBox methodsBox = JBBox.createVerticalBox();
     methodsBox.add(myRbAccessorPublic);
     methodsBox.add(myRbAccessorProtected);
     methodsBox.add(myRbAccessorPackageLocal);
@@ -356,12 +357,12 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     methodsVisibilityPanel.add(methodsBox, BorderLayout.CENTER);
     methodsVisibilityPanel.add(Box.createHorizontalStrut(5), BorderLayout.WEST);
 
-    Box visibilityBox = Box.createHorizontalBox();
+    JBBox visibilityBox = JBBox.createHorizontalBox();
     visibilityBox.add(fieldsVisibilityPanel);
     visibilityBox.add(Box.createHorizontalStrut(5));
     visibilityBox.add(methodsVisibilityPanel);
 
-    Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
     box.add(encapsulateBox);
     box.add(Box.createVerticalStrut(5));
     box.add(visibilityBox);
@@ -491,8 +492,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   /**
    * @return error string if errors were found, or null if everything is ok
    */
-  @NlsContexts.DialogMessage
-  private String validateData() {
+  private @NlsContexts.DialogMessage String validateData() {
     PsiManager manager = PsiManager.getInstance(myProject);
     for (int idx = 0; idx < myFields.length; idx++) {
       if (myCheckedMarks[idx]) {
@@ -768,8 +768,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
                                             mySetterNames, mySetterPrototypes, mySetterPrototypesIcons);
     }
 
-    @NotNull
-    private static RowIcon getIcon(@Nullable PsiMethod prototype, @Nullable PsiClass psiClass) {
+    private static @NotNull RowIcon getIcon(@Nullable PsiMethod prototype, @Nullable PsiClass psiClass) {
       Icon methodIcon = IconUtil.getEmptyIcon(true);
       Icon overrideIcon = EmptyIcon.ICON_16;
 

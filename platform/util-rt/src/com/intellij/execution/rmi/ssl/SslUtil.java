@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.Pair;
@@ -69,7 +69,8 @@ public final class SslUtil {
     return readPrivateKey(filePath, null);
   }
 
-  private static @NotNull List<X509Certificate> loadCertificates(@NotNull List<? extends SslEntityReader.Entity> entities) throws IOException {
+  @NotNull
+  private static List<X509Certificate> loadCertificates(@NotNull List<? extends SslEntityReader.Entity> entities) throws IOException {
     List<X509Certificate> certs = new ArrayList<>();
     for (SslEntityReader.Entity entity : entities) {
       if (entity instanceof SslEntityReader.CertificateEntity) {
@@ -84,7 +85,8 @@ public final class SslUtil {
     return loadPrivateKeyAndCerts(readWithCache(filePath), filePath, password);
   }
 
-  private static @NotNull Pair<PrivateKey, List<X509Certificate>> loadPrivateKeyAndCerts(
+  @NotNull
+  private static Pair<PrivateKey, List<X509Certificate>> loadPrivateKeyAndCerts(
     @NotNull List<? extends SslEntityReader.Entity> entities, @NotNull String filePath, char[] password)
     throws IOException {
     PrivateKey key = null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,33 +62,27 @@ public abstract class RenamePsiElementProcessorBase {
 
   /** @deprecated use {@link RenamePsiElementProcessor#findReferences(PsiElement, SearchScope, boolean)} instead */
   @Deprecated
-  @NotNull
-  public Collection<PsiReference> findReferences(@NotNull PsiElement element, boolean searchInCommentsAndStrings) {
+  public @NotNull @Unmodifiable Collection<PsiReference> findReferences(@NotNull PsiElement element, boolean searchInCommentsAndStrings) {
     return findReferences(element, GlobalSearchScope.projectScope(element.getProject()), searchInCommentsAndStrings);
   }
 
   /** @deprecated use {@link RenamePsiElementProcessor#findReferences(PsiElement, SearchScope, boolean)} instead */
   @Deprecated
-  @NotNull
-  public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
+  public @NotNull @Unmodifiable Collection<PsiReference> findReferences(@NotNull PsiElement element) {
     return findReferences(element, GlobalSearchScope.projectScope(element.getProject()), false);
   }
 
-  @NotNull
-  @Unmodifiable
-  public Collection<PsiReference> findReferences(@NotNull PsiElement element,
-                                                 @NotNull SearchScope searchScope,
-                                                 boolean searchInCommentsAndStrings) {
+  public @NotNull @Unmodifiable Collection<PsiReference> findReferences(@NotNull PsiElement element,
+                                                                        @NotNull SearchScope searchScope,
+                                                                        boolean searchInCommentsAndStrings) {
     return ReferencesSearch.search(element, searchScope).findAll();
   }
 
-  @Nullable
-  public Pair<String, String> getTextOccurrenceSearchStrings(@NotNull PsiElement element, @NotNull String newName) {
+  public @Nullable Pair<String, String> getTextOccurrenceSearchStrings(@NotNull PsiElement element, @NotNull String newName) {
     return null;
   }
 
-  @Nullable
-  public String getQualifiedNameAfterRename(@NotNull PsiElement element, @NotNull String newName, final boolean nonJava) {
+  public @Nullable String getQualifiedNameAfterRename(@NotNull PsiElement element, @NotNull String newName, final boolean nonJava) {
     return null;
   }
 
@@ -135,8 +129,7 @@ public abstract class RenamePsiElementProcessorBase {
     return true;
   }
 
-  @NotNull
-  public static RenamePsiElementProcessorBase forPsiElement(@NotNull PsiElement element) {
+  public static @NotNull RenamePsiElementProcessorBase forPsiElement(@NotNull PsiElement element) {
     for (RenamePsiElementProcessorBase processor : EP_NAME.getExtensionList()) {
       if (processor.canProcessElement(element)) {
         return processor;
@@ -145,16 +138,13 @@ public abstract class RenamePsiElementProcessorBase {
     return DEFAULT;
   }
 
-  @Nullable
-  public Runnable getPostRenameCallback(@NotNull PsiElement element,
-                                        @NotNull String newName,
-                                        @NotNull RefactoringElementListener elementListener) {
+  public @Nullable Runnable getPostRenameCallback(@NotNull PsiElement element,
+                                                  @NotNull String newName,
+                                                  @NotNull RefactoringElementListener elementListener) {
     return null;
   }
 
-  @Nullable
-  @NonNls
-  public String getHelpID(final PsiElement element) {
+  public @Nullable @NonNls String getHelpID(final PsiElement element) {
     if (element instanceof PsiFile) {
       return "refactoring.renameFile";
     }
@@ -193,8 +183,7 @@ public abstract class RenamePsiElementProcessorBase {
    * @param editor the editor in which the refactoring was invoked.
    * @return the element to rename, or null if the rename refactoring should be canceled.
    */
-  @Nullable
-  public PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {
+  public @Nullable PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {
     return element;
   }
 
@@ -204,7 +193,7 @@ public abstract class RenamePsiElementProcessorBase {
    * @param editor the editor in which inplace refactoring was invoked
    * @param renameCallback rename procedure which should be called on the chosen substitution
    */
-  public void substituteElementToRename(@NotNull final PsiElement element, @NotNull Editor editor, @NotNull Pass<? super PsiElement> renameCallback) {
+  public void substituteElementToRename(final @NotNull PsiElement element, @NotNull Editor editor, @NotNull Pass<? super PsiElement> renameCallback) {
     final PsiElement psiElement = substituteElementToRename(element, editor);
     if (psiElement == null) return;
     if (!PsiElementRenameHandler.canRename(psiElement.getProject(), editor, psiElement)) return;
@@ -226,13 +215,11 @@ public abstract class RenamePsiElementProcessorBase {
     return false;
   }
 
-  @Nullable
-  public PsiElement getElementToSearchInStringsAndComments(@NotNull PsiElement element) {
+  public @Nullable PsiElement getElementToSearchInStringsAndComments(@NotNull PsiElement element) {
     return element;
   }
 
-  @NotNull
-  public UsageInfo createUsageInfo(@NotNull PsiElement element, @NotNull PsiReference ref, @NotNull PsiElement referenceElement) {
+  public @NotNull UsageInfo createUsageInfo(@NotNull PsiElement element, @NotNull PsiReference ref, @NotNull PsiElement referenceElement) {
     return RenameUtilBase.createMoveRenameUsageInfo(element, ref, referenceElement);
   }
 
@@ -240,7 +227,7 @@ public abstract class RenamePsiElementProcessorBase {
 
   private static class MyRenamePsiElementProcessorBase extends RenamePsiElementProcessorBase implements DefaultRenamePsiElementProcessor {
     @Override
-    public boolean canProcessElement(@NotNull final PsiElement element) {
+    public boolean canProcessElement(final @NotNull PsiElement element) {
       return true;
     }
   }

@@ -17,6 +17,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.JavaPsiStringTemplateUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -271,9 +272,12 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, false);
     String indent = " ".repeat(offset);
     for (int i = 0; i < lines.length; i++) {
-      String content = PsiLiteralUtil.escapeBackSlashesInTextBlock(lines[i]);
-      content = PsiLiteralUtil.escapeTextBlockCharacters(content, i == 0 && escapeStartQuote,
-                                                         i == lines.length - 1 && escapeEndQuote, true);
+      String content = "";
+      if (!CharArrayUtil.containsOnlyWhiteSpaces(lines[i])) {
+        content = PsiLiteralUtil.escapeBackSlashesInTextBlock(lines[i]);
+        content = PsiLiteralUtil.escapeTextBlockCharacters(content, i == 0 && escapeStartQuote,
+                                                           i == lines.length - 1 && escapeEndQuote, true);
+      }
       buffer.append(content);
       if (i < lines.length - 1) {
         buffer.append('\n').append(indent);

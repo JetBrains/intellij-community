@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.openapi.editor.Document;
@@ -64,8 +64,7 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
     return null;
   }
 
-  @Nullable
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return myFragment.getNavigatable();
   }
 
@@ -79,8 +78,7 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
     myValid = valid;
   }
 
-  @Nullable
-  public TextRange getTextRange() {
+  public @Nullable TextRange getTextRange() {
     return myFragment.getTextRange();
   }
 

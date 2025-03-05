@@ -63,8 +63,7 @@ public interface PyAstForPart extends PyAstStatementPart {
   /**
    * @return target: the "x" in "{@code for x in (1, 2, 3)}".
    */
-  @Nullable
-  default PyAstExpression getTarget() {
+  default @Nullable PyAstExpression getTarget() {
     ASTNode n = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     if (followsNodeOfType(n, PyTokenTypes.FOR_KEYWORD)) {
       return (PyAstExpression)n.getPsi(); // can't be null, 'if' would fail
@@ -75,8 +74,7 @@ public interface PyAstForPart extends PyAstStatementPart {
   /**
    * @return source of iteration: the "(1, 2, 3)" in "{@code for x in (1, 2, 3)}".
    */
-  @Nullable
-  default PyAstExpression getSource() {
+  default @Nullable PyAstExpression getSource() {
     List<PsiElement> exprs = findChildrenByType(this, PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     // normally there are 2 exprs, the second is the source.
     if (exprs.size() != 2) return null; // could be a parsing error

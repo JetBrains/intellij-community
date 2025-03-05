@@ -1,0 +1,4 @@
+~complex~float_col~int_col~list~strings
+0~(1+2j)~1.0~1~[1.1, 2.2]~f
+1~(2.2+3j)~2.0~2~[2.2, 3.3]~s
+2~(4.4+5j)~NaN~3~[4.4, None]~NaN

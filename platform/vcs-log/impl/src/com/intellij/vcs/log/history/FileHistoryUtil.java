@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -32,8 +31,8 @@ public final class FileHistoryUtil {
       if (revision instanceof VcsFileRevisionEx) {
         FilePath path = ((VcsFileRevisionEx)revision).getPath();
         return path.isDirectory()
-               ? new VcsVirtualFolder(path.getPath(), null, VcsFileSystem.getInstance())
-               : new VcsVirtualFile(path.getPath(), revision, VcsFileSystem.getInstance());
+               ? new VcsVirtualFolder(path, null)
+               : new VcsVirtualFile(path, revision);
       }
     }
     return null;

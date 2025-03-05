@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.structure;
 
@@ -37,7 +37,7 @@ public class DomStructureViewTreeModel extends XmlStructureViewTreeModel impleme
   public @NotNull StructureViewTreeElement getRoot() {
     XmlFile myFile = getPsiFile();
     final DomFileElement<DomElement> fileElement = DomManager.getDomManager(myFile.getProject()).getFileElement(myFile, DomElement.class);
-    return fileElement == null?
+    return fileElement == null ?
            new XmlFileTreeElement(myFile) :
            new DomStructureTreeElement(fileElement.getRootElement().createStableCopy(), myDescriptor, myNavigationProvider);
   }

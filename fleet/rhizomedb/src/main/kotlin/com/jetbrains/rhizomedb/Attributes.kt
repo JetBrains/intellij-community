@@ -3,12 +3,11 @@ package com.jetbrains.rhizomedb
 
 import com.jetbrains.rhizomedb.impl.EidGen
 import com.jetbrains.rhizomedb.impl.generateSeed
-import fleet.util.serialization.DefaultJson
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlin.reflect.KProperty
 
-internal fun attr(ident: String, schema: Schema): Attribute<*> =
+fun attr(ident: String, schema: Schema): Attribute<*> =
   Attribute.fromEID<Any>(EidGen.memoizedEID(SchemaPart, ident), schema)
 
 /**
@@ -207,7 +206,7 @@ sealed class Attributes<E : Entity>(
     valueFlags: Indexing = Indexing.NOT_INDEXED,
     defaultValueProvider: DefaultValue<T>? = null
   ): Optional<T> =
-    addAttr(Optional<T>(
+    addAttr(Optional(
       ident = "$namespace/$name",
       attr("$namespace/$name", schema = Schema(
         cardinality = Cardinality.One,
@@ -396,7 +395,7 @@ internal fun ChangeScope.registerAttributes(attributes: Attributes<*>): Unit =
         entityAttribute.serializerLazy?.let { serializer ->
           mutate(MapAttribute(entityAttribute.attr) {
             when {
-              it is JsonElement -> DefaultJson.decodeFromJsonElement(serializer.value as KSerializer<Any>, it)
+              it is JsonElement -> DbJson.decodeFromJsonElement(serializer.value as KSerializer<Any>, it)
               else -> it
             }
           })

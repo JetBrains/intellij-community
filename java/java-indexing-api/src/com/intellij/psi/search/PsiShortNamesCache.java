@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.lang.Language;
@@ -97,7 +97,7 @@ public abstract class PsiShortNamesCache {
                                                  @NotNull Processor<? super PsiMethod> processor);
 
   public boolean processMethodsWithName(@NonNls @NotNull String name,
-                                        @NotNull final Processor<? super PsiMethod> processor,
+                                        final @NotNull Processor<? super PsiMethod> processor,
                                         @NotNull GlobalSearchScope scope,
                                         @Nullable IdFilter filter) {
     return processMethodsWithName(name, scope, processor);

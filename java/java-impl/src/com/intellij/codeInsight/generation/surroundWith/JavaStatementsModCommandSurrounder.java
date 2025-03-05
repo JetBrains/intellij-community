@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.lang.surroundWith.ModCommandSurrounder;
@@ -11,9 +11,11 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-abstract class JavaStatementsModCommandSurrounder extends ModCommandSurrounder {
+@ApiStatus.Internal
+public abstract class JavaStatementsModCommandSurrounder extends ModCommandSurrounder {
   @Override
   public boolean isApplicable(PsiElement @NotNull [] elements) {
     return ContainerUtil.find(elements, PsiSwitchLabelStatementBase.class::isInstance) == null;

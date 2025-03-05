@@ -1,6 +1,6 @@
-<idea-plugin url="<error descr="Must be valid link to website using https:// or http:// scheme">mywebsite.com</error>">
+<idea-plugin url="<error descr="Must be a valid link to the website using https:// or http:// scheme">mywebsite.com</error>">
   <id>test</id>
-  <vendor url="<error descr="Must be valid link to website using https:// or http:// scheme">mywebsite.com</error>">JetBrains</vendor>
+  <vendor url="<error descr="Must be a valid link to the website using https:// or http:// scheme">mywebsite.com</error>">JetBrains</vendor>
   <version>1.0</version>
 
   <<error descr="Value must not be empty">name</error>></name>

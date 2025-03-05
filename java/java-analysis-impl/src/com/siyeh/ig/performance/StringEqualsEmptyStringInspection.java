@@ -52,8 +52,7 @@ public final class StringEqualsEmptyStringInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final boolean useIsEmpty = ((Boolean)infos[0]).booleanValue();
     if (useIsEmpty) {
       return InspectionGadgetsBundle.message("string.equals.empty.string.is.empty.problem.descriptor");
@@ -109,8 +108,7 @@ public final class StringEqualsEmptyStringInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       if (myUseIsEmpty) {
         return CommonQuickFixBundle.message("fix.replace.with.x", "isEmpty()");
       }
@@ -119,9 +117,8 @@ public final class StringEqualsEmptyStringInspection extends BaseInspection {
       }
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("string.equals.empty.string.fix.family.name");
     }
 
@@ -189,7 +186,7 @@ public final class StringEqualsEmptyStringInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if (!"equals".equals(methodName)) {
         return;
       }

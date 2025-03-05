@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.ui.BeforeRunComponent
 import com.intellij.execution.ui.BeforeRunFragment
 import com.intellij.ide.macro.MacrosDialog
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.addLabeledSettingsEditorFragment
@@ -17,6 +18,7 @@ import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineFi
 import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineInfo
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
+import com.intellij.openapi.externalSystem.service.ui.util.AsyncDistributionsInfo
 import com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
 import com.intellij.openapi.externalSystem.service.ui.util.LabeledSettingsFragmentInfo
 import com.intellij.openapi.externalSystem.service.ui.util.PathFragmentInfo
@@ -32,6 +34,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.textFieldWithBrowseButton
+import com.intellij.util.application
 import com.intellij.util.text.nullize
 
 
@@ -50,7 +53,7 @@ fun <S> SettingsEditorFragmentContainer<S>.addCommandLineFragment(
   project: Project,
   commandLineInfo: CommandLineInfo,
   getCommandLine: S.() -> String,
-  setCommandLine: S.(String) -> Unit
+  setCommandLine: S.(String) -> Unit,
 ) = addSettingsEditorFragment(
   commandLineInfo,
   { CommandLineField(project, commandLineInfo, it) },
@@ -60,7 +63,7 @@ fun <S> SettingsEditorFragmentContainer<S>.addCommandLineFragment(
 
 fun <S : ExternalSystemRunConfiguration> SettingsEditorFragmentContainer<S>.addWorkingDirectoryFragment(
   project: Project,
-  workingDirectoryInfo: WorkingDirectoryInfo
+  workingDirectoryInfo: WorkingDirectoryInfo,
 ) = addWorkingDirectoryFragment(
   project,
   workingDirectoryInfo,
@@ -72,7 +75,7 @@ fun <S> SettingsEditorFragmentContainer<S>.addWorkingDirectoryFragment(
   project: Project,
   workingDirectoryInfo: WorkingDirectoryInfo,
   getWorkingDirectory: S.() -> String,
-  setWorkingDirectory: S.(String) -> Unit
+  setWorkingDirectory: S.(String) -> Unit,
 ) = addLabeledSettingsEditorFragment(
   workingDirectoryInfo,
   { WorkingDirectoryField(project, workingDirectoryInfo, it) },
@@ -88,17 +91,37 @@ fun <S> SettingsEditorFragmentContainer<S>.addDistributionFragment(
   project: Project,
   distributionsInfo: DistributionsInfo,
   getDistribution: S.() -> DistributionInfo?,
-  setDistribution: S.(DistributionInfo?) -> Unit
+  setDistribution: S.(DistributionInfo?) -> Unit,
 ) = addLabeledSettingsEditorFragment(
   distributionsInfo,
   {
     DistributionComboBox(project, distributionsInfo).apply {
       specifyLocationActionName = distributionsInfo.comboBoxActionName
-      distributionsInfo.distributions.forEach(::addDistributionIfNotExists)
+      if (distributionsInfo is AsyncDistributionsInfo && !distributionsInfo.isReady()) {
+        this.addLoadingItem()
+        application.executeOnPooledThread {
+          distributionsInfo.prepare();
+          application.invokeLater({
+                                    this.removeLoadingItem()
+                                    distributionsInfo.distributions.forEach(::addDistributionIfNotExists)
+                                  }, ModalityState.stateForComponent(this))
+        }
+      }
+      else {
+        distributionsInfo.distributions.forEach(::addDistributionIfNotExists)
+      }
     }
   },
-  { it, c -> c.selectedDistribution = it.getDistribution() },
-  { it, c -> it.setDistribution(c.selectedDistribution) },
+  { it, c ->
+    if (!c.hasLoadingItem()) {
+      c.selectedDistribution = it.getDistribution()
+    }
+  },
+  { it, c ->
+    if (!c.hasLoadingItem()) {
+      it.setDistribution(c.selectedDistribution)
+    }
+  },
 )
 
 fun <S : ExternalSystemRunConfiguration> SettingsEditorFragmentContainer<S>.addVmOptionsFragment() =
@@ -118,7 +141,7 @@ fun <S : ExternalSystemRunConfiguration> SettingsEditorFragmentContainer<S>.addV
 fun <S> SettingsEditorFragmentContainer<S>.addVmOptionsFragment(
   settingsFragmentInfo: LabeledSettingsFragmentInfo,
   getVmOptions: S.() -> String?,
-  setVmOptions: S.(String?) -> Unit
+  setVmOptions: S.(String?) -> Unit,
 ) = addRemovableLabeledTextSettingsEditorFragment(
   settingsFragmentInfo,
   {
@@ -154,7 +177,7 @@ fun <S> SettingsEditorFragmentContainer<S>.addEnvironmentFragment(
   setEnvs: S.(Map<String, String>) -> Unit,
   isPassParentEnvs: S.() -> Boolean,
   setPassParentEnvs: S.(Boolean) -> Unit,
-  hideWhenEmpty: Boolean
+  hideWhenEmpty: Boolean,
 ) = addLabeledSettingsEditorFragment(
   settingsFragmentInfo,
   { EnvironmentVariablesTextFieldWithBrowseButton() },
@@ -174,7 +197,7 @@ fun <S> SettingsEditorFragmentContainer<S>.addPathFragment(
   pathFragmentInfo: PathFragmentInfo,
   getPath: S.() -> String,
   setPath: S.(String) -> Unit,
-  defaultPath: S.() -> String = { "" }
+  defaultPath: S.() -> String = { "" },
 ) = addRemovableLabeledTextSettingsEditorFragment(
   pathFragmentInfo,
   {

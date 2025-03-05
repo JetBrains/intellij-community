@@ -5,8 +5,8 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +86,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   private static boolean isIdeaDirectory(VirtualFile file) {
-    return ProjectKt.getProjectStoreDirectory(file) != null;
+    return ProjectCoreUtil.isKnownProjectDirectory(file);
   }
 
   private static boolean hasImportProvider(VirtualFile file) {

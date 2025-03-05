@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 package com.intellij.platform.ide.bootstrap
 
@@ -25,6 +25,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.bootstrap.kernel.startClientKernel
+import com.intellij.platform.ide.bootstrap.kernel.startServerKernel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
@@ -32,6 +34,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.Java11Shim
+import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
@@ -124,8 +127,9 @@ fun CoroutineScope.startApplication(
     initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless, asyncScope = this@startApplication)
   }
 
+  var initUiScale: Job? = null
   if (!isHeadless) {
-    val initUiScale = launch {
+    initUiScale = launch {
       if (SystemInfoRt.isMac) {
         initAwtToolkitJob.join()
         JBUIScale.preloadOnMac()
@@ -143,6 +147,7 @@ fun CoroutineScope.startApplication(
   }
 
   val initLafJob = launch {
+    initUiScale?.join()
     initBaseLafJob.join()
     if (!isHeadless) {
       configureCssUiDefaults()
@@ -214,7 +219,7 @@ fun CoroutineScope.startApplication(
 
     if (!PluginAutoUpdater.shouldSkipAutoUpdate()) {
       span("plugin auto update") {
-          PluginAutoUpdater.applyPluginUpdates(logDeferred)
+        PluginAutoUpdater.applyPluginUpdates(logDeferred)
       }
     }
 
@@ -238,6 +243,17 @@ fun CoroutineScope.startApplication(
     }
   }
 
+  val kernelStarted = async {
+    span("Starting Kernel") {
+      if (PlatformUtils.isJetBrainsClient()) {
+        startClientKernel(mainScope)
+      }
+      else {
+        startServerKernel(mainScope)
+      }
+    }
+  }
+
   val appRegisteredJob = CompletableDeferred<Unit>()
 
   val appLoaded = async {
@@ -254,7 +270,7 @@ fun CoroutineScope.startApplication(
     val app = span("app instantiation") {
       // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
       @Suppress("SSBasedInspection")
-      ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).childScope("Application"), isInternal)
+      ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job + kernelStarted.await().coroutineContext).childScope("Application"), isInternal)
     }
 
     loadApp(
@@ -294,28 +310,31 @@ fun CoroutineScope.startApplication(
 
   // out of appLoaded scope
   launch {
-    // starter is used later, but we need to wait for appLoaded completion
-    val starter = appLoaded.await()
+    // wait for the kernel to start
+    withContext(kernelStarted.await().coroutineContext) {
+      // starter is used later, but we need to wait for appLoaded completion
+      val starter = appLoaded.await()
 
-    val isInitialStart = configImportDeferred.await()
-    // appLoaded not only provides starter but also loads app, that's why it is here
-    launch {
-      if (ConfigImportHelper.isFirstSession()) {
-        IdeStartupWizardCollector.logWizardExperimentState()
-      }
-    }
-
-    if (isInitialStart != null) {
-      LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_READY)
-      val log = logDeferred.await()
-      runCatching {
-        span("startup wizard run") {
-          runStartupWizard(isInitialStart = isInitialStart, app = ApplicationManager.getApplication())
+      val isInitialStart = configImportDeferred.await()
+      // appLoaded not only provides starter but also loads app, that's why it is here
+      launch {
+        if (ConfigImportHelper.isFirstSession()) {
+          IdeStartupWizardCollector.logWizardExperimentState()
         }
-      }.getOrLogException(log)
-    }
+      }
 
-    executeApplicationStarter(starter = starter, args = args)
+      if (isInitialStart != null) {
+        LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_READY)
+        val log = logDeferred.await()
+        runCatching {
+          span("startup wizard run") {
+            runStartupWizard(isInitialStart = isInitialStart, app = ApplicationManager.getApplication())
+          }
+        }.getOrLogException(log)
+      }
+
+      executeApplicationStarter(starter = starter, args = args)
+    }
   }
 }
 
@@ -395,15 +414,16 @@ private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job {
   return launch {
     lockSystemDirJob.join()
 
+    val homePath = PathManager.getHomePath()
     val configPath = PathManager.getConfigDir()
     val systemPath = PathManager.getSystemDir()
-    if (!span("system dirs checking") { doCheckSystemDirs(configPath, systemPath) }) {
+    if (!span("system dirs checking") { doCheckSystemDirs(homePath, configPath, systemPath) }) {
       exitProcess(AppExitCodes.DIR_CHECK_FAILED)
     }
   }
 }
 
-private suspend fun doCheckSystemDirs(configPath: Path, systemPath: Path): Boolean {
+private suspend fun doCheckSystemDirs(homePath: String, configPath: Path, systemPath: Path): Boolean {
   if (configPath == systemPath) {
     StartupErrorReporter.showError(
       BootstrapBundle.message("bootstrap.error.title.settings"),
@@ -412,7 +432,7 @@ private suspend fun doCheckSystemDirs(configPath: Path, systemPath: Path): Boole
     return false
   }
 
-  if (SystemInfoRt.isMac && systemPath.toString().contains(MAGIC_MAC_PATH)) {
+  if (SystemInfoRt.isMac && homePath.contains(MAGIC_MAC_PATH)) {
     StartupErrorReporter.showError(
       BootstrapBundle.message("bootstrap.error.title.settings"),
       BootstrapBundle.message("bootstrap.error.message.mac.trans")
@@ -464,7 +484,7 @@ private fun checkDirectory(directory: Path, kind: Int, property: String): Boolea
   return true
 }
 
-private suspend fun lockSystemDirs(args: List<String>) {
+private fun lockSystemDirs(args: List<String>) {
   val directoryLock = DirectoryLock(PathManager.getConfigDir(), PathManager.getSystemDir()) { processorArgs ->
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
@@ -481,7 +501,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
 
   try {
     val currentDir = Path.of("").toAbsolutePath().normalize()
-    val result = withContext(Dispatchers.IO) { directoryLock.lockOrActivate(currentDir, args) }
+    val result = directoryLock.lockOrActivate(currentDir, args)
     if (result == null) {
       ShutDownTracker.getInstance().registerShutdownTask {
         try {
@@ -498,12 +518,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
     }
   }
   catch (e: DirectoryLock.CannotActivateException) {
-    if (args.isEmpty()) {
-      StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), e.message)
-    }
-    else {
-      println(e.message)
-    }
+    StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), e)
     exitProcess(AppExitCodes.INSTANCE_CHECK_FAILED)
   }
   catch (e: Throwable) {

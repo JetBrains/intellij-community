@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,8 +96,7 @@ public abstract class FunctionHelper {
 
   public void registerReusedElements(Consumer<? super PsiElement> consumer) {}
 
-  @Nullable
-  public String getParameterName(int index) {
+  public @Nullable String getParameterName(int index) {
     return null;
   }
 
@@ -133,14 +132,12 @@ public abstract class FunctionHelper {
   }
 
   @Contract("null, _ -> null")
-  @Nullable
-  public static FunctionHelper create(PsiExpression expression, int paramCount) {
+  public static @Nullable FunctionHelper create(PsiExpression expression, int paramCount) {
     return create(expression, paramCount, false);
   }
 
   @Contract("null, _, _ -> null")
-  @Nullable
-  public static FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
+  public static @Nullable FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if(expression == null) return null;
     PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
@@ -212,8 +209,7 @@ public abstract class FunctionHelper {
     return new ComplexExpressionFunctionHelper(returnType, type, interfaceMethod.getName(), expression);
   }
 
-  @Nullable
-  private static String tryInlineMethodReference(int paramCount, PsiMethodReferenceExpression methodRef) {
+  private static @Nullable String tryInlineMethodReference(int paramCount, PsiMethodReferenceExpression methodRef) {
     PsiElement element = methodRef.resolve();
     if (element instanceof PsiMethod method) {
       String name = method.getName();
@@ -250,9 +246,8 @@ public abstract class FunctionHelper {
     return null;
   }
 
-  @NotNull
   @Contract(pure = true)
-  static FunctionHelper newObjectSupplier(PsiType type, String instanceClassName) {
+  static @NotNull FunctionHelper newObjectSupplier(PsiType type, String instanceClassName) {
     return new FunctionHelper(type) {
       PsiExpression myExpression;
 
@@ -290,8 +285,7 @@ public abstract class FunctionHelper {
    * @param context context
    * @return resulting expression (might be the same as input expression)
    */
-  @NotNull
-  public static <T extends PsiElement> T replaceVarReference(@NotNull T expressionOrCodeBlock,
+  public static @NotNull <T extends PsiElement> T replaceVarReference(@NotNull T expressionOrCodeBlock,
                                                              @NotNull String name,
                                                              String replacement,
                                                              ChainContext context) {
@@ -308,8 +302,7 @@ public abstract class FunctionHelper {
     return (T)lambda.getBody();
   }
 
-  @NotNull
-  private static List<PsiReturnStatement> getReturns(PsiElement body) {
+  private static @NotNull List<PsiReturnStatement> getReturns(PsiElement body) {
     List<PsiReturnStatement> returns = new ArrayList<>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -417,8 +410,7 @@ public abstract class FunctionHelper {
       }
     }
 
-    @NotNull
-    private PsiMethodReferenceExpression fromText(ChainContext context, String text) {
+    private @NotNull PsiMethodReferenceExpression fromText(ChainContext context, String text) {
       PsiTypeCastExpression castExpr = (PsiTypeCastExpression)context.createExpression("(" + myType.getCanonicalText() + ")" + text);
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)castExpr.getOperand();
       LOG.assertTrue(methodRef != null);
@@ -450,8 +442,7 @@ public abstract class FunctionHelper {
       myFnType = functionalInterface.getCanonicalText();
     }
 
-    @NotNull
-    private String getNameCandidate(PsiType functionalInterface) {
+    private @NotNull String getNameCandidate(PsiType functionalInterface) {
       PsiElement parent = myExpression.getParent();
       if(parent instanceof PsiExpressionList) {
         int idx = ArrayUtil.indexOf(((PsiExpressionList)parent).getExpressions(), myExpression);

@@ -9,13 +9,14 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
 
 public final class StringFormatUsageSearcher implements UsageSearcher {
   @Override
-  public @NotNull Collection<? extends Usage> collectImmediateResults(@NotNull UsageSearchParameters parameters) {
+  public @Unmodifiable @NotNull Collection<? extends Usage> collectImmediateResults(@NotNull UsageSearchParameters parameters) {
     SearchTarget target = parameters.getTarget();
     if (target instanceof StringFormatSymbolReferenceProvider.JavaFormatArgumentSymbol symbol) {
       PsiExpression expression = symbol.getFormatString();
@@ -26,10 +27,10 @@ public final class StringFormatUsageSearcher implements UsageSearcher {
     return List.of();
   }
 
-  private static @NotNull List<Usage> getFormatUsages(@NotNull Symbol symbol,
-                                                      @NotNull PsiExpression expression,
-                                                      @NotNull PsiExpression arg,
-                                                      @NotNull Function<? super PsiLiteralExpression, ? extends Iterable<? extends PsiSymbolReference>> function) {
+  private static @Unmodifiable @NotNull List<Usage> getFormatUsages(@NotNull Symbol symbol,
+                                                                    @NotNull PsiExpression expression,
+                                                                    @NotNull PsiExpression arg,
+                                                                    @NotNull Function<? super PsiLiteralExpression, ? extends Iterable<? extends PsiSymbolReference>> function) {
     return SyntaxTraverser.psiTraverser(expression)
       .traverse()
       .filter(PsiLiteralExpression.class)

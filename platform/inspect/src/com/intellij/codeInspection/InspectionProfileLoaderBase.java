@@ -21,10 +21,9 @@ public abstract class InspectionProfileLoaderBase<T extends InspectionProfileImp
     return project;
   }
 
-  @Nullable
-  protected InspectionProfileImpl tryLoadProfileFromYaml(@NotNull String profilePath,
-                                                         @NotNull InspectionToolsSupplier inspectionToolsSupplier,
-                                                         @NotNull BaseInspectionProfileManager profileManager) {
+  protected @Nullable InspectionProfileImpl tryLoadProfileFromYaml(@NotNull String profilePath,
+                                                                   @NotNull InspectionToolsSupplier inspectionToolsSupplier,
+                                                                   @NotNull BaseInspectionProfileManager profileManager) {
     if (!YamlInspectionProfileImpl.isYamlFile(profilePath)) {
       return null;
     }

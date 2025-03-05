@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.project.Project;
@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +49,7 @@ public final class CopyReferenceUtil {
     }
   }
 
-  static @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
+  static @Unmodifiable @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
     List<PsiElement> elements = new ArrayList<>();
     if (editor != null) {
       PsiReference reference = TargetElementUtil.findReference(editor);
@@ -58,7 +59,7 @@ public final class CopyReferenceUtil {
     }
 
     if (elements.isEmpty()) {
-      PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       if (psiElements != null) {
         Collections.addAll(elements, psiElements);
       }
@@ -115,8 +116,7 @@ public final class CopyReferenceUtil {
    * @deprecated use {@link FqnUtil#getVirtualFileFqn}
    */
   @Deprecated
-  @NotNull
-  public static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+  public static @NotNull String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     return FqnUtil.getVirtualFileFqn(virtualFile, project);
   }
 }

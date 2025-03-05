@@ -37,14 +37,12 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class SetReplaceableByEnumSetInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("set.replaceable.by.enum.set.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     if (infos.length != 1) return null;
     PsiLocalVariable localVariable = tryCast(infos[0], PsiLocalVariable.class);
     if (localVariable == null) return null;
@@ -64,28 +62,24 @@ public final class SetReplaceableByEnumSetInspection extends BaseInspection {
 
   private static class SetReplaceableByEnumSetVisitor extends CollectionReplaceableByEnumCollectionVisitor {
 
-    @NotNull
     @Override
-    protected List<String> getUnreplaceableCollectionNames() {
+    protected @NotNull List<String> getUnreplaceableCollectionNames() {
       return Arrays.asList("java.util.concurrent.CopyOnWriteArraySet", "java.util.concurrent.ConcurrentSkipListSet",
                            CommonClassNames.JAVA_UTIL_LINKED_HASH_SET);
     }
 
-    @NotNull
     @Override
-    protected List<String> getReplaceableCollectionNames() {
+    protected @NotNull List<String> getReplaceableCollectionNames() {
       return Collections.singletonList(CommonClassNames.JAVA_UTIL_HASH_SET);
     }
 
-    @NotNull
     @Override
-    protected String getReplacementCollectionName() {
+    protected @NotNull String getReplacementCollectionName() {
       return "java.util.EnumSet";
     }
 
-    @NotNull
     @Override
-    protected String getBaseCollectionName() {
+    protected @NotNull String getBaseCollectionName() {
       return CommonClassNames.JAVA_UTIL_SET;
     }
   }

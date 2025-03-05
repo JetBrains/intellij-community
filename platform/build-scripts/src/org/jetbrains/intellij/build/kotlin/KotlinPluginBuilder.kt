@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
-import java.util.regex.Pattern
 
 object KotlinPluginBuilder {
   /**
@@ -98,6 +97,8 @@ Android Studio: workaround for b/218317110 */
     "kotlin.gradle.gradle",
     "kotlin.gradle.code-insight-common",
     "kotlin.gradle.gradle-java",
+    "kotlin.gradle.gradle-java.k1",
+    "kotlin.gradle.gradle-java.k2",
     "kotlin.gradle.code-insight-groovy",
     "kotlin.gradle.code-insight-toml",
     "kotlin.native",
@@ -157,6 +158,7 @@ Android Studio: workaround for b/218317110 */
     "kotlin.base.fir.analysis-api-platform",
     "kotlin.base.fir.code-insight",
     "kotlin.base.fir.project-structure",
+    "kotlin.base.fir.scripting",
     "kotlin.code-insight.api",
     "kotlin.code-insight.utils",
     "kotlin.code-insight.intentions.shared",
@@ -220,6 +222,7 @@ Android Studio: workaround for b/218317110 */
     "kotlinc.analysis-api-impl-base",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
+    "kotlinc.kotlin-scripting-dependencies",
     "kotlinc.kotlin-gradle-statistics",
     "kotlinc.analysis-api-k2",
     "kotlinc.kotlin-compiler-fir",
@@ -321,33 +324,29 @@ Android Studio: workaround for b/218317110 */
       //noinspection SpellCheckingInspection
       spec.withProjectLibrary("vavr")
       spec.withProjectLibrary("javax-inject")
+      spec.withProjectLibrary("jackson-dataformat-toml")
 
-      withKotlincInPluginDirectory(spec)
+      withKotlincInPluginDirectory(spec = spec)
+      // TODO: KTIJ-32993
+      withKotlincInPluginDirectory(libName = "kotlin-ide-dist", target = "kotlinc.ide", spec = spec)
 
       spec.withCustomVersion(PluginVersionEvaluator { _, ideBuildVersion, _ ->
         // in kt-branches we have own since and until versions
         val sinceBuild = System.getProperty("kotlin.plugin.since")
         val untilBuild = System.getProperty("kotlin.plugin.until")
         val sinceUntil = if (sinceBuild != null && untilBuild != null) sinceBuild to untilBuild else null
-
-/* Android Studio: our build number format differs from upstream.
-        val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
-*/      val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+__BUILD_NUMBER__)\$").matcher(ideBuildVersion)
-        if (ijBuildNumber.matches()) {
-          // IJ installer configurations.
-          return@PluginVersionEvaluator PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion-$kind", sinceUntil = sinceUntil)
-        }
-
         if (ideBuildVersion.contains("IJ")) {
           // TC configurations that are inherited from AbstractKotlinIdeArtifact.
           // In this environment, ideBuildVersion equals to build number.
           // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
           val version = ideBuildVersion.replace("IJ", kind.toString())
           Span.current().addEvent("Kotlin plugin IJ version: $version")
-          return@PluginVersionEvaluator PluginVersionEvaluatorResult(pluginVersion = version, sinceUntil = sinceUntil)
+          PluginVersionEvaluatorResult(pluginVersion = version, sinceUntil = sinceUntil)
         }
-
-        throw IllegalStateException("Can't parse build number: $ideBuildVersion")
+        else {
+          // IJ installer configurations.
+          PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion-$kind", sinceUntil = sinceUntil)
+        }
       })
 
       spec.withRawPluginXmlPatcher { text, _ ->
@@ -398,7 +397,7 @@ Android Studio: workaround for b/218317110 */
       setupTracer = true,
       projectHome = home,
       productProperties = properties,
-      options = BuildOptions(enableEmbeddedJetBrainsClient = false)
+      options = BuildOptions(enableEmbeddedFrontend = false)
     )
     createBuildTasks(context).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }
@@ -435,7 +434,9 @@ Android Studio: workaround for b/218317110 */
       }
       withKotlincKotlinCompilerCommonLibrary(spec, mainModuleName)
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
-      withKotlincInPluginDirectory(spec)
+      withKotlincInPluginDirectory(spec = spec)
+      // TODO: KTIJ-32993
+      withKotlincInPluginDirectory(libName = "kotlin-ide-dist", target = "kotlinc.ide", spec = spec)
 
       addition?.invoke(spec)
     }
@@ -472,14 +473,14 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
   }
 }
 
-private fun withKotlincInPluginDirectory(spec: PluginLayout.PluginLayoutSpec) {
+private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   spec.withGeneratedResources { targetDir, context ->
-    val distLibName = "kotlinc.kotlin-dist"
+    val distLibName = "kotlinc.$libName"
     val library = context.project.libraryCollection.findLibrary(distLibName)!!
     val jars = library.getPaths(JpsOrderRootType.COMPILED)
     if (jars.size != 1) {
       throw IllegalStateException("$distLibName is expected to have only one jar")
     }
-    Decompressor.Zip(jars[0]).extract(targetDir.resolve("kotlinc"))
+    Decompressor.Zip(jars[0]).extract(targetDir.resolve(target))
   }
 }

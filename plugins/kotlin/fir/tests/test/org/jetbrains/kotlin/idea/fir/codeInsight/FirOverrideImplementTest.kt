@@ -29,7 +29,7 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
     }
 
     override fun testNoCallToAbstractSuper2() {
-        // KTIJ-23012
+        super.testNoCallToAbstractSuper2()
     }
 
     override fun testAndroidxNotNull() {
@@ -94,6 +94,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testProperty() {
         super.testProperty()
+    }
+
+    override fun testPropertyWithGetter() {
+        super.testPropertyWithGetter()
     }
 
     override fun testInterfaceGenericImplement() {

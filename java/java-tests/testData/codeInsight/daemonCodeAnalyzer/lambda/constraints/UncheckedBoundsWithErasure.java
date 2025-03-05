@@ -7,8 +7,8 @@ public class Sample {
   <B> B bar(G<B> gb) {return null;}
 
   void f(G1 g1) {
-    G<String> l11 =  <error descr="Incompatible types. Found: 'java.lang.Object', required: 'Sample.G<java.lang.String>'">bar(g1);</error>
-    String l1 = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">bar(g1);</error>
+    G<String> l11 =  <error descr="Incompatible types. Found: 'java.lang.Object', required: 'Sample.G<java.lang.String>'">bar</error>(g1);
+    String l1 = <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">bar</error>(g1);
     Object o = bar(g1);
   }
 }

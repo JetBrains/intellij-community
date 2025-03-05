@@ -93,7 +93,7 @@ public final class PythonMockSdk {
 
     ContainerUtil.addIfNotNull(result, PyUserSkeletonsUtil.getUserSkeletonsDirectory());
 
-    result.addAll(PyTypeShed.INSTANCE.findRootsForLanguageLevel(level));
+    result.addAll(PyTypeShed.INSTANCE.findStdlibRootsForLanguageLevel(level));
 
     return result;
   }

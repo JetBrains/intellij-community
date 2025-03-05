@@ -7,16 +7,11 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode as withKotlinSampleCodeImpl
 import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips as prepareKotlinSampleOnboardingTipsImpl
 
-@Suppress("unused")
 @Deprecated("Use AssetsKotlin util instead")
 abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {
 
-    fun withKotlinSampleCode(
-        sourceRootPath: String,
-        packageName: String?,
-        generateOnboardingTips: Boolean,
-        shouldOpenFile: Boolean = true
-    ) = withKotlinSampleCodeImpl(sourceRootPath, packageName, generateOnboardingTips, shouldOpenFile)
+    fun withKotlinSampleCode(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean, shouldOpenFile: Boolean = true) =
+        withKotlinSampleCodeImpl(sourceRootPath, packageName, generateOnboardingTips, shouldOpenFile)
 
     fun prepareOnboardingTips(project: Project) =
         prepareKotlinSampleOnboardingTipsImpl(project)

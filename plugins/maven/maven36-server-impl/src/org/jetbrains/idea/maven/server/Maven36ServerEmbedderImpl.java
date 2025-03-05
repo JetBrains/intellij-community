@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.text.VersionComparatorUtil;
@@ -102,8 +102,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
     }
   }
 
-  @Nullable
-  protected ArtifactResolver createCustomArtifactResolver(@Nullable MavenWorkspaceMap workspaceMap) {
+  protected @Nullable ArtifactResolver createCustomArtifactResolver(@Nullable MavenWorkspaceMap workspaceMap) {
     if (!myEmbedderSettings.useCustomDependenciesResolver()) {
       return null;
     }

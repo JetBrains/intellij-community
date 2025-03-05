@@ -54,8 +54,7 @@ public final class UnnecessaryBoxingInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     if (infos.length == 0) {
       return InspectionGadgetsBundle.message("unnecessary.boxing.problem.descriptor");
     }
@@ -82,8 +81,7 @@ public final class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return name;
     }
 
@@ -137,10 +135,9 @@ public final class UnnecessaryBoxingInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpression(expression, replacementText, commentTracker);
     }
 
-    @Nullable
-    private static String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression,
-                                                   @NotNull PsiExpression boxedExpression,
-                                                   CommentTracker commentTracker) {
+    private static @Nullable String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression,
+                                                             @NotNull PsiExpression boxedExpression,
+                                                             CommentTracker commentTracker) {
       final PsiType boxedType = boxedExpression.getType();
       if (boxedType == null) {
         return null;
@@ -234,8 +231,7 @@ public final class UnnecessaryBoxingInspection extends BaseInspection {
       }
       final PsiExpression boxedExpression = arguments[0];
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls
-      final String referenceName = methodExpression.getReferenceName();
+      final @NonNls String referenceName = methodExpression.getReferenceName();
       if (!"valueOf".equals(referenceName)) {
         return;
       }

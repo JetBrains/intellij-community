@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
@@ -221,8 +221,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
   }
 
-  @NotNull
-  public static @NlsSafe String formatClass(@NotNull PsiClass aClass, @FormatClassOptions int options) {
+  public static @NotNull @NlsSafe String formatClass(@NotNull PsiClass aClass, @FormatClassOptions int options) {
     StringBuilder buffer = new StringBuilder();
 
     if (BitUtil.isSet(options, SHOW_MODIFIERS) && !BitUtil.isSet(options, MODIFIERS_AFTER)) {
@@ -283,8 +282,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return buffer.toString();
   }
 
-  @NotNull
-  public static String formatModifiers(@NotNull PsiModifierListOwner element, int options) {
+  public static @NotNull String formatModifiers(@NotNull PsiModifierListOwner element, int options) {
     StringBuilder buffer = new StringBuilder();
     formatModifiers(element, options, buffer);
     return buffer.toString();
@@ -409,18 +407,15 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     return BitUtil.isSet(options, SHOW_FQ_CLASS_NAMES) ? ref.getCanonicalText() : ref.getText();
   }
 
-  @Nullable
-  public static String getExternalName(PsiModifierListOwner owner) {
+  public static @Nullable String getExternalName(PsiModifierListOwner owner) {
     return getExternalName(owner, true);
   }
 
-  @Nullable
-  public static String getExternalName(PsiModifierListOwner owner, boolean showParamName) {
+  public static @Nullable String getExternalName(PsiModifierListOwner owner, boolean showParamName) {
     return getExternalName(owner, showParamName, MAX_PARAMS_TO_SHOW);
   }
 
-  @Nullable
-  public static String getExternalName(PsiModifierListOwner owner, boolean showParamName, int maxParamsToShow) {
+  public static @Nullable String getExternalName(PsiModifierListOwner owner, boolean showParamName, int maxParamsToShow) {
     if (owner instanceof PsiPackage) {
       return ((PsiPackage)owner).getQualifiedName();
     }

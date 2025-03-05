@@ -2,7 +2,7 @@
 // ACTION: Introduce import alias
 // ACTION: Introduce local variable
 // WITH_STDLIB
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun test() {
     @MyExperimentalAPI<caret>
     1 + 1

@@ -1,0 +1,36 @@
+<idea-plugin package="com.intellij.smartUpdate">
+  <id>com.intellij.smartUpdate</id>
+  <name>Smart Update</name>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    Enables <b>Auto Update…</b> action that schedules automatic IDE and plugin updates.
+  ]]></description>
+
+  <dependencies>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.smartUpdateStep" interface="com.intellij.smartUpdate.SmartUpdateStep" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <smartUpdateStep id="ide.update" implementation="com.intellij.smartUpdate.IdeUpdateStep"/>
+    <smartUpdateStep id="plugins.update" implementation="com.intellij.smartUpdate.PluginsUpdateStep"/>
+    <smartUpdateStep id="vcs.update" implementation="com.intellij.smartUpdate.VcsUpdateStep"/>
+    <smartUpdateStep id="build.project" implementation="com.intellij.smartUpdate.BuildProjectStep"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.smartUpdate.IdeRestartedActivity"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.smartUpdate.SmartUpdateUsagesCollector"/>
+
+    <registryKey key="ide.smart.update" defaultValue="true"
+                 description="Enables the 'Update and Build' action which allows to upgrade the IDE installation,
+                 and to update and build the sources"/>
+  </extensions>
+
+  <actions resource-bundle="messages.SmartUpdateBundle">
+    <action id="smart.update" class="com.intellij.smartUpdate.SmartUpdateAction">
+      <add-to-group group-id="UpdateEntryPointGroup"/>
+    </action>
+  </actions>
+</idea-plugin>

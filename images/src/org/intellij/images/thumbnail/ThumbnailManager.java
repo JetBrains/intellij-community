@@ -34,6 +34,5 @@ public abstract class ThumbnailManager {
    *
    * @return Return thumbnail view
    */
-  @NotNull
-  public abstract ThumbnailView getThumbnailView();
+  public abstract @NotNull ThumbnailView getThumbnailView();
 }

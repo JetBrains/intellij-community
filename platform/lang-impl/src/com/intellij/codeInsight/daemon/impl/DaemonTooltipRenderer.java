@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -16,6 +16,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.util.List;
@@ -59,13 +60,13 @@ class DaemonTooltipRenderer extends LineTooltipRenderer {
         text.append(UIUtil.getHtmlBody(new Html(problem).setKeepFont(true))).append(UIUtil.BORDER_LINE);
       }
     }
-    if (text.length() > 0) { //otherwise do not change anything
+    if (!text.isEmpty()) { //otherwise do not change anything
       return XmlStringUtil.wrapInHtml(StringUtil.trimEnd(text.toString(), UIUtil.BORDER_LINE));
     }
     return super.dressDescription(editor, tooltipText, true);
   }
 
-  protected @NotNull List<@Tooltip String> getProblems(@NotNull @Tooltip String tooltipText) {
+  protected @Unmodifiable @NotNull List<@Tooltip String> getProblems(@NotNull @Tooltip String tooltipText) {
     return StringUtil.split(UIUtil.getHtmlBody(new Html(tooltipText).setKeepFont(true)), UIUtil.BORDER_LINE);
   }
 

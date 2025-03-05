@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.findUsages
 
@@ -40,7 +40,6 @@ import com.intellij.usages.rules.UsageFilteringRule
 import com.intellij.usages.rules.UsageGroupingRule
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.config.AnalysisFlag
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
@@ -359,8 +358,10 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
         }): Collection<T> =
             InTextDirectivesUtils.findLinesWithPrefixesRemoved(mainFileText, directive).map {
                 try {
-                  mapper(Class.forName(it).getDeclaredConstructor().newInstance())
-                } catch (e: Throwable) {
+                    val declaredConstructor = Class.forName(it).getDeclaredConstructor()
+                    declaredConstructor.isAccessible = true
+                    mapper(declaredConstructor.newInstance())
+                } catch (_: Throwable) {
                     mapper(Class.forName(it).kotlin.objectInstance as Any)
                 }
             }

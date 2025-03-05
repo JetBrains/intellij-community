@@ -256,7 +256,6 @@ final class ScratchImplUtil {
       }
     }
       .forValues(items)
-      .withFilter(it -> it.language == null || ScratchFileCreationHelper.EXTENSION.forLanguage(it.language).newScratchAllowed())
       .withComparator(comparator)
       .withExtraSpeedSearchNamer(o -> o.fileExtension)
       .withSelection(null);

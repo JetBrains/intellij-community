@@ -12,13 +12,13 @@
   "targets": [
     {
       "library": "L1",
-      "directDependents": ["A", "B"],
-      "transitiveDependents": ["A", "B"]
+      "directDependents": ["A"],
+      "transitiveDependents": ["A"]
     },
     {
       "library": "L2",
-      "directDependents": ["A", "B"],
-      "transitiveDependents": ["A", "B"]
+      "directDependents": ["B"],
+      "transitiveDependents": ["B"]
     },
     {
       "library": "L3",

@@ -35,8 +35,7 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
     }
 
     @Override
-    @NotNull
-    public Type getType() {
+    public @NotNull Type getType() {
         final IElementType t = getNode().getFirstChildNode().getElementType();
         if (OCT_CHARS.contains(t)) {
             return Type.OCT;

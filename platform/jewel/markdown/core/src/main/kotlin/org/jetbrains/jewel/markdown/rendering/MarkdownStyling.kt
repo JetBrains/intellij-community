@@ -1,3 +1,5 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the
+// Apache 2.0 license.
 package org.jetbrains.jewel.markdown.rendering
 
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +14,7 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition.BottomCenter
@@ -34,8 +37,23 @@ public class MarkdownStyling(
     public val thematicBreak: ThematicBreak,
     public val htmlBlock: HtmlBlock,
 ) {
+    @ExperimentalJewelApi public val baseInlinesStyling: InlinesStyling = paragraph.inlinesStyling
+
     @GenerateDataFunctions
     public class Paragraph(override val inlinesStyling: InlinesStyling) : WithInlinesStyling {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Paragraph
+
+            return inlinesStyling == other.inlinesStyling
+        }
+
+        override fun hashCode(): Int = inlinesStyling.hashCode()
+
+        override fun toString(): String = "Paragraph(inlinesStyling=$inlinesStyling)"
+
         public companion object
     }
 
@@ -60,6 +78,40 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as H1
+
+                if (inlinesStyling != other.inlinesStyling) return false
+                if (underlineWidth != other.underlineWidth) return false
+                if (underlineColor != other.underlineColor) return false
+                if (underlineGap != other.underlineGap) return false
+                if (padding != other.padding) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = inlinesStyling.hashCode()
+                result = 31 * result + underlineWidth.hashCode()
+                result = 31 * result + underlineColor.hashCode()
+                result = 31 * result + underlineGap.hashCode()
+                result = 31 * result + padding.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "H1(" +
+                    "inlinesStyling=$inlinesStyling, " +
+                    "underlineWidth=$underlineWidth, " +
+                    "underlineColor=$underlineColor, " +
+                    "underlineGap=$underlineGap, " +
+                    "padding=$padding" +
+                    ")"
+            }
+
             public companion object
         }
 
@@ -71,6 +123,40 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as H2
+
+                if (inlinesStyling != other.inlinesStyling) return false
+                if (underlineWidth != other.underlineWidth) return false
+                if (underlineColor != other.underlineColor) return false
+                if (underlineGap != other.underlineGap) return false
+                if (padding != other.padding) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = inlinesStyling.hashCode()
+                result = 31 * result + underlineWidth.hashCode()
+                result = 31 * result + underlineColor.hashCode()
+                result = 31 * result + underlineGap.hashCode()
+                result = 31 * result + padding.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "H2(" +
+                    "inlinesStyling=$inlinesStyling, " +
+                    "underlineWidth=$underlineWidth, " +
+                    "underlineColor=$underlineColor, " +
+                    "underlineGap=$underlineGap, " +
+                    "padding=$padding" +
+                    ")"
+            }
+
             public companion object
         }
 
@@ -82,6 +168,40 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as H3
+
+                if (inlinesStyling != other.inlinesStyling) return false
+                if (underlineWidth != other.underlineWidth) return false
+                if (underlineColor != other.underlineColor) return false
+                if (underlineGap != other.underlineGap) return false
+                if (padding != other.padding) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = inlinesStyling.hashCode()
+                result = 31 * result + underlineWidth.hashCode()
+                result = 31 * result + underlineColor.hashCode()
+                result = 31 * result + underlineGap.hashCode()
+                result = 31 * result + padding.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "H3(" +
+                    "inlinesStyling=$inlinesStyling, " +
+                    "underlineWidth=$underlineWidth, " +
+                    "underlineColor=$underlineColor, " +
+                    "underlineGap=$underlineGap, " +
+                    "padding=$padding" +
+                    ")"
+            }
+
             public companion object
         }
 
@@ -93,6 +213,40 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as H4
+
+                if (inlinesStyling != other.inlinesStyling) return false
+                if (underlineWidth != other.underlineWidth) return false
+                if (underlineColor != other.underlineColor) return false
+                if (underlineGap != other.underlineGap) return false
+                if (padding != other.padding) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = inlinesStyling.hashCode()
+                result = 31 * result + underlineWidth.hashCode()
+                result = 31 * result + underlineColor.hashCode()
+                result = 31 * result + underlineGap.hashCode()
+                result = 31 * result + padding.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "H4(" +
+                    "inlinesStyling=$inlinesStyling, " +
+                    "underlineWidth=$underlineWidth, " +
+                    "underlineColor=$underlineColor, " +
+                    "underlineGap=$underlineGap, " +
+                    "padding=$padding" +
+                    ")"
+            }
+
             public companion object
         }
 
@@ -104,6 +258,40 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as H5
+
+                if (inlinesStyling != other.inlinesStyling) return false
+                if (underlineWidth != other.underlineWidth) return false
+                if (underlineColor != other.underlineColor) return false
+                if (underlineGap != other.underlineGap) return false
+                if (padding != other.padding) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = inlinesStyling.hashCode()
+                result = 31 * result + underlineWidth.hashCode()
+                result = 31 * result + underlineColor.hashCode()
+                result = 31 * result + underlineGap.hashCode()
+                result = 31 * result + padding.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "H5(" +
+                    "inlinesStyling=$inlinesStyling, " +
+                    "underlineWidth=$underlineWidth, " +
+                    "underlineColor=$underlineColor, " +
+                    "underlineGap=$underlineGap, " +
+                    "padding=$padding" +
+                    ")"
+            }
+
             public companion object
         }
 
@@ -115,8 +303,70 @@ public class MarkdownStyling(
             override val underlineGap: Dp,
             override val padding: PaddingValues,
         ) : HN {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as H6
+
+                if (inlinesStyling != other.inlinesStyling) return false
+                if (underlineWidth != other.underlineWidth) return false
+                if (underlineColor != other.underlineColor) return false
+                if (underlineGap != other.underlineGap) return false
+                if (padding != other.padding) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = inlinesStyling.hashCode()
+                result = 31 * result + underlineWidth.hashCode()
+                result = 31 * result + underlineColor.hashCode()
+                result = 31 * result + underlineGap.hashCode()
+                result = 31 * result + padding.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "H6(" +
+                    "inlinesStyling=$inlinesStyling, " +
+                    "underlineWidth=$underlineWidth, " +
+                    "underlineColor=$underlineColor, " +
+                    "underlineGap=$underlineGap, " +
+                    "padding=$padding" +
+                    ")"
+            }
+
             public companion object
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Heading
+
+            if (h1 != other.h1) return false
+            if (h2 != other.h2) return false
+            if (h3 != other.h3) return false
+            if (h4 != other.h4) return false
+            if (h5 != other.h5) return false
+            if (h6 != other.h6) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = h1.hashCode()
+            result = 31 * result + h2.hashCode()
+            result = 31 * result + h3.hashCode()
+            result = 31 * result + h4.hashCode()
+            result = 31 * result + h5.hashCode()
+            result = 31 * result + h6.hashCode()
+            return result
+        }
+
+        override fun toString(): String = "Heading(h1=$h1, h2=$h2, h3=$h3, h4=$h4, h5=$h5, h6=$h6)"
 
         public companion object
     }
@@ -130,6 +380,43 @@ public class MarkdownStyling(
         public val strokeCap: StrokeCap,
         public val textColor: Color,
     ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as BlockQuote
+
+            if (padding != other.padding) return false
+            if (lineWidth != other.lineWidth) return false
+            if (lineColor != other.lineColor) return false
+            if (pathEffect != other.pathEffect) return false
+            if (strokeCap != other.strokeCap) return false
+            if (textColor != other.textColor) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = padding.hashCode()
+            result = 31 * result + lineWidth.hashCode()
+            result = 31 * result + lineColor.hashCode()
+            result = 31 * result + (pathEffect?.hashCode() ?: 0)
+            result = 31 * result + strokeCap.hashCode()
+            result = 31 * result + textColor.hashCode()
+            return result
+        }
+
+        override fun toString(): String {
+            return "BlockQuote(" +
+                "padding=$padding, " +
+                "lineWidth=$lineWidth, " +
+                "lineColor=$lineColor, " +
+                "pathEffect=$pathEffect, " +
+                "strokeCap=$strokeCap, " +
+                "textColor=$textColor" +
+                ")"
+        }
+
         public companion object
     }
 
@@ -145,6 +432,46 @@ public class MarkdownStyling(
             public val itemVerticalSpacingTight: Dp,
             public val padding: PaddingValues,
         ) {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as Ordered
+
+                if (numberStyle != other.numberStyle) return false
+                if (numberContentGap != other.numberContentGap) return false
+                if (numberMinWidth != other.numberMinWidth) return false
+                if (numberTextAlign != other.numberTextAlign) return false
+                if (itemVerticalSpacing != other.itemVerticalSpacing) return false
+                if (itemVerticalSpacingTight != other.itemVerticalSpacingTight) return false
+                if (padding != other.padding) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = numberStyle.hashCode()
+                result = 31 * result + numberContentGap.hashCode()
+                result = 31 * result + numberMinWidth.hashCode()
+                result = 31 * result + numberTextAlign.hashCode()
+                result = 31 * result + itemVerticalSpacing.hashCode()
+                result = 31 * result + itemVerticalSpacingTight.hashCode()
+                result = 31 * result + padding.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "Ordered(" +
+                    "numberStyle=$numberStyle, " +
+                    "numberContentGap=$numberContentGap, " +
+                    "numberMinWidth=$numberMinWidth, " +
+                    "numberTextAlign=$numberTextAlign, " +
+                    "itemVerticalSpacing=$itemVerticalSpacing, " +
+                    "itemVerticalSpacingTight=$itemVerticalSpacingTight, " +
+                    "padding=$padding" +
+                    ")"
+            }
+
             public companion object
         }
 
@@ -157,8 +484,65 @@ public class MarkdownStyling(
             public val itemVerticalSpacingTight: Dp,
             public val padding: PaddingValues,
         ) {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as Unordered
+
+                if (bullet != other.bullet) return false
+                if (bulletStyle != other.bulletStyle) return false
+                if (bulletContentGap != other.bulletContentGap) return false
+                if (itemVerticalSpacing != other.itemVerticalSpacing) return false
+                if (itemVerticalSpacingTight != other.itemVerticalSpacingTight) return false
+                if (padding != other.padding) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = bullet?.hashCode() ?: 0
+                result = 31 * result + bulletStyle.hashCode()
+                result = 31 * result + bulletContentGap.hashCode()
+                result = 31 * result + itemVerticalSpacing.hashCode()
+                result = 31 * result + itemVerticalSpacingTight.hashCode()
+                result = 31 * result + padding.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "Unordered(" +
+                    "bullet=$bullet, " +
+                    "bulletStyle=$bulletStyle, " +
+                    "bulletContentGap=$bulletContentGap, " +
+                    "itemVerticalSpacing=$itemVerticalSpacing, " +
+                    "itemVerticalSpacingTight=$itemVerticalSpacingTight, " +
+                    "padding=$padding" +
+                    ")"
+            }
+
             public companion object
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as List
+
+            if (ordered != other.ordered) return false
+            if (unordered != other.unordered) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = ordered.hashCode()
+            result = 31 * result + unordered.hashCode()
+            return result
+        }
+
+        override fun toString(): String = "List(ordered=$ordered, unordered=$unordered)"
 
         public companion object
     }
@@ -176,6 +560,49 @@ public class MarkdownStyling(
             public val fillWidth: Boolean,
             public val scrollsHorizontally: Boolean,
         ) {
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as Indented
+
+                if (fillWidth != other.fillWidth) return false
+                if (scrollsHorizontally != other.scrollsHorizontally) return false
+                if (editorTextStyle != other.editorTextStyle) return false
+                if (padding != other.padding) return false
+                if (shape != other.shape) return false
+                if (background != other.background) return false
+                if (borderWidth != other.borderWidth) return false
+                if (borderColor != other.borderColor) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = fillWidth.hashCode()
+                result = 31 * result + scrollsHorizontally.hashCode()
+                result = 31 * result + editorTextStyle.hashCode()
+                result = 31 * result + padding.hashCode()
+                result = 31 * result + shape.hashCode()
+                result = 31 * result + background.hashCode()
+                result = 31 * result + borderWidth.hashCode()
+                result = 31 * result + borderColor.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "Indented(" +
+                    "editorTextStyle=$editorTextStyle, " +
+                    "padding=$padding, " +
+                    "shape=$shape, " +
+                    "background=$background, " +
+                    "borderWidth=$borderWidth, " +
+                    "borderColor=$borderColor, " +
+                    "fillWidth=$fillWidth, " +
+                    "scrollsHorizontally=$scrollsHorizontally" +
+                    ")"
+            }
+
             public companion object
         }
 
@@ -203,8 +630,80 @@ public class MarkdownStyling(
                 Hide,
             }
 
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as Fenced
+
+                if (fillWidth != other.fillWidth) return false
+                if (scrollsHorizontally != other.scrollsHorizontally) return false
+                if (editorTextStyle != other.editorTextStyle) return false
+                if (padding != other.padding) return false
+                if (shape != other.shape) return false
+                if (background != other.background) return false
+                if (borderWidth != other.borderWidth) return false
+                if (borderColor != other.borderColor) return false
+                if (infoTextStyle != other.infoTextStyle) return false
+                if (infoPadding != other.infoPadding) return false
+                if (infoPosition != other.infoPosition) return false
+
+                return true
+            }
+
+            override fun hashCode(): Int {
+                var result = fillWidth.hashCode()
+                result = 31 * result + scrollsHorizontally.hashCode()
+                result = 31 * result + editorTextStyle.hashCode()
+                result = 31 * result + padding.hashCode()
+                result = 31 * result + shape.hashCode()
+                result = 31 * result + background.hashCode()
+                result = 31 * result + borderWidth.hashCode()
+                result = 31 * result + borderColor.hashCode()
+                result = 31 * result + infoTextStyle.hashCode()
+                result = 31 * result + infoPadding.hashCode()
+                result = 31 * result + infoPosition.hashCode()
+                return result
+            }
+
+            override fun toString(): String {
+                return "Fenced(" +
+                    "editorTextStyle=$editorTextStyle, " +
+                    "padding=$padding, " +
+                    "shape=$shape, " +
+                    "background=$background, " +
+                    "borderWidth=$borderWidth, " +
+                    "borderColor=$borderColor, " +
+                    "fillWidth=$fillWidth, " +
+                    "scrollsHorizontally=$scrollsHorizontally, " +
+                    "infoTextStyle=$infoTextStyle, " +
+                    "infoPadding=$infoPadding, " +
+                    "infoPosition=$infoPosition" +
+                    ")"
+            }
+
             public companion object
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Code
+
+            if (indented != other.indented) return false
+            if (fenced != other.fenced) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = indented.hashCode()
+            result = 31 * result + fenced.hashCode()
+            return result
+        }
+
+        override fun toString(): String = "Code(indented=$indented, fenced=$fenced)"
 
         public companion object
     }
@@ -219,6 +718,46 @@ public class MarkdownStyling(
         public val borderWidth: Dp,
         public val borderColor: Color,
     ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Image
+
+            if (alignment != other.alignment) return false
+            if (contentScale != other.contentScale) return false
+            if (padding != other.padding) return false
+            if (shape != other.shape) return false
+            if (background != other.background) return false
+            if (borderWidth != other.borderWidth) return false
+            if (borderColor != other.borderColor) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = alignment.hashCode()
+            result = 31 * result + contentScale.hashCode()
+            result = 31 * result + padding.hashCode()
+            result = 31 * result + shape.hashCode()
+            result = 31 * result + background.hashCode()
+            result = 31 * result + borderWidth.hashCode()
+            result = 31 * result + borderColor.hashCode()
+            return result
+        }
+
+        override fun toString(): String {
+            return "Image(" +
+                "alignment=$alignment, " +
+                "contentScale=$contentScale, " +
+                "padding=$padding, " +
+                "shape=$shape, " +
+                "background=$background, " +
+                "borderWidth=$borderWidth, " +
+                "borderColor=$borderColor" +
+                ")"
+        }
+
         public companion object
     }
 
@@ -228,6 +767,28 @@ public class MarkdownStyling(
         public val lineWidth: Dp,
         public val lineColor: Color,
     ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as ThematicBreak
+
+            if (padding != other.padding) return false
+            if (lineWidth != other.lineWidth) return false
+            if (lineColor != other.lineColor) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = padding.hashCode()
+            result = 31 * result + lineWidth.hashCode()
+            result = 31 * result + lineColor.hashCode()
+            return result
+        }
+
+        override fun toString(): String = "ThematicBreak(padding=$padding, lineWidth=$lineWidth, lineColor=$lineColor)"
+
         public companion object
     }
 
@@ -241,7 +802,93 @@ public class MarkdownStyling(
         public val borderColor: Color,
         public val fillWidth: Boolean,
     ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as HtmlBlock
+
+            if (fillWidth != other.fillWidth) return false
+            if (textStyle != other.textStyle) return false
+            if (padding != other.padding) return false
+            if (shape != other.shape) return false
+            if (background != other.background) return false
+            if (borderWidth != other.borderWidth) return false
+            if (borderColor != other.borderColor) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = fillWidth.hashCode()
+            result = 31 * result + textStyle.hashCode()
+            result = 31 * result + padding.hashCode()
+            result = 31 * result + shape.hashCode()
+            result = 31 * result + background.hashCode()
+            result = 31 * result + borderWidth.hashCode()
+            result = 31 * result + borderColor.hashCode()
+            return result
+        }
+
+        override fun toString(): String {
+            return "HtmlBlock(" +
+                "textStyle=$textStyle, " +
+                "padding=$padding, " +
+                "shape=$shape, " +
+                "background=$background, " +
+                "borderWidth=$borderWidth, " +
+                "borderColor=$borderColor, " +
+                "fillWidth=$fillWidth" +
+                ")"
+        }
+
         public companion object
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MarkdownStyling
+
+        if (blockVerticalSpacing != other.blockVerticalSpacing) return false
+        if (paragraph != other.paragraph) return false
+        if (heading != other.heading) return false
+        if (blockQuote != other.blockQuote) return false
+        if (code != other.code) return false
+        if (list != other.list) return false
+        if (image != other.image) return false
+        if (thematicBreak != other.thematicBreak) return false
+        if (htmlBlock != other.htmlBlock) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = blockVerticalSpacing.hashCode()
+        result = 31 * result + paragraph.hashCode()
+        result = 31 * result + heading.hashCode()
+        result = 31 * result + blockQuote.hashCode()
+        result = 31 * result + code.hashCode()
+        result = 31 * result + list.hashCode()
+        result = 31 * result + image.hashCode()
+        result = 31 * result + thematicBreak.hashCode()
+        result = 31 * result + htmlBlock.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "MarkdownStyling(" +
+            "blockVerticalSpacing=$blockVerticalSpacing, " +
+            "paragraph=$paragraph, " +
+            "heading=$heading, " +
+            "blockQuote=$blockQuote, " +
+            "code=$code, " +
+            "list=$list, " +
+            "image=$image, " +
+            "thematicBreak=$thematicBreak, " +
+            "htmlBlock=$htmlBlock" +
+            ")"
     }
 
     public companion object
@@ -274,6 +921,64 @@ public class InlinesStyling(
 ) {
     public val textLinkStyles: TextLinkStyles =
         TextLinkStyles(style = link, focusedStyle = linkFocused, hoveredStyle = linkHovered, pressedStyle = linkPressed)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as InlinesStyling
+
+        if (renderInlineHtml != other.renderInlineHtml) return false
+        if (textStyle != other.textStyle) return false
+        if (inlineCode != other.inlineCode) return false
+        if (link != other.link) return false
+        if (linkDisabled != other.linkDisabled) return false
+        if (linkFocused != other.linkFocused) return false
+        if (linkHovered != other.linkHovered) return false
+        if (linkPressed != other.linkPressed) return false
+        if (linkVisited != other.linkVisited) return false
+        if (emphasis != other.emphasis) return false
+        if (strongEmphasis != other.strongEmphasis) return false
+        if (inlineHtml != other.inlineHtml) return false
+        if (textLinkStyles != other.textLinkStyles) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = renderInlineHtml.hashCode()
+        result = 31 * result + textStyle.hashCode()
+        result = 31 * result + inlineCode.hashCode()
+        result = 31 * result + link.hashCode()
+        result = 31 * result + linkDisabled.hashCode()
+        result = 31 * result + linkFocused.hashCode()
+        result = 31 * result + linkHovered.hashCode()
+        result = 31 * result + linkPressed.hashCode()
+        result = 31 * result + linkVisited.hashCode()
+        result = 31 * result + emphasis.hashCode()
+        result = 31 * result + strongEmphasis.hashCode()
+        result = 31 * result + inlineHtml.hashCode()
+        result = 31 * result + textLinkStyles.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "InlinesStyling(" +
+            "textStyle=$textStyle, " +
+            "inlineCode=$inlineCode, " +
+            "link=$link, " +
+            "linkDisabled=$linkDisabled, " +
+            "linkFocused=$linkFocused, " +
+            "linkHovered=$linkHovered, " +
+            "linkPressed=$linkPressed, " +
+            "linkVisited=$linkVisited, " +
+            "emphasis=$emphasis, " +
+            "strongEmphasis=$strongEmphasis, " +
+            "inlineHtml=$inlineHtml, " +
+            "renderInlineHtml=$renderInlineHtml, " +
+            "textLinkStyles=$textLinkStyles" +
+            ")"
+    }
 
     public companion object
 }

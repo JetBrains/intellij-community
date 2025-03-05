@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
-import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import fleet.fastutil.ints.IntArrayList
+import fleet.fastutil.ints.IntOpenHashSet
+import fleet.fastutil.ints.isNotEmpty
+import fleet.fastutil.ints.mapNotNull
 
 data class CreateEntity(val eid: EID,
                         val entityTypeEid: EID,
@@ -107,7 +109,7 @@ data class RetractEntityInPartition(val eid: EID,
     val entitiesToRetract = IntArrayList()
     entitiesToRetract.add(eid)
     while (entitiesToRetract.isNotEmpty()) {
-      val nextEID = entitiesToRetract.removeInt(entitiesToRetract.size - 1)
+      val nextEID = entitiesToRetract.removeAt(entitiesToRetract.size - 1)
       if (retractedEntities.add(nextEID)) {
         queryIndex(IndexQuery.Entity(nextEID)).forEach { datom ->
           if (datom.attr.schema.cascadeDelete) {

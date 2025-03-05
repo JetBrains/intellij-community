@@ -42,8 +42,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifference;
 import static com.intellij.codeInsight.template.impl.TemplateContext.getDifferenceType;
@@ -543,7 +543,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
       })
       .install();
 
-    if (myTemplateGroups.size() > 0) {
+    if (!myTemplateGroups.isEmpty()) {
       myTree.setSelectionInterval(0, 0);
     }
 

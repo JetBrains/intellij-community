@@ -7,4 +7,5 @@ class Bar: Foo {
     override val hoge = 3
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddPropertyToSupertypeFix
-/* IGNORE_K2 */
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddPropertyToSupertypeFix

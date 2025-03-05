@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -234,7 +234,7 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
       final ModalityState current = getCurrentState();
       for (Map.Entry<UiActivity, ActivityInfo> entry : infoToCheck.entrySet()) {
         final ActivityInfo info = entry.getValue();
-        if (!current.dominates(info.getEffectiveState())) {
+        if (current.accepts(info.getEffectiveState())) {
           return false;
         }
       }

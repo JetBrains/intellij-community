@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.completion.CompletionType;
@@ -20,6 +20,7 @@ import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -50,6 +51,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -322,9 +324,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return all highlight infos for current file
    */
   @NotNull
+  @Unmodifiable
   List<HighlightInfo> doHighlighting();
 
   @NotNull
+  @Unmodifiable
   List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minimalSeverity);
 
   @NotNull PsiSymbolReference findSingleReferenceAtCaret();
@@ -363,6 +367,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   List<IntentionAction> getAllQuickFixes(@TestDataFile String @NotNull ... filePaths);
 
   @NotNull
+  @Unmodifiable
   List<IntentionAction> getAvailableIntentions();
 
   /**
@@ -374,6 +379,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #findSingleIntention(String)
    */
   @NotNull
+  @Unmodifiable
   List<IntentionAction> filterAvailableIntentions(@NotNull String hint);
 
   /**
@@ -611,18 +617,26 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Document getDocument(@NotNull PsiFile file);
 
   @NotNull
+  @Unmodifiable
   List<GutterMark> findAllGutters(@NotNull @TestDataFile String filePath);
 
+  @Unmodifiable
   List<GutterMark> findAllGutters();
 
   void type(final char c);
 
   void type(@NotNull String s);
 
+  /**
+   * @see IdeActions
+   */
   default void performEditorAction(@NotNull String actionId) {
     performEditorAction(actionId, null);
   }
 
+  /**
+   * @see IdeActions
+   */
   void performEditorAction(@NotNull String actionId, @Nullable AnActionEvent actionEvent);
 
   /**
@@ -634,6 +648,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   Presentation testAction(@NotNull AnAction action);
 
   @Nullable
+  @Unmodifiable
   List<String> getCompletionVariants(@TestDataFile String @NotNull ... filesBefore);
 
   /**
@@ -647,6 +662,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return {@code null} if the only item was auto-completed
    */
   @Nullable
+  @Unmodifiable
   List<String> getLookupElementStrings();
 
   void finishLookup(@MagicConstant(valuesFromClass = Lookup.class) char completionChar);
@@ -711,7 +727,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testFolding(@NotNull String fileName);
 
-  void testFoldingWithCollapseStatus(@NotNull final String verificationFileName, @Nullable String destinationFileName);
+  void testFoldingWithCollapseStatus(final @NotNull String verificationFileName, @Nullable String destinationFileName);
 
   void testFoldingWithCollapseStatus(@NotNull String fileName);
 
@@ -820,6 +836,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return a list of the breadcrumbs in the order from the topmost element crumb to the deepest.
    */
   @NotNull
+  @Unmodifiable
   List<Crumb> getBreadcrumbsAtCaret();
 
   void saveText(@NotNull VirtualFile file, @NotNull String text);
@@ -829,8 +846,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * It's disposed earlier than {@link UsefulTestCase#getTestRootDisposable()} and can be useful
    * e.g. for avoiding library virtual pointers leaks: {@code PsiTestUtil.addLibrary(myFixture.getProjectDisposable(), ...)}
    */
-  @NotNull
-  default Disposable getProjectDisposable() {
+  default @NotNull Disposable getProjectDisposable() {
     return ((ProjectEx)getProject()).getEarlyDisposable();
   }
 }

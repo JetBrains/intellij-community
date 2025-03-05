@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.maven.server.m40.Maven40ServerEmbedderImpl;
@@ -11,8 +11,8 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
-import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.XmlWriterUtil;
@@ -93,41 +93,47 @@ public final class Maven40EffectivePomDumper {
   }
 
   // See org.apache.maven.plugins.help.EffectivePomMojo#execute from maven-help-plugin
-  @Nullable
-  public static String evaluateEffectivePom(Maven40ServerEmbedderImpl embedder,
-                                            @NotNull final File file,
+  public static @Nullable String evaluateEffectivePom(Maven40ServerEmbedderImpl embedder,
+                                            final @NotNull File file,
                                             @NotNull List<String> activeProfiles,
                                             @NotNull List<String> inactiveProfiles) {
     final StringWriter w = new StringWriter();
 
-    try {
-      final MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
+    final MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
 
-      embedder.executeWithMavenSession(request, MavenWorkspaceMap.empty(), null, session -> {
-        try {
-          // copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
-          ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
+    embedder.executeWithMavenSession(request, MavenWorkspaceMap.empty(), null, session -> {
+      try {
+        // copied from DefaultMavenProjectBuilder.buildWithDependencies
+        ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
+        ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
+        projectBuildingRequest.setRepositorySession(session.getRepositorySession());
 
-          MavenProject project = buildingResult.getProject();
+        List<ProjectBuildingResult> results = builder.build(Collections.singletonList(file), false, projectBuildingRequest);
+        ProjectBuildingResult buildingResult = results.get(0);
 
-          XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
-                                                      "\n", null, null);
+        MavenProject project = buildingResult.getProject();
 
-          writeHeader(writer);
+        XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
+                                                    "\n", null, null);
 
-          writeEffectivePom(project, writer);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
-    }
-    catch (Exception e) {
-      return null;
-    }
+        writeHeader(writer);
+
+        writeEffectivePom(project, writer);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
 
     return w.toString();
+  }
+
+  private static String repeat(String str, int repeat) {
+    StringBuilder buffer = new StringBuilder(repeat * str.length());
+    for (int i = 0; i < repeat; i++) {
+      buffer.append(str);
+    }
+    return buffer.toString();
   }
 
   /**
@@ -161,7 +167,11 @@ public final class Maven40EffectivePomDumper {
    */
   private static void cleanModel(Model pom) {
     Properties properties = new SortedProperties();
-    properties.putAll(pom.getProperties());
+    Properties originalProperties = pom.getProperties();
+    for (String key : originalProperties.stringPropertyNames()) {
+      String value = originalProperties.getProperty(key);
+      properties.setProperty(key, value);
+    }
     pom.setProperties(properties);
   }
 

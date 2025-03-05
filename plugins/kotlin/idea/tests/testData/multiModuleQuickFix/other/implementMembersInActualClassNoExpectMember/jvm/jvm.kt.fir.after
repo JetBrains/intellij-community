@@ -1,5 +1,5 @@
 // "Implement members" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 actual interface ExpInterface {
     actual fun first()

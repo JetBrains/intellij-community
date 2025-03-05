@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.annotations.ApiStatus
 
@@ -77,10 +76,6 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
       listOf(VCS_FIELD.with(vcs.name),
              IS_FULL_REFRESH_FIELD.with(everythingDirty))
     }
-  }
-
-  fun logNonModalCommitStateChanged(project: Project?) {
-    NON_MODAL_COMMIT_STATE_CHANGED.log(project, VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES)
   }
 
   private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {

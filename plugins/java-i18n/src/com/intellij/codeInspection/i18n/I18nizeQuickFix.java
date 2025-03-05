@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -45,8 +43,7 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaI18nBundle.message("inspection.i18n.quickfix");
   }
 
@@ -136,11 +133,10 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
                                            .br().append(HtmlChunk.text(string).code()).toFragment());
   }
 
-  @Nullable
-  private static UBinaryExpression breakStringLiteral(@NotNull UInjectionHost literalExpression,
-                                                      UastCodeGenerationPlugin generationPlugin,
-                                                      UastElementFactory elementFactory,
-                                                      int offset) throws IncorrectOperationException {
+  private static @Nullable UBinaryExpression breakStringLiteral(@NotNull UInjectionHost literalExpression,
+                                                                UastCodeGenerationPlugin generationPlugin,
+                                                                UastElementFactory elementFactory,
+                                                                int offset) throws IncorrectOperationException {
     PsiElement sourcePsi = literalExpression.getSourcePsi();
     if (sourcePsi == null) {
       return null;

@@ -11,8 +11,7 @@ public class TimedReference<T> extends Timed<T> {
     super(parentDisposable);
   }
 
-  @Nullable
-  public synchronized T get() {
+  public synchronized @Nullable T get() {
     myAccessCount++;
     poll();
     return myT;

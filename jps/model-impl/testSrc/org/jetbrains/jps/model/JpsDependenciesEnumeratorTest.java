@@ -230,6 +230,32 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
                       srcRoot, testRoot, getFastUtilSources());
   }
 
+  public void testIncludeTestsFromDependentModules() throws IOException {
+    var depModule = addModule("dep");
+    var depTestRoot = addSourceRoot(depModule, true);
+    JpsModuleRootModificationUtil.addDependency(myModule, depModule, JpsJavaDependencyScope.TEST, false);
+
+    // default: add test roots from dependent modules
+    assertSourceRoots(
+      getJavaService().enumerateDependencies(Collections.singletonList(myModule)).withoutSdk(),
+      depTestRoot
+    );
+    assertSourceRoots(
+      getJavaService().enumerateDependencies(Collections.singletonList(myModule)).recursively().withoutSdk(),
+      depTestRoot
+    );
+
+    try (var ignored = TestJpsDependenciesEnumerationHandler.Companion.addModule(myModule, false)) {
+      // modified with a handler: do NOT add test roots from dependent modules
+      assertSourceRoots(
+        getJavaService().enumerateDependencies(Collections.singletonList(myModule)).withoutSdk()
+      );
+      assertSourceRoots(
+        getJavaService().enumerateDependencies(Collections.singletonList(myModule)).recursively().withoutSdk()
+      );
+    }
+  }
+
   private String setModuleOutput(JpsModule module, boolean tests) {
     try {
       File file = FileUtil.createTempDirectory(module.getName(), tests ? "testSrc" : "src");

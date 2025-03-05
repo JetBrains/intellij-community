@@ -21,12 +21,10 @@ import java.util.List;
 
 public final class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
 
-  @NotNull
-  private static final Key<List<PyCustomMember>> SOCKET_MEMBERS_KEY = Key.create("socket.members");
+  private static final @NotNull Key<List<PyCustomMember>> SOCKET_MEMBERS_KEY = Key.create("socket.members");
 
-  @NotNull
   @Override
-  public Collection<PyCustomMember> getMembers(PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
+  public @NotNull Collection<PyCustomMember> getMembers(PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
     final PyClass clazz = classType.getPyClass();
     final String qualifiedName = clazz.getQualifiedName();
     if ("socket._socketobject".equals(qualifiedName)) {

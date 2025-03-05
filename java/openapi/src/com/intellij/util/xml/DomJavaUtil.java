@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
@@ -16,19 +16,17 @@ public final class DomJavaUtil {
   private DomJavaUtil() {
   }
 
-  @Nullable
-  public static PsiClass findClass(@Nullable String name,
-                                   @NotNull PsiFile file,
-                                   @Nullable final Module module,
-                                   @Nullable final GlobalSearchScope searchScope) {
+  public static @Nullable PsiClass findClass(@Nullable String name,
+                                             @NotNull PsiFile file,
+                                             final @Nullable Module module,
+                                             final @Nullable GlobalSearchScope searchScope) {
     return findClass(name, file, module, searchScope, false);
   }
 
-  @Nullable
-  public static PsiClass findClass(@Nullable String name,
-                                   @NotNull PsiFile file,
-                                   @Nullable final Module module,
-                                   @Nullable GlobalSearchScope searchScope, boolean searchAnonymous) {
+  public static @Nullable PsiClass findClass(@Nullable String name,
+                                             @NotNull PsiFile file,
+                                             final @Nullable Module module,
+                                             @Nullable GlobalSearchScope searchScope, boolean searchAnonymous) {
     if (name == null) return null;
     searchScope = searchScope != null ? searchScope : calcScope(file, module);
     final PsiClass aClass;
@@ -45,13 +43,11 @@ public final class DomJavaUtil {
     return aClass;
   }
 
-  @Nullable
-  public static PsiClass findClass(@Nullable String name, @NotNull DomElement element) {
+  public static @Nullable PsiClass findClass(@Nullable String name, @NotNull DomElement element) {
     return findClass(name, element, false);
   }
 
-  @Nullable
-  public static PsiClass findClass(@Nullable String name, @NotNull DomElement element, boolean searchAnonymous) {
+  public static @Nullable PsiClass findClass(@Nullable String name, @NotNull DomElement element, boolean searchAnonymous) {
     assert element.isValid();
     if (DomUtil.hasXml(element)) {
       return findClass(name, DomUtil.getFile(element), element.getModule(), element.getResolveScope(), searchAnonymous);
@@ -59,8 +55,7 @@ public final class DomJavaUtil {
     return null;
   }
 
-  @NotNull
-  private static GlobalSearchScope calcScope(@NotNull PsiFile file, @Nullable Module module) {
+  private static @NotNull GlobalSearchScope calcScope(@NotNull PsiFile file, @Nullable Module module) {
     if (module == null) {
       return file.getResolveScope();
     }

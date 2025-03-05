@@ -56,7 +56,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -75,6 +74,7 @@ import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
@@ -380,7 +380,6 @@ internal fun MenuItem(
                         menuManager.closeAll(localInputModeManager.inputMode, true)
                     },
                     enabled = enabled,
-                    role = Role.Button,
                     interactionSource = interactionSource,
                     indication = null,
                 )
@@ -397,7 +396,11 @@ internal fun MenuItem(
         val itemColors = style.colors.itemColors
         val itemMetrics = style.metrics.itemMetrics
 
-        CompositionLocalProvider(LocalContentColor provides itemColors.contentFor(itemState).value) {
+        val updatedTextStyle = LocalTextStyle.current.copy(color = itemColors.contentFor(itemState).value)
+        CompositionLocalProvider(
+            LocalContentColor provides itemColors.contentFor(itemState).value,
+            LocalTextStyle provides updatedTextStyle,
+        ) {
             val backgroundColor by itemColors.backgroundFor(itemState)
 
             Row(
@@ -514,7 +517,6 @@ public fun MenuSubmenuItem(
                 .clickable(
                     onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
                     enabled = enabled,
-                    role = Role.Button,
                     interactionSource = interactionSource,
                     indication = null,
                 )

@@ -1,14 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveUsingEel
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.MavenWslUtil.getWslFile
-import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveWslAware
 import java.io.File
+import kotlin.io.path.Path
 
 class MavenEffectivePomEvaluator {
   companion object {
@@ -21,10 +21,10 @@ class MavenEffectivePomEvaluator {
         try {
           val profiles = mavenProject.activatedProfilesIds
           val virtualFile = mavenProject.file
-          val projectFile = resolveWslAware(project, { File(virtualFile.path) }) { wsl: WSLDistribution ->
-            wsl.getWslFile(File(virtualFile.path))
+          val projectFile = resolveUsingEel(project, { File(virtualFile.path) }) {
+            File(Path(virtualFile.path).asEelPath().toString())
           }
-          return@withBackgroundProgress embedder.evaluateEffectivePom(projectFile!!, profiles.enabledProfiles, profiles.disabledProfiles)
+          return@withBackgroundProgress embedder.evaluateEffectivePom(projectFile, profiles.enabledProfiles, profiles.disabledProfiles)
         }
         catch (e: Exception) {
           MavenLog.LOG.error(e)

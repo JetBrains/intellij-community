@@ -22,6 +22,19 @@ private class StatefulImpl(private val state: InteractiveComponentState) : Paint
             append("Disabled")
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as StatefulImpl
+
+        return state == other.state
+    }
+
+    override fun hashCode(): Int = state.hashCode()
+
+    override fun toString(): String = "StatefulImpl(state=$state)"
 }
 
 /**

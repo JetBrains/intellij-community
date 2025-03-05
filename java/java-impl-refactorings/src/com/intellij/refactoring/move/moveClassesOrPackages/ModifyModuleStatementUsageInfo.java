@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.psi.PsiJavaModule;
@@ -19,31 +19,26 @@ public class ModifyModuleStatementUsageInfo extends UsageInfo {
     myModifyingOperation = modifyingOperation;
   }
 
-  @NotNull
-  public PsiJavaModule getModuleDescriptor() {
+  public @NotNull PsiJavaModule getModuleDescriptor() {
     return myModuleDescriptor;
   }
 
-  @Nullable
-  public PsiPackageAccessibilityStatement getModuleStatement() {
+  public @Nullable PsiPackageAccessibilityStatement getModuleStatement() {
     return (PsiPackageAccessibilityStatement)getElement();
   }
 
-  @NotNull
-  public static ModifyModuleStatementUsageInfo createAdditionInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
-                                                                  @NotNull PsiJavaModule descriptor) {
+  public static @NotNull ModifyModuleStatementUsageInfo createAdditionInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
+                                                                           @NotNull PsiJavaModule descriptor) {
     return new ModifyModuleStatementUsageInfo(moduleStatement, descriptor, ModifyingOperation.ADD);
   }
 
-  @NotNull
-  public static ModifyModuleStatementUsageInfo createDeletionInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
-                                                                  @NotNull PsiJavaModule descriptor) {
+  public static @NotNull ModifyModuleStatementUsageInfo createDeletionInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
+                                                                           @NotNull PsiJavaModule descriptor) {
     return new ModifyModuleStatementUsageInfo(moduleStatement, descriptor, ModifyingOperation.DELETE);
   }
 
-  @NotNull
-  public static ModifyModuleStatementUsageInfo createLastDeletionInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
-                                                                      @NotNull PsiJavaModule descriptor) {
+  public static @NotNull ModifyModuleStatementUsageInfo createLastDeletionInfo(@NotNull PsiPackageAccessibilityStatement moduleStatement,
+                                                                               @NotNull PsiJavaModule descriptor) {
     return new ModifyModuleStatementUsageInfo(moduleStatement, descriptor, ModifyingOperation.DELETE_LAST);
   }
 

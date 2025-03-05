@@ -40,6 +40,7 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletion"
                         serviceImplementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCompletionImpl"/>
     <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
+    <applicationService serviceInterface="com.intellij.find.FindUsagesSettings" serviceImplementation="com.intellij.find.impl.FindUsagesSettingsImpl" />
     <applicationService serviceInterface="com.intellij.find.TextSearchService"
                         serviceImplementation="com.intellij.find.ngrams.TrigramTextSearchService"/>
     <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
@@ -60,6 +61,11 @@
 
     <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
                     serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
+
+    <projectService serviceInterface="com.intellij.codeInsight.multiverse.EditorContextManager"
+                    serviceImplementation="com.intellij.codeInsight.multiverse.EditorContextManagerImpl"/>
+    <multiverse.codeInsightContextPresentationProvider implementation="com.intellij.codeInsight.multiverse.ModuleEntityContextPresentationProvider"/>
+    <iw.actionProvider implementation="com.intellij.openapi.editor.impl.multiverse.CodeInsightContextSwitcherProvider"/>
 
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"

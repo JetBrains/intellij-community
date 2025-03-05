@@ -964,7 +964,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     GrClosureType.forbidClosureInference(() -> {
       PsiMethod getter = file.getTypeDefinitions()[0].findMethodsByName("getFoo", false)[0];
       PsiClassType type = (PsiClassType)PsiUtil.getSmartReturnType(getter);
-      assert type.resolve().getQualifiedName().equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
+      assertEquals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, type.resolve().getQualifiedName());
     });
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -39,9 +39,8 @@ public class CreateGetterFromUsageFix extends CreateMethodFromUsageFix implement
     return PsiType.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  protected String getMethodName() {
+  protected @NotNull String getMethodName() {
     return GroovyPropertyUtils.getGetterNameNonBoolean(getRefExpr().getReferenceName());
   }
 }

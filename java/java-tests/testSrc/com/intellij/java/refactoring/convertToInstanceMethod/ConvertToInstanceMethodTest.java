@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.convertToInstanceMethod;
 
 import com.intellij.JavaTestUtil;
@@ -40,7 +40,8 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method <b><code>Test.foo(Bar)</code></b> is private and will not be accessible from instance initializer of class <b><code>Test</code></b>.", e.getMessage());
+      assertEquals("Method <b><code>foo(Bar)</code></b> is private and will not be accessible from instance initializer of class " +
+                   "<b><code>Test</code></b>.", e.getMessage());
     }
   }
 

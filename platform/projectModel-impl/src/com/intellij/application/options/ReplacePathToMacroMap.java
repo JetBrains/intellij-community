@@ -15,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @see PathMacrosImpl#addMacroReplacements(ReplacePathToMacroMap)
@@ -215,12 +218,14 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
     return pathIndex;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (!(obj instanceof ReplacePathToMacroMap)) return false;
     return myMacroMap.equals(((ReplacePathToMacroMap)obj).myMacroMap);
   }
 
+  @Override
   public int hashCode() {
     return myMacroMap.hashCode();
   }

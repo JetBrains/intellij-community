@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -42,8 +42,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
     return new RemoveMiddlemanUsageViewDescriptor(field);
   }
 
@@ -62,7 +61,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (MemberInfo memberInfo : myDelegateMethodInfos) {
       if (memberInfo.isChecked() && memberInfo.isToAbstract()) {
@@ -78,7 +77,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
   private void processUsagesForMethod(final boolean deleteMethodHierarchy, PsiMethod method, int[] paramPermutation, String getterName, PsiMethod delegatedMethod,
                                       List<? super FixableUsageInfo> usages) {
-    for (PsiReference reference : ReferencesSearch.search(method)) {
+    for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
       final PsiElement referenceElement = reference.getElement();
       final PsiMethodCallExpression call = (PsiMethodCallExpression)referenceElement.getParent();
       final String access;
@@ -114,8 +113,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRareRefactoringsBundle.message("exposed.delegation.command.name", StringUtil.getQualifiedName(containingClass.getName(), field.getName()));
   }
 }

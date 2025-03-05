@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -21,7 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
@@ -31,6 +34,7 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -180,14 +184,13 @@ public class StandardDataFlowRunner {
     
   }
 
-  @NotNull
-  protected StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
+  protected @NotNull StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
     return new StandardDataFlowInterpreter(flow, listener);
   }
 
-  protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                              @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                              @NotNull ControlFlow flow) {
+  protected @Unmodifiable @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                                            @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                                            @NotNull ControlFlow flow) {
     DfaVariableValue assertionStatus = AssertionDisabledDescriptor.getAssertionsDisabledVar(myValueFactory);
     if (assertionStatus != null && myIgnoreAssertions != ThreeState.UNSURE) {
       DfaCondition condition = assertionStatus.eq(DfTypes.booleanValue(myIgnoreAssertions.toBoolean()));
@@ -240,7 +243,7 @@ public class StandardDataFlowRunner {
       Collection<DfaMemoryState> states = closures.get(closure);
       if (!unusedVars.isEmpty()) {
         List<DfaMemoryState> stateList = StreamEx.of(states)
-          .peek(state -> state.flushVariables(unusedVars::contains))
+          .peek(state -> state.forgetVariables(unusedVars::contains))
           .distinct().toList();
         states = StateQueue.squash(stateList);
       }

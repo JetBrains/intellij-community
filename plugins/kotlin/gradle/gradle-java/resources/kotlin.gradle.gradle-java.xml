@@ -1,6 +1,4 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava" xmlns:xi="http://www.w3.org/2001/XInclude">
-  <id>kotlin.gradle.gradle-java</id>
-  <vendor>JetBrains</vendor>
+<idea-plugin package="org.jetbrains.kotlin.idea.gradleJava">
 
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
@@ -10,9 +8,6 @@
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.base.external-build-system"/>
   </dependencies>
-
-  <xi:include href="kotlin.gradle.gradle-java.k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>
-  <xi:include href="kotlin.gradle.gradle-java.k2.xml" includeIf="idea.kotlin.plugin.use.k2"/>
 
   <projectListeners>
     <listener
@@ -46,6 +41,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <issueChecker implementation="org.jetbrains.kotlin.idea.gradleJava.issues.checkers.GradleUndefinedToolchainRepositoriesIssueChecker"/>
 
     <frameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.GradleKotlinMPPSourceSetsFrameworkSupportProvider"/>
     <frameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.GradleKotlinJavaFrameworkSupportProvider"/>
@@ -62,10 +58,12 @@
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelResolver" order="first"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.PrepareKotlinIdeImportTaskResolver" order="first" />
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectResolverExtension" order="first"/>
-    <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleCoroutineDebugProjectResolver" order="last"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestTasksResolver"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMppGradleProjectResolver"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinKPMGradleProjectResolver"/>
+
+    <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestGradleTaskManagerExtension"/>
+    <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinCoroutineDebugGradleTaskManagerExtension"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
 
@@ -92,6 +90,7 @@
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinFragmentDataService"/>
 
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslSyncListener"/>
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonJvmCriteriaMigrationNotificationListener"/>
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptNotificationProvider"/>
 
@@ -118,20 +117,17 @@
             defaultValue="true"
             restartRequired="false"/>
     <registryKey
-            key="kotlin.mpp.tests.force.gradle"
-            description="Run multi-platform tests with Gradle runner even if the platform runner is used by default.
-              This setting currently affects only HMPP projects. You may need to delete existing test configurations for the change to take place."
-            defaultValue="true"
-            restartRequired="false"/>
+            key="gradle.daemon.jvm.criteria.suggest.migration"
+            description="Enable to recommend migrate project from existing Gradle JDK configuration to Gradle Daemon JVM criteria"
+            defaultValue="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator"/>
-
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
 
-    <scriptDependenciesSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDependenciesSource"/>
-    <scriptReloadActionAvailability implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptReloadActionAvailability"/>
+    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource"/>
+    <kotlinScriptLazyResolveProhibitionCondition implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptLazyResolveProhibitionCondition"/>
 
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptAdditionalIdeaDependenciesProvider"/>
 
@@ -178,5 +174,7 @@
             icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
       <add-to-group group-id="ExternalSystem.ProjectRefreshActionGroup" anchor="first"/>
     </action>
+    <action id="Gradle.MigrateToDaemonJvmCriteria"
+            class="org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonJvmCriteriaMigrationAction"/>
   </actions>
 </idea-plugin>

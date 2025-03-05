@@ -49,8 +49,7 @@ internal class InvertIfConditionIntention :
         return element.condition != null && element.then != null
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): Context {
+    override fun KaSession.prepareContext(element: KtIfExpression): Context {
         val rBrace = parentBlockRBrace(element)
         val commentSavingRange = if (rBrace != null)
             PsiChildRange(element, rBrace)

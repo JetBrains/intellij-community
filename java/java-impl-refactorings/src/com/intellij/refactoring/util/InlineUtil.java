@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
@@ -26,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.inline.InlineTransformer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,17 +45,15 @@ public final class InlineUtil implements CommonJavaInlineUtil {
 
   private InlineUtil() {}
 
-  @NotNull
-  public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
+  public static @NotNull PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
     return CommonJavaInlineUtil.getInstance().inlineVariable(variable, initializer, ref, null);
   }
 
   @Override
-  @NotNull
-  public PsiExpression inlineVariable(@NotNull PsiVariable variable,
-                                      @NotNull PsiExpression initializer,
-                                      @NotNull PsiJavaCodeReferenceElement ref,
-                                      @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
+  public @NotNull PsiExpression inlineVariable(@NotNull PsiVariable variable,
+                                               @NotNull PsiExpression initializer,
+                                               @NotNull PsiJavaCodeReferenceElement ref,
+                                               @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
     final PsiElement parent = ref.getParent();
     if (parent instanceof PsiResourceExpression) {
       LOG.error("Unable to inline resource reference");
@@ -203,7 +201,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     return result && nonTailCallUsages.isEmpty();
   }
 
-  public static TailCallType getTailCallType(@NotNull final PsiReference psiReference) {
+  public static TailCallType getTailCallType(final @NotNull PsiReference psiReference) {
     PsiElement element = psiReference.getElement();
     if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
@@ -214,7 +212,14 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     }
     if (callParent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)callParent)) {
       PsiElement negationParent = PsiUtil.skipParenthesizedExprUp(callParent.getParent());
-      if (negationParent instanceof PsiReturnStatement || negationParent instanceof PsiLambdaExpression) {
+      if (negationParent instanceof PsiPolyadicExpression polyOp &&
+          (polyOp.getOperationTokenType().equals(JavaTokenType.ANDAND) || polyOp.getOperationTokenType().equals(JavaTokenType.OROR)) &&
+          PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyOp.getOperands()), callParent, false)) {
+        negationParent = PsiUtil.skipParenthesizedExprUp(negationParent.getParent());
+      }
+      if (negationParent instanceof PsiReturnStatement ||
+          negationParent instanceof PsiYieldStatement || 
+          negationParent instanceof PsiLambdaExpression) {
         return TailCallType.Invert;
       }
     }
@@ -325,7 +330,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
           name = newName;
         }
         if (!name.equals(oldName)) {
-          for (PsiReference reference : ReferencesSearch.search(named, new LocalSearchScope(renameScope), true)) {
+          for (PsiReference reference : ReferencesSearch.search(named, new LocalSearchScope(renameScope), true).asIterable()) {
             reference.handleElementRename(name);
           }
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(scope.getProject());
@@ -387,8 +392,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
    * @param variable variable initialized
    * @return map of places where locals referenced in the initializer are changed before the last use of variable
    */
-  @NotNull
-  public static Map<PsiElement, PsiVariable> getChangedBeforeLastAccessMap(@NotNull PsiExpression initializer,
+  public static @NotNull Map<PsiElement, PsiVariable> getChangedBeforeLastAccessMap(@NotNull PsiExpression initializer,
                                                                            @NotNull PsiVariable variable) {
     Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
     if (referencedVars.isEmpty()) return Map.of();
@@ -405,8 +409,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     return ControlFlowUtil.getWritesBeforeReads(flow, referencedVars, Collections.singleton(variable), start);
   }
 
-  @Nullable
-  private static ControlFlow createControlFlow(@NotNull PsiElement scope) {
+  private static @Nullable ControlFlow createControlFlow(@NotNull PsiElement scope) {
     ControlFlowFactory factory = ControlFlowFactory.getInstance(scope.getProject());
     ControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
 
@@ -844,7 +847,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     if (declaration == null || declaration.getDeclaredElements().length != 1) return;
     PsiModifierList modifiers = target.getModifierList();
     if (modifiers != null && modifiers.getAnnotations().length != 0) return;
-    boolean effectivelyFinal = HighlightControlFlowUtil.isEffectivelyFinal(variable, context, null);
+    boolean effectivelyFinal = ControlFlowUtil.isEffectivelyFinal(variable, context);
     if (!effectivelyFinal && !VariableAccessUtils.canUseAsNonFinal(target)) return;
 
     for (PsiReferenceExpression reference : references) {
@@ -914,15 +917,13 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     }),
     Return((methodCopy, callSite, returnType) -> null);
 
-    @Nullable
-    private final InlineTransformer myTransformer;
+    private final @Nullable InlineTransformer myTransformer;
 
     TailCallType(@Nullable InlineTransformer transformer) {
       myTransformer = transformer;
     }
 
-    @Nullable
-    public InlineTransformer getTransformer() {
+    public @Nullable InlineTransformer getTransformer() {
       return myTransformer;
     }
   }

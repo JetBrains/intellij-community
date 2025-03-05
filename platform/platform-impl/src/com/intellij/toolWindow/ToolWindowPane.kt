@@ -10,6 +10,8 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ThreeComponentsSplitter
 import com.intellij.openapi.util.Disposer
@@ -28,7 +30,6 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedR
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.DevicePoint
@@ -106,6 +107,10 @@ class ToolWindowPane private constructor(
     }
 
     private fun createButtonManager(paneId: String): ToolWindowButtonManager {
+      InternalUICustomization.getInstance().internalCustomizer.createCustomButtonManager(paneId)?.let {
+        return it
+      }
+
       val buttonManager: ToolWindowButtonManager
       if (ExperimentalUI.isNewUI()) {
         buttonManager = ToolWindowPaneNewButtonManager(paneId)
@@ -147,19 +152,17 @@ class ToolWindowPane private constructor(
 
     // splitters
     verticalSplitter = ThreeComponentsSplitter(true)
+    horizontalSplitter = ThreeComponentsSplitter(false)
+    setUpSplitter(verticalSplitter)
+    setUpSplitter(horizontalSplitter)
+
     val registryValue = Registry.get("ide.mainSplitter.min.size")
     registryValue.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         updateInnerMinSize(value)
       }
     }, disposable)
-    verticalSplitter.dividerWidth = 0
-    verticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
-    verticalSplitter.background = JBColor.GRAY
-    horizontalSplitter = ThreeComponentsSplitter(false)
-    horizontalSplitter.dividerWidth = 0
-    horizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
-    horizontalSplitter.background = JBColor.GRAY
+
     updateInnerMinSize(registryValue)
     val uiSettings = UISettings.getInstance()
     isWideScreen = uiSettings.wideScreenSupport
@@ -184,6 +187,13 @@ class ToolWindowPane private constructor(
     if (Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
       ToolWindowInnerDragHelper(disposable, this).start()
     }
+  }
+
+  private fun setUpSplitter(splitter: ThreeComponentsSplitter) {
+    splitter.dividerWidth = 0
+    splitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
+
+    splitter.background = InternalUICustomization.getInstance().getToolWindowsPaneThreeSplitterBackground()
   }
 
   override fun removeNotify() {
@@ -603,6 +613,10 @@ class ToolWindowPane private constructor(
         else if (anchor == ToolWindowAnchor.RIGHT) {
           orientation = !uiSettings.rightHorizontalSplit
         }
+      }
+
+      override fun createDivider(): Divider {
+        return InternalUICustomization.getInstance().createCustomDivider(isVisible, this) ?: super.createDivider()
       }
 
       override fun toString() = "[$firstComponent|$secondComponent]"

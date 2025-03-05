@@ -21,14 +21,12 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -39,9 +37,10 @@ public class LibraryNameAndLevelPanel {
   private String myDefaultLibraryName;
 
   public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {
-    this(formBuilder, libraryName, Arrays.asList(LibrariesContainer.LibraryLevel.values()), level);
+    this(formBuilder, libraryName, new ArrayList<>(Arrays.asList(LibrariesContainer.LibraryLevel.values())), level);
   }
 
+  @Contract(mutates = "param3")
   public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @NotNull List<LibrariesContainer.LibraryLevel> availableLevels,
                                   @Nullable LibrariesContainer.LibraryLevel level) {
     myLibraryNameField = new JTextField(25);

@@ -133,9 +133,8 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
     return true;
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getTypeParameters());
   }
 }

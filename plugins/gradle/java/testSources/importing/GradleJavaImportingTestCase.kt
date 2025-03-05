@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -103,6 +104,17 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
   fun assertModuleTargetBytecodeVersion(moduleName: String, version: String) {
     val targetBytecodeVersion = getBytecodeTargetLevelForModule(moduleName)
     assertEquals(version, targetBytecodeVersion)
+  }
+
+  fun assertProjectCompilerArgumentsVersion(vararg expectedCompilerArguments: String) {
+    val actualCompilerArguments = CompilerConfiguration.getInstance(myProject).getAdditionalOptions()
+    CollectionAssertions.assertEqualsOrdered(expectedCompilerArguments.asList(), actualCompilerArguments)
+  }
+
+  fun assertModuleCompilerArgumentsVersion(moduleName: String, vararg expectedCompilerArguments: String) {
+    val module = getModule(moduleName)
+    val actualCompilerArguments = CompilerConfiguration.getInstance(myProject).getAdditionalOptions(module)
+    CollectionAssertions.assertEqualsOrdered(expectedCompilerArguments.asList(), actualCompilerArguments)
   }
 
   open fun assertProjectLibraryCoordinates(libraryName: String,

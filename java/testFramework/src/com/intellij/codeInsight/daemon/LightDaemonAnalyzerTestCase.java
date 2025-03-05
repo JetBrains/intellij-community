@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -80,8 +81,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     return new ExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
   }
 
-  @Nullable
-  private String composeLocalPath(@Nullable String filePath) {
+  private @Nullable String composeLocalPath(@Nullable String filePath) {
     return filePath != null ? getTestDataPath() + "/" + filePath : null;
   }
 
@@ -119,13 +119,11 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     };
   }
 
-  @NotNull
-  protected List<HighlightInfo> highlightErrors() {
+  protected @NotNull @Unmodifiable List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
-  @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     IntList toIgnoreList = new IntArrayList();
@@ -150,7 +148,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     return annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting.class);
   }
 
-  protected List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
+  protected @Unmodifiable List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
     return DaemonAnalyzerTestCase.filter(doHighlighting(), minSeverity);
   }
 

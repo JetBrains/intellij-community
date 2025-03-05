@@ -12,15 +12,12 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.lang.ref.SoftReference;
+import java.util.*;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
@@ -75,18 +72,66 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
       SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
       CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
       if (provider == null || provider.isExpired()) {
-        Supplier<VirtualFile> fileSupplier;
+        Supplier<VirtualFile> fileSupplier; // all values must correctly implement equals and hashCode IJPL-150378
         if (virtualFile instanceof LightVirtualFile) {
           LightVirtualFile copy = getCopy((LightVirtualFile)virtualFile);
-          fileSupplier = () -> getCopy(copy); // create new copy each time it requested to make sure the attached PSI is collected
+          // create a new copy each time
+          // it requested to make sure the attached PSI is collected
+          fileSupplier = new LightVirtualFileCopyGetter(copy);
         }
         else {
-          fileSupplier = () -> virtualFile;
+          fileSupplier = new VirtualFileGetter(virtualFile);
         }
         provider = new CodeStyleCachedValueProvider(fileSupplier, myProject, fileData);
         fileData.putUserData(PROVIDER_KEY, new SoftReference<>(provider));
       }
       return provider;
+    }
+  }
+
+  private static class VirtualFileGetter implements Supplier<VirtualFile> {
+    private final VirtualFile virtualFile;
+
+    private VirtualFileGetter(VirtualFile file) { virtualFile = file; }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      VirtualFileGetter getter = (VirtualFileGetter)o;
+      return Objects.equals(virtualFile, getter.virtualFile);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(virtualFile);
+    }
+
+    @Override
+    public VirtualFile get() {
+      return virtualFile;
+    }
+  }
+
+  private static class LightVirtualFileCopyGetter implements Supplier<VirtualFile> {
+    private final LightVirtualFile virtualFile;
+
+    private LightVirtualFileCopyGetter(LightVirtualFile file) { virtualFile = file; }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      LightVirtualFileCopyGetter getter = (LightVirtualFileCopyGetter)o;
+      return Objects.equals(virtualFile, getter.virtualFile);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(virtualFile);
+    }
+
+    @Override
+    public VirtualFile get() {
+      return getCopy(virtualFile);
     }
   }
 

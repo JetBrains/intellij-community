@@ -1,13 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSemicolon
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.DeletePsiElementOfInterestFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.RemoveRedundantSemicolonFix
 import org.jetbrains.kotlin.lexer.KtTokens
 
 internal class RedundantSemicolonInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
@@ -20,7 +22,7 @@ internal class RedundantSemicolonInspection : AbstractKotlinInspection(), Cleanu
                     holder.registerProblem(
                         element,
                         KotlinBundle.message("redundant.semicolon"),
-                        DeletePsiElementOfInterestFix
+                        RemoveRedundantSemicolonFix
                     )
                 }
             }

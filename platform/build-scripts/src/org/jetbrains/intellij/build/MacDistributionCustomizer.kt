@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -6,15 +6,15 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
 import java.util.function.Predicate
 
 open class MacDistributionCustomizer {
   companion object {
     /**
-     * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
+     * Pass 'true' to this system property to produce additional .dmg and .sit archives for macOS without a runtime.
      */
-    const val BUILD_ARTIFACT_WITHOUT_RUNTIME = "intellij.build.dmg.without.bundled.jre"
+    const val BUILD_ARTIFACT_WITHOUT_RUNTIME: String = "intellij.build.dmg.without.bundled.jre"
   }
 
   /**
@@ -25,17 +25,17 @@ open class MacDistributionCustomizer {
   lateinit var icnsPath: String
 
   /**
-   * Path to icns file for EAP builds (if `null`, [icnsPath] will be used).
+   * Path to an .icns file for EAP builds (if `null`, [icnsPath] will be used).
    */
   var icnsPathForEAP: String? = null
 
   /**
-   * Path to alternative icns file in macOS Big Sur style
+   * Path to an alternative .icns file in macOS Big Sur style
    */
   var icnsPathForAlternativeIcon: String? = null
 
   /**
-   * Path to alternative icns file in macOS Big Sur style for EAP
+   * Path to an alternative .icns file in macOS Big Sur style for EAP
    */
   var icnsPathForAlternativeIconForEAP: String? = null
 
@@ -46,23 +46,22 @@ open class MacDistributionCustomizer {
 
   /**
    * A unique identifier string that specifies the app type of the bundle.
-   * The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A-Z, a-z), the dot ("."),
-   * and the hyphen ("-").
+   * The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A-Z, a-z), dots ('.'), and hyphens ('-').
    *
    * Reference:
-   * [CFBundleIdentifier](https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070).
+   * [CFBundleIdentifier](https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleidentifier).
    */
   lateinit var bundleIdentifier: String
 
   /**
-   * Path to an image which will be injected into .dmg file.
+   * Path to an image which will be injected into the .dmg file.
    */
   lateinit var dmgImagePath: String
 
   /**
    * The minimum version of macOS where the product is allowed to be installed.
    */
-  var minOSXVersion = "10.13"
+  var minOSXVersion: String = "10.13"
 
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
@@ -82,10 +81,10 @@ open class MacDistributionCustomizer {
    * </dict>
    * ```
    */
-  var additionalDocTypes = ""
+  var additionalDocTypes: String = ""
 
   /**
-   * Note that users won't be able to switch off some of these associations during installation
+   * Note that users won't be able to switch off some of these associations during installation,
    * so include only types of files which users will definitely prefer to open by the product.
    *
    * @see FileAssociation
@@ -118,9 +117,9 @@ open class MacDistributionCustomizer {
   var dmgImagePathForEAP: String? = null
 
   /**
-   * If `true`, a separate *-[org.jetbrains.intellij.build.impl.MacDistributionBuilder.NO_RUNTIME_SUFFIX].dmg artifact without a runtime will be produced.
+   * If `true`, a separate *-[org.jetbrains.intellij.build.impl.NO_RUNTIME_SUFFIX].dmg artifact without a runtime will be produced.
    */
-  var buildArtifactWithoutRuntime = System.getProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME)?.toBoolean() ?: System.getProperty("artifact.mac.no.jdk").toBoolean()
+  var buildArtifactWithoutRuntime: Boolean = System.getProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME)?.toBoolean() ?: System.getProperty("artifact.mac.no.jdk").toBoolean()
 
   /**
    * Application bundle name (`<name>.app`).
@@ -153,18 +152,13 @@ open class MacDistributionCustomizer {
       "MacOS/*"
     )
 
-    val rtPatterns = if (includeRuntime) {
-      context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)
-    }
-    else {
-      emptySequence()
-    }
+    val rtPatterns =
+      if (includeRuntime) context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)
+      else emptySequence()
 
-    return basePatterns +
-           rtPatterns +
-           RepairUtilityBuilder.executableFilesPatterns(context) +
-           extraExecutables +
-           context.getExtraExecutablePattern(OsFamily.MACOS)
+    val utilPatters = RepairUtilityBuilder.executableFilesPatterns(context)
+
+    return basePatterns + rtPatterns + utilPatters + extraExecutables + context.getExtraExecutablePattern(OsFamily.MACOS)
   }
 
   /**
@@ -179,7 +173,6 @@ open class MacDistributionCustomizer {
    * > For example, the network subsystem might apply constraints for one of your apps to the other app.
    */
   @ApiStatus.Internal
-  open fun getDistributionUUID(context: BuildContext, currentUuid: UUID?): UUID {
-    return UUID.nameUUIDFromBytes("${context.fullBuildNumber}-${context.options.buildDateInSeconds}".toByteArray())
-  }
+  open fun getDistributionUUID(context: BuildContext, currentUuid: UUID?): UUID =
+    UUID.nameUUIDFromBytes("${context.fullBuildNumber}-${context.options.buildDateInSeconds}".toByteArray())
 }

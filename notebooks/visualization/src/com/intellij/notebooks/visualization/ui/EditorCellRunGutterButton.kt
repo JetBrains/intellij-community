@@ -8,9 +8,10 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.editor.ex.EditorEx
 
 class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: EditorCell)  {
-  // PY-72142 & PY-69788 & PY-72701 - adds "Run cell" button to the gutter
+  // PY-72142 & PY-69788 & PY-72701 - adds the "Run cell" button to the gutter
+  var lastRunButtonVisibility: Boolean? = false
+
   private var currentAction: AnAction = RunCellGutterAction(cell)
-  init { hideRunButton()  }
 
   var visible: Boolean = false
     set(value) {
@@ -32,7 +33,7 @@ class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: 
     if (visible) showRunButton()
   }
 
-  fun updateIfShown() = when(visible) {
+  fun updateIfShown(): Unit = when(visible) {
     true -> showRunButton()
     false -> Unit
   }

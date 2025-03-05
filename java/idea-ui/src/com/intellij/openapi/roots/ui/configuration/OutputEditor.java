@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -40,8 +40,7 @@ public class OutputEditor extends ModuleElementsEditor {
   }
 
   @Override
-  @NlsContexts.ConfigurableName
-  public String getDisplayName() {
+  public @NlsContexts.ConfigurableName String getDisplayName() {
     return getName();
   }
 
@@ -59,9 +58,7 @@ public class OutputEditor extends ModuleElementsEditor {
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return "projectStructure.modules.paths";
   }
 

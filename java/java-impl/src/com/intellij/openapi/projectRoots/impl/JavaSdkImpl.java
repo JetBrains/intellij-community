@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -33,6 +34,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -45,6 +50,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
@@ -184,12 +190,34 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String suggestHomePath() {
-    return JavaHomeFinder.defaultJavaLocation();
+    return JavaHomeFinder.defaultJavaLocation(null);
+  }
+
+  @Override
+  public @Nullable String suggestHomePath(@NotNull Path path) {
+    return JavaHomeFinder.defaultJavaLocation(path);
   }
 
   @Override
   public @NotNull Collection<String> suggestHomePaths() {
-    return JavaHomeFinder.suggestHomePaths();
+    return suggestHomePaths(null);
+  }
+
+  @Override
+  public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
+    return JavaHomeFinder.suggestHomePaths(getEelDescriptor(project), false);
+  }
+
+  @Override
+  public @Unmodifiable @NotNull Collection<SdkEntry> collectSdkEntries(@Nullable Project project) {
+    return ContainerUtil.mapNotNull(
+      JavaHomeFinder.findJdks(getEelDescriptor(project), false),
+      JavaHomeFinder.JdkEntry::toSdkEntry
+    );
+  }
+
+  private static @NotNull EelDescriptor getEelDescriptor(@Nullable Project project) {
+    return project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project);
   }
 
   @Override
@@ -207,7 +235,8 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public boolean isValidSdkHome(@NotNull String path) {
-    return JdkUtil.checkForJdk(path);
+    Path homePath = Path.of(path);
+    return JdkUtil.checkForJdk(homePath, EelProviderUtil.getEelDescriptor(homePath).getOperatingSystem() == EelPath.OS.WINDOWS);
   }
 
   @Override
@@ -480,7 +509,7 @@ public final class JavaSdkImpl extends JavaSdk {
    * Tries to load the list of modules in the JDK from the 'release' file. Returns null if the 'release' file is not there
    * or doesn't contain the expected information.
    */
-  private static @Nullable List<String> readModulesFromReleaseFile(@NotNull Path jrtBaseDir) {
+  private static @Unmodifiable @Nullable List<String> readModulesFromReleaseFile(@NotNull Path jrtBaseDir) {
     try (InputStream stream = Files.newInputStream(jrtBaseDir.resolve("release"))) {
       Properties p = new Properties();
       p.load(stream);

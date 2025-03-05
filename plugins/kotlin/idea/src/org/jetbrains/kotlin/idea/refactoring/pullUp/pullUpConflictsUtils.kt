@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getChildrenToAnalyze
@@ -30,8 +31,9 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
-import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.substitute
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -133,6 +135,7 @@ internal fun willBeUsedInSourceClass(
 ): Boolean {
     return !ReferencesSearch
         .search(member, LocalSearchScope(sourceClass), false)
+        .asIterable()
         .all { willBeMoved(it.element, membersToMove) }
 }
 
@@ -218,6 +221,7 @@ private fun KotlinPullUpData.checkAccidentalOverrides(
         if (memberDescriptorInTargetClass != null) {
             val sequence = HierarchySearchRequest<PsiElement>(targetClass, targetClass.useScope())
                 .searchInheritors()
+                .asIterable()
                 .asSequence()
                 .filterNot { it.isSourceOrTarget(this) }
                 .mapNotNull { it.unwrapped as? KtClassOrObject }

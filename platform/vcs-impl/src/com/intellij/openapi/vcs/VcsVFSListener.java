@@ -33,7 +33,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -41,7 +43,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.util.ConcurrencyUtil.withLock;
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.awaitCancellationAndDispose;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
@@ -53,12 +57,9 @@ public abstract class VcsVFSListener implements Disposable {
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
   protected static final class MovedFileInfo {
-    @NotNull
-    public final String myOldPath;
-    @NotNull
-    public String myNewPath;
-    @NotNull
-    private final VirtualFile myFile;
+    public final @NotNull String myOldPath;
+    public @NotNull String myNewPath;
+    private final @NotNull VirtualFile myFile;
 
     MovedFileInfo(@NotNull VirtualFile file, @NotNull String newPath) {
       myOldPath = file.getPath();
@@ -86,7 +87,8 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected final Project myProject;
   protected final AbstractVcs myVcs;
-  @NotNull protected final CoroutineScope coroutineScope;
+  protected final @NotNull CoroutineScope coroutineScope;
+  private boolean myShouldCancelScope = true;
   protected final ChangeListManager myChangeListManager;
   protected final VcsShowConfirmationOption myAddOption;
   protected final VcsShowConfirmationOption myRemoveOption;
@@ -104,18 +106,15 @@ public abstract class VcsVFSListener implements Disposable {
 
     private final ReentrantReadWriteLock PROCESSING_LOCK = new ReentrantReadWriteLock();
 
-    @NotNull
-    public List<VirtualFile> acquireAddedFiles() {
+    public @NotNull List<VirtualFile> acquireAddedFiles() {
       return acquireListUnderLock(myAddedFiles);
     }
 
-    @NotNull
-    public List<MovedFileInfo> acquireMovedFiles() {
+    public @NotNull List<MovedFileInfo> acquireMovedFiles() {
       return acquireListUnderLock(myMovedFiles);
     }
 
-    @NotNull
-    public List<FilePath> acquireDeletedFiles() {
+    public @NotNull List<FilePath> acquireDeletedFiles() {
       return withLock(PROCESSING_LOCK.writeLock(), () -> {
         List<FilePath> deletedFiles = new ArrayList<>(myDeletedFiles);
         myDeletedFiles.clear();
@@ -126,8 +125,7 @@ public abstract class VcsVFSListener implements Disposable {
     /**
      * @return get a list of files under lock and clear the given collection of files
      */
-    @NotNull
-    private <T> List<T> acquireListUnderLock(@NotNull Collection<? extends T> files) {
+    private @NotNull <T> List<T> acquireListUnderLock(@NotNull Collection<? extends T> files) {
       return withLock(PROCESSING_LOCK.writeLock(), () -> {
         List<T> copiedFiles = new ArrayList<>(files);
         files.clear();
@@ -138,8 +136,7 @@ public abstract class VcsVFSListener implements Disposable {
     /**
      * @return get a map of copied files under lock and clear the given map
      */
-    @NotNull
-    public Map<VirtualFile, VirtualFile> acquireCopiedFiles() {
+    public @NotNull Map<VirtualFile, VirtualFile> acquireCopiedFiles() {
       return withLock(PROCESSING_LOCK.writeLock(), () -> {
         Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(myCopyFromMap);
         myCopyFromMap.clear();
@@ -422,6 +419,8 @@ public abstract class VcsVFSListener implements Disposable {
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
     myExternalFilesProcessor = createExternalFilesProcessor();
     myIgnoreFilesProcessor = createIgnoreFilesProcessor();
+
+    awaitCancellationAndDispose(coroutineScope, this);
   }
 
   /**
@@ -430,8 +429,9 @@ public abstract class VcsVFSListener implements Disposable {
   @Deprecated(forRemoval = true)
   protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
     //noinspection UsagesOfObsoleteApi
-    this(vcs, ((ComponentManagerEx)project).getCoroutineScope());
+    this(vcs, childScope(((ComponentManagerEx)project).getCoroutineScope(), "VcsVFSListener", EmptyCoroutineContext.INSTANCE, true));
     installListeners();
+    myShouldCancelScope = true;
   }
 
   protected void installListeners() {
@@ -445,6 +445,9 @@ public abstract class VcsVFSListener implements Disposable {
 
   @Override
   public void dispose() {
+    if (myShouldCancelScope) {
+      CoroutineScopeKt.cancel(coroutineScope, null);
+    }
   }
 
   protected boolean isEventAccepted(@NotNull VFileEvent event) {
@@ -464,8 +467,7 @@ public abstract class VcsVFSListener implements Disposable {
     return filePath != null && ReadAction.compute(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(filePath) == myVcs);
   }
 
-  @NotNull
-  private static FilePath getEventFilePath(@NotNull VFileEvent event) {
+  private static @NotNull FilePath getEventFilePath(@NotNull VFileEvent event) {
     if (event instanceof VFileCreateEvent createEvent) {
       return VcsUtil.getFilePath(event.getPath(), createEvent.isDirectory());
     }
@@ -685,27 +687,17 @@ public abstract class VcsVFSListener implements Disposable {
     return false;
   }
 
-  @NotNull
-  @NlsContexts.DialogTitle
-  protected abstract String getAddTitle();
+  protected abstract @NotNull @NlsContexts.DialogTitle String getAddTitle();
 
-  @NotNull
-  @NlsContexts.DialogTitle
-  protected abstract String getSingleFileAddTitle();
+  protected abstract @NotNull @NlsContexts.DialogTitle String getSingleFileAddTitle();
 
-  @NotNull
-  @NlsContexts.DialogMessage
-  protected abstract String getSingleFileAddPromptTemplate();
+  protected abstract @NotNull @NlsContexts.DialogMessage String getSingleFileAddPromptTemplate();
 
-  @NotNull
-  @NlsContexts.DialogTitle
-  protected abstract String getDeleteTitle();
+  protected abstract @NotNull @NlsContexts.DialogTitle String getDeleteTitle();
 
-  @NlsContexts.DialogTitle
-  protected abstract String getSingleFileDeleteTitle();
+  protected abstract @NlsContexts.DialogTitle String getSingleFileDeleteTitle();
 
-  @NlsContexts.DialogMessage
-  protected abstract String getSingleFileDeletePromptTemplate();
+  protected abstract @NlsContexts.DialogMessage String getSingleFileDeletePromptTemplate();
 
   protected abstract void performAdding(@NotNull Collection<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap);
 
@@ -761,9 +753,8 @@ public abstract class VcsVFSListener implements Disposable {
              || event instanceof VFileMoveEvent;
     }
 
-    @Nullable
     @Override
-    public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+    public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
       List<VFileContentChangeEvent> contentChangedEvents = new ArrayList<>();
       List<VFileEvent> beforeEvents = new ArrayList<>();
       List<VFileEvent> afterEvents = new ArrayList<>();

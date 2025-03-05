@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl.turboComplete
 
-import com.intellij.platform.ml.Tier
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -13,6 +12,3 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 data class CompletionKind(val name: Enum<*>, val variety: KindVariety)
-
-@ApiStatus.Internal
-object TierCompletionKind : Tier<CompletionKind>()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.vfs;
 
@@ -17,7 +17,7 @@ import java.util.Set;
 
 
 public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
-  @NotNull private final ContentRevision myContentRevision;
+  private final @NotNull ContentRevision myContentRevision;
 
   private volatile byte[] myContent;
   private volatile boolean myContentLoadFailed;
@@ -37,7 +37,7 @@ public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   }
 
   private ContentRevisionVirtualFile(@NotNull ContentRevision contentRevision) {
-    super(contentRevision.getFile().getPath(), VcsFileSystem.getInstance());
+    super(contentRevision.getFile());
     myContentRevision = contentRevision;
     setCharset(StandardCharsets.UTF_8);
   }
@@ -78,14 +78,12 @@ public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
     }
   }
 
-  @NotNull
-  public ContentRevision getContentRevision() {
+  public @NotNull ContentRevision getContentRevision() {
     return myContentRevision;
   }
 
-  @Nls
   @Override
-  protected @NotNull String getPresentableName(@Nls @NotNull String baseName) {
+  protected @Nls @NotNull String getPresentableName(@Nls @NotNull String baseName) {
     VcsRevisionNumber number = getContentRevision().getRevisionNumber();
     if (number instanceof ShortVcsRevisionNumber) {
       return baseName + " (" + ((ShortVcsRevisionNumber) number).toShortString() + ")";

@@ -33,7 +33,7 @@ public final class LoggerFactory implements Logger.Factory {
 
     var enableConsoleLogger = !logToJsonStdout && Boolean.parseBoolean(System.getProperty("idea.log.console", "true"));
 
-    JulLogger.configureLogFileAndConsole(getLogFilePath(), true, enableConsoleLogger, true, () -> IdeaLogger.dropFrequentExceptionsCaches());
+    JulLogger.configureLogFileAndConsole(getLogFilePath(), true, enableConsoleLogger, true, () -> IdeaLogger.dropFrequentExceptionsCaches(), null, null);
 
     var dialogAppender = new DialogAppender();
     dialogAppender.setLevel(Level.SEVERE);

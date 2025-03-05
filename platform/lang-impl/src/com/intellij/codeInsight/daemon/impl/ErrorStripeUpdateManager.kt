@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -134,7 +134,7 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
     }
 
     if (setNeeded) {
-      setTrafficLightOnEditorIfNeeded(model = markup, file = psiFile!!, project = project)
+      setTrafficLightOnEditorIfNeeded(markup, psiFile!!, project)
     }
   }
 
@@ -143,7 +143,7 @@ class ErrorStripeUpdateManager(private val project: Project, private val corouti
   internal fun setOrRefreshErrorStripeRenderer(model: EditorMarkupModel, file: PsiFile) {
     if (refreshErrorStripeRenderer(model)) {
       coroutineScope.launch(ModalityState.defaultModalityState().asContextElement()) {
-        setTrafficLightOnEditorIfNeeded(model = model, file = file, project = project)
+        setTrafficLightOnEditorIfNeeded(model, file, project)
       }
     }
   }
@@ -175,7 +175,7 @@ private suspend fun setTrafficLightOnEditorIfNeeded(model: EditorMarkupModel, fi
   }
 
   var rendererWasSet = false
-  val renderer = createRenderer(editor = editor, file = file, project = project)
+  val renderer = createRenderer(editor, file, project)
   try {
     withContext(Dispatchers.EDT) {
       val editor = model.getEditor()
@@ -203,7 +203,7 @@ private suspend fun createRenderer(editor: Editor, file: PsiFile, project: Proje
       return it
     }
   }
-  return createTrafficLightRenderer(editor = editor, file = file, project = project)
+  return TrafficLightRenderer.createTrafficLightRenderer(editor, file, project)
 }
 
 private suspend fun isEditorEligible(editor: Editor, psiFile: PsiFile, project: Project): Boolean {
@@ -241,7 +241,7 @@ private class EssentialHighlightingModeListener : RegistryValueListener {
 
       // Run all checks after disabling essential highlighting
       if (!value.asBoolean()) {
-        (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).restartToCompleteEssentialHighlighting()
+        (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).requestRestartToCompleteEssentialHighlighting()
       }
     }
   }

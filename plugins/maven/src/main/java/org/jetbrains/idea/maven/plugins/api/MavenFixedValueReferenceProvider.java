@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +39,8 @@ public class MavenFixedValueReferenceProvider implements MavenParamReferenceProv
 
     return new PsiReference[] {
       new PsiReferenceBase<>(element, mySoft) {
-        @Nullable
         @Override
-        public PsiElement resolve() {
+        public @Nullable PsiElement resolve() {
           if (mySoft) {
             return null;
           }

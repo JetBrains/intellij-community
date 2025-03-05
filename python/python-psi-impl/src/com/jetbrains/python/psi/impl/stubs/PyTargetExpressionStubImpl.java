@@ -23,6 +23,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +33,13 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
   private final String myName;
   private final InitializerType myInitializerType;
   private final QualifiedName myInitializer;
+  private final @Nullable PyLiteralKind myAssignedLiteralKind;
   private final boolean myQualified;
   private final String myTypeComment;
   private final String myAnnotation;
   private final boolean myHasAssignedValue;
   
-  @Nullable private final String myDocString;
+  private final @Nullable String myDocString;
   private final CustomTargetExpressionStub myCustomStub;
 
   public PyTargetExpressionStubImpl(String name,
@@ -54,16 +56,18 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
     myAnnotation = annotation;
     myHasAssignedValue = hasAssignedValue;
     myInitializerType = InitializerType.Custom;
+    myAssignedLiteralKind = null;
     myInitializer = null;
     myQualified = false;
     myCustomStub = customStub;
     myDocString = docString;
   }
-  
+
   public PyTargetExpressionStubImpl(final String name,
                                     @Nullable String docString,
                                     final InitializerType initializerType,
                                     final QualifiedName initializer,
+                                    final @Nullable PyLiteralKind assignedLiteralKind,
                                     final boolean qualified,
                                     @Nullable String typeComment,
                                     @Nullable String annotation,
@@ -78,6 +82,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
     assert initializerType != InitializerType.Custom;
     myInitializerType = initializerType;
     myInitializer = initializer;
+    myAssignedLiteralKind = assignedLiteralKind;
     myQualified = qualified;
     myCustomStub = null;
     myDocString = docString;
@@ -99,31 +104,32 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
   }
 
   @Override
+  public @Nullable PyLiteralKind getAssignedLiteralKind() {
+    return myAssignedLiteralKind;
+  }
+
+  @Override
   public boolean isQualified() {
     return myQualified;
   }
 
-  @Nullable
   @Override
-  public <T> T getCustomStub(Class<T> stubClass) {
+  public @Nullable <T> T getCustomStub(Class<T> stubClass) {
     return ObjectUtils.tryCast(myCustomStub, stubClass);
   }
 
-  @Nullable
   @Override
-  public String getDocString() {
+  public @Nullable String getDocString() {
     return myDocString;
   }
 
-  @Nullable
   @Override
-  public String getTypeComment() {
+  public @Nullable String getTypeComment() {
     return myTypeComment;
   }
 
-  @Nullable
   @Override
-  public String getAnnotation() {
+  public @Nullable String getAnnotation() {
     return myAnnotation;
   }
 
@@ -134,28 +140,17 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
 
   @Override
   public String toString() {
-    String result = "PyTargetExpressionStub(name=" + myName +
-                    ", hasAssignedValue=" + myHasAssignedValue;
-    if (myCustomStub == null) {
-      if (myInitializer != null) {
-        result += ", initializer=" + myInitializer;
-      }
-      result += ", initializerType=" + myInitializerType +
-                ", qualified=" + myQualified;
-    }
-    else {
-      result += ", customStub=" + myCustomStub;
-    }
-    if (myTypeComment != null) {
-      result += ", typeComment='" + myTypeComment + '\'';
-    }
-    if (myAnnotation != null) {
-      result += ", annotation='" + myAnnotation + '\'';
-    }
-    if (myDocString != null) {
-      result += ", docString='" + StringUtil.escapeStringCharacters(myDocString) + '\'';
-    }
-    result += ")";
-    return result;
+    return "PyTargetExpressionStubImpl{" +
+           "myName='" + myName + '\'' +
+           ", myInitializerType=" + myInitializerType +
+           ", myInitializer=" + myInitializer +
+           ", myAssignedLiteralKind=" + myAssignedLiteralKind +
+           ", myQualified=" + myQualified +
+           ", myTypeComment='" + myTypeComment + '\'' +
+           ", myAnnotation='" + myAnnotation + '\'' +
+           ", myHasAssignedValue=" + myHasAssignedValue +
+           ", myDocString='" + (myDocString != null ? StringUtil.escapeStringCharacters(myDocString) : null) + '\'' +
+           ", myCustomStub=" + myCustomStub +
+           '}';
   }
 }

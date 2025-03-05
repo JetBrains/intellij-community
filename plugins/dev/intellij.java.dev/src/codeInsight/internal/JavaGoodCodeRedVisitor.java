@@ -7,11 +7,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.dev.codeInsight.internal.GoodCodeRedVisitor;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiResolveHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,18 +16,11 @@ final class JavaGoodCodeRedVisitor implements GoodCodeRedVisitor {
 
   @Override
   public @NotNull PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder) {
-    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(holder.getProject()).getResolveHelper();
-    return new MyHighlightVisitorImpl(holder, resolveHelper);
+    return new MyHighlightVisitorImpl(holder);
   }
 
   private static final class MyHighlightVisitorImpl extends HighlightVisitorImpl {
-
-    private final @NotNull PsiResolveHelper myResolveHelper;
-
-    private MyHighlightVisitorImpl(@NotNull ProblemsHolder holder,
-                                   @NotNull PsiResolveHelper resolveHelper) {
-
-      myResolveHelper = resolveHelper;
+    private MyHighlightVisitorImpl(@NotNull ProblemsHolder holder) {
       prepareToRunAsInspection(new HighlightInfoHolder(holder.getFile()) {
         @Override
         public boolean add(@Nullable HighlightInfo info) {
@@ -53,11 +43,6 @@ final class JavaGoodCodeRedVisitor implements GoodCodeRedVisitor {
           return false;
         }
       });
-    }
-
-    @Override
-    protected @NotNull PsiResolveHelper getResolveHelper(@NotNull Project project) {
-      return myResolveHelper;
     }
   }
 }

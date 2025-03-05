@@ -1,11 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
+import com.intellij.codeInsight.FileModificationService
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
@@ -15,7 +25,33 @@ interface UsageReplacementStrategy {
     fun createReplacer(usage: KtReferenceExpression): (() -> KtElement?)?
 
     companion object {
-        val KEY = Key<Unit>("UsageReplacementStrategy.replaceUsages")
+        val KEY: Key<Unit> = Key<Unit>("UsageReplacementStrategy.replaceUsages")
+    }
+}
+
+fun UsageReplacementStrategy.replaceUsagesInWholeProject(
+    targetPsiElement: PsiElement,
+    @NlsContexts.DialogTitle progressTitle: String,
+    @NlsContexts.Command commandName: String,
+    unwrapSpecialUsages: Boolean = true,
+    unwrapper: (KtReferenceExpression) -> KtSimpleNameExpression?
+) {
+    val project = targetPsiElement.project
+    val usages = runWithModalProgressBlocking(project, progressTitle) {
+        runReadAction {
+            val searchScope = KotlinSourceFilterScope.projectSources(GlobalSearchScope.projectScope(project), project)
+            ReferencesSearch.search(targetPsiElement, searchScope)
+                .asIterable()
+                .filterIsInstance<KtSimpleReference<KtReferenceExpression>>()
+                .map { ref -> ref.expression }
+        }
+    }
+
+    val files = runReadAction { usages.map { it.containingFile.virtualFile }.distinct() }
+    if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, files)) return
+
+    project.executeWriteCommand(commandName) {
+        replaceUsages(usages, unwrapSpecialUsages, unwrapper)
     }
 }
 
@@ -99,7 +135,8 @@ private fun UsageReplacementStrategy.processUsages(
                 continue
             }
 
-            createReplacer(usage)?.invoke()?.parent?.parent?.parent?.reformatted(true)
+            val element = createReplacer(usage)?.invoke()
+            element?.parent?.reformatted(true)
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
             LOG.error(e)

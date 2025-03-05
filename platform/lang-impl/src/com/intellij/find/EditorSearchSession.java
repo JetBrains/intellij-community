@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_TOGGLE_SCROLL_TO_RESULTS_DURING_TYPING;
+
 /**
  * @author max, andrey.zaytsev
  */
@@ -156,7 +158,7 @@ public class EditorSearchSession implements SearchSession,
           }
           EditorSearchSession.this.updateUIWithFindModel();
           mySearchResults.clear();
-          EditorSearchSession.this.updateResults(true);
+          EditorSearchSession.this.updateResults(FindSettings.getInstance().isScrollToResultsDuringTyping());
           FindUtil.updateFindInFileModel(EditorSearchSession.this.getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
         }
         finally {
@@ -234,7 +236,9 @@ public class EditorSearchSession implements SearchSession,
       new Separator(ApplicationBundle.message("editorsearch.more.multiple.cursors")),
       new AddOccurrenceAction(),
       new RemoveOccurrenceAction(),
-      new SelectAllAction()
+      new SelectAllAction(),
+      new Separator(),
+      ActionManager.getInstance().getAction(ACTION_TOGGLE_SCROLL_TO_RESULTS_DURING_TYPING)
     );
 
     group.setPopup(true);
@@ -357,7 +361,6 @@ public class EditorSearchSession implements SearchSession,
     setMatchesLimit(LivePreviewController.MATCHES_LIMIT);
     String text = myComponent.getSearchTextComponent().getText();
     myFindModel.setStringToFind(text);
-    updateResults(true);
     updateMultiLineStateIfNeeded();
   }
 
@@ -639,7 +642,7 @@ public class EditorSearchSession implements SearchSession,
   }
 
   public void selectAllOccurrences() {
-    FindUtil.selectSearchResultsInEditor(myEditor, mySearchResults.getOccurrences().iterator(), -1);
+    FindUtil.selectSearchResultsInEditor(myEditor, mySearchResults.getOccurrences().iterator(), -1, !FindSettings.getInstance().isScrollToResultsDuringTyping());
   }
 
   public void removeOccurrence() {

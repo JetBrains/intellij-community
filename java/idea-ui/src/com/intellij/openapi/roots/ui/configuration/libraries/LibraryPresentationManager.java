@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,20 +22,15 @@ public abstract class LibraryPresentationManager {
     return ApplicationManager.getApplication().getService(LibraryPresentationManager.class);
   }
 
-  @NotNull
-  public abstract Icon getNamedLibraryIcon(@NotNull Library library, @Nullable StructureConfigurableContext context);
+  public abstract @NotNull Icon getNamedLibraryIcon(@NotNull Library library, @Nullable StructureConfigurableContext context);
 
-  @Nullable
-  public abstract Icon getCustomIcon(@NotNull Library library, @Nullable StructureConfigurableContext context);
+  public abstract @Nullable Icon getCustomIcon(@NotNull Library library, @Nullable StructureConfigurableContext context);
 
-  @NotNull
-  public abstract List<Icon> getCustomIcons(@NotNull Library library, @Nullable StructureConfigurableContext context);
+  public abstract @NotNull List<Icon> getCustomIcons(@NotNull Library library, @Nullable StructureConfigurableContext context);
 
-  @NotNull
-  public abstract List<@NlsSafe String> getDescriptions(@NotNull Library library, StructureConfigurableContext context);
+  public abstract @NotNull List<@NlsSafe String> getDescriptions(@NotNull Library library, StructureConfigurableContext context);
 
-  @NotNull
-  public abstract List<@Nls String> getDescriptions(VirtualFile @NotNull [] classRoots, Set<? extends LibraryKind> excludedKinds);
+  public abstract @NotNull List<@Nls String> getDescriptions(VirtualFile @NotNull [] classRoots, Set<? extends LibraryKind> excludedKinds);
 
   public abstract List<Library> getLibraries(@NotNull Set<? extends LibraryKind> kinds, @NotNull Project project, @Nullable StructureConfigurableContext context);
 

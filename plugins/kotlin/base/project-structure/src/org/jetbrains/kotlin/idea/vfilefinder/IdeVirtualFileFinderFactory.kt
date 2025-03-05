@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeEnlarger
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
@@ -20,7 +20,7 @@ class IdeVirtualFileFinderFactory : VirtualFileFinderFactory, MetadataFinderFact
         val ideaModuleInfo = module.getCapability(ModuleInfo.Capability) as? IdeaModuleInfo
 
         val scope = if (ideaModuleInfo != null) {
-            KotlinResolutionScopeProvider.getInstance(project).getResolutionScope(ideaModuleInfo.toKaModule())
+            KotlinResolutionScopeEnlarger.getEnlargedResolutionScope(ideaModuleInfo.toKaModule())
         } else {
             GlobalSearchScope.allScope(project)
         }

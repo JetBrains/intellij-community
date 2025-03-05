@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -16,21 +16,21 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspectionTest extends Ligh
   protected String[] getEnvironmentClasses() {
     return new String[] {
       """
-package com.google.common.collect;
-
-import java.util.List;
-
-public class ImmutableList<E> implements List<E> {
-  public static ImmutableList<?> of() {return new ImmutableList<>();}
-  public static <T> ImmutableList<T> copyOf(List<T> list) {return new ImmutableList<>();}
-}"""
+      package com.google.common.collect;
+      
+      import java.util.List;
+      
+      public class ImmutableList<E> implements List<E> {
+        public static ImmutableList<?> of() {return new ImmutableList<>();}
+        public static <T> ImmutableList<T> copyOf(List<T> list) {return new ImmutableList<>();}
+      }"""
     };
   }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11_ANNOTATED;
+    return JAVA_17;
   }
 
   public void testAssignmentOrReturnOfFieldWithMutableType() {

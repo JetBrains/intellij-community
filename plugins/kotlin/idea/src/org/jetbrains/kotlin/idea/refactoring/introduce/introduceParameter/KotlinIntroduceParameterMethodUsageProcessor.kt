@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
@@ -73,7 +73,7 @@ class KotlinIntroduceParameterMethodUsageProcessor : IntroduceParameterMethodUsa
         val scope = element.useScope.let {
             if (it is GlobalSearchScope) GlobalSearchScope.getScopeRestrictedByFileTypes(it, KotlinFileType.INSTANCE) else it
         }
-        val kotlinFunctions = HierarchySearchRequest(element, scope).searchOverriders().map { it.unwrapped }.filterIsInstance<KtFunction>()
+        val kotlinFunctions = HierarchySearchRequest(element, scope).searchOverriders().asIterable().map { it.unwrapped }.filterIsInstance<KtFunction>()
         return (kotlinFunctions + element).all {
             KotlinCallableDefinitionUsage(it, changeInfo.originalBaseFunctionDescriptor, null, null, false).processUsage(
                 changeInfo,

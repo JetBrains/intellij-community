@@ -23,9 +23,9 @@ public class LinearFragmentGenerator {
   private static final int SHORT_FRAGMENT_MAX_SIZE = 10;
   private static final int MAX_SEARCH_SIZE = 10;
 
-  @NotNull private final LiteLinearGraph myLinearGraph;
+  private final @NotNull LiteLinearGraph myLinearGraph;
 
-  @NotNull private final Set<Integer> myPinnedNodes;
+  private final @NotNull Set<Integer> myPinnedNodes;
 
   private final Function<Integer, List<Integer>> upNodesFun = new Function<>() {
     @Override
@@ -46,8 +46,7 @@ public class LinearFragmentGenerator {
     myPinnedNodes = pinnedNodes;
   }
 
-  @Nullable
-  public GraphFragment getRelativeFragment(@NotNull GraphElement element) {
+  public @Nullable GraphFragment getRelativeFragment(@NotNull GraphElement element) {
     int upNodeIndex;
     int downNodeIndex;
     if (element instanceof GraphNode) {
@@ -76,34 +75,28 @@ public class LinearFragmentGenerator {
     return null;
   }
 
-  @Nullable
-  public GraphFragment getDownFragment(int upperVisibleNodeIndex) {
+  public @Nullable GraphFragment getDownFragment(int upperVisibleNodeIndex) {
     return getFragment(upperVisibleNodeIndex, downNodesFun, upNodesFun, myPinnedNodes, true);
   }
 
-  @Nullable
-  public GraphFragment getUpFragment(int lowerNodeIndex) {
+  public @Nullable GraphFragment getUpFragment(int lowerNodeIndex) {
     return getFragment(lowerNodeIndex, upNodesFun, downNodesFun, myPinnedNodes, false);
   }
 
-  @Nullable
-  public GraphFragment getLongDownFragment(int rowIndex) {
+  public @Nullable GraphFragment getLongDownFragment(int rowIndex) {
     return getLongFragment(getDownFragment(rowIndex), Integer.MAX_VALUE);
   }
 
-  @Nullable
-  public GraphFragment getLongFragment(@NotNull GraphElement element) {
+  public @Nullable GraphFragment getLongFragment(@NotNull GraphElement element) {
     return getLongFragment(getRelativeFragment(element), Integer.MAX_VALUE);
   }
 
   // for hover
-  @Nullable
-  public GraphFragment getPartLongFragment(@NotNull GraphElement element) {
+  public @Nullable GraphFragment getPartLongFragment(@NotNull GraphElement element) {
     return getLongFragment(getRelativeFragment(element), 500);
   }
 
-  @Nullable
-  private GraphFragment getLongFragment(@Nullable GraphFragment startFragment, int bound) {
+  private @Nullable GraphFragment getLongFragment(@Nullable GraphFragment startFragment, int bound) {
     if (startFragment == null) return null;
 
     GraphFragment shortFragment;
@@ -130,11 +123,10 @@ public class LinearFragmentGenerator {
     return null;
   }
 
-  @Nullable
-  private static GraphFragment getFragment(int startNode,
-                                           Function<? super Integer, ? extends List<Integer>> getNextNodes,
-                                           Function<? super Integer, ? extends List<Integer>> getPrevNodes,
-                                           Set<Integer> thisNodeCantBeInMiddle, boolean isDown) {
+  private static @Nullable GraphFragment getFragment(int startNode,
+                                                     Function<? super Integer, ? extends List<Integer>> getNextNodes,
+                                                     Function<? super Integer, ? extends List<Integer>> getPrevNodes,
+                                                     Set<Integer> thisNodeCantBeInMiddle, boolean isDown) {
     Set<Integer> blackNodes = new HashSet<>();
     blackNodes.add(startNode);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.util.SmartList;
@@ -23,8 +23,14 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
   public DependencyGraphImpl(MapletFactory containerFactory) {
     super(containerFactory);
-    addIndex(new SubclassesIndex(containerFactory));
-    myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
+    try {
+      addIndex(new SubclassesIndex(containerFactory));
+      myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
+    }
+    catch (RuntimeException e) {
+      closeIgnoreErrors();
+      throw e;
+    }
   }
 
   @Override
@@ -44,8 +50,15 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     String sessionName = params.getSessionName();
     Iterable<NodeSource> deltaSources = delta.getSources();
-    Set<NodeSource> allProcessedSources = delta.isSourceOnly()? delta.getDeletedSources() : collect(flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
-    Set<Node<?, ?>> nodesBefore = collect(flat(map(allProcessedSources, this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    Set<NodeSource> allProcessedSources = delta.isSourceOnly()? delta.getDeletedSources() : collect(flat(List.of(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
+    Set<Node<?, ?>> nodesWithErrors = params.isCompiledWithErrors()? collect(flat(map(filter(delta.getBaseSources(), s -> !contains(deltaSources, s)), this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode)) : Set.of();
+
+    // Important: in case of errors some sources sent to recompilation ('baseSources') might not have corresponding output classes either because a source has compilation errors
+    // or because compiler stopped compilation and has not managed to compile some sources (=> produced no output for these sources).
+    // In this case ignore 'baseSources' when building the set of previously available nodes, so that only successfully recompiled and deleted sources will take part in dependency analysis and affection of additional files.
+    // This will also affect the contents of 'deletedNodes' set: it will be based only on those sources which were deleted or processed without errors => the current set of nodes for such files is known.
+    // Nodes in the graph corresponding to those 'baseSources', for which compiler has not produced any output, are available in the 'nodeWithErrors' set and can be analysed separately.
+    Set<Node<?, ?>> nodesBefore = collect(flat(map(params.isCompiledWithErrors()? flat(List.of(deltaSources, delta.getDeletedSources())) : allProcessedSources, this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
     Set<Node<?, ?>> nodesAfter = delta.isSourceOnly()? Collections.emptySet() : collect(flat(map(deltaSources, delta::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
 
     // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
@@ -57,6 +70,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
         @Override
         public String getSessionName() {
           return sessionName;
+        }
+
+        @Override
+        public DifferentiateParameters getParameters() {
+          return params;
         }
 
         @Override
@@ -80,7 +98,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       private final Predicate<Node<?, ?>> ANY_CONSTRAINT = node -> true;
 
       final Set<NodeSource> compiledSources = deltaSources instanceof Set? (Set<NodeSource>)deltaSources : collect(deltaSources, new HashSet<>());
-      final Set<ReferenceID> deleted = collect(map(deletedNodes, n -> n.getReferenceID()), new HashSet<>());
+      final Set<ReferenceID> deleted = collect(map(deletedNodes, Node::getReferenceID), new HashSet<>());
       final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
       final Set<Predicate<Node<?, ?>>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
@@ -161,19 +179,18 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     boolean incremental = true;
     for (DifferentiateStrategy diffStrategy : ourDifferentiateStrategies) {
-      if (!diffStrategy.differentiate(diffContext, nodesBefore, nodesAfter)) {
+      if (!diffStrategy.differentiate(diffContext, nodesBefore, nodesAfter, nodesWithErrors)) {
         incremental = false;
         break;
       }
     }
 
     if (!incremental) {
-      return DifferentiateResult.createNonIncremental("", delta, deletedNodes);
+      return DifferentiateResult.createNonIncremental("", params, delta, deletedNodes);
     }
 
-    Set<ReferenceID> dependingOnDeleted = collect(flat(map(deletedNodes, n -> getDependingNodes(n.getReferenceID()))), new HashSet<>());
+    Set<ReferenceID> dependingOnDeleted = collect(flat(map(diffContext.deleted, this::getDependingNodes)), new HashSet<>());
     Set<NodeSource> affectedSources = collect(flat(map(dependingOnDeleted, this::getSources)), new HashSet<>());
-
 
     Map<Node<?, ?>, Boolean> affectedNodeCache = Containers.createCustomPolicyMap(DiffCapable::isSame, DiffCapable::diffHashCode);
     Function<Node<?, ?>, Boolean> checkAffected = k -> affectedNodeCache.computeIfAbsent(k, n -> {
@@ -198,7 +215,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
           Boolean isAffected = checkAffected.apply(depNode);
           if (isAffected == null) {
             // non-incremental
-            return DifferentiateResult.createNonIncremental("", delta, deletedNodes);
+            return DifferentiateResult.createNonIncremental("", params, delta, deletedNodes);
           }
           if (isAffected) {
             affectSource = true;
@@ -214,7 +231,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       // Some nodes may be associated with multiple sources. In this case ensure that all these sources are sent to compilation
       Set<NodeSource> inputSources = delta.getBaseSources();
       Set<NodeSource> deleted = delta.getDeletedSources();
-      Predicate<? super NodeSource> srcFilter = diffContext.getParams().belongsToCurrentCompilationChunk().and(s -> !deleted.contains(s));
+      Predicate<? super NodeSource> srcFilter = DifferentiateParameters.affectableInCurrentChunk(diffContext.getParams()).and(s -> !deleted.contains(s));
       for (var node : flat(map(flat(inputSources, deleted), this::getNodes))) {
         Iterable<NodeSource> nodeSources = getSources(node.getReferenceID());
         if (count(nodeSources) > 1) {
@@ -236,14 +253,24 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     if (!delta.isSourceOnly()) {
       // complete affected file set with source-delta dependencies
-      collect(differentiate(createDelta(affectedSources, Collections.emptyList(), true), params).getAffectedSources(), affectedSources);
+      Delta affectedSourceDelta = createDelta(
+        filter(affectedSources, params.belongsToCurrentCompilationChunk()::test),
+        Collections.emptyList(),
+        true
+      );
+      var srcDeltaParams = DifferentiateParametersBuilder.create(params).compiledWithErrors(false).get();
+      collect(differentiate(affectedSourceDelta, srcDeltaParams).getAffectedSources(), affectedSources);
     }
-
 
     return new DifferentiateResult() {
       @Override
       public String getSessionName() {
         return sessionName;
+      }
+
+      @Override
+      public DifferentiateParameters getParameters() {
+        return params;
       }
 
       @Override
@@ -265,11 +292,12 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
   @Override
   public void integrate(@NotNull DifferentiateResult diffResult) {
+    DifferentiateParameters params = diffResult.getParameters();
     final Delta delta = diffResult.getDelta();
 
     // handle deleted nodes and sources
     if (!isEmpty(diffResult.getDeletedNodes())) {
-      Set<NodeSource> differentiatedSources = collect(flat(List.of(delta.getBaseSources(), delta.getSources(), delta.getDeletedSources())), new HashSet<>());
+      Set<NodeSource> differentiatedSources = collect(flat(List.of(params.isCompiledWithErrors()? List.of() : delta.getBaseSources(), delta.getSources(), delta.getDeletedSources())), new HashSet<>());
       for (var deletedNode : diffResult.getDeletedNodes()) { // the set of deleted nodes includes ones corresponding to deleted sources
         Set<NodeSource> nodeSources = collect(myNodeToSourcesMap.get(deletedNode.getReferenceID()), new HashSet<>());
         nodeSources.removeAll(differentiatedSources);
@@ -292,7 +320,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       index.integrate(diffResult.getDeletedNodes(), updatedNodes, deltaIndex);
     }
 
-    var deltaNodes = unique(map(flat(map(delta.getSources(), delta::getNodes)), node -> node.getReferenceID()));
+    var deltaNodes = unique(map(flat(map(delta.getSources(), delta::getNodes)), Node::getReferenceID));
     for (ReferenceID nodeID : deltaNodes) {
       Set<NodeSource> sourcesAfter = collect(myNodeToSourcesMap.get(nodeID), new HashSet<>());
       sourcesAfter.removeAll(delta.getBaseSources());

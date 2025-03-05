@@ -9,7 +9,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import org.jetbrains.annotations.ApiStatus
 
 internal class ModifiableModelCommitterServiceBridge : ModifiableModelCommitterService {
   override fun multiCommit(rootModels: MutableCollection<out ModifiableRootModel>, moduleModel: ModifiableModuleModel) {

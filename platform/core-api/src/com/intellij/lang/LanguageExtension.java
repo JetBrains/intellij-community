@@ -139,7 +139,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return buildExtensions(allKeys);
   }
 
-  public @NotNull List<T> allForLanguageOrAny(@NotNull Language l) {
+  public @Unmodifiable @NotNull List<T> allForLanguageOrAny(@NotNull Language l) {
     List<T> forLanguage = allForLanguage(l);
     if (l == Language.ANY) {
       return forLanguage;

@@ -56,7 +56,7 @@ public final class PyInspectionsSuppressor implements InspectionSuppressor {
   }
 
   private static boolean isSuppressedForParent(@NotNull PsiElement element,
-                                               @NotNull final Class<? extends PyElement> parentClass,
+                                               final @NotNull Class<? extends PyElement> parentClass,
                                                @NotNull String suppressId) {
     PyElement parent = PsiTreeUtil.getParentOfType(element, parentClass, false);
     if (parent == null) {

@@ -41,6 +41,7 @@ public final class TargetAction extends DumbAwareAction {
                     "; Project: " + buildFile.getProject().getPresentableUrl();
   }
 
+  @Override
   public @NonNls String toString() {
     return myDebugString;
   }

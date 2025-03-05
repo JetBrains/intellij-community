@@ -30,8 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public final class TransientFieldInNonSerializableClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     return InspectionGadgetsBundle.message(
       "transient.field.in.non.serializable.class.problem.descriptor",

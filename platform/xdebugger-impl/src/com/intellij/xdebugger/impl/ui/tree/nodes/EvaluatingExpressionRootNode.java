@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.ui.UIUtil;
@@ -29,7 +29,7 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
     }
 
     @Override
-    public void computeChildren(@NotNull final XCompositeNode node) {
+    public void computeChildren(final @NotNull XCompositeNode node) {
       myDialog.startEvaluation(new MyEvaluationCallback(node));
     }
 
@@ -44,14 +44,14 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
       }
 
       @Override
-      public void evaluated(@NotNull final XValue result) {
+      public void evaluated(final @NotNull XValue result) {
         String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
         myNode.addChildren(XValueChildrenList.singleton(name, result), true);
         myDialog.evaluationDone();
       }
 
       @Override
-      public void errorOccurred(@NotNull final String errorMessage) {
+      public void errorOccurred(final @NotNull String errorMessage) {
         myNode.setErrorMessage(errorMessage);
         myDialog.evaluationDone();
       }

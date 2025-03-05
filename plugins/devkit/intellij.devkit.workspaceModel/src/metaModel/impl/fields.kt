@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl
 
-import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithSource
+import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithPsi
+import com.intellij.psi.PsiElement
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import org.jetbrains.kotlin.descriptors.SourceElement
 
 private val fieldObjType = ObjTypeImpl<ObjProperty<*, *>>()
 
@@ -15,8 +15,8 @@ sealed class ObjPropertyBase<T : Obj, V>(
   override val open: Boolean,
   override val mutable: Boolean,
   override val content: Boolean,
-  override val sourceElement: SourceElement
-) : ObjProperty<T, V>, ObjMetaElementWithSource {
+  override val sourcePsi: PsiElement?
+) : ObjProperty<T, V>, ObjMetaElementWithPsi {
   private val mutableOverrides: MutableList<ObjProperty<T, V>> = ArrayList()
   private val mutableOverriddenBy: MutableList<ObjProperty<T, V>> = ArrayList()
 
@@ -39,8 +39,8 @@ class OwnPropertyImpl<T : Obj, V>(
   override val constructorParameter: Boolean,
   override val classLocalId: Int,
   override val isKey: Boolean,
-  sourceElement: SourceElement
-) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourceElement), OwnProperty<T, V> {
+  sourcePsi: PsiElement?
+) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourcePsi), OwnProperty<T, V> {
 
   override fun toString(): String = "$name (${receiver.name})"
 }
@@ -56,7 +56,7 @@ class ExtPropertyImpl<T : Obj, V>(
   override val module: ObjModule,
   override val moduleLocalId: Int,
   override val annotations: List<ObjAnnotation>,
-  sourceElement: SourceElement,
-) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourceElement), ExtProperty<T, V> {
+  sourcePsi: PsiElement?
+) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, mutable, content, sourcePsi), ExtProperty<T, V> {
   override fun toString(): String = "$name (${receiver.name})"
 }

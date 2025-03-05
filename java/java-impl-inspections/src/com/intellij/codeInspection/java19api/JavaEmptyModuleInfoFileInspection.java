@@ -4,6 +4,7 @@ package com.intellij.codeInspection.java19api;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.Module;
@@ -101,8 +102,7 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
     return !modules.isEmpty();
   }
 
-  @Nullable
-  private static PsiElement getStartContentElement(@NotNull PsiJavaModule module) {
+  private static @Nullable PsiElement getStartContentElement(@NotNull PsiJavaModule module) {
     PsiElement child = module.getFirstChild();
     while (child != null && child.getNode().getElementType() != LBRACE) {
       child = child.getNextSibling();
@@ -143,8 +143,7 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
       .collect(Collectors.toCollection(() -> new TreeSet<>((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()))));
   }
 
-  @NotNull
-  private static DependencyScope getScope(@NotNull PsiJavaModule descriptor) {
+  private static @NotNull DependencyScope getScope(@NotNull PsiJavaModule descriptor) {
     PsiFile file = descriptor.getContainingFile().getOriginalFile();
     Module module = ModuleUtilCore.findModuleForFile(file);
     if (module == null) return DependencyScope.COMPILE;
@@ -155,27 +154,24 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
            : DependencyScope.COMPILE;
   }
 
-  @Nullable
-  private static PsiJavaModule findDescriptor(@Nullable PsiElement psiElement) {
+  private static @Nullable PsiJavaModule findDescriptor(@Nullable PsiElement psiElement) {
     if (psiElement == null) return null;
     if (psiElement instanceof PsiPackage psiPackage) {
       PsiDirectory[] directories = psiPackage.getDirectories(psiPackage.getResolveScope());
       for (PsiDirectory directory : directories) {
-        PsiJavaModule descriptor = JavaModuleGraphUtil.findDescriptorByElement(directory);
+        PsiJavaModule descriptor = JavaPsiModuleUtil.findDescriptorByElement(directory);
         if (descriptor != null) return descriptor;
       }
     }
     else {
-      return JavaModuleGraphUtil.findDescriptorByElement(psiElement);
+      return JavaPsiModuleUtil.findDescriptorByElement(psiElement);
     }
     return null;
   }
 
   private static class ImportsCollector implements ContentIterator {
-    @NotNull
-    private final PsiManager myPsiManager;
-    @NotNull
-    private final Predicate<PsiImportStatement> myShouldProcessFollowingFile;
+    private final @NotNull PsiManager myPsiManager;
+    private final @NotNull Predicate<PsiImportStatement> myShouldProcessFollowingFile;
 
     private ImportsCollector(@NotNull PsiManager manager, @NotNull Predicate<PsiImportStatement> shouldProcessFollowingFile) {
       myPsiManager = manager;

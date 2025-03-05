@@ -91,8 +91,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -949,6 +949,7 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       PsiElement parent = owner.getParent();
       if (parent == null || !(parent.getParent() instanceof PsiMethod)) return false;
     }
+    if (owner instanceof PsiRecordComponent) return false;
     if (!owner.getManager().isInProject(owner)) return true;
     return JavaCodeStyleSettings.getInstance(owner.getContainingFile()).USE_EXTERNAL_ANNOTATIONS;
   }

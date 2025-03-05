@@ -2,14 +2,11 @@
 package git4idea;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder;
@@ -25,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
+import com.intellij.vcs.commit.CommitMode;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAdvancedSettingsListener;
 import git4idea.annotate.GitAnnotationProvider;
@@ -35,11 +33,12 @@ import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
+import git4idea.commit.GitCommitModeProvider;
+import git4idea.commit.GitStagingAreaCommitMode;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
-import git4idea.index.GitStageManagerKt;
 import git4idea.merge.GitMergeProvider;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -49,7 +48,9 @@ import git4idea.stash.ui.GitStashContentProviderKt;
 import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.vfs.GitVFSListener;
+import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 import org.jetbrains.annotations.*;
 
 import java.util.Collections;
@@ -60,6 +61,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
+
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledIoThread;
 
 /**
  * Git VCS implementation
@@ -72,8 +76,7 @@ public final class GitVcs extends AbstractVcs {
   private static final Logger LOG = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
 
-  private final AtomicReference<Disposable> myDisposable = new AtomicReference<>();
-  @NotNull private final CoroutineScope coroutineScope;
+  private final AtomicReference<CoroutineScope> myActiveScope = new AtomicReference<>();
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
@@ -83,9 +86,8 @@ public final class GitVcs extends AbstractVcs {
     return Objects.requireNonNull(gitVcs);
   }
 
-  public GitVcs(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+  public GitVcs(@NotNull Project project) {
     super(project, NAME);
-    this.coroutineScope = coroutineScope;
   }
 
   public ReadWriteLock getCommandLock() {
@@ -165,7 +167,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   public @Nullable VcsRevisionNumber parseRevisionNumber(@Nullable String revision, @Nullable FilePath path) throws VcsException {
-    if (revision == null || revision.length() == 0) return null;
+    if (revision == null || revision.isEmpty()) return null;
     if (revision.length() > 40) {    // date & revision-id encoded string
       String dateString = revision.substring(0, revision.indexOf("["));
       String rev = revision.substring(revision.indexOf("[") + 1, 40);
@@ -196,22 +198,21 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void activate() {
-    Disposable disposable = Disposer.newDisposable();
-    // do not leak Project if 'deactivate' is never called
-    Disposer.register(GitDisposable.getInstance(myProject), disposable);
+    CoroutineScope globalScope = GitDisposable.getInstance(myProject).getCoroutineScope();
+    CoroutineScope activeScope = childScope(globalScope, "GitVcs", EmptyCoroutineContext.INSTANCE, true);
+
     // workaround the race between 'activate' and 'deactivate'
-    Disposable oldDisposable = myDisposable.getAndSet(disposable);
-    if (oldDisposable != null) Disposer.dispose(oldDisposable);
+    CoroutineScope oldScope = myActiveScope.getAndSet(activeScope);
+    if (oldScope != null) CoroutineScopeKt.cancel(oldScope, null);
 
-    BackgroundTaskUtil.executeOnPooledThread(disposable, ()
-      -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
+    executeOnPooledIoThread(activeScope, () -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
 
-    myVFSListener = GitVFSListener.createInstance(this, disposable, coroutineScope);
+    myVFSListener = GitVFSListener.createInstance(this, activeScope);
     // make sure to read the registry before opening commit dialog
     myProject.getService(VcsUserRegistry.class);
 
-    GitAnnotationsListener.registerListener(myProject, disposable);
-    GitAdvancedSettingsListener.registerListener(myProject, disposable);
+    GitAnnotationsListener.registerListener(myProject, activeScope);
+    GitAdvancedSettingsListener.registerListener(myProject, activeScope);
 
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
@@ -220,8 +221,9 @@ public final class GitVcs extends AbstractVcs {
   @Override
   protected void deactivate() {
     myVFSListener = null;
-    Disposable disposable = myDisposable.getAndSet(null);
-    if (disposable != null) Disposer.dispose(disposable);
+
+    CoroutineScope oldScope = myActiveScope.getAndSet(null);
+    if (oldScope != null) CoroutineScopeKt.cancel(oldScope, null);
   }
 
   @Override
@@ -237,7 +239,7 @@ public final class GitVcs extends AbstractVcs {
    * @param action an action
    */
   public void showErrors(@NotNull List<? extends VcsException> list, @NotNull @Nls String action) {
-    if (list.size() > 0) {
+    if (!list.isEmpty()) {
       @Nls StringBuilder buffer = new StringBuilder();
       buffer.append("\n");
       buffer.append(GitBundle.message("error.list.title", action));
@@ -353,9 +355,17 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  public boolean isWithCustomLocalChanges() {
-    return GitVcsApplicationSettings.getInstance().isStagingAreaEnabled() &&
-           GitStageManagerKt.canEnableStagingArea();
+  public @Nullable CommitMode getForcedCommitMode() {
+    if (GitVcsApplicationSettings.getInstance().isStagingAreaEnabled()) {
+      return GitStagingAreaCommitMode.INSTANCE;
+    }
+    CommitMode commitModeFromExtension = GitCommitModeProvider.EP_NAME.computeSafeIfAny(GitCommitModeProvider::getCommitMode);
+    if (commitModeFromExtension != null) {
+      return commitModeFromExtension;
+    }
+    else {
+      return null;
+    }
   }
 
   @Override

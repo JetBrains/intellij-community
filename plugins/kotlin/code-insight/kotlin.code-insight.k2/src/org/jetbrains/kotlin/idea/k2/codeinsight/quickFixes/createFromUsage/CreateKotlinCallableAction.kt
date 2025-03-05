@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.java.request.CreateExecutableFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.*
@@ -33,9 +35,9 @@ internal class CreateKotlinCallableAction(
     private val targetClass: JvmClass,
     private val abstract: Boolean,
     private val needFunctionBody: Boolean,
-    private val myText: String,
+    @IntentionName private val myText: String,
     private val pointerToContainer: SmartPsiElementPointer<*>,
-) : JvmGroupIntentionAction {
+) : JvmGroupIntentionAction, PriorityAction {
     private val methodName: String = request.methodName
     private val callPointer: SmartPsiElementPointer<PsiElement>? = when (request) {
         is CreateMethodFromKotlinUsageRequest -> request.call.createSmartPointer()
@@ -75,6 +77,10 @@ internal class CreateKotlinCallableAction(
 
     override fun startInWriteAction(): Boolean = true
 
+    override fun getPriority(): PriorityAction.Priority {
+        return if (methodName.firstOrNull()?.isLowerCase() == true) PriorityAction.Priority.NORMAL else PriorityAction.Priority.LOW
+    }
+
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
         return pointerToContainer.element != null
                 && callPointer?.element != null
@@ -96,42 +102,43 @@ internal class CreateKotlinCallableAction(
     override fun getText(): String = myText
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-        if (callableDefinitionAsString != null) {
-            val callableInfo = NewCallableInfo(
-                callableDefinitionAsString,
-                parameterCandidates,
-                candidatesOfRenderedReturnType,
-                containerClassFqName,
-                isForCompanion,
-                listOf(), listOf()
-            )
-
-            val call = call
-            require(call != null)
-            val createKotlinCallablePsiEditor = CreateKotlinCallablePsiEditor(
-                project, callableInfo,
-            )
-            val function = KtPsiFactory(project).createFunction(
-                callableInfo.definitionAsString
-            )
-            val passedContainerElement = pointerToContainer.element ?: return
-            val anchor = call
-            val shouldComputeContainerFromAnchor =
-                if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension || !passedContainerElement.isWritable
-                else passedContainerElement.getContainer() == anchor.getContainer()
-            val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
-                anchor.getExtractionContainers().firstOrNull() ?:return
-            } else {
-                passedContainerElement
-            }
-            createKotlinCallablePsiEditor.showEditor(
-                function,
-                call,
-                isExtension,
-                requestTargetClassPointer?.element,
-                insertContainer,
-            )
+        if (callableDefinitionAsString == null) {
+            return
         }
+        val callableInfo = NewCallableInfo(
+            callableDefinitionAsString,
+            parameterCandidates,
+            candidatesOfRenderedReturnType,
+            containerClassFqName,
+            isForCompanion,
+            listOf(), listOf()
+        )
+
+        val call = call
+        require(call != null)
+        val createKotlinCallablePsiEditor = CreateKotlinCallablePsiEditor(
+            project, callableInfo,
+        )
+        val function = KtPsiFactory(project).createFunction(
+            callableInfo.definitionAsString
+        )
+        val passedContainerElement = pointerToContainer.element ?: return
+        val anchor = call
+        val shouldComputeContainerFromAnchor =
+            if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension || !passedContainerElement.isWritable
+            else passedContainerElement.getContainer() == anchor.getContainer()
+        val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
+            anchor.getExtractionContainers().firstOrNull() ?:return
+        } else {
+            passedContainerElement
+        }
+        createKotlinCallablePsiEditor.showEditor(
+            function,
+            call,
+            isExtension,
+            requestTargetClassPointer?.element,
+            insertContainer,
+        )
     }
 
     private fun getContainer(): KtElement? {

@@ -38,6 +38,7 @@ public fun IconActionButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
@@ -55,6 +56,7 @@ public fun IconActionButton(
         style = style,
         interactionSource = interactionSource,
         modifier = modifier,
+        iconModifier = iconModifier,
         colorFilter = colorFilter,
         hint = hint,
         onClick = onClick,
@@ -67,6 +69,7 @@ public fun IconActionButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
@@ -89,6 +92,7 @@ public fun IconActionButton(
             style = style,
             interactionSource = interactionSource,
             modifier = modifier,
+            iconModifier = iconModifier,
             colorFilter = colorFilter,
             hint = hint,
             onClick = onClick,
@@ -103,6 +107,7 @@ public fun IconActionButton(
     hints: Array<PainterHint>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
@@ -119,6 +124,7 @@ public fun IconActionButton(
         style = style,
         interactionSource = interactionSource,
         modifier = modifier,
+        iconModifier = iconModifier,
         colorFilter = colorFilter,
         hints = hints,
         onClick = onClick,
@@ -132,6 +138,7 @@ public fun IconActionButton(
     hints: Array<PainterHint>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
@@ -147,6 +154,7 @@ public fun IconActionButton(
         CoreIconActionButton(
             key = key,
             modifier = modifier,
+            iconModifier = iconModifier,
             contentDescription = contentDescription,
             iconClass = iconClass,
             enabled = enabled,
@@ -170,6 +178,7 @@ private fun BaseIconActionButton(
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
     modifier: Modifier,
+    iconModifier: Modifier,
     colorFilter: ColorFilter?,
     hint: PainterHint?,
     onClick: () -> Unit,
@@ -184,6 +193,7 @@ private fun BaseIconActionButton(
             style = style,
             interactionSource = interactionSource,
             modifier = modifier,
+            iconModifier = iconModifier,
             colorFilter = colorFilter,
             hint = hint,
             onClick = onClick,
@@ -198,6 +208,7 @@ private fun BaseIconActionButton(
             style = style,
             interactionSource = interactionSource,
             modifier = modifier,
+            iconModifier = iconModifier,
             colorFilter = colorFilter,
             hints = emptyArray(),
             onClick = onClick,
@@ -215,12 +226,20 @@ private fun CoreIconActionButton(
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
     modifier: Modifier,
+    iconModifier: Modifier,
     colorFilter: ColorFilter?,
     hints: Array<PainterHint>,
     onClick: () -> Unit,
 ) {
     IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
-        Icon(key, contentDescription, iconClass = iconClass, colorFilter = colorFilter, hints = hints)
+        Icon(
+            key = key,
+            contentDescription = contentDescription,
+            modifier = iconModifier,
+            iconClass = iconClass,
+            colorFilter = colorFilter,
+            hints = hints,
+        )
     }
 }
 
@@ -234,12 +253,20 @@ private fun CoreIconActionButton(
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
     modifier: Modifier,
+    iconModifier: Modifier,
     colorFilter: ColorFilter?,
     hint: PainterHint,
     onClick: () -> Unit,
 ) {
     IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
-        Icon(key, contentDescription, iconClass = iconClass, hint = hint, colorFilter = colorFilter)
+        Icon(
+            key = key,
+            contentDescription = contentDescription,
+            modifier = iconModifier,
+            iconClass = iconClass,
+            hint = hint,
+            colorFilter = colorFilter,
+        )
     }
 }
 
@@ -249,12 +276,23 @@ public fun IconActionButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    CoreIconActionButton(painter, contentDescription, enabled, focusable, style, interactionSource, modifier, onClick)
+    CoreIconActionButton(
+        painter = painter,
+        contentDescription = contentDescription,
+        enabled = enabled,
+        focusable = focusable,
+        style = style,
+        interactionSource = interactionSource,
+        modifier = modifier,
+        iconModifier = iconModifier,
+        onClick = onClick,
+    )
 }
 
 @Composable
@@ -263,6 +301,7 @@ public fun IconActionButton(
     contentDescription: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    iconModifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusable: Boolean = true,
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
@@ -276,6 +315,7 @@ public fun IconActionButton(
         CoreIconActionButton(
             painter = painter,
             modifier = modifier,
+            iconModifier = iconModifier,
             contentDescription = contentDescription,
             enabled = enabled,
             focusable = focusable,
@@ -295,7 +335,10 @@ private fun CoreIconActionButton(
     style: IconButtonStyle,
     interactionSource: MutableInteractionSource,
     modifier: Modifier = Modifier,
+    iconModifier: Modifier,
     onClick: () -> Unit,
 ) {
-    IconButton(onClick, modifier, enabled, focusable, style, interactionSource) { Icon(painter, contentDescription) }
+    IconButton(onClick, modifier, enabled, focusable, style, interactionSource) {
+        Icon(painter, contentDescription, modifier = iconModifier)
+    }
 }

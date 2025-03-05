@@ -233,7 +233,7 @@ public final class ProcessListUtil {
    * @deprecated The method seems to be not used, but it can be hypothetically used in some unpublished third-party plugin.
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
     return parseLinuxOutputMacStyle(commandOnly, full, null);
   }

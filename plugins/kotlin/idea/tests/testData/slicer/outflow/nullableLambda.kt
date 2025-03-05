@@ -5,5 +5,5 @@ fun String.foo(<caret>p: String) {
 }
 
 fun bar(receiver: String, b: Boolean, lambda: (String.() -> String)?): String {
-    return if (b) lambda!!.invoke(receiver) else ""
+    return if (b) (lambda!!).invoke(receiver) else ""
 }

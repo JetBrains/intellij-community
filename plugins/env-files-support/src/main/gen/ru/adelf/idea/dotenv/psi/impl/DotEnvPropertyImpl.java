@@ -1,11 +1,14 @@
 // This is a generated file. Not intended for manual editing.
 package ru.adelf.idea.dotenv.psi.impl;
 
+import java.util.List;
+import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.PsiTreeUtil;
+import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
+import ru.adelf.idea.dotenv.psi.DotEnvNamedElementImpl;
 import ru.adelf.idea.dotenv.psi.*;
 
 public class DotEnvPropertyImpl extends DotEnvNamedElementImpl implements DotEnvProperty {

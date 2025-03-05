@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 class RefreshRootsLibraryAction extends DumbAwareAction {
-  @NotNull private final BaseLibrariesConfigurable myConfigurable;
+  private final @NotNull BaseLibrariesConfigurable myConfigurable;
 
   RefreshRootsLibraryAction(@NotNull BaseLibrariesConfigurable configurable) {
     super(JavaUiBundle.message("refresh.library.roots.action.name"));
@@ -61,8 +61,7 @@ class RefreshRootsLibraryAction extends DumbAwareAction {
     return ActionUpdateThread.EDT;
   }
 
-  @Nullable
-  private Library getLibrary() {
+  private @Nullable Library getLibrary() {
     ProjectStructureElement element = myConfigurable.getSelectedElement();
     return element instanceof LibraryProjectStructureElement ? ((LibraryProjectStructureElement)element).getLibrary() : null;
   }

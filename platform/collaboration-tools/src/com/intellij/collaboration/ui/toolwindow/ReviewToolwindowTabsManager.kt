@@ -50,7 +50,7 @@ private class ReviewToolwindowTabsManager<
 ) {
   private val contentManager = toolwindow.contentManager
   private val projectVm = reviewToolwindowViewModel.projectVm
-  private val cs = parentCs.childScope(Dispatchers.Main)
+  private val cs = parentCs.childScope(Dispatchers.EDT)
 
   init {
     contentManager.addDataProvider(EdtNoGetDataProvider { sink ->

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.external
 
 import com.intellij.diff.DiffDialogHints
@@ -35,7 +35,7 @@ import java.io.IOException
 @ApiStatus.Internal
 object ExternalDiffTool {
   private val LOG = Logger.getInstance(ExternalDiffTool::class.java)
-  private val ERROR_NOTIFICATION_GROUP_ID = "Diff Changes Loading Error"
+  private const val ERROR_NOTIFICATION_GROUP_ID = "Diff Changes Loading Error"
 
   @JvmStatic
   fun isEnabled(): Boolean {
@@ -159,7 +159,7 @@ object ExternalDiffTool {
 
       return true
     }
-    catch (ignore: ProcessCanceledException) {
+    catch (_: ProcessCanceledException) {
     }
     catch (e: Throwable) {
       LOG.warn(e)

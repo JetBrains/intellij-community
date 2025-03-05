@@ -30,6 +30,11 @@ public class FirHierarchyWithLibTestGenerated extends AbstractFirHierarchyWithLi
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("abstractList")
+    public void testAbstractList() throws Exception {
+        runTest("../../idea/tests/testData/hierarchy/withLib/abstractList/");
+    }
+
     @TestMetadata("annotation")
     public void testAnnotation() throws Exception {
         runTest("../../idea/tests/testData/hierarchy/withLib/annotation/");

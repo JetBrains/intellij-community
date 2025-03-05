@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,18 +17,19 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.function.UnaryOperator;
 
-abstract class StubTreeSerializerBase<SerializationState> {
+@ApiStatus.Internal
+public abstract class StubTreeSerializerBase<SerializationState> {
   static final ThreadLocal<ObjectStubSerializer<?, ? extends Stub>> ourRootStubSerializer = new ThreadLocal<>();
   private static final boolean useStubStringInterner = Boolean.parseBoolean(System.getProperty("idea.use.stub.string.interner", "false"));
 
   private final @Nullable UnaryOperator<String> stubStringInterner;
 
-  StubTreeSerializerBase() {
+  public StubTreeSerializerBase() {
     stubStringInterner = useStubStringInterner ? StubStringInterner.getInstance() : UnaryOperator.identity();
   }
 
   @NotNull
-  Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
+  public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(false);
     StubInputStream inputStream = new StubInputStream(stream, storage);
 
@@ -67,7 +69,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
     return baseStub;
   }
 
-  void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
+  public void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(true);
     @NotNull SerializationState serializationState = createSerializationState();
@@ -77,7 +79,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
     if (rootStub instanceof PsiFileStubImpl<?> fileStub) {
       PsiFileStub<?>[] roots = fileStub.getStubRoots();
       if (roots.length == 0) {
-        Logger.getInstance(getClass()).error("Incorrect stub files count during serialization:" + rootStub + "," + rootStub.getStubType());
+        Logger.getInstance(getClass()).error("Incorrect stub files count during serialization:" + rootStub);
       }
       else {
         doDefaultSerialization = false;
@@ -124,7 +126,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
       return stub;
     }
     finally {
-      ourRootStubSerializer.set(null);
+      ourRootStubSerializer.remove();
     }
   }
 
@@ -168,7 +170,7 @@ abstract class StubTreeSerializerBase<SerializationState> {
                              @NotNull SerializationState state) throws IOException {
     serializeSelf(root, out, state);
     if (root instanceof StubBase<?> base) {
-      StubList stubList = base.myStubList;
+      StubList stubList = base.getStubList();
       if (root != stubList.get(0)) {
         throw new IllegalArgumentException("Serialization is supported only for root stubs");
       }
@@ -204,7 +206,8 @@ abstract class StubTreeSerializerBase<SerializationState> {
 
         allStarts.set(start);
 
-        addStub(parentIndex, index, start, (IElementType)serializer);
+        IElementType elementType = serializer2type(serializer);
+        addStub(parentIndex, index, start, elementType);
         if (!serializer.isAlwaysLeaf(root)) {
           deserializeChildren(index);
         }
@@ -225,9 +228,15 @@ abstract class StubTreeSerializerBase<SerializationState> {
       }
 
       void deserializeRoot() throws IOException, SerializerNotFoundException {
-        addStub(0, 0, 0, (IElementType)rootType);
+        addStub(0, 0, 0, serializer2type(rootType));
         deserializeChildren(0);
       }
+
+      private static @Nullable IElementType serializer2type(ObjectStubSerializer<?, ?> serializer) {
+        // todo IJPL-562 potentially slow call???
+        return StubElementRegistryServiceImpl.getInstanceImpl().getElementTypeBySerializer(serializer);
+      }
+
     }.deserializeRoot();
     byte[] serializedStubs = readByteArray(inputStream);
     stubList.setStubData(new LazyStubData(storage, parentsAndStarts, serializedStubs, allStarts));

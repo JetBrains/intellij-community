@@ -36,6 +36,7 @@ class DistributedTestModel private constructor(
             serializers.register(LazyCompanionMarshaller(RdId(8999514109111023287), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestActionParameters"))
             serializers.register(LazyCompanionMarshaller(RdId(1797576418817339312), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestComponentData"))
             serializers.register(LazyCompanionMarshaller(RdId(-3821381997278381377), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdTestSession"))
+            serializers.register(LazyCompanionMarshaller(RdId(-3824320616986647720), classLoader, "com.intellij.remoteDev.tests.modelGenerated.RdProductInfo"))
         }
         
         
@@ -57,7 +58,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -2934857283786697801L
+        const val serializationHash = -5949507648312297742L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -201,6 +202,71 @@ enum class RdAgentType {
             marshaller.write(ctx, buffer, value)
         }
     }
+}
+
+
+/**
+ * #### Generated from [DistributedTestModel.kt]
+ */
+data class RdProductInfo (
+    val productCode: String,
+    val productVersion: String
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<RdProductInfo> {
+        override val _type: KClass<RdProductInfo> = RdProductInfo::class
+        override val id: RdId get() = RdId(-3824320616986647720)
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): RdProductInfo  {
+            val productCode = buffer.readString()
+            val productVersion = buffer.readString()
+            return RdProductInfo(productCode, productVersion)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdProductInfo)  {
+            buffer.writeString(value.productCode)
+            buffer.writeString(value.productVersion)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as RdProductInfo
+        
+        if (productCode != other.productCode) return false
+        if (productVersion != other.productVersion) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + productCode.hashCode()
+        __r = __r*31 + productVersion.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("RdProductInfo (")
+        printer.indent {
+            print("productCode = "); productCode.print(printer); println()
+            print("productVersion = "); productVersion.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+    //threading
 }
 
 
@@ -383,7 +449,8 @@ class RdTestSession private constructor(
     private val _projectsNames: RdCall<Unit, List<String>>,
     private val _makeScreenshot: RdCall<String, Boolean>,
     private val _isResponding: RdCall<Unit, Boolean>,
-    private val _projectsAreInitialised: RdCall<Unit, Boolean>
+    private val _projectsAreInitialised: RdCall<Unit, Boolean>,
+    private val _getProductCodeAndVersion: RdCall<Unit, RdProductInfo>
 ) : RdBindableBase() {
     //companion
     
@@ -415,7 +482,8 @@ class RdTestSession private constructor(
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _projectsAreInitialised = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _exitApp, _showNotification, _closeProject, _forceLeaveAllModals, _closeProjectIfOpened, _runNextAction, _runNextActionGetComponentData, _requestFocus, _isFocused, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised).withId(_id)
+            val _getProductCodeAndVersion = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, RdProductInfo)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _exitApp, _showNotification, _closeProject, _forceLeaveAllModals, _closeProjectIfOpened, _runNextAction, _runNextActionGetComponentData, _requestFocus, _isFocused, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised, _getProductCodeAndVersion).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -441,6 +509,7 @@ class RdTestSession private constructor(
             RdCall.write(ctx, buffer, value._makeScreenshot)
             RdCall.write(ctx, buffer, value._isResponding)
             RdCall.write(ctx, buffer, value._projectsAreInitialised)
+            RdCall.write(ctx, buffer, value._getProductCodeAndVersion)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
@@ -465,6 +534,7 @@ class RdTestSession private constructor(
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
     val isResponding: RdCall<Unit, Boolean> get() = _isResponding
     val projectsAreInitialised: RdCall<Unit, Boolean> get() = _projectsAreInitialised
+    val getProductCodeAndVersion: RdCall<Unit, RdProductInfo> get() = _getProductCodeAndVersion
     //methods
     //initializer
     init {
@@ -486,6 +556,7 @@ class RdTestSession private constructor(
         _makeScreenshot.async = true
         _isResponding.async = true
         _projectsAreInitialised.async = true
+        _getProductCodeAndVersion.async = true
     }
     
     init {
@@ -505,6 +576,7 @@ class RdTestSession private constructor(
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
         bindableChildren.add("isResponding" to _isResponding)
         bindableChildren.add("projectsAreInitialised" to _projectsAreInitialised)
+        bindableChildren.add("getProductCodeAndVersion" to _getProductCodeAndVersion)
     }
     
     //secondary constructor
@@ -535,7 +607,8 @@ class RdTestSession private constructor(
         RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
-        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
+        RdCall<Unit, RdProductInfo>(FrameworkMarshallers.Void, RdProductInfo)
     )
     
     //equals trait
@@ -565,6 +638,7 @@ class RdTestSession private constructor(
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
             print("isResponding = "); _isResponding.print(printer); println()
             print("projectsAreInitialised = "); _projectsAreInitialised.print(printer); println()
+            print("getProductCodeAndVersion = "); _getProductCodeAndVersion.print(printer); println()
         }
         printer.print(")")
     }
@@ -591,7 +665,8 @@ class RdTestSession private constructor(
             _projectsNames.deepClonePolymorphic(),
             _makeScreenshot.deepClonePolymorphic(),
             _isResponding.deepClonePolymorphic(),
-            _projectsAreInitialised.deepClonePolymorphic()
+            _projectsAreInitialised.deepClonePolymorphic(),
+            _getProductCodeAndVersion.deepClonePolymorphic()
         )
     }
     //contexts

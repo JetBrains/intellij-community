@@ -59,16 +59,16 @@ public class PyBuiltinCache {
   /**
    * Stores the most often used types, returned by getNNNType().
    */
-  @NotNull private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<>();
+  private final @NotNull Map<String, PyClassTypeImpl> myTypeCache = new HashMap<>();
 
-  @Nullable private PyFile myBuiltinsFile;
-  @Nullable private PyFile myExceptionsFile;
+  private @Nullable PyFile myBuiltinsFile;
+  private @Nullable PyFile myExceptionsFile;
   private long myModStamp = -1;
 
   public PyBuiltinCache() {
   }
 
-  public PyBuiltinCache(@Nullable final PyFile builtins, @Nullable PyFile exceptions) {
+  public PyBuiltinCache(final @Nullable PyFile builtins, @Nullable PyFile exceptions) {
     myBuiltinsFile = builtins;
     myExceptionsFile = exceptions;
   }
@@ -79,8 +79,7 @@ public class PyBuiltinCache {
    * @param reference something to define the module from.
    * @return an instance of cache. If reference was null, the instance is a fail-fast dud one.
    */
-  @NotNull
-  public static PyBuiltinCache getInstance(@Nullable PsiElement reference) {
+  public static @NotNull PyBuiltinCache getInstance(@Nullable PsiElement reference) {
     if (reference != null) {
       try {
         Sdk sdk = findSdkForFile(reference.getContainingFile());
@@ -94,8 +93,7 @@ public class PyBuiltinCache {
     return DUD_INSTANCE; // a non-functional fail-fast instance, for a case when skeletons are not available
   }
 
-  @Nullable
-  public static Sdk findSdkForFile(PsiFileSystemItem psifile) {
+  public static @Nullable Sdk findSdkForFile(PsiFileSystemItem psifile) {
     if (psifile == null) {
       return null;
     }
@@ -106,8 +104,7 @@ public class PyBuiltinCache {
     return findSdkForNonModuleFile(psifile);
   }
 
-  @Nullable
-  public static Sdk findSdkForNonModuleFile(@NotNull PsiFileSystemItem psiFile) {
+  public static @Nullable Sdk findSdkForNonModuleFile(@NotNull PsiFileSystemItem psiFile) {
     final VirtualFile vfile;
     if (psiFile instanceof PsiFile) {
       final PsiFile contextFile = FileContextUtil.getContextFile(psiFile);
@@ -135,23 +132,19 @@ public class PyBuiltinCache {
     return sdk;
   }
 
-  @Nullable
-  public static PyFile getBuiltinsForSdk(@NotNull Project project, @NotNull Sdk sdk) {
+  public static @Nullable PyFile getBuiltinsForSdk(@NotNull Project project, @NotNull Sdk sdk) {
     return getSkeletonFile(project, sdk, getBuiltinsFileName(PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)));
   }
 
-  @NotNull
-  public static String getBuiltinsFileName(@NotNull LanguageLevel level) {
+  public static @NotNull String getBuiltinsFileName(@NotNull LanguageLevel level) {
     return level.isPython2() ? BUILTIN_FILE : BUILTIN_FILE_3K;
   }
 
-  @Nullable
-  public static PyFile getExceptionsForSdk(@NotNull Project project, @NotNull Sdk sdk) {
+  public static @Nullable PyFile getExceptionsForSdk(@NotNull Project project, @NotNull Sdk sdk) {
     return getSkeletonFile(project, sdk, EXCEPTIONS_FILE);
   }
 
-  @Nullable
-  private static PyFile getSkeletonFile(final @NotNull Project project, @NotNull Sdk sdk, @NotNull String name) {
+  private static @Nullable PyFile getSkeletonFile(final @NotNull Project project, @NotNull Sdk sdk, @NotNull String name) {
     SdkTypeId sdkType = sdk.getSdkType();
     if (PyNames.PYTHON_SDK_ID_NAME.equals(sdkType.getName())) {
       final int index = name.indexOf(".");
@@ -165,28 +158,7 @@ public class PyBuiltinCache {
     return null;
   }
 
-  @Nullable
-  public PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name, @NotNull TypeEvalContext context) {
-    final PyClass cls = getClass(name);
-    if (cls != null) {
-      if (sequence instanceof PyDictLiteralExpression) {
-        final PyTypedDictType typedDictType = PyCollectionTypeUtil.INSTANCE.getTypedDictTypeWithModifications(sequence, context);
-        if (typedDictType != null) {
-          return typedDictType;
-        }
-      }
-      final List<PyType> literalCollectionType = PyCollectionTypeUtil.INSTANCE.getTypeByModifications(sequence, context);
-      return new PyCollectionTypeImpl(cls, false,
-                                      ContainerUtil.map(literalCollectionType,
-                                                        type -> type instanceof PyLiteralStringType
-                                                                ? new PyClassTypeImpl(((PyLiteralStringType)type).getCls(), false)
-                                                                : type));
-    }
-    return null;
-  }
-
-  @Nullable
-  public PyFile getBuiltinsFile() {
+  public @Nullable PyFile getBuiltinsFile() {
     return myBuiltinsFile;
   }
 
@@ -200,8 +172,7 @@ public class PyBuiltinCache {
    * @param name to look for
    * @return found element, or null.
    */
-  @Nullable
-  public PsiElement getByName(@NonNls String name) {
+  public @Nullable PsiElement getByName(@NonNls String name) {
     if (myBuiltinsFile != null) {
       final PsiElement element = myBuiltinsFile.getElementNamed(name);
       if (element != null) {
@@ -214,16 +185,14 @@ public class PyBuiltinCache {
     return null;
   }
 
-  @Nullable
-  public PyClass getClass(@NonNls String name) {
+  public @Nullable PyClass getClass(@NonNls String name) {
     if (myBuiltinsFile != null) {
       return myBuiltinsFile.findTopLevelClass(name);
     }
     return null;
   }
 
-  @Nullable
-  public PyClassTypeImpl getObjectType(@NonNls String name) {
+  public @Nullable PyClassTypeImpl getObjectType(@NonNls String name) {
     PyClassTypeImpl val;
     synchronized (myTypeCache) {
       if (myBuiltinsFile != null) {
@@ -250,53 +219,43 @@ public class PyBuiltinCache {
     return val;
   }
 
-  @Nullable
-  public PyClassType getObjectType() {
+  public @Nullable PyClassType getObjectType() {
     return getObjectType("object");
   }
 
-  @Nullable
-  public PyClassType getListType() {
+  public @Nullable PyClassType getListType() {
     return getObjectType("list");
   }
 
-  @Nullable
-  public PyClassType getDictType() {
+  public @Nullable PyClassType getDictType() {
     return getObjectType("dict");
   }
 
-  @Nullable
-  public PyClassType getSetType() {
+  public @Nullable PyClassType getSetType() {
     return getObjectType("set");
   }
 
-  @Nullable
-  public PyClassType getTupleType() {
+  public @Nullable PyClassType getTupleType() {
     return getObjectType("tuple");
   }
 
-  @Nullable
-  public PyClassType getIntType() {
+  public @Nullable PyClassType getIntType() {
     return getObjectType("int");
   }
 
-  @Nullable
-  public PyClassType getFloatType() {
+  public @Nullable PyClassType getFloatType() {
     return getObjectType("float");
   }
 
-  @Nullable
-  public PyClassType getComplexType() {
+  public @Nullable PyClassType getComplexType() {
     return getObjectType("complex");
   }
 
-  @Nullable
-  public PyClassType getStrType() {
+  public @Nullable PyClassType getStrType() {
     return getObjectType("str");
   }
 
-  @Nullable
-  public PyClassType getBytesType(LanguageLevel level) {
+  public @Nullable PyClassType getBytesType(LanguageLevel level) {
     if (level.isPy3K()) {
       return getObjectType("bytes");
     }
@@ -305,8 +264,7 @@ public class PyBuiltinCache {
     }
   }
 
-  @Nullable
-  public PyClassType getUnicodeType(LanguageLevel level) {
+  public @Nullable PyClassType getUnicodeType(LanguageLevel level) {
     if (level.isPy3K()) {
       return getObjectType("str");
     }
@@ -315,8 +273,7 @@ public class PyBuiltinCache {
     }
   }
 
-  @Nullable
-  public PyType getStringType(LanguageLevel level) {
+  public @Nullable PyType getStringType(LanguageLevel level) {
     if (level.isPy3K()) {
       return getObjectType("str");
     }
@@ -325,8 +282,7 @@ public class PyBuiltinCache {
     }
   }
 
-  @Nullable
-  public PyType getByteStringType(@NotNull LanguageLevel level) {
+  public @Nullable PyType getByteStringType(@NotNull LanguageLevel level) {
     if (level.isPy3K()) {
       return getObjectType("bytes");
     }
@@ -335,13 +291,11 @@ public class PyBuiltinCache {
     }
   }
 
-  @Nullable
-  public PyType getStrOrUnicodeType() {
+  public @Nullable PyType getStrOrUnicodeType() {
     return getStrOrUnicodeType(false);
   }
 
-  @Nullable
-  public PyType getStrOrUnicodeType(boolean definition) {
+  public @Nullable PyType getStrOrUnicodeType(boolean definition) {
     PyClassLikeType str = getObjectType("str");
     PyClassLikeType unicode = getObjectType("unicode");
 
@@ -356,23 +310,19 @@ public class PyBuiltinCache {
     return PyUnionType.union(str, unicode);
   }
 
-  @Nullable
-  public PyClassType getBoolType() {
+  public @Nullable PyClassType getBoolType() {
     return getObjectType("bool");
   }
 
-  @Nullable
-  public PyClassType getClassMethodType() {
+  public @Nullable PyClassType getClassMethodType() {
     return getObjectType("classmethod");
   }
 
-  @Nullable
-  public PyClassType getStaticMethodType() {
+  public @Nullable PyClassType getStaticMethodType() {
     return getObjectType("staticmethod");
   }
 
-  @Nullable
-  public PyClassType getTypeType() {
+  public @Nullable PyClassType getTypeType() {
     return getObjectType("type");
   }
 

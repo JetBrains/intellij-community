@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +24,7 @@ abstract class PersistentMapTestBase extends UsefulTestCase {
     File directory = FileUtil.createTempDirectory("persistent", "map");
     myFile = new File(directory, "map");
     assertTrue(myFile.createNewFile());
-    myDataFile = new File(directory, myFile.getName() + PersistentHashMap.DATA_FILE_EXTENSION);
+    myDataFile = new File(directory, myFile.getName() + PersistentMapImpl.DATA_FILE_EXTENSION);
     myMap = new PersistentHashMap<>(myFile.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
   }
 

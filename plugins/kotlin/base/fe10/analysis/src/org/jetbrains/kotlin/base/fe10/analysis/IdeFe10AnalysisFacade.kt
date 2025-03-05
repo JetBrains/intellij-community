@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.util.CancellationChecker
 @OptIn(FrontendInternals::class, KaPlatformInterface::class)
 internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10AnalysisFacade {
 
-    @OptIn(Frontend10ApiUsage::class)
+    @OptIn(K1ModeProjectStructureApi::class)
     override fun getAnalysisContext(ktModule: KaModule, token: KaLifetimeToken): Fe10AnalysisContext {
         val moduleInfo = ktModule.moduleInfo
         val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacadeByModuleInfo(moduleInfo, ktModule.targetPlatform)

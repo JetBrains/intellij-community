@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.quarantine.setup
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
@@ -12,7 +12,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
@@ -127,7 +127,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
       initProject(projectInfo)
       initProject(linkedProjectInfo)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("linked_project/pom.xml")
           .writeText("""
             <?xml version="1.0"?>
@@ -167,7 +167,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
       val projectInfo = getSimpleProjectInfo("project")
       initProject(projectInfo)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/.idea/compiler.xml")
           .writeText("""
             |<?xml version="1.0" encoding="UTF-8"?>
@@ -193,7 +193,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
       val projectInfo = getSimpleProjectInfo("project")
       initProject(projectInfo)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/.idea/compiler.xml")
           .writeText("""
             |<?xml version="1.0" encoding="UTF-8"?>
@@ -231,7 +231,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
       val projectInfo = getSimpleProjectInfo("project")
       initProject(projectInfo)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/project.iml")
           .writeText("""
             |<?xml version="1.0" encoding="UTF-8"?>
@@ -260,7 +260,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
         .useProjectAsync { project ->
           assertModules(project, "project")
           awaitProjectConfiguration(project) {
-            writeAction {
+            edtWriteAction {
               testRoot.createFile("project/.idea/gradle.xml")
                 .writeText("""
                   |<?xml version="1.0" encoding="UTF-8"?>
@@ -296,7 +296,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
       val projectInfo = getSimpleProjectInfo("project")
       initProject(projectInfo)
 
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/.idea/inspectionProfiles/myInspections.xml")
           .writeText("""
             |<component name="InspectionProjectProfileManager">

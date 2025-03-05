@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ResourceUtil
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -34,12 +34,6 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     internal fun isEnabledInPreview(editor: Editor) : Boolean? {
       return editor.getUserData(CODE_VISION_PREVIEW_ENABLED)
     }
-
-    internal val anchorRenderer: SimpleListCellRenderer<CodeVisionAnchorKind> by lazy {
-      SimpleListCellRenderer.create(
-        SimpleListCellRenderer.Customizer { label, value, _ -> label.text = CodeVisionBundle.message(value.key) }
-      )
-    }
   }
 
 
@@ -49,7 +43,7 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     val panel = panel {
       row {
         label(CodeVisionBundle.message("CodeVisionConfigurable.column.name.position"))
-        val comboBox = comboBox(CodeVisionGlobalSettingsProvider.supportedAnchors, anchorRenderer).component
+        val comboBox = comboBox(CodeVisionGlobalSettingsProvider.supportedAnchors, renderer = textListCellRenderer("") { CodeVisionBundle.message(it.key) }).component
         comboBox.item = settings.getPositionForGroup(id)
         positionComboBox = comboBox
       }

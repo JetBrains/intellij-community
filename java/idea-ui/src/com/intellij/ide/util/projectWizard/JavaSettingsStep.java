@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -44,8 +30,8 @@ import java.util.Collections;
  */
 public class JavaSettingsStep extends SdkSettingsStep {
 
-  @NotNull @NonNls private static final String MODULE_SOURCE_ROOT_KEY = "java.module.default.source.root";
-  @NotNull @NonNls private static final String DEFAULT_MODULE_SOURCE_ROOT_PATH = "src";
+  private static final @NotNull @NonNls String MODULE_SOURCE_ROOT_KEY = "java.module.default.source.root";
+  private static final @NotNull @NonNls String DEFAULT_MODULE_SOURCE_ROOT_PATH = "src";
 
   private final ModuleBuilder             myModuleBuilder;
   private       JBCheckBox                myCreateSourceRoot;
@@ -67,9 +53,8 @@ public class JavaSettingsStep extends SdkSettingsStep {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(JavaUiBundle.message("prompt.select.source.directory"));
     mySourcePath.addBrowseFolderListener(new TextBrowseFolderListener(descriptor, project) {
-      @NotNull
       @Override
-      protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+      protected @NotNull String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
         String contentEntryPath = myModuleBuilder.getContentEntryPath();
         String path = chosenFile.getPath();
         return contentEntryPath == null ? path : path.substring(StringUtil.commonPrefixLength(contentEntryPath, path));
@@ -93,7 +78,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
         if (contentEntryPath != null) {
           final String dirName = mySourcePath.getText().trim().replace(File.separatorChar, '/');
           PropertiesComponent.getInstance().setValue(MODULE_SOURCE_ROOT_KEY, dirName);
-          String text = dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
+          String text = !dirName.isEmpty() ? contentEntryPath + "/" + dirName : contentEntryPath;
           ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.singletonList(Pair.create(text, "")));
         }
       }

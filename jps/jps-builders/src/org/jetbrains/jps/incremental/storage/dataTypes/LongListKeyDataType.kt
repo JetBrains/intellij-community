@@ -1,13 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage.dataTypes
 
 import org.h2.mvstore.DataUtils.readVarInt
 import org.h2.mvstore.WriteBuffer
 import org.h2.mvstore.type.DataType
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 
-internal object LongListKeyDataType : DataType<LongArray> {
-  override fun isMemoryEstimationAllowed() = true
+@ApiStatus.Internal
+object LongListKeyDataType : DataType<LongArray> {
+  override fun isMemoryEstimationAllowed(): Boolean = true
 
   // don't care about non-ASCII strings for memory estimation
   override fun getMemory(obj: LongArray): Int = obj.size * Long.SIZE_BYTES
@@ -24,7 +26,9 @@ internal object LongListKeyDataType : DataType<LongArray> {
     }
   }
 
-  override fun write(buff: WriteBuffer, obj: LongArray) = throw IllegalStateException("Must not be called")
+  override fun write(buff: WriteBuffer, obj: LongArray) {
+    throw IllegalStateException("Must not be called")
+  }
 
   override fun read(buff: ByteBuffer, storage: Any, len: Int) {
     @Suppress("UNCHECKED_CAST")
@@ -36,7 +40,7 @@ internal object LongListKeyDataType : DataType<LongArray> {
     }
   }
 
-  override fun read(buff: ByteBuffer) = throw IllegalStateException("Must not be called")
+  override fun read(buff: ByteBuffer): LongArray = throw IllegalStateException("Must not be called")
 
   override fun binarySearch(key: LongArray, storage: Any, size: Int, initialGuess: Int): Int = throw IllegalStateException("Must not be called")
 

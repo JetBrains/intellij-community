@@ -222,7 +222,7 @@ class ChainMethodCallsBlockBuilder {
     }
 
     private @Nullable String getIndentString() {
-      if (nodes.size() > 0) {
+      if (!nodes.isEmpty()) {
         ASTNode prev = nodes.get(0).getTreePrev();
         if (prev != null && prev.getPsi() instanceof PsiWhiteSpace && prev.textContains('\n')) {
           CharSequence whitespace = prev.getChars();

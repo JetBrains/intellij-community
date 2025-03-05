@@ -1,9 +1,12 @@
+// PRIORITY: LOW
 // AFTER-WARNING: Parameter 'p' is never used
 fun foo(a: Int) {
-    // some comment
+    if (a
+        // some comment
+        == 0
+    ) bar(a)
 
     // another comment
-    if (a == 0) bar(a)
     else if (a == 1) bar(a)
 }
 

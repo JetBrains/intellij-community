@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.dev.psiViewer;
 
 import com.intellij.dev.psiViewer.PsiViewerExtension;
@@ -14,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class JavaPsiViewerExtension implements PsiViewerExtension{
   @Override
-  @NotNull
-  public FileType getDefaultFileType() {
+  public @NotNull FileType getDefaultFileType() {
     return JavaFileType.INSTANCE;
   }
 

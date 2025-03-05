@@ -3,7 +3,6 @@ package com.jetbrains.python.editor;
 
 import com.intellij.psi.PsiComment;
 import com.jetbrains.python.ast.*;
-import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.ApiStatus;
 
 public final class PyEditorHandlerConfig {

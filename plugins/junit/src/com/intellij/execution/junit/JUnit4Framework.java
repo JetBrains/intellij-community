@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,8 +22,7 @@ public class JUnit4Framework extends JUnitTestFramework {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "JUnit4";
   }
 
@@ -32,15 +31,13 @@ public class JUnit4Framework extends JUnitTestFramework {
     return JUnitUtil.TEST_ANNOTATION;
   }
 
-  @Nullable
   @Override
-  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+  public @Nullable ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
     return JUnitExternalLibraryDescriptor.JUNIT4;
   }
 
   @Override
-  @Nullable
-  public String getDefaultSuperClass() {
+  public @Nullable String getDefaultSuperClass() {
     return null;
   }
 
@@ -54,9 +51,8 @@ public class JUnit4Framework extends JUnitTestFramework {
     }, false);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_ANNOTATION_NAME, 0)) return each;
@@ -65,9 +61,8 @@ public class JUnit4Framework extends JUnitTestFramework {
     }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (each.hasModifierProperty(PsiModifier.STATIC)
@@ -79,9 +74,8 @@ public class JUnit4Framework extends JUnitTestFramework {
     }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_ANNOTATION_NAME, 0)) return each;
@@ -90,9 +84,8 @@ public class JUnit4Framework extends JUnitTestFramework {
     }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (each.hasModifierProperty(PsiModifier.STATIC)
@@ -105,8 +98,7 @@ public class JUnit4Framework extends JUnitTestFramework {
   }
 
   @Override
-  @Nullable
-  protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
+  protected @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
     String beforeClassAnnotationName = JUnitUtil.BEFORE_CLASS_ANNOTATION_NAME;
     String beforeAnnotationName = JUnitUtil.BEFORE_ANNOTATION_NAME;
     return findOrCreateSetUpMethod(clazz, beforeClassAnnotationName, beforeAnnotationName);
@@ -180,8 +172,7 @@ public class JUnit4Framework extends JUnitTestFramework {
   }
 
   @Override
-  @NotNull
-  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+  public @NotNull FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 Test Method.java");
   }
 

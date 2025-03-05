@@ -10,7 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
   private final RuntimeModuleId myId;
@@ -27,9 +30,8 @@ class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
     myDependencies = dependencies;
   }
 
-  @NotNull
   @Override
-  public RuntimeModuleId getModuleId() {
+  public @NotNull RuntimeModuleId getModuleId() {
     return myId;
   }
 
@@ -46,9 +48,8 @@ class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
     return myId.hashCode();
   }
 
-  @NotNull
   @Override
-  public List<RuntimeModuleDescriptor> getDependencies() {
+  public @NotNull List<RuntimeModuleDescriptor> getDependencies() {
     return myDependencies;
   }
 
@@ -61,9 +62,8 @@ class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
     return paths;
   }
 
-  @Nullable
   @Override
-  public InputStream readFile(@NotNull String relativePath) throws IOException {
+  public @Nullable InputStream readFile(@NotNull String relativePath) throws IOException {
     for (ResourceRoot root : resolveResourceRoots()) {
       InputStream inputStream = root.openFile(relativePath);
       if (inputStream != null) {
@@ -86,8 +86,7 @@ class RuntimeModuleDescriptorImpl implements RuntimeModuleDescriptor {
   }
 
   @Override
-  @NotNull
-  public List<Path> getModuleClasspath() {
+  public @NotNull List<Path> getModuleClasspath() {
     Set<Path> classpath = new LinkedHashSet<>();
     collectDependencies(this, new LinkedHashSet<>(), classpath);
     return List.copyOf(classpath);

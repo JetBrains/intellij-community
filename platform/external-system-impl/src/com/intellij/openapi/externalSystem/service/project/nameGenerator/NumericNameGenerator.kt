@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class NumericNameGenerator private constructor(
   private val name: String,
+  private val maxNumberSeq: Int,
 ) {
 
   fun generate(): Iterable<String> {
@@ -15,7 +16,7 @@ class NumericNameGenerator private constructor(
         private var current: Int = 0
 
         override fun hasNext(): Boolean {
-          return current < MAX_NUMBER_SEQ
+          return current < maxNumberSeq
         }
 
         override fun next(): String {
@@ -30,8 +31,8 @@ class NumericNameGenerator private constructor(
     private const val MAX_NUMBER_SEQ = 2
 
     @JvmStatic
-    fun generate(name: String): Iterable<String> {
-      return NumericNameGenerator(name).generate()
+    fun generate(name: String, maxNumberSeq: Int = MAX_NUMBER_SEQ): Iterable<String> {
+      return NumericNameGenerator(name, maxNumberSeq).generate()
     }
   }
 }

@@ -34,8 +34,7 @@ public abstract class PyDocumentationSettings
   public static final PyDefaultProjectAwareServiceClasses<ServiceState, PyDocumentationSettings, AppService, ModuleService>
     SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
 
-  @ApiStatus.Internal
-  public final static DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.REST;
+  @ApiStatus.Internal public static final DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.REST;
 
   protected PyDocumentationSettings() {
     super(new ServiceState());
@@ -58,14 +57,12 @@ public abstract class PyDocumentationSettings
     return file instanceof PyAstFile ? getFormatForFile(file) == format : getState().getFormat() == format;
   }
 
-  @NotNull
-  public final DocStringFormat getFormatForFile(@NotNull PsiFile file) {
+  public final @NotNull DocStringFormat getFormatForFile(@NotNull PsiFile file) {
     final DocStringFormat fileFormat = getFormatFromDocformatAttribute(file);
     return fileFormat != null && fileFormat != DocStringFormat.PLAIN ? fileFormat : getState().myDocStringFormat;
   }
 
-  @Nullable
-  public static DocStringFormat getFormatFromDocformatAttribute(@NotNull PsiFile file) {
+  public static @Nullable DocStringFormat getFormatFromDocformatAttribute(@NotNull PsiFile file) {
     if (file instanceof PyAstFile) {
       final PyAstTargetExpression expr = getDocFormatAttribute(file);
       if (expr != null) {
@@ -84,8 +81,7 @@ public abstract class PyDocumentationSettings
     return null;
   }
 
-  @Nullable
-  private static PyAstTargetExpression getDocFormatAttribute(@NotNull PsiFile file) {
+  private static @Nullable PyAstTargetExpression getDocFormatAttribute(@NotNull PsiFile file) {
     StubElement<?> stub = ((PsiFileImpl)file).getGreenStub();
     if (stub != null) {
       return getDocFormatAttribute(stub.getChildrenStubs());
@@ -95,8 +91,7 @@ public abstract class PyDocumentationSettings
     }
   }
 
-  @Nullable
-  private static PyAstTargetExpression getDocFormatAttribute(@NotNull List<StubElement<?>> stubs) {
+  private static @Nullable PyAstTargetExpression getDocFormatAttribute(@NotNull List<StubElement<?>> stubs) {
     for (StubElement<?> stub : stubs) {
       PsiElement psi = stub.getPsi();
       if (psi instanceof PyAstTargetExpression targetExpression && PyNames.DOCFORMAT.equals(targetExpression.getName())) {
@@ -110,8 +105,7 @@ public abstract class PyDocumentationSettings
     return null;
   }
 
-  @Nullable
-  private static PyAstTargetExpression getDocFormatAttribute(@NotNull PsiElement @NotNull [] elements) {
+  private static @Nullable PyAstTargetExpression getDocFormatAttribute(@NotNull PsiElement @NotNull [] elements) {
     for (PsiElement element : elements) {
       if (element instanceof PyAstClass || element instanceof PyAstFunction) continue;
       if (element instanceof PyAstTargetExpression targetExpression && PyNames.DOCFORMAT.equals(targetExpression.getName())) {
@@ -123,8 +117,7 @@ public abstract class PyDocumentationSettings
     return null;
   }
 
-  @NotNull
-  public final DocStringFormat getFormat() {
+  public final @NotNull DocStringFormat getFormat() {
     return getState().getFormat();
   }
 
@@ -151,8 +144,7 @@ public abstract class PyDocumentationSettings
 
 
   public static final class ServiceState {
-    @NotNull
-    private DocStringFormat myDocStringFormat;
+    private @NotNull DocStringFormat myDocStringFormat;
     @OptionTag("analyzeDoctest")
     public boolean myAnalyzeDoctest = true;
     @OptionTag("renderExternalDocumentation")
@@ -167,8 +159,7 @@ public abstract class PyDocumentationSettings
       this(DEFAULT_DOC_STRING_FORMAT);
     }
 
-    @NotNull
-    public DocStringFormat getFormat() {
+    public @NotNull DocStringFormat getFormat() {
       return myDocStringFormat;
     }
 
@@ -179,8 +170,7 @@ public abstract class PyDocumentationSettings
     // Legacy name of the field to preserve settings format
     @SuppressWarnings("unused")
     @OptionTag("myDocStringFormat")
-    @NotNull
-    public String getFormatName() {
+    public @NotNull String getFormatName() {
       return myDocStringFormat.getName();
     }
 

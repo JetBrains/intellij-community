@@ -188,19 +188,19 @@ implements ClassGenerator
 
     protected Object create(Object key) {
         try {
-        	Class gen = null;
+        	Class<?> gen = null;
 
             synchronized (source) {
                 ClassLoader loader = getClassLoader();
-                Map cache2 = null;
-                cache2 = (Map)source.cache.get(loader);
+                Map<Object, Object> cache2;
+                cache2 = (Map<Object, Object>)source.cache.get(loader);
                 if (cache2 == null) {
                     cache2 = new HashMap<>();
                     cache2.put(NAME_KEY, new HashSet<>());
                     source.cache.put(loader, cache2);
                 } else if (useCache) {
                     Reference ref = (Reference)cache2.get(key);
-                    gen = ref == null ? null : (Class) ref.get();
+                    gen = ref == null ? null : (Class<?>) ref.get();
                 }
                 if (gen == null) {
                     AbstractClassGenerator save = CURRENT.get();

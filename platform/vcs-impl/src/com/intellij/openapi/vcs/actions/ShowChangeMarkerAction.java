@@ -41,8 +41,7 @@ abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionR
     moveToRange(data.tracker, data.editor, targetRange);
   }
 
-  @Nullable
-  private static Data getDataFromContext(@NotNull AnActionEvent e) {
+  private static @Nullable Data getDataFromContext(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
 
@@ -60,14 +59,12 @@ abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionR
     tracker.scrollAndShowHint(range, editor);
   }
 
-  @Nullable
-  private Range getTargetRange(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
+  private @Nullable Range getTargetRange(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
     int line = editor.getCaretModel().getLogicalPosition().line;
     return getTargetRange(tracker, line);
   }
 
-  @Nullable
-  protected abstract Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line);
+  protected abstract @Nullable Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line);
 
   static class Next extends ShowChangeMarkerAction {
     @Override
@@ -97,8 +94,8 @@ abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionR
 
 
   private static class Data {
-    @NotNull private final LineStatusTracker<?> tracker;
-    @NotNull private final Editor editor;
+    private final @NotNull LineStatusTracker<?> tracker;
+    private final @NotNull Editor editor;
 
     Data(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
       this.tracker = tracker;

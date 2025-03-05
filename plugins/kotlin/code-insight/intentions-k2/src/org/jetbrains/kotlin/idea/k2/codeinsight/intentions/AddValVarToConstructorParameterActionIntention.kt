@@ -38,8 +38,7 @@ class AddValVarToConstructorParameterActionIntention : KotlinApplicableModComman
 
     override fun getApplicableRanges(element: KtParameter): List<TextRange> = ApplicabilityRanges.declarationName(element)
 
-    context(KaSession)
-    override fun prepareContext(element: KtParameter) {
+    override fun KaSession.prepareContext(element: KtParameter) {
     }
 
     override fun invoke(

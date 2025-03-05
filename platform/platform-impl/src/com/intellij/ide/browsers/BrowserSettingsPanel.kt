@@ -9,11 +9,11 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Comparing
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.ColumnInfo
@@ -43,6 +43,8 @@ internal class BrowserSettingsPanel {
   private var customPathValue: String? = null
 
   private val root: JPanel = panel {
+    useNewComboBoxRenderer()
+
     val itemEditor: DialogItemEditor<ConfigurableWebBrowser> = object : DialogItemEditor<ConfigurableWebBrowser> {
       override fun getItemClass(): Class<ConfigurableWebBrowser> {
         return ConfigurableWebBrowser::class.java
@@ -116,7 +118,7 @@ internal class BrowserSettingsPanel {
       defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST)
       defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE)
 
-      defaultBrowserPolicyComboBox = comboBox(defaultBrowserPolicies, SimpleListCellRenderer.create("") { value: DefaultBrowserPolicy ->
+      defaultBrowserPolicyComboBox = comboBox(defaultBrowserPolicies, textListCellRenderer("") { value: DefaultBrowserPolicy ->
         when (value) {
           DefaultBrowserPolicy.SYSTEM -> IdeBundle.message("settings.browsers.system.default")
           DefaultBrowserPolicy.FIRST -> IdeBundle.message("settings.browsers.first.listed")
@@ -153,11 +155,11 @@ internal class BrowserSettingsPanel {
 
     group(IdeBundle.message("settings.browsers.reload.behavior")) {
       row(IdeBundle.message("setting.value.reload.mode.server")) {
-        serverReloadModeComboBox = comboBox(ReloadMode.values().asList(), SimpleListCellRenderer.create("") { it.title })
+        serverReloadModeComboBox = comboBox(ReloadMode.entries, textListCellRenderer("") { it.title })
           .component
       }
       row(IdeBundle.message("setting.value.reload.mode.preview")) {
-        previewReloadModeComboBox = comboBox(ReloadMode.values().asList(), SimpleListCellRenderer.create("") { it.title })
+        previewReloadModeComboBox = comboBox(ReloadMode.entries, textListCellRenderer("") { it.title })
           .component
       }
     }

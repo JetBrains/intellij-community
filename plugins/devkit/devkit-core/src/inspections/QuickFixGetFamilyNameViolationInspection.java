@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -20,11 +21,12 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 import java.util.HashSet;
 import java.util.Set;
 
-final class QuickFixGetFamilyNameViolationInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class QuickFixGetFamilyNameViolationInspection extends DevKitUastInspectionBase {
 
   private static final boolean SKIP_CHILDREN = true;
 
-  private final static Set<String> BASE_CONTEXT_AWARE_CLASSES = Set.of(PsiElement.class.getName(),
+  private static final Set<String> BASE_CONTEXT_AWARE_CLASSES = Set.of(PsiElement.class.getName(),
                                                                        Navigatable.class.getName(),
                                                                        AreaInstance.class.getName(),
                                                                        VirtualFile.class.getName());

@@ -43,15 +43,6 @@ class InlayHintsConfigurable(private val project: Project) : Configurable, Confi
     InlaySettingsProvider.EP.getExtensions().flatMap { it.getDependencies() }
 
   companion object {
-    /**
-     * Updates settings UI when external change happens (e. g. when some provider is changed).
-     */
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("New UI doesn't need it, just drop call")
-    fun updateInlayHintsUI() {
-
-    }
 
     @JvmStatic
     @ApiStatus.ScheduledForRemoval

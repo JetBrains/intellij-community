@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend.ui
 
 import com.intellij.openapi.project.Project
@@ -7,7 +7,7 @@ import com.intellij.platform.navbar.frontend.vm.NavBarVm
 import com.intellij.platform.navbar.frontend.vm.impl.NavBarVmImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.JBPanel
-import com.intellij.util.ui.showingScope
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.*
@@ -43,7 +43,9 @@ fun staticNavBarPanel(
     }
   }
 
-  panel.showingScope("static nav bar window", uiData = ComponentUtil::getWindow) { window ->
+  panel.launchOnShow("static nav bar window") {
+    val window = ComponentUtil.getWindow(panel)
+                 ?: return@launchOnShow
     withContext(Dispatchers.Default) {
       handleWindow(window)
     }
@@ -62,7 +64,7 @@ class StaticNavBarPanel(
   val model: NavBarVm? get() = _vm.value
 
   init {
-    showingScope("static nav bar vm") {
+    launchOnShow("static nav bar vm") {
       _vm.collectLatest { vm ->
         if (vm != null) {
           handleVm(vm)

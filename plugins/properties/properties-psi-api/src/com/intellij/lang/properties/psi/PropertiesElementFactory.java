@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.IProperty;
@@ -27,46 +27,41 @@ public final class PropertiesElementFactory {
     }
   };
 
-  @NotNull
-  public static IProperty createProperty(@NotNull Project project,
-                                         @NonNls @NotNull String name,
-                                         @NonNls @NotNull String value,
-                                         @Nullable Character delimiter) {
+  public static @NotNull IProperty createProperty(@NotNull Project project,
+                                                  @NonNls @NotNull String name,
+                                                  @NonNls @NotNull String value,
+                                                  @Nullable Character delimiter) {
     return createProperty(project, name, value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
   }
 
-  @NotNull
-  public static IProperty createProperty(@NotNull Project project,
-                                         @NonNls @NotNull String name,
-                                         @NonNls @NotNull String value,
-                                         @Nullable Character delimiter,
-                                         @NotNull PropertyKeyValueFormat format) {
+  public static @NotNull IProperty createProperty(@NotNull Project project,
+                                                  @NonNls @NotNull String name,
+                                                  @NonNls @NotNull String value,
+                                                  @Nullable Character delimiter,
+                                                  @NotNull PropertyKeyValueFormat format) {
     String text = getPropertyText(name, value, delimiter, project, format);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
   }
 
-  @NotNull
-  public static String getPropertyText(@NonNls @NotNull String name,
-                                       @NonNls @NotNull String value,
-                                       @NonNls @Nullable Character delimiter,
-                                       @Nullable Project project,
-                                       @NotNull PropertyKeyValueFormat format) {
+  public static @NotNull String getPropertyText(@NonNls @NotNull String name,
+                                                @NonNls @NotNull String value,
+                                                @NonNls @Nullable Character delimiter,
+                                                @Nullable Project project,
+                                                @NotNull PropertyKeyValueFormat format) {
     if (delimiter == null) {
       delimiter = project == null ? '=' : PropertiesCodeStyleSettings.getInstance(project).getDelimiter();
     }
     return (format != PropertyKeyValueFormat.FILE ? escape(name) : name) + delimiter + escapeValue(value, delimiter, format);
   }
 
-  @NotNull
-  public static PropertiesFile createPropertiesFile(@NotNull Project project, @NonNls @NotNull String text) {
+  public static @NotNull PropertiesFile createPropertiesFile(@NotNull Project project, @NonNls @NotNull String text) {
     @NonNls String filename = "dummy." + PropertiesFileType.INSTANCE.getDefaultExtension();
     return (PropertiesFile)PsiFileFactory.getInstance(project)
       .createFileFromText(filename, PropertiesFileType.INSTANCE, text);
   }
 
-  @NotNull
-  public static PropertiesFile createPropertiesFile(@NotNull Project project, Properties properties, String fileName) {
+  public static @NotNull PropertiesFile createPropertiesFile(@NotNull Project project, Properties properties, String fileName) {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     try {
       properties.store(stream, "");
@@ -79,8 +74,7 @@ public final class PropertiesElementFactory {
       .createFileFromText(filename, PropertiesFileType.INSTANCE, stream.toString());
   }
 
-  @NotNull
-  public static synchronized PropertiesFile getSystemProperties(@NotNull Project project) {
+  public static synchronized @NotNull PropertiesFile getSystemProperties(@NotNull Project project) {
     PropertiesFile systemPropertiesFile = project.getUserData(SYSTEM_PROPERTIES_KEY);
     if (systemPropertiesFile == null) {
       project.putUserData(SYSTEM_PROPERTIES_KEY, systemPropertiesFile = createPropertiesFile(project, System.getProperties(), "system"));
@@ -88,8 +82,7 @@ public final class PropertiesElementFactory {
     return systemPropertiesFile;
   }
 
-  @NotNull
-  private static String escape(@NotNull String name) {
+  private static @NotNull String escape(@NotNull String name) {
     if (StringUtil.startsWithChar(name, '#') || StringUtil.startsWithChar(name, '!')) {
       name = "\\" + name;
     }

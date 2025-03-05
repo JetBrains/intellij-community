@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework.fixture
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
-import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 

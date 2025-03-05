@@ -92,9 +92,8 @@ public class VisiblePack implements VcsLogDataPack, UserDataHolder {
     return getVisibleGraph().getVisibleCommitCount() == 0;
   }
 
-  public @Nullable VirtualFile getRoot(int row) {
-    int head = getVisibleGraph().getRowInfo(row).getOneOfHeads();
-    return myDataPack.getRefsModel().rootAtHead(head);
+  public @Nullable VirtualFile getRootAtHead(int headCommitIndex) {
+    return myDataPack.getRefsModel().rootAtHead(headCommitIndex);
   }
 
   @SuppressWarnings("unchecked")

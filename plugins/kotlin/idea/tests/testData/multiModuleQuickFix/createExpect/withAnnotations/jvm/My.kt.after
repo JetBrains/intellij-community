@@ -1,5 +1,5 @@
 // "Create expected class in common module testModule_Common" "true"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // IGNORE_K2
 
 annotation class PlatformAnnotation

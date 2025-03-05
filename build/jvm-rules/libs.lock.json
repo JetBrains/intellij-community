@@ -1,0 +1,86 @@
+{
+  "com.google.flatbuffers:flatbuffers-java:25.2.10": [
+    "587bd6c31cda747587493a113bec8602d3a0b0ca579b2b1b838ef71b19e6525d",
+    "202bfdb62bff2f27bf3932a909fa5e45b3070aad3db3bb5a11900ee471a5546b"
+  ],
+  "com.google.protobuf:protobuf-java:4.29.3": [
+    "442db5991a11974d72127353be7d7e7abdf8d943d83b16668cb2e336d7392f54",
+    "6a755c09e0e5112a39c9e0910e07021d8700294666cd22c431fcf572acb4eb77"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-logging-otlp:1.47.0": [
+    "aa49634f2f46bd8fa13ec952c35a264295324aaedc1a585958529953861e9269",
+    "2ae0bff948fd5a1f4f4f47e83a50546fd8e335927e2e6576d173c9172045afde"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-otlp:1.47.0": [
+    "0bf93192631d8d069f865707abf456432bb8fca316d5a7fd0ff5d1302414c651",
+    "aafc09eaaa3cf90a02f1c9670cb1c00ba73f86ed13e6ad91cc47efb1f3cabe62"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-sender-jdk:1.47.0": [
+    "17c8e65e017e506ba520811009a37a64eceb2ceb0d15cd1d0e0cb074e54821cc",
+    "cf54580e7cc05a59cfbb14ecf673fdd82e2ed014717653434cb99cf093193450"
+  ],
+  "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.47.0": [
+    "94348d4263e2c59c7039630cad379d969b62644ed09b6178fa952988559b396a",
+    "e2eea857013276cb59d4b3ad6463901a8bce5cb324e071f6b3996d2f8e53a262"
+  ],
+  "org.apache.arrow:arrow-algorithm:18.2.0": [
+    "0c4089bde0ce62f00720d64dc0b7f08a6cb23e96c424ec7e061b4c4e6e4bba82",
+    "c596851108722c8a5165e24d0fb8775fc5768305623f2b91d23e7b9b903055ec"
+  ],
+  "org.apache.arrow:arrow-format:18.2.0": [
+    "6d977352a232559c97a38dfdd786f014e87489d3bb3f33f12cfed30bdd164669",
+    "6b0e19b1d0270a5fd51182d815738e7b2aba4f00b6cf9a3a41d13aebb4e12d0a"
+  ],
+  "org.apache.arrow:arrow-memory-core:18.2.0": [
+    "f2867e5267d0ae4eb97ea5cac47bba90ca73522c53aa702a23258f9754ca8b8e",
+    "badccb602f0184e27e55f58f1c4c5cd8a4eb5f5a257ae4d21a444ce57091ce38"
+  ],
+  "org.apache.arrow:arrow-memory-netty-buffer-patch:18.2.0": [
+    "9c5f242b6484ebfadc7d17f19554bd725afa1658d9cf824e59f1678618d263c2",
+    "9feb87fdbcb00d99ede9bc648c88ffbd4fd5858a879f60f405c583786660f1fa"
+  ],
+  "org.apache.arrow:arrow-memory-netty:18.2.0": [
+    "ff6c4900356e594411269ebc511ce3a98d881d67adc61e9b620f8ba9184694b7",
+    "2788604690613113ddcdd15b9d1d86f6ea00c260d5f2368236209d4595969782"
+  ],
+  "org.apache.arrow:arrow-vector:18.2.0": [
+    "29fe15fac68e30fdd59364bcd8b5058490cc85269fd47fb460abaff1fb61243d",
+    "90709044e442c5998d68ce146e487ba89d1eb859c4ddf67defa2d8131390e10e"
+  ],
+  "org.jetbrains.kotlin:kotlin-build-tools-api:2.1.20-Beta2": [
+    "d2155dea5f3a6262fa7f68400c858c2982d937863ec142cc13b142e915b324e3",
+    "fe86558db8dc6b7712ef376b92de40f3573dd844f2529424fb8162309b97d7f6"
+  ],
+  "org.jetbrains.kotlin:kotlin-build-tools-impl:2.1.20-Beta2": [
+    "fef93d25defc9c63fc2d8a85914282ccf18bd4fdf4a757d00417e82c4fe30d75",
+    "8f8f11d1078d1a4ee7c5c3a61c3df74e0b3c1820e97a95b9e3a81ea4f70f6101"
+  ],
+  "org.jetbrains.kotlin:kotlin-compiler:2.1.20-Beta2": [
+    "367c4d9e0ba8c4e1f5ee52552bb4c63ca1422fc8543333378480031eda5010eb",
+    "84652229286b1136776b0d739993c48d5a963343a9dbd240a7a41da99c68556d"
+  ],
+  "org.jetbrains.kotlin:kotlin-compose-compiler-plugin:2.1.20-Beta2": [
+    "516e93281f577203335d0aaafcd63a5ffa23082d674c3d78159d5000b1c40f61",
+    "bfb26a777eb4338852c072adb735c7903306e7c45ea57a59e6a023f2986af628"
+  ],
+  "org.jetbrains.kotlin:kotlin-jps-plugin:2.1.20-Beta2": [
+    "479f83fbaff22361ac3c1c2de410043901afe71e06fa6ab599b0037059b53788",
+    "9050fd365fa139a4aa0c5c1383d177474eacf151495b577987ffc86bc78cecbc"
+  ],
+  "org.jetbrains.kotlin:kotlin-metadata-jvm:2.1.20-Beta2": [
+    "a4d99e5b88eff9972c117b577436aa587e83f78e60cf005cd614065f59ead7a9",
+    "3f5468b5c409702c7cac30067208b7218ab9e3f7209e686966c6c2de2134dd18"
+  ],
+  "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin:2.1.20-Beta2": [
+    "deabc2903e4c1aab9d5e3e4be29736c0873a961b7b2f9db02051d5fd1675ceb8",
+    "941b3bf2b6b366f6b6d066b8d17daf4ec974ec9a419888aa3448716b15fde8e9"
+  ],
+  "org.jetbrains.kotlin:kotlin-util-klib-metadata:2.1.20-Beta2": [
+    "98261bc30acd236aadd09de17b8a375a5a3181af72e293b4d5e41e08a2e2f691",
+    "8c09123a01414e2e8b7b691aecb3e96b36d993f0101de8566f62f5ff6a1e8d3f"
+  ],
+  "org.jetbrains.kotlin:kotlin-util-klib:2.1.20-Beta2": [
+    "3323354cff5c1e10e5ce3a57a0eb9475b20868264689543b7bc80cf4797423ca",
+    "4aa4da6df01507c0fe9b48ff4f3d2a5eb5edf5f894850169c90efc89330a9d8b"
+  ]
+}

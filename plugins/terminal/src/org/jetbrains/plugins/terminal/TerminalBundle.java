@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.DynamicBundle;
@@ -9,19 +9,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class TerminalBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.TerminalBundle";
-  public static final TerminalBundle INSTANCE = new TerminalBundle();
+public final class TerminalBundle {
+  private static final @NonNls String BUNDLE = "messages.TerminalBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(TerminalBundle.class, BUNDLE);
 
-  private TerminalBundle() { super(BUNDLE); }
+  private TerminalBundle() { }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.containsKey(key) ? INSTANCE.getMessage(key, params) : TerminalDeprecatedMessagesBundle.message(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.containsKey(key) ? INSTANCE.getLazyMessage(key, params) : TerminalDeprecatedMessagesBundle.messagePointer(key, params);
   }
 }

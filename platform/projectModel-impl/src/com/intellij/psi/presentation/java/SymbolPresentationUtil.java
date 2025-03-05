@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.presentation.java;
 
 import com.intellij.navigation.ItemPresentation;
@@ -33,8 +33,7 @@ public final class SymbolPresentationUtil {
     return element.getText();
   }
 
-  @Nullable
-  public static @NlsSafe String getSymbolContainerText(PsiElement element) {
+  public static @Nullable @NlsSafe String getSymbolContainerText(PsiElement element) {
     if (element instanceof NavigationItem) {
       final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
       if (presentation != null){

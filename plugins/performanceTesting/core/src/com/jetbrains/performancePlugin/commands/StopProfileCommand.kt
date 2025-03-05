@@ -3,7 +3,6 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.jetbrains.performancePlugin.profilers.Profiler.Companion.getCurrentProfilerHandler
-import com.jetbrains.performancePlugin.profilers.Profiler.Companion.isAnyProfilingStarted
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 
 /**

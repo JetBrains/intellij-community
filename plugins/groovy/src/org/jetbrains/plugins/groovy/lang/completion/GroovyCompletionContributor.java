@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -45,7 +45,7 @@ public final class GroovyCompletionContributor extends CompletionContributor {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
+                                    final @NotNull CompletionResultSet result) {
         final Set<String> usedWords = new HashSet<>();
         for (CompletionResult element : result.runRemainingContributors(parameters, true)) {
           usedWords.add(element.getLookupElement().getLookupString());
@@ -69,7 +69,7 @@ public final class GroovyCompletionContributor extends CompletionContributor {
 
 
   @Override
-  public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
+  public void beforeCompletion(final @NotNull CompletionInitializationContext context) {
     final String identifier = new GrDummyIdentifierProvider(context).getIdentifier();
     if (identifier != null) {
       context.setDummyIdentifier(identifier);

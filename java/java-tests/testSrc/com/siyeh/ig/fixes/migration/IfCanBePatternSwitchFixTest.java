@@ -54,4 +54,5 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testSeveralIfStatementsWithComments() { doTest(); }
   public void testIfOnClass() { assertQuickfixNotAvailable(); }
   public void testWithEnums() { doTest(); }
+  public void testIfWithDefaultNotNull() { doTest(); }
 }

@@ -23,15 +23,13 @@ public final class CleanupProcessor extends AbstractProcessor {
     super(PsiElement.class, LombokClassNames.CLEANUP);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     // TODO warning: "You're assigning an auto-cleanup variable to something else. This is a bad idea."
     final ProblemValidationSink problemNewBuilder = new ProblemValidationSink();
 

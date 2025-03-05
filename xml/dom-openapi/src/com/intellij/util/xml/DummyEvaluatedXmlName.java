@@ -43,6 +43,7 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName {
     return myNamespace;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -55,6 +56,7 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myXmlName != null ? myXmlName.hashCode() : 0);

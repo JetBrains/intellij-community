@@ -26,11 +26,9 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public abstract class SettingsConnectionService {
-  @NotNull
-  private final EventLogApplicationInfo myApplicationInfo;
+  private final @NotNull EventLogApplicationInfo myApplicationInfo;
 
-  @NotNull
-  private final Supplier<EventLogExternalSendSettings> myCachedExternalSettings;
+  private final @NotNull Supplier<EventLogExternalSendSettings> myCachedExternalSettings;
 
   protected SettingsConnectionService(@NotNull Supplier<@Nullable String> settingsUrlSupplier, @NotNull String recorderId,
                                       @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
@@ -44,31 +42,26 @@ public abstract class SettingsConnectionService {
     );
   }
 
-  @Nullable
-  protected EventLogSendConfiguration getConfiguration(@NotNull EventLogBuildType type) {
+  protected @Nullable EventLogSendConfiguration getConfiguration(@NotNull EventLogBuildType type) {
     EventLogExternalSendSettings settings = getExternalSettings();
     return settings != null ? settings.getConfiguration(type) : null;
   }
 
-  @Nullable
-  protected String getEndpointValue(@NotNull String attribute) {
+  protected @Nullable String getEndpointValue(@NotNull String attribute) {
     EventLogExternalSendSettings settings = getExternalSettings();
     return settings != null ? settings.getEndpoint(attribute) : null;
   }
 
-  @NotNull
-  public Map<String, String> getOptions() {
+  public @NotNull Map<String, String> getOptions() {
     EventLogExternalSendSettings settings = getExternalSettings();
     return settings != null ? settings.getOptions() : Collections.emptyMap();
   }
 
-  @Nullable
-  protected synchronized EventLogExternalSendSettings getExternalSettings() {
+  protected synchronized @Nullable EventLogExternalSendSettings getExternalSettings() {
     return myCachedExternalSettings.get();
   }
 
-  @Nullable
-  public EventLogExternalSendSettings loadSettings(@NotNull String recorderId, @NotNull String configUrl, @NotNull String appVersion) {
+  public @Nullable EventLogExternalSendSettings loadSettings(@NotNull String recorderId, @NotNull String configUrl, @NotNull String appVersion) {
     try {
       return StatsHttpRequests.request(configUrl, myApplicationInfo.getConnectionSettings()).send(r -> {
         try {

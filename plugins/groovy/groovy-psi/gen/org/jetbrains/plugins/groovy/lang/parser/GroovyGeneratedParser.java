@@ -1,5 +1,3 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -7869,21 +7867,41 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
+  // (non_empty_annotation_list mb_nl)? IDENTIFIER (type_parameter_bounds_list | empty_type_parameter_bounds_list)
   public static boolean type_parameter(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_parameter")) return false;
-    if (!nextTokenIs(b, "<type parameter>", IDENTIFIER)) return false;
+    if (!nextTokenIsFast(b, T_AT) &&
+        !nextTokenIs(b, "<type parameter>", IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, TYPE_PARAMETER, "<type parameter>");
-    r = consumeToken(b, IDENTIFIER);
-    r = r && type_parameter_1(b, l + 1);
+    r = type_parameter_0(b, l + 1);
+    r = r && consumeToken(b, IDENTIFIER);
+    r = r && type_parameter_2(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
+  // (non_empty_annotation_list mb_nl)?
+  private static boolean type_parameter_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_parameter_0")) return false;
+    type_parameter_0_0(b, l + 1);
+    return true;
+  }
+
+  // non_empty_annotation_list mb_nl
+  private static boolean type_parameter_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_parameter_0_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = non_empty_annotation_list(b, l + 1);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // type_parameter_bounds_list | empty_type_parameter_bounds_list
-  private static boolean type_parameter_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "type_parameter_1")) return false;
+  private static boolean type_parameter_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "type_parameter_2")) return false;
     boolean r;
     r = type_parameter_bounds_list(b, l + 1);
     if (!r) r = empty_type_parameter_bounds_list(b, l + 1);
@@ -7963,7 +7981,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   // type_parameter type_parameters_tail*
   static boolean type_parameters(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_parameters")) return false;
-    if (!nextTokenIs(b, IDENTIFIER)) return false;
+    if (!nextTokenIsFast(b, T_AT) &&
+        !nextTokenIs(b, "", IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = type_parameter(b, l + 1);

@@ -1,0 +1,4 @@
+int_col~float_col
+1~1.0
+2~2.0
+3~null

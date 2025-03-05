@@ -31,7 +31,7 @@ class OnArrayTest {
     public static void main(String[] args) {
         Cln s =  int[]::clone;
         IA a =  int[]::new;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'OnArrayTest.I'">I i = int[]::new;</error>
+        I i = int[]::<error descr="Incompatible types. Found: '<method reference>', required: 'OnArrayTest.I'">new</error>;
         Len<String> strLen = String[]::<error descr="Cannot resolve method 'length'">length</error>;
         ToStr<Integer> toStr = Integer[]::toString;
 
@@ -51,7 +51,7 @@ class IDEA106973 {
 
   {
     Function<Integer, String[]> a  = String[] :: new;
-    <error descr="Incompatible types. Found: '<method reference>', required: 'IDEA106973.Function<java.lang.String,java.lang.String[]>'">Function<String, String[]> a1  = String[] :: new;</error>
+    Function<String, String[]> a1  = String[] :: <error descr="Incompatible types. Found: '<method reference>', required: 'IDEA106973.Function<java.lang.String,java.lang.String[]>'">new</error>;
     Function<Short, String[]> a2  = String[] :: new;
   }
 }

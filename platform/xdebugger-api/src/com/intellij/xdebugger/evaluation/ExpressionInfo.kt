@@ -1,11 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.evaluation
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.PairSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -13,9 +11,10 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import org.jetbrains.annotations.ApiStatus
 
 @Serializable
-class ExpressionInfo @JvmOverloads constructor(
+class ExpressionInfo @ApiStatus.Internal constructor(
   /**
    * Text range to highlight as link,
    * will be used to compute evaluation and display text if these values not specified.
@@ -27,11 +26,17 @@ class ExpressionInfo @JvmOverloads constructor(
    */
   val expressionText: String? = null,
   val displayText: String? = expressionText,
-  // ignore [PsiElement] in serialization for now, since it is not serializable
-  // TODO: [ExpressionInfo] shouldn't contain PsiElement
-  @Transient
-  val element: PsiElement? = null,
-)
+  @ApiStatus.Internal
+  val isManualSelection: Boolean,
+) {
+  @JvmOverloads
+  constructor(textRange: TextRange, expressionText: String? = null, displayText: String? = expressionText) : this(
+    textRange,
+    expressionText,
+    displayText,
+    isManualSelection = false,
+  )
+}
 
 // TODO: temporary hack, remove it when [TextRange] will be serializable
 private object TextRangeSerializer : KSerializer<TextRange> {

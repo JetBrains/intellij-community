@@ -7,6 +7,7 @@ import com.intellij.jarRepository.services.MavenRepositoryService;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -29,7 +30,7 @@ public class BintrayRepositoryService extends MavenRepositoryService {
   }
 
   @Override
-  public @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+  public @Unmodifiable @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
     BintrayModel.Repository info = parseInfo(url);
     if (info != null) {
       BintrayEndpoint bintrayEndpoint = new BintrayEndpoint();

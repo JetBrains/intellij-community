@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,8 +23,8 @@ import java.util.*;
 public class UnifiedEditorHighlighter implements EditorHighlighter {
   private static final Logger LOG = Logger.getInstance(UnifiedEditorHighlighter.class);
 
-  @NotNull private final Document myDocument;
-  @NotNull private final List<Element> myPieces;
+  private final @NotNull Document myDocument;
+  private final @NotNull List<Element> myPieces;
 
   UnifiedEditorHighlighter(@NotNull Document document,
                            @NotNull EditorHighlighter highlighter1,
@@ -122,9 +122,8 @@ public class UnifiedEditorHighlighter implements EditorHighlighter {
     }
   }
 
-  @NotNull
   @Override
-  public HighlighterIterator createIterator(int startOffset) {
+  public @NotNull HighlighterIterator createIterator(int startOffset) {
     int index = Collections.binarySearch(myPieces, createEmptyElement(startOffset, 0), Comparator.comparingInt(Element::getStart));
     // index: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
     // and we need index of the first element that is less or equal (floorElement)
@@ -136,14 +135,12 @@ public class UnifiedEditorHighlighter implements EditorHighlighter {
   public void setEditor(@NotNull HighlighterClient editor) {
   }
 
-  @NotNull
-  private static Element createEmptyElement(int startOffset, int endOffset) {
+  private static @NotNull Element createEmptyElement(int startOffset, int endOffset) {
     return new Element(startOffset, endOffset, null, TextAttributes.ERASE_MARKER, TextAttributesKey.EMPTY_ARRAY);
   }
 
   private static final class ProxyIterator implements HighlighterIterator {
-    @NotNull
-    private final Document myDocument;
+    private final @NotNull Document myDocument;
     private int myIdx;
     private final List<Element> myPieces;
 
@@ -197,9 +194,8 @@ public class UnifiedEditorHighlighter implements EditorHighlighter {
       return myIdx < 0 || myIdx >= myPieces.size();
     }
 
-    @NotNull
     @Override
-    public Document getDocument() {
+    public @NotNull Document getDocument() {
       return myDocument;
     }
   }

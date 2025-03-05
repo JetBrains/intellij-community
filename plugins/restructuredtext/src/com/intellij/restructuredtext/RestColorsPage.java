@@ -31,12 +31,11 @@ public class RestColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(RestBundle.message("literal.and.line.blocks"), RestSyntaxHighlighter.REST_INLINE),
   };
 
-  @NonNls private static final HashMap<String, TextAttributesKey> ourTagToDescriptorMap = new HashMap<>();
+  private static final @NonNls HashMap<String, TextAttributesKey> ourTagToDescriptorMap = new HashMap<>();
 
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return RestBundle.message("restructured.text");
   }
 
@@ -56,16 +55,14 @@ public class RestColorsPage implements ColorSettingsPage {
   }
 
   @Override
-  @NotNull
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(RestFileType.INSTANCE, null, null);
     assert highlighter != null;
     return highlighter;
   }
 
   @Override
-  @NotNull
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return
       """
         .. comment for documentation master file

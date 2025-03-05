@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +48,7 @@ public final class RenameFileAction extends AnAction implements ActionPromoter {
   }
 
   @Override
-  public @Nullable List<AnAction> suppress(@NotNull List<? extends AnAction> actions,
+  public @Nullable List<AnAction> suppress(@NotNull @Unmodifiable List<? extends AnAction> actions,
                                            @NotNull DataContext context) {
     return CommonDataKeys.EDITOR.getData(context) != null && ContainerUtil.findInstance(actions, RenameElementAction.class) != null 
            ? Collections.singletonList(this) : null;

@@ -27,8 +27,7 @@ public interface PyAstStringElement extends PsiElement {
    *
    * @see #getPrefixLength()
    */
-  @NotNull
-  default String getPrefix() {
+  default @NotNull String getPrefix() {
     return PyStringLiteralCoreUtil.getPrefix(getText());
   }
 
@@ -55,8 +54,7 @@ public interface PyAstStringElement extends PsiElement {
    * 
    * @see #getContentRange() 
    */
-  @NotNull
-  default String getContent() {
+  default @NotNull String getContent() {
     return getContentRange().substring(getText());
   }
 

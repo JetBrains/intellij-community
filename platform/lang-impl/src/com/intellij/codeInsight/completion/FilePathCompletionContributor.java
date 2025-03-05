@@ -190,12 +190,12 @@ public final class FilePathCompletionContributor extends CompletionContributor {
                                                      String prefix,
                                                      FileType[] suitableFileTypes,
                                                      int invocationCount) {
-    boolean prefixMatched = prefix.length() == 0 || StringUtil.startsWithIgnoreCase(fileName, prefix);
+    boolean prefixMatched = prefix.isEmpty() || StringUtil.startsWithIgnoreCase(fileName, prefix);
     if (prefixMatched && (suitableFileTypes.length == 0 || invocationCount > 2)) return true;
 
     if (prefixMatched) {
       String extension = FileUtilRt.getExtension(fileName);
-      if (extension.length() == 0) return false;
+      if (extension.isEmpty()) return false;
 
       for (FileType fileType : suitableFileTypes) {
         for (FileNameMatcher matcher : FileTypeManager.getInstance().getAssociations(fileType)) {
@@ -232,7 +232,7 @@ public final class FilePathCompletionContributor extends CompletionContributor {
     PsiFileSystemItem parent;
     while ((parent = parentFile.getParent()) != null &&
            (stopParent == null || !Objects.equals(parent.getVirtualFile(), stopParent))) {
-      if (parent.getName().length() > 0) contextParts.add(0, StringUtil.toLowerCase(parent.getName()));
+      if (!parent.getName().isEmpty()) contextParts.add(0, StringUtil.toLowerCase(parent.getName()));
       parentFile = parent;
     }
 
@@ -364,13 +364,13 @@ public final class FilePathCompletionContributor extends CompletionContributor {
         sb.append(relativePath);
       }
 
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.append(')');
       }
 
       presentation.setItemText(myName);
 
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         presentation.setTailText(sb.toString(), true);
       }
 

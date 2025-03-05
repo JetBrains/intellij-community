@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,10 +22,10 @@ import static com.intellij.openapi.vcs.changes.patch.GitPatchWriter.writeGitHead
 
 @ApiStatus.Internal
 public final class BinaryPatchWriter {
-  private final static Logger LOG = Logger.getInstance(BinaryFilePatch.class);
+  private static final Logger LOG = Logger.getInstance(BinaryFilePatch.class);
 
-  private final static @NonNls String GIT_BINARY_HEADER = "GIT binary patch";
-  private final static @NonNls String LITERAL_HEADER = "literal %s";
+  private static final @NonNls String GIT_BINARY_HEADER = "GIT binary patch";
+  private static final @NonNls String LITERAL_HEADER = "literal %s";
 
   public static void writeBinaries(@Nullable Path basePath,
                                    @NotNull List<BinaryFilePatch> patches,
@@ -52,8 +52,7 @@ public final class BinaryPatchWriter {
     }
   }
 
-  @NotNull
-  private static String getSha1ForContent(byte @Nullable [] content) {
+  private static @NotNull String getSha1ForContent(byte @Nullable [] content) {
     return content != null ? BlobIndexUtil.getSha1(content) : NOT_COMMITTED_HASH;
   }
 }

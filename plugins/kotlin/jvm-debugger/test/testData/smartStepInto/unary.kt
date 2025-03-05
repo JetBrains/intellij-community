@@ -6,4 +6,4 @@ class A {
 fun foo() {
     <caret>+A() || -A()
 }
-// EXISTS: unaryPlus(), unaryMinus()
+// EXISTS: unaryPlus(), constructor A()_0, unaryMinus(), constructor A()_1

@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.intellij.lang.annotations.MagicConstant
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.SystemDependent
 
@@ -78,12 +77,6 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
 
   private val _propertyChangedFlow = MutableSharedFlow<PropertyNames>(extraBufferCapacity = 16, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val propertyChangedFlow: Flow<PropertyNames> = _propertyChangedFlow.asSharedFlow()
-
-  @Suppress("unused")
-  @get:Deprecated("Use {@link GeneralLocalSettings#getUseDefaultBrowser()} instead.")
-  @get:ApiStatus.ScheduledForRemoval
-  val isUseDefaultBrowser: Boolean
-    get() = state.useDefaultBrowser
 
   var isSearchInBackground: Boolean
     get() = state.searchInBackground

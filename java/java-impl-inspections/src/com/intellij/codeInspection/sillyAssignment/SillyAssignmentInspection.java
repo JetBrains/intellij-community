@@ -30,9 +30,7 @@ public final class SillyAssignmentInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "SillyAssignment";
   }
 
@@ -42,8 +40,7 @@ public final class SillyAssignmentInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
@@ -137,10 +134,8 @@ public final class SillyAssignmentInspection extends AbstractBaseJavaLocalInspec
 
   private static class RemoveSillyAssignmentFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionsBundle.message("assignment.to.itself.quickfix.name");
     }
 

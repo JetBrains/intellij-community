@@ -35,6 +35,7 @@ internal object RuntimeChooserJreValidator {
     get() = 11
 
   fun isSupportedSdkItem(item: JdkItem): Boolean {
+    // TODO Introduce EelApi here.
     //we do only support mac bundle layout
     if (SystemInfo.isMac && !item.packageToBinJavaPrefix.endsWith("Contents/Home")) {
       return false

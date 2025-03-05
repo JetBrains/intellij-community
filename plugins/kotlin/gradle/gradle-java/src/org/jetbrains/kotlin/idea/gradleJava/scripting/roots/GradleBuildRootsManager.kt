@@ -20,7 +20,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -43,6 +42,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -295,7 +295,7 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
         }
     }
 
-    fun loadLinkedRoot(settings: GradleProjectSettings, version: String = getGradleVersion(project, settings)): GradleBuildRoot {
+    fun loadLinkedRoot(settings: GradleProjectSettings, version: String): GradleBuildRoot {
         if (!enabled) {
             return Legacy(settings)
         }
@@ -313,7 +313,7 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
         return tryCreateImportedRoot(settings.externalProjectPath) {
             GradleBuildRootDataSerializer.getInstance().read(it)?.let { data ->
                 val gradleHome = data.gradleHome
-                if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(gradleHome) != version) return@let null
+                if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(Path.of(gradleHome)) != version) return@let null
 
                 addFromSettings(data, settings)
             }
@@ -406,7 +406,14 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
                     }
 
                     if (KotlinPluginModeProvider.isK1Mode() && restartAnalyzer) {
-                        KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
+                        val kotlinCodeBlockModificationListenerClass = Class.forName("org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener")
+                        kotlinCodeBlockModificationListenerClass
+                            .getMethod("incModificationCount")
+                            .invoke(
+                                @Suppress("IncorrectServiceRetrieving")
+                                project.getService(kotlinCodeBlockModificationListenerClass),
+                            )
+
                         // this required only for "pause" state
                         PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
                             DaemonCodeAnalyzer.getInstance(project).restart(ktFile)

@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
+import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Focused
@@ -51,8 +52,11 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.dropdownStyle
-import org.jetbrains.jewel.ui.util.thenIf
 
+@Deprecated(
+    message = "Use ListComboBox instead. This component will be removed in a future release.",
+    level = DeprecationLevel.WARNING,
+)
 @Composable
 public fun Dropdown(
     modifier: Modifier = Modifier,
@@ -106,7 +110,7 @@ public fun Dropdown(
                         skipNextClick = false
                     },
                     enabled = enabled,
-                    role = Role.Button,
+                    role = Role.DropdownList,
                     interactionSource = interactionSource,
                     indication = null,
                 )

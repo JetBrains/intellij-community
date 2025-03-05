@@ -26,14 +26,12 @@ import java.util.Collections;
 final class EditInjectionSettingsAction implements IntentionAction, LowPriorityAction {
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return IntelliLangBundle.message("intention.name.language.injection.settings");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return IntelliLangBundle.message("intention.family.name.edit.injection.settings");
   }
 
@@ -47,7 +45,7 @@ final class EditInjectionSettingsAction implements IntentionAction, LowPriorityA
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     ApplicationManager.getApplication().runReadAction(() -> invokeImpl(project, editor, file));
   }
 

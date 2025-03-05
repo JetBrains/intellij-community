@@ -2,8 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -13,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -24,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -128,11 +126,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   private @NotNull Collection<PsiVariable> getVariablesToFix() {
-    Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
-    if (vars == null) {
-      vars = ((UserDataHolderEx)myContext).putUserDataIfAbsent(VARS[myFixType], ContainerUtil.createConcurrentWeakMap());
-    }
-    final Map<PsiVariable, Boolean> finalVars = vars;
+    final Map<PsiVariable, Boolean> finalVars =
+      ConcurrencyUtil.computeIfAbsent(myContext, VARS[myFixType], () -> ContainerUtil.createConcurrentWeakMap());
     return new AbstractCollection<>() {
       @Override
       public boolean add(PsiVariable psiVariable) {
@@ -296,7 +291,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     int type = MAKE_FINAL;
     for (PsiReferenceExpression expression : outerReferences) {
       // if it happens that variable referenced from another inner class, make sure it can be make final from there
-      PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, expression);
+      PsiElement innerScope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, expression);
 
       if (innerScope != null) {
         @FixType int thisType = MAKE_FINAL;
@@ -320,11 +315,14 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new HashMap<>();
     for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
-      HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,
-                                                                                                 variable.getContainingFile());
-      if (highlightInfo != null) return false;
-      highlightInfo = HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
-      if (highlightInfo != null) return false;
+      if (!ControlFlowUtil.isInitializedBeforeUsage(
+        expression, variable, uninitializedVarProblems, false)) {
+        return false;
+      }
+      if (ControlFlowUtil.findFinalVariableAlreadyInitializedProblem(variable, expression, finalVarProblems) !=
+          ControlFlowUtil.DoubleInitializationProblem.NO_PROBLEM) {
+        return false;
+      }
       if (variable instanceof PsiParameter && PsiUtil.isAccessedForWriting(expression)) return false;
     }
     return true;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.ide.highlighter.DTDFileType;
@@ -28,6 +28,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.*;
 import java.util.*;
@@ -95,16 +96,16 @@ public final class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return ContainerUtil.getFirstItem(data.values());
   }
 
-  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(final @Nullable Module module,
-                                                                                           @NotNull Project project) {
+  public static @Unmodifiable List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(final @Nullable Module module,
+                                                                                                         @NotNull Project project) {
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>> xmlResources = IndexedRelevantResource.getAllResources(NAME, module, project, null);
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>> dtdResources = getDtdResources(null, module, project);
     return ContainerUtil.concat(xmlResources, dtdResources);
   }
 
-  private static @NotNull List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getDtdResources(@Nullable String namespace,
-                                                                                                     @Nullable Module module,
-                                                                                                     @NotNull Project project) {
+  private static @Unmodifiable @NotNull List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getDtdResources(@Nullable String namespace,
+                                                                                                                   @Nullable Module module,
+                                                                                                                   @NotNull Project project) {
     AdditionalIndexedRootsScope scope = new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(project));
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     Function<VirtualFile, IndexedRelevantResource<String, XsdNamespaceBuilder>> resourceFunction = f -> {

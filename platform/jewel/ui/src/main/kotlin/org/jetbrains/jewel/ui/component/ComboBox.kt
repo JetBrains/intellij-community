@@ -40,7 +40,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -50,6 +49,7 @@ import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.onHover
+import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.ui.Outline
@@ -57,13 +57,12 @@ import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
-import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
 public fun ComboBox(
     labelText: String,
     modifier: Modifier = Modifier,
-    menuModifier: Modifier = Modifier,
+    popupModifier: Modifier = Modifier,
     isEnabled: Boolean = true,
     outline: Outline = Outline.None,
     maxPopupHeight: Dp = Dp.Unspecified,
@@ -72,16 +71,12 @@ public fun ComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
-    onPopupStateChange: (Boolean) -> Unit = {},
+    popupManager: PopupManager = PopupManager(),
     popupContent: @Composable () -> Unit,
 ) {
-    var popupExpanded by remember { mutableStateOf(false) }
     var chevronHovered by remember { mutableStateOf(false) }
 
-    fun setPopupExpanded(expanded: Boolean) {
-        popupExpanded = expanded
-        onPopupStateChange(expanded)
-    }
+    val popupVisible by popupManager.isPopupVisible
 
     var comboBoxState by remember { mutableStateOf(ComboBoxState.of(enabled = isEnabled)) }
     val comboBoxFocusRequester = remember { FocusRequester() }
@@ -112,7 +107,7 @@ public fun ComboBox(
                 .onFocusChanged { focusState ->
                     comboBoxState = comboBoxState.copy(focused = focusState.isFocused)
                     if (!focusState.isFocused) {
-                        setPopupExpanded(false)
+                        popupManager.setPopupVisible(false)
                     }
                 }
                 .thenIf(isEnabled) {
@@ -121,31 +116,43 @@ public fun ComboBox(
                         .pointerInput(interactionSource) {
                             detectPressAndCancel(
                                 onPress = {
-                                    setPopupExpanded(!popupExpanded)
+                                    popupManager.setPopupVisible(!popupVisible)
                                     comboBoxFocusRequester.requestFocus()
                                 },
-                                onCancel = { setPopupExpanded(false) },
+                                onCancel = { popupManager.setPopupVisible(false) },
                             )
                         }
                         .semantics(mergeDescendants = true) { role = Role.DropdownList }
                         .onPreviewKeyEvent {
-                            if (it.type == KeyEventType.KeyDown && it.key == Key.Spacebar) {
-                                setPopupExpanded(!popupExpanded)
-                            }
-                            if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionDown) {
-                                if (popupExpanded) {
-                                    onArrowDownPress()
-                                } else {
-                                    setPopupExpanded(true)
+                            if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+
+                            when {
+                                it.key == Key.Spacebar -> {
+                                    popupManager.setPopupVisible(!popupVisible)
+                                    true
                                 }
+
+                                it.key == Key.DirectionDown -> {
+                                    if (popupVisible) {
+                                        onArrowDownPress()
+                                    } else {
+                                        popupManager.setPopupVisible(true)
+                                    }
+                                    true
+                                }
+
+                                it.key == Key.DirectionUp && popupVisible -> {
+                                    onArrowUpPress()
+                                    true
+                                }
+
+                                it.key == Key.Escape && popupVisible -> {
+                                    popupManager.setPopupVisible(false)
+                                    true
+                                }
+
+                                else -> false
                             }
-                            if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionUp && popupExpanded) {
-                                onArrowUpPress()
-                            }
-                            if (it.type == KeyEventType.KeyDown && it.key == Key.Escape && popupExpanded) {
-                                setPopupExpanded(false)
-                            }
-                            false
                         }
                 }
                 .background(style.colors.backgroundFor(comboBoxState, false).value, shape)
@@ -191,7 +198,7 @@ public fun ComboBox(
             }
         }
 
-        if (popupExpanded) {
+        if (popupVisible) {
             val maxHeight =
                 if (maxPopupHeight == Dp.Unspecified) {
                     JewelTheme.comboBoxStyle.metrics.maxPopupHeight
@@ -202,16 +209,15 @@ public fun ComboBox(
             PopupContainer(
                 onDismissRequest = {
                     if (!chevronHovered) {
-                        setPopupExpanded(false)
+                        popupManager.setPopupVisible(false)
                     }
                 },
                 modifier =
-                    menuModifier
-                        .testTag("Jewel.ComboBox.PopupMenu")
-                        .semantics { contentDescription = "Jewel.ComboBox.PopupMenu" }
+                    popupModifier
+                        .testTag("Jewel.ComboBox.Popup")
                         .heightIn(max = maxHeight)
                         .width(comboBoxWidth)
-                        .onClick { setPopupExpanded(false) },
+                        .onClick { popupManager.setPopupVisible(false) },
                 horizontalAlignment = Alignment.Start,
                 popupProperties = PopupProperties(focusable = false),
                 content = popupContent,

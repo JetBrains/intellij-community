@@ -72,8 +72,7 @@ public class Topic<L> {
   /**
    * @return human-readable name of the current topic. Is intended to be used in informational/logging purposes only
    */
-  @NonNls
-  public @NotNull String getDisplayName() {
+  public @NonNls @NotNull String getDisplayName() {
     return myDisplayName;
   }
 

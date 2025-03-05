@@ -124,12 +124,14 @@ abstract class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
             appendName(Name.identifier(uField.name))
             appendFixedText(" = ")
             appendName(Name.identifier(uParameter.name))
+            appendFixedText("\n")
         }
         if (anchor != null) {
             val newLine = ktPsiFactory.createWhiteSpace("\n")
             if (addBefore) {
                 val anchor = body.addBefore(newLine, anchor)
-                body.addBefore(assignmentExpression, anchor)
+                val assignment = body.addAfter(assignmentExpression, anchor)
+                body.addAfter(newLine, assignment)
             } else {
                 val anchor = body.addAfter(newLine, anchor)
                 body.addAfter(assignmentExpression, anchor)

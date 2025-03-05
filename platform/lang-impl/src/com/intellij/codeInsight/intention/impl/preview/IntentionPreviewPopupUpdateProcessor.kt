@@ -34,6 +34,8 @@ import com.intellij.ui.popup.PopupPositionManager.Position.RIGHT
 import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.ui.util.height
+import com.intellij.ui.util.width
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -81,26 +83,17 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
 
       component.multiPanel.select(LOADING_PREVIEW, true)
 
-      var popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
+      popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
         .setCancelCallback { cancel() }
         .setCancelKeyEnabled(false)
-        .setShowBorder(false)
         .addUserData(IntentionPreviewPopupKey())
-
-      // see with com.intellij.ui.popup.AbstractPopup.show(java.awt.Component, int, int, boolean).
-      // don't use in cases when borders may be preserved
-      if (WindowRoundedCornersManager.isAvailable() && SystemInfoRt.isMac) {
-        popupBuilder = popupBuilder.setShowBorder(true)
-      }
-
-      popup = popupBuilder.createPopup()
+        .createPopup()
 
       component.addComponentListener(object : ComponentAdapter() {
         override fun componentResized(e: ComponentEvent?) {
-          var size = popup.size
-          size = Dimension(size.width.coerceAtLeast(MIN_WIDTH), size.height)
-          popup.content.preferredSize = size
-          popup.size = size
+          val size = popup.size
+          val insets = popup.content.insets
+          popup.size = Dimension((size.width - insets.width).coerceAtLeast(MIN_WIDTH), size.height - insets.height)
           adjustPosition(originalPopup, true)
         }
       })

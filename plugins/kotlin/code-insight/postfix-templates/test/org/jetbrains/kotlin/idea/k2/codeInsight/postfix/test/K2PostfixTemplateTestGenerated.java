@@ -26,6 +26,32 @@ import org.junit.runner.RunWith;
 public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTemplateTest {
     @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/expansion/arg")
+    public static class Arg extends AbstractK2PostfixTemplateTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        @TestMetadata("arg.kt")
+        public void testArg() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("argWithReturn.kt")
+        public void testArgWithReturn() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("argWithThrow.kt")
+        public void testArgWithThrow() throws Exception {
+            performTest();
+        }
+    }
+
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/arrayOf")
     public static class ArrayOf extends AbstractK2PostfixTemplateTest {
         @java.lang.Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -38,7 +38,7 @@ public final class StubElementTypeHolderEP {
    * <ul>
    * <li>It's an interface</li>
    * <li>All stub element types to load are declared as fields in the interface itself, not in super-interfaces</li>
-   * <li>For all {@link IStubElementType} fields, their {@link IStubElementType#getExternalId()}:
+   * <li>For all {@link com.intellij.psi.tree.IElementType} fields, their corresponding {@link ObjectStubSerializer#getExternalId()}:
    * <ul>
    *   <li>doesn't depend on class fields, so that it can be called during IStubElementType construction</li>
    *   <li>effectively returns {@code "somePrefix" + debugName}</li>

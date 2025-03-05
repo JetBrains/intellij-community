@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -31,9 +31,8 @@ public final class EclipseProjectImportProvider extends ProjectImportProvider {
     return myProcessor.canOpenProject(file);
   }
 
-  @NotNull
   @Override
-  public String getFileSample() {
+  public @NotNull String getFileSample() {
     return EclipseBundle.message("eclipse.file.to.import.description");
   }
 }

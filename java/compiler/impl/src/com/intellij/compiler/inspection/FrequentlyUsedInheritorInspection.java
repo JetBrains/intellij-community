@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.inspection;
 
 import com.intellij.codeInspection.*;
@@ -32,8 +32,8 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
   private static final int PERCENT_THRESHOLD = SystemProperties.getIntProperty("FrequentlyUsedInheritorInspection.percent.threshold", 20);
 
   @Override
-  public ProblemDescriptor @Nullable [] checkClass(@NotNull final PsiClass aClass,
-                                                   @NotNull final InspectionManager manager,
+  public ProblemDescriptor @Nullable [] checkClass(final @NotNull PsiClass aClass,
+                                                   final @NotNull InspectionManager manager,
                                                    final boolean isOnTheFly) {
     if (aClass instanceof PsiTypeParameter || aClass.isEnum()) {
       return null;
@@ -88,8 +88,7 @@ public final class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLoc
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
   }
 
-  @Nullable
-  private static Pair<PsiClass, PsiElement> getSuperIfOnlyOne(@NotNull final PsiClass aClass) {
+  private static @Nullable Pair<PsiClass, PsiElement> getSuperIfOnlyOne(final @NotNull PsiClass aClass) {
     PsiClass superClass = aClass.getSuperClass();
     if (superClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
       return isInSourceContent(aClass) ? Pair.create(superClass, aClass.getExtendsList()) : null;

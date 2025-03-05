@@ -58,8 +58,6 @@ import javax.xml.namespace.QName;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.intellij.util.ObjectUtils.doIfNotNull;
-
 public class RngElementDescriptor implements XmlElementDescriptor {
 
   private static final Logger LOG = Logger.getInstance(RngElementDescriptor.class);
@@ -204,7 +202,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   }
 
   protected XmlAttributeDescriptor computeAttributeDescriptor(final Map<DAttributePattern, Pair<? extends Map<String, String>, Boolean>> attributes) {
-    if (attributes.size() > 0) {
+    if (!attributes.isEmpty()) {
       RngXmlAttributeDescriptor d = null;
       final Set<DAttributePattern> patterns = attributes.keySet();
       for (DAttributePattern pattern : patterns) {
@@ -311,7 +309,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   private static String format(QName qName, String p) {
     final String localPart = qName.getLocalPart();
-    return p.length() > 0 ? p + ":" + localPart : localPart;
+    return !p.isEmpty() ? p + ":" + localPart : localPart;
   }
 
   private static @Nullable PsiElement getDeclarationImpl(@NotNull Project project, PsiElement decl, Locator location, PsiFile file) {
@@ -345,6 +343,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -356,6 +355,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myElementPattern.hashCode();
   }
@@ -421,7 +421,8 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       myColumn = column;
       PsiElement definition = getNavigationElement();
       myName = definition.getText();
-      PsiElement prevPrevSibling = doIfNotNull(definition.getPrevSibling(), PsiElement::getPrevSibling);
+      PsiElement obj = definition.getPrevSibling();
+      PsiElement prevPrevSibling = obj == null ? null : obj.getPrevSibling();
       if (prevPrevSibling == null) {
         LOG.error("Failed to locate type for RNC element - " + myName);
       }

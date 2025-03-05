@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -51,16 +51,14 @@ public final class MavenProjectConfiguration {
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "jars", keyAttributeName = "name")
   public Map<String, MavenFilteredJarConfiguration> jarsConfiguration = new HashMap<>();
 
-  @Nullable
-  private MavenModuleResourceConfiguration findProject(MavenIdBean id) {
+  private @Nullable MavenModuleResourceConfiguration findProject(MavenIdBean id) {
     return getModuleConfigurationMap().get(id);
   }
 
   @Transient
   private volatile Map<MavenIdBean, MavenModuleResourceConfiguration> myIdToModuleMap;
 
-  @NotNull
-  private Map<MavenIdBean, MavenModuleResourceConfiguration> getModuleConfigurationMap() {
+  private @NotNull Map<MavenIdBean, MavenModuleResourceConfiguration> getModuleConfigurationMap() {
     Map<MavenIdBean, MavenModuleResourceConfiguration> map = myIdToModuleMap;
     if (map == null) {
       map = new HashMap<>();
@@ -74,8 +72,7 @@ public final class MavenProjectConfiguration {
     return map;
   }
 
-  @Nullable
-  public String resolveProperty(final String propName, final MavenModuleResourceConfiguration moduleConfig, Map<String, String> additionalProperties) {
+  public @Nullable String resolveProperty(final String propName, final MavenModuleResourceConfiguration moduleConfig, Map<String, String> additionalProperties) {
     boolean hasPrefix = false;
     String unprefixed = propName;
 
@@ -147,8 +144,7 @@ public final class MavenProjectConfiguration {
 
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
-  @NotNull
-  private static Map<String, String> getMavenOptsProperties() {
+  private static @NotNull Map<String, String> getMavenOptsProperties() {
     Map<String, String> res = ourPropertiesFromMvnOpts;
     if (res == null) {
       String mavenOpts = System.getenv("MAVEN_OPTS");
@@ -211,8 +207,7 @@ public final class MavenProjectConfiguration {
     return ourMavenAndJvmConfigs.computeIfAbsent(getBaseDir(moduleResourceConfig.directory), baseDir -> readConfigFiles(baseDir));
   }
 
-  @NotNull
-  public static Map<String, String> readConfigFiles(File baseDir) {
+  public static @NotNull Map<String, String> readConfigFiles(File baseDir) {
     Map<String, String> result = new HashMap<>();
     readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result, "");
     readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result, "true");

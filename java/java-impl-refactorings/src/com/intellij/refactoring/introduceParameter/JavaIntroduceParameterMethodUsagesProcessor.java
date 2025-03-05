@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -131,7 +131,7 @@ public final class JavaIntroduceParameterMethodUsagesProcessor implements Introd
                                                      JavaPsiFacade.getElementFactory(project));
   }
 
-  private static void removeParametersFromCall(@NotNull final PsiExpressionList argList, IntList parametersToRemove, PsiMethod method) {
+  private static void removeParametersFromCall(final @NotNull PsiExpressionList argList, IntList parametersToRemove, PsiMethod method) {
     final int parametersCount = method.getParameterList().getParametersCount();
     final PsiExpression[] exprs = argList.getExpressions();
     for (int i = parametersToRemove.size() - 1; i >= 0; i--) {
@@ -153,8 +153,7 @@ public final class JavaIntroduceParameterMethodUsagesProcessor implements Introd
     }
   }
 
-  @Nullable
-  private static PsiExpression getLast(PsiExpression[] oldArgs) {
+  private static @Nullable PsiExpression getLast(PsiExpression[] oldArgs) {
     PsiExpression anchor;
     if (oldArgs.length > 0) {
       anchor = oldArgs[oldArgs.length - 1];
@@ -239,8 +238,7 @@ public final class JavaIntroduceParameterMethodUsagesProcessor implements Introd
     return false;
   }
 
-  @Nullable
-  public static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
+  public static @Nullable PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
     PsiParameterList parameterList = methodToReplaceIn.getParameterList();
     final PsiParameter anchorParameter;
     final PsiParameter[] parameters = parameterList.getParameters();

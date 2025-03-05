@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Editor;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ex.ChangedLines;
 import com.intellij.openapi.vcs.ex.ChangesBlock;
 import com.intellij.openapi.vcs.ex.Range;
@@ -31,8 +32,7 @@ import java.util.List;
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
 public final class LineStatusMarkerDrawUtil {
-  @NotNull
-  public static List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
+  public static @NotNull List<Range> getSelectedRanges(@NotNull List<? extends Range> ranges, @NotNull Editor editor, int y) {
     int lineHeight = editor.getLineHeight();
     int triangleGap = lineHeight / 3;
 
@@ -140,7 +140,7 @@ public final class LineStatusMarkerDrawUtil {
         Color gutterColor = colorScheme.getColor(editor, change.type);
         int line = gutter.getHoveredFreeMarkersLine();
         if (isRangeHovered(editor, line, x, start, end)) {
-          paintRect(g, gutterColor, null, x - 1, start, endX + 2, end);
+          paintRect(g, gutterColor, null, x - JBUI.scale(3), start, endX, end);
         }
         else {
           paintRect(g, gutterColor, null, x, start, endX, end);
@@ -214,14 +214,16 @@ public final class LineStatusMarkerDrawUtil {
     }
   }
 
-  @NotNull
-  public static IntPair getGutterArea(@NotNull Editor editor) {
+  public static @NotNull IntPair getGutterArea(@NotNull Editor editor) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     if (ExperimentalUI.isNewUI()) {
       int x = gutter.getExtraLineMarkerFreePaintersAreaOffset();
-      x += 1; // leave 1px for brace highlighters
-      x += 2; //IDEA-286352
-      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4)), editor);
+      int width = Registry.intValue("gutter.vcs.changes.width", 4, 4, 6);
+      x += JBUI.scale(1); // leave 1px for brace highlighters
+      if (width < 5) {
+        x += JBUI.scale(2); //IDEA-286352
+      }
+      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", width)), editor);
       return new IntPair(x, x + areaWidth);
     }
     else {
@@ -307,8 +309,7 @@ public final class LineStatusMarkerDrawUtil {
     return PaintUtil.RoundingMode.ROUND.round(v * scale);
   }
 
-  @Nullable
-  public static Color getErrorStripeColor(byte type) {
+  public static @Nullable Color getErrorStripeColor(byte type) {
     return LineStatusMarkerColorScheme.DEFAULT.getErrorStripeColor(type);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
@@ -15,13 +15,13 @@ import kotlin.math.roundToInt
 class ChartGraphics(val graphics: Graphics2D, val offsetX: Double, val offsetY: Double) {
   constructor(graphics: Graphics2D, offsetX: Int, offsetY: Int) : this(graphics, offsetX.toDouble(), offsetY.toDouble())
 
-  fun fill(s: Shape) = graphics.fill(move(s))
-  fun draw(s: Shape) = graphics.draw(move(s))
-  fun clip(s: Shape) = graphics.clip(move(s))
-  fun drawString(str: String, x: Float, y: Float) = graphics.drawString(str, x + offsetX.toFloat(), y + offsetY.toFloat())
-  fun drawString(str: String, x: Int, y: Int) = graphics.drawString(str, x + offsetX.roundToInt(), y + offsetY.roundToInt())
-  fun fillOval(x: Int, y: Int, width: Int, height: Int) = graphics.fillOval(x + offsetX.roundToInt(), y + offsetY.roundToInt(), width, height)
-  fun drawOval(x: Int, y: Int, width: Int, height: Int) = graphics.drawOval(x + offsetX.roundToInt(), y + offsetY.roundToInt(), width, height)
+  fun fill(s: Shape): Unit = graphics.fill(move(s))
+  fun draw(s: Shape): Unit = graphics.draw(move(s))
+  fun clip(s: Shape): Unit = graphics.clip(move(s))
+  fun drawString(str: String, x: Float, y: Float): Unit = graphics.drawString(str, x + offsetX.toFloat(), y + offsetY.toFloat())
+  fun drawString(str: String, x: Int, y: Int): Unit = graphics.drawString(str, x + offsetX.roundToInt(), y + offsetY.roundToInt())
+  fun fillOval(x: Int, y: Int, width: Int, height: Int): Unit = graphics.fillOval(x + offsetX.roundToInt(), y + offsetY.roundToInt(), width, height)
+  fun drawOval(x: Int, y: Int, width: Int, height: Int): Unit = graphics.drawOval(x + offsetX.roundToInt(), y + offsetY.roundToInt(), width, height)
   fun fontMetrics(): FontMetrics = graphics.fontMetrics
   fun create(): ChartGraphics = ChartGraphics(graphics.create() as Graphics2D, offsetX, offsetY)
 

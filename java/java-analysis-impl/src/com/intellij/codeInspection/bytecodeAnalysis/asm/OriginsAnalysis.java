@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -129,8 +129,7 @@ public final class OriginsAnalysis {
    * @param insn     an executed instruction
    * @return location of an interesting value *before* execution of an instruction (in the past) or null if it is not traceable
    */
-  @Nullable
-  private static Location previousLocation(Frame<? extends Value> frame, Location location, AbstractInsnNode insn) throws AnalyzerException {
+  private static @Nullable Location previousLocation(Frame<? extends Value> frame, Location location, AbstractInsnNode insn) throws AnalyzerException {
     int insnType = insn.getType();
     if (insnType == AbstractInsnNode.LABEL || insnType == AbstractInsnNode.LINE || insnType == AbstractInsnNode.FRAME) {
       return location;
@@ -156,8 +155,7 @@ public final class OriginsAnalysis {
     return null;
   }
 
-  @NotNull
-  private static Frame<SourceValue> makePreFrame(@NotNull Frame<? extends Value> frame) {
+  private static @NotNull Frame<SourceValue> makePreFrame(@NotNull Frame<? extends Value> frame) {
     Frame<SourceValue> preFrame = new Frame<>(frame.getLocals(), frame.getMaxStackSize());
     for (int i = 0; i < frame.getLocals(); i++) {
       preFrame.setLocal(i, new PreValue(true, i, frame.getLocal(i).getSize()));

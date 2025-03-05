@@ -6,3 +6,4 @@ fun foo() {
     println(bar)
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveRedundantInitializerFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.VariableInitializerIsRedundantInspection$createQuickFix$1

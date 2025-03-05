@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,7 +32,9 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
           return false;
         }
       }
-      catch (ProcessCanceledException | IndexNotReadyException e) {
+      catch (IndexNotReadyException ignore) {
+      }
+      catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {
@@ -42,9 +45,24 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
     return true;
   }
 
+  @SuppressWarnings({"deprecation", "MissingDeprecatedAnnotation"})
+  @ScheduledForRemoval
+  @Deprecated
   @Experimental
   @Override
   public @NotNull Query<Result> wrap(@NotNull QueryWrapper<Result> wrapper) {
     return new ExecutorsQuery<>(myParameters, ContainerUtil.map(myExecutors, e -> e.wrap(wrapper)));
+  }
+
+  @Experimental
+  @Override
+  public @NotNull Query<Result> interceptWith(@NotNull QueryExecutionInterceptor interceptor) {
+    return new ExecutorsQuery<>(myParameters, ContainerUtil.map(myExecutors, e -> interceptWith(e, interceptor)));
+  }
+
+  private static <R, P> QueryExecutor<R, P> interceptWith(QueryExecutor<R, P> executor, QueryExecutionInterceptor interceptor) {
+    return (parameters, consumer) -> {
+      return interceptor.intercept(() -> executor.execute(parameters, consumer));
+    };
   }
 }

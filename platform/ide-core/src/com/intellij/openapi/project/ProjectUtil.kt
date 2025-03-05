@@ -31,8 +31,6 @@ import com.intellij.util.text.trimMiddle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import java.nio.file.Files
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
 import javax.swing.JComponent
@@ -120,15 +118,6 @@ inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() 
     model.commit()
   }
   return result
-}
-
-fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
-  return try {
-    Files.exists(Path.of(parent.path, Project.DIRECTORY_STORE_FOLDER))
-  }
-  catch (e: InvalidPathException) {
-    false
-  }
 }
 
 /**

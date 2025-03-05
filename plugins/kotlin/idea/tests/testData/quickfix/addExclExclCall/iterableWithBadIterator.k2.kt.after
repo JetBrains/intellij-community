@@ -1,4 +1,5 @@
 // "Add non-null asserted (test!!) call" "true"
+// K2_AFTER_ERROR: 'operator' modifier is required on 'FirNamedFunctionSymbol /Some.iterator' in 'iterator'.
 
 class Some {
     fun iterator(): Iterator<Int> = null!!

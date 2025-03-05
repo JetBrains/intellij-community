@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.DumbAwareAnnotationUtil;
@@ -110,8 +110,7 @@ public final class ChronoUtil {
   /**
    * @return {@code ChronoField} enum constant with the same name or null if enum constant is not found
    */
-  @Nullable
-  public static ChronoField getChronoField(@NotNull String name) {
+  public static @Nullable ChronoField getChronoField(@NotNull String name) {
     return chronoFieldMap.get(name);
   }
 
@@ -232,8 +231,7 @@ public final class ChronoUtil {
     return name != null && name.equals("SimpleDateFormat");
   }
 
-  @Nullable
-  public static String getQualifiedName(@NotNull PsiMethod method) {
+  public static @Nullable String getQualifiedName(@NotNull PsiMethod method) {
     return Optional.ofNullable(method.getContainingClass())
       .map(c -> c.getQualifiedName())
       .orElse(null);

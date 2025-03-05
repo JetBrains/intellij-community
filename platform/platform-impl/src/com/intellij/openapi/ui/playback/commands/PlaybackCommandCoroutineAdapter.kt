@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.ui.playback.PlaybackCommand
 import com.intellij.openapi.ui.playback.PlaybackContext
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.NonNls
@@ -23,10 +23,12 @@ abstract class PlaybackCommandCoroutineAdapter(protected val text: @NonNls Strin
 
   override fun canGoFurther(): Boolean = true
 
+  @OptIn(DelicateCoroutinesApi::class)
   final override fun execute(context: PlaybackContext): CompletableFuture<*> {
     context.code(text, line)
 
-    val job = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().async {
+    // ExitAppCommand cannot use app scope
+    val job = GlobalScope.async {
       doExecute(context)
     }
     job.invokeOnCompletion {

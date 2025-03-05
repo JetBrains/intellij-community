@@ -17,11 +17,11 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
 
 class BekBranchCreator {
-  @NotNull private final LinearGraph myPermanentGraph;
-  @NotNull private final GraphLayoutImpl myGraphLayout;
-  @NotNull private final Flags myDoneNodes;
+  private final @NotNull LinearGraph myPermanentGraph;
+  private final @NotNull GraphLayoutImpl myGraphLayout;
+  private final @NotNull Flags myDoneNodes;
 
-  @NotNull private final BekEdgeRestrictions myEdgeRestrictions = new BekEdgeRestrictions();
+  private final @NotNull BekEdgeRestrictions myEdgeRestrictions = new BekEdgeRestrictions();
 
   BekBranchCreator(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout) {
     myPermanentGraph = permanentGraph;
@@ -29,8 +29,7 @@ class BekBranchCreator {
     myDoneNodes = new BitSetFlags(permanentGraph.nodesCount(), false);
   }
 
-  @NotNull
-  public Pair<List<BekBranch>, BekEdgeRestrictions> getResult() {
+  public @NotNull Pair<List<BekBranch>, BekEdgeRestrictions> getResult() {
     List<BekBranch> bekBranches = new ArrayList<>();
 
     for (int headNode : myGraphLayout.getHeadNodeIndex()) {

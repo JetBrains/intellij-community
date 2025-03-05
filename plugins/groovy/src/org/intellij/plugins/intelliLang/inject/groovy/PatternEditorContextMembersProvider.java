@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -46,9 +46,9 @@ public final class PatternEditorContextMembersProvider extends NonCodeMembersCon
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
-                                     @NotNull final PsiScopeProcessor scopeProcessor,
-                                     @NotNull final PsiElement place,
-                                     @NotNull final ResolveState state) {
+                                     final @NotNull PsiScopeProcessor scopeProcessor,
+                                     final @NotNull PsiElement place,
+                                     final @NotNull ResolveState state) {
     final PsiFile containingFile = place.getContainingFile();
     if (containingFile == null) {
       PsiUtilCore.ensureValid(place);
@@ -72,8 +72,7 @@ public final class PatternEditorContextMembersProvider extends NonCodeMembersCon
     return processor.process(getRootByClasses(file, InjectorUtils.getPatternClasses(injection.getSupportId())));
   }
 
-  @NotNull
-  private static PsiFile getRootByClasses(@NotNull PsiFile file, Class @NotNull [] classes) {
+  private static @NotNull PsiFile getRootByClasses(@NotNull PsiFile file, Class @NotNull [] classes) {
     final Project project = file.getProject();
     SoftFactoryMap<Class[], PsiFile> map = project.getUserData(PATTERN_INJECTION_CONTEXT);
     if (map == null) {
@@ -104,8 +103,7 @@ public final class PatternEditorContextMembersProvider extends NonCodeMembersCon
     return true;
   }
 
-  @Nullable
-  private static XmlTag getTagByInjectedFile(final PsiFile file) {
+  private static @Nullable XmlTag getTagByInjectedFile(final PsiFile file) {
     final SmartPsiElementPointer pointer = file.getUserData(FileContextUtil.INJECTED_IN_ELEMENT);
     final PsiElement element = pointer == null? null : pointer.getElement();
     return element instanceof XmlText ? ((XmlText)element).getParentTag() : null;
@@ -125,7 +123,7 @@ public final class PatternEditorContextMembersProvider extends NonCodeMembersCon
     return classes.length == 0 || processor.process(getRootByClasses(file, classes));
   }
 
-  private static Set<String> collectDevPatternClassNames(@NotNull final Project project) {
+  private static Set<String> collectDevPatternClassNames(final @NotNull Project project) {
     CachedValue<Set<String>> cachedValue = project.getUserData(PATTERN_CLASSES);
     if (cachedValue == null) {
       cachedValue = CachedValuesManager.getManager(project).createCachedValue(
@@ -135,7 +133,7 @@ public final class PatternEditorContextMembersProvider extends NonCodeMembersCon
     return cachedValue.getValue();
   }
 
-  private static Set<String> calcDevPatternClassNames(@NotNull final Project project) {
+  private static Set<String> calcDevPatternClassNames(final @NotNull Project project) {
     final List<String> roots = ContainerUtil.createLockFreeCopyOnWriteList();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     PsiClass beanClass = psiFacade.findClass(PatternClassBean.class.getName(), GlobalSearchScope.allScope(project));

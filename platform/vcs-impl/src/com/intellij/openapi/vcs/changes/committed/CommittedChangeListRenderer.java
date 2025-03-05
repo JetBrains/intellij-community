@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
@@ -39,8 +39,7 @@ public class CommittedChangeListRenderer extends ColoredTreeCellRenderer {
     myFontSize = -1;
   }
 
-  @NotNull
-  public static String getDescriptionOfChangeList(@NotNull String text) {
+  public static @NotNull String getDescriptionOfChangeList(@NotNull String text) {
     return text.replaceAll("\n", " // ");
   }
 

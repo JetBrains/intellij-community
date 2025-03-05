@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -162,7 +163,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
 
         val rangeFilter = { element: PsiElement ->
             if (rangeMarker.isValid) {
-                val range = TextRange(rangeMarker.startOffset, rangeMarker.endOffset)
+                val range = rangeMarker.textRange
 
                 val elementRange = element.textRange!!
                 when {
@@ -336,7 +337,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
 
     private abstract class CollectElementsVisitor<TElement : KtElement>(
         protected val elementFilter: (PsiElement) -> FilterResult
-    ) : KtVisitorVoid() {
+    ) : KtVisitorVoid(),PsiRecursiveVisitor {
 
         var options: Options = Options.DEFAULT
 

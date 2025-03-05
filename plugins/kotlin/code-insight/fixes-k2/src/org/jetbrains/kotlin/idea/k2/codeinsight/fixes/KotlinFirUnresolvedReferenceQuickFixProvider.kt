@@ -8,10 +8,21 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQuickFixHelper
+import org.jetbrains.kotlin.idea.highlighter.restoreKaDiagnosticsForUnresolvedReference
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.createRenameUnresolvedReferenceFix
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 
+/**
+ * A provider for quick-fixes related to unresolved references in Kotlin for K2 Mode.
+ *
+ * Used as a lazy alternative to registering factories in [KotlinK2QuickFixRegistrar] to
+ * postpone some work during the highlighting (see KTIJ-26874).
+ * 
+ * Triggered from [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor].
+ */
 class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<PsiReference>() {
     override fun registerFixes(reference: PsiReference, registrar: QuickFixActionRegistrar) {
         val ktElement = reference.element as? KtElement ?: return
@@ -23,8 +34,14 @@ class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFix
         }
 
         analyze(ktElement) {
-            for (quickFix in ImportQuickFixProvider.getFixes(ktElement)) {
+            val savedDiagnostics = ktElement.restoreKaDiagnosticsForUnresolvedReference()
+            
+            for (quickFix in ImportQuickFixProvider.getFixes(savedDiagnostics)) {
                 registrar.register(quickFix)
+            }
+
+            if (ktElement is KtNameReferenceExpression) {
+                createRenameUnresolvedReferenceFix(ktElement)?.let { action -> registrar.register(action) }
             }
         }
     }

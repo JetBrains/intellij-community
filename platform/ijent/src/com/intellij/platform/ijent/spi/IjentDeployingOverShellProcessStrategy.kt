@@ -5,6 +5,8 @@ import com.intellij.execution.CommandLineUtil.posixQuote
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.getIjentGrpcArgv
@@ -15,7 +17,14 @@ import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.measureTime
+
+private val EP_NAME = ExtensionPointName<IjentDeploymentListener>("com.intellij.ijent.deploymentListener")
+interface IjentDeploymentListener {
+  fun shellInitialized(initializationTime: Duration)
+}
 
 abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : IjentDeployingStrategy.Posix {
   protected abstract val ijentLabel: String
@@ -34,18 +43,21 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
       val shellProcess = ShellProcessWrapper(IjentSessionMediator.create(scope, createShellProcess(), ijentLabel))
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
-        // The timeout is taken at random.
-        withTimeout(10.seconds) {
-          write("set -ex")
-          ensureActive()
-          filterOutBanners()
+        val initializationTime = measureTime {
+          withTimeout(runCatching { Registry.intValue("ijent.shell.initialization.timeout") }.getOrDefault(30_000).milliseconds) {
+            write("set -ex")
+            ensureActive()
+            filterOutBanners()
+          }
         }
+
+        EP_NAME.forEachExtensionSafe { extension -> extension.shellInitialized(initializationTime) }
       })
     }
     context
   }
 
-  final override suspend fun getTargetPlatform(): EelPlatform.Posix {
+  override suspend fun getTargetPlatform(): EelPlatform.Posix {
     return myContext.await().execCommand {
       getTargetPlatform()
     }
@@ -288,8 +300,8 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Po
 
   val targetPlatform = when {
     arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
-    "x86_64" in arch -> EelPlatform.X8664Linux
-    "aarch64" in arch -> EelPlatform.Aarch64Linux
+    "x86_64" in arch -> EelPlatform.Linux(EelPlatform.X86_64)
+    "aarch64" in arch -> EelPlatform.Linux(EelPlatform.ARM_64)
     else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
   return targetPlatform

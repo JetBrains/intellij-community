@@ -20,6 +20,9 @@ import java.util.Set;
 
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
+ * <p>
+ * Data is stored _either_ in-memory, or in underlyingStorage, but not both: if a key has it's data in inMemoryStorage,
+ * this data completely shadows same key's data in underlyingStorage.
  */
 @Internal
 public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
@@ -31,6 +34,13 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   private final Map<Key, TransientChangeTrackingValueContainer<Value>> inMemoryStorage;
   private final @NotNull VfsAwareIndexStorage<Key, Value> underlyingStorage;
 
+  /**
+   * If buffering is enabled, updates are accumulated only in inMemoryStorage.
+   * Otherwise, updates go both inMemoryStorage and underlyingStorage.
+   * MAYBE RC: 'mode switching' is not the best approach here, given all the thread-safety concerns.
+   *           Ideally, 'buffering' should be a property of each update but currently we can't add a new param to
+   *           update methods, since they are defined by IndexStorage iface
+   */
   private boolean bufferingEnabled;
   private final List<BufferingStateListener> bufferingStateListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -134,7 +144,7 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   }
 
   @Override
-  public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, IdFilter idFilter)
+  public boolean processKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, IdFilter idFilter)
     throws StorageException {
     Set<Key> stopList = new HashSet<>();
 
@@ -155,6 +165,24 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
       stopList.add(key);
     }
     return underlyingStorage.processKeys(stopList.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
+  }
+
+
+  @Override
+  public void updateValue(Key key, int inputId, Value newValue) throws StorageException {
+    if (bufferingEnabled) {
+      UpdatableValueContainer<Value> memContainer = getMemValueContainer(key);
+      memContainer.removeAssociatedValue(inputId);
+      memContainer.addValue(inputId, newValue);
+      return;
+    }
+
+    ChangeTrackingValueContainer<Value> valueContainer = inMemoryStorage.get(key);
+    if (valueContainer != null) {
+      valueContainer.dropMergedData();
+    }
+
+    underlyingStorage.updateValue(key, inputId, newValue);
   }
 
   @Override
@@ -205,18 +233,19 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   }
 
   @Override
-  public @NotNull ValueContainer<Value> read(Key key) throws StorageException {
+  public <E extends Exception> boolean read(Key key,
+                                            @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E {
     ValueContainer<Value> valueContainer = inMemoryStorage.get(key);
     if (valueContainer != null) {
-      return valueContainer;
+      return processor.process(valueContainer);
     }
 
-    return underlyingStorage.read(key);
+    return underlyingStorage.read(key, processor);
   }
 
   @Override
   public int keysCountApproximately() {
-    //RC: this imprecise upper bound -- some keys counted twice since they present in both transient
+    //RC: this is an imprecise upper bound -- some keys counted twice since they present in both transient
     //    and persistent storage
     return inMemoryStorage.size() + underlyingStorage.keysCountApproximately();
   }

@@ -4,6 +4,7 @@ package com.intellij.execution.junit;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.testframework.TestIconProvider;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
@@ -12,6 +13,8 @@ import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.ui.LayeredIcon;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -248,19 +251,42 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
 
     TestIconProvider provider = new TestIconProvider();
 
-    LayeredIcon fooMethodIcon = (LayeredIcon) provider.getIcon(fooMethod, 0);
-    assertEquals("Method", fooMethodIcon.getIcon(0).toString());
-    assertEquals("runConfigurations/testMark.svg", fooMethodIcon.getIcon(1).toString());
-    assertEquals("nodes/c_public.svg", fooMethodIcon.getIcon(2).toString());
+    assertIcons(
+      provider.getIcon(fooMethod, Iconable.ICON_FLAG_VISIBILITY),
+      "Method",
+      "runConfigurations/testMark.svg",
+      "nodes/c_public.svg"
+    );
+    assertIcons(
+      provider.getIcon(fooMethod, 0),
+      "Method",
+      "runConfigurations/testMark.svg"
+    );
 
     Icon foo1MethodIcon = provider.getIcon(foo1Method, 0);
     assertNull(foo1MethodIcon);
 
-    LayeredIcon foo2MethodIcon = (LayeredIcon)provider.getIcon(foo2Method, 0);
-    assertEquals("runConfigurations/ignoredTest.svg", foo2MethodIcon.getIcon(0).toString());
-    assertEquals("nodes/c_public.svg", foo2MethodIcon.getIcon(1).toString());
+    assertIcons(
+      provider.getIcon(foo2Method, Iconable.ICON_FLAG_VISIBILITY),
+      "runConfigurations/ignoredTest.svg",
+      "nodes/c_public.svg"
+    );
+    assertEquals("runConfigurations/ignoredTest.svg", provider.getIcon(foo2Method, 0).toString());
   }
-  
+
+  private void assertIcons(@Nullable Icon icon, @NotNull String @NotNull... iconStrings) {
+    assertNotNull(icon);
+    assertTrue(icon instanceof LayeredIcon);
+    LayeredIcon layeredIcon = (LayeredIcon)icon;
+    assertEquals(iconStrings.length, layeredIcon.getIconCount());
+    for (int i = 0; i < iconStrings.length; i++) {
+      Icon layer = layeredIcon.getIcon(i);
+      String iconString = iconStrings[i];
+      assertNotNull(layer);
+      assertEquals(iconString, layer.toString());
+    }
+  }
+
   public void testableClassTest() {
      myFixture.addClass("package org.junit.jupiter.api;" +
                        "@org.junit.platform.commons.annotation.Testable public @interface Test {}");

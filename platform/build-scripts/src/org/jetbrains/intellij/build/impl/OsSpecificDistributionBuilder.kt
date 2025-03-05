@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -31,7 +31,7 @@ interface OsSpecificDistributionBuilder {
 
   suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture)
 
-  suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture)
+  suspend fun writeProductInfoFile(targetDir: Path, arch: JvmArchitecture): Path
 
   fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> = emptySequence()
 
@@ -122,9 +122,8 @@ interface OsSpecificDistributionBuilder {
     }
   }
 
-
   private fun checkZip(distribution: Path, root: String, patterns: Collection<PathMatcher>): List<MatchedFile> {
-    return ZipFile(Files.newByteChannel(distribution)).use { zipFile ->
+    return ZipFile.Builder().setSeekableByteChannel(Files.newByteChannel(distribution)).get().use { zipFile ->
       zipFile.entries.asSequence().filter { !it.isDirectory }.mapNotNull { entry ->
         var entryPath = Path.of(entry.name)
         if (!root.isEmpty()) {
@@ -141,9 +140,7 @@ interface OsSpecificDistributionBuilder {
 
   companion object {
     @Internal
-    fun suffix(arch: JvmArchitecture): String = when (arch) {
-      JvmArchitecture.x64 -> ""
-      else -> "-${arch.fileSuffix}"
-    }
+    fun suffix(arch: JvmArchitecture): String =
+      if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
   }
 }

@@ -1,11 +1,11 @@
-org/cef/CefBrowserSettings
+kotlin/jvm/internal/DefaultConstructorMarker
 org/cef/CefClient
 org/cef/CefSettings
 org/cef/browser/CefBrowser
 org/cef/browser/CefFrame
 org/cef/browser/CefMessageRouter
 org/cef/browser/CefMessageRouter$CefMessageRouterConfig
-org/cef/browser/CefRequestContext
+org/cef/callback/CefCallback
 org/cef/callback/CefContextMenuParams
 org/cef/callback/CefMenuModel
 org/cef/callback/CefSchemeHandlerFactory
@@ -25,5 +25,13 @@ org/cef/handler/CefLoadHandler$ErrorCode
 org/cef/handler/CefPermissionHandler
 org/cef/handler/CefRenderHandler
 org/cef/handler/CefRequestHandler
+org/cef/handler/CefRequestHandlerAdapter
+org/cef/handler/CefResourceHandler
+org/cef/handler/CefResourceRequestHandler
+org/cef/misc/BoolRef
+org/cef/misc/IntRef
+org/cef/misc/StringRef
 org/cef/network/CefCookie
 org/cef/network/CefCookieManager
+org/cef/network/CefRequest
+org/cef/network/CefResponse

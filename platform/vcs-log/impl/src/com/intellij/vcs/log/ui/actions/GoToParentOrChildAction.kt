@@ -12,7 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogDataKeys
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRow
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToGraphRow
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector.PARENT_COMMIT
 import com.intellij.vcs.log.ui.VcsLogUiEx
@@ -57,7 +57,7 @@ internal open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareActi
     }
 
     if (rows.size == 1) {
-      ui.jumpToRow(rows.single(), false, true)
+      ui.jumpToGraphRow(rows.single(), false, true)
     }
     else {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(
@@ -75,7 +75,7 @@ internal open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareActi
       object : DumbAwareAction(text, VcsLogBundle.message("action.go.to.navigate.to", text), null) {
         override fun actionPerformed(e: AnActionEvent) {
           triggerUsage(e)
-          ui.jumpToRow(row, false, true)
+          ui.jumpToGraphRow(row, false, true)
         }
       }
     }

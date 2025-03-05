@@ -5,6 +5,7 @@ import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
 import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -53,8 +54,22 @@ class NonSingularHandler implements BuilderElementHandler {
       .withAnnotations(info.getAnnotations())
       .withWriteAccess()
       .withBodyText(blockText);
+
+    final LombokLightParameter setterParameter = methodBuilder.getParameterList().getParameter(0);
     if (info.getVariable() instanceof PsiField psiField) {
+      if (null != setterParameter) {
+        LombokCopyableAnnotations.copyCopyableAnnotations(psiField, setterParameter.getModifierList(),
+                                                          LombokCopyableAnnotations.BASE_COPYABLE);
+      }
       LombokCopyableAnnotations.copyCopyableAnnotations(psiField, methodBuilder.getModifierList(),
+                                                        LombokCopyableAnnotations.COPY_TO_SETTER);
+    }
+    else {
+      if (null != setterParameter) {
+        LombokCopyableAnnotations.copyCopyableAnnotations(info.getVariable(), info.getBuilderClass(), setterParameter.getModifierList(),
+                                                          LombokCopyableAnnotations.BASE_COPYABLE);
+      }
+      LombokCopyableAnnotations.copyCopyableAnnotations(info.getVariable(), info.getBuilderClass(), methodBuilder.getModifierList(),
                                                         LombokCopyableAnnotations.COPY_TO_SETTER);
     }
 

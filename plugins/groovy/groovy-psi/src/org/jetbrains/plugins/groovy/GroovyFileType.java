@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -16,32 +16,26 @@ import java.util.LinkedHashSet;
 
 public final class GroovyFileType extends LanguageFileType {
   public static final @NotNull GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
-  @NonNls public static final String DEFAULT_EXTENSION = "groovy";
+  public static final @NonNls String DEFAULT_EXTENSION = "groovy";
 
-  @NlsSafe
-  private static final String GROOVY_DESCRIPTION = "Groovy";
+  private static final @NlsSafe String GROOVY_DESCRIPTION = "Groovy";
 
   private GroovyFileType() {
     super(GroovyLanguage.INSTANCE);
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return "Groovy";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return GROOVY_DESCRIPTION;
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getDefaultExtension() {
+  public @NotNull @NonNls String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 

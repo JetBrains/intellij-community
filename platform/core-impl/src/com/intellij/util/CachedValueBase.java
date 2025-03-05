@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -190,7 +190,7 @@ public abstract class CachedValueBase<T> {
   private static final Object[] PSI_MODIFICATION_DEPENDENCIES = new Object[]{PsiModificationTracker.MODIFICATION_COUNT};
 
   @ApiStatus.NonExtendable
-  public static abstract class Data<T> implements Getter<T> {
+  public abstract static class Data<T> implements Getter<T> {
     private final T myValue;
 
     protected Data(T value) {

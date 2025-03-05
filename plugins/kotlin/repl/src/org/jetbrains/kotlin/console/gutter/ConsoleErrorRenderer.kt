@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.console.gutter
 
@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.KotlinIdeaReplBundle
 import org.jetbrains.kotlin.console.SeverityDetails
 import org.jetbrains.kotlin.diagnostics.Severity
 
-class ConsoleErrorRenderer(private val messages: List<SeverityDetails>) : GutterIconRenderer() {
+internal class ConsoleErrorRenderer(private val messages: List<SeverityDetails>) : GutterIconRenderer() {
     private fun msgType(severity: Severity) = when (severity) {
         Severity.ERROR -> KotlinIdeaReplBundle.message("message.type.error")
         Severity.WARNING -> KotlinIdeaReplBundle.message("message.type.warning")

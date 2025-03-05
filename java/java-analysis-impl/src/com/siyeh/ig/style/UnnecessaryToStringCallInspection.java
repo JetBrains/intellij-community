@@ -39,8 +39,7 @@ public final class UnnecessaryToStringCallInspection extends BaseInspection impl
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.tostring.call.problem.descriptor");
   }
 
@@ -58,17 +57,15 @@ public final class UnnecessaryToStringCallInspection extends BaseInspection impl
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       if (replacementText == null) {
         return InspectionGadgetsBundle.message("inspection.remove.redundant.call.fix.name", "toString");
       }
       return CommonQuickFixBundle.message("fix.replace.with.x", replacementText);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.simplify");
     }
 
@@ -115,7 +112,7 @@ public final class UnnecessaryToStringCallInspection extends BaseInspection impl
   private static boolean isRedundantToString(PsiMethodCallExpression call) {
     if (call == null) return false;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String referenceName = methodExpression.getReferenceName();
+    final @NonNls String referenceName = methodExpression.getReferenceName();
     if (!"toString".equals(referenceName) || !call.getArgumentList().isEmpty()) return false;
     final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
     if (qualifier == null) {

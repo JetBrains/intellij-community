@@ -1,0 +1,61 @@
+- url: https://cache-redirector.jetbrains.com/repo1.maven.org/maven2
+  libs:
+    # protobuf
+    - id: com.google.protobuf:protobuf-java
+      version: 4.29.3
+    # kotlin JPS plugin
+    - id: org.jetbrains.kotlin:kotlin-build-tools-api
+      version: 2.1.20-Beta2
+    - id: org.jetbrains.kotlin:kotlin-util-klib
+      version: 2.1.20-Beta2
+    - id: org.jetbrains.kotlin:kotlin-util-klib-metadata
+      version: 2.1.20-Beta2
+    # kotlin compiler
+    - id: org.jetbrains.kotlin:kotlin-build-tools-impl
+      version: 2.1.20-Beta2
+    - id: org.jetbrains.kotlin:kotlin-compiler
+      version: 2.1.20-Beta2
+      runtimeDeps:
+        - "@lib//:jetbrains-annotations"
+        - "@lib//:kotlinx-coroutines-core"
+    - id: org.jetbrains.kotlin:kotlin-metadata-jvm
+      version: 2.1.20-Beta2
+    - id: org.jetbrains.kotlin:kotlin-jps-plugin
+      version: 2.1.20-Beta2
+    # kotlin compiler plugins
+    - id: org.jetbrains.kotlin:kotlin-serialization-compiler-plugin
+      version: 2.1.20-Beta2
+    - id: org.jetbrains.kotlin:kotlin-compose-compiler-plugin
+      version: 2.1.20-Beta2
+    # other libs
+    - id: com.google.flatbuffers:flatbuffers-java
+      version: 25.2.10
+    - id: org.apache.arrow:arrow-format
+      version: 18.2.0
+    - id: org.apache.arrow:arrow-algorithm
+      version: 18.2.0
+    - id: org.apache.arrow:arrow-vector
+      version: 18.2.0
+      runtimeDeps:
+        - ":flatbuffers-java"
+        - ":arrow-format"
+    - id: org.apache.arrow:arrow-memory-core
+      version: 18.2.0
+    - id: org.apache.arrow:arrow-memory-netty
+      version: 18.2.0
+      runtimeDeps:
+        - ":arrow-memory-netty-buffer-patch"
+    - id: org.apache.arrow:arrow-memory-netty-buffer-patch
+      version: 18.2.0
+    # OpenTelemetry
+    - id: io.opentelemetry:opentelemetry-exporter-logging-otlp
+      version: 1.47.0
+    - id: io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi
+      version: 1.47.0
+    - id: io.opentelemetry:opentelemetry-exporter-otlp
+      runtimeDeps:
+        - ":opentelemetry-exporter-sender-jdk"
+        - ":opentelemetry-sdk-extension-autoconfigure-spi"
+      version: 1.47.0
+    - id: io.opentelemetry:opentelemetry-exporter-sender-jdk
+      version: 1.47.0

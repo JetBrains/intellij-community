@@ -17,7 +17,7 @@ final class CommandLineParserUtil extends GeneratedParserUtilBase {
   private CommandLineParserUtil() {
   }
 
-  static void bound_argument(@NotNull final PsiBuilder b, final int i) {
+  static void bound_argument(final @NotNull PsiBuilder b, final int i) {
     final IElementType tokenType = b.getTokenType();
     final IElementType leftElement = b.rawLookup(-1);
     final IElementType rightElement = b.rawLookup(1);

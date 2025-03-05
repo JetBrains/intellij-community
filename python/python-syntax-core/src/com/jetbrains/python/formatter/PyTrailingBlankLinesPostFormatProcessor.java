@@ -35,9 +35,8 @@ public final class PyTrailingBlankLinesPostFormatProcessor implements PostFormat
     return source.getLanguage().isKindOf(PythonLanguage.getInstance());
   }
 
-  @NotNull
   @Override
-  public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
+  public @NotNull PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     final PsiFile psiFile = source.getContainingFile();
     if (isApplicableTo(psiFile)) {
       final TextRange whitespaceRange = findTrailingWhitespacesRange(psiFile);
@@ -48,9 +47,8 @@ public final class PyTrailingBlankLinesPostFormatProcessor implements PostFormat
     return source;
   }
 
-  @NotNull
   @Override
-  public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
+  public @NotNull TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     if (!isApplicableTo(source)) {
       return rangeToReformat;
     }
@@ -62,8 +60,7 @@ public final class PyTrailingBlankLinesPostFormatProcessor implements PostFormat
     return rangeToReformat;
   }
 
-  @NotNull
-  private static TextRange findTrailingWhitespacesRange(@NotNull PsiFile file) {
+  private static @NotNull TextRange findTrailingWhitespacesRange(@NotNull PsiFile file) {
     final CharSequence contents = file.getViewProvider().getContents();
     int start;
     boolean lineFeedNext = false;
@@ -77,8 +74,7 @@ public final class PyTrailingBlankLinesPostFormatProcessor implements PostFormat
     return new TextRange(start + 1, contents.length());
   }
 
-  @NotNull
-  private static TextRange replaceOrDeleteTrailingWhitespaces(@NotNull final PsiFile pyFile, @NotNull final TextRange whitespaceRange) {
+  private static @NotNull TextRange replaceOrDeleteTrailingWhitespaces(final @NotNull PsiFile pyFile, final @NotNull TextRange whitespaceRange) {
     final PyCodeStyleSettings customSettings = CodeStyle.getCustomSettings(pyFile, PyCodeStyleSettings.class);
     final boolean addLineFeed = customSettings.BLANK_LINE_AT_FILE_END || EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF();
 

@@ -102,7 +102,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   @Override
   protected @NotNull Process createProcess(@NotNull ProcessBuilder processBuilder) throws IOException {
-    if (getInputFile() == null && !isProcessCreatorSet()) {
+    if (getInputFile() == null && !isProcessCreatorSet() && tryGetEel() == null) {
       try {
         return startProcessWithPty(processBuilder.command());
       }

@@ -18,9 +18,9 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -47,16 +47,13 @@ public final class UnnecessaryTemporaryOnConversionFromStringInspection extends 
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.from.string.display.name");
   }
 
-  @Nullable
-  @NonNls
-  static String calculateReplacementExpression(PsiMethodCallExpression expression,
-                                               CommentTracker commentTracker,
-                                               boolean fullyQualified) {
+  static @Nullable @NonNls String calculateReplacementExpression(PsiMethodCallExpression expression,
+                                                                 CommentTracker commentTracker,
+                                                                 boolean fullyQualified) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiNewExpression qualifier = ObjectUtils.tryCast(methodExpression.getQualifierExpression(), PsiNewExpression.class);
     if (qualifier == null) return null;
@@ -74,8 +71,7 @@ public final class UnnecessaryTemporaryOnConversionFromStringInspection extends 
   }
 
   @Override
-  @Nullable
-  public LocalQuickFix buildFix(Object... infos) {
+  public @Nullable LocalQuickFix buildFix(Object... infos) {
     final String replacementExpression = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker(), false);
     if (replacementExpression == null) return null;
     final String name = CommonQuickFixBundle.message("fix.replace.with.x", replacementExpression);
@@ -91,15 +87,13 @@ public final class UnnecessaryTemporaryOnConversionFromStringInspection extends 
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return m_name;
     }
 
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.simplify");
     }
 
@@ -123,7 +117,7 @@ public final class UnnecessaryTemporaryOnConversionFromStringInspection extends 
 
   private static class UnnecessaryTemporaryObjectVisitor extends BaseInspectionVisitor {
 
-    @NonNls private static final Map<String, String> s_basicTypeMap = new HashMap<>(7);
+    private static final @NonNls Map<String, String> s_basicTypeMap = new HashMap<>(7);
 
     static {
       s_basicTypeMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "booleanValue");

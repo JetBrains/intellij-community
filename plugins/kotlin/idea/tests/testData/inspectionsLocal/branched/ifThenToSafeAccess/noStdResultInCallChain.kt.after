@@ -1,6 +1,6 @@
 // HIGHLIGHT: WARNING
 // FIX: Replace 'if' expression with safe access expression
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class Result<T> {
     fun getOrNull(): Any = TODO()
 }

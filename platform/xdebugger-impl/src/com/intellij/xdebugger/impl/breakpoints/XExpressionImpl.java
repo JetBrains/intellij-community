@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.lang.Language;
@@ -14,7 +14,7 @@ public class XExpressionImpl implements XExpression {
   public static final XExpression EMPTY_EXPRESSION = fromText("", EvaluationMode.EXPRESSION);
   public static final XExpression EMPTY_CODE_FRAGMENT = fromText("", EvaluationMode.CODE_FRAGMENT);
 
-  @NotNull private final String myExpression;
+  private final @NotNull String myExpression;
   private final Language myLanguage;
   private final String myCustomInfo;
   private final EvaluationMode myMode;
@@ -30,9 +30,8 @@ public class XExpressionImpl implements XExpression {
     myMode = mode;
   }
 
-  @NotNull
   @Override
-  public String getExpression() {
+  public @NotNull String getExpression() {
     return myExpression;
   }
 
@@ -46,9 +45,8 @@ public class XExpressionImpl implements XExpression {
     return myCustomInfo;
   }
 
-  @NotNull
   @Override
-  public EvaluationMode getMode() {
+  public @NotNull EvaluationMode getMode() {
     return myMode;
   }
 

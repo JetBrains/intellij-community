@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -16,22 +16,21 @@ import org.jetbrains.annotations.Nullable;
 
 
 public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> implements ChangesBrowserNode.NodeWithFilePath {
-  @NotNull private final FilePath myModuleRoot;
+  private final @NotNull FilePath myModuleRoot;
 
   private ChangesBrowserModuleNode(@NotNull Module userObject, @NotNull FilePath moduleRoot) {
     super(userObject);
     myModuleRoot = moduleRoot;
   }
 
-  @Nullable
-  public static ChangesBrowserModuleNode create(@NotNull Module module) {
+  public static @Nullable ChangesBrowserModuleNode create(@NotNull Module module) {
     FilePath moduleRoot = getModuleRootFilePath(module);
     if (moduleRoot == null) return null;
     return new ChangesBrowserModuleNode(module, moduleRoot);
   }
 
   @Override
-  public void render(@NotNull final ChangesBrowserNodeRenderer renderer,
+  public void render(final @NotNull ChangesBrowserNodeRenderer renderer,
                      final boolean selected,
                      final boolean expanded,
                      final boolean hasFocus) {
@@ -50,8 +49,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> impleme
     }
   }
 
-  @NotNull
-  public FilePath getModuleRoot() {
+  public @NotNull FilePath getModuleRoot() {
     return myModuleRoot;
   }
 
@@ -75,8 +73,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> impleme
     return compareFileNames(getUserObject().getName(), o2.getName());
   }
 
-  @Nullable
-  private static FilePath getModuleRootFilePath(@NotNull Module module) {
+  private static @Nullable FilePath getModuleRootFilePath(@NotNull Module module) {
     return ReadAction.compute(() -> {
       if (module.isDisposed()) return null;
       VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();

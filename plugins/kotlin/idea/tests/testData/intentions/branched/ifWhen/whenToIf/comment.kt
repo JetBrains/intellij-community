@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 // AFTER-WARNING: The expression is unused
 // AFTER-WARNING: The expression is unused
 fun foo(b: Boolean) {
@@ -8,5 +9,3 @@ fun foo(b: Boolean) {
         else -> 2
     }
 }
-
-// IGNORE_K2

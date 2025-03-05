@@ -38,8 +38,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -62,11 +60,13 @@ import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
+typealias SuggestedNames = List<Collection<String>>
+
 object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     private class IntroduceVariableContext(
         project: Project,
         isVar: Boolean,
-        nameSuggestions: List<Collection<String>>,
+        nameSuggestions: SuggestedNames,
         replaceFirstOccurrence: Boolean,
         isDestructuringDeclaration: Boolean,
         private val expressionRenderedType: String,
@@ -201,20 +201,26 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         }
     }
 
-    private fun KtExpression.chooseApplicableComponentNamesForVariableDeclaration(
-        haveOccurrencesToReplace: Boolean,
+    private fun KtExpression.chooseDestructuringNames(
         editor: Editor?,
-        callback: (List<String>) -> Unit
+        haveOccurrencesToReplace: Boolean,
+        nameValidator: KotlinDeclarationNameValidator,
+        callback: (SuggestedNames) -> Unit,
     ) {
         if (haveOccurrencesToReplace) return callback(emptyList())
-        return chooseApplicableComponentNames(this, editor, callback = callback)
+        return chooseDestructuringNames(
+            editor = editor,
+            expression = this,
+            nameValidator = nameValidator,
+            callback = callback
+        )
     }
 
     private fun executeMultiDeclarationTemplate(
         project: Project,
         editor: Editor,
         declaration: KtDestructuringDeclaration,
-        suggestedNames: List<Collection<String>>
+        suggestedNames: SuggestedNames,
     ) {
         StartMarkAction.canStart(editor)?.let { return }
 
@@ -299,38 +305,26 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
             val replaceFirstOccurrence = allReplaces.firstOrNull()?.shouldReplaceOccurrence(commonContainer) == true
 
-            expression.chooseApplicableComponentNamesForVariableDeclaration(
+            val anchor = calculateAnchorForExpressions(commonParent, commonContainer, allReplaces) ?: return@create
+            val nameValidator = KotlinDeclarationNameValidator(
+                visibleDeclarationsContext = anchor,
+                checkVisibleDeclarationsContext = true,
+                target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
+            )
+
+            expression.chooseDestructuringNames(
+                editor = editor,
                 haveOccurrencesToReplace = replaceFirstOccurrence || allReplaces.size > 1,
-                editor,
-            ) { componentNames ->
-                val anchor = calculateAnchorForExpressions(commonParent, commonContainer, allReplaces)
-                    ?: return@chooseApplicableComponentNamesForVariableDeclaration
-                val isDestructuringDeclaration = componentNames.isNotEmpty()
-                val suggestedNames = analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                    val nameValidator = KotlinDeclarationNameValidator(
-                        anchor,
-                        true,
-                        KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
-                    )
-                    if (isDestructuringDeclaration) {
-                        componentNames.map { componentName ->
-                            suggestNameByName(
-                                componentName
-                            ) { nameValidator.validate(it) }.let(::listOf)
-                        }
-                    } else {
-                        with(KotlinNameSuggester()) {
-                            suggestExpressionNames(expression) { nameValidator.validate(it) }.toList()
-                        }.let(::listOf)
-                    }
-                }
+                nameValidator = nameValidator,
+            ) { destructuringNames ->
+                val suggestedNames = destructuringNames.takeIf { it.isNotEmpty() } ?: suggestSingleVariableNames(expression, nameValidator)
 
                 val introduceVariableContext = IntroduceVariableContext(
                     project,
                     isVar,
                     suggestedNames,
                     replaceFirstOccurrence,
-                    isDestructuringDeclaration,
+                    destructuringNames.isNotEmpty(),
                     expressionRenderedType,
                     renderedTypeArguments,
                 )

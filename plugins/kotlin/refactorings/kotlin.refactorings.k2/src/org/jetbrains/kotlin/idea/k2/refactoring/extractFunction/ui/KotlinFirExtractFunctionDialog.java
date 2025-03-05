@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.*;
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractUtilKt;
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IParameter;
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IReplacement;
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ParameterReplacement;
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent;
@@ -40,11 +39,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class KotlinFirExtractFunctionDialog extends DialogWrapper {
     private JPanel contentPane;
@@ -93,8 +90,7 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
         return KtPsiUtilKt.quoteIfNeeded(functionNameField.getEnteredName());
     }
 
-    @Nullable
-    private KtModifierKeywordToken getVisibility() {
+    private @Nullable KtModifierKeywordToken getVisibility() {
         if (!isVisibilitySectionAvailable()) return null;
 
         KtModifierKeywordToken value = (KtModifierKeywordToken) visibilityBox.getSelectedItem();
@@ -153,9 +149,8 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
             returnTypeBox.setModel(returnTypeBoxModel);
             returnTypeBox.setRenderer(
                     new DefaultListCellRenderer() {
-                        @NotNull
                         @Override
-                        public Component getListCellRendererComponent(
+                        public @NotNull Component getListCellRendererComponent(
                                 JList list,
                                 Object value,
                                 int index,
@@ -199,9 +194,8 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
         );
 
         parameterTablePanel = new FirExtractFunctionParameterTablePanel() {
-            @NotNull
             @Override
-            public KtElement getContext() {
+            public @NotNull KtElement getContext() {
                 return context;
             }
 
@@ -271,9 +265,8 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
         return contentPane;
     }
 
-    @NotNull
     @Override
-    protected JComponent createContentPane() {
+    protected @NotNull JComponent createContentPane() {
         return contentPane;
     }
 

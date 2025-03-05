@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.tools.projectWizard.cli
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import org.jetbrains.kotlin.tools.projectWizard.wizard.Wizard
-import org.jetbrains.kotlin.tools.projectWizard.wizard.YamlWizard
 import java.nio.file.Path
 
 abstract class AbstractProjectTemplateBuildFileGenerationTest : AbstractBuildFileGenerationTest() {

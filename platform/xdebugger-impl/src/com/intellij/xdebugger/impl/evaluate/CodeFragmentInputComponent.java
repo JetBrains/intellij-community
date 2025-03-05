@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate;
 
+import com.intellij.codeInsight.inline.completion.InlineCompletion;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBSplitter;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
@@ -44,7 +34,16 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
                                     Disposable parentDisposable) {
     super(XDebuggerBundle.message("dialog.title.evaluate.code.fragment"));
     myMultilineEditor = new XDebuggerExpressionEditor(project, editorsProvider, "evaluateCodeFragment", sourcePosition,
-                                                      statements != null ? statements : XExpressionImpl.EMPTY_CODE_FRAGMENT, true, true, false);
+                                                      statements != null ? statements : XExpressionImpl.EMPTY_CODE_FRAGMENT, true, true, false) {
+      @Override
+      protected void prepareEditor(EditorEx editor) {
+        super.prepareEditor(editor);
+        XDebugSessionImpl session = (XDebugSessionImpl)XDebuggerManager.getInstance(project).getCurrentSession();
+        if (session != null) {
+          InlineCompletion.INSTANCE.install(editor, session.getCoroutineScope());
+        }
+      }
+    };
 
     myMainForm.setName(XDebuggerBundle.message("xdebugger.label.text.code.fragment"));
     myMainForm.addExpressionComponent(myMultilineEditor.getComponent());
@@ -54,8 +53,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
   }
 
   @Override
-  @NotNull
-  public XDebuggerEditorBase getInputEditor() {
+  public @NotNull XDebuggerEditorBase getInputEditor() {
     return myMultilineEditor;
   }
 

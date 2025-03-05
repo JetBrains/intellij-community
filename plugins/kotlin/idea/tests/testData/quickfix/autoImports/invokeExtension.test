@@ -1,7 +1,7 @@
 // FILE: first.before.kt
 // "Import operator 'Some.invoke'" "true"
 // ERROR: Expression 'Some()' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package testing
 
@@ -28,7 +28,7 @@ operator fun Some.invoke(s: String) {}
 // FILE: first.after.kt
 // "Import operator 'Some.invoke'" "true"
 // ERROR: Expression 'Some()' of type 'Some' cannot be invoked as a function. The function 'invoke()' is not found
-/* IGNORE_K2 */
+// IGNORE_K2
 
 package testing
 

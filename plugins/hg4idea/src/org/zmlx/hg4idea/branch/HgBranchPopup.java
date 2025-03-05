@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -105,8 +105,7 @@ public final class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     wrapWithMoreActionIfNeeded(myProject, popupGroup, bookmarkActions, topShownBookmarks, SHOW_ALL_BOOKMARKS_KEY, true);
   }
 
-  @Nullable
-  private HgCommonBranchActions createLocalBranchActions(List<HgRepository> allRepositories, String name, boolean isBookmark) {
+  private @Nullable HgCommonBranchActions createLocalBranchActions(List<HgRepository> allRepositories, String name, boolean isBookmark) {
     List<HgRepository> repositories = filterRepositoriesNotOnThisBranch(name, allRepositories);
     if (repositories.isEmpty()) return null;
     return isBookmark
@@ -115,8 +114,7 @@ public final class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   }
 
   @Override
-  @NotNull
-  protected LightActionGroup createRepositoriesActions() {
+  protected @NotNull LightActionGroup createRepositoriesActions() {
     LightActionGroup popupGroup = new LightActionGroup(false);
     popupGroup.addSeparator(HgBundle.message("repositories"));
     List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()

@@ -21,9 +21,9 @@ import java.io.File
 class MavenFolderResolver(private val project: Project) {
   private val projectsManager: MavenProjectsManager = MavenProjectsManager.getInstance(project)
 
-  suspend fun resolveFoldersAndImport() = resolveFoldersAndImport(projectsManager.projects)
+  suspend fun resolveFoldersAndImport(): Unit = resolveFoldersAndImport(projectsManager.projects)
 
-  suspend fun resolveFoldersAndImport(projects: Collection<MavenProject>) {
+  suspend fun resolveFoldersAndImport(projects: List<MavenProject>) {
     withBackgroundProgress(project, MavenProjectBundle.message("maven.updating.folders"), true) {
       reportRawProgress { reporter ->
         doResolveFoldersAndImport(projects, reporter)
@@ -31,10 +31,8 @@ class MavenFolderResolver(private val project: Project) {
     }
   }
 
-  private suspend fun doResolveFoldersAndImport(projects: Collection<MavenProject>, progressReporter: RawProgressReporter) {
-
-    val allProjectsWithChanges = resolveFolders(projects, progressReporter)
-    val projectsToImportWithChanges = allProjectsWithChanges.filter { !it.key.hasReadingProblems() && it.value.hasChanges() }
+  private suspend fun doResolveFoldersAndImport(projects: List<MavenProject>, progressReporter: RawProgressReporter) {
+    resolveFolders(projects, progressReporter)
 
     //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
     MavenUtil.restartMavenConnectors(project, false) { c: MavenServerConnector ->
@@ -44,38 +42,34 @@ class MavenFolderResolver(private val project: Project) {
       false
     }
 
-    if (!projectsToImportWithChanges.isEmpty()) {
-      projectsManager.importMavenProjects(projectsToImportWithChanges)
-    }
+    projectsManager.importMavenProjects(projects)
   }
 
-  private suspend fun resolveFolders(mavenProjects: Collection<MavenProject>,
-                                     progressReporter: RawProgressReporter): Map<MavenProject, MavenProjectChanges> {
+  private suspend fun resolveFolders(mavenProjects: Collection<MavenProject>, progressReporter: RawProgressReporter) {
     val console = MavenSourceGenerationConsole(project)
     try {
       console.start()
       val tree = projectsManager.projectsTree
       val mavenProjectsToResolve = collectMavenProjectsToResolve(mavenProjects, tree)
       val projectMultiMap = MavenUtil.groupByBasedir(mavenProjectsToResolve, tree)
-      val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChanges>()
       for ((baseDir, mavenProjectsForBaseDir) in projectMultiMap.entrySet()) {
         console.startSourceGeneration(baseDir)
-        val chunk = resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter, console)
-        projectsWithChanges.putAll(chunk)
+        resolveFolders(baseDir, mavenProjectsForBaseDir, tree, progressReporter, console)
         console.finishSourceGeneration(baseDir)
       }
-      return projectsWithChanges
     }
     finally {
       console.finish()
     }
   }
 
-  private suspend fun resolveFolders(baseDir: String,
-                                     mavenProjects: Collection<MavenProject>,
-                                     tree: MavenProjectsTree,
-                                     progressReporter: RawProgressReporter,
-                                     console: MavenSourceGenerationConsole): Map<MavenProject, MavenProjectChanges> {
+  private suspend fun resolveFolders(
+    baseDir: String,
+    mavenProjects: Collection<MavenProject>,
+    tree: MavenProjectsTree,
+    progressReporter: RawProgressReporter,
+    console: MavenSourceGenerationConsole,
+  ) {
     val goal = projectsManager.importingSettings.updateFoldersOnImportPhase
 
     val fileToProject = mavenProjects.associateBy({ File(it.file.path) }, { it })
@@ -100,16 +94,13 @@ class MavenFolderResolver(private val project: Project) {
       projectsManager.embeddersManager.release(embedder)
     }
 
-    val projectsWithChanges = mutableMapOf<MavenProject, MavenProjectChanges>()
     for (goalResult in goalResults) {
       val mavenProject = fileToProject.getOrDefault(goalResult.file, null)
       if (null != mavenProject && MavenUtil.shouldResetDependenciesAndFolders(goalResult.problems)) {
         val changes = mavenProject.setFolders(goalResult.folders)
-        projectsWithChanges[mavenProject] = changes
         tree.fireFoldersResolved(Pair.create(mavenProject, changes))
       }
     }
-    return projectsWithChanges
   }
 
   private fun collectMavenProjectsToResolve(mavenProjects: Collection<MavenProject>, tree: MavenProjectsTree): Collection<MavenProject> {

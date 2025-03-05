@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -61,8 +61,7 @@ public final class SealedUtils {
     }
   }
 
-  @NotNull
-  private static PsiReferenceList createPermitsClause(@NotNull PsiFileFactory factory, @NotNull String permitsClause) {
+  private static @NotNull PsiReferenceList createPermitsClause(@NotNull PsiFileFactory factory, @NotNull String permitsClause) {
     PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText(JavaLanguage.INSTANCE, "class __Dummy " + permitsClause + "{}");
     PsiClass newClass = javaFile.getClasses()[0];
     return Objects.requireNonNull(newClass.getPermitsList());
@@ -128,7 +127,7 @@ public final class SealedUtils {
         result = "intention.error.make.sealed.class.different.packages";
       }
     }
-    else if (JavaModuleGraphUtil.findDescriptorByElement(inheritor) != module) {
+    else if (JavaPsiModuleUtil.findDescriptorByElement(inheritor) != module) {
       result = "intention.error.make.sealed.class.different.modules";
     }
     return result;

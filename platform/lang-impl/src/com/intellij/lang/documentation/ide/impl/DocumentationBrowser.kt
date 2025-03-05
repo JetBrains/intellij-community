@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
@@ -9,7 +9,8 @@ import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
@@ -29,12 +30,10 @@ internal class DocumentationBrowser private constructor(
   private val project: Project,
   initialPage: DocumentationPage,
 ) : DocumentationBrowserFacade, Disposable {
-
   var ui: DocumentationUI by lateinitVal()
   var closeTrigger: (() -> Unit)? = null
 
   private sealed class BrowserRequest {
-
     class Load(val request: DocumentationRequest, val reset: Boolean) : BrowserRequest()
 
     object Reload : BrowserRequest()
@@ -44,10 +43,9 @@ internal class DocumentationBrowser private constructor(
     class Restore(val snapshot: HistorySnapshot) : BrowserRequest()
   }
 
-  private val myRequestFlow: MutableSharedFlow<BrowserRequest> = MutableSharedFlow(
-    replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST,
-  )
+  private val myRequestFlow: MutableSharedFlow<BrowserRequest> = MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
+  @Suppress("RAW_SCOPE_CREATION")
   private val cs = CoroutineScope(EmptyCoroutineContext)
 
   init {
@@ -126,13 +124,15 @@ internal class DocumentationBrowser private constructor(
       handleDownloadSourcesRequest(url)
       return
     }
+
     val targetPointer = this.targetPointer
     val internalResult = try {
       handleLink(project, targetPointer, url, page)
     }
-    catch (e: IndexNotReadyException) {
+    catch (_: IndexNotReadyException) {
       return // normal situation, nothing to do
     }
+
     when (internalResult) {
       is OrderEntry -> withContext(Dispatchers.EDT) {
         if (internalResult.isValid) {
@@ -159,18 +159,17 @@ internal class DocumentationBrowser private constructor(
     }
   }
 
-  private suspend fun handleDownloadSourcesRequest(href: String) {
+  private fun handleDownloadSourcesRequest(href: String) {
     val filePath = href.replaceFirst(DocumentationDownloader.HREF_PREFIX, "")
     val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
     if (file != null) {
-      val handler = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }
-      if (handler != null) {
-        blockingContext {
-          val callback = handler.download(project, file)
-          callback.doWhenProcessed {
-            logDownloadFinished(project, handler::class.java, callback.isDone)
+      CoroutineScopeService.getCoroutineScope(project)
+        .launch {
+          val handler = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }
+          if (handler != null) {
+            val success = handler.download(project, file)
+            logDownloadFinished(project, handler::class.java, success)
           }
-        }
       }
       closeTrigger?.invoke()
     }
@@ -185,9 +184,7 @@ internal class DocumentationBrowser private constructor(
     }
   }
 
-  fun currentExternalUrl(): String? {
-    return page.currentContent?.links?.externalUrl
-  }
+  fun currentExternalUrl(): String? = page.currentContent?.links?.externalUrl
 
   val history: DocumentationHistory get() = myHistory
 
@@ -198,9 +195,7 @@ internal class DocumentationBrowser private constructor(
     val ui: UISnapshot,
   )
 
-  private fun historySnapshot(): HistorySnapshot {
-    return HistorySnapshot(page, ui.uiSnapshot())
-  }
+  private fun historySnapshot(): HistorySnapshot = HistorySnapshot(page, ui.uiSnapshot())
 
   private fun restore(snapshot: HistorySnapshot) {
     check(myRequestFlow.tryEmit(BrowserRequest.Restore(snapshot)))
@@ -214,7 +209,6 @@ internal class DocumentationBrowser private constructor(
   }
 
   companion object {
-
     fun createBrowser(project: Project, requests: List<DocumentationRequest>): DocumentationBrowser {
       val browser = DocumentationBrowser(project, DocumentationPage(requests, project))
       browser.reload() // init loading
@@ -222,11 +216,17 @@ internal class DocumentationBrowser private constructor(
     }
 
     /**
-     * @return `true` if a loaded page has some content,
-     * or `false` if a loaded page is empty
+     * @return `true` if a loaded page has some content, `false` if a loaded page is empty
      */
-    suspend fun DocumentationBrowser.waitForContent(): Boolean {
-      return pageFlow.first().waitForContent()
+    suspend fun DocumentationBrowser.waitForContent(): Boolean = pageFlow.first().waitForContent()
+  }
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineScopeService(val coroutineScope: CoroutineScope) {
+    companion object {
+      fun getCoroutineScope(project: Project): CoroutineScope {
+        return project.service<CoroutineScopeService>().coroutineScope
+      }
     }
   }
 }

@@ -26,8 +26,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.importing.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE
 import org.jetbrains.idea.maven.importing.MAVEN_DEFAULT_ANNOTATION_PROFILE
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getModuleProfileName
-import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
-import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.junit.Assert
 import org.junit.Test
 
@@ -613,6 +611,67 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+            </plugin>
+        </plugins>
+    </build>
+""")
+
+    val mavenProject = projectsManager.findProject(getModule("project"))
+    assertNotNull(mavenProject)
+
+    val annotationProcessors = mavenProject!!.externalAnnotationProcessors
+    assertNotEmpty(annotationProcessors)
+
+    assertTrue(
+      annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger-compiler" == it.artifactId && "2.2" == it.version })
+    assertTrue(annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger" == it.artifactId && "2.2" == it.version })
+
+    val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+
+    val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
+    assertNotNull(projectProfile)
+    val path = projectProfile!!.processorPath
+    assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")))
+  }
+
+  @Test
+  fun testImportManagedDependencyAnnotationProcessorFromExecution()  = runBlocking{
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1.0</version>
+      <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.google.dagger</groupId>
+                <artifactId>dagger-compiler</artifactId>
+                <version>2.2</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.12.1</version>
+                <executions>
+                     <execution>
+                        <id>myid</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <annotationProcessorPaths>
+                                <path>
+                                    <groupId>com.google.dagger</groupId>
+                                    <artifactId>dagger-compiler</artifactId>
+                                </path>
+                            </annotationProcessorPaths>    
+                        </configuration>
+                     </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

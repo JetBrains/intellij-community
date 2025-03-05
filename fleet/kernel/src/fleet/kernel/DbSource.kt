@@ -31,7 +31,7 @@ interface DbSource {
         .onSuccess { latest ->
           val ctx = DbContext<DB>(latest, dbSource)
           DbContext.threadLocal.set(ctx)
-          context[ContextMatches]?.matches?.firstOrNull { m -> !m.job.isActive }?.let { cancelledMatch ->
+          context[ContextMatches]?.matches?.firstOrNull { m -> !m.validity.isActive }?.let { cancelledMatch ->
             ctx.setPoison(UnsatisfiedMatchException(CancellationReason("match invalidated by rete", cancelledMatch)))
           }
         }.onFailure { ex ->
@@ -98,9 +98,9 @@ class FlowDbSource(
 }
 
 
-fun KernelContextElement(transactor: Transactor): CoroutineContext =
+fun KernelContextElement(transactor: Transactor, dbSource: DbSource = FlowDbSource(transactor.dbState, "kernel $transactor")): CoroutineContext =
   transactor +
-  DbSource.ContextElement(FlowDbSource(transactor.dbState, "kernel $transactor")) +
+  DbSource.ContextElement(dbSource) +
   (asOf(transactor.dbState.value) { ReteEntity.forKernel(transactor) } ?: EmptyCoroutineContext)
 
 fun ConstantDbContext(db: DB): CoroutineContext =

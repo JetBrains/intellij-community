@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -104,7 +104,7 @@ public final class JsonSchemaMappingsConfigurable extends MasterDetailsComponent
       String displayName = ((MyNode)element).getDisplayName();
       if (displayName.startsWith(s)) {
         String lastPart = displayName.substring(s.length()).trim();
-        if (lastPart.length() == 0 && max == -1) {
+        if (lastPart.isEmpty() && max == -1) {
           max = 1;
           continue;
         }
@@ -229,7 +229,7 @@ public final class JsonSchemaMappingsConfigurable extends MasterDetailsComponent
             final ThreeState similar = comparator.isSimilar(pattern, item);
             if (ThreeState.NO.equals(similar)) continue;
 
-            if (sb.length() > 0) sb.append('\n');
+            if (!sb.isEmpty()) sb.append('\n');
             sb.append(JsonBundle.message("schema.configuration.error.conflicting.mappings.desc",
                                          pattern.getPresentation(),
                                          info.getName(),
@@ -240,7 +240,7 @@ public final class JsonSchemaMappingsConfigurable extends MasterDetailsComponent
       }
       patternsMap.put(info.getName(), patterns);
     }
-    if (sb.length() > 0) {
+    if (!sb.isEmpty()) {
       myError = JsonBundle.message("schema.configuration.error.conflicting.mappings.title", sb.toString());
     } else {
       myError = null;

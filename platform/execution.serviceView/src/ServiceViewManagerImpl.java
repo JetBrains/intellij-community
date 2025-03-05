@@ -140,7 +140,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     return null;
   }
 
-  private Set<? extends ServiceViewContributor<?>> getActiveContributors() {
+  private @Unmodifiable Set<? extends ServiceViewContributor<?>> getActiveContributors() {
     return ContainerUtil.map2Set(myModel.getRoots(), ServiceViewItem::getRootContributor);
   }
 

@@ -30,7 +30,7 @@ final class ShBraceMatcher implements PairedBraceMatcher, ShTokenTypes {
   }
 
   @Override
-  public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType tokenType) {
+  public boolean isPairedBracesAllowedBeforeType(final @NotNull IElementType lbraceType, final @Nullable IElementType tokenType) {
     return true;
   }
 

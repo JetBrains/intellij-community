@@ -136,21 +136,24 @@ private fun replaceAtCaretAndGetParentObject(element: PsiElement,
 }
 
 private fun cleanupWhitespacesAndDelete(it: PsiElement, walker: JsonLikePsiWalker) {
+  val toCleanup = mutableSetOf<PsiElement>()
   // cleanup redundant whitespace
   var next = it.nextSibling
   while (next != null && next.text.isBlank()) {
     val n = next
     next = next.nextSibling
-    n.delete()
+    toCleanup.add(n)
   }
   var prev = it.prevSibling
   while (prev != null && prev.text.isBlank()) {
     val n = prev
     prev = prev.prevSibling
     if (walker.getParentPropertyAdapter(prev) == null || it.nextSibling == null) {
-      n.delete()
+      toCleanup.add(n)
     }
   }
+  // we have to collect elements to avoid getting siblings of already deleted items
+  toCleanup.forEach { it.delete() }
   it.delete()
 }
 
@@ -164,14 +167,24 @@ private fun addNewPropertyWithObjectValue(parentObject: JsonObjectValueAdapter, 
   }.let { walker.getParentPropertyAdapter(it)!! }
 }
 
-private tailrec fun doExpand(parentObject: JsonObjectValueAdapter,
-                             completionPath: List<String>,
-                             walker: JsonLikePsiWalker,
-                             element: PsiElement,
-                             index: Int,
-                             fakeProperty: PsiElement?): PsiElement? {
-  val property = parentObject.propertyList.firstOrNull { it.name == completionPath[index] }
-                 ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element, fakeProperty)
+private tailrec fun doExpand(
+  parentObject: JsonObjectValueAdapter,
+  completionPath: List<String>,
+  walker: JsonLikePsiWalker,
+  element: PsiElement,
+  index: Int,
+  fakeProperty: PsiElement?
+): PsiElement? {
+  val parentProperty = walker.getParentPropertyAdapter(element)
+  val property = parentObject.propertyList.firstOrNull {
+    // we match properties both by name and by parent
+    // for languages with exotic syntaxes, there can be multiple same-named properties
+    //  at different levels within the same object
+    it.name == completionPath[index] && (
+      parentProperty == null ||
+      walker.haveSameParentWithinObject(parentProperty.delegate, it.delegate)
+    )
+  } ?: addNewPropertyWithObjectValue(parentObject, completionPath[index], walker, element, fakeProperty)
   fakeProperty?.let {
     cleanupWhitespacesAndDelete(it, walker)
   }
@@ -241,18 +254,19 @@ private fun addBeforeOrAfter(value: JsonValueAdapter,
                              fakeProperty: PsiElement?): PsiElement {
   val properties = value.asObject?.propertyList.orEmpty()
   val firstProperty = properties.firstOrNull()
-  val lastProperty = properties.lastOrNull()
-  return if (lastProperty != null && element.startOffset >= lastProperty.delegate.endOffset) {
-    val newElement = value.delegate.addAfter(elementToAdd, lastProperty.delegate)
-    if (lastProperty.delegate != fakeProperty) {
-      JsonLikePsiWalker.getWalker(newElement)?.getSyntaxAdapter(newElement.project)?.ensureComma(
-        lastProperty.delegate, newElement
+  val lastPropertyBefore = properties.lastOrNull { element.startOffset >= it.delegate.endOffset }
+  return if (lastPropertyBefore != null) {
+    val newElement = lastPropertyBefore.delegate.parent.addAfter(elementToAdd, lastPropertyBefore.delegate)
+    if (lastPropertyBefore.delegate != fakeProperty) {
+      JsonLikePsiWalker.getWalker(element)?.getSyntaxAdapter(element.project)?.ensureComma(
+        lastPropertyBefore.delegate, newElement
       )
     }
     newElement
   }
   else {
-    val newElement = value.delegate.addBefore(elementToAdd, firstProperty?.delegate)
+    val newElement = (firstProperty?.delegate?.parent ?: value.delegate)
+      .addBefore(elementToAdd, firstProperty?.delegate)
     firstProperty?.delegate?.takeIf { it != fakeProperty }?.let {
       JsonLikePsiWalker.getWalker(newElement)?.getSyntaxAdapter(newElement.project)?.ensureComma(
         newElement, it

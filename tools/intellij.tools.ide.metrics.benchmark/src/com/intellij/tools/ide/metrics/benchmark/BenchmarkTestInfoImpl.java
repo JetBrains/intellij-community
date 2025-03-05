@@ -32,13 +32,11 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   private enum IterationMode {
@@ -53,8 +51,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
   public String launchName;                      // to print on fail
   private int warmupIterations = 1;                      // default warmup iterations should be positive
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
-  @NotNull
-  private final IJTracer tracer;
+  private final @NotNull IJTracer tracer;
   private final ArrayList<MetricsCollector> metricsCollectors = new ArrayList<>();
 
   private boolean useDefaultSpanMetricExporter = true;
@@ -116,11 +113,21 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
       // remove content of the previous tests from the idea.log
       IJPerfBenchmarksMetricsPublisher.Companion.truncateTestLog();
 
-      var filesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) ->
-                                                                          it.toString().contains("-metrics") ||
-                                                                          it.toString().contains("-meters")).toList();
-      for (Path file : filesWithMetrics) {
-        Files.deleteIfExists(file);
+      try (Stream<Path> logDirChildren = Files.list(PathManager.getLogDir())) {
+        logDirChildren.filter(child -> {
+            String name = child.toString();
+            return name.contains("-metrics")
+                   || name.contains("-meters")
+                   || name.endsWith(".jfr");
+          })
+          .forEach(childToRemove -> {
+            try {
+              Files.deleteIfExists(childToRemove);
+            }
+            catch (IOException e) {
+              // ignore deletion errors for individual files
+            }
+          });
       }
     }
     catch (Exception e) {
@@ -267,6 +274,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
     start(fullTestName);
   }
 
+  @Override
   public void start(@NotNull KFunction<?> kotlinTestMethod) {
     start(String.format("%s.%s", kotlinTestMethod.getClass().getName(), kotlinTestMethod.getName()));
   }
@@ -285,6 +293,7 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
     start(getCallingTestMethod(), subTestName);
   }
 
+  @Override
   public void start(String fullQualifiedTestMethodName) {
     String sanitizedFullQualifiedTestMethodName = sanitizeFullTestNameForArtifactPublishing(fullQualifiedTestMethodName);
     start(IterationMode.WARMUP, sanitizedFullQualifiedTestMethodName);

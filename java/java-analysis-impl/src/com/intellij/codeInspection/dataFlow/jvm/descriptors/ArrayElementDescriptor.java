@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
@@ -22,6 +22,11 @@ import org.jetbrains.annotations.Nullable;
 public final class ArrayElementDescriptor extends JvmVariableDescriptor {
   private final int myIndex;
 
+  /**
+   * Creates a descriptor that represents an array element with a fixed index
+   * 
+   * @param index index of an array element
+   */
   private ArrayElementDescriptor(int index) {
     myIndex = index;
   }
@@ -64,9 +69,8 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
     return dfType;
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return "[" + myIndex + "]";
   }
 
@@ -154,10 +158,9 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
       .orElseGet(factory::getUnknown);
   }
 
-  @NotNull
-  private static DfaValue getAdvancedExpressionDfaValue(@NotNull DfaValueFactory factory,
-                                                        @Nullable PsiExpression expression,
-                                                        @NotNull DfType targetType) {
+  private static @NotNull DfaValue getAdvancedExpressionDfaValue(@NotNull DfaValueFactory factory,
+                                                                 @Nullable PsiExpression expression,
+                                                                 @NotNull DfType targetType) {
     if (expression == null) return factory.getUnknown();
     DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(factory, expression);
     if (value != null) {
@@ -198,5 +201,16 @@ public final class ArrayElementDescriptor extends JvmVariableDescriptor {
       return componentType.meet(DfaNullability.fromNullability(DfaPsiUtil.getTypeNullability(arrayType.getComponentType())).asDfType());
     }
     return componentType;
+  }
+
+  /**
+   * @param arrayAccess expression to create a descriptor for
+   * @return an array element descriptor that describes a specified array access expression;
+   * null if it's not possible to describe a given array access expression with a single
+   * {@code ArrayElementDescriptor}
+   */
+  public static @Nullable ArrayElementDescriptor fromArrayAccess(@NotNull PsiArrayAccessExpression arrayAccess) {
+    return ExpressionUtils.computeConstantExpression(arrayAccess.getIndexExpression()) instanceof Integer index ?
+         new ArrayElementDescriptor(index) : null;
   }
 }

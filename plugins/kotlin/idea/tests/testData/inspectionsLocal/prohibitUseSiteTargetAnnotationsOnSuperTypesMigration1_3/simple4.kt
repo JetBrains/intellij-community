@@ -1,5 +1,5 @@
 // LANGUAGE_VERSION: 1.3
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 interface Foo
 

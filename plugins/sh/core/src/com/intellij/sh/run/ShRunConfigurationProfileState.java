@@ -10,27 +10,32 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShStringUtil;
 import com.intellij.terminal.TerminalExecutionConsole;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
 
 final class ShRunConfigurationProfileState implements RunProfileState {
   private final Project myProject;
@@ -43,15 +48,18 @@ final class ShRunConfigurationProfileState implements RunProfileState {
 
   @Override
   public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    if (myRunConfiguration.isExecuteInTerminal() && !isRunBeforeConfig()) {
+    final EelDescriptor eelDescriptor = computeEelDescriptor();
+
+    if (EelPathUtils.isProjectLocal(myProject) && // fixme!!!: remove this check after terminal will be migrated to eel
+        myRunConfiguration.isExecuteInTerminal() && !isRunBeforeConfig()) {
       ShRunner shRunner = ApplicationManager.getApplication().getService(ShRunner.class);
       if (shRunner != null && shRunner.isAvailable(myProject)) {
-        shRunner.run(myProject, buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(),
+        shRunner.run(myProject, buildCommand(eelDescriptor), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(),
                      isActivateToolWindow());
         return null;
       }
     }
-    return buildExecutionResult();
+    return buildExecutionResult(eelDescriptor);
   }
 
   private boolean isActivateToolWindow() {
@@ -59,13 +67,13 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return settings == null || settings.isActivateToolWindowBeforeRun() || settings.isFocusToolWindowBeforeRun();
   }
 
-  private ExecutionResult buildExecutionResult() throws ExecutionException {
+  private ExecutionResult buildExecutionResult(@NotNull EelDescriptor eelDescriptor) throws ExecutionException {
     GeneralCommandLine commandLine;
     if (myRunConfiguration.isExecuteScriptFile()) {
-      commandLine = createCommandLineForFile();
+      commandLine = createCommandLineForFile(eelDescriptor);
     }
     else {
-      commandLine = createCommandLineForScript();
+      commandLine = createCommandLineForScript(eelDescriptor);
     }
     ProcessHandler processHandler = createProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
@@ -74,61 +82,47 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return new DefaultExecutionResult(console, processHandler);
   }
 
-  @NotNull
-  private static ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
+  private static @NotNull ProcessHandler createProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableProcessHandler(commandLine) {
-      @NotNull
       @Override
-      protected BaseOutputReader.Options readerOptions() {
+      protected @NotNull BaseOutputReader.Options readerOptions() {
         return BaseOutputReader.Options.forTerminalPtyProcess();
       }
     };
   }
 
-  @NotNull
-  private GeneralCommandLine createCommandLineForScript() {
+  private @NotNull GeneralCommandLine createCommandLineForScript(@NotNull EelDescriptor eelDescriptor) {
     PtyCommandLine commandLine = new PtyCommandLine();
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
-    commandLine.withExePath(ShConfigurationType.getDefaultShell(myProject));
+    commandLine.withWorkingDirectory(Path.of(myRunConfiguration.getScriptWorkingDirectory()));
+    commandLine.withExePath(convertPathUsingEel(ShConfigurationType.getDefaultShell(myProject), eelDescriptor));
     commandLine.withParameters("-c");
     commandLine.withParameters(myRunConfiguration.getScriptText());
     return commandLine;
   }
 
-  @NotNull
-  private GeneralCommandLine createCommandLineForFile() throws ExecutionException {
+  private @NotNull GeneralCommandLine createCommandLineForFile(@NotNull EelDescriptor eelDescriptor) throws ExecutionException {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(myRunConfiguration.getScriptPath());
     if (virtualFile == null || virtualFile.getParent() == null) {
       throw new ExecutionException(ShBundle.message("error.message.cannot.determine.shell.script.parent.directory"));
     }
 
-    final WSLDistribution wslDistribution = ShRunConfiguration.getWSLDistributionIfNeeded(myRunConfiguration.getInterpreterPath(),
-                                                                                          myRunConfiguration.getScriptPath());
-
     PtyCommandLine commandLine = new PtyCommandLine();
-    if (!SystemInfo.isWindows || wslDistribution != null) {
-      commandLine.getEnvironment().put("TERM", "xterm-256color"); //NON-NLS
-    }
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
     commandLine.withEnvironment(myRunConfiguration.getEnvData().getEnvs());
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
+    commandLine.withWorkingDirectory(Path.of(myRunConfiguration.getScriptWorkingDirectory()));
 
-    commandLine.setExePath(convertToWslIfNeeded(myRunConfiguration.getInterpreterPath(), wslDistribution));
+    commandLine.setExePath(convertPathUsingEel(myRunConfiguration.getInterpreterPath(), eelDescriptor));
     if (StringUtil.isNotEmpty(myRunConfiguration.getInterpreterOptions())) {
       commandLine.addParameters(ParametersListUtil.parse(myRunConfiguration.getInterpreterOptions()));
     }
-    commandLine.addParameter(convertToWslIfNeeded(myRunConfiguration.getScriptPath(), wslDistribution));
+    commandLine.addParameter(convertPathUsingEel(myRunConfiguration.getScriptPath(), eelDescriptor));
     if (StringUtil.isNotEmpty(myRunConfiguration.getScriptOptions())) {
       commandLine.addParameters(ParametersListUtil.parse(myRunConfiguration.getScriptOptions()));
-    }
-
-    if (wslDistribution != null) {
-      commandLine = wslDistribution.patchCommandLine(commandLine, myProject, null, false);
     }
 
     return commandLine;
@@ -142,16 +136,13 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return isRunBeforeConfig;
   }
 
-  @NotNull
-  private String buildCommand() {
+  private @NotNull String buildCommand(@NotNull EelDescriptor eelDescriptor) {
     if (myRunConfiguration.isExecuteScriptFile()) {
-      final WSLDistribution wslDistribution = ShRunConfiguration.getWSLDistributionIfNeeded(myRunConfiguration.getInterpreterPath(),
-                                                                                            myRunConfiguration.getScriptPath());
       final List<String> commandLine = new ArrayList<>();
       addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs());
-      addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), wslDistribution));
+      addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), eelDescriptor));
       addIfPresent(commandLine, myRunConfiguration.getInterpreterOptions());
-      commandLine.add(adaptPathForExecution(myRunConfiguration.getScriptPath(), wslDistribution));
+      commandLine.add(adaptPathForExecution(myRunConfiguration.getScriptPath(), eelDescriptor));
       addIfPresent(commandLine, myRunConfiguration.getScriptOptions());
       return String.join(" ", commandLine);
     }
@@ -160,6 +151,34 @@ final class ShRunConfigurationProfileState implements RunProfileState {
       addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs(), true);
       addIfPresent(commandLine, myRunConfiguration.getScriptText());
       return String.join(" ", commandLine);
+    }
+  }
+
+  private EelDescriptor computeEelDescriptor() {
+    EelDescriptor eelDescriptor = null;
+
+    if (!myRunConfiguration.getScriptWorkingDirectory().isEmpty()) {
+      eelDescriptor = nullizeIfLocal(getEelDescriptor(Path.of(myRunConfiguration.getScriptWorkingDirectory())));
+    }
+
+    if (eelDescriptor == null && !myRunConfiguration.getInterpreterPath().isEmpty()) {
+      eelDescriptor = nullizeIfLocal(getEelDescriptor(Path.of(myRunConfiguration.getInterpreterPath())));
+    }
+
+    if (eelDescriptor == null) {
+      return getEelDescriptor(myProject);
+    }
+    else {
+      return eelDescriptor;
+    }
+  }
+
+  private static @Nullable EelDescriptor nullizeIfLocal(@NotNull EelDescriptor eelDescriptor) {
+    if (eelDescriptor == LocalEelDescriptor.INSTANCE) {
+      return null;
+    }
+    else {
+      return eelDescriptor;
     }
   }
 
@@ -197,21 +216,17 @@ final class ShRunConfigurationProfileState implements RunProfileState {
   }
 
   private static String adaptPathForExecution(@NotNull String systemDependentPath,
-                                              @Nullable WSLDistribution wslDistribution) {
-    if (wslDistribution != null) {
-      return wslDistribution.getWslPath(systemDependentPath);
-    } else {
-      if (Platform.current() != Platform.WINDOWS) return ShStringUtil.quote(systemDependentPath);
-      String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
-      return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.apply(escapedPath) : escapedPath;
-    }
+                                              @NotNull EelDescriptor eelDescriptor) {
+    systemDependentPath = convertPathUsingEel(systemDependentPath, eelDescriptor);
+
+    if (eelDescriptor.getOperatingSystem() != EelPath.OS.WINDOWS) return ShStringUtil.quote(systemDependentPath);
+    String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
+    return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.apply(escapedPath) : escapedPath;
   }
 
-  private static String convertToWslIfNeeded(@NotNull String path, @Nullable WSLDistribution wslDistribution) {
+  private static String convertPathUsingEel(@NotNull String path, @NotNull EelDescriptor eelDescriptor) {
     if (path.isEmpty()) return path;
-    if (wslDistribution != null) {
-      return wslDistribution.getWslPath(path);
-    }
-    return path;
+    if (eelDescriptor == LocalEelDescriptor.INSTANCE) return path;
+    return EelNioBridgeServiceKt.asEelPath(Path.of(path)).toString();
   }
 }

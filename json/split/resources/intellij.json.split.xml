@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.json.split">
+<idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker"
                     interface="com.intellij.json.codeinsight.JsonLiteralChecker"

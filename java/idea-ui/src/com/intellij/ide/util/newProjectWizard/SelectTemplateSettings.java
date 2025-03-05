@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,13 +24,11 @@ public class SelectTemplateSettings implements PersistentStateComponent<SelectTe
     return ApplicationManager.getApplication().getService(SelectTemplateSettings.class);
   }
 
-  @Nullable
-  public String getLastGroup() {
+  public @Nullable String getLastGroup() {
     return LAST_TEMPLATE == null ? null : LAST_TEMPLATE.split("/")[0];
   }
 
-  @Nullable
-  public String getLastTemplate() {
+  public @Nullable String getLastTemplate() {
     if (LAST_TEMPLATE == null) {
       return null;
     }
@@ -41,9 +42,8 @@ public class SelectTemplateSettings implements PersistentStateComponent<SelectTe
     LAST_TEMPLATE = group + "/" + template;
   }
 
-  @NotNull
   @Override
-  public SelectTemplateSettings getState() {
+  public @NotNull SelectTemplateSettings getState() {
     return this;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
   private static final Logger LOG = Logger.getInstance(ServerModeDebuggerTransport.class);
 
-  @NotNull private final ServerSocket myServerSocket;
+  private final @NotNull ServerSocket myServerSocket;
   private volatile DebuggerReader myDebuggerReader;
 
   private volatile boolean myConnected = false;

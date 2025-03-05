@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.Location;
@@ -20,7 +20,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.openapi.util.text.Strings.isEmpty;
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;
@@ -29,8 +30,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
 
 public final class GradleGroovyRunnerUtil {
-  @NotNull
-  public static List<String> getTasksTarget(@NotNull PsiElement element, @Nullable Module module) {
+  public static @NotNull List<String> getTasksTarget(@NotNull PsiElement element, @Nullable Module module) {
     PsiElement parent = element;
     while (parent.getParent() != null && !(parent.getParent() instanceof PsiFile)) {
       parent = parent.getParent();
@@ -73,8 +73,7 @@ public final class GradleGroovyRunnerUtil {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static String getTaskNameIfMethodDeclaresIt(GrMethodCallExpression methodCall) {
+  private static @Nullable String getTaskNameIfMethodDeclaresIt(GrMethodCallExpression methodCall) {
     String taskNameCandidate = getStringValueFromFirstArg(methodCall);
     if (taskNameCandidate == null) return null;
     PsiMethod resolvedMethod = methodCall.resolveMethod();
@@ -119,8 +118,7 @@ public final class GradleGroovyRunnerUtil {
     }
   }
 
-  @Nullable
-  private static Module getModule(@NotNull PsiElement element, @NotNull Project project) {
+  private static @Nullable Module getModule(@NotNull PsiElement element, @NotNull Project project) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
       VirtualFile virtualFile = containingFile.getVirtualFile();
@@ -131,8 +129,7 @@ public final class GradleGroovyRunnerUtil {
     return null;
   }
 
-  @NotNull
-  public static List<String> getTasksTarget(@Nullable Location location) {
+  public static @NotNull List<String> getTasksTarget(@Nullable Location location) {
     if (location == null) return Collections.emptyList();
     if (location instanceof GradleTaskLocation) {
       return ((GradleTaskLocation)location).getTasks();
@@ -142,8 +139,7 @@ public final class GradleGroovyRunnerUtil {
     return getTasksTarget(location.getPsiElement(), module);
   }
 
-  @NotNull
-  public static List<String> getTasksTarget(@NotNull PsiElement element) {
+  public static @NotNull List<String> getTasksTarget(@NotNull PsiElement element) {
     return getTasksTarget(element, null);
   }
 

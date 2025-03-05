@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.serialization.ObjectSerializer
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.io.URLUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.BDDAssertions.then
@@ -15,10 +16,22 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.net.URLClassLoader
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 class DataNodeTest {
   lateinit var classLoader: ClassLoader
-  private val libUrl = javaClass.classLoader.getResource("dataNodeTest/lib.jar")
+  private val libUrl by lazy {
+    val resource = "dataNodeTest/lib.jar"
+    var libUrl = javaClass.classLoader.getResource(resource)!!
+    if (libUrl.protocol == URLUtil.JAR_PROTOCOL) {
+      // jar in jar
+      val extracted = Files.createTempFile("extracted", ".jar")
+      Files.copy(libUrl.openStream(), extracted, StandardCopyOption.REPLACE_EXISTING)
+      libUrl = extracted.toUri().toURL()
+    }
+    libUrl
+  }
 
   @Before
   fun setUp() {

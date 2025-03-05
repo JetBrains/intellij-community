@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
 import com.dynatrace.hash4j.hashing.HashSink;
@@ -136,7 +136,7 @@ public final class MavenResourcesTarget extends ModuleBasedTarget<MavenResourceR
 
   @Override
   public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
-    BuildDataPaths dataPaths = projectDescriptor.getTargetsState().getDataPaths();
+    BuildDataPaths dataPaths = projectDescriptor.dataManager.getDataPaths();
     MavenModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
     if (configuration == null) {
       hash.putBoolean(false);

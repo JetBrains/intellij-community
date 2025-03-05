@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.psi.PsiElement;
@@ -28,9 +28,8 @@ public class ReadWriteVariableInstruction extends InstructionImpl {
     return myIsWrite;
   }
 
-  @NotNull
   @Override
-  protected String getElementPresentation() {
+  protected @NotNull String getElementPresentation() {
     return (isWrite() ? "WRITE " : "READ ") + myDescriptor;
   }
 }

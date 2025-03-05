@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.*;
@@ -9,8 +9,8 @@ import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.IdleTracker;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,14 +49,13 @@ import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -160,7 +159,7 @@ public class CompilerManagerImpl extends CompilerManager {
     addCompiler(compiler, NO_FACTORY_ID);
   }
 
-  private void addCompiler(@NotNull Compiler compiler, @NotNull final String factoryId) {
+  private void addCompiler(@NotNull Compiler compiler, final @NotNull String factoryId) {
     myCompilers.put(compiler, factoryId);
     // supporting file instrumenting compilers and validators for external build
     // Since these compilers are IDE-specific and use PSI, it is ok to run them before and after the build in the IDE
@@ -542,7 +541,7 @@ public class CompilerManagerImpl extends CompilerManager {
     return projectBuildDir;
   }
 
-  private static class CompiledClass implements ClassObject {
+  private static final class CompiledClass implements ClassObject {
     private final String myPath;
     private final String myClassName;
     private final byte[] myBytes;

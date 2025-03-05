@@ -1,16 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
@@ -75,9 +71,8 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     );
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     Collection<String> nonBlockingAnnotations = union(myNonBlockingAnnotations, DEFAULT_NONBLOCKING_ANNOTATIONS);
     Collection<String> blockingAnnotations = union(myBlockingAnnotations, DEFAULT_BLOCKING_ANNOTATIONS);
 
@@ -177,11 +172,13 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
 
       if (contextType instanceof ContextType.Unsure && myConsiderUnknownContextBlocking) {
         if (myHolder.isOnTheFly()) {
-          myHolder.registerProblem(
-            elementToHighLight,
-            JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking"),
-            ProblemHighlightType.INFORMATION,
-            new ConsiderUnknownContextBlockingFix(false));
+          myHolder.problem(elementToHighLight,
+                           JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking"))
+            .highlight(ProblemHighlightType.INFORMATION)
+            .fix(new UpdateInspectionOptionFix(
+              BlockingMethodInNonBlockingContextInspection.this, "myConsiderUnknownContextBlocking",
+              JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking"), false))
+            .register();
         }
         return;
       }
@@ -191,7 +188,10 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
         .flatArray(checker -> checker.getQuickFixesFor(elementContext));
 
       if (contextType instanceof ContextType.Unsure && !myConsiderUnknownContextBlocking) {
-        fixesStream = fixesStream.append(new ConsiderUnknownContextBlockingFix(true));
+        fixesStream = fixesStream.append(
+          LocalQuickFix.from(new UpdateInspectionOptionFix(
+            BlockingMethodInNonBlockingContextInspection.this, "myConsiderUnknownContextBlocking",
+            JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking"), true)));
       }
 
       String message;
@@ -305,34 +305,5 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
 
   private static ContextType chooseType(ContextType first, ContextType second) {
     return first.getPriority() > second.getPriority() ? first : second;
-  }
-
-  private class ConsiderUnknownContextBlockingFix implements LocalQuickFix, LowPriorityAction {
-    private final boolean considerUnknownContextBlocking;
-
-    private ConsiderUnknownContextBlockingFix(boolean considerUnknownContextBlocking) {
-      this.considerUnknownContextBlocking = considerUnknownContextBlocking;
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      if (considerUnknownContextBlocking) {
-        return JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.blocking");
-      }
-      else {
-        return JvmAnalysisBundle.message("jvm.inspections.blocking.method.consider.unknown.context.nonblocking");
-      }
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      BlockingMethodInNonBlockingContextInspection.this.myConsiderUnknownContextBlocking = considerUnknownContextBlocking;
-      DaemonCodeAnalyzer.getInstance(project).restart(descriptor.getPsiElement().getContainingFile());
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      return new IntentionPreviewInfo.Html(JvmAnalysisBundle.message("jvm.inspections.blocking.method.intention.text", getFamilyName()));
-    }
   }
 }

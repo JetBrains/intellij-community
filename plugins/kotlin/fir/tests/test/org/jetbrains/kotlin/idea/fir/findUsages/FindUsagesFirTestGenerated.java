@@ -1213,6 +1213,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/constructorCall.0.kt");
             }
 
+            @TestMetadata("enumConstants.0.kt")
+            public void testEnumConstants() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/enumConstants.0.kt");
+            }
+
             @TestMetadata("jvmOverloaded.0.kt")
             public void testJvmOverloaded() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/jvmOverloaded.0.kt");

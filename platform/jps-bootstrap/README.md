@@ -21,7 +21,7 @@ On buildserver it's not easy to output something correctly, the output is interc
 
 ### Locally
  * just run CLASS_NAME from IDEA
- * run any main class (written in Java/Kotlin/Groovy) from intellij project via\
+ * run any main class (written in Java/Kotlin) from intellij project via\
 `./jps-bootstrap.cmd MODULE_NAME CLASS_NAME ARGS`
  
 Example: `./community/platform/jps-bootstrap/jps-bootstrap.sh intellij.idea.ultimate.build DownloadLibrariesBuildTarget`

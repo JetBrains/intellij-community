@@ -16,7 +16,6 @@ internal class FindReplaceActionButton(
 ) : JButton(text) {
 
   init {
-    isFocusable = false
     if (!getInstance().disableMnemonicsInControls) {
       setMnemonic(myMnemonic)
     }

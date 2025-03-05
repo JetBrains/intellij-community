@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.importing;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -19,19 +19,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ImportSpecBuilder {
 
-  @NotNull private final Project myProject;
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private ProgressExecutionMode myProgressExecutionMode;
-  @Nullable private ExternalProjectRefreshCallback myCallback;
+  private final @NotNull Project myProject;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private @NotNull ProgressExecutionMode myProgressExecutionMode;
+  private @Nullable ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean isActivateBuildToolWindowOnStart = false;
   private boolean isActivateBuildToolWindowOnFailure = true;
   private @NotNull ThreeState isNavigateToError = ThreeState.UNSURE;
-  @Nullable private String myVmOptions;
-  @Nullable private String myArguments;
+  private @Nullable String myVmOptions;
+  private @Nullable String myArguments;
   private boolean myCreateDirectoriesForEmptyContentRoots;
-  @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
-  @Nullable private UserDataHolderBase myUserData;
+  private @Nullable ProjectResolverPolicy myProjectResolverPolicy;
+  private @Nullable UserDataHolderBase myUserData;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -153,7 +153,7 @@ public class ImportSpecBuilder {
   }
 
   @ApiStatus.Internal
-  public final static class DefaultProjectRefreshCallback implements ExternalProjectRefreshCallback {
+  public static final class DefaultProjectRefreshCallback implements ExternalProjectRefreshCallback {
     private final Project myProject;
 
     public DefaultProjectRefreshCallback(ImportSpec spec) {
@@ -161,7 +161,7 @@ public class ImportSpecBuilder {
     }
 
     @Override
-    public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+    public void onSuccess(final @Nullable DataNode<ProjectData> externalProject) {
       if (externalProject == null) {
         return;
       }

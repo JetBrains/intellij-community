@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -16,6 +16,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -97,7 +98,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     return mySchemeManager.getAllSchemes();
   }
 
-  private List<CodeStyleSettings> getAllSettings() {
+  private @Unmodifiable List<CodeStyleSettings> getAllSettings() {
     return ContainerUtil.map(mySchemeManager.getAllSchemes(), scheme -> scheme.getCodeStyleSettings());
   }
 

@@ -1,6 +1,6 @@
 package com.intellij.driver.impl;
 
-import com.intellij.driver.model.DriverIlligalStateException;
+import com.intellij.driver.model.DriverIllegalStateException;
 import com.intellij.driver.model.OnDispatcher;
 import com.intellij.driver.model.ProductVersion;
 import com.intellij.driver.model.RdTarget;
@@ -20,18 +20,23 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
+import kotlin.Metadata;
+import kotlin.jvm.JvmStatic;
 import kotlin.text.StringsKt;
 import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -122,7 +127,7 @@ public class Invoker implements InvokerMBean {
 
     Object instance;
     try {
-      instance = findInstance(call, callTarget.clazz());
+      instance = findInstance(call, callTarget);
     }
     catch (Exception e) {
       //we need to ignore caching check and not throw error
@@ -130,7 +135,7 @@ public class Invoker implements InvokerMBean {
         LOG.error("Unable to get instance for " + call);
       }
 
-      throw new DriverIlligalStateException("Unable to get instance for " + call, e);
+      throw new DriverIllegalStateException("Unable to get instance for " + call, e);
     }
 
     if (call.getDispatcher() == OnDispatcher.EDT) {
@@ -166,7 +171,7 @@ public class Invoker implements InvokerMBean {
     // first lookup in the current session
     Session session = sessions.get(sessionId);
     if (session == null) {
-      throw new DriverIlligalStateException("No such session " + sessionId);
+      throw new DriverIllegalStateException("No such session " + sessionId);
     }
 
     Object value = session.findReference(id);
@@ -178,7 +183,7 @@ public class Invoker implements InvokerMBean {
       if (value != null) return value;
     }
 
-    throw new DriverIlligalStateException("No such reference with id " + id + ". " +
+    throw new DriverIllegalStateException("No such reference with id " + id + ". " +
                                           "It may happen if a weak reference to the variable expires. " +
                                           "Please use `Driver.withContext { }` for hard variable references.");
   }
@@ -249,7 +254,11 @@ public class Invoker implements InvokerMBean {
         return supplier.call();
       }
       catch (InvocationTargetException e) {
-        throw new DriverIlligalStateException(e);
+        if (e.getCause() instanceof IllegalComponentStateException) {
+          throw (IllegalComponentStateException)e.getCause();
+        }
+
+        throw new DriverIllegalStateException(e);
       }
       catch (Exception e) {
         ExceptionUtil.rethrow(e);
@@ -321,20 +330,39 @@ public class Invoker implements InvokerMBean {
     int argCount = call.getArgs().length;
 
     List<Method> availableMethods = Arrays.stream(clazz.getMethods()).toList();
+
+    if (call instanceof UtilityCall && isKotlinClass(clazz)) {
+      Class<?> companionClass =
+        ContainerUtil.find(clazz.getDeclaredClasses(), c -> c.getName().equals(call.getClassName() + "$Companion"));
+      if (companionClass != null) {
+        clazz = companionClass;
+        availableMethods = availableMethods.stream().filter(m -> Modifier.isStatic(m.getModifiers())).toList();
+        List<Method> companionNotStaticMethods = Arrays.stream(clazz.getMethods())
+          .filter(m -> m.getAnnotation(JvmStatic.class) == null)
+          .toList();
+        availableMethods = ContainerUtil.concat(availableMethods, companionNotStaticMethods);
+      }
+    }
+
     List<Method> targetMethods = availableMethods.stream()
       .filter(m -> m.getName().equals(call.getMethodName()) && argCount == m.getParameterCount())
       .toList();
 
     if (targetMethods.isEmpty()) {
-      throw new IllegalStateException(
-        String.format(
-          "No method '%s' with parameter count %s in class %s. If your method is companion method in Kotlin, don't forget to add @JvmStatic." +
-          // https://youtrack.jetbrains.com/issue/AT-1744/Driver-make-it-not-neccessary-to-add-JvmStatic-to-kotlin-companion-methods
-          "\nAvailable methods: %n%s",
-          call.getMethodName(), argCount, call.getClassName(),
-          availableMethods.stream().map(it -> it.toString())
-            .collect(Collectors.joining(" - " + System.lineSeparator()))
-        ));
+      StringBuilder message = new StringBuilder(
+        String.format("No method '%s' with parameter count %s in class %s.", call.getMethodName(), argCount, call.getClassName())
+      );
+      if (call instanceof UtilityCall && isKotlinClass(clazz)) {
+        message
+          .append(System.lineSeparator())
+          .append("For utility call only static methods were checked. If there is a companion object, its methods were also checked.");
+      }
+      message.append(
+        String.format("\nAvailable methods: %n%s",
+                      availableMethods.stream().map(it -> it.toString())
+                        .collect(Collectors.joining(" - " + System.lineSeparator())))
+      );
+      throw new IllegalStateException(message.toString());
     }
 
     if (targetMethods.size() > 1) {
@@ -381,7 +409,7 @@ public class Invoker implements InvokerMBean {
       clazz = getClassLoader(call).loadClass(call.getClassName());
     }
     catch (ClassNotFoundException e) {
-      throw new DriverIlligalStateException(
+      throw new DriverIllegalStateException(
         (rdTarget == RdTarget.DEFAULT ? "" : rdTarget + ": ") + "No such class '" + call.getClassName() + "'", e);
     }
     return clazz;
@@ -396,7 +424,7 @@ public class Invoker implements InvokerMBean {
       String moduleId = StringsKt.substringAfter(pluginId, "/", pluginId);
 
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(mainId));
-      if (plugin == null) throw new DriverIlligalStateException("No such plugin " + mainId);
+      if (plugin == null) throw new DriverIllegalStateException("No such plugin " + mainId);
 
       List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).content.modules;
       for (PluginContentDescriptor.ModuleItem module : modules) {
@@ -405,16 +433,17 @@ public class Invoker implements InvokerMBean {
         }
       }
 
-      throw new DriverIlligalStateException("No such plugin module " + pluginId);
+      throw new DriverIllegalStateException("No such plugin module " + pluginId);
     }
 
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
-    if (plugin == null) throw new DriverIlligalStateException("No such plugin " + pluginId);
+    if (plugin == null) throw new DriverIllegalStateException("No such plugin " + pluginId);
 
     return plugin.getClassLoader();
   }
 
-  private @Nullable Object findInstance(RemoteCall call, Class<?> clazz) {
+  private @Nullable Object findInstance(RemoteCall call, CallTarget callTarget) {
+    Class<?> clazz = callTarget.clazz();
     if (call instanceof ServiceCall) {
       Object projectInstance = null;
       Ref projectRef = ((ServiceCall)call).getProjectRef();
@@ -427,7 +456,7 @@ public class Invoker implements InvokerMBean {
       if (serviceInterface != null) {
         serviceClass = findServiceInterface(clazz, serviceInterface);
         if (serviceClass == null) {
-          throw new DriverIlligalStateException("Unable to find interface " + serviceInterface + " for service " + clazz);
+          throw new DriverIllegalStateException("Unable to find interface " + serviceInterface + " for service " + clazz);
         }
       }
 
@@ -451,16 +480,48 @@ public class Invoker implements InvokerMBean {
       Ref ref = ((RefCall)call).getRef();
       Object reference = getReference(call.getSessionId(), ref.id());
 
-      if (reference == null) throw new DriverIlligalStateException("No such ref exists " + ref);
+      if (reference == null) throw new DriverIllegalStateException("No such ref exists " + ref);
 
       return reference;
     }
 
     if (call instanceof UtilityCall) {
-      return null;
+      Object instance = null;
+      int modifiers = callTarget.targetMethod().getModifiers();
+      if (Modifier.isStatic(modifiers)) {
+        return instance;
+      }
+
+      if(isKotlinClass(clazz)) {
+        if (clazz.getName().endsWith("$Companion")) { //getting an instance of companion class
+          try {
+            instance = clazz.getEnclosingClass().getDeclaredField("Companion").get(null);
+          }
+          catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new DriverIllegalStateException(
+              String.format("Failed to get an instance of a companion class %s", clazz.getName()), e
+            );
+          }
+        }
+        else { //getting an instance of Kotlin object
+          try {
+            instance = clazz.getDeclaredField("INSTANCE").get(null);
+          }
+          catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new DriverIllegalStateException(
+              String.format("Failed to get an instance of a Kotlin object %s", clazz.getName()), e
+            );
+          }
+        }
+      }
+      return instance;
     }
 
     throw new UnsupportedOperationException("Unsupported call type " + call);
+  }
+
+  private static boolean isKotlinClass(Class<?> clazz) {
+    return clazz.getAnnotation(Metadata.class) != null;
   }
 
   private static @Nullable Class<?> findServiceInterface(@NotNull Class<?> clazz, @NotNull String serviceInterface) {
@@ -486,17 +547,28 @@ public class Invoker implements InvokerMBean {
     Object[] args = new Object[call.getArgs().length];
     for (int i = 0; i < args.length; i++) {
       var arg = call.getArgs()[i];
-
-      if (arg instanceof Ref) {
-        Object reference = getReference(call.getSessionId(), ((Ref)arg).id());
-        args[i] = reference;
-      }
-      else {
-        args[i] = arg;
-      }
+      args[i] = transformArg(call, arg);
     }
 
     return args;
+  }
+
+  private Object transformArg(@NotNull RemoteCall call, Object arg) {
+    if (arg != null && arg.getClass().isArray() && Array.getLength(arg) > 0 && ContainerUtil.and((Object[])arg, item -> item instanceof Ref)) {
+      var componentType = getReference(call.getSessionId(), ((Ref)Array.get(arg, 0)).id()).getClass();
+      var result = Array.newInstance(componentType, Array.getLength(arg));
+      for (int i = 0; i < Array.getLength(arg); i++) {
+        Array.set(result, i, getReference(call.getSessionId(), ((Ref)Array.get(arg, i)).id()));
+      }
+      return result;
+    }
+    if (arg instanceof List<?> && !((List<?>)arg).isEmpty() && ContainerUtil.and(((List<?>)arg), item -> item instanceof Ref)) {
+      return ContainerUtil.map(((List<?>) arg), item -> getReference(call.getSessionId(), ((Ref)item).id()));
+    }
+    if (arg instanceof Ref) {
+      return getReference(call.getSessionId(), ((Ref)arg).id());
+    }
+    return arg;
   }
 
   private static @NotNull RemoteCallResult getRemoteCallResult(@NotNull Session session, @NotNull CallTarget callTarget, Object result) {

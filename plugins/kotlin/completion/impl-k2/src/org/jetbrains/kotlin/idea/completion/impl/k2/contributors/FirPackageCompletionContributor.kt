@@ -6,29 +6,28 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 
 internal class FirPackageCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
-
         val rootSymbol = positionContext.resolveReceiverToSymbols()
             .filterIsInstance<KaPackageSymbol>()
             .singleOrNull()
@@ -39,10 +38,9 @@ internal class FirPackageCompletionContributor(
         rootSymbol.packageScope
             .getPackageSymbols(scopeNameFilter)
             .filterNot { it.fqName.isExcludedFromAutoImport(project, originalKtFile) }
-            .forEach { packageSymbol ->
-                val element = KotlinFirLookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
-                Weighers.applyWeighsToLookupElement(weighingContext, element, KtSymbolWithOrigin(packageSymbol, symbolOrigin))
-                sink.addElement(element)
-            }
+            .map { packageSymbol ->
+                KotlinFirLookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
+                    .applyWeighs(weighingContext, KtSymbolWithOrigin(packageSymbol, symbolOrigin))
+            }.forEach(sink::addElement)
     }
 }

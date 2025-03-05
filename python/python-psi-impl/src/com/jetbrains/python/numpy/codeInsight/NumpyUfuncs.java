@@ -8,7 +8,7 @@ import java.util.List;
 public final class NumpyUfuncs {
   private static final List<String> UFUNC_LIST = new ArrayList<>();
 
-  public static boolean isUFunc(@Nullable final String name) {
+  public static boolean isUFunc(final @Nullable String name) {
     return UFUNC_LIST.contains(name);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -17,9 +17,9 @@ import org.jetbrains.idea.svn.api.ProgressTracker;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class CheckoutEventHandler implements ProgressTracker {
-  @Nullable private final ProgressIndicator myIndicator;
+  private final @Nullable ProgressIndicator myIndicator;
   private int myExternalsCount;
-  @NotNull private final SvnVcs myVCS;
+  private final @NotNull SvnVcs myVCS;
   private final boolean myIsExport;
   private int myCnt;
 

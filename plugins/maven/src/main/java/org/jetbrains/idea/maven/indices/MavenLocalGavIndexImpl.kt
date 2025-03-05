@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -15,17 +14,34 @@ import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
-import java.io.File
-import java.nio.file.Paths
+import java.io.IOException
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+
+private fun Path.walkBottomUp(action: (Path) -> Unit) {
+  Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+      action(file)
+      return FileVisitResult.CONTINUE
+    }
+
+    override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+      action(dir)
+      return FileVisitResult.CONTINUE
+    }
+  })
+}
 
 class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, MavenUpdatableIndex {
 
   private val group2Artifacts = ConcurrentHashMap<String, MutableSet<String>>()
   private val mavenIds2Versions = ConcurrentHashMap<String, MutableSet<String>>()
-  private val repoFile = Paths.get(repo.url).toFile().canonicalFile
-  private val mutex = Mutex();
+  private val repoFile = Paths.get(repo.url)
+  private val mutex = Mutex()
 
   override fun close(releaseIndexContext: Boolean) {
     mavenIds2Versions.clear()
@@ -57,28 +73,34 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
     var success = false
     var filesProcessed = 0
     val startTime = System.currentTimeMillis()
-    if(mutex.tryLock()){
+    if (mutex.tryLock()) {
       try {
         withContext(Dispatchers.IO) {
           try {
-            repoFile.walkBottomUp()
-              .filter { it.name.endsWith(".pom") }
-              .mapNotNull { extractMavenId(it) }
-              .forEach { id ->
-                addTo(group2Artifacts, id.groupId!!, id.artifactId!!)
-                addTo(mavenIds2Versions, id2string(id.groupId!!, id.artifactId!!), id.version!!)
-                if (filesProcessed % 100 == 0) {
-                  indicator.setText(IndicesBundle.message("maven.indices.scanned.artifacts", filesProcessed))
+            repoFile.walkBottomUp {
+              if (it.name.endsWith(".pom")) {
+                val id = extractMavenId(it)
+
+                if (id != null) {
+                  addTo(group2Artifacts, id.groupId!!, id.artifactId!!)
+                  addTo(mavenIds2Versions, id2string(id.groupId!!, id.artifactId!!), id.version!!)
+                  if (filesProcessed % 100 == 0) {
+                    indicator.setText(IndicesBundle.message("maven.indices.scanned.artifacts", filesProcessed))
+                  }
+                  if (!isActive) throw MavenProcessCanceledException()
+                  filesProcessed++
                 }
-                if (!isActive) throw MavenProcessCanceledException()
-                filesProcessed++
               }
+            }
             success = true
             indicator.setText(IndicesBundle.message("maven.indices.updated.for.repo", repo.name))
           }
+          catch (e: java.io.IOException) {
+            MavenLog.LOG.warn("Error updating repository $repoFile GAV index", e)
+          }
           finally {
             MavenLog.LOG.info(
-              "GAV index updated for repo $repoFile, $filesProcessed files processed in ${group2Artifacts.size} groups in ${System.currentTimeMillis() - startTime} millis")
+              "GAV index updated for repo $repoFile, $filesProcessed files processed in ${group2Artifacts.size} groups in ${System.currentTimeMillis() - startTime} millis, succeed = $success")
             activity.finished {
               listOf(
                 MavenIndexUsageCollector.MANUAL.with(explicit),
@@ -89,10 +111,12 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
             }
           }
         }
-      } finally {
+      }
+      finally {
         mutex.unlock()
       }
-    } else {
+    }
+    else {
       MavenLog.LOG.info("maven index updating already")
     }
 
@@ -104,13 +128,13 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
     set.add(value)
   }
 
-  private fun extractMavenId(it: File): MavenId? {
+  private fun extractMavenId(it: Path): MavenId? {
     if (MavenLog.LOG.isTraceEnabled) {
       MavenLog.LOG.trace("extracting id from file $it")
     }
-    val version = it.parentFile?.name
-    val artifactId = it.parentFile?.parentFile?.name
-    var dirFile = it.parentFile?.parentFile
+    val version = it.parent?.fileName?.pathString
+    val artifactId = it.parent?.parent?.fileName?.pathString
+    var dirFile = it.parent?.parent
 
     if (version == null || artifactId == null || dirFile == null) {
       MavenLog.LOG.info("Cannot extract maven id from file $it")
@@ -118,32 +142,31 @@ class MavenLocalGavIndexImpl(val repo: MavenRepositoryInfo) : MavenGAVIndex, Mav
     }
     val list = ArrayList<String>(2)
 
-    dirFile = dirFile.parentFile
-    while (dirFile != null && dirFile.absolutePath != repoFile.absolutePath) {
+    dirFile = dirFile.parent
+    while (dirFile != null && dirFile != repoFile) {
       list.add(dirFile.name)
-      dirFile = dirFile.parentFile
+      dirFile = dirFile.parent
     }
     val groupId = list.reversed().joinToString(separator = ".")
     return MavenId(groupId, artifactId, version)
 
   }
 
-  override fun tryAddArtifacts(artifactFiles: Collection<File>): List<AddArtifactResponse> {
+  override fun tryAddArtifacts(artifactFiles: Collection<Path>): List<AddArtifactResponse> {
     val result = ArrayList<AddArtifactResponse>()
     artifactFiles.forEach {
-      val file = it.absoluteFile
-      if (!FileUtil.isAncestor(repoFile, it, true)) {
-        result.add(AddArtifactResponse(file, null))
+      if (!FileUtil.isAncestor(repoFile.pathString, it.pathString, true)) {
+        result.add(AddArtifactResponse(it.toAbsolutePath().toFile(), null))
       }
       else {
-        val id = extractMavenId(file)
+        val id = extractMavenId(it)
         if (id == null) {
-          result.add(AddArtifactResponse(file, null))
+          result.add(AddArtifactResponse(it.toAbsolutePath().toFile(), null))
         }
         else {
           addTo(group2Artifacts, id.groupId!!, id.artifactId!!)
           addTo(mavenIds2Versions, id2string(id.groupId!!, id.artifactId!!), id.version!!)
-          result.add(AddArtifactResponse(file, IndexedMavenId(id.groupId, id.artifactId, id.version, "", "")))
+          result.add(AddArtifactResponse(it.toAbsolutePath().toFile(), IndexedMavenId(id.groupId, id.artifactId, id.version, "", "")))
         }
       }
     }

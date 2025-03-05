@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipTitle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -27,7 +25,6 @@ import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -112,7 +109,7 @@ interface Row {
   fun resizableRow(): Row
 
   /**
-   * Adds comment after the row with the appropriate color and font size (macOS and Linux use smaller font).
+   * Adds comment after the row with the appropriate color and font size.
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
    * * \n does not work as new line in HTML, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
@@ -223,32 +220,6 @@ interface Row {
   fun button(@NlsContexts.Button text: String, action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<JButton>
 
   /**
-   * This method is moved into an extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API
-   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionButton`
-   */
-  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun actionButton(action: AnAction, @NonNls actionPlace: String = ActionPlaces.UNKNOWN): Cell<ActionButton> {
-    return actionButton(action, actionPlace)
-  }
-
-  /**
-   * This method is moved into an extension because Kotlin UI DSL is going to be moved into public API, but [ActionButton] is a part of impl API.
-   * To fix compilation issue add `import com.intellij.ui.dsl.builder.actionsButton`
-   */
-  @Deprecated("Use extension function com.intellij.ui.dsl.builder.ExtensionsKt.actionButton instead", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun actionsButton(vararg actions: AnAction,
-                    @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
-                    icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton> {
-    return actionsButton(*actions, actionPlace = actionPlace, icon = icon)
-  }
-
-  @Deprecated("Use another segmentedButton method instead. API is different and text value must be assigned in new version of renderer",
-              level = DeprecationLevel.HIDDEN)
-  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T>
-
-  /**
    * [renderer] converts values to visual presentation. Every presentation must have non-empty text, other properties are optional.
    * Use [SegmentedButton.update] if text, hint, or other properties in model are changed and should be re-rendered
    */
@@ -278,7 +249,7 @@ interface Row {
            action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
-   * Adds comment with the appropriate color and font size (macOS and Linux use smaller font).
+   * Adds comment with the appropriate color and font size.
    * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
    * * \n does not work as new line in html, use &lt;br&gt; instead
    * * Links with href to http/https are automatically marked with additional arrow icon
@@ -322,6 +293,7 @@ interface Row {
   /**
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
+  @ApiStatus.Experimental
   fun textFieldWithBrowseButton(
     project: Project? = null,
     fileChosen: ((chosenFile: VirtualFile) -> String)? = null
@@ -331,6 +303,7 @@ interface Row {
   /**
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
+  @ApiStatus.Experimental
   fun textFieldWithBrowseButton(
     browseDialogTitle: @NlsContexts.DialogTitle String,
     project: Project? = null,
@@ -341,6 +314,7 @@ interface Row {
   /**
    * Creates text field with browse button and [columns] set to [COLUMNS_SHORT]
    */
+  @ApiStatus.Experimental
   fun textFieldWithBrowseButton(
     fileChooserDescriptor: FileChooserDescriptor,
     project: Project? = null,

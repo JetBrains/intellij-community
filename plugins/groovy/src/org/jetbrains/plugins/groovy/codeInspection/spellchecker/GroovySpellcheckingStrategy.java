@@ -32,9 +32,8 @@ public class GroovySpellcheckingStrategy extends SpellcheckingStrategy implement
     }
   };
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     if (TokenSets.STRING_LITERAL_SET.contains(element.getNode().getElementType())) {
       return myStringTokenizer;
     }

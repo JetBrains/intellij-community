@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClassKind;
@@ -47,8 +47,7 @@ public final class PsiJvmConversionHelper {
     return list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
   }
 
-  @Nullable
-  static PsiAnnotation getListAnnotation(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String fqn) {
+  static @Nullable PsiAnnotation getListAnnotation(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String fqn) {
     PsiModifierList list = modifierListOwner.getModifierList();
     return list == null ? null : list.findAnnotation(fqn);
   }
@@ -62,16 +61,14 @@ public final class PsiJvmConversionHelper {
     return modifierListOwner.hasModifierProperty(MODIFIERS.get(modifier));
   }
 
-  @NotNull
-  static JvmClassKind getJvmClassKind(@NotNull PsiClass psiClass) {
+  static @NotNull JvmClassKind getJvmClassKind(@NotNull PsiClass psiClass) {
     if (psiClass.isAnnotationType()) return JvmClassKind.ANNOTATION;
     if (psiClass.isInterface()) return JvmClassKind.INTERFACE;
     if (psiClass.isEnum()) return JvmClassKind.ENUM;
     return JvmClassKind.CLASS;
   }
 
-  @Nullable
-  static JvmReferenceType getClassSuperType(@NotNull PsiClass psiClass) {
+  static @Nullable JvmReferenceType getClassSuperType(@NotNull PsiClass psiClass) {
     if (psiClass.isInterface()) return null;
     if (psiClass.isEnum()) return getTypeByName(CommonClassNames.JAVA_LANG_ENUM, psiClass.getProject(), psiClass.getResolveScope());
     if (psiClass instanceof PsiAnonymousClass) {
@@ -108,19 +105,16 @@ public final class PsiJvmConversionHelper {
     return referenceList.getReferencedTypes();
   }
 
-  @NotNull
-  static String getAnnotationAttributeName(@NotNull PsiNameValuePair pair) {
+  static @NotNull String getAnnotationAttributeName(@NotNull PsiNameValuePair pair) {
     String name = pair.getName();
     return name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name;
   }
 
-  @Nullable
-  static JvmAnnotationAttributeValue getAnnotationAttributeValue(@NotNull PsiNameValuePair pair) {
+  static @Nullable JvmAnnotationAttributeValue getAnnotationAttributeValue(@NotNull PsiNameValuePair pair) {
     return getAnnotationAttributeValue(pair.getValue());
   }
 
-  @Nullable
-  static JvmAnnotationAttributeValue getAnnotationAttributeValue(@Nullable PsiAnnotationMemberValue value) {
+  static @Nullable JvmAnnotationAttributeValue getAnnotationAttributeValue(@Nullable PsiAnnotationMemberValue value) {
     if (value instanceof PsiClassObjectAccessExpression) {
       return new PsiAnnotationClassValue((PsiClassObjectAccessExpression)value);
     }

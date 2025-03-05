@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.SuppressionUtilCore;
@@ -13,6 +12,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
@@ -53,9 +53,8 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
     return true;
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     return InspectionGadgetsBundle.message("try.with.identical.catches.problem.descriptor", type.getPresentableText());
   }
@@ -231,11 +230,11 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
   }
 
   private static final class CatchSectionWrapper {
-    @NotNull final PsiCatchSection myCatchSection;
-    @NotNull final PsiCodeBlock myCodeBlock;
-    @NotNull final PsiParameter myParameter;
-    @NotNull final List<? extends PsiClassType> myTypes;
-    @NotNull final DuplicatesFinder myFinder;
+    final @NotNull PsiCatchSection myCatchSection;
+    final @NotNull PsiCodeBlock myCodeBlock;
+    final @NotNull PsiParameter myParameter;
+    final @NotNull List<? extends PsiClassType> myTypes;
+    final @NotNull DuplicatesFinder myFinder;
 
     private CatchSectionWrapper(@NotNull PsiCatchSection catchSection,
                                 @NotNull PsiCodeBlock codeBlock,
@@ -314,13 +313,12 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
       return sections;
     }
 
-    @Nullable
-    private static CatchSectionWrapper createWrapper(@NotNull PsiCatchSection catchSection) {
+    private static @Nullable CatchSectionWrapper createWrapper(@NotNull PsiCatchSection catchSection) {
       final PsiParameter parameter = catchSection.getParameter();
       final PsiCodeBlock codeBlock = catchSection.getCatchBlock();
       if (parameter != null && codeBlock != null) {
         final List<PsiClassType> types = getClassTypes(parameter.getType());
-        if (types != null && HighlightControlFlowUtil.isEffectivelyFinal(parameter, codeBlock, null)) {
+        if (types != null && ControlFlowUtil.isEffectivelyFinal(parameter, codeBlock)) {
           final DuplicatesFinder finder = buildDuplicatesFinder(codeBlock, parameter);
           return new CatchSectionWrapper(catchSection, codeBlock, parameter, types, finder);
         }
@@ -328,8 +326,7 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
       return null;
     }
 
-    @Nullable
-    private static List<PsiClassType> getClassTypes(@Nullable PsiType type) {
+    private static @Nullable List<PsiClassType> getClassTypes(@Nullable PsiType type) {
       if (type instanceof PsiClassType) {
         return Collections.singletonList((PsiClassType)type);
       }
@@ -345,8 +342,7 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
       return null;
     }
 
-    @NotNull
-    private static DuplicatesFinder buildDuplicatesFinder(@NotNull PsiCodeBlock catchBlock, @NotNull PsiParameter parameter) {
+    private static @NotNull DuplicatesFinder buildDuplicatesFinder(@NotNull PsiCodeBlock catchBlock, @NotNull PsiParameter parameter) {
       final InputVariables inputVariables =
         new InputVariables(Collections.singletonList(parameter), parameter.getProject(), new LocalSearchScope(catchBlock), false, Collections.emptySet());
       return new DuplicatesFinder(new PsiElement[]{catchBlock}, inputVariables, null, Collections.emptyList());
@@ -376,15 +372,13 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
   }
 
-  @NotNull
-  private static List<String> collectCommentTexts(@NotNull PsiElement element) {
+  private static @NotNull List<String> collectCommentTexts(@NotNull PsiElement element) {
     final List<String> result = new ArrayList<>();
     collectCommentTexts(element, result);
     return result;
   }
 
-  @NotNull
-  public static String getCommentText(@NotNull PsiComment comment) {
+  public static @NotNull String getCommentText(@NotNull PsiComment comment) {
     final IElementType type = comment.getTokenType();
     final String text = comment.getText();
     int start = 0, end = text.length();
@@ -429,8 +423,7 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
     }
 

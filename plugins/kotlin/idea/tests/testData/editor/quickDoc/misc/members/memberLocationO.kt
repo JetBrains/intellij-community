@@ -1,0 +1,2 @@
+data class LocationContainerK(val <caret>memberLocationO: AuxClassA, var memberLocationP: AuxFaceA)
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">val</span> <span style="color:#660e7a;font-weight:bold;">memberLocationO</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://AuxClassA">AuxClassA</a></span></pre></div>

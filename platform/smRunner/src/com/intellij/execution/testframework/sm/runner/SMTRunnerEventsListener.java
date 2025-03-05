@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
@@ -72,7 +72,7 @@ public interface SMTRunnerEventsListener {
    * If name is empty string statistics will be switched to normal mode
    * @param testCount - 0 will be considered as unknown tests number
    */
-  void onCustomProgressTestsCategory(@Nullable final String categoryName, final int testCount);
+  void onCustomProgressTestsCategory(final @Nullable String categoryName, final int testCount);
   void onCustomProgressTestStarted();
   void onCustomProgressTestFailed();
   void onCustomProgressTestFinished();

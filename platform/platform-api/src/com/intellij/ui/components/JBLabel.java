@@ -275,7 +275,7 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
       setCopyable(true);
     }
 
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
   }
 
   /**

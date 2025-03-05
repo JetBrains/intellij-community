@@ -27,10 +27,10 @@ data class CallChainConversion(
 ) {
     val id: ConversionId get() = ConversionId(firstName, secondName)
 
-    val firstName = firstFqName.shortName().asString()
-    val secondName = secondFqName.shortName().asString()
+    val firstName: String = firstFqName.shortName().asString()
+    val secondName: String = secondFqName.shortName().asString()
 
-    fun withArgument(argument: String) = CallChainConversion(firstFqName, secondFqName, replacement, argument)
+    fun withArgument(argument: String): CallChainConversion = CallChainConversion(firstFqName, secondFqName, replacement, argument)
 }
 
 class CallChainExpressions private constructor(
@@ -132,39 +132,39 @@ object CallChainConversions {
     private val KOTLIN_TEXT_SINGLE_OR_NULL = FqName("kotlin.text.singleOrNull")
 
     // replacements
-    const val FIRST = "first"
-    const val FIRST_OR_NULL = "firstOrNull"
-    const val LAST = "last"
-    const val LAST_OR_NULL = "lastOrNull"
-    const val SINGLE = "single"
-    const val SINGLE_OR_NULL = "singleOrNull"
-    const val ANY = "any"
-    const val NONE = "none"
-    const val COUNT = "count"
-    const val MIN = "min"
-    const val MAX = "max"
-    const val MIN_OR_NULL = "minOrNull"
-    const val MAX_OR_NULL = "maxOrNull"
-    const val MIN_BY = "minBy"
-    const val MAX_BY = "maxBy"
-    const val MIN_BY_OR_NULL = "minByOrNull"
-    const val MAX_BY_OR_NULL = "maxByOrNull"
-    const val JOIN_TO = "joinTo"
-    const val JOIN_TO_STRING = "joinToString"
-    const val MAP_NOT_NULL = "mapNotNull"
-    const val ASSOCIATE = "associate"
-    const val ASSOCIATE_TO = "associateTo"
-    const val SUM_OF = "sumOf"
-    const val MAX_OF = "maxOf"
-    const val MAX_OF_OR_NULL = "maxOfOrNull"
-    const val MIN_OF = "minOf"
-    const val MIN_OF_OR_NULL = "minOfOrNull"
-    const val FIRST_NOT_NULL_OF = "firstNotNullOf"
-    const val FIRST_NOT_NULL_OF_OR_NULL = "firstNotNullOfOrNull"
-    const val LIST_OF_NOT_NULL = "listOfNotNull"
-    const val MAP = "map"
-    const val SUM = "sum"
-    const val TO_MAP = "toMap"
+    const val FIRST: String = "first"
+    const val FIRST_OR_NULL: String = "firstOrNull"
+    const val LAST: String = "last"
+    const val LAST_OR_NULL: String = "lastOrNull"
+    const val SINGLE: String = "single"
+    const val SINGLE_OR_NULL: String = "singleOrNull"
+    const val ANY: String = "any"
+    const val NONE: String = "none"
+    const val COUNT: String = "count"
+    const val MIN: String = "min"
+    const val MAX: String = "max"
+    const val MIN_OR_NULL: String = "minOrNull"
+    const val MAX_OR_NULL: String = "maxOrNull"
+    const val MIN_BY: String = "minBy"
+    const val MAX_BY: String = "maxBy"
+    const val MIN_BY_OR_NULL: String = "minByOrNull"
+    const val MAX_BY_OR_NULL: String = "maxByOrNull"
+    const val JOIN_TO: String = "joinTo"
+    const val JOIN_TO_STRING: String = "joinToString"
+    const val MAP_NOT_NULL: String = "mapNotNull"
+    const val ASSOCIATE: String = "associate"
+    const val ASSOCIATE_TO: String = "associateTo"
+    const val SUM_OF: String = "sumOf"
+    const val MAX_OF: String = "maxOf"
+    const val MAX_OF_OR_NULL: String = "maxOfOrNull"
+    const val MIN_OF: String = "minOf"
+    const val MIN_OF_OR_NULL: String = "minOfOrNull"
+    const val FIRST_NOT_NULL_OF: String = "firstNotNullOf"
+    const val FIRST_NOT_NULL_OF_OR_NULL: String = "firstNotNullOfOrNull"
+    const val LIST_OF_NOT_NULL: String = "listOfNotNull"
+    const val MAP: String = "map"
+    const val SUM: String = "sum"
+    const val TO_MAP: String = "toMap"
 
     val conversionsList: List<CallChainConversion> by lazy {
         listOf(
@@ -281,4 +281,13 @@ object CallChainConversions {
     val conversionGroups: Map<ConversionId, List<CallChainConversion>> by lazy {
         conversionsList.groupBy { conversion -> conversion.id }
     }
+}
+
+enum class AssociateFunction(val functionName: String) {
+    ASSOCIATE_WITH("associateWith"),
+    ASSOCIATE_BY("associateBy"),
+    ASSOCIATE_BY_KEY_AND_VALUE("associateBy");
+
+    fun name(hasDestination: Boolean): String =
+        if (hasDestination) "${functionName}To" else functionName
 }

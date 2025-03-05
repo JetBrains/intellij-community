@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.Nullability;
@@ -28,9 +28,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Boolean isEmpty = (Boolean)infos[0];
     if (isEmpty.booleanValue()) {
       return InspectionGadgetsBundle.message("arrays.as.list.with.zero.arguments.problem.descriptor");
@@ -45,9 +44,8 @@ public final class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspe
     return true;
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final boolean isEmpty = (Boolean)infos[0];
     final boolean suggestListOf = (Boolean)infos[1];
     return new ArraysAsListWithOneArgumentFix(isEmpty, suggestListOf);
@@ -63,17 +61,15 @@ public final class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspe
       mySuggestListOf = suggestListOf;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       if (mySuggestListOf) return CommonQuickFixBundle.message("fix.replace.with.x", "List.of()");
       final @NonNls String call = myEmpty ? "Collections.emptyList()" : "Collections.singletonList()";
       return CommonQuickFixBundle.message("fix.replace.with.x", call);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.simplify");
     }
 

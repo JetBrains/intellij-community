@@ -26,7 +26,7 @@ class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepository
     return this
   }
 
-  fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
+  override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
     TODO("Not yet implemented")
   }
 
@@ -58,11 +58,9 @@ class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepository
     TODO("Not yet implemented")
   }
 
-  override suspend fun refreshCashes() {
-    TODO("Not yet implemented")
+  override suspend fun refreshCaches() {
   }
 
   override suspend fun initCaches() {
-    TODO("Not yet implemented")
   }
 }

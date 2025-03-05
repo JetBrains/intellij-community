@@ -4,6 +4,7 @@ package com.intellij.openapi.application.rw
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -30,20 +31,25 @@ internal class InternalReadAction<T>(
         check(unsatisfiedConstraint == null) {
           "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
         }
-        return blockingContext(action)
+        return blockingContext {
+          // To copy permit from context to thread local
+          ReadAction.compute<T, Throwable>(action)
+        }
       }
       coroutineScope {
         readLoop()
       }
     }
     else {
-      if (isLockStoredInContext && application.hasLockStateInContext(currentCoroutineContext())) {
+      // Third condition is check for lock consistency
+      if (isLockStoredInContext && application.hasLockStateInContext(currentCoroutineContext()) && application.isReadAccessAllowed) {
         val unsatisfiedConstraint = findUnsatisfiedConstraint()
         check(unsatisfiedConstraint == null) {
           "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
         }
         return withContext(Dispatchers.Default) {
-          action()
+          // To copy permit from context to thread local
+          ReadAction.compute<T, Throwable>(action)
         }
       }
       withContext(Dispatchers.Default) {

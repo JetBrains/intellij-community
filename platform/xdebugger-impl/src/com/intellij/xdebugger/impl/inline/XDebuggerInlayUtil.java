@@ -36,7 +36,7 @@ import java.util.List;
 @Service(Service.Level.PROJECT)
 public final class XDebuggerInlayUtil {
   public static final String INLINE_HINTS_DELIMETER = ":";
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public static XDebuggerInlayUtil getInstance(Project project) {
     return project.getService(XDebuggerInlayUtil.class);

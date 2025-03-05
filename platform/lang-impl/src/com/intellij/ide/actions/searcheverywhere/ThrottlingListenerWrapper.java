@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -16,7 +17,8 @@ import java.util.Map;
  * <br>
  * Not thread-safe and should be notified only in EDT
  */
-final class ThrottlingListenerWrapper implements SearchListener, Disposable {
+@ApiStatus.Internal
+public final class ThrottlingListenerWrapper implements SearchListener, Disposable {
 
   private static final int DEFAULT_THROTTLING_TIMEOUT = 100;
 

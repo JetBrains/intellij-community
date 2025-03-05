@@ -7,18 +7,19 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.devkit.core" exported="" />
-    <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
-    <orderEntry type="library" exported="" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" exported="" />
-    <orderEntry type="module" module-name="intellij.xml.dom.tests" exported="" />
-    <orderEntry type="module" module-name="intellij.java.compiler.tests" exported="" />
-    <orderEntry type="module" module-name="intellij.xml.dom" exported="" />
-    <orderEntry type="module" module-name="intellij.xml.dom.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.java.compiler" exported="" />
-    <orderEntry type="module" module-name="intellij.jvm.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.devkit.core" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" />
+    <orderEntry type="module" module-name="intellij.xml.dom.tests" />
+    <orderEntry type="module" module-name="intellij.java.compiler.tests" />
+    <orderEntry type="module" module-name="intellij.xml.dom" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.core" />
 </module>

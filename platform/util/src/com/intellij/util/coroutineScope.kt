@@ -1,14 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
@@ -31,24 +29,30 @@ fun Job.cancelOnDispose(disposable: Disposable, disposeOnCompletion: Boolean = t
  *
  * When [this] disposable is disposed from another place [cs] won't be touched.
  */
-fun Disposable.attachAsChildTo(cs: CoroutineScope) {
+fun Disposable.disposeOnCompletion(cs: CoroutineScope) {
   val disposableRef = AtomicReference<Disposable?>(this)
-  val job = cs.launch {
-    try {
-      awaitCancellation()
-    }
-    finally {
-      disposableRef.getAndSet(null)?.let {
-        Disposer.dispose(it)
-      }
+  val disposableHandle = cs.coroutineContext.job.invokeOnCompletion {
+    disposableRef.getAndSet(null)?.let {
+      Disposer.dispose(it)
     }
   }
+
   val registered = Disposer.tryRegister(this) {
     disposableRef.getAndSet(null)?.let {
-      job.cancel("disposed")
+      disposableHandle.dispose()
     }
   }
-  if (!registered) job.cancel("disposable is already disposed")
+  if (!registered) disposableHandle.dispose()
+}
+
+/**
+ * This function is deprecated to emphasize that the disposable does not become a child of the scope.
+ * - Its disposal happens out of scope, after the scope is completed. The scope does not wait for the disposal.
+ * - The disposal failure does not cancel the scope.
+ */
+@Deprecated("Use `disposeOnCompletion` instead", ReplaceWith("disposeOnCompletion(cs)"))
+fun Disposable.attachAsChildTo(cs: CoroutineScope) {
+  disposeOnCompletion(cs)
 }
 
 /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,12 +6,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.CollectionFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -22,6 +20,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl;
 import org.jetbrains.jps.model.serialization.impl.JpsSerializationFormatException;
+import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleClasspathSerializer;
@@ -60,12 +59,12 @@ public final class JpsProjectLoader {
     }
   };
 
-  private final JpsProject myProject;
+  private final JpsProject project;
   private final Map<String, String> myPathVariables;
   private final JpsPathMapper myPathMapper;
   private final boolean myLoadUnloadedModules;
   private final JpsComponentLoader myComponentLoader;
-  private final @Nullable Path myExternalConfigurationDirectory;
+  private final @Nullable Path externalConfigurationDirectory;
 
   private JpsProjectLoader(JpsProject project,
                            Map<String, String> pathVariables,
@@ -74,12 +73,12 @@ public final class JpsProjectLoader {
                            @Nullable Path externalConfigurationDirectory, 
                            boolean loadUnloadedModules) {
     JpsMacroExpander macroExpander = JpsProjectConfigurationLoading.createProjectMacroExpander(pathVariables, baseDir);
-    myExternalConfigurationDirectory = externalConfigurationDirectory;
-    myComponentLoader = new JpsComponentLoader(macroExpander, myExternalConfigurationDirectory);
-    myProject = project;
+    this.externalConfigurationDirectory = externalConfigurationDirectory;
+    myComponentLoader = new JpsComponentLoader(macroExpander, this.externalConfigurationDirectory);
+    this.project = project;
     myPathVariables = pathVariables;
     myPathMapper = pathMapper;
-    JpsProjectConfigurationLoading.setupSerializationExtension(myProject, baseDir);
+    JpsProjectConfigurationLoading.setupSerializationExtension(this.project, baseDir);
     myLoadUnloadedModules = loadUnloadedModules;
   }
 
@@ -140,30 +139,27 @@ public final class JpsProjectLoader {
   }
 
   private void loadFromDirectory(@NotNull Path dir, @NotNull Executor executor) {
-    myProject.setName(JpsProjectConfigurationLoading.getDirectoryBaseProjectName(dir));
+    project.setName(JpsProjectConfigurationLoading.getDirectoryBaseProjectName(dir.getParent(), dir));
     Path defaultConfigFile = dir.resolve("misc.xml");
     JpsSdkType<?> projectSdkType = loadProjectRoot(myComponentLoader.loadRootElement(defaultConfigFile));
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
-        myComponentLoader.loadComponents(dir, defaultConfigFile, serializer, myProject);
+        myComponentLoader.loadComponents(dir, defaultConfigFile, serializer, project);
       }
     }
 
     Path externalConfigDir;
-    if (myExternalConfigurationDirectory != null) {
-      externalConfigDir = myExternalConfigurationDirectory.resolve("project");
-      LOG.info("External project config dir is used: " + externalConfigDir);
+    if (externalConfigurationDirectory == null) {
+      externalConfigDir = null;
     }
     else {
-      externalConfigDir = null;
+      externalConfigDir = externalConfigurationDirectory.resolve("project");
+      LOG.info("External project config dir is used: " + externalConfigDir);
     }
 
     Element moduleData = myComponentLoader.loadComponent(dir.resolve("modules.xml"), MODULE_MANAGER_COMPONENT);
-    Element externalModuleData;
-    if (externalConfigDir == null) {
-      externalModuleData = null;
-    }
-    else {
+    if (externalConfigDir != null) {
+      Element externalModuleData;
       Element rootElement = myComponentLoader.loadRootElement(externalConfigDir.resolve("modules.xml"));
       if (rootElement == null) {
         externalModuleData = null;
@@ -178,16 +174,17 @@ public final class JpsProjectLoader {
           externalModuleData = rootElement;
         }
       }
-    }
-    if (externalModuleData != null) {
-      String componentName = externalModuleData.getAttributeValue("name");
-      LOG.assertTrue(componentName != null && componentName.startsWith("External"));
-      externalModuleData.setAttribute("name", componentName.substring("External".length()));
-      if (moduleData == null) {
-        moduleData = externalModuleData;
-      }
-      else {
-        JDOMUtil.deepMerge(moduleData, externalModuleData);
+
+      if (externalModuleData != null) {
+        String componentName = externalModuleData.getAttributeValue("name");
+        LOG.assertTrue(componentName != null && componentName.startsWith("External"));
+        externalModuleData.setAttribute("name", componentName.substring("External".length()));
+        if (moduleData == null) {
+          moduleData = externalModuleData;
+        }
+        else {
+          JDOMUtil.deepMerge(moduleData, externalModuleData);
+        }
       }
     }
 
@@ -204,38 +201,38 @@ public final class JpsProjectLoader {
     }
     timingLog.run();
 
-    JpsProjectConfigurationLoading.loadArtifactsFromDirectory(myProject, myComponentLoader, dir, externalConfigDir);
-    JpsProjectConfigurationLoading.loadRunConfigurationsFromDirectory(myProject, myComponentLoader, dir, workspaceFile);
+    JpsProjectConfigurationLoading.loadArtifactsFromDirectory(project, myComponentLoader, dir, externalConfigDir);
+    JpsProjectConfigurationLoading.loadRunConfigurationsFromDirectory(project, myComponentLoader, dir, workspaceFile);
   }
 
   private void loadFromIpr(@NotNull Path iprFile, @NotNull Executor executor) {
     final Element iprRoot = myComponentLoader.loadRootElement(iprFile);
 
     String projectName = FileUtilRt.getNameWithoutExtension(iprFile.getFileName().toString());
-    myProject.setName(projectName);
+    project.setName(projectName);
     Path iwsFile = iprFile.getParent().resolve(projectName + ".iws");
     Element iwsRoot = myComponentLoader.loadRootElement(iwsFile);
 
     JpsSdkType<?> projectSdkType = loadProjectRoot(iprRoot);
-    JpsProjectConfigurationLoading.loadProjectExtensionsFromIpr(myProject, iprRoot, iwsRoot);
+    JpsProjectConfigurationLoading.loadProjectExtensionsFromIpr(project, iprRoot, iwsRoot);
     loadModules(JDomSerializationUtil.findComponent(iprRoot, "ProjectModuleManager"), projectSdkType, iwsFile, executor);
     loadProjectLibraries(JDomSerializationUtil.findComponent(iprRoot, "libraryTable"));
-    JpsProjectConfigurationLoading.loadArtifactsFromIpr(myProject, iprRoot);
-    JpsProjectConfigurationLoading.loadRunConfigurationsFromIpr(myProject, iprRoot, iwsRoot);
+    JpsProjectConfigurationLoading.loadArtifactsFromIpr(project, iprRoot);
+    JpsProjectConfigurationLoading.loadRunConfigurationsFromIpr(project, iprRoot, iwsRoot);
   }
 
   private @Nullable JpsSdkType<?> loadProjectRoot(@Nullable Element root) {
     Pair<String, String> sdkTypeIdAndName = JpsProjectConfigurationLoading.readProjectSdkTypeAndName(root);
     if (sdkTypeIdAndName != null) {
       JpsSdkType<?> sdkType = JpsSdkTableSerializer.getSdkType(sdkTypeIdAndName.first);
-      JpsSdkTableSerializer.setSdkReference(myProject.getSdkReferencesTable(), sdkTypeIdAndName.second, sdkType);
+      JpsSdkTableSerializer.setSdkReference(project.getSdkReferencesTable(), sdkTypeIdAndName.second, sdkType);
       return sdkType;
     }
     return null;
   }
 
   private void loadProjectLibraries(@Nullable Element libraryTableElement) {
-    JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myPathMapper, myProject.getLibraryCollection());
+    JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myPathMapper, project.getLibraryCollection());
   }
 
   private void loadModules(@Nullable Element componentElement,
@@ -247,10 +244,11 @@ public final class JpsProjectLoader {
       return;
     }
 
-    Set<String> unloadedModules = !myLoadUnloadedModules ? JpsProjectConfigurationLoading.readNamesOfUnloadedModules(workspaceFile, myComponentLoader) 
-                                                         : Collections.emptySet();
+    Set<String> unloadedModules = myLoadUnloadedModules
+                                  ? Set.of()
+                                  : JpsProjectConfigurationLoading.readNamesOfUnloadedModules(workspaceFile, myComponentLoader);
 
-    final Set<Path> foundFiles = CollectionFactory.createSmallMemoryFootprintSet();
+    final Set<Path> foundFiles = new HashSet<>();
     final List<Path> moduleFiles = new ArrayList<>();
     for (Element moduleElement : JDOMUtil.getChildren(componentElement.getChild(MODULES_TAG), MODULE_TAG)) {
       final String path = moduleElement.getAttributeValue(FILE_PATH_ATTRIBUTE);
@@ -264,7 +262,7 @@ public final class JpsProjectLoader {
 
     List<JpsModule> modules = loadModules(moduleFiles, projectSdkType, myPathVariables, myPathMapper, executor);
     for (JpsModule module : modules) {
-      myProject.addModule(module);
+      project.addModule(module);
     }
     timingLog.run();
   }
@@ -281,12 +279,12 @@ public final class JpsProjectLoader {
     List<JpsModule> modules = new ArrayList<>();
     List<CompletableFuture<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();
     Path externalModuleDir;
-    if (myExternalConfigurationDirectory != null) {
-      externalModuleDir = myExternalConfigurationDirectory.resolve("modules");
-      LOG.info("External project config dir is used for modules: " + externalModuleDir);
+    if (externalConfigurationDirectory == null) {
+      externalModuleDir = null;
     }
     else {
-      externalModuleDir = null;
+      externalModuleDir = externalConfigurationDirectory.resolve("modules");
+      LOG.info("External project config dir is used for modules: " + externalModuleDir);
     }
 
     for (Path file : moduleFiles) {
@@ -304,9 +302,9 @@ public final class JpsProjectLoader {
             else {
               JDOMUtil.deepMergeWithAttributes(data, externalData,
                                                List.of(
-                                    new JDOMUtil.MergeAttribute("content", "url"),
-                                    new JDOMUtil.MergeAttribute("component", "name")
-                                  ));
+                                                 new JDOMUtil.MergeAttribute("content", "url"),
+                                                 new JDOMUtil.MergeAttribute("component", "name")
+                                               ));
             }
           }
         }
@@ -315,15 +313,21 @@ public final class JpsProjectLoader {
           LOG.info("Module '" + getModuleName(file) + "' is skipped: " + file.toAbsolutePath() + " doesn't exist");
         }
         else {
-          // Copy the content roots that are defined in a separate tag, to a general content root component
+          // copy the content roots that are defined in a separate tag, to a general content root component
           List<Element> components = data.getChildren("component");
           Element rootManager = null;
           Element additionalElements = null;
           for (Element component : components) {
             String attributeValue = component.getAttributeValue("name");
-            if (attributeValue.equals("NewModuleRootManager")) rootManager = component;
-            if (attributeValue.equals("AdditionalModuleElements")) additionalElements = component;
-            if (rootManager != null && additionalElements != null) break;
+            if (attributeValue.equals("NewModuleRootManager")) {
+              rootManager = component;
+            }
+            if (attributeValue.equals("AdditionalModuleElements")) {
+              additionalElements = component;
+            }
+            if (rootManager != null && additionalElements != null) {
+              break;
+            }
           }
           if (rootManager != null && additionalElements != null) {
             // Cleanup attributes that aren't needed
@@ -374,8 +378,12 @@ public final class JpsProjectLoader {
     }
   }
 
-  private static @NotNull JpsModule loadModule(@NotNull Path file, @NotNull Element moduleRoot, List<String> paths,
-                                               @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables, @NotNull JpsPathMapper pathMapper) {
+  private static @NotNull JpsModule loadModule(@NotNull Path file,
+                                               @NotNull Element moduleRoot,
+                                               List<String> paths,
+                                               @Nullable JpsSdkType<?> projectSdkType,
+                                               Map<String, String> pathVariables,
+                                               @NotNull JpsPathMapper pathMapper) {
     String name = getModuleName(file);
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);

@@ -32,13 +32,12 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.make.function");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PyFunction problemFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (problemFunction == null) return;
@@ -64,8 +63,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     );
   }
 
-  @NotNull
-  private static PyFunction transformDefinition(@NotNull PyFunction method) {
+  private static @NotNull PyFunction transformDefinition(@NotNull PyFunction method) {
     PyParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length > 0) {
       parameters[0].delete();
@@ -77,8 +75,8 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     return (PyFunction)topmostClass.getParent().addBefore(copy, topmostClass);
   }
 
-  private static void updateUsage(@NotNull final PsiElement finalElement, @NotNull final PyReferenceExpression element,
-                                  @NotNull final PsiFile usageFile, boolean addImport) {
+  private static void updateUsage(final @NotNull PsiElement finalElement, final @NotNull PyReferenceExpression element,
+                                  final @NotNull PsiFile usageFile, boolean addImport) {
     final PyExpression qualifier = element.getQualifier();
     if (qualifier == null) return;
     if (qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
@@ -107,7 +105,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     }
   }
 
-  private static void removeFormerImport(@NotNull final PsiFile usageFile, boolean addImport) {
+  private static void removeFormerImport(final @NotNull PsiFile usageFile, boolean addImport) {
     if (usageFile instanceof PyFile && addImport) {
       final PsiFile contextFile = FileContextUtil.getContextFile(usageFile);
       final PsiFile file = ObjectUtils.chooseNotNull(contextFile, usageFile);
@@ -127,7 +125,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     }
   }
 
-  private static void updateAssignment(PyReferenceExpression element, @NotNull final PsiElement resolved) {
+  private static void updateAssignment(PyReferenceExpression element, final @NotNull PsiElement resolved) {
     final PsiElement parent = resolved.getParent();
     if (parent instanceof PyAssignmentStatement) {
       final PyExpression value = ((PyAssignmentStatement)parent).getAssignedValue();
@@ -146,7 +144,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     }
   }
 
-  private static void updateArgumentList(@NotNull final PyReferenceExpression element) {
+  private static void updateArgumentList(final @NotNull PyReferenceExpression element) {
     final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpression == null) return;
     final PyArgumentList argumentList = callExpression.getArgumentList();

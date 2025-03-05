@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,53 +33,25 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExecutionSettings> extends RemoteExternalSystemService<S> {
 
-  /** <a href="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link RemoteExternalSystemProjectResolverImpl}. */
-  RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings> NULL_OBJECT
-    = new RemoteExternalSystemProjectResolver<>() {
-    @Nullable
-    @Override
-    public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                                    @NotNull String projectPath,
-                                                    boolean isPreviewMode,
-                                                    @Nullable ExternalSystemExecutionSettings settings,
-                                                    @Nullable ProjectResolverPolicy resolverPolicy)
-      throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
-      return null;
-    }
-
-    @Override
-    public void setSettings(@NotNull ExternalSystemExecutionSettings settings) {
-    }
-
-    @Override
-    public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) {
-    }
-
-    @Override
-    public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
-      return false;
-    }
-
-    @Override
-    public boolean cancelTask(@NotNull ExternalSystemTaskId id) {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
-      return Collections.emptyMap();
-    }
+  RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings> NULL_OBJECT = new RemoteExternalSystemProjectResolver<>() {
+    //@formatter:off
+    @Override public @Nullable DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id, @NotNull String projectPath, boolean isPreviewMode, @Nullable ExternalSystemExecutionSettings settings, @Nullable ProjectResolverPolicy resolverPolicy) { return null; }
+    @Override public void setSettings(@NotNull ExternalSystemExecutionSettings settings) { }
+    @Override public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) { }
+    @Override public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) { return false; }
+    @Override public boolean cancelTask(@NotNull ExternalSystemTaskId id) { return false; }
+    @Override public @NotNull Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() { return Collections.emptyMap(); }
+    //@formatter:on
   };
 
-
-  @Nullable
-  DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                           @NotNull String projectPath,
-                                           boolean isPreviewMode,
-                                           @Nullable S settings,
-                                           @Nullable ProjectResolverPolicy resolverPolicy)
-    throws RemoteException, ExternalSystemException, IllegalArgumentException, IllegalStateException;
+  @Nullable DataNode<ProjectData> resolveProjectInfo(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull String projectPath,
+    boolean isPreviewMode,
+    @Nullable S settings,
+    @Nullable ProjectResolverPolicy resolverPolicy
+  ) throws RemoteException, ExternalSystemException, IllegalArgumentException, IllegalStateException;
 }

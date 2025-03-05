@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -19,13 +19,13 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachImplementation
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import java.util.concurrent.Callable
 
 class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
@@ -100,7 +100,7 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
                 return processLightClassLocalImplementations(psiClass, searchScope, consumer)
             }
 
-            return runReadAction { ContainerUtil.process(ClassInheritorsSearch.search(psiClass, true), consumer) }
+            return runReadAction { ContainerUtil.process(ClassInheritorsSearch.search(psiClass, true).asIterable(), consumer) }
         }
 
         private fun processLightClassLocalImplementations(
@@ -113,7 +113,7 @@ class KotlinDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSea
                 val virtualFiles =searchScope.scope.mapTo(HashSet()) { it.containingFile.virtualFile }
                 GlobalSearchScope.filesScope(psiClass.project, virtualFiles)
             }
-            return ContainerUtil.process(ClassInheritorsSearch.search(psiClass, globalScope, true)) { candidate ->
+            return ContainerUtil.process(ClassInheritorsSearch.search(psiClass, globalScope, true).asIterable()) { candidate ->
                 val candidateOrigin = candidate.unwrapped ?: candidate
                 val inScope = runReadAction { candidateOrigin in searchScope }
                 if (inScope) {

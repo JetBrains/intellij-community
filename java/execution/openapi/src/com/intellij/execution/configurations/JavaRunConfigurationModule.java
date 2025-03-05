@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -65,8 +65,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     return null;
   }
 
-  @NotNull
-  public GlobalSearchScope getSearchScope() {
+  public @NotNull GlobalSearchScope getSearchScope() {
     Module module = getModule();
     if (module != null) {
       return myClassesInLibraries ? module.getModuleRuntimeScope(true) : GlobalSearchScope.moduleWithDependenciesScope(module);
@@ -121,7 +120,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
   }
 
   public PsiClass checkClassName(final String className, final @NlsContexts.DialogMessage String errorMessage) throws RuntimeConfigurationException {
-    if (className == null || className.length() == 0) {
+    if (className == null || className.isEmpty()) {
       throw new RuntimeConfigurationError(errorMessage);
     }
     return findNotNullClass(className);

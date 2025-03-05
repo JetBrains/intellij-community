@@ -12,4 +12,4 @@ class B {
     fun f1() {}
 }
 
-// EXISTS: getB(), f1()
+// EXISTS: constructor A(), getB(), f1()

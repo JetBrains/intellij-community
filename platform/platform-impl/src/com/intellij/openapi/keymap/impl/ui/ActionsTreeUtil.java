@@ -441,6 +441,20 @@ public final class ActionsTreeUtil {
     }
   }
 
+  private static void appendGroupsFromExtensions(@Nullable Project project,
+                                                 Condition<? super AnAction> wrappedFilter,
+                                                 @NotNull Group parentGroup,
+                                                 @NotNull KeymapExtension.KeymapLocation location) {
+    for (KeymapExtension extension : KeymapExtension.EXTENSION_POINT_NAME.getExtensionList()) {
+      if (extension.getGroupLocation() == location) {
+        final Group group = createExtensionGroup(wrappedFilter, project, extension);
+        if (group == null) continue;
+        if (location == KeymapExtension.KeymapLocation.OTHER && group.getSize() == 0) continue;
+        parentGroup.addGroup(group);
+      }
+    }
+  }
+
   private static Group createExtensionGroup(Condition<? super AnAction> filtered, final Project project, KeymapExtension provider) {
     return (Group)provider.createGroup(filtered, project);
   }
@@ -448,9 +462,8 @@ public final class ActionsTreeUtil {
   private static Group createMacrosGroup(Condition<? super AnAction> filtered) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     List<String> ids = actionManager.getActionIdList(ActionMacro.MACRO_ACTION_PREFIX);
-    ids.sort(null);
     Group group = new Group(KeyMapBundle.message("macros.group.title"), null, (Supplier<? extends Icon>)null);
-    for (String id : ids) {
+    for (String id : ContainerUtil.sorted(ids)) {
       if (actionMatchesFilter(filtered, actionManager, id)) {
         group.addActionId(id);
       }
@@ -461,9 +474,8 @@ public final class ActionsTreeUtil {
   private static Group createIntentionsGroup(Condition<? super AnAction> filtered) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     List<String> ids = actionManager.getActionIdList(WRAPPER_PREFIX);
-    ids.sort(null);
     Group group = new Group(KeyMapBundle.message("intentions.group.title"), IdeActions.GROUP_INTENTIONS, (Supplier<? extends Icon>)null);
-    for (String id : ids) {
+    for (String id : ContainerUtil.sorted(ids)) {
       if (actionMatchesFilter(filtered, actionManager, id)) {
         group.addActionId(id);
       }
@@ -489,20 +501,34 @@ public final class ActionsTreeUtil {
     return group;
   }
 
-  private static @NotNull Group createOtherGroup(@Nullable Condition<? super AnAction> filtered, Group mainGroup, @Nullable Keymap keymap) {
-    mainGroup.initIds();
-    Set<String> result = new HashSet<>();
-
+  private static @NotNull Group createOtherGroup(@Nullable Project project,
+                                                 @Nullable Condition<? super AnAction> filtered,
+                                                 @NotNull Group mainGroup,
+                                                 @Nullable Keymap keymap) {
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManagerEx.getInstanceEx();
+
+    Group otherGroup = new Group(KeyMapBundle.message("other.group.title"), null, () -> AllIcons.Nodes.KeymapOther);
+    for (AnAction action : getActions("Other.KeymapGroup")) {
+      addAction(otherGroup, action, actionManager, filtered, false);
+    }
+    appendGroupsFromExtensions(project, filtered, otherGroup, KeymapExtension.KeymapLocation.OTHER);
+
+    mainGroup.initIds();
+    otherGroup.initIds();
+
+    Set<String> result = new HashSet<>();
     if (keymap != null) {
       for (String id : keymap.getActionIdList()) {
         if (id.startsWith(EDITOR_PREFIX) && actionManager.getActionOrStub("$" + id.substring(6)) != null) {
           continue;
         }
 
-        if (!id.startsWith(QuickList.QUICK_LIST_PREFIX) && !mainGroup.containsId(id)) {
-          result.add(id);
+        if (id.startsWith(QuickList.QUICK_LIST_PREFIX) ||
+            mainGroup.containsId(id) ||
+            otherGroup.containsId(id)) {
+          continue;
         }
+        result.add(id);
       }
     }
 
@@ -513,6 +539,7 @@ public final class ActionsTreeUtil {
       if (isNonExecutableActionGroup(id, actionOrStub) ||
           id.startsWith(QuickList.QUICK_LIST_PREFIX) ||
           mainGroup.containsId(id) ||
+          otherGroup.containsId(id) ||
           result.contains(id)) {
         continue;
       }
@@ -527,35 +554,27 @@ public final class ActionsTreeUtil {
 
     filterOtherActionsGroup(result);
 
-    Group group = new Group(KeyMapBundle.message("other.group.title"), null, () -> AllIcons.Nodes.KeymapOther);
-    for (AnAction action : getActions("Other.KeymapGroup")) {
-      addAction(group, action, actionManager, filtered, false);
-    }
-
-    Set<String> groupIds = group.initIds();
-
     // a quick hack to skip already included groups
     JBTreeTraverser<String> traverser = JBTreeTraverser.from(o -> actionManager.getParentGroupIds(o));
     for (String actionId : namedGroups) {
       if (traverser.withRoot(actionId).unique().traverse()
-        .filter(o -> mainGroup.containsId(o) || group.containsId(o)).isNotEmpty()) {
+        .filter(o -> mainGroup.containsId(o) || otherGroup.containsId(o)).isNotEmpty()) {
         continue;
       }
       result.add(actionId);
     }
 
-    ContainerUtil.sort(group.getChildren(), Comparator.comparing(o -> ((Group)o).getName()));
-    result.removeAll(groupIds);
+    ContainerUtil.sort(otherGroup.getChildren(), Comparator.comparing(o -> ((Group)o).getName()));
 
     for (String id : ContainerUtil.sorted(result, Comparator.comparing(o -> getTextToCompare(o)))) {
       AnAction actionOrStub = actionManager.getActionOrStub(id);
       if (actionOrStub == null || isSearchable(actionOrStub)) {
         if (actionMatchesFilter(filtered, actionOrStub)) {
-          group.addActionId(id);
+          otherGroup.addActionId(id);
         }
       }
     }
-    return group;
+    return otherGroup;
   }
 
   private static boolean isNonExecutableActionGroup(String id, AnAction actionOrStub) {
@@ -630,17 +649,12 @@ public final class ActionsTreeUtil {
     Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"));
     mainGroup.addGroup(createEditorActionsGroup(wrappedFilter));
     mainGroup.addGroup(createMainMenuGroup(wrappedFilter));
-    for (KeymapExtension extension : KeymapExtension.EXTENSION_POINT_NAME.getExtensionList()) {
-      final Group group = createExtensionGroup(wrappedFilter, project, extension);
-      if (group != null) {
-        mainGroup.addGroup(group);
-      }
-    }
+    appendGroupsFromExtensions(project, wrappedFilter, mainGroup, KeymapExtension.KeymapLocation.TOP_LEVEL);
     mainGroup.addGroup(createMacrosGroup(wrappedFilter));
     mainGroup.addGroup(createIntentionsGroup(wrappedFilter));
     mainGroup.addGroup(createQuickListsGroup(wrappedFilter, filter, forceFiltering, quickLists));
     mainGroup.addGroup(createPluginsActionsGroup(wrappedFilter));
-    mainGroup.addGroup(createOtherGroup(wrappedFilter, mainGroup, keymap));
+    mainGroup.addGroup(createOtherGroup(project, wrappedFilter, mainGroup, keymap)); // must be created the last
     if (!Strings.isEmpty(filter) || filtered != null) {
       List<Object> list = mainGroup.getChildren();
       for (Iterator<Object> i = list.iterator(); i.hasNext(); ) {

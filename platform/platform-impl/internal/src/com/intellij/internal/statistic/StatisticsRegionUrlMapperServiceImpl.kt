@@ -6,9 +6,11 @@ import com.intellij.ide.RegionUrlMapper
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
 import com.intellij.internal.statistic.eventLog.StatisticsRegionUrlMapperService
 import com.intellij.openapi.components.serviceIfCreated
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -16,7 +18,6 @@ import kotlin.time.Duration.Companion.minutes
  *
  * If changed, please, update [StatisticsRegionUrlMapperService.Companion.getInstance]
  */
-@ApiStatus.Internal
 private class StatisticsRegionUrlMapperServiceImpl(val scope: CoroutineScope) : StatisticsRegionUrlMapperService() {
   @Volatile
   private var url: String? = null

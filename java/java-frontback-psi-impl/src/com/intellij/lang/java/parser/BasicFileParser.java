@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.AbstractBundle;
@@ -93,12 +93,12 @@ public class BasicFileParser {
     }
 
     if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {
-      impListInfo.first.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(), null);  // pass comments behind fake import list
-      firstDeclaration.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(), null);
+      impListInfo.first.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(getLanguageLevel(builder)), null);  // pass comments behind fake import list
+      firstDeclaration.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(getLanguageLevel(builder)), null);
     }
     if (isImplicitClass) {
       PsiBuilder.Marker beforeFirst = firstDeclaration.precede();
-      done(beforeFirst, myJavaElementTypeContainer.IMPLICIT_CLASS, myWhiteSpaceAndCommentSetHolder);
+      done(beforeFirst, myJavaElementTypeContainer.IMPLICIT_CLASS, builder, myWhiteSpaceAndCommentSetHolder);
     }
   }
 
@@ -112,8 +112,7 @@ public class BasicFileParser {
     return false;
   }
 
-  @Nullable
-  protected PsiBuilder.Marker parseInitial(PsiBuilder builder) {
+  protected @Nullable PsiBuilder.Marker parseInitial(PsiBuilder builder) {
     return myParser.getDeclarationParser().parse(builder, BasicDeclarationParser.BaseContext.FILE);
   }
 
@@ -123,7 +122,7 @@ public class BasicFileParser {
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
       PsiBuilder.Marker modList = builder.mark();
       myParser.getDeclarationParser().parseAnnotations(builder);
-      done(modList, myJavaElementTypeContainer.MODIFIER_LIST, myWhiteSpaceAndCommentSetHolder);
+      done(modList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
       if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
         statement.rollbackTo();
         return;
@@ -138,11 +137,10 @@ public class BasicFileParser {
 
     semicolon(builder);
 
-    done(statement, myJavaElementTypeContainer.PACKAGE_STATEMENT, myWhiteSpaceAndCommentSetHolder);
+    done(statement, myJavaElementTypeContainer.PACKAGE_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
   }
 
-  @NotNull
-  protected Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<? super PsiBuilder> stopper) {
+  protected @NotNull Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<? super PsiBuilder> stopper) {
     PsiBuilder.Marker list = builder.mark();
 
     boolean isEmpty = true;
@@ -182,12 +180,11 @@ public class BasicFileParser {
       list = precede;
     }
 
-    done(list, myJavaElementTypeContainer.IMPORT_LIST, myWhiteSpaceAndCommentSetHolder);
+    done(list, myJavaElementTypeContainer.IMPORT_LIST, builder, myWhiteSpaceAndCommentSetHolder);
     return Pair.create(list, isEmpty);
   }
 
-  @Nullable
-  protected PsiBuilder.Marker parseImportStatement(PsiBuilder builder) {
+  protected @Nullable PsiBuilder.Marker parseImportStatement(PsiBuilder builder) {
     if (builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD) return null;
 
     PsiBuilder.Marker statement = builder.mark();
@@ -213,7 +210,7 @@ public class BasicFileParser {
       semicolon(builder);
     }
 
-    done(statement, type, myWhiteSpaceAndCommentSetHolder);
+    done(statement, type, builder, myWhiteSpaceAndCommentSetHolder);
     return statement;
   }
 
@@ -233,8 +230,7 @@ public class BasicFileParser {
     return myJavaElementTypeContainer.IMPORT_STATEMENT;
   }
 
-  @NotNull
-  private static @NlsContexts.ParsingError String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
+  private static @NotNull @NlsContexts.ParsingError String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
     return bundle.getMessage(errorMessageKey);
   }
 }

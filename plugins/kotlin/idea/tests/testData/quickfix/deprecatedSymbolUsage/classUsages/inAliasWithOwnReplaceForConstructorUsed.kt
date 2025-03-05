@@ -13,4 +13,4 @@ typealias Old = <caret>OldClass
 
 val a: Old = aa.Old()
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
-/* IGNORE_K2 */
+// IGNORE_K2

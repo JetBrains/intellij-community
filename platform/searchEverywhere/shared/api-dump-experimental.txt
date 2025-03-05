@@ -1,0 +1,8 @@
+*:com.intellij.platform.searchEverywhere.SeItemPresentation
+- *sf:Companion:com.intellij.platform.searchEverywhere.SeItemPresentation$Companion
+- a:getText():java.lang.String
+*f:com.intellij.platform.searchEverywhere.SeItemPresentation$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+*:com.intellij.platform.searchEverywhere.api.SeItem
+- a:presentation():com.intellij.platform.searchEverywhere.SeItemPresentation
+- a:weight():I

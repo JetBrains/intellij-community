@@ -81,8 +81,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       .reportMessage(project);
   }
 
-  @NotNull
-  private static List<File> collectProjectTaskArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
+  private static @NotNull List<File> collectProjectTaskArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
     List<File> taskArtifacts = new ArrayList<>();
     GradleCollectionVisitor.accept(project.getTasks().withType(Jar.class), new GradleCollectionVisitor<Jar>() {
 
@@ -491,8 +490,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       JavaCompile javaCompile = (JavaCompile)javaCompileTask;
       externalSourceSet.setJavaToolchainHome(getJavaToolchainHome(project, javaCompile));
       externalSourceSet.setSourceCompatibility(javaCompile.getSourceCompatibility());
-      externalSourceSet.setPreview(javaCompile.getOptions().getCompilerArgs().contains("--enable-preview"));
       externalSourceSet.setTargetCompatibility(javaCompile.getTargetCompatibility());
+      externalSourceSet.setCompilerArguments(javaCompile.getOptions().getAllCompilerArgs());
     }
     if (externalSourceSet.getSourceCompatibility() == null) {
       externalSourceSet.setSourceCompatibility(sourceSetResolutionContext.projectSourceCompatibility);

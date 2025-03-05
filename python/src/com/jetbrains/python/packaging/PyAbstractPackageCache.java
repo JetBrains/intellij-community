@@ -42,7 +42,7 @@ public abstract class PyAbstractPackageCache {
                     @Override
                     public PackageInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                             throws JsonParseException {
-                      if (json.isJsonObject() && json.getAsJsonObject().size() == 0) {
+                      if (json.isJsonObject() && json.getAsJsonObject().isEmpty()) {
                         return PackageInfo.EMPTY;
                       }
                       return defaultGson.fromJson(json, typeOfT);
@@ -121,18 +121,6 @@ public abstract class PyAbstractPackageCache {
    */
   public boolean containsPackage(@NotNull String name) {
     return myPackages.containsKey(name);
-  }
-
-  /**
-   * Returns available package versions sorted in the reversed order using
-   * {@link com.intellij.webcore.packaging.PackageVersionComparator} so that the latest version is the first on the list
-   * or {@code null} if the given package is not contained in the cache or this feature is not available.
-   *
-   * @param packageName case-insensitive name of a package
-   */
-  public @Nullable List<String> getVersions(@NotNull String packageName) {
-    final PackageInfo packageInfo = myPackages.get(packageName);
-    return packageInfo != null ? packageInfo.getVersions() : null;
   }
 
   @Override

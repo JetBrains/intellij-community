@@ -18,8 +18,10 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -257,8 +259,8 @@ public class FileListeningTest extends IntegrationTestCase {
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
     assertEquals(1, changes.size());
     Entry e = ((DeleteChange)changes.get(0)).getDeletedEntry();
-    final List<Entry> children = e.getChildren();
-    sortEntries(children);
+    List<Entry> children = e.getChildren();
+    children = sortEntries(children);
     assertEquals(2, children.size());
     assertEquals("f.txt", children.get(0).getName());
     assertEquals("subdir", children.get(1).getName());
@@ -312,7 +314,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertNull(getEntryFor(revs.get(2), myRoot).findEntry("dir/subDir"));
   }
 
-  private static void sortEntries(final List<Entry> entries) {
-    Collections.sort(entries, Comparator.comparing(Entry::getName));
+  private static @Unmodifiable @NotNull List<Entry> sortEntries(@Unmodifiable List<Entry> entries) {
+    return ContainerUtil.sorted(entries, Comparator.comparing(Entry::getName));
   }
 }

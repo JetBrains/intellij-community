@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40;
 
 import com.intellij.maven.server.m40.utils.Maven40ModelInheritanceAssembler;
@@ -36,9 +36,8 @@ public class Maven40ServerImpl extends MavenServerBase {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) {
+  public @NotNull MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       return Maven40ProfileUtil.interpolateAndAlignModel(model, basedir, pomDir);

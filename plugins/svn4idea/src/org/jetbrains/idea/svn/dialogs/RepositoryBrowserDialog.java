@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
@@ -82,7 +82,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private final Project myProject;
   protected final SvnVcs myVCS;
-  @NotNull private final RepositoryBrowserComponent myRepositoryBrowser;
+  private final @NotNull RepositoryBrowserComponent myRepositoryBrowser;
 
   private final DeleteAction myDeleteAction;
   private AnAction copyUrlAction;
@@ -90,8 +90,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private final boolean myShowFiles;
 
-  @NonNls public static final String PLACE_TOOLBAR = "RepositoryBrowser.Toolbar";
-  @NonNls private static final String PLACE_MENU = "RepositoryBrowser.Menu";
+  public static final @NonNls String PLACE_TOOLBAR = "RepositoryBrowser.Toolbar";
+  private static final @NonNls String PLACE_MENU = "RepositoryBrowser.Menu";
   private final @NlsContexts.Label String myRepositoriesLabelText;
   protected JLabel myRepositoriesLabel;
 
@@ -277,8 +277,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  protected RepositoryBrowserComponent getRepositoryBrowser() {
+  protected @NotNull RepositoryBrowserComponent getRepositoryBrowser() {
     return myRepositoryBrowser;
   }
 
@@ -311,8 +310,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return getRepositoryBrowser().getSelectedURL();
   }
 
-  @Nullable
-  protected RepositoryTreeNode getSelectedNode() {
+  protected @Nullable RepositoryTreeNode getSelectedNode() {
     return getRepositoryBrowser().getSelectedNode();
   }
 
@@ -429,7 +427,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected static class EditLocationAction extends DumbAwareAction {
 
-    @NotNull private final RepositoryBrowserComponent myBrowserComponent;
+    private final @NotNull RepositoryBrowserComponent myBrowserComponent;
 
     public EditLocationAction(@NotNull RepositoryBrowserComponent browserComponent) {
       super(messagePointer("repository.browser.edit.location.menu.item"));
@@ -662,7 +660,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final RepositoryTreeNode node = getSelectedNode();
       if (node == null) {
         return;
@@ -787,8 +785,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       public void doSynthetic() {
       }
       @Override
-      @Nullable
-      public Url parent() {
+      public @Nullable Url parent() {
         return null;
       }
     };
@@ -811,7 +808,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final RepositoryTreeNode treeNode = getRepositoryBrowser().getSelectedNode();
       if (treeNode != null) {
         final String url = treeNode.getURL().toString();
@@ -1029,7 +1026,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null);
     }
   }
@@ -1064,8 +1061,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private File selectFile(@DialogTitle String title, @Label String description) {
+  private @Nullable File selectFile(@DialogTitle String title, @Label String description) {
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     fcd.setShowFileSystemRoots(true);
     fcd.setTitle(title);
@@ -1130,7 +1126,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected void doCheckout(@Nullable final CheckoutProvider.Listener listener, final RepositoryTreeNode selectedNode) {
+  protected void doCheckout(final @Nullable CheckoutProvider.Listener listener, final RepositoryTreeNode selectedNode) {
     if (selectedNode == null) {
       return;
     }

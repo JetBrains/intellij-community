@@ -230,6 +230,13 @@
             "type": "string"
           }
         },
+        "symfony-bundles": {
+          "description": "Symfony bundle names, which enable framework support within the particular Symfony project using AssetMapper.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "file-extensions": {
           "description": "Extensions of files, which should have the framework support enabled. Use this to support custom file extensions like '.vue' or '.svelte'. Never specify generic extensions like '.html', '.js' or '.ts'. If you need your contributions to be present in every file don't specify the framework at all",
           "type": "array",

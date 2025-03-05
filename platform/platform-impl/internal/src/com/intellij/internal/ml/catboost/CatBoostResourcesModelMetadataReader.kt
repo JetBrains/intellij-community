@@ -6,9 +6,9 @@ import com.intellij.internal.ml.ResourcesModelMetadataReader
 
 class CatBoostResourcesModelMetadataReader(metadataHolder: Class<*>,
                                            featuresDirectory: String,
-                                           private val modelDirectory: String) : ResourcesModelMetadataReader(metadataHolder, featuresDirectory) {
+                                           private val modelDirectory: String) : ResourcesModelMetadataReader(metadataHolder, featuresDirectory), CatBoostModelMetadataReader {
 
-  fun loadModel(): NaiveCatBoostModel {
+  override fun loadModel(): NaiveCatBoostModel {
     val resource = "$modelDirectory/model.bin"
     val fileStream = metadataHolder.classLoader.getResourceAsStream(resource)
                      ?: throw InconsistentMetadataException(

@@ -83,6 +83,7 @@ public abstract class TailType {
       return tailOffset;
     }
 
+    @Override
     public String toString() {
       return "NONE";
     }

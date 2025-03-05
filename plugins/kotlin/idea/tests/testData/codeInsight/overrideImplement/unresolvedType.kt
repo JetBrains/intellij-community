@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 interface A<in TPipeline, out TBuilder : Any, TFeature : Any> {
     fun install(pipeline: TPipeline, configure: TBuilder.() -> Unit): TFeature
 }

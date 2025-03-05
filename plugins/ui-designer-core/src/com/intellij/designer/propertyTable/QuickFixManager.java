@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.inspection.AbstractQuickFixManager;
@@ -27,9 +27,8 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Li
     updateHintVisibility();
   }
 
-  @NotNull
   @Override
-  protected List<ErrorInfo> getErrorInfos() {
+  protected @NotNull List<ErrorInfo> getErrorInfos() {
     RadPropertyTable component = (RadPropertyTable)myComponent;
 
     int selectedRow = component.getSelectedRow();

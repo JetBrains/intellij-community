@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -91,8 +90,8 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
   }
 
   private static final class FolderPatchCreationTask extends Task.Backgroundable {
-    @NotNull private final AbstractVcs myVcs;
-    @NotNull private final VcsFileRevision myRevision;
+    private final @NotNull AbstractVcs myVcs;
+    private final @NotNull VcsFileRevision myRevision;
     private CommittedChangeList myList;
     private VcsException myException;
 
@@ -110,7 +109,7 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
       RepositoryLocation changedRepositoryPath = myRevision.getChangedRepositoryPath();
       if (changedRepositoryPath == null) return;
 
-      VcsVirtualFile vf = new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision, VcsFileSystem.getInstance());
+      VcsVirtualFile vf = new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision);
 
       try {
         myList = AbstractVcsHelperImpl.getRemoteList(provider, myRevision.getRevisionNumber(), vf);

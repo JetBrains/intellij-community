@@ -510,7 +510,11 @@ as an example
         return
       }
 
+      const ramMinusFileMappingsBytes = extractTimeSeries("MEM.ramMinusFileMappingsBytes")
+      const ramPlusSwapMinusFileMappingsBytes = extractTimeSeries("MEM.ramPlusSwapMinusFileMappingsBytes")
+
       const usedHeapBytes = extractTimeSeries("JVM.usedHeapBytes")
+      const committedHeapBytes = extractTimeSeries("JVM.committedHeapBytes")
       const maxHeapBytes = extractTimeSeries("JVM.maxHeapBytes")
       const usedNativeBytes = extractTimeSeries("JVM.usedNativeBytes")
       const maxNativeBytes = extractTimeSeries("JVM.maxNativeBytes")
@@ -530,12 +534,33 @@ as an example
 
 
       plotTimeSeries(
+        'RAM usage (minus file mappings)',
+        'jvmBasics_Ram_Chart',
+        [{
+          name: 'Used RAM, Mb',
+          color: 'green',
+          series: ramMinusFileMappingsBytes.mulScalar(1.0 / 1024 / 1024)
+        }, {
+          name: 'Used RAM + swap, Mb',
+          color: 'blue',
+          series: ramPlusSwapMinusFileMappingsBytes.mulScalar(1.0 / 1024 / 1024)
+        }],
+        /*yaxis:*/ {
+          title: 'Mb'
+        }
+      )
+
+      plotTimeSeries(
         'Heap memory use',
         'jvmBasics_Heap_Chart',
         [{
           name: 'Used heap, Mb',
           color: 'green',
           series: usedHeapBytes.mulScalar(1.0 / 1024 / 1024)
+        }, {
+          name: 'Committed heap, Mb',
+          color: 'orange',
+          series: committedHeapBytes.mulScalar(1.0 / 1024 / 1024)
         }, {
           name: 'Max heap, Mb',
           color: 'red',
@@ -1501,6 +1526,7 @@ as an example
 
     <div class="caption">JVM: heap, native memory, threads, CPU</div>
 
+    <div id="jvmBasics_Ram_Chart" class="plot hideable"></div>
     <div id="jvmBasics_Heap_Chart" class="plot hideable"></div>
     <div id="jvmBasics_OffHeap_Chart" class="plot hideable"></div>
     <div id="jvmBasics_DirectByteBuffers_Chart" class="plot hideable"></div>

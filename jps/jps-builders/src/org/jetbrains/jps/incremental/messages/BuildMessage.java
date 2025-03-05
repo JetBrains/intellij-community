@@ -44,6 +44,7 @@ public abstract class BuildMessage {
     return myMessageText;
   }
 
+  @Override
   public String toString() {
     return getMessageText();
   }

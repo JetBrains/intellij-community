@@ -1,17 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInspection.*
-import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
@@ -29,7 +31,10 @@ import org.jetbrains.kotlin.idea.util.isComma
 import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.nextLeaf
+import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import kotlin.properties.Delegates
 
@@ -171,7 +176,7 @@ internal class TrailingCommaInspection(
         private fun createQuickFix(
             @IntentionFamilyName fixMessage: String,
             commaOwner: KtElement,
-        ): LocalQuickFix = ReformatTrailingCommaFix(commaOwner, fixMessage)
+        ): PsiUpdateModCommandQuickFix = ReformatTrailingCommaFix(commaOwner, fixMessage)
 
         private val PsiElement.textRangeOfCommaOrSymbolAfter: TextRange
             get() {
@@ -187,13 +192,13 @@ internal class TrailingCommaInspection(
   override fun getOptionsPane() = pane(
     checkbox("addCommaWarning", KotlinBundle.message("inspection.trailing.comma.report.also.a.missing.comma")))
 
-    class ReformatTrailingCommaFix(commaOwner: KtElement, @IntentionFamilyName private val fixMessage: String) : LocalQuickFix {
+    class ReformatTrailingCommaFix(commaOwner: KtElement, @IntentionFamilyName private val fixMessage: String) : PsiUpdateModCommandQuickFix() {
         private val commaOwnerPointer = commaOwner.createSmartPointer()
 
-        override fun getFamilyName(): String = fixMessage
+        override fun getFamilyName(): @IntentionFamilyName String = fixMessage
 
-        override fun applyFix(project: Project, problemDescriptor: ProblemDescriptor) {
-            val element = commaOwnerPointer.element ?: return
+        override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+            val element = updater.getWritable(commaOwnerPointer.element) ?: return
             val range = createFormatterTextRange(element)
             CodeStyle.runWithLocalSettings(project, CodeStyle.getSettings(element.containingKtFile)) { tempSettings ->
                 tempSettings.kotlinCustomSettings.ALLOW_TRAILING_COMMA = true
@@ -206,11 +211,6 @@ internal class TrailingCommaInspection(
             val startElement = TrailingCommaHelper.elementBeforeFirstElement(commaOwner) ?: commaOwner
             val endElement = TrailingCommaHelper.elementAfterLastElement(commaOwner) ?: commaOwner
             return TextRange.create(startElement.startOffset, endElement.endOffset)
-        }
-
-        override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
-            val element = commaOwnerPointer.element ?: return null
-            return ReformatTrailingCommaFix(PsiTreeUtil.findSameElementInCopy(element, target), fixMessage)
         }
     }
 }

@@ -82,8 +82,7 @@ final class ShowBaseRevisionAction extends DumbAwareAction {
     }
   }
 
-  @Nls
-  private static String createMessage(@NotNull Project project, @NotNull VcsRevisionDescription description, @NotNull VirtualFile vf) {
+  private static @Nls String createMessage(@NotNull Project project, @NotNull VcsRevisionDescription description, @NotNull VirtualFile vf) {
     String commitMessage = IssueLinkHtmlRenderer.formatTextWithLinks(project, StringUtil.notNullize(description.getCommitMessage()));
     String message = VcsBundle.message("current.version.text",
                                        description.getAuthor(),

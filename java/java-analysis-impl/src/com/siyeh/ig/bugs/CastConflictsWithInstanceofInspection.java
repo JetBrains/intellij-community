@@ -33,8 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public final class CastConflictsWithInstanceofInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final String castExpressionType = ((PsiTypeElement)infos[1]).getText();
     final String instanceofType = ((PsiTypeElement)infos[2]).getText();
     return InspectionGadgetsBundle.message(
@@ -145,14 +144,12 @@ public final class CastConflictsWithInstanceofInspection extends BaseInspection 
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("cast.conflicts.with.instanceof.quickfix1", myCastType, myInstanceofType);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.cast.fix.family.name");
     }
 
@@ -172,15 +169,13 @@ public final class CastConflictsWithInstanceofInspection extends BaseInspection 
       myCastType = castType;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.instanceof.fix.family.name");
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("cast.conflicts.with.instanceof.quickfix2", myInstanceofType, myCastType);
     }
 

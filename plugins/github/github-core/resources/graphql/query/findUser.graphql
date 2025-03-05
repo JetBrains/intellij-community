@@ -1,0 +1,10 @@
+query($login: String!) {
+  user(login: $login) {
+    __typename
+    ...user
+  }
+
+  rateLimit {
+    ...rates
+  }
+}

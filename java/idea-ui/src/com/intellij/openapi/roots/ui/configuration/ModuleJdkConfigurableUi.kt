@@ -5,7 +5,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JButton
 
-private class ModuleJdkConfigurableUi(moduleCombo: JdkComboBox, editButton: JButton) {
+internal class ModuleJdkConfigurableUi(moduleCombo: JdkComboBox, editButton: JButton) {
   val panel = panel {
     row(JavaUiBundle.message("module.libraries.target.jdk.module.radio")) {
       cell(moduleCombo)

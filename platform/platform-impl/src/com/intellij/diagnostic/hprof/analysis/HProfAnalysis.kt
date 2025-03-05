@@ -98,7 +98,7 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
 
       val histogram = Histogram.create(parser, hprofMetadata.classStore)
 
-      val nominatedClasses = ClassNomination(histogram, 5).nominateClasses()
+      val nominatedClasses = ClassNomination(histogram, 10).nominateClasses()
 
       progress.text2 = DiagnosticBundle.message("hprof.analysis.progress.details.create.id.mapping.file")
       progress.fraction = 0.2
@@ -150,7 +150,9 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
       analysisStopwatch.start()
 
       val nominatedClassNames = nominatedClasses.map { it.classDefinition.name }
-      val analysisConfig = AnalysisConfig(perClassOptions = AnalysisConfig.PerClassOptions(classNames = nominatedClassNames),
+      val analysisConfig = AnalysisConfig(perClassOptions = AnalysisConfig.PerClassOptions(classNames = nominatedClassNames
+                                                                                                        + listOf("com.intellij.openapi.editor.impl.EditorImpl")
+                                                                                                        + listOf("com.intellij.openapi.project.impl.ProjectImpl")),
                                           metaInfoOptions = AnalysisConfig.MetaInfoOptions(include = includeMetaInfo),
                                           traverseOptions = AnalysisConfig.TraverseOptions(onlyStrongReferences = onlyStrongReferences, includeClassesAsRoots = includeClassesAsRoots))
       val analysisContext = AnalysisContext(

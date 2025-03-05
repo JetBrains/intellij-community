@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.ide.util.*;
@@ -55,8 +55,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
@@ -76,8 +76,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   private JavaVisibilityPanel myJavaVisibilityPanel;
   private JPanel myTargetClassPanel;
   private JLabel myTargetClassLabel;
-  @Nullable private PsiClass myTargetClass;
-  @Nullable private final PsiClass myDefaultTargetClass;
+  private @Nullable PsiClass myTargetClass;
+  private final @Nullable PsiClass myDefaultTargetClass;
 
   private TargetClassInfo myTargetClassInfo;
 
@@ -96,8 +96,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     init();
   }
 
-  @Nullable
-  public static PsiClass getParentClass(PsiElement occurrence) {
+  public static @Nullable PsiClass getParentClass(PsiElement occurrence) {
     PsiElement cur = occurrence;
     while (true) {
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(cur, PsiClass.class, true);
@@ -203,14 +202,12 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     return myJavaVisibilityPanel.getVisibility();
   }
 
-  @Nullable
   @Override
-  public PsiClass getTargetClass() {
+  public @Nullable PsiClass getTargetClass() {
     return myTargetClassInfo.getTargetClass();
   }
 
-  @NotNull
-  public String getTargetClassName() {
+  public @NotNull String getTargetClassName() {
     return myTargetClassEditor.getText();
   }
 
@@ -219,15 +216,13 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     return this;
   }
 
-  @NotNull
   @Override
-  public LinkedHashSet<String> suggestNames() {
+  public @NotNull LinkedHashSet<String> suggestNames() {
     return new GrFieldNameSuggester(myContext, new GroovyVariableValidator(myContext), true).suggestNames();
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return myNameField.getEnteredName();
   }
 
@@ -241,7 +236,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     return myTypeCombo.getSelectedType();
   }
 
-  @NonNls private static final String RECENTS_KEY = "GrIntroduceConstantDialog.RECENTS_KEY";
+  private static final @NonNls String RECENTS_KEY = "GrIntroduceConstantDialog.RECENTS_KEY";
 
   private void createUIComponents() {
     myJavaVisibilityPanel = new JavaVisibilityPanel(false, true);
@@ -388,16 +383,14 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       myProject = project;
     }
 
-    @Nullable
-    public PsiClass getTargetClass() {
+    public @Nullable PsiClass getTargetClass() {
       if (myTargetClass == null) {
         myTargetClass = getTargetClass(myQualifiedName, myBaseDirectory, myProject, myModule);
       }
       return myTargetClass;
     }
 
-    @Nullable
-    private static PsiClass getTargetClass(String qualifiedName, PsiDirectory baseDirectory, Project project, Module module) {
+    private static @Nullable PsiClass getTargetClass(String qualifiedName, PsiDirectory baseDirectory, Project project, Module module) {
       GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
 
       PsiClass targetClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);

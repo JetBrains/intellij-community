@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: receiver
-// IS_APPLICABLE: false
+// NO_OPTION: RECEIVER|Add use-site target 'receiver'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 
 annotation class A
 

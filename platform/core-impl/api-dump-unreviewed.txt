@@ -492,7 +492,6 @@ f:com.intellij.ide.plugins.PluginManagerCore
 - bs:writePluginIdsToFile$default(com.intellij.ide.plugins.PluginManagerCore,java.nio.file.Path,java.util.Collection,java.nio.file.OpenOption[],I,java.lang.Object):V
 f:com.intellij.ide.plugins.XmlReader
 - sf:isKotlinPlugin(com.intellij.openapi.extensions.PluginId):Z
-- sf:readModuleDescriptorForTest(B[]):com.intellij.ide.plugins.RawPluginDescriptor
 a:com.intellij.indentation.AbstractIndentParser
 - com.intellij.lang.PsiParser
 - p:myBuilder:com.intellij.indentation.IndentPsiBuilder
@@ -636,6 +635,7 @@ c:com.intellij.lang.TokenWrapper
 - com.intellij.psi.tree.IElementType
 - <init>(com.intellij.psi.tree.IElementType,java.lang.CharSequence):V
 - getDelegate():com.intellij.psi.tree.IElementType
+- getText():java.lang.String
 - getValue():java.lang.String
 f:com.intellij.lang.WhitespacesBinders
 - sf:DEFAULT_LEFT_BINDER:com.intellij.lang.WhitespacesAndCommentsBinder
@@ -737,7 +737,6 @@ c:com.intellij.lang.impl.PsiBuilderImpl
 - getTreeBuilt():com.intellij.lang.ASTNode
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - hasErrorsAfter(com.intellij.lang.PsiBuilder$Marker):Z
-- isCollapsed(com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker):Z
 - isWhitespaceOrComment(com.intellij.psi.tree.IElementType):Z
 - lookAhead(I):com.intellij.psi.tree.IElementType
 - mark():com.intellij.lang.PsiBuilder$Marker
@@ -752,19 +751,148 @@ c:com.intellij.lang.impl.PsiBuilderImpl
 - setTokenTypeRemapper(com.intellij.lang.ITokenTypeRemapper):V
 - setWhitespaceSkippedCallback(com.intellij.lang.WhitespaceSkippedCallback):V
 - whitespaceOrComment(com.intellij.psi.tree.IElementType):Z
-a:com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker
-- com.intellij.lang.LighterASTNode
-- com.intellij.lang.SyntaxTreeBuilder$Production
-- pf:myBuilder:com.intellij.lang.impl.PsiBuilderImpl
-- p:myLexemeIndex:I
-- p:myNext:com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker
-- p:myParent:com.intellij.lang.impl.PsiBuilderImpl$ProductionMarker
-- getEndIndex():I
-- getStartIndex():I
-- getStartOffset():I
-- isCollapsed():Z
-- remapTokenType(com.intellij.psi.tree.IElementType):V
-- a:tokenTextMatches(java.lang.CharSequence):Z
+c:com.intellij.lexer.DelegateLexer
+- com.intellij.lexer.LexerBase
+- pf:myDelegate:com.intellij.lexer.Lexer
+- <init>(com.intellij.lexer.Lexer):V
+- advance():V
+- getBufferEnd():I
+- f:getBufferSequence():java.lang.CharSequence
+- f:getDelegate():com.intellij.lexer.Lexer
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- start(java.lang.CharSequence,I,I,I):V
+c:com.intellij.lexer.FilterLexer
+- com.intellij.lexer.DelegateLexer
+- <init>(com.intellij.lexer.Lexer,com.intellij.lexer.FilterLexer$Filter):V
+- <init>(com.intellij.lexer.Lexer,com.intellij.lexer.FilterLexer$Filter,Z[]):V
+- advance():V
+- getCurrentPosition():com.intellij.lexer.LexerPosition
+- getOriginal():com.intellij.lexer.Lexer
+- getPrevTokenEnd():I
+- f:locateToken():V
+- restore(com.intellij.lexer.LexerPosition):V
+- start(java.lang.CharSequence,I,I,I):V
+com.intellij.lexer.FilterLexer$Filter
+- a:reject(com.intellij.psi.tree.IElementType):Z
+f:com.intellij.lexer.FilterLexer$SetFilter
+- com.intellij.lexer.FilterLexer$Filter
+- <init>(com.intellij.psi.tree.TokenSet):V
+- reject(com.intellij.psi.tree.IElementType):Z
+c:com.intellij.lexer.FlexAdapter
+- com.intellij.lexer.LexerBase
+- <init>(com.intellij.lexer.FlexLexer):V
+- advance():V
+- getBufferEnd():I
+- getBufferSequence():java.lang.CharSequence
+- getFlex():com.intellij.lexer.FlexLexer
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- p:locateToken():V
+- start(java.lang.CharSequence,I,I,I):V
+com.intellij.lexer.FlexLexer
+- a:advance():com.intellij.psi.tree.IElementType
+- a:getTokenEnd():I
+- a:getTokenStart():I
+- a:reset(java.lang.CharSequence,I,I,I):V
+- a:yybegin(I):V
+- a:yystate():I
+c:com.intellij.lexer.LayeredLexer
+- com.intellij.lexer.DelegateLexer
+- sf:ourDisableLayersFlag:java.lang.ThreadLocal
+- <init>(com.intellij.lexer.Lexer):V
+- advance():V
+- p:findLayerLexer(com.intellij.psi.tree.IElementType):com.intellij.lexer.Lexer
+- getCurrentPosition():com.intellij.lexer.LexerPosition
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- p:isLayerActive():Z
+- registerLayer(com.intellij.lexer.Lexer,com.intellij.psi.tree.IElementType[]):V
+- registerSelfStoppingLayer(com.intellij.lexer.Lexer,com.intellij.psi.tree.IElementType[],com.intellij.psi.tree.IElementType[]):V
+- restore(com.intellij.lexer.LexerPosition):V
+- start(java.lang.CharSequence,I,I,I):V
+a:com.intellij.lexer.LookAheadLexer
+- com.intellij.lexer.LexerBase
+- <init>(com.intellij.lexer.Lexer):V
+- <init>(com.intellij.lexer.Lexer,I):V
+- p:addToken(I,com.intellij.psi.tree.IElementType):V
+- p:addToken(com.intellij.psi.tree.IElementType):V
+- advance():V
+- pf:advanceAs(com.intellij.lexer.Lexer,com.intellij.psi.tree.IElementType):V
+- pf:advanceLexer(com.intellij.lexer.Lexer):V
+- getBufferEnd():I
+- getBufferSequence():java.lang.CharSequence
+- p:getCacheSize():I
+- pf:getCachedOffset(I):I
+- pf:getCachedType(I):com.intellij.psi.tree.IElementType
+- getCurrentPosition():com.intellij.lexer.LookAheadLexer$LookAheadLexerPosition
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- p:lookAhead(com.intellij.lexer.Lexer):V
+- replaceCachedType(I,com.intellij.psi.tree.IElementType):com.intellij.psi.tree.IElementType
+- p:resetCacheSize(I):V
+- f:restore(com.intellij.lexer.LexerPosition):V
+- p:restore(com.intellij.lexer.LookAheadLexer$LookAheadLexerPosition):V
+- start(java.lang.CharSequence,I,I,I):V
+pc:com.intellij.lexer.LookAheadLexer$LookAheadLexerPosition
+- com.intellij.lexer.LexerPosition
+- <init>(com.intellij.lexer.LookAheadLexer,com.intellij.util.containers.ImmutableUserMap):V
+- getCustomMap():com.intellij.util.containers.ImmutableUserMap
+- getOffset():I
+- getState():I
+c:com.intellij.lexer.MergingLexerAdapter
+- com.intellij.lexer.MergingLexerAdapterBase
+- <init>(com.intellij.lexer.Lexer,com.intellij.psi.tree.TokenSet):V
+- getMergeFunction():com.intellij.lexer.MergeFunction
+a:com.intellij.lexer.MergingLexerAdapterBase
+- com.intellij.lexer.DelegateLexer
+- <init>(com.intellij.lexer.Lexer):V
+- advance():V
+- getCurrentPosition():com.intellij.lexer.LexerPosition
+- a:getMergeFunction():com.intellij.lexer.MergeFunction
+- getOriginal():com.intellij.lexer.Lexer
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- restore(com.intellij.lexer.LexerPosition):V
+- start(java.lang.CharSequence,I,I,I):V
+c:com.intellij.lexer.StringLiteralLexer
+- com.intellij.lexer.LexerBase
+- sf:NO_QUOTE_CHAR:C
+- p:myBuffer:java.lang.CharSequence
+- p:myBufferEnd:I
+- p:myEnd:I
+- pf:myOriginalLiteralToken:com.intellij.psi.tree.IElementType
+- pf:myQuoteChar:C
+- p:myStart:I
+- <init>(C,com.intellij.psi.tree.IElementType):V
+- <init>(C,com.intellij.psi.tree.IElementType,Z,java.lang.String):V
+- <init>(C,com.intellij.psi.tree.IElementType,Z,java.lang.String,Z,Z):V
+- advance():V
+- getBufferEnd():I
+- getBufferSequence():java.lang.CharSequence
+- p:getHexCodedEscapeSeq():com.intellij.psi.tree.IElementType
+- p:getStandardLimitedHexCodedEscapeSeq(I):com.intellij.psi.tree.IElementType
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- p:getUnicodeEscapeSequenceType():com.intellij.psi.tree.IElementType
+- p:handleSingleSlashEscapeSequence():com.intellij.psi.tree.IElementType
+- p:locateAdditionalEscapeSequence(I,I):I
+- p:locateHexEscapeSequence(I,I):I
+- p:locateUnicodeEscapeSequence(I,I):I
+- p:shouldAllowSlashZero():Z
+- start(java.lang.CharSequence,I,I,I):V
 c:com.intellij.mock.MockApplication
 - com.intellij.mock.MockComponentManager
 - com.intellij.openapi.application.ex.ApplicationEx
@@ -926,7 +1054,7 @@ f:com.intellij.openapi.application.TransactionGuardImpl
 - assertWriteActionAllowed():V
 - assertWriteSafeContext(com.intellij.openapi.application.ModalityState):V
 - enteredModality(com.intellij.openapi.application.ModalityState):V
-- getContextTransaction():com.intellij.openapi.application.TransactionGuardImpl$TransactionIdImpl
+- getContextTransaction():com.intellij.openapi.application.TransactionId
 - isWriteSafeModality(com.intellij.openapi.application.ModalityState):Z
 - isWritingAllowed():Z
 - submitTransaction(com.intellij.openapi.Disposable,com.intellij.openapi.application.TransactionId,java.lang.Runnable):V
@@ -948,7 +1076,6 @@ com.intellij.openapi.application.ex.ApplicationEx
 - exit(I,I):V
 - exit(Z,Z):V
 - exit(Z,Z,I):V
-- a:holdsReadLock():Z
 - isComponentCreated():Z
 - isLightEditMode():Z
 - a:isWriteActionInProgress():Z
@@ -965,7 +1092,6 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 - a:getApiVersionAsNumber():com.intellij.openapi.util.BuildNumber
 - a:getApplicationSvgIconUrl():java.lang.String
 - a:getBuiltinPluginsUrl():java.lang.String
-- a:getChannelListUrl():java.lang.String
 - a:getCopyrightStart():java.lang.String
 - a:getDefaultClassicDarkLaf():java.lang.String
 - a:getDefaultClassicLightLaf():java.lang.String
@@ -986,7 +1112,6 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 - a:getSupportUrl():java.lang.String
 - a:getUpdateUrls():com.intellij.openapi.application.ex.ApplicationInfoEx$UpdateUrls
 - a:getWebHelpUrl():java.lang.String
-- a:getWelcomeScreenLogoUrl():java.lang.String
 - a:getWhatsNewUrl():java.lang.String
 - a:getWinKeymapUrl():java.lang.String
 - a:getYoutrackUrl():java.lang.String
@@ -1023,15 +1148,15 @@ f:com.intellij.openapi.application.ex.ApplicationUtil$CannotRunReadActionExcepti
 f:com.intellij.openapi.application.impl.AnyModalityState
 - com.intellij.openapi.application.ModalityState
 - sf:ANY:com.intellij.openapi.application.impl.AnyModalityState
-- dominates(com.intellij.openapi.application.ModalityState):Z
+- accepts(com.intellij.openapi.application.ModalityState):Z
 com.intellij.openapi.application.impl.ModalContextProjectLocator
 - a:isPartOf(javax.swing.JFrame,com.intellij.openapi.project.Project):Z
 f:com.intellij.openapi.application.impl.ModalityStateEx
 - com.intellij.openapi.application.ModalityState
 - <init>():V
+- accepts(com.intellij.openapi.application.ModalityState):Z
 - appendJob(kotlinx.coroutines.Job):com.intellij.openapi.application.ModalityState
 - appendProgress(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.application.ModalityState
-- dominates(com.intellij.openapi.application.ModalityState):Z
 a:com.intellij.openapi.command.CommandProcessorEx
 - com.intellij.openapi.command.CommandProcessor
 - <init>():V
@@ -1355,11 +1480,8 @@ a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - f:getDocument(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.Document
 - pa:getDocumentListener():com.intellij.openapi.editor.event.DocumentListener
 - getFile(com.intellij.openapi.editor.Document):com.intellij.openapi.vfs.VirtualFile
-- ps:getPreviewCharCount(com.intellij.openapi.vfs.VirtualFile):I
-- ps:isBinaryWithoutDecompiler(com.intellij.openapi.vfs.VirtualFile):Z
 - isPartialPreviewOfALargeFile(com.intellij.openapi.editor.Document):Z
 - reloadBinaryFiles():V
-- ps:setDocumentTooLarge(com.intellij.openapi.editor.Document,Z):V
 f:com.intellij.openapi.fileEditor.impl.LoadTextUtil
 - s:changeLineSeparators(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.Object):V
 - s:charsetForWriting(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.nio.charset.Charset):com.intellij.openapi.util.Pair$NonNull
@@ -1494,7 +1616,6 @@ c:com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 - finishNonCancelableSection():V
 - p:getCancellationTrace():java.lang.Throwable
 - getFraction():D
-- p:getLock():java.lang.Object
 - getModalityState():com.intellij.openapi.application.ModalityState
 - getText():java.lang.String
 - getText2():java.lang.String
@@ -1594,9 +1715,6 @@ com.intellij.openapi.roots.PackageDirectoryCache
 - s:createCache(java.util.List):com.intellij.openapi.roots.PackageDirectoryCache
 - a:getDirectoriesByPackageName(java.lang.String):java.util.List
 - a:getSubpackageNames(java.lang.String,com.intellij.psi.search.GlobalSearchScope):java.util.Set
-a:com.intellij.openapi.vfs.ex.VirtualFileManagerEx
-- com.intellij.openapi.vfs.VirtualFileManager
-- <init>():V
 c:com.intellij.openapi.vfs.impl.LightFilePointer
 - com.intellij.openapi.vfs.pointers.VirtualFilePointer
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
@@ -1642,17 +1760,13 @@ c:com.intellij.openapi.vfs.impl.ZipHandler
 - <init>(java.lang.String):V
 - p:acquireZipHandle():com.intellij.util.io.ResourceHandle
 - clearCaches():V
-- s:clearFileAccessorCache():V
 - p:getEntryFileStamp():J
 a:com.intellij.openapi.vfs.impl.ZipHandlerBase
 - com.intellij.openapi.vfs.impl.ArchiveHandler
 - <init>(java.lang.String):V
 - pa:acquireZipHandle():com.intellij.util.io.ResourceHandle
-- p:buildEntryMapForZipFile(java.util.zip.ZipFile):java.util.Map
 - contentsToByteArray(java.lang.String):B[]
 - p:createEntriesMap():java.util.Map
-- getArchiveCrcHashes():java.util.Map
-- getEntryCrc(java.lang.String):J
 - pa:getEntryFileStamp():J
 - getInputStream(java.lang.String):java.io.InputStream
 com.intellij.openapi.vfs.impl.http.FileDownloadingListener
@@ -1902,7 +2016,7 @@ a:com.intellij.psi.PsiAnchor
 - a:getEndOffset():I
 - a:getFile():com.intellij.psi.PsiFile
 - a:getStartOffset():I
-- s:restoreFromStubIndex(com.intellij.psi.impl.source.PsiFileWithStubSupport,I,com.intellij.psi.stubs.IStubElementType,Z):com.intellij.psi.PsiElement
+- s:restoreFromStubIndex(com.intellij.psi.impl.source.PsiFileWithStubSupport,I,com.intellij.psi.tree.IElementType,Z):com.intellij.psi.PsiElement
 - a:retrieve():com.intellij.psi.PsiElement
 - retrieveOrThrow():com.intellij.psi.PsiElement
 c:com.intellij.psi.PsiAnchor$HardReference
@@ -2008,17 +2122,6 @@ a:com.intellij.psi.impl.AbstractPsiCachedValue
 com.intellij.psi.impl.AnyPsiChangeListener
 - afterPsiChanged(Z):V
 - beforePsiChanged(Z):V
-c:com.intellij.psi.impl.BlockSupportImpl
-- com.intellij.psi.text.BlockSupport
-- <init>():V
-- s:diffTrees(com.intellij.lang.ASTNode,com.intellij.util.diff.DiffTreeChangeBuilder,com.intellij.util.diff.ShallowNodeComparator,com.intellij.util.diff.FlyweightCapableTreeStructure,com.intellij.openapi.progress.ProgressIndicator,java.lang.CharSequence):V
-- s:findReparseableRoots(com.intellij.psi.impl.source.PsiFileImpl,com.intellij.lang.FileASTNode,com.intellij.openapi.util.TextRange,java.lang.CharSequence):com.intellij.openapi.util.Couple
-- s:getFileCopy(com.intellij.psi.impl.source.PsiFileImpl,com.intellij.psi.FileViewProvider):com.intellij.psi.impl.source.PsiFileImpl
-- s:mergeTrees(com.intellij.psi.impl.source.PsiFileImpl,com.intellij.lang.ASTNode,com.intellij.lang.ASTNode,com.intellij.openapi.progress.ProgressIndicator,java.lang.CharSequence):com.intellij.psi.impl.DiffLog
-- reparseRange(com.intellij.psi.PsiFile,I,I,java.lang.CharSequence):V
-- reparseRange(com.intellij.psi.PsiFile,com.intellij.lang.FileASTNode,com.intellij.openapi.util.TextRange,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator,java.lang.CharSequence):com.intellij.psi.impl.DiffLog
-- ps:tryReparseLeaf(com.intellij.psi.tree.IReparseableLeafElementType,com.intellij.lang.ASTNode,java.lang.CharSequence):com.intellij.lang.ASTNode
-- ps:tryReparseNode(com.intellij.psi.tree.IReparseableElementTypeBase,com.intellij.lang.ASTNode,java.lang.CharSequence,com.intellij.psi.PsiManager,com.intellij.lang.Language,com.intellij.util.CharTable):com.intellij.lang.ASTNode
 f:com.intellij.psi.impl.CheckUtil
 - s:checkDelete(com.intellij.openapi.vfs.VirtualFile):V
 - s:checkWritable(com.intellij.psi.PsiElement):V
@@ -2588,6 +2691,7 @@ c:com.intellij.psi.impl.file.PsiDirectoryImpl
 - getChildren():com.intellij.psi.PsiElement[]
 - getContainingFile():com.intellij.psi.PsiFile
 - getFiles():com.intellij.psi.PsiFile[]
+- getFiles(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.PsiFile[]
 - getLanguage():com.intellij.lang.Language
 - getManager():com.intellij.psi.PsiManager
 - getName():java.lang.String
@@ -3407,7 +3511,6 @@ f:com.intellij.psi.impl.source.tree.LightTreeUtil
 - s:processLeavesAtOffsets(I[],com.intellij.lang.LighterAST,java.util.function.BiConsumer):V
 - s:requiredChildOfType(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.tree.IElementType):com.intellij.lang.LighterASTNode
 - s:requiredChildOfType(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.tree.TokenSet):com.intellij.lang.LighterASTNode
-- s:toBuffer(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,java.lang.StringBuilder,com.intellij.psi.tree.TokenSet):V
 - s:toFilteredString(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.tree.TokenSet):java.lang.String
 c:com.intellij.psi.impl.source.tree.OwnBufferLeafPsiElement
 - com.intellij.psi.impl.source.tree.LeafElement
@@ -3701,7 +3804,6 @@ c:com.intellij.psi.stubs.ObjectStubTree
 c:com.intellij.psi.stubs.PsiFileStubImpl
 - com.intellij.psi.stubs.StubBase
 - com.intellij.psi.stubs.PsiFileStub
-- sf:TYPE:com.intellij.psi.tree.IStubFileElementType
 - <init>(com.intellij.psi.PsiFile):V
 - clearPsi(java.lang.String):V
 - f:getDiagnostics():java.lang.String
@@ -3757,28 +3859,18 @@ com.intellij.psi.templateLanguages.TreePatcher
 - a:insert(com.intellij.psi.impl.source.tree.CompositeElement,com.intellij.psi.impl.source.tree.TreeElement,com.intellij.psi.templateLanguages.OuterLanguageElement):V
 - split(com.intellij.psi.impl.source.tree.LeafElement,I,com.intellij.util.CharTable):com.intellij.psi.impl.source.tree.LeafElement
 a:com.intellij.psi.text.BlockSupport
-- sf:DO_NOT_REPARSE_INCREMENTALLY:com.intellij.openapi.util.Key
-- sf:INCREMENTAL_REPARSE_DEPTH_LIMIT:I
-- sf:TREE_DEPTH_LIMIT_EXCEEDED:com.intellij.openapi.util.Key
 - sf:TREE_TO_BE_REPARSED:com.intellij.openapi.util.Key
 - <init>():V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.text.BlockSupport
 - s:isTooDeep(com.intellij.openapi.util.UserDataHolder):Z
 - a:reparseRange(com.intellij.psi.PsiFile,I,I,java.lang.CharSequence):V
 - a:reparseRange(com.intellij.psi.PsiFile,com.intellij.lang.FileASTNode,com.intellij.openapi.util.TextRange,java.lang.CharSequence,com.intellij.openapi.progress.ProgressIndicator,java.lang.CharSequence):com.intellij.psi.impl.DiffLog
-c:com.intellij.psi.text.BlockSupport$ReparsedSuccessfullyException
+f:com.intellij.psi.text.BlockSupport$ReparsedSuccessfullyException
 - java.lang.RuntimeException
 - com.intellij.openapi.diagnostic.ControlFlowException
-- <init>(com.intellij.psi.impl.DiffLog):V
 - fillInStackTrace():java.lang.Throwable
-- getDiffLog():com.intellij.psi.impl.DiffLog
 com.intellij.psi.tree.ChildRoleBase
 - sf:NONE:I
-c:com.intellij.psi.tree.DefaultRoleFinder
-- com.intellij.psi.tree.RoleFinder
-- <init>(java.util.function.Supplier):V
-- <init>(com.intellij.psi.tree.IElementType[]):V
-- findChild(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 a:com.intellij.psi.tree.IErrorCounterReparseableElementType
 - com.intellij.psi.tree.IReparseableElementType
 - sf:FATAL_ERROR:I

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework;
 
@@ -14,6 +14,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeViewProvider;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diff.LineTokenizer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -24,15 +28,31 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.config.BooleanProperty;
+import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.Collection;
 import java.util.Iterator;
 
-public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element> & CommonJavaRunConfigurationParameters> extends SMTRunnerConsoleProperties {
+public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element> & CommonJavaRunConfigurationParameters>
+  extends SMTRunnerConsoleProperties implements SMTRunnerTestTreeViewProvider {
+
+  /**
+   * A {@link BooleanProperty} that determines whether to use wall time for time-related operations
+   * in the Java-style test console. The default value is {@code false}.
+   * <p>
+   * This setting affects how time is reported and displayed, potentially switching
+   * between "wall-clock time" and another time measurement mode depending on its value.
+   * <p>
+   * It is public because it can be used not only by inheritances but also some java-style test consoles (for example, Gradle)
+   */
+  public static final BooleanProperty USE_WALL_TIME = new BooleanProperty("useWallTime", false);
+
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
     super(configuration, testFrameworkName, executor);
     setPrintTestingStartedTime(false);
@@ -59,15 +79,13 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     return ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), isDebug());
   }
 
-  @Nullable
   @Override
-  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+  public @Nullable Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     //navigate to the first stack trace
     return getStackTraceErrorNavigatable(location, stacktrace);
   }
 
-  @Nullable
-  public static Navigatable getStackTraceErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+  public static @Nullable Navigatable getStackTraceErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     final PsiLocation<?> psiLocation = location.toPsiLocation();
     PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
     if (containingClass == null && location instanceof MethodLocation) {
@@ -77,7 +95,7 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     final String qualifiedName = containingClass.getQualifiedName();
     if (qualifiedName == null) return null;
     PsiMethod containingMethod = null;
-    for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
+    for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
       final PsiMethod psiMethod = iterator.next().getPsiElement();
       if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod;
     }
@@ -103,13 +121,13 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
           return new OpenFileDescriptor(containingClass.getProject(), psiFile.getVirtualFile(), lineNumber, 0);
         }
       }
-      catch (NumberFormatException ignored) { }
+      catch (NumberFormatException ignored) {
+      }
     }
     return null;
   }
 
-  @Nullable
-  public DebuggerSession getDebugSession() {
+  public @Nullable DebuggerSession getDebugSession() {
     final DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(getProject());
     final Collection<DebuggerSession> sessions = debuggerManager.getSessions();
     for (final DebuggerSession debuggerSession : sessions) {
@@ -121,5 +139,21 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   @Override
   public boolean isEditable() {
     return Registry.is("editable.java.test.console");
+  }
+
+  @Override
+  public @NotNull SMTRunnerTestTreeView createSMTRunnerTestTreeView() {
+    return Registry.is("java.test.enable.tree.live.time") ? new JavaSMTRunnerTestTreeView(this) : new SMTRunnerTestTreeView();
+  }
+
+  @Override
+  public void appendAdditionalActions(DefaultActionGroup actionGroup, JComponent parent, TestConsoleProperties target) {
+    super.appendAdditionalActions(actionGroup, parent, target);
+    if (Registry.is("java.test.enable.tree.live.time")) {
+      actionGroup.addSeparator();
+      DumbAwareToggleBooleanProperty property =
+        new DumbAwareToggleBooleanProperty(JavaBundle.message("java.test.use.wall.time"), null, null, target, USE_WALL_TIME);
+      actionGroup.add(property);
+    }
   }
 }

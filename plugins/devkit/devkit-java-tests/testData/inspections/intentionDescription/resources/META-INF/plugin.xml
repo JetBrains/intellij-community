@@ -17,5 +17,12 @@
     <intentionAction>
       <className>MyQuickFixIntentionAction</className>
     </intentionAction>
+    <intentionAction>
+      <className>MyIntentionActionWithDescriptionDirectoryName</className>
+      <descriptionDirectoryName>customDescriptionDirectory</descriptionDirectoryName>
+    </intentionAction>
+
+    <java.error.fix errorCode="exception.unhandled" implementationClass="MyJavaErrorFix"/>
+
   </extensions>
 </idea-plugin>

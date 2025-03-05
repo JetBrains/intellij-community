@@ -10,18 +10,23 @@ import com.intellij.psi.*
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.j2k.ParseContext.*
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportList
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
 
@@ -69,7 +74,7 @@ class NewJavaToKotlinConverter(
             val javaFile = files[i]
             withProgressProcessor.updateState(fileIndex = i, phase = CREATE_FILES, phaseDescription)
             runUndoTransparentActionInEdt(inWriteAction = true) {
-                KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
+                KtPsiFactory.contextual(javaFile.parent ?: javaFile).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                     .also { it.addImports(result.importsToAdd) }
             }
         }
@@ -90,7 +95,7 @@ class NewJavaToKotlinConverter(
         forInlining: Boolean = false
     ): Result {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        val targetKaModule = targetModule?.productionOrTestSourceModuleInfo?.toKaModule()
+        val targetKaModule = targetModule?.toKaSourceModuleForProductionOrTest()
 
         // TODO
         // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
@@ -132,7 +137,12 @@ class NewJavaToKotlinConverter(
             else -> LanguageVersionSettingsImpl.DEFAULT
         }
 
-        val importStorage = JKImportStorage(languageVersionSettings)
+        val kaModule =
+            targetFile?.let { KaModuleProvider.getModule(project, it, useSiteModule = null) }
+                ?: targetModule?.toKaSourceModuleForProduction()
+                ?: KaModuleProvider.getModule(project, contextElement, useSiteModule = null)
+
+        val importStorage = JKImportStorage(kaModule.targetPlatform, project)
         val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, referenceSearcher, importStorage, bodyFilter, forInlining)
 
         // we want to leave all imports as is in the case when user is converting only imports
@@ -151,11 +161,10 @@ class NewJavaToKotlinConverter(
             inputElements.any { it == element || it.isAncestor(element, strict = true) }
 
         val externalCodeProcessing = NewExternalCodeProcessing(referenceSearcher, ::isInConversionContext)
-        val context = NewJ2kConverterContext(
+        val context = ConverterContext(
             symbolProvider,
             typeFactory,
             converter = this,
-            ::isInConversionContext,
             importStorage,
             JKElementInfoStorage(),
             externalCodeProcessing,
@@ -178,16 +187,15 @@ class NewJavaToKotlinConverter(
             processor.updateState(fileIndex = i, phase = PRINT_CODE, phaseDescription)
             val (element, ast) = elementWithAst
             if (ast == null) return@mapIndexed null
-            val code = JKCodeBuilder(context).run { printCodeOut(ast) }
+
+            val code = JKCodeBuilder(context).printCodeOut(ast)
+            val importsToAdd = importStorage.getImports()
             val parseContext = when (element) {
-                is PsiStatement, is PsiExpression -> ParseContext.CODE_BLOCK
-                else -> ParseContext.TOP_LEVEL
+                is PsiStatement, is PsiExpression -> CODE_BLOCK
+                else -> TOP_LEVEL
             }
-            ElementResult(
-                code,
-                importsToAdd = importStorage.getImports(),
-                parseContext = parseContext
-            )
+
+            ElementResult(code, importsToAdd, parseContext)
         }
 
         return Result(

@@ -32,8 +32,8 @@ internal class GroovyDeclarationHighlightingPassFactory : TextEditorHighlighting
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? = file.getGroovyFile()?.let {
-    GroovyDeclarationHighlightingPass(file, it, editor.document)
+  override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? = psiFile.getGroovyFile()?.let {
+    GroovyDeclarationHighlightingPass(psiFile, it, editor.document)
   }
 }
 

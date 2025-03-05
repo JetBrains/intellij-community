@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.project.Project;
@@ -173,9 +174,8 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
     myLoginMethodTypeComboBox.setEnabled(enabled);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCustomPanel() {
+  protected @Nullable JComponent createCustomPanel() {
     myField2Variable = new IdentityHashMap<>();
     FormBuilder builder = FormBuilder.createFormBuilder();
     for (final TemplateVariable variable : myRepository.getTemplateVariables()) {
@@ -251,9 +251,8 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
 
   private TextFieldWithAutoCompletion<String> createTextFieldWithCompletion(String text, final List<String> variants) {
     final StringsCompletionProvider provider = new StringsCompletionProvider(variants, null) {
-      @Nullable
       @Override
-      public String getPrefix(@NotNull String text, int offset) {
+      public @Nullable String getPrefix(@NotNull String text, int offset) {
         final int i = text.lastIndexOf('{', offset - 1);
         if (i < 0) {
           return "";

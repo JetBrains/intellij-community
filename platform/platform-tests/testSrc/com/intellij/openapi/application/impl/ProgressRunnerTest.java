@@ -277,7 +277,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
           var progressWindow = (TestProgressWindow)ProgressIndicatorProvider.getGlobalProgressIndicator();
           var cancelled = new Semaphore(1);
           EventQueue.invokeLater(() -> {
-            var modalComponent = progressWindow.getDialog$intellij_platform_tests().getPanel();
+            var modalComponent = progressWindow.getExposedDialog().getPanel();
             var escapeEvent = new KeyEvent(modalComponent, KeyEvent.KEY_PRESSED, System.nanoTime(), 0, KeyEvent.VK_ESCAPE, '');
             IdeEventQueue.getInstance().postEvent(escapeEvent);
             EventQueue.invokeLater(() -> cancelled.up());

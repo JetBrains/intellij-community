@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.rebuild
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.io.DirectoryContentSpec
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
-import java.util.*
 
 abstract class JpsRebuildTestCase: JpsBuildTestCase() {
   protected val myOutputDirectory: File by lazy {
@@ -50,7 +36,7 @@ abstract class JpsRebuildTestCase: JpsBuildTestCase() {
   }
 
   fun rebuild() {
-    JpsJavaExtensionService.getInstance()!!.getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(FileUtil.toSystemIndependentName(myOutputDirectory.absolutePath))
+    JpsJavaExtensionService.getInstance()!!.getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(FileUtilRt.toSystemIndependentName(myOutputDirectory.absolutePath))
     doBuild(CompileScopeTestBuilder.rebuild().allModules().allArtifacts()).assertSuccessful()
   }
 

@@ -63,7 +63,7 @@ function Global:Prompt() {
 
   $Result = ""
   $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
-  $PromptStateOSC = Global:__JetBrainsIntellijCreatePromptStateOSC
+
   if ($__JetBrainsIntellijTerminalInitialized) {
     if (($ExitCode -eq $null) -or ($ExitCode -eq 0 -and -not $Success)) {
       $ExitCode = if ($Success) { 0 } else { 1 }
@@ -72,7 +72,8 @@ function Global:Prompt() {
       [Console]::WriteLine("command_finished exit_code=$ExitCode")
     }
     $CommandFinishedEvent = Global:__JetBrainsIntellijOSC "command_finished;exit_code=$ExitCode"
-    $Result = $PromptStateOSC + $CommandFinishedEvent + $CommandEndMarker
+    $Result = $CommandFinishedEvent + $CommandEndMarker
+    [Console]::Write($Result)
   }
   else {
     # For some reason there is no error if I delete the history file, just an empty string returned.
@@ -86,9 +87,12 @@ function Global:Prompt() {
       [Console]::WriteLine("initialized")
     }
     $InitializedEvent = Global:__JetBrainsIntellijOSC "initialized;shell_info=$(__JetBrainsIntellijEncode $ShellInfo)"
-    $Result = $PromptStateOSC + $HistoryOSC + $InitializedEvent + $CommandEndMarker
+    $Result = $HistoryOSC + $InitializedEvent + $CommandEndMarker
+    [Console]::Write($Result)
   }
-  return $Result
+  $PromptStateOSC = Global:__JetBrainsIntellijCreatePromptStateOSC
+  [Console]::Write($PromptStateOSC)
+  return ""
 }
 
 function Global:__JetBrainsIntellijCreatePromptStateOSC() {

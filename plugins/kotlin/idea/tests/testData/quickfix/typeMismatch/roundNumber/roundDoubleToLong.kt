@@ -1,4 +1,5 @@
 // "Round using roundToLong()" "true"
+// PRIORITY: LOW
 // WITH_STDLIB
 fun test(d: Double) {
     bar(d<caret>)
@@ -6,3 +7,4 @@ fun test(d: Double) {
 
 fun bar(x: Long) {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RoundNumberFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.RoundNumberFix

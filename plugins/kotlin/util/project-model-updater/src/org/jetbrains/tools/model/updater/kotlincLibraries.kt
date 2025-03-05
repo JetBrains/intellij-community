@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
 import org.jetbrains.tools.model.updater.impl.*
 
 private const val ktGroup = "org.jetbrains.kotlin"
-private const val BOOTSTRAP_VERSION = "2.1.255-dev-255"
+internal const val BOOTSTRAP_VERSION = "2.2.255-dev-255"
 
 // see .idea/jarRepositories.xml
 private val KOTLIN_IDE_DEPS_REPOSITORY = JpsRemoteRepository(
@@ -68,6 +68,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         }
 
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-scripting-dependencies", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-compiler-impl", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincCoordinates, transitive = true)
@@ -75,6 +76,9 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide")
         kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates)
+
+        // TODO: KTIJ-32993
+        kotlincWithStandardNaming("kotlinc.kotlin-dist", kotlincCoordinates, postfix = "-for-ide", jpsLibraryName = "kotlinc.kotlin-ide-dist")
 
         // bootstrap version of kotlin-jps-plugin-classpath required for testing
         kotlincWithStandardNaming(

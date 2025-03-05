@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.IProperty;
@@ -37,8 +37,7 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
     }
   };
 
-  @NotNull
-  public String getSeparator(final ResourceBundle resourceBundle) {
+  public @NotNull String getSeparator(final ResourceBundle resourceBundle) {
     if (!(resourceBundle instanceof ResourceBundleImpl resourceBundleImpl)) {
       return ".";
     }
@@ -89,13 +88,12 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
   }
 
   @Override
-  public void loadState(@NotNull final PropertiesSeparatorManagerState state) {
+  public void loadState(final @NotNull PropertiesSeparatorManagerState state) {
     myUserDefinedSeparators = state.decode();
   }
 
-  @Nullable
   @Override
-  public PropertiesSeparatorManagerState getState() {
+  public @Nullable PropertiesSeparatorManagerState getState() {
     return myUserDefinedSeparators.isEmpty() ? null : myUserDefinedSeparators.encode();
   }
 
@@ -142,8 +140,7 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
     }
   }
 
-  @Nullable
-  private static String decodeSeparator(String separator) {
+  private static @Nullable String decodeSeparator(String separator) {
     if (separator.length() % 6 != 0) {
       return null;
     }

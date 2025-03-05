@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.jvmcompat
 
 import com.intellij.ReviseWhenPortedToJDK
@@ -32,7 +32,10 @@ fun generateJvmSupportMatrices(json: Path, kt: Path, applicationVersion: String)
 }
 
 fun generateJvmSupportMatrices(json: Path, kt: Path, applicationVersion: String, copyrightComment: String) {
-  val jsonData = json.readText(Charsets.UTF_8)
+  generateJvmSupportMatrices(json.readText(Charsets.UTF_8), kt, applicationVersion, copyrightComment)
+}
+
+fun generateJvmSupportMatrices(jsonData: String, kt: Path, applicationVersion: String, copyrightComment: String) {
   val parsedData = GradleCompatibilityDataParser.parseVersionedJson(jsonData, applicationVersion)
                    ?: throw IllegalStateException("Cannot get compatibility data")
   if ('\n' in copyrightComment) {

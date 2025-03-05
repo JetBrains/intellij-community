@@ -140,12 +140,12 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
 
   @Override
   public boolean isEnumerated() {
-    return myValues.size() > 0 && myValues.get(null) == null;
+    return !myValues.isEmpty() && myValues.get(null) == null;
   }
 
   @Override
   public String[] getEnumeratedValues() {
-    if (myValues.size() > 0) {
+    if (!myValues.isEmpty()) {
       final Map<String, String> copy;
       if (myValues.get(null) != null) {
         copy = new HashMap<>(myValues);
@@ -181,7 +181,7 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
       final String uri = myName.getNamespaceURI();
       final String prefix = tag.getPrefixByNamespace(uri);
       if (prefix != null) {
-        if (prefix.length() == 0) {
+        if (prefix.isEmpty()) {
           return myName.getLocalPart();
         }
         else {
@@ -189,9 +189,9 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
         }
       }
     }
-    if (myName.getNamespaceURI().length() > 0) {
+    if (!myName.getNamespaceURI().isEmpty()) {
       final String prefix2 = myName.getPrefix();
-      if (prefix2 != null && prefix2.length() > 0) {
+      if (prefix2 != null && !prefix2.isEmpty()) {
         return prefix2 + ":" + myName.getLocalPart();
       }
     }

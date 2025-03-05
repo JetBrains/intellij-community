@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -45,14 +31,12 @@ public final class ChooseFileIntentionAction implements IntentionAction {
   private Supplier<VirtualFile[]> myFileChooser = null;
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return MavenDomBundle.message("inspection.group");
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return MavenDomBundle.message("intention.choose.file");
   }
 
@@ -94,12 +78,11 @@ public final class ChooseFileIntentionAction implements IntentionAction {
   }
 
   @TestOnly
-  public void setFileChooser(@Nullable final Supplier<VirtualFile[]> fileChooser) {
+  public void setFileChooser(final @Nullable Supplier<VirtualFile[]> fileChooser) {
     myFileChooser = fileChooser;
   }
 
-  @Nullable
-  private static MavenDomDependency getDependency(PsiFile file, Editor editor) {
+  private static @Nullable MavenDomDependency getDependency(PsiFile file, Editor editor) {
     PsiElement el = PsiUtilCore.getElementAtOffset(file, editor.getCaretModel().getOffset());
 
     XmlTag tag = PsiTreeUtil.getParentOfType(el, XmlTag.class, false);

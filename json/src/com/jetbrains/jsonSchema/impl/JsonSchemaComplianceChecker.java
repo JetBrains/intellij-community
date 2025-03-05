@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
@@ -157,10 +158,7 @@ public final class JsonSchemaComplianceChecker {
   }
 
   private boolean checkIfAlreadyProcessed(@NotNull PsiElement property) {
-    Set<PsiElement> data = mySession.getUserData(ANNOTATED_PROPERTIES);
-    if (data == null) {
-      data = mySession.putUserDataIfAbsent(ANNOTATED_PROPERTIES, ConcurrentCollectionFactory.createConcurrentSet());
-    }
+    Set<PsiElement> data = ConcurrencyUtil.computeIfAbsent(mySession, ANNOTATED_PROPERTIES, () -> ConcurrentCollectionFactory.createConcurrentSet());
     return !data.add(property);
   }
 }

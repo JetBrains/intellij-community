@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.pom.java.JavaFeature;
@@ -23,9 +22,8 @@ import java.util.Set;
  */
 public final class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("interface.may.be.annotated.functional.problem.descriptor");
   }
 
@@ -56,7 +54,7 @@ public final class InterfaceMayBeAnnotatedFunctionalInspection extends BaseInspe
           AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, 0)) {
         return;
       }
-      if (LambdaHighlightingUtil.checkInterfaceFunctional(aClass) != null) {
+      if (LambdaUtil.checkInterfaceFunctional(aClass) != LambdaUtil.FunctionalInterfaceStatus.VALID) {
         return;
       }
       MethodSignature signature = LambdaUtil.getFunction(aClass);

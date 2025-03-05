@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
@@ -15,7 +16,8 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.Set;
 import java.util.function.Supplier;
 
-final class FileEqualsUsageInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class FileEqualsUsageInspection extends DevKitUastInspectionBase {
 
   private static final Set<String> METHOD_NAMES = Set.of("equals", "compareTo", "hashCode");
 
@@ -32,8 +34,7 @@ final class FileEqualsUsageInspection extends DevKitUastInspectionBase {
   private static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class, UBinaryExpression.class};
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
 
       @Override

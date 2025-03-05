@@ -76,6 +76,14 @@ class NotRoamableUiSettings @Internal constructor(): SerializablePersistentState
       updateState { it.copy(experimentalSingleStripe = value) }
     }
 
+  @get:Internal
+  @set:Internal
+  var xNextStripe: Boolean
+    get() = state.xNextStripe
+    set(value) {
+      updateState { it.copy(xNextStripe = value) }
+    }
+
   override fun loadState(state: NotRoamableUiOptions) {
     var fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
     if (fontSize <= 0) {
@@ -166,6 +174,9 @@ data class NotRoamableUiOptions internal constructor(
   @JvmField
   @OptionTag
   val experimentalSingleStripe: Boolean = false,
+  @JvmField
+  @OptionTag
+  val xNextStripe: Boolean = false,
 )
 
 /**

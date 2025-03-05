@@ -24,6 +24,7 @@ public class CommentInstruction extends SimpleInstruction {
     myText = text;
   }
 
+  @Override
   public String toString() {
     return ";  " + myText;
   }

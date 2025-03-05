@@ -71,8 +71,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class AntExplorer extends SimpleToolWindowPanel implements Disposable {
   private Project myProject;
@@ -271,9 +271,9 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
           ignoredFiles.add(e.getFile());
         }
       }
-      if (ignoredFiles.size() != 0) {
+      if (!ignoredFiles.isEmpty()) {
         String messageText;
-        @NlsSafe final StringBuilder message = new StringBuilder();
+        final @NlsSafe StringBuilder message = new StringBuilder();
         String separator = "";
         for (final VirtualFile virtualFile : ignoredFiles) {
           message.append(separator);
@@ -413,14 +413,12 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
     return getCurrentBuildFile();
   }
 
-  @Nullable
-  private AntBuildFileBase getCurrentBuildFile() {
+  private @Nullable AntBuildFileBase getCurrentBuildFile() {
     final AntBuildFileNodeDescriptor descriptor = getCurrentBuildFileNodeDescriptor();
     return (AntBuildFileBase)((descriptor == null) ? null : descriptor.getBuildFile());
   }
 
-  @NotNull
-  private Collection<AntBuildFileBase> getSelectedBuildFiles() {
+  private @NotNull Collection<AntBuildFileBase> getSelectedBuildFiles() {
     if (myTree == null) {
       return Collections.emptyList();
     }
@@ -446,8 +444,7 @@ public final class AntExplorer extends SimpleToolWindowPanel implements Disposab
     return result;
   }
 
-  @Nullable
-  private AntBuildFileNodeDescriptor getCurrentBuildFileNodeDescriptor() {
+  private @Nullable AntBuildFileNodeDescriptor getCurrentBuildFileNodeDescriptor() {
     final Tree tree = myTree;
     if (tree == null) {
       return null;

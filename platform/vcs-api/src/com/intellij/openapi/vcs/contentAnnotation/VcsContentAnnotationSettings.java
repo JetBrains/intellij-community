@@ -23,7 +23,7 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
     return project.getService(VcsContentAnnotationSettings.class);
   }
 
- public final static class State {
+ public static final class State {
     public boolean myShow1;
     public long myLimit = ourAbsoluteLimit;
   }

@@ -100,6 +100,10 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     return isOpaque(state.scrollBar) || state.animationBehavior.trackFrame > 0
   }
 
+  private fun isMousePressedOnVisiblePart(event: MouseEvent): Boolean {
+    return event.id == MouseEvent.MOUSE_PRESSED && isThumbContains(event.x, event.y)
+  }
+
   open val isTrackExpandable: Boolean
     get() = false
 
@@ -108,7 +112,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
   }
 
   fun isThumbContains(x: Int, y: Int): Boolean {
-    return installedState!!.thumb.bounds.contains(x, y)
+    return installedState?.thumb?.bounds?.contains(x, y) == true
   }
 
   protected open fun paintTrack(g: Graphics2D, c: JComponent) {
@@ -429,8 +433,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       }
     }
 
-    fun redispatchIfTrackNotClickable(event: MouseEvent): Boolean {
-      if (isTrackClickable()) {
+    fun passMouseEventThroughInvisibleScrollbar(event: MouseEvent): Boolean {
+      if (isTrackClickable() || isMousePressedOnVisiblePart(event)) {
         return false
       }
 
@@ -448,13 +452,13 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
     override fun mouseClicked(e: MouseEvent) {
       val scrollBar = installedState?.scrollBar ?: return
       if (scrollBar.isEnabled) {
-        redispatchIfTrackNotClickable(e)
+        passMouseEventThroughInvisibleScrollbar(e)
       }
     }
 
     override fun mousePressed(event: MouseEvent) {
       val scrollBar = installedState?.scrollBar ?: return
-      if (!scrollBar.isEnabled || redispatchIfTrackNotClickable(event) || SwingUtilities.isRightMouseButton(event)) {
+      if (!scrollBar.isEnabled || passMouseEventThroughInvisibleScrollbar(event) || SwingUtilities.isRightMouseButton(event)) {
         return
       }
 
@@ -511,7 +515,7 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
       }
 
       scrollBar.valueIsAdjusting = false
-      if (redispatchIfTrackNotClickable(event)) {
+      if (passMouseEventThroughInvisibleScrollbar(event)) {
         return
       }
       if (SwingUtilities.isRightMouseButton(event)) {
@@ -638,8 +642,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
         thumbMax = track.bounds.y + track.bounds.height - thumb.bounds.height
         thumbPos = MathUtil.clamp(y - myOffset, thumbMin, thumbMax)
         if (thumb.bounds.y != thumbPos) {
-          val minY: Int = min(thumb.bounds.y.toDouble(), thumbPos.toDouble()).toInt()
-          val maxY: Int = (max(thumb.bounds.y.toDouble(), thumbPos.toDouble()) + thumb.bounds.height).toInt()
+          val minY: Int = min(thumb.bounds.y, thumbPos)
+          val maxY: Int = max(thumb.bounds.y, thumbPos) + thumb.bounds.height
           thumb.bounds.y = thumbPos
           state.animationBehavior.onThumbMove()
           repaint(thumb.bounds.x, minY, thumb.bounds.width, maxY - minY)
@@ -650,8 +654,8 @@ open class DefaultScrollBarUI @JvmOverloads internal constructor(
         thumbMax = track.bounds.x + track.bounds.width - thumb.bounds.width
         thumbPos = MathUtil.clamp(x - myOffset, thumbMin, thumbMax)
         if (thumb.bounds.x != thumbPos) {
-          val minX: Int = min(thumb.bounds.x.toDouble(), thumbPos.toDouble()).toInt()
-          val maxX: Int = (max(thumb.bounds.x.toDouble(), thumbPos.toDouble()) + thumb.bounds.width).toInt()
+          val minX: Int = min(thumb.bounds.x, thumbPos)
+          val maxX: Int = max(thumb.bounds.x, thumbPos) + thumb.bounds.width
           thumb.bounds.x = thumbPos
           state.animationBehavior.onThumbMove()
           repaint(minX, thumb.bounds.y, maxX - minX, thumb.bounds.height)
@@ -782,4 +786,4 @@ private fun addPreferredHeight(preferred: Dimension, component: Component?) {
  */
 private fun convert(newRange: Double, oldValue: Double, oldRange: Double): Int = (.5 + newRange * oldValue / oldRange).toInt()
 
-private fun adjust(value: Int, min: Int, max: Int): Int = max(min.toDouble(), min(value.toDouble(), max.toDouble())).toInt()
+private fun adjust(value: Int, min: Int, max: Int): Int = max(min, min(value, max))

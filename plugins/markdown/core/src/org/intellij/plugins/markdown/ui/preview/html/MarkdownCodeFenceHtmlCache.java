@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview.html;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -28,12 +28,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public final class MarkdownCodeFenceHtmlCache implements Disposable {
-  @NotNull public static final String MARKDOWN_FILE_PATH_KEY = "markdown-md5-file-path";
+  public static final @NotNull String MARKDOWN_FILE_PATH_KEY = "markdown-md5-file-path";
 
-  @NotNull private final Alarm myAlarm = new Alarm(this);
-  @NotNull private final Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches =
+  private final @NotNull Alarm myAlarm = new Alarm(this);
+  private final @NotNull Collection<MarkdownCodeFencePluginCacheCollector> myCodeFencePluginCaches =
     ConcurrentCollectionFactory.createConcurrentSet();
-  @NotNull private final Collection<File> myAdditionalCacheToDelete = ConcurrentCollectionFactory.createConcurrentSet();
+  private final @NotNull Collection<File> myAdditionalCacheToDelete = ConcurrentCollectionFactory.createConcurrentSet();
 
   public static MarkdownCodeFenceHtmlCache getInstance() {
     return ApplicationManager.getApplication().getService(MarkdownCodeFenceHtmlCache.class);

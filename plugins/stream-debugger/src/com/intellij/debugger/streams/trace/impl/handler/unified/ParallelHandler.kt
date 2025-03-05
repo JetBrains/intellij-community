@@ -1,10 +1,11 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace.impl.handler.unified
 
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.PeekTraceHandler
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.impl.IntermediateStreamCallImpl
 import com.intellij.openapi.util.TextRange
 
 /**
@@ -19,5 +20,5 @@ class ParallelHandler(num: Int, private val call: IntermediateStreamCall, dsl: D
   }
 
   private class SequentialCall(elementsType: GenericType)
-    : IntermediateStreamCallImpl("sequential", emptyList(), elementsType, elementsType, TextRange.EMPTY_RANGE)
+    : IntermediateStreamCallImpl("sequential", "", emptyList(), elementsType, elementsType, TextRange.EMPTY_RANGE)
 }

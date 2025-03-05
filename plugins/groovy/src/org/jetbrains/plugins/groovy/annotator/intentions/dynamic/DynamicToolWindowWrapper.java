@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.DeleteProvider;
@@ -312,8 +312,7 @@ public final class DynamicToolWindowWrapper {
 
     RefactoringListenerManager.getInstance(myProject).addListenerProvider(new RefactoringElementListenerProvider() {
       @Override
-      @Nullable
-      public RefactoringElementListener getListener(final PsiElement element) {
+      public @Nullable RefactoringElementListener getListener(final PsiElement element) {
         if (element instanceof PsiClass) {
           final String qualifiedName = ((PsiClass)element).getQualifiedName();
 
@@ -475,8 +474,7 @@ public final class DynamicToolWindowWrapper {
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
   }
 
-  @Nullable
-  private TreeTableTree getTree() {
+  private @Nullable TreeTableTree getTree() {
     return myTreeTable != null ? myTreeTable.getTree() : null;
   }
 

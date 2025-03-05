@@ -30,6 +30,7 @@ public final class ProblemImpl implements Problem {
     return isSyntax;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -43,6 +44,7 @@ public final class ProblemImpl implements Problem {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = virtualFile.hashCode();
@@ -51,6 +53,7 @@ public final class ProblemImpl implements Problem {
     return result;
   }
 
+  @Override
   public @NonNls String toString() {
     return "Problem: " + highlightInfo;
   }

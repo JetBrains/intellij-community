@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.actions
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -25,8 +25,7 @@ import com.intellij.testFramework.LightVirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
-
+private class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
   override fun update(e: AnActionEvent) {
     val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
@@ -53,7 +52,7 @@ class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
       }
 
       if (doc?.isWritable == true) {
-        writeAction {
+        edtWriteAction {
           executeCommand(e.project, JsonBundle.message("JsonJacksonReformatAction.command.name.json.reformat")) {
             doc.setText(formatted)
           }
@@ -76,7 +75,7 @@ class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
       )
       if (!dialogBuilder.ask(project)) return@runWithModalProgressBlocking
 
-      writeAction {
+      edtWriteAction {
         executeCommand(e.project, JsonBundle.message("JsonJacksonReformatAction.command.name.json.reformat")) {
           virtualFile.getOutputStream(this@JsonJacksonReformatAction).use { stream ->
             stream.write(formatted.toByteArray(virtualFile.getCharset()))

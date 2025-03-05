@@ -39,6 +39,7 @@ interface ClientFileEditorManager {
   fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider?
   fun getSelectedEditor(): FileEditor?
   fun getSelectedEditorWithProvider(): FileEditorWithProvider?
+  fun getSelectedEditorWithProviderFlow(): Flow<FileEditorWithProvider?>
   fun getSelectedEditors(): List<FileEditor>
   fun getSelectedTextEditor(): Editor?
   fun getSelectedFile(): VirtualFile?

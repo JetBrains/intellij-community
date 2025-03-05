@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.codeWithMe.ClientId
@@ -25,8 +25,6 @@ import javax.swing.SwingUtilities
 import kotlin.io.path.exists
 import kotlin.math.max
 
-private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
-
 /**
  * @api {get} /file Open file
  * @apiName file
@@ -35,7 +33,7 @@ private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
  * @apiParam {String} file The path of the file. Relative (to project base dir, VCS root, module source or content root) or absolute.
  * @apiParam {Integer} [line] The line number of the file (1-based).
  * @apiParam {Integer} [column] The column number of the file (1-based).
- * @apiParam {Boolean} [focused=true] Whether to focus project window.
+ * @apiParam {Boolean} [focused=true] Whether to focus a project window.
  *
  * @apiExample {curl} Absolute path
  * curl http://localhost:63342/api/file//absolute/path/to/file.kt
@@ -49,7 +47,10 @@ private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
  * @apiExample {curl} Query parameters
  * curl http://localhost:63342/api/file?file=path/to/file.kt&line=100&column=34
  */
+@Suppress("KDocUnresolvedReference")
 internal class OpenFileHttpService : RestService() {
+  private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
+
   override fun getServiceName() = "file"
 
   override fun isMethodSupported(method: HttpMethod) = method === HttpMethod.GET || method === HttpMethod.POST
@@ -60,16 +61,16 @@ internal class OpenFileHttpService : RestService() {
     val keepAlive = HttpUtil.isKeepAlive(request)
     val channel = context.channel()
 
-    val apiRequest: OpenFileRequest
-    if (request.method() === HttpMethod.POST) {
-      apiRequest = gson.fromJson(createJsonReader(request), OpenFileRequest::class.java)
+    val apiRequest = if (request.method() === HttpMethod.POST) {
+      gson.fromJson(createJsonReader(request), OpenFileRequest::class.java)
     }
     else {
-      apiRequest = OpenFileRequest()
-      apiRequest.file = getStringParameter("file", urlDecoder).takeIf { !it.isNullOrBlank() }
-      apiRequest.line = getIntParameter("line", urlDecoder)
-      apiRequest.column = getIntParameter("column", urlDecoder)
-      apiRequest.focused = getBooleanParameter("focused", urlDecoder, true)
+      OpenFileRequest().apply {
+        file = getStringParameter("file", urlDecoder).takeIf { !it.isNullOrBlank() }
+        line = getIntParameter("line", urlDecoder)
+        column = getIntParameter("column", urlDecoder)
+        focused = getBooleanParameter("focused", urlDecoder, true)
+      }
     }
 
     val prefixLength = 1 + PREFIX.length + 1 + getServiceName().length + 1
@@ -157,7 +158,7 @@ internal class OpenFileHttpService : RestService() {
     val clientId = ClientId.ownerId
     val task = Runnable {
       ClientId.withClientId(clientId) {
-        val effectiveProject = project ?: RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
+        val effectiveProject = project ?: getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
         // OpenFileDescriptor line and column number are 0-based.
         OpenFileDescriptor(effectiveProject, file, max(request.line - 1, 0), max(request.column - 1, 0)).navigate(true)
         if (request.focused) {

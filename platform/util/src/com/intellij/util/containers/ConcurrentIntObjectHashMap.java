@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.containers;
 
@@ -1099,6 +1099,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * no mapping for the given key
    * @return the mapping for the key, if present; else the default value
    */
+  @Override
   public V getOrDefault(int key, V defaultValue) {
     V v;
     return (v = get(key)) == null ? defaultValue : v;

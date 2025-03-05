@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit2.info;
 
 import com.intellij.execution.Location;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public final class LocationUtil {
-  public static boolean isJarAttached(@NotNull Location location, @NotNull final PsiPackage aPackage, final String... fqn) {
+  public static boolean isJarAttached(@NotNull Location location, final @NotNull PsiPackage aPackage, final String... fqn) {
     return isJarAttached(location, aPackage.getDirectories(), fqn);
   }
 

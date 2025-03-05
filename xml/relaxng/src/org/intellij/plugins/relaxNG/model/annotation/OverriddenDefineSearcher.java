@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.relaxNG.model.annotation;
 
 import com.intellij.psi.xml.XmlFile;
@@ -38,7 +38,7 @@ final class OverriddenDefineSearcher extends CommonElement.Visitor {
 
   @Override
   public void visitDefine(Define<?, ?> d) {
-    if (myIncludes.size() > 0 && myIncludes.getInt(myIncludes.size() - 1) == 1) {
+    if (!myIncludes.isEmpty() && myIncludes.getInt(myIncludes.size() - 1) == 1) {
       if (d.getName().equals(myDefine.getName())) {
         myResult.add(d);
       }

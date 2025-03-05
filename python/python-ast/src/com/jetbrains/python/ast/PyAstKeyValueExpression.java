@@ -11,13 +11,11 @@ import org.jetbrains.annotations.Nullable;
 public interface PyAstKeyValueExpression extends PyAstExpression {
   PyAstKeyValueExpression[] EMPTY_ARRAY = new PyAstKeyValueExpression[0];
 
-  @NotNull
-  default PyAstExpression getKey() {
+  default @NotNull PyAstExpression getKey() {
     return (PyAstExpression)getNode().getFirstChildNode().getPsi();
   }
 
-  @Nullable
-  default PyAstExpression getValue() {
+  default @Nullable PyAstExpression getValue() {
     return PsiTreeUtil.getNextSiblingOfType(getKey(), PyAstExpression.class);
   }
 

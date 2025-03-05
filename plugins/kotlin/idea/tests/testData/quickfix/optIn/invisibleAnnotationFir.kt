@@ -1,6 +1,6 @@
 // "Opt in for 'Ann' on 'test'" "false"
-// IGNORE_K1
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@Foo.Ann' or '@OptIn(Foo.Ann::class)'
+// K2_AFTER_ERROR: This declaration needs opt-in. Its usage must be marked with '@Foo.Ann' or '@OptIn(Foo.Ann::class)'
 // ACTION: Add import for 'Foo.bar'
 // ACTION: Convert to run
 // ACTION: Convert to with

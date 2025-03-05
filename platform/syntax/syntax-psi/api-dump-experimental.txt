@@ -1,0 +1,31 @@
+*:com.intellij.platform.syntax.psi.ElementTypeConverter
+- a:convert(com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
+- a:convert(com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
+*a:com.intellij.platform.syntax.psi.ElementTypeConverterBase
+- com.intellij.platform.syntax.psi.ElementTypeConverter
+- <init>(java.util.Map):V
+- f:convert(com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
+- f:convert(com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
+*:com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
+- a:getCommentTokens():java.util.Set
+- a:getLexer():com.intellij.platform.syntax.lexer.Lexer
+- getWhitespaceTokens():java.util.Set
+*f:com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
+- com.intellij.lang.LanguageExtension
+- *sf:Companion:com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions$Companion
+- <init>():V
+- sf:getINSTANCE():com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
+*f:com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions$Companion
+- f:getINSTANCE():com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
+*:com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- com.intellij.openapi.util.UserDataHolder
+- a:getLightTree():com.intellij.util.diff.FlyweightCapableTreeStructure
+- a:getSyntaxTreeBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+- a:getTreeBuilt():com.intellij.lang.ASTNode
+*:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+- *sf:Companion:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
+- a:createBuilder(com.intellij.lang.ASTNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- a:createBuilder(com.intellij.lang.LighterLazyParseableNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- s:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+*f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
+- f:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory

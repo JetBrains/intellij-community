@@ -24,7 +24,7 @@ import java.util.Map;
 public final class GotoInspectionModel extends SimpleChooseByNameModel {
   private final Map<String, InspectionToolWrapper> myToolNames = new HashMap<>();
   private final String[] myNames;
-  private final InspectionListCellRenderer myListCellRenderer = new InspectionListCellRenderer();
+  private final ListCellRenderer<?> myListCellRenderer = InspectionListUtilKt.cellRenderer();
 
 
   public GotoInspectionModel(@NotNull Project project) {
@@ -45,7 +45,7 @@ public final class GotoInspectionModel extends SimpleChooseByNameModel {
   }
 
   @Override
-  public @NotNull ListCellRenderer getListCellRenderer() {
+  public @NotNull ListCellRenderer<?> getListCellRenderer() {
     return myListCellRenderer;
   }
 

@@ -30,6 +30,11 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
+/**
+ * @see MasterController
+ * @deprecated not used anymore, and is internal
+ */
+@Deprecated(forRemoval = true)
 public final class MasterDetailPopupBuilder implements MasterController {
   private static final Color BORDER_COLOR = Gray._135;
 
@@ -236,6 +241,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
       if (SystemInfoRt.isMac && !StartupUiUtil.isUnderDarcula()) {
         JButton done = new JButton(LangBundle.message("button.done"));
         done.setOpaque(false);
+        //noinspection HardCodedStringLiteral
         done.setMnemonic('o');
         done.addActionListener(actionListener);
         builder.setCommandButton(new ActiveComponent.Adapter() {

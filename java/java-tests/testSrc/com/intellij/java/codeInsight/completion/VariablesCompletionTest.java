@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.NeedsIndex;
 
+import java.util.Arrays;
 import java.util.Set;
 
 public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
@@ -289,6 +290,19 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     LookupElement[] items = myFixture.completeBasic();
     assertStringItems("FOO");
     assertEquals(" ( = \"c\")", NormalCompletionTestCase.renderElement(items[0]).getTailText());
+  }
+
+  public void testDoubleString() {
+    myFixture.configureByText("a.java",
+                              """
+                                public class AA {
+                                    public boolean isEnabled(int depth, String t<caret>ag) {
+                                    }
+                                }
+                                
+                                """);
+    LookupElement[] items = myFixture.completeBasic();
+    assertEquals(1, Arrays.stream(items).filter(e -> e.getLookupString().equals("string")).count());
   }
 
   private static final String FILE_PREFIX = "/codeInsight/completion/variables/";

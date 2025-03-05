@@ -4,7 +4,7 @@
 
 class A<T>(val n: T) {
     fun foo(a: Int): A<T> = throw Exception()
-    fun foo(i: Int, string: String): A<Int> {
+    fun foo(a: Int, string: String): A<Int> {
         TODO("Not yet implemented")
     }
 }

@@ -1,13 +1,5 @@
 // "Create expected function in common module testModule_Common" "false"
-// ACTION: Apply all 'Remove modifier' fixes in file
-// ACTION: Convert member to extension
-// ACTION: Convert to block body
-// ACTION: Create expected class in common module testModule_Common
-// ACTION: Move to companion object
-// ACTION: Remove 'actual' modifier
-// ACTION: Remove explicit type specification
-// DISABLE-ERRORS
-// IGNORE_K2
+// DISABLE_ERRORS
 
 actual class My {
     actual fun <caret>foo(param: String): Int = 42

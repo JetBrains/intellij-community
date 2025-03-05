@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.application.ModalityState;
@@ -29,7 +29,7 @@ public interface CheckoutProvider {
    * Migrate to {@link com.intellij.util.ui.cloneDialog.VcsCloneDialog} or {@link VcsCloneComponent}
    */
   @Deprecated(forRemoval = true)
-  void doCheckout(@NotNull final Project project, @Nullable Listener listener);
+  void doCheckout(final @NotNull Project project, @Nullable Listener listener);
 
   @Nls @NotNull String getVcsName();
 
@@ -43,13 +43,12 @@ public interface CheckoutProvider {
 
   class CheckoutProviderComparator implements Comparator<CheckoutProvider> {
     @Override
-    public int compare(@NotNull final CheckoutProvider o1, @NotNull final CheckoutProvider o2) {
+    public int compare(final @NotNull CheckoutProvider o1, final @NotNull CheckoutProvider o2) {
       return UIUtil.removeMnemonic(o1.getVcsName()).compareTo(UIUtil.removeMnemonic(o2.getVcsName()));
     }
   }
 
-  @NotNull
-  default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+  default @NotNull VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
     return new VcsCloneComponentStub(project, this, VcsBundle.message("clone.dialog.clone.button"));
   }
 }

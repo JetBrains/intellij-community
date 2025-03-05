@@ -1,10 +1,12 @@
 // "Make 'arg' private" "true"
+// PRIORITY: HIGH
 // ACTION: Convert to secondary constructor
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Make 'PrivateType' public
 // ACTION: Move to class body
 // ERROR: 'public' function exposes its 'private-in-file' parameter type PrivateType
+// K2_AFTER_ERROR: 'public' function exposes its 'private-in-file' parameter type 'PrivateType'.
 // IGNORE_K1
 
 private class PrivateType

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -13,6 +13,7 @@ import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.application.setUserInteractiveQosForEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WeakFocusStackManager
@@ -175,9 +176,16 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
     // do not crash AWT on exceptions
     AWTExceptionHandler.register()
   }
-  if (!isHeadless && "true" == System.getProperty("idea.check.swing.threading")) {
+
+  if (!isHeadless && System.getProperty("idea.check.swing.threading").toBoolean()) {
     span("repaint manager set") {
       RepaintManager.setCurrentManager(AssertiveRepaintManager())
+    }
+  }
+
+  span("set QoS for EDT") {
+    if (!isHeadless && setUserInteractiveQosForEdt) {
+      UiThreadPriority.adjust()
     }
   }
 }
@@ -188,7 +196,7 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
 private fun blockATKWrapper() {
   // the registry must not be used here, because this method is called before application loading
   @Suppress("SpellCheckingInspection")
-  if (!SystemInfoRt.isLinux || !java.lang.Boolean.parseBoolean(System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true"))) {
+  if (!SystemInfoRt.isLinux || !System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true").toBoolean()) {
     return
   }
 
@@ -203,7 +211,7 @@ private fun blockATKWrapper() {
 
 @VisibleForTesting
 fun checkHiDPISettings() {
-  if (!java.lang.Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
+  if (!System.getProperty("hidpi", "true").toBoolean()) {
     // suppress JRE-HiDPI mode
     System.setProperty("sun.java2d.uiScale.enabled", "false")
   }

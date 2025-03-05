@@ -1,24 +1,27 @@
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.parser;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
-import static org.editorconfig.language.parser.EditorConfigParserUtil.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.LightPsiParser;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+
+import static org.editorconfig.language.parser.EditorConfigParserUtil.*;
+import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class EditorConfigParserBase implements PsiParser, LightPsiParser {
 
+  @Override
   public ASTNode parse(IElementType t, PsiBuilder b) {
     parseLight(t, b);
     return b.getTreeBuilt();
   }
 
+  @Override
   public void parseLight(IElementType t, PsiBuilder b) {
     boolean r;
     b = adapt_builder_(t, b, this, EXTENDS_SETS_);

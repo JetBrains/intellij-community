@@ -67,15 +67,25 @@ class KotlinULambdaExpression(
         }
 
     private fun getParameters(includeExplicitParameters: Boolean): List<UParameter> {
-        val explicitParameters = sourcePsi.valueParameters.mapIndexed { i, p ->
-            KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
+        // For [valueParameters] (includeExplicitParameters = false)
+        // but only if there are value parameters indeed
+        if (!includeExplicitParameters && sourcePsi.valueParameters.isNotEmpty()) {
+            return sourcePsi.valueParameters.mapIndexed { i, p ->
+                KotlinUParameter(UastKotlinPsiParameter.create(p, sourcePsi, this, i), p, this)
+            }
         }
-        if (explicitParameters.isNotEmpty()) return explicitParameters
 
+        // For [parameters] (includeExplicitParameters = true)
+        // or for [valueParameters] without explicit value parameters
         return baseResolveProviderService.getImplicitParameters(sourcePsi, this, includeExplicitParameters)
     }
 
     override fun asRenderString(): String {
+        val renderedAnnotations = uAnnotations.joinToString(
+            separator = " ",
+            postfix = if (uAnnotations.isNotEmpty()) " " else "", // @... {...
+            transform = UAnnotation::asRenderString
+        )
         val renderedValueParameters = if (valueParameters.isEmpty())
             ""
         else
@@ -83,6 +93,6 @@ class KotlinULambdaExpression(
         val expressions =
             (body as? UBlockExpression)?.expressions?.joinToString("\n") { it.asRenderString().withMargin } ?: body.asRenderString()
 
-        return "{ $renderedValueParameters\n$expressions\n}"
+        return "$renderedAnnotations{ $renderedValueParameters\n$expressions\n}"
     }
 }

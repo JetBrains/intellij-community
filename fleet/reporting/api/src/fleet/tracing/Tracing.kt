@@ -11,23 +11,19 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 private inline fun <T> withSpan(span: CompletableSpan, body: (Span) -> T): T =
-  try {
-    body(span).also {
-      span.complete(SpanStatus.Success, null)
+  runCatching { body(span) }.also { span.completeWithResult(it) }.getOrThrow()
+
+private fun CompletableSpan.completeWithResult(result: Result<*>) {
+  result
+    .onSuccess {
+      complete(SpanStatus.Success, null)
+    }.onFailure { ex ->
+      when (ex) {
+        is CancellationException -> complete(SpanStatus.Cancelled, null)
+        else -> complete(SpanStatus.Failed(ex), null)
+      }
     }
-  }
-  catch (x: CancellationException) {
-    span.complete(SpanStatus.Cancelled, null)
-    throw x
-  }
-  catch (x: InterruptedException) {
-    span.complete(SpanStatus.Cancelled, null)
-    throw x
-  }
-  catch (x: Throwable) {
-    span.complete(SpanStatus.Failed(x), null)
-    throw x
-  }
+}
 
 fun <T> withCurrentSpan(span: Span, body: () -> T): T =
   currentSpanThreadLocal.get().let { oldSpan ->
@@ -42,7 +38,7 @@ fun <T> withCurrentSpan(span: Span, body: () -> T): T =
 
 fun <T> span(name: String, info: SpanInfoBuilder.() -> Unit = {}, body: () -> T): T =
   currentSpan.let { span ->
-    when(span) {
+    when (span) {
       is Span.Noop -> body()
       else -> withSpan(span.startChild(spanInfo(name, span.job, false, info))) { child ->
         withCurrentSpan(child, body)
@@ -56,8 +52,10 @@ fun Span.asContextElement(): CoroutineContext.Element =
 suspend fun <T> spannedScope(name: String, info: SpanInfoBuilder.() -> Unit = {}, body: suspend CoroutineScope.() -> T): T =
   spannedScope(currentSpan.startChild(spanInfo(name, coroutineContext.job, true, info)), body)
 
-suspend fun <T> spannedScope(span: CompletableSpan,
-                             body: suspend CoroutineScope.() -> T): T =
+suspend fun <T> spannedScope(
+  span: CompletableSpan,
+  body: suspend CoroutineScope.() -> T,
+): T =
   withSpan(span) {
     withContext(span.asContextElement(), body)
   }

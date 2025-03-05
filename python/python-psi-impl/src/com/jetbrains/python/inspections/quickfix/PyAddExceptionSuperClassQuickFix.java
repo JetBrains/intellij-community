@@ -14,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyAddExceptionSuperClassQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.add.exception.base");
   }
 

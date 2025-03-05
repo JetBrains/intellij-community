@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import kotlinx.metadata.*;
-import kotlinx.metadata.jvm.JvmExtensionsKt;
-import kotlinx.metadata.jvm.KotlinClassHeader;
-import kotlinx.metadata.jvm.KotlinClassMetadata;
+import com.intellij.util.ArrayUtilRt;
+import kotlin.metadata.*;
+import kotlin.metadata.jvm.JvmExtensionsKt;
+import kotlin.metadata.jvm.KotlinClassHeader;
+import kotlin.metadata.jvm.KotlinClassMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.GraphDataInput;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
  * The created annotation instance can be further introspected with <a href="https://github.com/JetBrains/kotlin/tree/master/libraries/kotlinx-metadata/jvm">kotlinx-metadata-jvm</a> library
  */
 public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff> {
-  private static final String[] EMPTY_STRING_ARRAY = new String[0];
+  private static final String[] EMPTY_STRING_ARRAY = ArrayUtilRt.EMPTY_STRING_ARRAY;
   private static final int[] EMPTY_INT_ARRAY = new int[0];
 
   private final int myKind;
@@ -283,7 +284,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean containerAccessRestricted() {
-      return getVisibilityLevel(getContainerVisibility()) < getVisibilityLevel(myPast.getContainerVisibility());
+      return accessRestricted(getContainerVisibility(), myPast.getContainerVisibility());
     }
 
     public boolean extraChanged() {
@@ -338,7 +339,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean accessRestricted() {
-      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+      return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
     }
 
     public boolean argsBecameNotNull() {
@@ -402,7 +403,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean accessRestricted() {
-      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+      return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
     }
 
     public boolean underlyingTypeChanged() {
@@ -429,7 +430,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean accessRestricted() {
-      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+      return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
     }
 
     public boolean argsBecameNotNull() {
@@ -493,15 +494,15 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean accessRestricted() {
-      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+      return KotlinMeta.accessRestricted(Attributes.getVisibility(now), Attributes.getVisibility(past));
     }
 
     public boolean getterAccessRestricted() {
-      return getVisibilityLevel(getGetterVisibility(now)) < getVisibilityLevel(getGetterVisibility(past));
+      return KotlinMeta.accessRestricted(getGetterVisibility(now), getGetterVisibility(past));
     }
 
     public boolean setterAccessRestricted() {
-      return getVisibilityLevel(getSetterVisibility(now)) < getVisibilityLevel(getSetterVisibility(past));
+      return KotlinMeta.accessRestricted(getSetterVisibility(now), getSetterVisibility(past));
     }
 
     public boolean customAccessorAdded() {
@@ -525,6 +526,14 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       KmPropertyAccessorAttributes setter = prop.getSetter();
       return setter != null && Attributes.isNotDefault(setter);
     }
+  }
+
+  public static boolean accessRestricted(Visibility now, Visibility past) {
+    if (getVisibilityLevel(now) < getVisibilityLevel(past)) {
+      return true;
+    }
+    // special case for incomparable visibility levels: the other way around can be seen as access restriction too
+    return past == Visibility.PROTECTED && now == Visibility.INTERNAL;
   }
 
   private static final Map<Visibility, Integer> VISIBILITY_LEVEL = Map.of(

@@ -30,15 +30,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 public final class GroovySynchronizationOnVariableInitializedWithLiteralInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.synchronization.on.variable.ref.which.was.initialized.with.literal");
 
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

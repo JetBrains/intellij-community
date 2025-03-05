@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,20 +18,19 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public final class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
-  private final static Logger LOG = Logger.getInstance(GuavaOptionalConversionRule.class);
+  private static final Logger LOG = Logger.getInstance(GuavaOptionalConversionRule.class);
 
-  public final static @NonNls String OPTIONAL_CONVERTOR_PATTERN = "Optional.fromNullable($o$.orElse(null))";
-  public final static @NonNls String GUAVA_OPTIONAL = "com.google.common.base.Optional";
-  public final static @NonNls String JAVA_OPTIONAL = "java.util.Optional";
+  public static final @NonNls String OPTIONAL_CONVERTOR_PATTERN = "Optional.fromNullable($o$.orElse(null))";
+  public static final @NonNls String GUAVA_OPTIONAL = "com.google.common.base.Optional";
+  public static final @NonNls String JAVA_OPTIONAL = "java.util.Optional";
 
-  @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForMethod(@Nullable PsiType from,
-                                                                 @Nullable PsiType to,
-                                                                 @NotNull PsiMethod method,
-                                                                 @NotNull String methodName,
-                                                                 PsiExpression context,
-                                                                 TypeMigrationLabeler labeler) {
+  protected @Nullable TypeConversionDescriptorBase findConversionForMethod(@Nullable PsiType from,
+                                                                           @Nullable PsiType to,
+                                                                           @NotNull PsiMethod method,
+                                                                           @NotNull String methodName,
+                                                                           PsiExpression context,
+                                                                           TypeMigrationLabeler labeler) {
     if (!(context instanceof PsiMethodCallExpression)) {
       if ("or".equals(methodName)) {
         PsiMethodCallExpression methodCallExpression = null;
@@ -97,9 +96,8 @@ public final class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRu
            (aClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()));
   }
 
-  @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForVariableReference(@Nullable PsiExpression context) {
+  protected @Nullable TypeConversionDescriptorBase findConversionForVariableReference(@Nullable PsiExpression context) {
     if (GuavaOptionalConversionUtil.isOptionalOrContext(context)) {
       return new TypeConversionDescriptor("$o$", "com.google.common.base." + OPTIONAL_CONVERTOR_PATTERN);
     }
@@ -145,15 +143,13 @@ public final class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRu
                                                              "$val$.map(java.util.Collections::singleton).orElse(java.util.Collections.emptySet())"));
   }
 
-  @NotNull
   @Override
-  public String ruleFromClass() {
+  public @NotNull String ruleFromClass() {
     return GUAVA_OPTIONAL;
   }
 
-  @NotNull
   @Override
-  public String ruleToClass() {
+  public @NotNull String ruleToClass() {
     return JAVA_OPTIONAL;
   }
 

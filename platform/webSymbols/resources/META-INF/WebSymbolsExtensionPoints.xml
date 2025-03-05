@@ -10,6 +10,10 @@
                     dynamic="true">
       <with attribute="implementation" implements="com.intellij.webSymbols.context.WebSymbolsContextProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.enableInLanguage"
+                    beanClass="com.intellij.webSymbols.WebSymbolsEnabledLanguage$WebSymbolsSupportInLanguageEP"
+                    dynamic="true">
+    </extensionPoint>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes"
                     beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP"
@@ -47,6 +51,12 @@
     <extensionPoint qualifiedName="com.intellij.webSymbols.declarationProvider"
                     interface="com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.psiReferenceProvider"
+                    beanClass="com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderBean"
+                    dynamic="true">
+      <with attribute="hostElementClass" implements="com.intellij.model.psi.PsiExternalReferenceHost"/>
+      <with attribute="implementationClass" implements="com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.psiSourcedSymbolProvider"
                     interface="com.intellij.webSymbols.PsiSourcedWebSymbolProvider"
                     dynamic="true"/>
@@ -56,11 +66,14 @@
     <extensionPoint qualifiedName="com.intellij.webSymbols.inspectionToolMapping"
                     beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.highlightInLanguage"
-                    beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP"
+    <extensionPoint qualifiedName="com.intellij.webSymbols.problemQuickFixProvider"
+                    interface="com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.contextSourceProximityProvider"
                     interface="com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.highlightingCustomizer"
+                    interface="com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

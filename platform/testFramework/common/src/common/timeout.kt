@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -16,10 +17,12 @@ val DEFAULT_TEST_TIMEOUT: Duration = 10.seconds
 fun <T> timeoutRunBlocking(
   timeout: Duration = DEFAULT_TEST_TIMEOUT,
   coroutineName: String? = null,
+  context: CoroutineContext = EmptyCoroutineContext,
   action: suspend CoroutineScope.() -> T,
 ): T {
+  val nameContext = coroutineName?.let(::CoroutineName) ?: EmptyCoroutineContext
   @Suppress("RAW_RUN_BLOCKING")
-  return runBlocking(context = coroutineName?.let(::CoroutineName) ?: EmptyCoroutineContext) {
+  return runBlocking(context = context + nameContext) {
     val job = async(block = action)
     @OptIn(DelicateCoroutinesApi::class)
     withContext(blockingDispatcher) {

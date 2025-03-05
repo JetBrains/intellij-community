@@ -13,16 +13,16 @@ import org.jetbrains.kotlin.psi.*
 
 object ApplicabilityRanges {
 
-    fun ifKeyword(element: KtIfExpression) =
+    fun ifKeyword(element: KtIfExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.ifKeyword }
 
-    fun whenKeyword(element: KtWhenExpression) =
+    fun whenKeyword(element: KtWhenExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.whenKeyword }
 
-    fun visibilityModifier(element: KtModifierListOwner) =
+    fun visibilityModifier(element: KtModifierListOwner): List<TextRange> =
         modifier(element, KtTokens.VISIBILITY_MODIFIERS)
 
-    fun modalityModifier(element: KtModifierListOwner) =
+    fun modalityModifier(element: KtModifierListOwner): List<TextRange> =
         modifier(element, KtTokens.MODALITY_MODIFIERS)
 
     private fun modifier(
@@ -30,7 +30,7 @@ object ApplicabilityRanges {
         tokens: TokenSet,
     ) = ApplicabilityRange.single(element) { it.modifierList?.getModifier(tokens) }
 
-    fun calleeExpression(element: KtCallExpression) =
+    fun calleeExpression(element: KtCallExpression): List<TextRange> =
         ApplicabilityRange.single(element) { it.calleeExpression }
 
     fun callExcludingLambdaArgument(element: KtCallElement): List<TextRange> {
@@ -69,7 +69,7 @@ object ApplicabilityRanges {
         return listOf(TextRange(0, endOffset))
     }
 
-    fun declarationName(element: KtNamedDeclaration) =
+    fun declarationName(element: KtNamedDeclaration): List<TextRange> =
         ApplicabilityRange.single(element) { it.nameIdentifier }
 
     fun ifExpressionExcludingBranches(element: KtIfExpression): List<TextRange> {

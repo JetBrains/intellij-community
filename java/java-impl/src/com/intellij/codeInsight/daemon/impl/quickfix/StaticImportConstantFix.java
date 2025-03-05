@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -14,13 +14,15 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> implements HighPriorityAction {
+@ApiStatus.Internal
+public class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCodeReferenceElement> implements HighPriorityAction {
   StaticImportConstantFix(@NotNull PsiFile file, @NotNull PsiJavaCodeReferenceElement referenceElement) {
     super(file, referenceElement);
   }

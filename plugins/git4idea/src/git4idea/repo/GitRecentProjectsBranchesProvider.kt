@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.github.benmanes.caffeine.cache.AsyncCacheLoader
@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
@@ -80,20 +81,25 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
   }
 
   private inner class BranchesLoader : AsyncCacheLoader<String, GitRecentProjectCachedBranch> {
-    override fun asyncLoad(key: String, executor: Executor) =
-      loadBranch(key, null, executor)
+    override fun asyncLoad(key: String, executor: Executor) = loadBranch(projectPath = key, previousValue = null, executor = executor)
 
-    override fun asyncReload(key: String, oldValue: GitRecentProjectCachedBranch, executor: Executor) =
-      loadBranch(key, oldValue, executor)
+    override fun asyncReload(key: String, oldValue: GitRecentProjectCachedBranch, executor: Executor): CompletableFuture<GitRecentProjectCachedBranch> {
+      return loadBranch(projectPath = key, previousValue = oldValue, executor = executor)
+    }
 
-    private fun loadBranch(projectPath: String, previousValue: GitRecentProjectCachedBranch?, executor: Executor): CompletableFuture<GitRecentProjectCachedBranch>? =
-      coroutineScope
+    private fun loadBranch(
+      projectPath: String,
+      previousValue: GitRecentProjectCachedBranch?,
+      executor: Executor,
+    ): CompletableFuture<GitRecentProjectCachedBranch> {
+      return coroutineScope
         .future { loadBranch(previousValue, projectPath) }
         .whenCompleteAsync(
           { branch, _ ->
             if (branch != null && branch != previousValue) updateRecentProjectsSignal.tryEmit(Unit)
           }, executor
         )
+    }
   }
 
   companion object {
@@ -104,7 +110,9 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
 
     @VisibleForTesting
     internal suspend fun loadBranch(previousValue: GitRecentProjectCachedBranch?, projectPath: String): GitRecentProjectCachedBranch {
-      if (previousValue == GitRecentProjectCachedBranch.Unknown) return previousValue
+      if (previousValue == GitRecentProjectCachedBranch.Unknown) {
+        return previousValue
+      }
 
       return try {
         val headFile = previousValue?.headFilePath?.let(Path::of) ?: findGitHead(projectPath)
@@ -120,8 +128,8 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
       if (headFile == null) return GitRecentProjectCachedBranch.Unknown
 
       val headFileContent = withContext(Dispatchers.IO) {
-        headFile.readText().trim()
-      }
+        if (Files.exists(headFile)) headFile.readText().trim() else null
+      } ?: return GitRecentProjectCachedBranch.Unknown
 
       val targetRef =
         (if (GitRefUtil.parseHash(headFileContent) == null) GitRefUtil.getTarget(headFileContent) else null)
@@ -130,13 +138,12 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
       return GitRecentProjectCachedBranch.KnownBranch(branchName = GitBranchUtil.stripRefsPrefix(targetRef), headFilePath = headFile.absolutePathString())
     }
 
-    private fun findGitHead(projectPath: String): Path? {
-      val gitRoot = findGitRootFor(Path(projectPath)) ?: return null
-      return gitRoot.resolve(GitUtil.DOT_GIT).resolve(GitUtil.HEAD)
+    private suspend fun findGitHead(projectPath: String): Path? = withContext(Dispatchers.IO) {
+      findGitDir(Path(projectPath))?.resolve(GitUtil.HEAD)?.takeIf { Files.exists(it) }
     }
 
-    private fun findGitRootFor(path: Path): Path? =
-      generateSequence(path) { it.parent }.find { GitUtil.isGitRoot(it) }
+    private fun findGitDir(path: Path): Path? =
+      generateSequence(path) { it.parent }.mapNotNull { GitUtil.findGitDir(it) }.firstOrNull()
   }
 }
 

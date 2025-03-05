@@ -22,8 +22,7 @@ public class NastradamusBucketingScheme implements BucketingScheme {
     myNastradamusClient = initNastradamus();
   }
 
-  @Nullable
-  public NastradamusClient getNastradamusClient() {
+  public @Nullable NastradamusClient getNastradamusClient() {
     return myNastradamusClient;
   }
 

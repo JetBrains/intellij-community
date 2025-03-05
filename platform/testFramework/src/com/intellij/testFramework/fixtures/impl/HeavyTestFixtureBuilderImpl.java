@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -15,19 +15,16 @@ import java.util.Arrays;
 import java.util.Map;
 
 final class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestFixture> {
-  @NotNull
-  private final HeavyIdeaTestFixtureImpl myFixture;
-  @NotNull
-  private final Map<Class<? extends ModuleFixtureBuilder<?>>, Class<? extends ModuleFixtureBuilder<?>>> myProviders;
+  private final @NotNull HeavyIdeaTestFixtureImpl myFixture;
+  private final @NotNull Map<Class<? extends ModuleFixtureBuilder<?>>, Class<? extends ModuleFixtureBuilder<?>>> myProviders;
 
   HeavyTestFixtureBuilderImpl(@NotNull HeavyIdeaTestFixtureImpl fixture, @NotNull Map<Class<? extends ModuleFixtureBuilder<?>>, Class<? extends ModuleFixtureBuilder<?>>> providers) {
     myFixture = fixture;
     myProviders = providers;
   }
 
-  @NotNull
   @Override
-  public HeavyIdeaTestFixture getFixture() {
+  public @NotNull HeavyIdeaTestFixture getFixture() {
     return myFixture;
   }
 

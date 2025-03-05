@@ -18,11 +18,59 @@ import org.jetbrains.kotlin.idea.scratch.printDebugMessage
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.idea.scratch.LOG as log
 
-class RunScratchAction : ScratchAction(
-    KotlinJvmBundle.message("scratch.run.button"),
-    AllIcons.Actions.Execute
+class RunScratchActionK2 : ScratchAction(
+    KotlinJvmBundle.getLazyMessage("scratch.run.button"), AllIcons.Actions.Execute
 ) {
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
+        val scratchFile = e.currentScratchFile ?: return
+        val executor = scratchFile.k2ScratchExecutor ?: return
+        val module = scratchFile.module
 
+        ProjectTaskManagerImpl.putBuildOriginator(project, this.javaClass)
+
+        if (module != null && scratchFile.options.isMakeBeforeRun) {
+            ProjectTaskManager.getInstance(project).build(module).onSuccess { executionResult ->
+                if (executionResult.isAborted || executionResult.hasErrors()) {
+                    executor.errorOccurs(KotlinJvmBundle.message("there.were.compilation.errors.in.module.0", module.name))
+                } else {
+                    executor.execute()
+                }
+            }
+        } else {
+            executor.execute()
+        }
+    }
+
+    class ExplainInfo(
+        val variableName: String, val offsets: Pair<Int, Int>, val variableValue: Any?, val line: Int?
+    ) {
+        override fun toString(): String {
+            return "ExplainInfo(variableName='$variableName', offsets=$offsets, variableValue=$variableValue, line=$line)"
+        }
+    }
+
+    override fun update(e: AnActionEvent) {
+        super.update(e)
+
+
+        val scratchFile = e.currentScratchFile ?: return
+
+        e.presentation.isVisible = !scratchFile.options.isInteractiveMode
+
+        e.presentation.isEnabled = !(ScratchCompilationSupport.isAnyInProgress() || scratchFile.options.isInteractiveMode)
+
+        if (e.presentation.isEnabled) {
+            e.presentation.text = templatePresentation.text
+        } else {
+            e.presentation.text = KotlinJvmBundle.message("other.scratch.file.execution.is.in.progress")
+        }
+    }
+}
+
+class RunScratchAction : ScratchAction(
+    KotlinJvmBundle.getLazyMessage("scratch.run.button"), AllIcons.Actions.Execute
+) {
     init {
         KeymapManager.getInstance().activeKeymap.getShortcuts("Kotlin.RunScratch").firstOrNull()?.let {
             templatePresentation.text += " (${KeymapUtil.getShortcutText(it)})"
@@ -31,7 +79,6 @@ class RunScratchAction : ScratchAction(
 
     override fun actionPerformed(e: AnActionEvent) {
         val scratchFile = e.currentScratchFile ?: return
-
         Handler.doAction(scratchFile, false)
     }
 
@@ -88,7 +135,9 @@ class RunScratchAction : ScratchAction(
     override fun update(e: AnActionEvent) {
         super.update(e)
 
-        e.presentation.isEnabled = !ScratchCompilationSupport.isAnyInProgress()
+        val scratchFile = e.currentScratchFile ?: return
+
+        e.presentation.isEnabled = !(ScratchCompilationSupport.isAnyInProgress() || scratchFile.options.isInteractiveMode)
 
         if (e.presentation.isEnabled) {
             e.presentation.text = templatePresentation.text
@@ -96,8 +145,7 @@ class RunScratchAction : ScratchAction(
             e.presentation.text = KotlinJvmBundle.message("other.scratch.file.execution.is.in.progress")
         }
 
-        val scratchFile = e.currentScratchFile ?: return
 
-        e.presentation.isVisible = !ScratchCompilationSupport.isInProgress(scratchFile)
+        e.presentation.isVisible = !(ScratchCompilationSupport.isAnyInProgress() || scratchFile.options.isInteractiveMode)
     }
 }

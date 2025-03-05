@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.icons.AllIcons;
@@ -22,21 +22,18 @@ import java.util.List;
 
 public class GenericRepositoryType extends BaseRepositoryType<GenericRepository> {
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Generic";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.General.Web;
   }
 
-  @NotNull
   @Override
-  public TaskRepository createRepository() {
+  public @NotNull TaskRepository createRepository() {
     return new GenericRepository(this);
   }
 
@@ -45,11 +42,10 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
     return GenericRepository.class;
   }
 
-  @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(final GenericRepository repository,
-                                           final Project project,
-                                           final Consumer<? super GenericRepository> changeListener) {
+  public @NotNull TaskRepositoryEditor createEditor(final GenericRepository repository,
+                                                    final Project project,
+                                                    final Consumer<? super GenericRepository> changeListener) {
     return new GenericRepositoryEditor<>(project, repository, changeListener);
   }
 

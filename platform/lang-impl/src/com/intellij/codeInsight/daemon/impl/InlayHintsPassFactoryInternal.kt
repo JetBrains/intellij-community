@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeHighlighting.*
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.*
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.editor.Editor
@@ -14,6 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
 
 private val PSI_MODIFICATION_STAMP: Key<Long> = Key.create("inlay.psi.modification.stamp")
@@ -25,19 +25,19 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
     registrar.registerTextEditorHighlightingPass(this, ghl, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+  override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (editor.isOneLineMode) return null
     val savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP)
     if (DiffUtil.isDiffEditor(editor)) return null
-    val currentStamp = getCurrentModificationStamp(file)
+    val currentStamp = getCurrentModificationStamp(psiFile)
     if (savedStamp != null && savedStamp == currentStamp) return null
 
-    val language = file.language
+    val language = psiFile.language
     val hintSink = InlayHintsSinkImpl(editor)
-    val collectors = getProviders(file, editor).mapNotNull { it.getCollectorWrapperFor(file, editor, language, hintSink) }
-    val priorityRange = HighlightingSessionImpl.getFromCurrentIndicator(file).visibleRange
+    val collectors = getProviders(psiFile, editor).mapNotNull { it.getCollectorWrapperFor(psiFile, editor, language, hintSink) }
+    val priorityRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).visibleRange
 
-    return InlayHintsPass(file, collectors, editor, priorityRange, hintSink)
+    return InlayHintsPass(psiFile, collectors, editor, priorityRange, hintSink)
   }
 
   @Suppress("CompanionObjectInExtension") // used in external plugins (https://youtrack.jetbrains.com/issue/IDEA-333164/Breaking-change-with-InlayHintsPassFactory-class-moved-in-another-package)
@@ -48,9 +48,15 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
       }
     }
 
+    @Deprecated(message = "use [DaemonCodeAnalyzer.restart]")
     fun restartDaemonUpdatingHints(project: Project) {
       forceHintsUpdateOnNextPass()
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("InlayHintsPassFactoryInternal.restartDaemonUpdatingHints")
+    }
+    @ApiStatus.Internal
+    fun restartDaemonUpdatingHints(project: Project, reason: String) {
+      forceHintsUpdateOnNextPass()
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart(reason)
     }
 
     fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {

@@ -27,8 +27,7 @@ public final class AssignmentToStaticFieldFromInstanceMethodInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "assignment.to.static.field.from.instance.method.problem.descriptor");
   }

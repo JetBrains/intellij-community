@@ -8,9 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IJPerfSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
-  @NotNull
   @Override
-  public SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
+  public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
     return new IJPerfSyntaxHighlighter();
   }
 }

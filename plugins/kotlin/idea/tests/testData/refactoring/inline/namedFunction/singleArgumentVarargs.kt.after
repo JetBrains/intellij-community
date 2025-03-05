@@ -1,4 +1,4 @@
-fun <T> newFun(vararg elements: T) {}
+fun <T> newFun(vararg elements: T){}
 
 fun foo() {
     newFun("a")

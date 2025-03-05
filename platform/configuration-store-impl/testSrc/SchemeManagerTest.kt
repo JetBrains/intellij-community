@@ -14,8 +14,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.*
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -27,6 +29,7 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Functionality without stream providers is covered, ICS has own test suite.
@@ -152,7 +155,7 @@ class SchemeManagerTest {
     }
 
     // use provider to specify the exact order of files (it is critical to test both variants - old, new or new, old)
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
+    val schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, ATestSchemeProcessor(), object : StreamProvider {
       override val isExclusive = true
 
       override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
@@ -164,10 +167,12 @@ class SchemeManagerTest {
         return true
       }
 
-      override fun processChildren(path: String,
-                                   roamingType: RoamingType,
-                                   filter: (name: String) -> Boolean,
-                                   processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
+      override fun processChildren(
+        path: String,
+        roamingType: RoamingType,
+        filter: (name: String) -> Boolean,
+        processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean,
+      ): Boolean {
         for (name in fileNames) {
           dir.resolve(name).inputStream().use {
             processor(name, it, false)
@@ -199,7 +204,7 @@ class SchemeManagerTest {
   @Test
   fun setSchemes() {
     val dir = fsRule.fs.getPath("/test")
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
+    val schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), provider = null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
 
@@ -350,7 +355,7 @@ class SchemeManagerTest {
      * 3. Create a [SchemeManagerImpl] with the [StreamProvider] from #1 and [com.intellij.openapi.options.SchemeProcessor] from #2.
      *    We now have a SchemeManager that can be manipulated to exhibit the error.
      */
-    val schemeManager = SchemeManagerImpl(FILE_SPEC, schemeProcessor, streamProvider, dir)
+    val schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, schemeProcessor, streamProvider, dir)
 
     /**
      * 4. Add a scheme and save it. The scheme manager will now have a scheme named in the style of our
@@ -360,7 +365,7 @@ class SchemeManagerTest {
     schemeManager.save()
 
     /**
-     * 5. Obtain the scheme by writing its contents into an element, and then load the element with a different naming scheme.
+     * 5. Get the scheme by writing its contents into an element, and then load the element with a different naming scheme.
      *    This creates the scenario where `schemeManager` and `streamProvider` refer to the same scheme with different names.
      */
     val element = Element("state")
@@ -526,27 +531,29 @@ class SchemeManagerTest {
     val dir = tempDirManager.newPath(refreshVfs = true)
     val busDisposable = Disposer.newDisposable()
     try {
-      val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
-        @Suppress("UNCHECKED_CAST")
-        val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<TestScheme, TestScheme>, projectRule.project)
-        ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
-      })
+      timeoutRunBlocking(1.minutes) {
+        val schemeManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), provider = null, dir, fileChangeSubscriber = { schemeManager ->
+          @Suppress("UNCHECKED_CAST")
+          val schemeFileTracker = SchemeFileTracker(schemeManager as SchemeManagerImpl<TestScheme, TestScheme>, projectRule.project)
+          ApplicationManager.getApplication().messageBus.connect(busDisposable).subscribe(VirtualFileManager.VFS_CHANGES, schemeFileTracker)
+        }, cs = this)
 
-      val a = TestScheme("a", "a")
-      val b = TestScheme("b", "b")
-      schemeManager.setSchemes(listOf(a, b))
-      runInEdtAndWait { schemeManager.save() }
+        val a = TestScheme("a", "a")
+        val b = TestScheme("b", "b")
+        schemeManager.setSchemes(listOf(a, b))
+        runInEdtAndWait { schemeManager.save() }
 
-      assertThat(dir.resolve("a.xml")).isRegularFile()
-      assertThat(dir.resolve("b.xml")).isRegularFile()
+        assertThat(dir.resolve("a.xml")).isRegularFile()
+        assertThat(dir.resolve("b.xml")).isRegularFile()
 
-      a.name = "b"
-      b.name = "a"
+        a.name = "b"
+        b.name = "a"
 
-      runInEdtAndWait { schemeManager.save() }
+        runInEdtAndWait { schemeManager.save() }
 
-      assertThat(dir.resolve("a.xml").readText()).isEqualTo("""<scheme name="a" data="b" />""")
-      assertThat(dir.resolve("b.xml").readText()).isEqualTo("""<scheme name="b" data="a" />""")
+        assertThat(dir.resolve("a.xml").readText()).isEqualTo("""<scheme name="a" data="b" />""")
+        assertThat(dir.resolve("b.xml").readText()).isEqualTo("""<scheme name="b" data="a" />""")
+      }
     }
     finally {
       Disposer.dispose(busDisposable)
@@ -554,19 +561,21 @@ class SchemeManagerTest {
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {
-    assertThatThrownBy { SchemeManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemeProcessor()) }.hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
+    assertThatThrownBy { SchemeManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemeProcessor()) }
+      .hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
   }
 
   @Test fun `path must be system-independent`() {
     DefaultLogger.disableStderrDumping(disposableRule.disposable)
+    @Suppress("DEPRECATION")
     rethrowLoggedErrorsIn {
-      assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor()) }.hasMessage("Path must be system-independent, use forward slash instead of backslash")
+      assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor()) }
+        .hasMessage("Path must be system-independent, use forward slash instead of backslash")
     }
   }
 
-  private fun createSchemeManager(dir: Path): SchemeManagerImpl<TestScheme, TestScheme> {
-    return SchemeManagerImpl(fileSpec = FILE_SPEC, processor = TestSchemeProcessor(), provider = null, ioDirectory = dir)
-  }
+  private fun createSchemeManager(dir: Path): SchemeManagerImpl<TestScheme, TestScheme> =
+    SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), provider = null, dir)
 
   private fun createAndLoad(testData: String): SchemeManagerImpl<TestScheme, TestScheme> {
     createTempFiles(testData)
@@ -586,7 +595,7 @@ class SchemeManagerTest {
   }
 
   private fun createAndLoad(): SchemeManagerImpl<TestScheme, TestScheme> {
-    val schemesManager = SchemeManagerImpl(FILE_SPEC, TestSchemeProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
+    val schemesManager = SchemeManagerImpl(projectRule.project, FILE_SPEC, TestSchemeProcessor(), MockStreamProvider(remoteBaseDir!!), localBaseDir!!)
     schemesManager.loadSchemes()
     return schemesManager
   }
@@ -629,8 +638,10 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
 }
 
 @Tag("scheme")
-data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:JvmField var name: String = "",
-                      @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
+data class TestScheme(
+  @field:Attribute @field:JvmField var name: String = "",
+  @field:Attribute var data: String? = null
+) : ExternalizableScheme, SerializableScheme {
   override fun getName() = name
 
   override fun setName(value: String) {
@@ -641,10 +652,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
 }
 
 open class TestSchemeProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
-  override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>,
-                            name: String,
-                            attributeProvider: (String) -> String?,
-                            isBundled: Boolean): TestScheme {
+  override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>, name: String, attributeProvider: (String) -> String?, isBundled: Boolean): TestScheme {
     val scheme = dataHolder.read().deserialize(TestScheme::class.java)
     dataHolder.updateDigest(scheme)
     return scheme

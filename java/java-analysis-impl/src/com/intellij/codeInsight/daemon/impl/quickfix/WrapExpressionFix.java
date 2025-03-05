@@ -1,14 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> {
   private static final Logger LOG = Logger.getInstance(WrapExpressionFix.class);
@@ -36,8 +36,7 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
     myMethodPresentation = getMethodPresentation(expression, myExpectedType, myPrimitiveExpected);
   }
 
-  @Nullable
-  private static PsiClassType getClassType(PsiType type, PsiElement place) {
+  private static @Nullable PsiClassType getClassType(PsiType type, PsiElement place) {
     if (type instanceof PsiClassType) {
       return (PsiClassType)type;
     }
@@ -61,9 +60,8 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
     return null;
   }
 
-  @Nullable
-  private static PsiMethod findWrapper(@NotNull PsiType type, @NotNull PsiClassType expectedType,
-                                       boolean primitiveExpected, @NotNull PsiElement context) {
+  private static @Nullable PsiMethod findWrapper(@NotNull PsiType type, @NotNull PsiClassType expectedType,
+                                                 boolean primitiveExpected, @NotNull PsiElement context) {
     PsiClass aClass = expectedType.resolve();
     if (aClass != null) {
       PsiType expectedReturnType = expectedType;
@@ -98,8 +96,7 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("wrap.expression.using.static.accessor.family");
   }
 
@@ -142,8 +139,7 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
 
   public static void registerWrapAction(JavaResolveResult[] candidates,
                                         PsiExpression[] expressions,
-                                        @NotNull HighlightInfo.Builder highlightInfo,
-                                        TextRange fixRange) {
+                                        @NotNull Consumer<? super CommonIntentionAction> info) {
     PsiType expectedType = null;
     PsiExpression expr = null;
 
@@ -182,8 +178,7 @@ public class WrapExpressionFix extends PsiUpdateModCommandAction<PsiExpression> 
     }
 
     if (expectedType != null) {
-      var action = new WrapExpressionFix(expectedType, expr, null);
-      highlightInfo.registerFix(action, null, null, fixRange, null);
+      info.accept(new WrapExpressionFix(expectedType, expr, null));
     }
   }
 }

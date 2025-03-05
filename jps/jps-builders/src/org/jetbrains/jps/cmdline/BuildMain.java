@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +24,7 @@ import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.incremental.storage.BuildTargetStateManager;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
@@ -143,9 +143,9 @@ public final class BuildMain {
             }
 
             // preloading target configurations and pre-calculating target dirty state
-            BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+            BuildTargetStateManager targetStateManager = projectDescriptor.dataManager.getTargetStateManager();
             for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
-              targetsState.getTargetConfiguration(target).isTargetDirty(projectDescriptor);
+              targetStateManager.isTargetDirty(target, projectDescriptor);
             }
 
             //noinspection ResultOfMethodCallIgnored

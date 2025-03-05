@@ -1,7 +1,7 @@
 // "Opt in for 'RequiresOptIn' in module 'light_idea_test_case'" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:-OptInRelease -opt-in=AnotherMarker
 // COMPILER_ARGUMENTS_AFTER: -XXLanguage:-OptInRelease -opt-in=AnotherMarker -opt-in=kotlin.RequiresOptIn
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // RUNTIME_WITH_SCRIPT_RUNTIME
 
 @RequiresOptIn<caret>

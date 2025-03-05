@@ -67,9 +67,8 @@ internal class ConvertLambdaToReferenceIntention :
         }
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtLambdaExpression): Context? {
+    override fun KaSession.prepareContext(element: KtLambdaExpression): Context? {
         val singleStatement = element.singleStatementOrNull() ?: return null
         when (singleStatement) {
             is KtCallExpression -> {

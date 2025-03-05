@@ -15,6 +15,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.io.SuperUserStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.AssumptionViolatedException;
 
 import java.io.*;
@@ -352,7 +353,7 @@ public final class IoTestUtil {
     return "\\\\127.0.0.1\\" + localPath.charAt(0) + '$' + localPath.substring(2);
   }
 
-  public static @NotNull List<@NotNull String> enumerateWslDistributions() {
+  public static @Unmodifiable @NotNull List<@NotNull String> enumerateWslDistributions() {
     assertTrue(SystemInfo.isWin10OrNewer);
     try {
       GeneralCommandLine cmd = new GeneralCommandLine("wsl", "-l", "-q").withRedirectErrorStream(true).withCharset(StandardCharsets.UTF_16LE);

@@ -116,8 +116,9 @@ abstract class KotlinInplaceParameterIntroducerBase<KotlinType, Descriptor>(
                         val parameterType = currentType ?: parameter.typeReference!!.text
                         descriptor = descriptor.copy(newParameterName = parameterName!!, newParameterTypeText = parameterType)
                         val modifier = if (valVar != KotlinValVar.None) "${valVar.keywordName} " else ""
-                        val defaultValue = if (withDefaultValue) {
-                            " = ${if (newArgumentValue is KtProperty) newArgumentValue.name else newArgumentValue.text}"
+                        val argumentValue = newArgumentValue
+                        val defaultValue = if (withDefaultValue && argumentValue != null) {
+                            " = ${if (argumentValue is KtProperty) argumentValue.name else argumentValue.text}"
                         } else ""
 
                         "$modifier$parameterName: $parameterType$defaultValue"

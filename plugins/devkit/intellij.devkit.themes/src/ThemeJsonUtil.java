@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.google.common.collect.Lists;
@@ -22,11 +22,9 @@ import java.util.stream.Collectors;
 
 public final class ThemeJsonUtil {
 
-  @NonNls
-  private static final String UI_PROPERTY_NAME = "ui";
+  private static final @NonNls String UI_PROPERTY_NAME = "ui";
 
-  @NonNls
-  private static final String COLORS_PROPERTY_NAME = "colors";
+  private static final @NonNls String COLORS_PROPERTY_NAME = "colors";
 
   static boolean isInsideUiProperty(@NotNull JsonProperty property) {
     PsiElement parent = property;
@@ -62,8 +60,7 @@ public final class ThemeJsonUtil {
     return ((JsonObject)colorsValue).getPropertyList();
   }
 
-  @Nullable
-  static Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findMetadata(@NotNull JsonProperty property) {
+  static @Nullable Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> findMetadata(@NotNull JsonProperty property) {
     final String key = property.getName();
     final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> byName = UIThemeMetadataService.getInstance().findByKey(key);
     if (byName != null) return byName;

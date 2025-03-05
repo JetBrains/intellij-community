@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.impl.UsageAdaptersKt;
@@ -191,6 +191,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    performShowUsagesAction(e);
+  }
+
+  @ApiStatus.Internal
+  public static void performShowUsagesAction(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
 
@@ -210,7 +215,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     RelativePoint popupPosition = editor != null
                                   ? popupFactory.guessBestPopupLocation(editor)
                                   : popupFactory.guessBestPopupLocation(dataContext);
-    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName());
     ReadAction.nonBlocking(() -> ResolverKt.allTargets(dataContext))
       .expireWith(project).finishOnUiThread(ModalityState.nonModal(), variants -> showUsages(project, variants, popupPosition, editor, searchScope))
       .submit(AppExecutorUtil.getAppExecutorService());
@@ -260,7 +265,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                 @NotNull RelativePoint popupPosition,
                                 @NotNull SearchTarget target) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName());
     ShowTargetUsagesActionHandler.showUsages(
       project, searchScope, target,
       ShowUsagesParameters.initial(project, editor, popupPosition)
@@ -303,7 +308,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         options.searchScope = scope;
       }
       else {
-        options.searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+        options.searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName());
       }
       actionHandler = createActionHandler(handler, options, title);
     }
@@ -428,15 +433,30 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         findUsagesManager.findUsages(
           handler.getPrimaryElements(), handler.getSecondaryElements(),
           handler, options,
-          FindSettings.getInstance().isSkipResultsWithOneUsage()
+          FindUsagesSettings.getInstance().isSkipResultsWithOneUsage()
         );
       }
 
       @Override
       public @NotNull ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope) {
+        return withScope(searchScope, false);
+      }
+
+      @Override
+      public @NotNull ShowUsagesActionHandler withMaximalScope() {
+        return withScope(getMaximalScope(), true);
+      }
+
+      private @NotNull ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope, boolean isMaximalScope) {
         FindUsagesOptions newOptions = options.clone();
         newOptions.searchScope = searchScope;
+        newOptions.isMaximalScope = isMaximalScope;
         return createActionHandler(handler, newOptions, title);
+      }
+
+      @Override
+      public boolean isSaveScope() {
+        return !options.isMaximalScope;
       }
 
       @Override
@@ -523,6 +543,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     ReadAction.nonBlocking(() -> actionHandler.getEventData()).submit(AppExecutorUtil.getAppExecutorService()).onSuccess(
       (eventData) -> UsageViewStatisticsCollector.logSearchStarted(project, usageView, CodeNavigateSource.ShowUsagesPopup, eventData));
     final SearchScope searchScope = actionHandler.getSelectedScope();
+    if (actionHandler.isSaveScope()) {
+      FindUsagesSettings.getInstance().setDefaultScopeName(searchScope.getDisplayName());
+    }
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
     Ref<UsageNode> preselectedRow = new Ref<>();
@@ -745,10 +768,15 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         }
         findUsageSpan.end();
         long current = System.nanoTime();
+        long firstUsageTimestamp = firstUsageAddedTS.get();
+        long durationFirstResults = -1; // If there is no usage found, we don't set durationFirstResults but mark it as -1.
+        if (firstUsageTimestamp != 0) { // firstUsageTimestamp == 0 means that no usage was found.
+          durationFirstResults = TimeUnit.NANOSECONDS.toMillis(firstUsageTimestamp - searchStarted);
+        }
         UsageViewStatisticsCollector.logSearchFinished(project, usageView,
                                                        actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(),
                                                        visibleUsages.size(),
-                                                       TimeUnit.NANOSECONDS.toMillis(firstUsageAddedTS.get() - searchStarted),
+                                                       durationFirstResults,
                                                        TimeUnit.NANOSECONDS.toMillis(current - searchStarted),
                                                        tooManyResults.get(),
                                                        indicator.isCanceled(),
@@ -1109,7 +1137,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
         String selectedFile = file;
 
-        UsageAdaptersKt.getUsageInfo(adapters, project).thenAccept(selectedUsages -> {
+        UsageAdaptersKt.getUsageInfoAsFuture(adapters, project).thenAccept(selectedUsages -> {
           ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
               .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
                 usagePreviewPanel.updateLayout(project, selectedUsages);
@@ -1660,7 +1688,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     if (showUsagesPopupData != null) {
       cancel(showUsagesPopupData.popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
     }
-    ShowUsagesActionHandler handler = actionHandler.withScope(actionHandler.getMaximalScope());
+    ShowUsagesActionHandler handler = actionHandler.withMaximalScope();
     if (handler != null) {
       showElementUsages(parameters, handler);
     }

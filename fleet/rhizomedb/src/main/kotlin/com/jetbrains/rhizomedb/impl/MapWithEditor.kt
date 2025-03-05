@@ -3,7 +3,7 @@ package com.jetbrains.rhizomedb.impl
 
 import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.EID
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 

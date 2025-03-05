@@ -1,42 +1,28 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiPackage
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.analysis.KotlinBaseAnalysisBundle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
+import org.jetbrains.kotlin.idea.refactoring.rename.runProcessWithProgressSynchronously
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtConstantExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtParenthesizedExpression
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtThisExpression
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
@@ -77,6 +63,10 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         }
     }
 
+    override fun startInWriteAction(): Boolean {
+        return false
+    }
+
     private fun KtExpression.childOfBlock(): KtExpression? = PsiTreeUtil.findFirstParent(this) {
         val parent = it.parent
         parent is KtBlockExpression || parent is KtValueArgument
@@ -115,15 +105,17 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
         replaceReference(referenceElement, refactoringTarget.targetElementValue, lastTarget, psiFactory)
 
-        block.addRange(refactoringTarget.targetElementValue, lastTarget)
+        runWriteAction {
+            block.addRange(refactoringTarget.targetElementValue, lastTarget)
 
-        if (!scopeFunction.isParameterScope) {
-            removeRedundantThisQualifiers(block)
-        }
+            if (!scopeFunction.isParameterScope) {
+                removeRedundantThisQualifiers(block)
+            }
 
-        with(firstTarget) {
-            parent.addBefore(scopeFunctionCall, this)
-            parent.deleteChildRange(this, lastTarget)
+            with(firstTarget) {
+                parent.addBefore(scopeFunctionCall, this)
+                parent.deleteChildRange(this, lastTarget)
+            }
         }
 
         return true
@@ -182,14 +174,16 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
 
         val range = PsiTreeUtil.getElementsOfRange(firstTarget, lastTarget)
 
-        ReferencesSearch.search(searchParameters)
-            .mapNotNull { it.element as? KtNameReferenceExpression }
-            .filter { reference ->
-                range.any { rangeElement -> PsiTreeUtil.isAncestor(rangeElement, reference, /* strict = */ true) }
-            }
-            .forEach { referenceInRange ->
-                referenceInRange.replace(replacement)
-            }
+        runProcessWithProgressSynchronously(KotlinBaseAnalysisBundle.message("dialog.message.collect.usages"), true, element.project) {
+            ReferencesSearch.search(searchParameters)
+                .asIterable()
+                .mapNotNull { it.element as? KtNameReferenceExpression }
+                .filter { reference ->
+                    runReadAction { range.any { rangeElement -> PsiTreeUtil.isAncestor(rangeElement, reference, /* strict = */ true) } }
+                }
+        }.forEach { referenceInRange ->
+            runWriteAction { referenceInRange.replace(replacement) }
+        }
     }
 
     private fun KtExpression.tryExtractReferenceName(): Pair<PsiElement, String>? {

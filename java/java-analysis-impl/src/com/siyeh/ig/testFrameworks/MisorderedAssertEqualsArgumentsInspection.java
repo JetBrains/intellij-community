@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -27,14 +27,12 @@ import java.util.Set;
  */
 public final class MisorderedAssertEqualsArgumentsInspection extends BaseInspection {
 
-  @NonNls
-  private static final Set<String> methodNames =
+  private static final @NonNls Set<String> methodNames =
     ContainerUtil.newHashSet("assertEquals", "assertEqualsNoOrder", "assertNotEquals", "assertArrayEquals", "assertSame",
                              "assertNotSame", "failNotSame", "failNotEquals");
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("misordered.assert.equals.arguments.problem.descriptor");
   }
 
@@ -46,8 +44,7 @@ public final class MisorderedAssertEqualsArgumentsInspection extends BaseInspect
   private class FlipArgumentsFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("misordered.assert.equals.arguments.flip.quickfix");
     }
 

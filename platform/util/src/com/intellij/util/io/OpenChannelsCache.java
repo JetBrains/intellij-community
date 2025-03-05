@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -29,7 +29,7 @@ import static java.nio.file.StandardOpenOption.*;
  * without wrapping.
  */
 @ApiStatus.Internal
-final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
+public final class OpenChannelsCache { // TODO: Will it make sense to have a background thread, that flushes the cache by timeout?
   private final int myCapacity;
   private int myHitCount;
   private int myMissCount;

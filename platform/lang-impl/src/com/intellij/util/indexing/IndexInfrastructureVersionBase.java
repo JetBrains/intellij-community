@@ -8,14 +8,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.stubs.BinaryFileStubBuilder;
-import com.intellij.psi.stubs.BinaryFileStubBuilders;
-import com.intellij.psi.stubs.StubIndexExtension;
-import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.psi.stubs.*;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.TemplateLanguageStubBaseVersion;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -144,23 +143,26 @@ public class IndexInfrastructureVersionBase {
   public static @NotNull Map<String, String> stubFileElementTypeVersions() {
     var builder = new HashMap<String, String>();
 
-    for (IFileElementType fileElementType : getAllStubFileElementTypes()) {
-      if (fileElementType instanceof IStubFileElementType) {
-        int stubVersion = getStubFileElementBaseVersion((IStubFileElementType<?>)fileElementType);
-        String name = getStubFileElementTypeKey((IStubFileElementType<?>)fileElementType);
+    for (LanguageStubDescriptor stubDescriptor : getAllLanguageStubDescriptors()) {
+      int stubVersion = getStubFileElementBaseVersion(stubDescriptor);
+      String name = getStubFileElementTypeKey(stubDescriptor);
 
-        String newVersion = Integer.toString(stubVersion);
+      String newVersion = Integer.toString(stubVersion);
 
-        var oldValue = builder.put(name, newVersion);
-        if (oldValue != null && !oldValue.equals(newVersion)) {
-          LOG.warn("Multiple declarations of the same IFileElementType: " + name + ", old version " + oldValue + ", new version: " + newVersion);
-        }
+      var oldValue = builder.put(name, newVersion);
+      if (oldValue != null && !oldValue.equals(newVersion)) {
+        LOG.warn("Multiple declarations of the same IFileElementType: " + name + ", old version " + oldValue + ", new version: " + newVersion);
       }
     }
 
     return builder;
   }
 
+  /**
+   * @deprecated use {@link #getAllLanguageStubDescriptors} intead
+   * @return
+   */
+  @Deprecated
   public static @NotNull List<IFileElementType> getAllStubFileElementTypes() {
     return Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
       .filter(type -> type instanceof LanguageFileType)
@@ -171,14 +173,46 @@ public class IndexInfrastructureVersionBase {
       .collect(Collectors.toList());
   }
 
+  @ApiStatus.Experimental
+  public static @NotNull List<LanguageStubDescriptor> getAllLanguageStubDescriptors() {
+    StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
+    return Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
+      .filter(type -> type instanceof LanguageFileType)
+      .map(type -> ((LanguageFileType)type).getLanguage())
+      .map(fileType -> stubElementRegistryService.getStubDescriptor(fileType))
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+  }
+
+  /**
+   * @deprecated use {@link #getStubFileElementTypeKey(LanguageStubDescriptor)}
+   */
+  @Deprecated
   public static @NotNull String getStubFileElementTypeKey(@NotNull IStubFileElementType<?> fileNodeType) {
     return fileNodeType.getExternalId() + ":" + fileNodeType.getLanguage().getID();
   }
 
+  @ApiStatus.Experimental
+  public static @NotNull String getStubFileElementTypeKey(@NotNull LanguageStubDescriptor descriptor) {
+    return descriptor.getFileElementSerializer().getExternalId() + ":" + descriptor.getLanguage().getID();
+  }
+
+  /**
+   * @deprecated use {@link #getStubFileElementBaseVersion(LanguageStubDescriptor)}
+   */
+  @Deprecated
   public static int getStubFileElementBaseVersion(@NotNull IStubFileElementType<?> fileNodeType) {
     int stubVersion = fileNodeType.getStubVersion();
     return fileNodeType.getLanguage() instanceof TemplateLanguage
-           ? stubVersion - IStubFileElementType.getTemplateStubBaseVersion()
+           ? stubVersion - TemplateLanguageStubBaseVersion.getVersion()
+           : stubVersion;
+  }
+
+  @ApiStatus.Experimental
+  public static int getStubFileElementBaseVersion(@NotNull LanguageStubDescriptor descriptor) {
+    int stubVersion = descriptor.getStubDefinition().getStubVersion();
+    return descriptor.getLanguage() instanceof TemplateLanguage // todo IJPL-562 get rid of template here???
+           ? stubVersion - TemplateLanguageStubBaseVersion.getVersion()
            : stubVersion;
   }
 }

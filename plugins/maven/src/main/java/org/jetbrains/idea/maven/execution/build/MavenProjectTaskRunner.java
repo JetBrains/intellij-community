@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.build;
 
 import com.intellij.execution.Executor;
@@ -128,11 +128,10 @@ public final class MavenProjectTaskRunner extends ProjectTaskRunner {
     return false;
   }
 
-  @Nullable
   @Override
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
-                                                         @NotNull ExecuteRunConfigurationTask task,
-                                                         @Nullable Executor executor) {
+  public @Nullable ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                                   @NotNull ExecuteRunConfigurationTask task,
+                                                                   @Nullable Executor executor) {
     for (MavenExecutionEnvironmentProvider environmentProvider : MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
       if (environmentProvider.isApplicable(task)) {
         return environmentProvider.createExecutionEnvironment(project, task, executor);
@@ -209,8 +208,7 @@ public final class MavenProjectTaskRunner extends ProjectTaskRunner {
     runBatch(project, mavenRunner, "Maven Build", commands, context, callback);
   }
 
-  @NotNull
-  private static String getGoal(boolean buildOnlyResources, boolean compileOnly) {
+  private static @NotNull String getGoal(boolean buildOnlyResources, boolean compileOnly) {
     if (buildOnlyResources) {
       return "resources:resources";
     }

@@ -21,8 +21,8 @@ plugins {
 {{default_android_block}}
 
 kotlin {
-    android()
-    ios()
+    {{androidTargetPlaceholder}}
+    {{iosTargetPlaceholder}}
 
     sourceSets {
         val commonMain by getting {

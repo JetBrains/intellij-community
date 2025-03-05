@@ -6,15 +6,19 @@ import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl
 import com.intellij.codeInsight.hint.ClientHintManager
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpdatedToolbar
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -202,7 +206,11 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
     val actionManager = serviceAsync<ActionManager>()
-    if (runToCursorService.isAtExecution(editor.virtualFile ?: return, lineNumber)) {
+    val virtualFile = editor.virtualFile ?: return
+    val isAtExecution = readAction {
+      runToCursorService.isAtExecution(virtualFile, lineNumber)
+    }
+    if (isAtExecution) {
       showHint(editor, lineNumber, firstNonSpacePos, listOf(actionManager.getAction(XDebuggerActions.RESUME)), lineY)
     }
     else {
@@ -210,7 +218,14 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       if (runToCursorService.canRunToCursor(editor, lineNumber)) {
         actions.add(actionManager.getAction(IdeActions.ACTION_RUN_TO_CURSOR))
       }
-      val extraActions = (actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup).getChildren(actionManager)
+
+      val extraActions = Utils.expandActionGroupSuspend(
+                                      actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup,
+                                      PresentationFactory(),
+                                      DataManager.getInstance().getDataContext(editor.contentComponent),
+                                      ActionPlaces.EDITOR_HINT,
+                                      ActionUiKind.NONE,
+                                      false)
       actions.addAll(extraActions)
       showHint(editor, lineNumber, firstNonSpacePos, actions, lineY)
     }

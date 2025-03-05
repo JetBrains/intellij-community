@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalUiSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.*;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.EnvironmentUtil;
@@ -60,6 +61,7 @@ import java.util.function.Supplier;
 public final class TerminalSettingsPanel {
   private JPanel myWholePanel;
   private TextFieldWithHistoryWithBrowseButton myShellPathField;
+  private JBCheckBox myShowSeparatorsBetweenBlocksCheckbox;
   private JBCheckBox mySoundBellCheckBox;
   private JBCheckBox myCloseSessionCheckBox;
   private JBCheckBox myMouseReportCheckBox;
@@ -85,6 +87,7 @@ public final class TerminalSettingsPanel {
   private JBLabel myBetaLabel;
   private JPanel myNewUiChildSettingsPanel;
 
+  private JPanel myPromptStylePanel;
   private JPanel myPromptStyleButtonsPanel;
   private JBRadioButton mySingleLineButton;
   private JBRadioButton myDoubleLineButton;
@@ -114,8 +117,10 @@ public final class TerminalSettingsPanel {
     myNewUiSettingsPanel.setVisible(ExperimentalUI.isNewUI());
     myBetaLabel.setIcon(AllIcons.General.Beta);
     myNewUiChildSettingsPanel.setBorder(JBUI.Borders.emptyLeft(28));
-    myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
+    myNewUiCheckbox.setSelected(isGenOneTerminalEnabled());
     myNewUiCheckbox.addChangeListener(__ -> updateNewUiPanelState());
+
+    myShowSeparatorsBetweenBlocksCheckbox.setVisible(isGenTwoTerminalEnabled() && !isGenOneTerminalEnabled());
 
     myPromptStyleButtonsPanel.setBorder(JBUI.Borders.empty(4, 20, 0, 0));
     // UI Designer is unable to create a ContextHelpLabel, because it doesn't have a default constructor.
@@ -191,7 +196,8 @@ public final class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
-    return myNewUiCheckbox.isSelected() != Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
+    return myNewUiCheckbox.isSelected() != isGenOneTerminalEnabled()
+           || (myBlockTerminalOptions.getShowSeparatorsBetweenBlocks() != myShowSeparatorsBetweenBlocksCheckbox.isSelected())
            || (myBlockTerminalOptions.getPromptStyle() != getSelectedPromptStyle())
            || !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
@@ -215,8 +221,8 @@ public final class TerminalSettingsPanel {
     var blockTerminalSetting = Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY);
     if (blockTerminalSetting.asBoolean() != myNewUiCheckbox.isSelected()) {
       blockTerminalSetting.setValue(myNewUiCheckbox.isSelected());
-      TerminalUsageTriggerCollector.triggerBlockTerminalSwitched$intellij_terminal(myProject, myNewUiCheckbox.isSelected(),
-                                                                                   BlockTerminalSwitchPlace.SETTINGS);
+      TerminalUsageTriggerCollector.triggerBlockTerminalSwitched(myProject, myNewUiCheckbox.isSelected(),
+                                                                 BlockTerminalSwitchPlace.SETTINGS);
       if (!myNewUiCheckbox.isSelected()) {
         TerminalUsageLocalStorage.getInstance().recordBlockTerminalDisabled();
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -224,6 +230,7 @@ public final class TerminalSettingsPanel {
         }, ModalityState.nonModal());
       }
     }
+    myBlockTerminalOptions.setShowSeparatorsBetweenBlocks(myShowSeparatorsBetweenBlocksCheckbox.isSelected());
     myBlockTerminalOptions.setPromptStyle(getSelectedPromptStyle());
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());
@@ -253,7 +260,8 @@ public final class TerminalSettingsPanel {
   }
 
   public void reset() {
-    myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
+    myNewUiCheckbox.setSelected(isGenOneTerminalEnabled());
+    myShowSeparatorsBetweenBlocksCheckbox.setSelected(myBlockTerminalOptions.getShowSeparatorsBetweenBlocks());
     var promptStyle = myBlockTerminalOptions.getPromptStyle();
     mySingleLineButton.setSelected(promptStyle == TerminalPromptStyle.SINGLE_LINE);
     myDoubleLineButton.setSelected(promptStyle == TerminalPromptStyle.DOUBLE_LINE);
@@ -309,8 +317,8 @@ public final class TerminalSettingsPanel {
     });
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myConfigureTerminalKeybindingsActionLink);
     myCursorShape = new ComboBox<>(TerminalUiSettingsManager.CursorShape.values());
-    myCursorShape.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
-      label.setText(value.getText());
+    myCursorShape.setRenderer(BuilderKt.textListCellRenderer(value -> {
+      return value.getText();
     }));
     myShellPathField = createShellPath();
   }
@@ -407,8 +415,7 @@ public final class TerminalSettingsPanel {
     }
   }
 
-  @NotNull
-  private static Color findColorByKey(String... colorKeys) {
+  private static @NotNull Color findColorByKey(String... colorKeys) {
     Color c = null;
     for (String key : colorKeys) {
       c = UIManager.getColor(key);
@@ -419,6 +426,14 @@ public final class TerminalSettingsPanel {
 
     assert c != null : "Can't find color for keys " + Arrays.toString(colorKeys);
     return c;
+  }
+
+  private static boolean isGenOneTerminalEnabled() {
+    return Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY, false);
+  }
+
+  private static boolean isGenTwoTerminalEnabled() {
+    return Registry.is(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY, false);
   }
 
   public Color getChangedValueColor() {

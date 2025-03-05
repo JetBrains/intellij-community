@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import com.intellij.codeInsight.CodeInsightUtilCore
@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.refactoring.conflicts.filterCandidates
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
@@ -72,7 +73,7 @@ fun checkClassLikeNameShadowing(declaration: KtNamedDeclaration, newName: String
             val klass = it.psi
             val newFqName = (klass as? KtClassOrObject)?.fqName ?: (klass as? PsiClass)?.qualifiedName?.let { FqName.fromSegments(it.split(".")) }
             if (newFqName != null && klass != null && processedClasses.add(klass)) {
-                for (ref in ReferencesSearch.search(klass, declaration.useScope)) {
+                for (ref in ReferencesSearch.search(klass, declaration.useScope).asIterable()) {
                     val refElement = ref.element as? KtSimpleNameExpression ?: continue //todo cross language conflicts
                     if (refElement.getStrictParentOfType<KtTypeReference>() != null) {
                         //constructor (also implicit) calls would be processed together with other callables
@@ -101,7 +102,8 @@ fun checkCallableShadowing(
         val usage = usageIterator.next()
         val refElement = usage.element as? KtSimpleNameExpression ?: continue
         if (refElement.getStrictParentOfType<KtTypeReference>() != null ||
-            refElement.getStrictParentOfType<KtImportDirective>() != null) continue
+            refElement.getStrictParentOfType<KtImportDirective>() != null ||
+            refElement.parent is KtValueArgumentName) continue
 
         val parent = refElement.parent
         val callExpression = parent as? KtCallExpression ?: parent as? KtQualifiedExpression ?: parent as? KtCallableReferenceExpression ?: refElement
@@ -305,7 +307,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                     } else if (containingSymbol == null) {
                         (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
                     } else null
-                containerFQN?.asString()?.takeIf { it.isNotEmpty() }
+                containerFQN?.quoteIfNeeded()?.asString()?.takeIf { it.isNotEmpty() }
             }
         } ?: return null
 

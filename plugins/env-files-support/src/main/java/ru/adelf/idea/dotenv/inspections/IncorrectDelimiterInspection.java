@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.psi.DotEnvTypes;
@@ -17,10 +18,9 @@ import ru.adelf.idea.dotenv.psi.impl.DotEnvKeyImpl;
 public class IncorrectDelimiterInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
-    @NotNull
     @Override
-    public String getDisplayName() {
-        return "Incorrect delimiter";
+    public @NotNull String getDisplayName() {
+        return DotEnvBundle.message("inspection.name.incorrect.delimiter");
     }
 
     @Override
@@ -28,9 +28,8 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
         return true;
     }
 
-    @Nullable
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public @Nullable ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }
@@ -38,13 +37,13 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
         return analyzeFile(file, manager, isOnTheFly).getResultsArray();
     }
 
-    @NotNull
-    private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static @NotNull ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvKeyImpl.class).forEach(key -> {
             if (key.getText().contains("-")) {
-                problemsHolder.registerProblem(key, "Expected: '_' Found: '-'"/*, new ReplaceDelimiterQuickFix()*/);
+                problemsHolder.registerProblem(key,
+                                               DotEnvBundle.message("inspection.message.expected.found")/*, new ReplaceDelimiterQuickFix()*/);
             }
         });
 
@@ -53,12 +52,12 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
 
     private static class ReplaceDelimiterQuickFix implements LocalQuickFix {
 
-        @NotNull
         @Override
-        public String getName() {
-            return "Replace delimiter";
+        public @NotNull String getName() {
+            return DotEnvBundle.message("intention.name.replace.delimiter");
         }
 
+        @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             try {
                 PsiElement psiElement = descriptor.getPsiElement();
@@ -72,8 +71,8 @@ public class IncorrectDelimiterInspection extends LocalInspectionTool {
             }
         }
 
-        @NotNull
-        public String getFamilyName() {
+        @Override
+        public @NotNull String getFamilyName() {
             return getName();
         }
     }

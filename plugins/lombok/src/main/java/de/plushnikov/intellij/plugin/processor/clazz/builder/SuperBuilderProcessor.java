@@ -49,9 +49,8 @@ public final class SuperBuilderProcessor extends AbstractClassProcessor {
     return List.of(builderMethodName, BuilderHandler.TO_BUILDER_METHOD_NAME, constructorName);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
     addJacksonizedAnnotation(psiClass, result);
     addFieldsAnnotation(result, psiClass, BuilderProcessor.SINGULAR_CLASS, BuilderProcessor.BUILDER_DEFAULT_CLASS);

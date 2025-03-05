@@ -3,6 +3,7 @@ package com.intellij.platform.workspace.storage.tests.containers
 
 import com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntBiMap
 import com.intellij.platform.workspace.storage.impl.containers.NonNegativeIntIntBiMap
+import com.intellij.testFramework.propertyBased.MadTestingUtil.assertNoErrorLoggedIn
 import com.intellij.util.containers.BidirectionalMap
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
@@ -15,7 +16,7 @@ class NonNegativeIntIntBiMapPropertyTest {
   @Test
   fun propertyTest() {
     PropertyChecker.checkScenarios {
-      ImperativeCommand { env ->
+      assertNoErrorLoggedIn(ImperativeCommand { env ->
         val myMap = MutableNonNegativeIntIntBiMap()
         val workingMap = BidirectionalMap<Int, Int>()
 
@@ -26,7 +27,7 @@ class NonNegativeIntIntBiMapPropertyTest {
           RemoveKeyValue(myMap, workingMap),
           ToImmutable(myMap, workingMap)
         ))
-      }
+      })
     }
   }
 

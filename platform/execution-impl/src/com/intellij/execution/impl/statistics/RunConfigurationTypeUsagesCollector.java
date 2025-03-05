@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.EnvFilesOptions;
@@ -127,6 +127,11 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   }
 
   @Override
+  protected boolean requiresSmartMode() {
+    return true;
+  }
+
+  @Override
   protected boolean requiresReadAccess() {
     return true;
   }
@@ -156,10 +161,10 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
             featureUsed = StringUtil.isNotEmpty((String)value);
           }
           else if (value instanceof Collection) {
-            featureUsed = ((Collection<?>)value).size() > 0;
+            featureUsed = !((Collection<?>)value).isEmpty();
           }
           else if (value instanceof Map) {
-            featureUsed = ((Map<?, ?>)value).size() > 0;
+            featureUsed = !((Map<?, ?>)value).isEmpty();
           }
           else {
             continue;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
@@ -54,9 +54,6 @@ import java.util.function.Supplier;
 
 import static com.intellij.ui.border.NamedBorderKt.withName;
 
-/**
- * @author Dmitry Avdeev
- */
 public class EditorNotificationPanel extends JPanel implements IntentionActionProvider, Weighted {
 
   private static final Supplier<EditorColorsScheme> GLOBAL_SCHEME_SUPPLIER = () -> EditorColorsManager.getInstance().getGlobalScheme();
@@ -402,7 +399,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   public interface ActionHandler {
     /**
-     * Invoked when an action-link click from the notification panel
+     * Invoked when an action-link clicks from the notification panel
      */
     void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
                                 @NotNull HyperlinkEvent event);
@@ -722,15 +719,14 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  @NotNull
-  private static Icon getPromoIcon() {
+  private static @NotNull Icon getPromoIcon() {
     // todo it can be different in PyCharm Pro
     return AllIcons.Ultimate.Lock;
   }
 
   public enum Status {
     Info(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, () -> AllIcons.General.BalloonInformation),
-    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, () -> AllIcons.Debugger.ThreadStates.Idle),
+    Success(JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND, JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR, () -> AllIcons.Status.Success),
     Warning(JBUI.CurrentTheme.Banner.WARNING_BACKGROUND, JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR, () -> AllIcons.General.BalloonWarning),
     Error(JBUI.CurrentTheme.Banner.ERROR_BACKGROUND, JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR, () -> AllIcons.General.BalloonError),
     Promo(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR, EditorNotificationPanel::getPromoIcon);

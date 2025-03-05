@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.DynamicBundle;
@@ -9,15 +10,14 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public class GradleDeprecatedMessagesBundle extends DynamicBundle {
-  @NonNls public static final String PATH_TO_BUNDLE = "messages.GradleDeprecatedMessagesBundle";
+  public static final @NonNls String PATH_TO_BUNDLE = "messages.GradleDeprecatedMessagesBundle";
   private static final GradleDeprecatedMessagesBundle BUNDLE = new GradleDeprecatedMessagesBundle();
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return BUNDLE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return BUNDLE.getLazyMessage(key, params);
   }
 

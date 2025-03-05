@@ -34,4 +34,8 @@ public class LombokGetterActionTest extends LombokLightActionTestCase {
   public void testGetterWithAnnotationChange() throws Exception {
     doTest();
   }
+
+  public void testGetterWithCustomCode() throws Exception {
+    doTest();
+  }
 }

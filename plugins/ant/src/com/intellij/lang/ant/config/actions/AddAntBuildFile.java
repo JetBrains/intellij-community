@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-final class AddAntBuildFile extends AnAction {
+@ApiStatus.Internal
+public final class AddAntBuildFile extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
@@ -47,7 +49,7 @@ final class AddAntBuildFile extends AnAction {
     }
 
     int filesAdded = 0;
-    @Nls final StringBuilder errors = new StringBuilder();
+    final @Nls StringBuilder errors = new StringBuilder();
 
     for (VirtualFile file : files) {
       try {

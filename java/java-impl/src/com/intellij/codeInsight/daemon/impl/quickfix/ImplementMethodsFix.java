@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -123,7 +124,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return IntentionPreviewInfo.DIFF;
   }
 
-  public static @NotNull List<PsiMethodMember> filterNonDefaultMethodMembers(Collection<CandidateInfo> overrideImplement) {
+  public static @Unmodifiable @NotNull List<PsiMethodMember> filterNonDefaultMethodMembers(Collection<CandidateInfo> overrideImplement) {
     return ContainerUtil.map(
       ContainerUtil.filter(overrideImplement,
                            t -> t.getElement() instanceof PsiMethod method && !method.hasModifierProperty(PsiModifier.DEFAULT)),

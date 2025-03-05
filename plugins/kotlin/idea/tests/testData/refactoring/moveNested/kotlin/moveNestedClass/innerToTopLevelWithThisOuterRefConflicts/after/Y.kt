@@ -1,6 +1,8 @@
 package test
 
-class Y(private val a: X) {
+import test.X.foo
+
+class Y(private val x: X) {
     fun test() {
         1.foo()
         with(1) { foo() }

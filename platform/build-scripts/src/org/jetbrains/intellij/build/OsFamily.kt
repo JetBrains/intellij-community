@@ -12,6 +12,9 @@ enum class OsFamily(
   /** presentable name of OS */
   @JvmField
   val osName: String,
+  /** directory name in cross-platform distribution and various temporary locations */
+  @JvmField
+  val dirName: String,
   /** suffix for directory name where OS-specific files are produces */
   @JvmField
   val distSuffix: String,
@@ -19,9 +22,9 @@ enum class OsFamily(
   @JvmField
   val jbrArchiveSuffix: String
 ) {
-  WINDOWS(osId = BuildOptions.OS_WINDOWS, osName = "Windows", distSuffix = "win", jbrArchiveSuffix = "windows"),
-  MACOS(osId = BuildOptions.OS_MAC, osName = "macOS", distSuffix = "mac", jbrArchiveSuffix = "osx"),
-  LINUX(osId = BuildOptions.OS_LINUX, osName = "Linux", distSuffix = "unix", jbrArchiveSuffix = "linux");
+  WINDOWS(osId = BuildOptions.OS_WINDOWS, osName = "Windows", dirName = "win", distSuffix = "win", jbrArchiveSuffix = "windows"),
+  MACOS(osId = BuildOptions.OS_MAC, osName = "macOS", dirName = "mac", distSuffix = "mac", jbrArchiveSuffix = "osx"),
+  LINUX(osId = BuildOptions.OS_LINUX, osName = "Linux", dirName = "linux", distSuffix = "unix", jbrArchiveSuffix = "linux");
 
   companion object {
     @JvmField

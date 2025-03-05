@@ -48,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
+
 final class TrafficLightPopup {
   private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = new ExtensionPointName<>("com.intellij.inspectionPopupLevelChangePolicy");
   private static final int DELTA_X = 6;
@@ -347,6 +349,11 @@ final class TrafficLightPopup {
       @Override
       protected @NotNull String itemToString(@NotNull InspectionsLevel item) {
         return prefix + item;
+      }
+
+      @Override
+      public @NotNull ListCellRenderer<? super InspectionsLevel> createRenderer() {
+        return textListCellRenderer(level -> level.toString());
       }
     };
   }

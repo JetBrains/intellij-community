@@ -15,20 +15,14 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.codeInsight.intentions.fake.ReplaceItWithExplicitFunctionLiteralParamIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.addExplicitItParameter
+import org.jetbrains.kotlin.idea.codeinsight.utils.scopeFunctionsList
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-
-private val scopeFunctions: List<FqName> = listOf(
-    "kotlin.also",
-    "kotlin.let",
-    "kotlin.takeIf",
-    "kotlin.takeUnless",
-).map { FqName(it) }
 
 internal class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
 
@@ -49,7 +43,7 @@ internal class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinI
         val qualifiedExpression = lambda.getStrictParentOfType<KtQualifiedExpression>()
         if (qualifiedExpression != null
             && qualifiedExpression.receiverExpression.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
-            && qualifiedExpression.callExpression?.isCalling(scopeFunctions, context) == true
+            && qualifiedExpression.callExpression?.isCalling(scopeFunctionsList, context) == true
         ) return@lambdaExpressionVisitor
 
         lambda.forEachDescendantOfType<KtNameReferenceExpression> { expression ->
@@ -79,13 +73,7 @@ internal class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinI
             val lambda = implicitParameterReference.getStrictParentOfType<KtLambdaExpression>() ?: return
             val parentLambda = lambda.getParentImplicitParameterLambda() ?: return
 
-            val parameter = parentLambda.functionLiteral
-                .getOrCreateParameterList()
-                .addParameterBefore(
-                    KtPsiFactory(project).createLambdaParameterList(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier).parameters.first(),
-                    null,
-                )
-
+            val parameter = parentLambda.addExplicitItParameter()
             val editor = parentLambda.findExistingEditor() ?: return
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
             editor.caretModel.moveToOffset(parameter.startOffset)

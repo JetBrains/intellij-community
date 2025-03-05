@@ -10,6 +10,7 @@ import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.text
 import com.intellij.ui.dsl.builder.trimmedTextValidation
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.newProjectWizard.deniedCharsValidation
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider.Companion.bindProjectName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,16 +35,22 @@ interface ProjectPathProvider {
   val projectPathFlows: ProjectPathFlows
 
   companion object {
+
     /**
      * Binds [com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings] property to the certain cell and updates it each time project path is changes
+     * [deniedChars] are added to validation and replaced with `_`
      */
+    @JvmOverloads
     @RequiresEdt
-    fun Cell<JTextField>.bindProjectName(projectPathProvider: ProjectPathProvider, property: KMutableProperty0<@NlsSafe String>) = apply {
+    fun Cell<JTextField>.bindProjectName(projectPathProvider: ProjectPathProvider, property: KMutableProperty0<@NlsSafe String>, deniedChars: Regex? = null) = apply {
       trimmedTextValidation(CHECK_NON_EMPTY, CHECK_NO_WHITESPACES)
+      deniedChars?.let {
+        trimmedTextValidation(deniedCharsValidation(it))
+      }
       bindText(property)
       projectPathProvider.onProjectFileNameChanged {
         withContext(Dispatchers.EDT) {
-          text(it)
+          text(deniedChars?.replace(it, "_") ?: it)
         }
       }
     }

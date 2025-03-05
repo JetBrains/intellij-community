@@ -27,9 +27,7 @@ public interface PluginDescriptor {
     return false;
   }
 
-  /**
-   * @deprecated Use {@link #getPluginPath()}
-   */
+  /** @deprecated Use {@link #getPluginPath()} */
   @Deprecated
   default File getPath() {
     Path path = getPluginPath();
@@ -52,15 +50,8 @@ public interface PluginDescriptor {
 
   boolean isLicenseOptional();
 
-  /**
-   * @deprecated Do not use.
-   */
-  @Deprecated
-  PluginId @NotNull [] getOptionalDependentPluginIds();
-
   @Nullable @NlsSafe String getVendor();
 
-  //TODO: remove default implementation in 2021.3
   default @Nullable @NlsSafe String getOrganization() {
     return null;
   }
@@ -78,15 +69,6 @@ public interface PluginDescriptor {
   @Nullable String getVendorUrl();
 
   @Nullable String getUrl();
-
-  /**
-   * @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  default @Nullable String getDownloads() {
-    return null;
-  }
 
   @Nullable @NlsSafe String getSinceBuild();
 

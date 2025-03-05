@@ -16,6 +16,7 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
+import java.io.IOException
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -28,7 +29,7 @@ import kotlin.time.Duration.Companion.days
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".bin"
 
-private const val cacheVersion: Byte = 10
+private const val cacheVersion: Byte = 11
 
 internal class LocalDiskJarCacheManager(
   private val cacheDir: Path,
@@ -82,7 +83,11 @@ internal class LocalDiskJarCacheManager(
     val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
     if (checkCache(cacheMetadataFile = cacheMetadataFile, cacheFile = cacheFile, sources = sources, items = items, span = span, nativeFiles = nativeFiles)) {
       // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
-      Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
+      try {
+        Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
+      } catch (e: IOException) {
+        Span.current().addEvent("update cacheFile modification time failed: $e")
+      }
 
       span.addEvent(
         "use cache",

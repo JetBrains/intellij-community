@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.bugzilla;
 
 import com.intellij.openapi.project.Project;
@@ -16,27 +17,23 @@ import java.util.EnumSet;
  * @author Mikhail Golubev
  */
 public class BugzillaRepositoryType extends TaskRepositoryType<BugzillaRepository> {
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Bugzilla";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Bugzilla;
   }
 
-  @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(BugzillaRepository repository, Project project, Consumer<? super BugzillaRepository> changeListener) {
+  public @NotNull TaskRepositoryEditor createEditor(BugzillaRepository repository, Project project, Consumer<? super BugzillaRepository> changeListener) {
     return new BugzillaRepositoryEditor(project, repository, changeListener);
   }
 
-  @NotNull
   @Override
-  public TaskRepository createRepository() {
+  public @NotNull TaskRepository createRepository() {
     return new BugzillaRepository(this);
   }
 

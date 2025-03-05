@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.jsonRpc.socket;
 
 import com.intellij.openapi.Disposable;
@@ -43,21 +43,18 @@ public final class RpcBinaryRequestHandler extends BinaryRequestHandler implemen
     return BinaryRequestHandler.EP_NAME.findExtension(RpcBinaryRequestHandler.class).getServer();
   }
 
-  @NotNull
-  private JsonRpcServer getServer() {
+  private @NotNull JsonRpcServer getServer() {
     clientManager.getValue();
     return rpcServer;
   }
 
-  @NotNull
   @Override
-  public UUID getId() {
+  public @NotNull UUID getId() {
     return ID;
   }
 
-  @NotNull
   @Override
-  public ChannelHandler getInboundHandler(@NotNull ChannelHandlerContext context) {
+  public @NotNull ChannelHandler getInboundHandler(@NotNull ChannelHandlerContext context) {
     SocketClient client = new SocketClient(context.channel());
     context.channel().attr(ClientManagerKt.getCLIENT()).set(client);
     clientManager.getValue().addClient(client);

@@ -110,7 +110,7 @@ object WindowsFileUtil {
     /*
      * known reasons for a null hProcess:
      *   1) CreateProcess didn't result in creation of a new process
-     *   2) lpСommandline first / lpWorkingDir arg is a symlink and was not resolved
+     *   2) lpCommandLine first / lpWorkingDir arg is a symlink and was not resolved
      */
     require(pi.hProcess != null) {
       "hProcess should not be null in our case"

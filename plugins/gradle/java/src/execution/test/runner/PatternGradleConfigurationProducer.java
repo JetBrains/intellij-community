@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -127,15 +127,13 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     });
   }
 
-  @NotNull
-  private static String suggestConfigurationName(List<String> tests) {
+  private static @NotNull String suggestConfigurationName(List<String> tests) {
     if (tests.isEmpty()) return "";
     if (tests.size() == 1) return tests.get(0);
     return GradleBundle.message("gradle.tests.pattern.producer.configuration.name", tests.get(0), tests.size() - 1);
   }
 
-  @Nullable
-  private static Module getModuleFromContext(ConfigurationContext context) {
+  private static @Nullable Module getModuleFromContext(ConfigurationContext context) {
     Module module = context.getModule();
     if (module != null) return module;
     Location contextLocation = context.getLocation();
@@ -144,8 +142,7 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
     return ModuleUtilCore.findModuleForPsiElement(locationElement);
   }
 
-  @NotNull
-  private static TestMappings getTestMappings(@NotNull Project project, @NotNull List<String> tests) {
+  private static @NotNull TestMappings getTestMappings(@NotNull Project project, @NotNull List<String> tests) {
     Map<String, PsiClass> classes = new LinkedHashMap<>();
     Map<String, String> methods = new LinkedHashMap<>();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -187,9 +184,8 @@ public final class PatternGradleConfigurationProducer extends GradleTestRunConfi
 
   private static class GradlePatternBasedConfigurationProducer<T extends JavaTestConfigurationBase>
     extends AbstractPatternBasedConfigurationProducer<T> {
-    @NotNull
     @Override
-    public ConfigurationFactory getConfigurationFactory() {
+    public @NotNull ConfigurationFactory getConfigurationFactory() {
       return GradleExternalTaskConfigurationType.getInstance().getFactory();
     }
 

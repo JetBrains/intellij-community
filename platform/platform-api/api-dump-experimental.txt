@@ -164,61 +164,9 @@ com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.project.DumbAware
 - *:createFileEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 - *bs:createFileEditor$suspendImpl(com.intellij.openapi.fileEditor.AsyncFileEditorProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
-*:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
-- *sf:Companion:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Companion
-- s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
-- s:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0$Multicaster
-- s:create2():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2$Multicaster
-- a:filterEvents(kotlin.jvm.functions.Function1):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
-- a:ignoreParameters():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
-- a:mapParameters(kotlin.jvm.functions.Function1):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
-- a:onceWhenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- onceWhenEventHappened(kotlin.jvm.functions.Function1):V
-- a:whenEventHappened(I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- whenEventHappened(I,kotlin.jvm.functions.Function1):V
-- a:whenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- whenEventHappened(kotlin.jvm.functions.Function1):V
-*f:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Companion
-- f:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
-- f:create():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0$Multicaster
-- f:create2():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2$Multicaster
-*:com.intellij.openapi.observable.dispatcher.SingleEventDispatcher$Multicaster
-- com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
-- a:fireEvent(java.lang.Object):V
-*Fa:com.intellij.openapi.observable.operation.core.AbstractObservableOperationTrace
-- com.intellij.openapi.observable.operation.core.ObservableTaskOperationTrace
-- <init>():V
-- getDetachTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
-- getFinishObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
-- getFinishTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
-- getScheduleObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
-- getScheduleTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
-- getStartObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
-- getStartTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
-*f:com.intellij.openapi.observable.operation.core.AtomicOperationTrace
-- com.intellij.openapi.observable.operation.core.AbstractObservableOperationTrace
-- com.intellij.openapi.observable.operation.core.MutableOperationTrace
-- *sf:Companion:com.intellij.openapi.observable.operation.core.AtomicOperationTrace$Companion
-- <init>():V
-- <init>(java.lang.String):V
-- <init>(java.lang.String,Z):V
-- <init>(Z):V
-- detach(com.intellij.openapi.observable.operation.OperationExecutionId):V
-- detachAll():V
-- getName():java.lang.String
-- getState():com.intellij.openapi.observable.operation.core.ObservableOperationState
-- getStatus():com.intellij.openapi.observable.operation.core.ObservableOperationStatus
-- traceFinish(com.intellij.openapi.observable.operation.OperationExecutionId,com.intellij.openapi.observable.operation.OperationExecutionStatus):V
-- traceSchedule(com.intellij.openapi.observable.operation.OperationExecutionId):V
-- traceStart(com.intellij.openapi.observable.operation.OperationExecutionId):V
-*f:com.intellij.openapi.observable.operation.core.AtomicOperationTrace$Companion
-*:com.intellij.openapi.observable.operation.core.ObservableOperationTrace
-- a:getFinishObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
-- a:getName():java.lang.String
-- a:getScheduleObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
-- a:getStartObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
-- a:getStatus():com.intellij.openapi.observable.operation.core.ObservableOperationStatus
 f:com.intellij.openapi.observable.util.ListenerUiUtil
+- *sf:whenItemChangedFromUi(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- *bs:whenItemChangedFromUi$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - *sf:whenItemSelectedFromUi(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - *bs:whenItemSelectedFromUi$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - *sf:whenStateChangedFromUi(javax.swing.JCheckBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
@@ -233,6 +181,9 @@ f:com.intellij.openapi.observable.util.PropertyOperationUtil
 - *sf:backwardFilter(com.intellij.openapi.observable.properties.ObservableMutableProperty,kotlin.jvm.functions.Function1):com.intellij.openapi.observable.properties.ObservableMutableProperty
 *:com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 - a:getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
+*:com.intellij.openapi.options.ObservableOptionEditor
+- com.intellij.openapi.options.OptionEditor
+- a:getResultFlow():kotlinx.coroutines.flow.StateFlow
 *:com.intellij.openapi.options.OptionEditor
 - a:getComponent():javax.swing.JComponent
 - a:result():java.lang.Object
@@ -285,6 +236,20 @@ c:com.intellij.openapi.ui.ComboBox
 a:com.intellij.openapi.ui.DialogWrapper
 - *:isKeepPopupsOpen():Z
 - *:setKeepPopupsOpen(Z):V
+*c:com.intellij.openapi.ui.FileSaverRunnable
+- java.awt.event.ActionListener
+- java.lang.Runnable
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileSaverDescriptor,javax.swing.JComponent,com.intellij.openapi.ui.TextComponentAccessor):V
+- actionPerformed(java.awt.event.ActionEvent):V
+- pf:chooseFile(com.intellij.openapi.fileChooser.FileChooserDescriptor):V
+- pf:chosenFileToResultingText(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- f:getAccessor():com.intellij.openapi.ui.TextComponentAccessor
+- pf:getComponentText():java.lang.String
+- pf:getInitialFile():kotlin.Pair
+- f:getProject():com.intellij.openapi.project.Project
+- f:getTextComponent():javax.swing.JComponent
+- onFileChosen(java.io.File):V
+- run():V
 *:com.intellij.openapi.ui.UiSwitcher
 - *sf:Companion:com.intellij.openapi.ui.UiSwitcher$Companion
 - s:append(javax.swing.JComponent,com.intellij.openapi.ui.UiSwitcher):V
@@ -399,12 +364,18 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 *c:com.intellij.ui.components.JBHtmlPane
 - javax.swing.JEditorPane
 - com.intellij.openapi.Disposable
+- <init>():V
 - <init>(com.intellij.ui.components.JBHtmlPaneStyleConfiguration,com.intellij.ui.components.JBHtmlPaneConfiguration):V
 - dispose():V
 - f:getBackgroundFlow():kotlinx.coroutines.flow.StateFlow
+- p:getContentsScaleFactor():F
+- getSelectedText():java.lang.String
 - getText():java.lang.String
+- p:initializePaneConfiguration(com.intellij.ui.components.JBHtmlPaneConfiguration$Builder):V
+- p:initializeStyleConfiguration(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder):V
 - p:paintComponent(java.awt.Graphics):V
 - p:processKeyEvent(java.awt.event.KeyEvent):V
+- f:reloadCssStylesheets():V
 - setDocument(javax.swing.text.Document):V
 - setEditorKit(javax.swing.text.EditorKit):V
 - setText(java.lang.String):V
@@ -443,19 +414,19 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - <init>():V
 - <init>(kotlin.jvm.functions.Function1):V
 - sf:builder():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
-- equals(java.lang.Object):Z
 - sf:getDefaultSpaceAfterParagraph():I
 - sf:getDefaultSpaceBeforeParagraph():I
 - sf:getEditorColorClassPrefix():java.lang.String
-- hashCode():I
 *f:com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - <init>():V
 - f:build():com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 - f:colorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
+- f:colorSchemeProvider(kotlin.jvm.functions.Function0):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:editorInlineContext(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:enableCodeBlocksBackground(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:enableInlineCodeBackground(Z):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:getColorScheme():com.intellij.openapi.editor.colors.EditorColorsScheme
+- f:getColorSchemeProvider():kotlin.jvm.functions.Function0
 - f:getEditorInlineContext():Z
 - f:getElementStyleOverrides():com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides
 - f:getEnableCodeBlocksBackground():Z
@@ -472,6 +443,7 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - f:overrideElementStyle(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:overrideElementStyle(kotlin.jvm.functions.Function1):com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder
 - f:setColorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
+- f:setColorSchemeProvider(kotlin.jvm.functions.Function0):V
 - f:setEditorInlineContext(Z):V
 - f:setElementStyleOverrides(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$ElementStyleOverrides):V
 - f:setEnableCodeBlocksBackground(Z):V
@@ -683,12 +655,14 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - a:getList():javax.swing.JList
 - a:getSelected():Z
 - a:getSelectionColor():java.awt.Color
+- a:getToolTipText():java.lang.String
 - a:getValue():java.lang.Object
 - a:icon(javax.swing.Icon,kotlin.jvm.functions.Function1):V
 - bs:icon$default(com.intellij.ui.dsl.listCellRenderer.LcrRow,javax.swing.Icon,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - a:separator(kotlin.jvm.functions.Function1):V
 - a:setBackground(java.awt.Color):V
 - a:setSelectionColor(java.awt.Color):V
+- a:setToolTipText(java.lang.String):V
 - a:text(java.lang.String,kotlin.jvm.functions.Function1):V
 - bs:text$default(com.intellij.ui.dsl.listCellRenderer.LcrRow,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 *e:com.intellij.ui.dsl.listCellRenderer.LcrRow$Gap
@@ -701,7 +675,7 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 *:com.intellij.ui.dsl.listCellRenderer.LcrSeparator
 - a:getText():java.lang.String
 - a:setText(java.lang.String):V
-*f:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
+*Fa:com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
 - com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 - <init>(java.awt.Color):V
 - f:getAttributes():com.intellij.ui.SimpleTextAttributes
@@ -713,6 +687,11 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 - f:setFont(java.awt.Font):V
 - f:setForeground(java.awt.Color):V
 - f:setSpeedSearchHighlighting(Z):V
+- a:speedSearch(kotlin.jvm.functions.Function1):V
+*f:com.intellij.ui.dsl.listCellRenderer.LcrTextSpeedSearchParams
+- <init>():V
+- f:getRanges():java.lang.Iterable
+- f:setRanges(java.lang.Iterable):V
 *a:com.intellij.ui.hover.HoverListener
 - <init>():V
 - f:addTo(javax.swing.JComponent):V
@@ -811,35 +790,28 @@ c:com.intellij.ui.components.fields.ExtendableTextField
 *:com.intellij.ui.speedSearch.SpeedSearchSupply$SpeedSearchLocator
 - a:getSizeAndLocation(javax.swing.JComponent):com.intellij.ui.awt.RelativeRectangle
 *:com.intellij.ui.treeStructure.TreeDomainModel
-- a:accessData(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - a:computeRoot(kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.ui.treeStructure.TreeDomainModelKt
-- *sf:TreeDomainModel(com.intellij.ide.util.treeView.AbstractTreeStructure,Z,I):com.intellij.ui.treeStructure.TreeDomainModel
 *:com.intellij.ui.treeStructure.TreeNodeDomainModel
 - a:computeChildren(kotlin.coroutines.Continuation):java.lang.Object
-- a:computeLeafState(kotlin.coroutines.Continuation):java.lang.Object
+- a:computeIsLeaf(kotlin.coroutines.Continuation):java.lang.Object
 - a:computePresentation(com.intellij.ui.treeStructure.TreeNodePresentationBuilder,kotlin.coroutines.Continuation):java.lang.Object
-- a:getUserObject():java.lang.Object
 *:com.intellij.ui.treeStructure.TreeNodePresentation
-- a:getFullText():java.util.List
-- a:getIcon():javax.swing.Icon
-- a:getMainText():java.lang.String
-- a:getToolTip():java.lang.String
-- a:isLeaf():Z
 *:com.intellij.ui.treeStructure.TreeNodePresentationBuilder
 - a:appendTextFragment(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - a:build():com.intellij.ui.treeStructure.TreeNodePresentation
 - a:setIcon(javax.swing.Icon):V
 - a:setMainText(java.lang.String):V
 - a:setToolTipText(java.lang.String):V
-*:com.intellij.ui.treeStructure.TreeNodeTextFragment
-- a:getAttributes():com.intellij.ui.SimpleTextAttributes
-- a:getText():java.lang.String
+*:com.intellij.ui.treeStructure.TreeNodeState
+- a:getPresentation():com.intellij.ui.treeStructure.TreeNodePresentation
+- a:isExpanded():Z
 *:com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getChildren():kotlinx.coroutines.flow.Flow
-- a:getPresentation():kotlinx.coroutines.flow.Flow
-- a:getUserObject():java.lang.Object
-- a:presentationSnapshot():com.intellij.ui.treeStructure.TreeNodePresentation
+- a:getDomainModel():com.intellij.ui.treeStructure.TreeNodeDomainModel
+- a:getParent():com.intellij.ui.treeStructure.TreeNodeViewModel
+- a:getState():kotlinx.coroutines.flow.Flow
+- a:setExpanded(Z):V
+- a:stateSnapshot():com.intellij.ui.treeStructure.TreeNodeState
 *:com.intellij.ui.treeStructure.TreeSwingModel
 - com.intellij.ui.tree.TreeVisitor$LoadingAwareAcceptor
 - com.intellij.ui.treeStructure.BgtAwareTreeModel
@@ -847,19 +819,35 @@ f:com.intellij.ui.treeStructure.TreeDomainModelKt
 - a:getChild(java.lang.Object,I):com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getRoot():com.intellij.ui.treeStructure.TreeNodeViewModel
 - a:getShowLoadingNode():Z
+- a:getViewModel():com.intellij.ui.treeStructure.TreeViewModel
 - a:setShowLoadingNode(Z):V
 f:com.intellij.ui.treeStructure.TreeSwingModelKt
 - *sf:TreeSwingModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeViewModel):com.intellij.ui.treeStructure.TreeSwingModel
+*:com.intellij.ui.treeStructure.TreeSwingModelListener
+- javax.swing.event.TreeModelListener
+- a:scrollRequested(com.intellij.ui.treeStructure.TreeSwingModelScrollEvent):V
+- a:selectionChanged(com.intellij.ui.treeStructure.TreeSwingModelSelectionEvent):V
+*f:com.intellij.ui.treeStructure.TreeSwingModelScrollEvent
+- java.util.EventObject
+- <init>(com.intellij.ui.treeStructure.TreeSwingModel,javax.swing.tree.TreePath):V
+- f:getScrollTo():javax.swing.tree.TreePath
+*f:com.intellij.ui.treeStructure.TreeSwingModelSelectionEvent
+- java.util.EventObject
+- <init>(com.intellij.ui.treeStructure.TreeSwingModel,javax.swing.tree.TreePath[]):V
+- f:getNewSelection():javax.swing.tree.TreePath[]
 *:com.intellij.ui.treeStructure.TreeViewModel
-- a:accept(com.intellij.ui.tree.SuspendingTreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:accept(com.intellij.ui.tree.TreeVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:getComparator():java.util.Comparator
+- a:accept(com.intellij.ui.treeStructure.TreeViewModelVisitor,Z,kotlin.coroutines.Continuation):java.lang.Object
 - a:getDomainModel():com.intellij.ui.treeStructure.TreeDomainModel
 - a:getRoot():kotlinx.coroutines.flow.Flow
-- a:invalidate(javax.swing.tree.TreePath,Z,kotlin.coroutines.Continuation):java.lang.Object
-- a:setComparator(java.util.Comparator):V
+- a:getScrollEvents():kotlinx.coroutines.flow.Flow
+- a:getSelection():kotlinx.coroutines.flow.StateFlow
+- a:invalidate(com.intellij.ui.treeStructure.TreeNodeViewModel,Z):V
+- a:scrollTo(com.intellij.ui.treeStructure.TreeNodeViewModel):V
+- a:setSelection(java.util.Collection):V
 f:com.intellij.ui.treeStructure.TreeViewModelKt
 - *sf:TreeViewModel(kotlinx.coroutines.CoroutineScope,com.intellij.ui.treeStructure.TreeDomainModel):com.intellij.ui.treeStructure.TreeViewModel
+*:com.intellij.ui.treeStructure.TreeViewModelVisitor
+- a:visit(com.intellij.ui.treeStructure.TreeNodeViewModel,kotlin.coroutines.Continuation):java.lang.Object
 *c:com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - id:java.lang.String

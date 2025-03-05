@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtil.getRelativePath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsNotifier
@@ -306,6 +307,40 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun `test merge with local changes overwritten by merge should show smart merge dialog`() {
     `check operation with local changes overwritten by should show smart checkout dialog`("merge", 1)
+  }
+
+  // IJPL-173728
+  fun `test merge with trailing whitespace changes overwritten by checkout should show smart merge dialog`() {
+    val repo = first
+    val fileName = "test"
+    val anotherFileName = "other"
+    val branchName = "feature"
+
+    cd(repo)
+    repo.file(fileName).create("line").addCommit("init")
+    repo.git("checkout -b $branchName")
+    repo.file(fileName).write("   ").addCommit("more spaces")
+    repo.git("checkout master")
+    repo.file(fileName).write("       ").addCommit("even more spaces")
+    repo.file(fileName).write(" ").add()
+    repo.file(anotherFileName).create().add()
+    updateChangeListManager()
+
+    val changedPaths = mutableListOf<String>()
+    mergeBranch(branchName, object : TestUiHandler(this.project) {
+      override fun showSmartOperationDialog(
+        project: Project, changes: List<Change>,
+        paths: Collection<String>,
+        operation: String,
+        forceButton: String?
+      ): GitSmartOperationDialog.Choice {
+        changes.forEach {
+          changedPaths.add(getRelativePath(repo.root.path, it.afterRevision!!.file.path, '/')!!)
+        }
+        return CANCEL
+      }
+    })
+    assertSameElements(changedPaths, setOf(fileName, anotherFileName))
   }
 
   private fun `check operation with local changes overwritten by should show smart checkout dialog`(operation: String, numFiles: Int) {

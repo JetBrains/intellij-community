@@ -2,8 +2,28 @@
 
 package org.jetbrains.kotlin.idea.completion.test.handlers
 
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import java.nio.file.Paths
 
 @RunWith(JUnit38ClassRunner::class)
-abstract class K1CompletionMultiFileHandlerTest : AbstractCompletionMultiFileHandlerTest()
+class K1CompletionMultiFileHandlerTest : AbstractCompletionMultiFileHandlerTest() {
+
+    override fun doTest(
+        completionChar: Char,
+        vararg extraFileNames: String,
+        predicate: LookupElementPresentation.() -> Boolean,
+    ) {
+        val testFile = Paths.get(testDataDirectory.path, getTestFileName())
+
+        IgnoreTests.runTestIfNotDisabledByFileDirective(testFile, IgnoreTests.DIRECTIVES.IGNORE_K1) {
+            super.doTest(
+                completionChar = completionChar,
+                extraFileNames = extraFileNames,
+                predicate = predicate,
+            )
+        }
+    }
+}

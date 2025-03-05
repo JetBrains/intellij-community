@@ -35,7 +35,7 @@ public class RestSwingHtmlPanel implements RestPreviewPanel {
   }
 
   @Override
-  @NotNull public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myScrollPane;
   }
 

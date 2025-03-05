@@ -136,27 +136,12 @@ public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalMetricsKt {
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/GlobalMetrics$Companion;)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 }
 
-public final class org/jetbrains/jewel/bridge/theme/BridgeSliderStylingKt {
-	public static final fun dark-7HESe_I (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
-	public static synthetic fun dark-7HESe_I$default (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
-	public static final fun defaults-IDSuZpE (Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics$Companion;FJFFFF)Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics;
-	public static synthetic fun defaults-IDSuZpE$default (Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics$Companion;FJFFFFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics;
-	public static final fun light-7HESe_I (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
-	public static synthetic fun light-7HESe_I$default (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
-}
-
 public final class org/jetbrains/jewel/bridge/theme/BridgeThemeColorPaletteKt {
 	public static final fun getWindowsPopupBorder (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;)Landroidx/compose/ui/graphics/Color;
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette$Companion;)Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;
 }
 
-public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeTextKt {
-	public static final fun retrieveConsoleTextStyle ()Landroidx/compose/ui/text/TextStyle;
-	public static final fun retrieveDefaultTextStyle ()Landroidx/compose/ui/text/TextStyle;
-	public static final fun retrieveEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
-}
-
-public final class org/jetbrains/jewel/bridge/theme/ScrollbarBridgeKt {
+public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeScrollbarKt {
 	public static final fun default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
 	public static final fun default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
 	public static final fun macOs-TZvXluI (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;FFLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJJJ)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
@@ -167,6 +152,26 @@ public final class org/jetbrains/jewel/bridge/theme/ScrollbarBridgeKt {
 	public static synthetic fun windowsAndLinux-TZvXluI$default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling$Companion;FFLandroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;JJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$WhenScrolling;
 	public static final fun windowsAndLinux-tYhzLtE (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;FLandroidx/compose/foundation/layout/PaddingValues;JJ)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
 	public static synthetic fun windowsAndLinux-tYhzLtE$default (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible$Companion;FLandroidx/compose/foundation/layout/PaddingValues;JJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ScrollbarVisibility$AlwaysVisible;
+}
+
+public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeSliderKt {
+	public static final fun dark-7HESe_I (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
+	public static synthetic fun dark-7HESe_I$default (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
+	public static final fun defaults-IDSuZpE (Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics$Companion;FJFFFF)Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics;
+	public static synthetic fun defaults-IDSuZpE$default (Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics$Companion;FJFFFFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SliderMetrics;
+	public static final fun light-7HESe_I (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
+	public static synthetic fun light-7HESe_I$default (Lorg/jetbrains/jewel/ui/component/styling/SliderColors$Companion;JJJJJJJJJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/SliderColors;
+}
+
+public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeSplitButtonKt {
+	public static final fun readDefaultSplitButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;
+	public static final fun readOutlinedSplitButtonStyle ()Lorg/jetbrains/jewel/ui/component/styling/SplitButtonStyle;
+}
+
+public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeTextKt {
+	public static final fun retrieveConsoleTextStyle ()Landroidx/compose/ui/text/TextStyle;
+	public static final fun retrieveDefaultTextStyle ()Landroidx/compose/ui/text/TextStyle;
+	public static final fun retrieveEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
 }
 
 public final class org/jetbrains/jewel/bridge/theme/SwingBridgeThemeKt {

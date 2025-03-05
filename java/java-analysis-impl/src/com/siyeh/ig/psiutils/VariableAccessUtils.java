@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LocalRefUseInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,6 +31,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -276,7 +277,7 @@ public final class VariableAccessUtils {
    * @param variable  the variable to find references for
    * @return a list of references, empty list if no references were found.
    */
-  public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable) {
+  public static @Unmodifiable List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable) {
     PsiFile file = variable.getContainingFile();
     if (file == null) return List.of();
     if (!file.isPhysical()) {
@@ -310,7 +311,7 @@ public final class VariableAccessUtils {
    * @param context  the context to find references in
    * @return a list of references. When the specified context is {@code null}, the result will always be an empty list.
    */
-  public static List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
+  public static @Unmodifiable List<PsiReferenceExpression> getVariableReferences(@NotNull PsiVariable variable, @Nullable PsiElement context) {
     if (context == null) return Collections.emptyList();
     PsiFile file = context.getContainingFile();
     PsiFile variableFile = variable.getContainingFile();
@@ -435,8 +436,7 @@ public final class VariableAccessUtils {
     return false;
   }
 
-  @Nullable
-  private static PsiElement getDirectChildWhichContainsElement(
+  private static @Nullable PsiElement getDirectChildWhichContainsElement(
     @NotNull PsiElement ancestor,
     @NotNull PsiElement descendant) {
     if (ancestor == descendant) {
@@ -454,7 +454,7 @@ public final class VariableAccessUtils {
     return child;
   }
 
-  public static Set<PsiVariable> collectUsedVariables(PsiElement context) {
+  public static @Unmodifiable Set<PsiVariable> collectUsedVariables(PsiElement context) {
     if (context == null) {
       return Collections.emptySet();
     }
@@ -463,7 +463,7 @@ public final class VariableAccessUtils {
     return visitor.getUsedVariables();
   }
 
-  public static boolean isAnyVariableAssigned(@NotNull Collection<? extends PsiVariable> variables, @Nullable PsiElement context) {
+  public static boolean isAnyVariableAssigned(@NotNull @Unmodifiable Collection<? extends PsiVariable> variables, @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }
@@ -526,8 +526,8 @@ public final class VariableAccessUtils {
     final boolean finalVariableIntroduction =
       !initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL) ||
       PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, initialization) &&
-      !HighlightControlFlowUtil.isEffectivelyFinal(initialization, containingScope, null) &&
-      HighlightControlFlowUtil.isEffectivelyFinal(variable, containingScope, null);
+      !ControlFlowUtil.isEffectivelyFinal(initialization, containingScope) &&
+      ControlFlowUtil.isEffectivelyFinal(variable, containingScope);
     final boolean canCaptureThis = initialization instanceof PsiField && !initialization.hasModifierProperty(PsiModifier.STATIC);
 
     final PsiType variableType = variable.getType();
@@ -621,7 +621,31 @@ public final class VariableAccessUtils {
              .allMatch(context -> context == null || PsiTreeUtil.isAncestor(context, block, false));
   }
 
-  static boolean isVariableTypeChangeSafeForReference(@NotNull PsiType targetType, @NotNull PsiReferenceExpression reference) {
+  /// Returns true if the type of element that `reference` refers to can be safely changed to `targetType`.
+  ///
+  /// ### Example
+  ///
+  /// Consider the following (obviously wrong, but good enough for demo purpose) code:
+  ///
+  /// ```java
+  /// void foo(Optional<String> opt) {
+  ///   Object obj = opt.get();
+  ///   if (obj instanceof Integer) {
+  ///     doStuff();
+  ///   }
+  ///   // ...
+  /// }
+  /// ```
+  ///
+  /// Let's say you'd like to know if it's "safe" to change the type of local variable `obj` from `Object` to `String`.
+  /// "Safe" means that there likely will be no compile-time errors or behavior difference after such a type change is performed.
+  ///
+  /// In our example, this method returns false because changing the type of `obj`
+  /// to `String` will cause a compile-time error like `cannot cast 'java.lang.String' to 'java.lang.Integer'`.
+  ///
+  /// It's possible there are cases not covered by this method.
+  /// If you discover such a case, consider updating the implementation.
+  public static boolean isVariableTypeChangeSafeForReference(@NotNull PsiType targetType, @NotNull PsiReferenceExpression reference) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(reference.getParent());
     if (PsiUtil.isAccessedForWriting(reference)) {
       PsiAssignmentExpression assignmentExpression = tryCast(parent, PsiAssignmentExpression.class);

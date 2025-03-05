@@ -1,4 +1,4 @@
-// "Add 'kotlin.Any' as upper bound for E" "true"
+// "Add 'Any' as upper bound for E" "true"
 
 fun <T : Any> foo() = 1
 

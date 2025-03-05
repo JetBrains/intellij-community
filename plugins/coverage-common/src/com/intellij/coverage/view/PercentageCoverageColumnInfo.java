@@ -20,7 +20,7 @@ public final class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescripto
   /**
    * @deprecated Use {@link PercentageCoverageColumnInfo#PercentageCoverageColumnInfo(int, String, CoverageSuitesBundle)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PercentageCoverageColumnInfo(int columnIdx,
                                       @NlsContexts.ColumnName String name,
                                       final CoverageSuitesBundle suitesBundle,
@@ -46,7 +46,9 @@ public final class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescripto
   public String valueOf(NodeDescriptor node) {
     final CoverageEngine coverageEngine = mySuitesBundle.getCoverageEngine();
     final Project project = node.getProject();
-    return coverageEngine.createCoverageViewExtension(project, mySuitesBundle).getPercentage(myColumnIdx, (AbstractTreeNode<?>)node);
+    CoverageViewExtension extension = coverageEngine.createCoverageViewExtension(project, mySuitesBundle);
+    if (extension == null) return null;
+    return extension.getPercentage(myColumnIdx, (AbstractTreeNode<?>)node);
   }
 
   @Override

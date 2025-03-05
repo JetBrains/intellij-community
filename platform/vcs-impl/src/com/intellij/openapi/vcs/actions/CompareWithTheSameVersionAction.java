@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.idea.ActionsBundle;
@@ -15,11 +15,10 @@ import org.jetbrains.annotations.Nullable;
 
 final class CompareWithTheSameVersionAction extends AbstractShowDiffAction {
   @Override
-  @NotNull
-  protected DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
-                                           @NotNull VirtualFile selectedFile,
-                                           @NotNull Project project,
-                                           @Nullable Editor editor) {
+  protected @NotNull DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
+                                                    @NotNull VirtualFile selectedFile,
+                                                    @NotNull Project project,
+                                                    @Nullable Editor editor) {
     return new DiffActionExecutor.CompareToCurrentExecutor(diffProvider, selectedFile, project, editor);
   }
 

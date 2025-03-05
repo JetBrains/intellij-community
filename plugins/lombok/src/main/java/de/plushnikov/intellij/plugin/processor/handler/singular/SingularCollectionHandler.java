@@ -19,13 +19,11 @@ class SingularCollectionHandler extends AbstractSingularHandler {
     super(qualifiedName);
   }
 
-  @NotNull
-  private static PsiType getOneElementType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
+  private static @NotNull PsiType getOneElementType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
   }
 
-  @NotNull
-  private static PsiType getCollectionType(@NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
+  private static @NotNull PsiType getCollectionType(@NotNull PsiType psiFieldType, @NotNull PsiManager psiManager) {
     final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
     return PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_UTIL_COLLECTION, elementType);
   }

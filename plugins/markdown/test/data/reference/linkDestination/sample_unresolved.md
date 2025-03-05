@@ -1,1 +1,1 @@
-[ref]: <warning descr="Cannot resolve directory 'app'">app</warning>/<warning descr="Cannot resolve symbol 'foo1.txt'">foo1.txt</warning>
+[ref]: <warning descr="Cannot resolve directory 'app'">app</warning>/<warning descr="Cannot resolve file 'foo1.txt'">foo1.txt</warning>

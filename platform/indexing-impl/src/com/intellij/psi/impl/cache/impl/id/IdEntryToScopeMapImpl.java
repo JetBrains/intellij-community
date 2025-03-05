@@ -50,9 +50,8 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
     return null;
   }
 
-  @NotNull
   @Override
-  public Set<IdIndexEntry> keySet() {
+  public @NotNull Set<IdIndexEntry> keySet() {
     return new AbstractSet<>() {
       @Override
       public boolean contains(Object o) {
@@ -83,15 +82,13 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
     };
   }
 
-  @NotNull
   @Override
-  public Collection<Integer> values() {
+  public @NotNull Collection<Integer> values() {
     return idHashToScopeMask.values();
   }
 
-  @NotNull
   @Override
-  public Set<Entry<IdIndexEntry, Integer>> entrySet() {
+  public @NotNull Set<Entry<IdIndexEntry, Integer>> entrySet() {
     return new AbstractSet<>() {
       @Override
       public @NotNull Iterator<Entry<IdIndexEntry, Integer>> iterator() {

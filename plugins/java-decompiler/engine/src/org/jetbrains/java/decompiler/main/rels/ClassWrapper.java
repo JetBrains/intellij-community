@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.main.collectors.LimitContainer;
 import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -57,7 +58,7 @@ public class ClassWrapper {
       RootStatement root = null;
 
       boolean isError = false;
-
+      String customErrorMessage = null;
       try {
         cancellationManager.checkCanceled();
         if (mt.containsCode()) {
@@ -93,6 +94,13 @@ public class ClassWrapper {
           }
         }
       }
+      catch (LimitContainer.LimitExceededDecompilerException e) {
+        String message =
+          "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + classStruct.qualifiedName + " couldn't be decompiled.";
+        DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, e);
+        isError = true;
+        customErrorMessage = e.getMessage();
+      }
       catch (CancellationManager.TimeExceedException e) {
         String message = "Processing time limit exceeded for method " + mt.getName() + ", execution interrupted.";
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.ERROR);
@@ -102,13 +110,15 @@ public class ClassWrapper {
         throw e;
       }
       catch (Throwable t) {
-        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + classStruct.qualifiedName + " couldn't be decompiled.";
+        String message =
+          "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + classStruct.qualifiedName + " couldn't be decompiled.";
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
         isError = true;
       }
 
       MethodWrapper methodWrapper = new MethodWrapper(root, varProc, mt, counter);
       methodWrapper.decompiledWithErrors = isError;
+      methodWrapper.decompiledWithErrorsMessage = customErrorMessage;
 
       methods.addWithKey(methodWrapper, InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()));
 

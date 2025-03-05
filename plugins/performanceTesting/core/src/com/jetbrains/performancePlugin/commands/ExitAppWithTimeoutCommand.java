@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.jetbrains.performancePlugin.commands.ExitAppCommand.writeExitMetricsIfNeeded;
+import static com.jetbrains.performancePlugin.commands.ExitAppCommandKt.writeExitMetricsIfNeeded;
 
 public final class ExitAppWithTimeoutCommand extends AbstractCallbackBasedCommand {
 

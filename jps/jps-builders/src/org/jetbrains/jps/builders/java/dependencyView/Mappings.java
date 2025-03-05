@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.*;
@@ -175,7 +175,7 @@ public class Mappings {
           @Override
           protected @NotNull String debugString(String path) {
             // on case-insensitive file systems save paths in normalized (lowercase) format to make tests run deterministically
-            return SystemInfo.isFileSystemCaseSensitive ? path : path.toLowerCase(Locale.US);
+            return SystemInfoRt.isFileSystemCaseSensitive ? path : path.toLowerCase(Locale.US);
           }
         };
         myClassToRelativeSourceFilePath = new IntObjectPersistentMultiMaplet<>(

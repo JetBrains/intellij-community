@@ -10,7 +10,6 @@ import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -22,7 +21,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -52,8 +50,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
@@ -113,13 +111,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
       }
     }
 
-    if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-      createLightWeightPopup(project, title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
-    }
-    else {
-      Messages.showInputDialog(project, message, title, null, initialText, validator, TextRange.from(initialText.length(), 0));
-      consumer.accept(Collections.singletonList(validator.getCreatedElement()));
-    }
+    createLightWeightPopup(project, title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
   }
 
   @Override

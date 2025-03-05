@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -17,9 +17,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class AtomicFieldUpdaterNotStaticFinalInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     final PsiType type = field.getType();
     final String typeText = type.getPresentableText();

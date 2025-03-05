@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.execution.*;
@@ -24,9 +24,9 @@ import java.util.Map;
 public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
   extends JavaCommandLineState {
 
-  @NotNull protected final T myConfiguration;
+  protected final @NotNull T myConfiguration;
 
-  public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
+  public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, final @NotNull T configuration) {
     super(environment);
     myConfiguration = configuration;
   }
@@ -45,9 +45,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     super.prepareTargetEnvironmentRequest(request, targetProgressIndicator);
   }
 
-  @NotNull
   @Override
-  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
+  protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
     throws ExecutionException {
     TargetedCommandLineBuilder line = super.createTargetedCommandLine(request);
     File inputFile = InputRedirectAware.getInputFile(myConfiguration);
@@ -66,9 +65,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     return JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(getConfiguration(), getRunnerSettings(), console, executor);
   }
 
-  @NotNull
   @Override
-  protected OSProcessHandler startProcess() throws ExecutionException {
+  protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
 
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
@@ -96,8 +94,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
                                                     targetedCommandLineBuilder.getFilesToDeleteOnTermination());
   }
 
-  @NotNull
-  protected T getConfiguration() {
+  protected @NotNull T getConfiguration() {
     return myConfiguration;
   }
 }

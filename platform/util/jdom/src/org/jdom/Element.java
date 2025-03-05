@@ -138,6 +138,26 @@ public class Element extends Content implements Parent, Serializable {
     super(CType.Element);
   }
 
+  @ApiStatus.Internal
+  public static Element createClone(@NotNull Element source, Content[] content, List<Attribute> attributes) {
+    Element clone = new Element(source.name, source.namespace);
+    if (source.additionalNamespaces != null) {
+      clone.additionalNamespaces = new ArrayList<>(source.additionalNamespaces);
+    }
+
+    clone.attributes = new AttributeList(clone);
+    if (attributes != null) {
+      for (Attribute attribute : attributes) {
+        clone.attributes.add(attribute.clone());
+      }
+    }
+
+    for (Content c : content) {
+      clone.content.add(c.clone());
+    }
+    return clone;
+  }
+
   /**
    * Creates a new element with the supplied (local) name and namespace. If
    * the provided namespace is null, the element will have no namespace.

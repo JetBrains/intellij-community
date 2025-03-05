@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -27,9 +27,8 @@ import java.util.Set;
  */
 public final class SimplifiableAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     if (infos.length == 0) {
       return InspectionGadgetsBundle.message("simplifiable.annotation.whitespace.problem.descriptor");
     }
@@ -51,8 +50,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
     SimplifiableAnnotationFix() {}
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("simplifiable.annotation.quickfix");
     }
 
@@ -82,7 +80,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
       out.append('(');
       if (attributes.length == 1) {
         final PsiNameValuePair attribute = attributes[0];
-        @NonNls final String name = attribute.getName();
+        final @NonNls String name = attribute.getName();
         if (name != null && !PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
           out.append(name).append('=');
         }
@@ -158,7 +156,7 @@ public final class SimplifiableAnnotationInspection extends BaseInspection imple
         final PsiIdentifier identifier = attribute.getNameIdentifier();
         final PsiAnnotationMemberValue attributeValue = attribute.getValue();
         if (identifier != null && attributeValue != null) {
-          @NonNls final String name = attribute.getName();
+          final @NonNls String name = attribute.getName();
           if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name) && !containsError(annotation)) {
             registerErrorAtOffset(attribute, 0, attributeValue.getStartOffsetInParent(),
                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, attribute);

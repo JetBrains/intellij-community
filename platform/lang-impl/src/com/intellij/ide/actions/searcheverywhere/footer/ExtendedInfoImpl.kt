@@ -5,7 +5,6 @@ import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.OpenInRightSplitAction
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.lang.LangBundle
-import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil

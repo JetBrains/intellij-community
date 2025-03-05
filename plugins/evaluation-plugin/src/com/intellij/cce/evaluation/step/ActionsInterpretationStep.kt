@@ -2,18 +2,16 @@
 package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.actions.DatasetContext
-import com.intellij.cce.actions.EvaluationDataset
 import com.intellij.cce.evaluation.ActionsInterpretationHandler
-import com.intellij.cce.interpreter.FeatureInvoker
+import com.intellij.cce.evaluation.EvaluationEnvironment
 import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 
 class ActionsInterpretationStep(
   private val config: Config,
-  private val dataset: EvaluationDataset,
+  private val environment: EvaluationEnvironment,
   private val datasetContext: DatasetContext,
-  private val featureInvoker: FeatureInvoker,
   private val newWorkspace: Boolean
 ) : BackgroundEvaluationStep {
   override val name: String = "Actions interpreting"
@@ -24,7 +22,7 @@ class ActionsInterpretationStep(
     val resultWorkspace =
       if (newWorkspace) EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
       else workspace
-    ActionsInterpretationHandler(config, datasetContext, featureInvoker).invoke(dataset, resultWorkspace, progress)
+    ActionsInterpretationHandler(config, datasetContext).invoke(environment, resultWorkspace, progress)
     return resultWorkspace
   }
 }

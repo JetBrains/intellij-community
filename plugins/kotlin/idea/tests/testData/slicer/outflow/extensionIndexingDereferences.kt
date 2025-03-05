@@ -21,3 +21,6 @@ fun test() {
     x[1] *= y
     x[1]++
 }
+
+//https://youtrack.jetbrains.com/issue/KT-72641
+// IGNORE_K2

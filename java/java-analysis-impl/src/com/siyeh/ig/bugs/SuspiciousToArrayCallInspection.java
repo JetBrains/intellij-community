@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -25,16 +25,14 @@ import org.jetbrains.annotations.Nullable;
 public final class SuspiciousToArrayCallInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     final PsiType foundType = (PsiType)infos[1];
     return InspectionGadgetsBundle.message("suspicious.to.array.call.problem.descriptor", type.getCanonicalText(), foundType.getCanonicalText());
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new SuspiciousToArrayCallFix((PsiType)infos[0], (boolean)infos[2]);
   }
 
@@ -54,7 +52,7 @@ public final class SuspiciousToArrayCallInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if (!"toArray".equals(methodName)) {
         return;
       }
@@ -152,10 +150,9 @@ public final class SuspiciousToArrayCallInspection extends BaseInspection {
       }
     }
 
-    @Nullable
-    private static PsiType getActualItemTypeIfMismatch(@NotNull PsiArrayType arrayType,
-                                                       @NotNull PsiMethodCallExpression expression,
-                                                       PsiType itemType) {
+    private static @Nullable PsiType getActualItemTypeIfMismatch(@NotNull PsiArrayType arrayType,
+                                                                 @NotNull PsiMethodCallExpression expression,
+                                                                 PsiType itemType) {
       itemType = GenericsUtil.getVariableTypeByExpressionType(itemType);
       final PsiType componentType = arrayType.getComponentType();
       if (itemType == null || componentType.isAssignableFrom(itemType)) return null;
@@ -184,8 +181,8 @@ public final class SuspiciousToArrayCallInspection extends BaseInspection {
   }
 
   private static class SuspiciousToArrayCallFix extends PsiUpdateModCommandQuickFix {
-    @NonNls private final String myReplacement;
-    @NonNls private final String myPresented;
+    private final @NonNls String myReplacement;
+    private final @NonNls String myPresented;
     
     SuspiciousToArrayCallFix(PsiType wantedType, boolean isFunction) {
       if (wantedType instanceof PsiClassType) {
@@ -209,17 +206,13 @@ public final class SuspiciousToArrayCallInspection extends BaseInspection {
       new CommentTracker().replaceAndRestoreComments(expression, myReplacement);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myPresented);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("suspicious.to.array.call.fix.family.name");
     }
   }

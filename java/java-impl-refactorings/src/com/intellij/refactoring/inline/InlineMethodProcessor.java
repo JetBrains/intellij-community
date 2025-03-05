@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -125,14 +125,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return RefactoringBundle.message("inline.method.command", myDescriptiveName);
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InlineViewDescriptor(myMethod);
   }
 
@@ -143,7 +141,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (myReference != null) {
       usages.add(new UsageInfo(myReference.getElement()));
     }
-    for (PsiReference reference : MethodReferencesSearch.search(myMethod, myRefactoringScope, true)) {
+    for (PsiReference reference : MethodReferencesSearch.search(myMethod, myRefactoringScope, true).asIterable()) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
@@ -581,7 +579,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         System.arraycopy(instanceCreationArguments, 0, exprs, 0, parameters.length - 1);
         StringBuilder varargs = new StringBuilder();
         for (int i = parameters.length - 1; i < instanceCreationArguments.length; i++) {
-          if (varargs.length() > 0) varargs.append(", ");
+          if (!varargs.isEmpty()) varargs.append(", ");
           varargs.append(instanceCreationArguments[i].getText());
         }
 
@@ -734,11 +732,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     ChangeContextUtil.clearContextInfo(anchorParent);
   }
 
-  @Nullable
-  static PsiReferenceExpression replaceCall(@NotNull PsiElementFactory factory,
-                                            @NotNull PsiMethodCallExpression methodCall,
-                                            @Nullable PsiElement firstAdded,
-                                            @Nullable PsiLocalVariable resultVar) {
+  static @Nullable PsiReferenceExpression replaceCall(@NotNull PsiElementFactory factory,
+                                                      @NotNull PsiMethodCallExpression methodCall,
+                                                      @Nullable PsiElement firstAdded,
+                                                      @Nullable PsiLocalVariable resultVar) {
     if (resultVar != null) {
       PsiExpression expr = factory.createExpressionFromText(resultVar.getName(), null);
       return (PsiReferenceExpression)new CommentTracker().replaceAndRestoreComments(methodCall, expr);
@@ -748,6 +745,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     CommentTracker tracker = new CommentTracker();
     PsiElement anchor = CommonJavaRefactoringUtil.getParentStatement(methodCall, true);
     assert anchor != null;
+    if (anchor instanceof PsiReturnStatement oldReturn &&
+        PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor) instanceof PsiReturnStatement newReturn &&
+        newReturn.getReturnValue() != null) {
+      // Remove new return instead of old return to preserve surrounder anchors
+      tracker.replace(Objects.requireNonNull(oldReturn.getReturnValue()), newReturn.getReturnValue());
+      anchor = newReturn;
+    }
     if (firstAdded != null) {
       tracker.delete(anchor);
       tracker.insertCommentsBefore(firstAdded);
@@ -793,8 +797,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return new BlockData(block, thisVar, parmVars, resultVar);
   }
 
-  @Nullable
-  private PsiLocalVariable declareThis(PsiSubstitutor callSubstitutor, PsiCodeBlock block) {
+  private @Nullable PsiLocalVariable declareThis(PsiSubstitutor callSubstitutor, PsiCodeBlock block) {
     PsiClass containingClass = myMethod.getContainingClass();
     if (myMethod.hasModifierProperty(PsiModifier.STATIC) || containingClass == null || containingClass instanceof PsiImplicitClass) return null;
     PsiType thisType = GenericsUtil.getVariableTypeByExpressionType(myFactory.createType(containingClass, callSubstitutor));
@@ -1029,8 +1032,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private record BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {}
 
   @Override
-  @NotNull
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
+  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(final @NotNull UsageViewDescriptor descriptor) {
     if (myInlineThisOnly) {
       return Collections.singletonList(myReference.getElement());
     }

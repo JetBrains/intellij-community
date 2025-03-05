@@ -21,7 +21,6 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuildTargetType
 import org.jetbrains.jps.incremental.artifacts.impl.ArtifactSorter
 import org.jetbrains.jps.incremental.artifacts.impl.JpsArtifactUtil
 import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder
-import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement
@@ -30,17 +29,14 @@ import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.extension
 
 internal class JpsCompilationRunner(private val context: CompilationContext) {
   companion object {
     init {
-      // unset 'groovy.target.bytecode' which was possibly set by outside context to get a target bytecode version from the corresponding java compiler settings
-      System.clearProperty("groovy.target.bytecode")
       setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
       setSystemPropertyIfUndefined(DependencyResolvingBuilder.RESOLUTION_PARALLELISM_PROPERTY, Runtime.getRuntime().availableProcessors().toString())
       setSystemPropertyIfUndefined(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
-      setSystemPropertyIfUndefined(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true")
-      setSystemPropertyIfUndefined("groovyc.asm.resolving.only", "false")
 
       // https://youtrack.jetbrains.com/issue/IDEA-269280
       System.setProperty("aether.connector.resumeDownloads", "false")
@@ -158,6 +154,8 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
         val module = context.findRequiredModule(it)
         val outputDir = context.getModuleOutputDir(module)
         if (Files.isDirectory(outputDir) && Files.newDirectoryStream(outputDir).use { stream -> stream.any() }) {
+          false
+        } else if (Files.isRegularFile(outputDir) && outputDir.extension == "jar") {
           false
         }
         else {

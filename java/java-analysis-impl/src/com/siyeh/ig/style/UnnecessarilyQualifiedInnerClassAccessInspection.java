@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,9 +30,8 @@ public final class UnnecessarilyQualifiedInnerClassAccessInspection extends Base
   @SuppressWarnings("PublicField")
   public boolean ignoreReferencesNeedingImport = false;
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message(
       "unnecessarily.qualified.inner.class.access.problem.descriptor",
@@ -54,8 +53,7 @@ public final class UnnecessarilyQualifiedInnerClassAccessInspection extends Base
   private static class UnnecessarilyQualifiedInnerClassAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessarily.qualified.inner.class.access.quickfix");
     }

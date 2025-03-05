@@ -17,10 +17,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 internal val REFACTORING_DATA_KEY: Key<SuggestedRefactoringData> = Key.create<SuggestedRefactoringData>("suggested.refactoring.data")

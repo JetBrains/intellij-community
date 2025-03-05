@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
@@ -27,9 +27,8 @@ import java.util.List;
 
 public class SingleStatementInBlockInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("single.statement.in.block.descriptor", infos);
   }
 
@@ -38,9 +37,8 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
     return new SingleStatementInBlockVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     if (infos.length == 1 && infos[0] instanceof String) {
       return new SingleStatementInBlockFix((String)infos[0]);
     }
@@ -73,9 +71,8 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
       return false;
     }
 
-    @Nullable
     @Override
-    protected Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
+    protected @Nullable Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
       if (body instanceof PsiBlockStatement) {
         final PsiCodeBlock codeBlock = ((PsiBlockStatement)body).getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
@@ -135,23 +132,19 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
       myKeywordText = keywordText;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return InspectionGadgetsBundle.message("single.statement.in.block.quickfix", myKeywordText);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("single.statement.in.block.family.quickfix");
     }
 
     @Override
-    public @NotNull List<CustomizableIntentionAction.@NotNull RangeToHighlight> getRangesToHighlight(Project project,
-                                                                                                     ProblemDescriptor descriptor) {
+    public @Unmodifiable @NotNull List<CustomizableIntentionAction.@NotNull RangeToHighlight> getRangesToHighlight(Project project,
+                                                                                                                   ProblemDescriptor descriptor) {
       BlockData info = getBlockInfo(descriptor.getStartElement());
       if (info == null) return List.of();
       PsiCodeBlock block = info.block().getCodeBlock();
@@ -174,8 +167,7 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
       commentTracker.insertCommentsBefore(info.statement());
     }
 
-    @Nullable
-    private BlockData getBlockInfo(@NotNull PsiElement startElement) {
+    private @Nullable BlockData getBlockInfo(@NotNull PsiElement startElement) {
       PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(startElement, PsiStatement.class);
       if (statement instanceof PsiBlockStatement) {
         statement = PsiTreeUtil.getNonStrictParentOfType(statement.getParent(), PsiStatement.class);

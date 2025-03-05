@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -70,7 +71,7 @@ public final class LiveTemplateBuilder {
 
   public @NotNull TemplateImpl buildTemplate() {
     List<Variable> variables = getListWithLimit(myVariables);
-    if (!findVarOccurence(TemplateImpl.END)) {
+    if (!findVarOccurence(Template.END)) {
       if (myLastEndVarName == null) {
         for (Variable variable : variables) {
           if (isEndVariable(variable.getName())) {
@@ -104,7 +105,7 @@ public final class LiveTemplateBuilder {
           }
         }
         if (endOffset >= 0) {
-          myVariableOccurrences.add(new VarOccurence(TemplateImpl.END, endOffset));
+          myVariableOccurrences.add(new VarOccurence(Template.END, endOffset));
         }
       }
     }
@@ -114,9 +115,9 @@ public final class LiveTemplateBuilder {
     }
 
     List<VarOccurence> variableOccurrences = getListWithLimit(myVariableOccurrences);
-    variableOccurrences.sort(Comparator.comparingInt(o -> o.myOffset));
+
     int last = 0;
-    for (VarOccurence occurence : variableOccurrences) {
+    for (VarOccurence occurence : ContainerUtil.sorted(variableOccurrences, Comparator.comparingInt(o -> o.myOffset))) {
       template.addTextSegment(myText.substring(last, occurence.myOffset));
       template.addVariableSegment(occurence.myName);
       last = occurence.myOffset;
@@ -126,7 +127,7 @@ public final class LiveTemplateBuilder {
     return template;
   }
 
-  private <T> List<T> getListWithLimit(List<T> list) {
+  private @Unmodifiable <T> List<T> getListWithLimit(List<T> list) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return list;
     }
@@ -197,7 +198,7 @@ public final class LiveTemplateBuilder {
   }
 
   public int insertTemplate(int offset, TemplateImpl template, Map<String, String> predefinedVarValues) {
-    myIsToReformat = myText.length() > 0 || template.isToReformat();
+    myIsToReformat = !myText.isEmpty() || template.isToReformat();
     removeEndVarAtOffset(offset);
 
     String text = template.getTemplateText();
@@ -242,7 +243,7 @@ public final class LiveTemplateBuilder {
     for (int i = 0; i < template.getSegmentsCount(); i++) {
       String segmentName = template.getSegmentName(i);
       int localOffset = template.getSegmentOffset(i);
-      if (TemplateImpl.END.equals(segmentName)) {
+      if (Template.END.equals(segmentName)) {
         end = offset + localOffset;
       }
       else {

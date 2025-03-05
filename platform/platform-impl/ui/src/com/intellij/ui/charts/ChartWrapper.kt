@@ -126,12 +126,12 @@ abstract class GridChartWrapper<X: Number, Y: Number>: ChartWrapper(), XYChartCo
 
   protected open fun findX(xy: MinMax<X, Y>, x: X): Double {
     val width = width - (margins.left + margins.right)
-    return width * (x.toDouble() - xy.xMin.toDouble()) / (xy.xMax.toDouble() - xy.xMin.toDouble())
+    return (width * (x.toDouble() - xy.xMin.toDouble()) / (xy.xMax.toDouble() - xy.xMin.toDouble())).let { if (it.isFinite()) it else 0.0}
   }
 
   protected open fun findY(xy: MinMax<X, Y>, y: Y): Double {
     val height = height - (margins.top + margins.bottom)
-    return height - height * (y.toDouble() - xy.yMin.toDouble()) / (xy.yMax.toDouble() - xy.yMin.toDouble())
+    return (height - height * (y.toDouble() - xy.yMin.toDouble()) / (xy.yMax.toDouble() - xy.yMin.toDouble())).let { if (it.isFinite()) it else 0.0}
   }
 
   protected open fun findGridLabelOffset(line: GridLine<*, *, *>, g: Graphics2D): Coordinates<Double, Double> {

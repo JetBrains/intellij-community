@@ -1,14 +1,16 @@
 0(1) element: null
 1(2) element: PyWhileStatement
-2(3,11) READ ACCESS: x
-3(4) element: PyStatementList. Condition: x:true
-4(5) element: PyMatchStatement
-5(6) READ ACCESS: x
-6(7,9) refutable pattern: 42
-7(8) matched pattern: 42
-8(1) element: PyContinueStatement
-9(10) element: PyExpressionStatement
-10(1) READ ACCESS: y
+2(3,4) READ ACCESS: x
+3(13) element: null. Condition: x:false
+4(5) element: null. Condition: x:true
+5(6) element: PyStatementList
+6(7) element: PyMatchStatement
+7(8) READ ACCESS: x
+8(9,11) refutable pattern: 42
+9(10) matched pattern: 42
+10(1) element: PyContinueStatement
 11(12) element: PyExpressionStatement
-12(13) READ ACCESS: z
-13() element: null
+12(1) READ ACCESS: y
+13(14) element: PyExpressionStatement
+14(15) READ ACCESS: z
+15() element: null

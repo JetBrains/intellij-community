@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.projectWizard;
 
@@ -31,8 +31,8 @@ import static java.awt.GridBagConstraints.*;
 
 public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep {
   private static final Logger LOG = Logger.getInstance(AbstractStepWithProgress.class);
-  @NonNls private static final String PROGRESS_PANEL = "progress_panel";
-  @NonNls private static final String RESULTS_PANEL = "results_panel";
+  private static final @NonNls String PROGRESS_PANEL = "progress_panel";
+  private static final @NonNls String RESULTS_PANEL = "results_panel";
   private JPanel myPanel;
 
   private JLabel myTitleLabel;
@@ -203,7 +203,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
       super.setText2(text);
     }
 
-    private static void updateLabel(final JLabel label, @NlsContexts.Label final String text) {
+    private static void updateLabel(final JLabel label, final @NlsContexts.Label String text) {
       UIUtil.invokeLaterIfNeeded(() -> label.setText(text));
     }
   }

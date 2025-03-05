@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.maven.model;
 
@@ -25,7 +25,7 @@ public final class MavenPlugin implements Serializable {
   private final boolean myExtensions;
 
   private final Element myConfiguration;
-  private final List<Execution> myExecutions;
+  private final List<@NotNull Execution> myExecutions;
 
   private final List<MavenId> myDependencies;
 
@@ -35,7 +35,7 @@ public final class MavenPlugin implements Serializable {
                      boolean aDefault,
                      boolean extensions,
                      Element configuration,
-                     List<Execution> executions,
+                     List<@NotNull Execution> executions,
                      List<MavenId> dependencies) {
     myGroupId = groupId;
     myArtifactId = artifactId;
@@ -71,12 +71,11 @@ public final class MavenPlugin implements Serializable {
     return myExtensions;
   }
 
-  @Nullable
-  public Element getConfigurationElement() {
+  public @Nullable Element getConfigurationElement() {
     return myConfiguration;
   }
 
-  public List<Execution> getExecutions() {
+  public List<@NotNull Execution> getExecutions() {
     return myExecutions;
   }
 
@@ -84,8 +83,7 @@ public final class MavenPlugin implements Serializable {
     return myDependencies;
   }
 
-  @Nullable
-  public Element getGoalConfiguration(@NotNull String goal) {
+  public @Nullable Element getGoalConfiguration(@NotNull String goal) {
     for (MavenPlugin.Execution each : getExecutions()) {
       if (each.getGoals().contains(goal)) {
         return each.getConfigurationElement();
@@ -103,20 +101,6 @@ public final class MavenPlugin implements Serializable {
     }
 
     return null;
-  }
-
-  public List<Element> getCompileExecutionConfigurations() {
-    List<Element> result = new ArrayList<Element>();
-    for (MavenPlugin.Execution each : getExecutions()) {
-      if (isCompileExecution(each) && each.getConfigurationElement() != null) {
-        result.add(each.getConfigurationElement());
-      }
-    }
-    return result;
-  }
-
-  private static boolean isCompileExecution(Execution each) {
-    return "default-compile".equals(each.getExecutionId()) || (each.getGoals() != null && each.getGoals().contains("compile"));
   }
 
   public String getDisplayString() {
@@ -195,8 +179,7 @@ public final class MavenPlugin implements Serializable {
       return myGoals;
     }
 
-    @Nullable
-    public Element getConfigurationElement() {
+    public @Nullable Element getConfigurationElement() {
       return myConfiguration;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ModalityState;
@@ -30,8 +30,8 @@ public class BackgroundTaskGroup extends BackgroundTaskQueue {
 
   private static final Logger LOG = Logger.getInstance(BackgroundTaskGroup.class);
 
-  @NotNull protected final List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
-  @NotNull private final Project myProject;
+  protected final @NotNull List<VcsException> myExceptions = createLockFreeCopyOnWriteList();
+  private final @NotNull Project myProject;
 
   public BackgroundTaskGroup(@NotNull Project project, @ProgressTitle @NotNull String title) {
     super(project, title);

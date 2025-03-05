@@ -3,13 +3,13 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
 import com.intellij.codeInsight.annoPackages.Jsr305Support;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -35,6 +35,7 @@ import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -338,7 +339,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return null;
   }
 
-  private @NotNull List<String> filterNickNames(@NotNull Nullability nullability) {
+  private @Unmodifiable @NotNull List<String> filterNickNames(@NotNull Nullability nullability) {
     return ContainerUtil.mapNotNull(getAllNullabilityNickNames(), c -> Jsr305Support.getNickNamedNullability(c) == nullability ? c.getQualifiedName() : null);
   }
 
@@ -412,7 +413,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   protected @Nullable NullabilityAnnotationInfo findNullityDefaultOnModule(PsiAnnotation.@NotNull TargetType @NotNull [] targetTypes,
                                                                            @NotNull PsiElement element) {
-    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(element);
+    PsiJavaModule module = JavaPsiModuleUtil.findDescriptorByElement(element);
     if (module != null) {
       return getNullityDefault(module, targetTypes, element, false);
     }

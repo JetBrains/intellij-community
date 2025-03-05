@@ -32,6 +32,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 
 import java.io.File;
@@ -100,7 +101,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     Project project = psiElement.getProject();
     PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return Collections.emptyList();
-    VirtualFile refVFile = containingFile.getVirtualFile();
+    VirtualFile refVFile = containingFile.getOriginalFile().getVirtualFile();
     if (refVFile == null) return Collections.emptyList();
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -360,7 +361,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     ModuleRootModificationUtil.addModuleLibrary(module, libraryName, urls, Collections.emptyList(), scope);
   }
 
-  public static @NotNull List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
+  public static @Unmodifiable @NotNull List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
     return ContainerUtil.map(jarPaths, OrderEntryFix::refreshAndConvertToUrl);
   }
 

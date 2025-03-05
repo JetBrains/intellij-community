@@ -12,6 +12,7 @@ class GitActionIdsHolder : ActionIdsHolder {
     CONTINUE("git4idea.rebase.continue"),
     RETRY("git4idea.rebase.retry"),
     RESOLVE("git4idea.rebase.resolve"),
+    STAGE_AND_RETRY("git4idea.rebase.stage.and.retry"),
 
     GPG_AGENT_CONFIGURATION_SUCCESS_MANUAL("git.gpg.agent.configuration.success.manual.action"),
     GPG_AGENT_CONFIGURATION_PROPOSE_MANUAL("git.gpg.agent.configuration.propose.manual.action"),

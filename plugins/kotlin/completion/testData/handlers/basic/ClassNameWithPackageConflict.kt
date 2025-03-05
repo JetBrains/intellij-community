@@ -3,6 +3,5 @@ fun buildTemplates() {
     Coll<caret>
 }
 
-// IGNORE_K2
 // ELEMENT: Collections
 // TAIL_TEXT: " (java.util)"

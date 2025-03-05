@@ -331,8 +331,7 @@ public class DirDiffPanel implements Disposable {
     }
   }
 
-  @NotNull
-  private AbstractAction createNavigationAction(boolean goDown, boolean withSelection) {
+  private @NotNull AbstractAction createNavigationAction(boolean goDown, boolean withSelection) {
     return new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -539,9 +538,8 @@ public class DirDiffPanel implements Disposable {
       super(project, DiffPlaces.DIR_DIFF);
     }
 
-    @Nullable
     @Override
-    protected String getRequestName(@NotNull ElementWrapper element) {
+    protected @Nullable String getRequestName(@NotNull ElementWrapper element) {
       return null;
     }
 
@@ -551,9 +549,8 @@ public class DirDiffPanel implements Disposable {
       return element != null ? new ElementWrapper(element) : null;
     }
 
-    @NotNull
     @Override
-    protected DiffRequest loadRequest(@NotNull ElementWrapper element, @NotNull ProgressIndicator indicator)
+    protected @NotNull DiffRequest loadRequest(@NotNull ElementWrapper element, @NotNull ProgressIndicator indicator)
       throws ProcessCanceledException, DiffRequestProducerException {
       DiffElement sourceElement = element.sourceElement;
       DiffElement targetElement = element.targetElement;
@@ -601,8 +598,8 @@ public class DirDiffPanel implements Disposable {
   }
 
   private static class ElementWrapper {
-    @Nullable public final DiffElement sourceElement;
-    @Nullable public final DiffElement targetElement;
+    public final @Nullable DiffElement sourceElement;
+    public final @Nullable DiffElement targetElement;
 
     ElementWrapper(@NotNull DirDiffElementImpl element) {
       sourceElement = element.getSource();

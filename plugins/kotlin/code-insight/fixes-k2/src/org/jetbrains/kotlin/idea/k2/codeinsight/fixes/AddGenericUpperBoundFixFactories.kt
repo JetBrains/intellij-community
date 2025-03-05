@@ -37,8 +37,12 @@ internal object AddGenericUpperBoundFixFactories {
 
         return AddGenericUpperBoundFix(
             element = typeParameter,
-            renderedUpperBound = expectedUpperBound.render(
+            fqName = expectedUpperBound.render(
                 renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
+                position = Variance.IN_VARIANCE,
+            ),
+            shortName = expectedUpperBound.render(
+                renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
                 position = Variance.IN_VARIANCE,
             )
         )

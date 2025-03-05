@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -31,7 +32,7 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
     if (qualifier != null) {
       final PsiElement aClass = qualifier.resolve();
       if (!(aClass instanceof PsiClass)) return null;
-      return getSuperType((PsiClass)aClass, PsiUtil.isLanguageLevel8OrHigher(this));
+      return getSuperType((PsiClass)aClass, PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, this));
     }
 
     for (PsiElement scope = getContext(); scope != null; scope = scope.getContext()) {

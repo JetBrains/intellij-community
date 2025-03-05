@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
@@ -6,27 +6,21 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.CustomFoldRegion;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.TextDrawingCallback;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +47,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private static final Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
 
   private final EditorImpl myEditor;
+  private final EditorModel myEditorModel;
   private final DocumentEx myDocument;
   private final EditorPainter myPainter;
   private final EditorCoordinateMapper myMapper;
@@ -77,13 +72,18 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private int myTabSize; // guarded by myLock
   private int myTopOverhang; //guarded by myLock
   private int myBottomOverhang; //guarded by myLock
+  private @NotNull DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy = new DefaultDoubleWidthCharacterStrategy();
 
   private final Object myLock = new Object();
-  
+
   public EditorView(@NotNull EditorImpl editor) {
+    this(editor, editor.getEditorModel());
+  }
+
+  public EditorView(@NotNull EditorImpl editor, @NotNull EditorModel editorModel) {
     myEditor = editor;
-    myDocument = editor.getDocument();
-    
+    myEditorModel = editorModel;
+    myDocument = myEditorModel.getDocument();
     myPainter = new EditorPainter(this);
     myMapper = new EditorCoordinateMapper(this);
     mySizeManager = new EditorSizeManager(this);
@@ -93,63 +93,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myTabFragment = new TabFragment(this);
 
     myEditor.getContentComponent().addHierarchyListener(this);
-    myEditor.getScrollingModel().addVisibleAreaListener(this);
+    getScrollingModel().addVisibleAreaListener(this);
 
     Disposer.register(this, myLogicalPositionCache);
     Disposer.register(this, myTextLayoutCache);
     Disposer.register(this, mySizeManager);
-  }
-
-  EditorImpl getEditor() {
-    return myEditor;
-  }
-
-  FontRenderContext getFontRenderContext() {
-    synchronized (myLock) {
-      return myFontRenderContext;
-    }
-  }
-
-  EditorSizeManager getSizeManager() {
-    return mySizeManager;
-  }
-  
-  TextLayoutCache getTextLayoutCache() {
-    return myTextLayoutCache;
-  }
-  
-  TabFragment getTabFragment() {
-    return myTabFragment;
-  }
-  
-  LogicalPositionCache getLogicalPositionCache() {
-    return myLogicalPositionCache;
-  }
-
-  float getRightAlignmentLineStartX(int visualLine) {
-    return myMapper.getRightAlignmentLineStartX(visualLine);
-  }
-
-  int getRightAlignmentMarginX() {
-    return myMapper.getRightAlignmentMarginX();
-  }
-
-  @Override
-  public void dispose() {
-    myEditor.getScrollingModel().removeVisibleAreaListener(this);
-    myEditor.getContentComponent().removeHierarchyListener(this);
-  }
-
-  @Override
-  public void hierarchyChanged(HierarchyEvent e) {
-    if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getComponent().isShowing()) {
-      checkFontRenderContext(null);
-    }
-  }
-
-  @Override
-  public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
-    checkFontRenderContext(null);
   }
 
   @RequiresEdt
@@ -170,76 +118,76 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myMapper.visualLineToYRange(line);
   }
 
-  @RequiresReadLock
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
+    assertReadAccess();
     return myMapper.offsetToLogicalPosition(offset);
   }
 
-  @RequiresReadLock
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
+    assertReadAccess();
     return myMapper.logicalPositionToOffset(pos);
   }
 
   @RequiresEdt
   public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean beforeSoftWrap) {
     assertNotInBulkMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     return myMapper.logicalToVisualPosition(pos, beforeSoftWrap);
   }
 
   @RequiresEdt
   public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
     assertNotInBulkMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     return myMapper.visualToLogicalPosition(pos);
   }
 
   @RequiresEdt
   public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertNotInBulkMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualPosition(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
 
   @RequiresEdt
   public int visualPositionToOffset(VisualPosition visualPosition) {
     assertNotInBulkMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     return myMapper.visualPositionToOffset(visualPosition);
   }
 
   @RequiresEdt
   public int offsetToVisualLine(int offset, boolean beforeSoftWrap) {
     assertNotInBulkMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualLine(offset, beforeSoftWrap);
   }
 
   @RequiresEdt
   public int visualLineToOffset(int visualLine) {
     assertNotInBulkMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     return myMapper.visualLineToOffset(visualLine);
   }
 
   @RequiresEdt
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     assertNotInBulkMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     return myMapper.xyToVisualPosition(p);
   }
 
   @RequiresEdt
   public @NotNull Point2D visualPositionToXY(@NotNull VisualPosition pos) {
     assertNotInBulkMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     return myMapper.visualPositionToXY(pos);
   }
 
   @RequiresEdt
   public @NotNull Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertNotInBulkMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
 
@@ -259,26 +207,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout == null ? 0 : layout.getWidth();
   }
 
-  LineLayout getPrefixLayout() {
-    synchronized (myLock) {
-      FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
-      if (topLevelRegions != null && topLevelRegions.length > 0) {
-        FoldRegion firstRegion = topLevelRegions[0];
-        if (firstRegion instanceof CustomFoldRegion && firstRegion.getStartOffset() == 0) {
-          return null; // prefix is hidden
-        }
-      }
-      return myPrefixLayout;
-    }
-  }
-
-  TextAttributes getPrefixAttributes() {
-    return myPrefixAttributes;
-  }
-
   @RequiresEdt
   public void paint(Graphics2D g) {
-    myEditor.getSoftWrapModel().prepareToMapping();
+    getSoftWrapModel().prepareToMapping();
     checkFontRenderContext(g.getFontRenderContext());
     myPainter.paint(g);
   }
@@ -292,7 +223,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public @NotNull Dimension getPreferredSize() {
     assert !myEditor.isPurePaintingMode();
     return ReadAction.compute(() -> {
-      myEditor.getSoftWrapModel().prepareToMapping();
+      getSoftWrapModel().prepareToMapping();
       return mySizeManager.getPreferredSize();
     });
   }
@@ -310,7 +241,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public int getPreferredWidth(int beginLine, int endLine) {
     assert !myEditor.isPurePaintingMode();
     return ReadAction.compute(() -> {
-      myEditor.getSoftWrapModel().prepareToMapping();
+      getSoftWrapModel().prepareToMapping();
       return mySizeManager.getPreferredWidth(beginLine, endLine);
     });
   }
@@ -319,7 +250,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public int getPreferredHeight() {
     assert !myEditor.isPurePaintingMode();
     return ReadAction.compute(() -> {
-      myEditor.getSoftWrapModel().prepareToMapping();
+      getSoftWrapModel().prepareToMapping();
       return mySizeManager.getPreferredHeight();
     });
   }
@@ -329,22 +260,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     int startVisualLine = offsetToVisualLine(startOffset, false);
     int endVisualLine = offsetToVisualLine(endOffset, true);
     return getMaxTextWidthInLineRange(startVisualLine, endVisualLine) + getInsets().left;
-  }
-
-  /**
-   * If {@code quickEvaluationListener} is provided, quick approximate size evaluation becomes enabled, listener will be invoked
-   * if approximation will in fact be used during width calculation.
-   */
-  int getMaxTextWidthInLineRange(int startVisualLine, int endVisualLine) {
-    myEditor.getSoftWrapModel().prepareToMapping();
-    int maxWidth = 0;
-    VisualLinesIterator iterator = new VisualLinesIterator(myEditor, startVisualLine);
-    while (!iterator.atEnd() && iterator.getVisualLine() <= endVisualLine) {
-      int width = mySizeManager.getVisualLineWidth(iterator, false);
-      maxWidth = Math.max(maxWidth, width);
-      iterator.advance();
-    }
-    return maxWidth;
   }
 
   @RequiresEdt
@@ -397,7 +312,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
     int offset = logicalPositionToOffset(logicalPosition);
     if (!logicalPosition.equals(offsetToLogicalPosition(offset))) return false; // virtual space
-    if (myEditor.getSoftWrapModel().getSoftWrap(offset) != null) {
+    if (getSoftWrapModel().getSoftWrap(offset) != null) {
       VisualPosition beforeWrapPosition = offsetToVisualPosition(offset, true, true);
       if (visualPosition.line == beforeWrapPosition.line && 
           (visualPosition.column > beforeWrapPosition.column || 
@@ -480,24 +395,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     }
   }
 
-  float getMaxCharWidth() {
-    synchronized (myLock) {
-      initMetricsIfNeeded();
-      return myMaxCharWidth;
-    }
-  }
-
   public int getAscent() {
     synchronized (myLock) {
       initMetricsIfNeeded();
       return myLineHeight - myDescent;
-    }
-  }
-
-  int getCapHeight() {
-    synchronized (myLock) {
-      initMetricsIfNeeded();
-      return myCapHeight;
     }
   }
 
@@ -513,6 +414,291 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       initMetricsIfNeeded();
       return myBottomOverhang;
     }
+  }
+
+  public int getTabSize() {
+    synchronized (myLock) {
+      if (myTabSize < 0) {
+        myTabSize = EditorUtil.getTabSize(myEditor);
+      }
+      return myTabSize;
+    }
+  }
+
+  public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
+    if (offset < 0 || offset == 0 && !leanTowardsLargerOffsets) return 0;
+    String text = region.getPlaceholderText();
+    if (offset > text.length()) {
+      offset = text.length();
+      leanTowardsLargerOffsets = true;
+    }
+    int logicalColumn = LogicalPositionCache.calcColumn(text, 0, 0, offset, getTabSize());
+    int maxColumn = 0;
+    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
+      int startLC = fragment.getStartLogicalColumn();
+      int endLC = fragment.getEndLogicalColumn();
+      if (logicalColumn > startLC && logicalColumn < endLC ||
+          logicalColumn == startLC && leanTowardsLargerOffsets ||
+          logicalColumn == endLC && !leanTowardsLargerOffsets) {
+        return fragment.logicalToVisualColumn(logicalColumn);
+      }
+      maxColumn = fragment.getEndVisualColumn();
+    }
+    return maxColumn;
+  }
+
+  public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
+    if (visualColumn < 0 || visualColumn == 0 && !leansRight) return 0;
+    String text = region.getPlaceholderText();
+    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
+      int startVC = fragment.getStartVisualColumn();
+      int endVC = fragment.getEndVisualColumn();
+      if (visualColumn > startVC && visualColumn < endVC ||
+          visualColumn == startVC && leansRight ||
+          visualColumn == endVC && !leansRight) {
+        int logicalColumn = fragment.visualToLogicalColumn(visualColumn);
+        return LogicalPositionCache.calcOffset(text, logicalColumn, 0, 0, text.length(), getTabSize());
+      }
+    }
+    return text.length();
+  }
+
+  public void invalidateFoldRegionLayout(FoldRegion region) {
+    region.putUserData(FOLD_REGION_TEXT_LAYOUT, null);
+  }
+
+  public int getVisibleLineCount() {
+    return Math.max(1, getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber());
+  }
+
+  public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
+    Point pp = p.x >= 0 && p.y >= 0 ? p : new Point(Math.max(p.x, 0), Math.max(p.y, 0));
+    return visualToLogicalPosition(xyToVisualPosition(pp));
+  }
+
+  @Override
+  public void drawChars(@NotNull Graphics g, char @NotNull [] data, int start, int end, int x, int y, @NotNull Color color, @NotNull FontInfo fontInfo) {
+    myPainter.drawChars(g, data, start, end, x, y, color, fontInfo);
+  }
+
+  @Override
+  public void dispose() {
+    getScrollingModel().removeVisibleAreaListener(this);
+    myEditor.getContentComponent().removeHierarchyListener(this);
+  }
+
+  @Override
+  public void hierarchyChanged(HierarchyEvent e) {
+    if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && e.getComponent().isShowing()) {
+      checkFontRenderContext(null);
+    }
+  }
+
+  @Override
+  public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
+    checkFontRenderContext(null);
+  }
+
+  @Override
+  public @NotNull String dumpState() {
+    String prefixText = myPrefixText;
+    TextAttributes prefixAttributes = myPrefixAttributes;
+    synchronized (myLock) {
+      return "[prefix text: " + prefixText +
+             ", prefix attributes: " + prefixAttributes +
+             ", space width: " + myPlainSpaceWidth +
+             ", line height: " + myLineHeight +
+             ", descent: " + myDescent +
+             ", char height: " + myCharHeight +
+             ", max char width: " + myMaxCharWidth +
+             ", tab size: " + myTabSize +
+             " ,size manager: " + mySizeManager.dumpState() +
+             " ,logical position cache: " + myLogicalPositionCache.dumpState() +
+             "]";
+    }
+  }
+
+  @TestOnly
+  public void validateState() {
+    myLogicalPositionCache.validateState();
+    mySizeManager.validateState();
+  }
+
+  float getMaxCharWidth() {
+    synchronized (myLock) {
+      initMetricsIfNeeded();
+      return myMaxCharWidth;
+    }
+  }
+
+  int getCapHeight() {
+    synchronized (myLock) {
+      initMetricsIfNeeded();
+      return myCapHeight;
+    }
+  }
+
+  /**
+   * If {@code quickEvaluationListener} is provided, quick approximate size evaluation becomes enabled, listener will be invoked
+   * if approximation will in fact be used during width calculation.
+   */
+  int getMaxTextWidthInLineRange(int startVisualLine, int endVisualLine) {
+    getSoftWrapModel().prepareToMapping();
+    int maxWidth = 0;
+    VisualLinesIterator iterator = new VisualLinesIterator(this, startVisualLine);
+    while (!iterator.atEnd() && iterator.getVisualLine() <= endVisualLine) {
+      int width = mySizeManager.getVisualLineWidth(iterator, false);
+      maxWidth = Math.max(maxWidth, width);
+      iterator.advance();
+    }
+    return maxWidth;
+  }
+
+  LineLayout getPrefixLayout() {
+    synchronized (myLock) {
+      FoldRegion[] topLevelRegions = getFoldingModel().fetchTopLevel();
+      if (topLevelRegions != null && topLevelRegions.length > 0) {
+        FoldRegion firstRegion = topLevelRegions[0];
+        if (firstRegion instanceof CustomFoldRegion && firstRegion.getStartOffset() == 0) {
+          return null; // prefix is hidden
+        }
+      }
+      return myPrefixLayout;
+    }
+  }
+
+  TextAttributes getPrefixAttributes() {
+    return myPrefixAttributes;
+  }
+
+  boolean isAd() {
+    return myEditorModel.isAd();
+  }
+
+  EditorImpl getEditor() {
+    return myEditor;
+  }
+
+  DocumentEx getDocument() {
+    return myDocument;
+  }
+
+  FoldingModelImpl getFoldingModel() {
+    return (FoldingModelImpl)myEditorModel.getFoldingModel();
+  }
+
+  InlayModelEx getInlayModel() {
+    return myEditorModel.getInlayModel();
+  }
+
+  SoftWrapModelImpl getSoftWrapModel() {
+    return (SoftWrapModelImpl)myEditorModel.getSoftWrapModel();
+  }
+
+  MarkupModelEx getFilteredDocumentMarkupModel() {
+    return myEditorModel.getDocumentMarkupModel();
+  }
+
+  MarkupModelEx getMarkupModel() {
+    return myEditorModel.getEditorMarkupModel();
+  }
+
+  CaretModelImpl getCaretModel() {
+    return (CaretModelImpl)myEditorModel.getCaretModel();
+  }
+
+  SelectionModel getSelectionModel() {
+    return myEditorModel.getSelectionModel();
+  }
+
+  EditorHighlighter getHighlighter() {
+    return myEditorModel.getHighlighter();
+  }
+
+  FocusModeModel getFocusModel() {
+    return myEditorModel.getFocusModel();
+  }
+
+  ScrollingModel getScrollingModel() {
+    return myEditorModel.getScrollingModel();
+  }
+
+  FontRenderContext getFontRenderContext() {
+    synchronized (myLock) {
+      return myFontRenderContext;
+    }
+  }
+
+  EditorSizeManager getSizeManager() {
+    return mySizeManager;
+  }
+
+  TextLayoutCache getTextLayoutCache() {
+    return myTextLayoutCache;
+  }
+
+  TabFragment getTabFragment() {
+    return myTabFragment;
+  }
+
+  LogicalPositionCache getLogicalPositionCache() {
+    return myLogicalPositionCache;
+  }
+
+  float getRightAlignmentLineStartX(int visualLine) {
+    return myMapper.getRightAlignmentLineStartX(visualLine);
+  }
+
+  int getRightAlignmentMarginX() {
+    return myMapper.getRightAlignmentMarginX();
+  }
+
+  LineLayout getFoldRegionLayout(FoldRegion foldRegion) {
+    LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
+    if (layout == null) {
+      TextAttributes placeholderAttributes = getFoldingModel().getPlaceholderAttributes();
+      layout = LineLayout.create(this, StringUtil.replace(foldRegion.getPlaceholderText(), "\n", " "),
+                              placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType());
+      foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
+    }
+    return layout;
+  }
+
+  public float getCodePointWidth(int codePoint) {
+    return getCodePointWidth(codePoint, Font.PLAIN);
+  }
+
+  float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
+    var multiplier = myEditor.getSettings().getCharacterGridWidthMultiplier();
+    if (multiplier != null) {
+      return multiplier * (myDoubleWidthCharacterStrategy.isDoubleWidth(codePoint) ? getMaxCharWidth() * 2.0f : getMaxCharWidth());
+    }
+    else {
+      return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
+    }
+  }
+
+  Insets getInsets() {
+    return myEditor.getContentComponent().getInsets();
+  }
+
+  int getBidiFlags() {
+    return myBidiFlags;
+  }
+
+  private void invalidateFoldRegionLayouts() {
+    ReadAction.run(() -> {
+      for (FoldRegion region : getFoldingModel().getAllFoldRegions()) {
+        invalidateFoldRegionLayout(region);
+      }
+    });
+  }
+
+  /**
+   * @return the number of visible logical lines, which is the number of total logical lines minus the number of folded lines
+   */
+  private int getVisibleLogicalLinesCount() {
+    return getDocument().getLineCount() - getFoldingModel().getTotalNumberOfFoldedLines();
   }
 
   // guarded by myLock
@@ -571,15 +757,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
     myCapHeight = (int)font.createGlyphVector(myFontRenderContext, "H").getVisualBounds().getHeight();
   }
-  
-  public int getTabSize() {
-    synchronized (myLock) {
-      if (myTabSize < 0) {
-        myTabSize = EditorUtil.getTabSize(myEditor);
-      }
-      return myTabSize;
-    }
-  }
 
   // guarded by myLock
   private boolean setFontRenderContext(FontRenderContext context) {
@@ -596,10 +773,26 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     Object fmHint = UISettings.getEditorFractionalMetricsHint();
     myFontRenderContext = contextToSet.getFractionalMetricsHint() == fmHint
                           ? contextToSet
-                          : new FontRenderContext(contextToSet.getTransform(), 
-                                                  contextToSet.getAntiAliasingHint(), 
+                          : new FontRenderContext(contextToSet.getTransform(),
+                                                  contextToSet.getAntiAliasingHint(),
                                                   fmHint);
     return true;
+  }
+
+  /**
+   * Sets the strategy to differentiate between single and double width characters.
+   * <p>
+   *   Only used when the {@link EditorSettings#setCharacterGridWidthMultiplier(Float) character grid mode}
+   *   is enabled.
+   *   If not set, then the character width will be guessed by its actual width in the font used.
+   *   Such heuristics generally works well for most regular characters,
+   *   but may fail for special characters sometimes used in fancy shell prompts, for example,
+   *   which is why an explicit strategy is needed.
+   * </p>
+   * @param doubleWidthCharacterStrategy the strategy to use
+   */
+  public void setDoubleWidthCharacterStrategy(@NotNull DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
+    myDoubleWidthCharacterStrategy = doubleWidthCharacterStrategy;
   }
 
   private void checkFontRenderContext(FontRenderContext context) {
@@ -614,7 +807,25 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
       myCharWidthCache.clear();
-      myEditor.getFoldingModel().updateCachedOffsets();
+      getFoldingModel().updateCachedOffsets();
+    }
+  }
+
+  private void assertReadAccess() {
+    if (!myEditorModel.isAd()) {
+      ThreadingAssertions.assertReadAccess();
+    }
+  }
+
+  private void assertNotInBulkMode() {
+    if (myDocument instanceof DocumentImpl) {
+      ((DocumentImpl)myDocument).assertNotInBulkUpdate();
+    }
+    else if (myDocument.isInBulkUpdate()) {
+      throw new IllegalStateException("Current operation is not permitted in bulk mode");
+    }
+    if (getInlayModel().isInBatchMode()) {
+      throw new IllegalStateException("Current operation is not permitted during batch inlay update");
     }
   }
 
@@ -627,118 +838,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
   }
 
-  public int offsetToVisualColumnInFoldRegion(@NotNull FoldRegion region, int offset, boolean leanTowardsLargerOffsets) {
-    if (offset < 0 || offset == 0 && !leanTowardsLargerOffsets) return 0;
-    String text = region.getPlaceholderText();
-    if (offset > text.length()) {
-      offset = text.length();
-      leanTowardsLargerOffsets = true;
-    }
-    int logicalColumn = LogicalPositionCache.calcColumn(text, 0, 0, offset, getTabSize());
-    int maxColumn = 0;
-    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
-      int startLC = fragment.getStartLogicalColumn();
-      int endLC = fragment.getEndLogicalColumn();
-      if (logicalColumn > startLC && logicalColumn < endLC ||
-          logicalColumn == startLC && leanTowardsLargerOffsets ||
-          logicalColumn == endLC && !leanTowardsLargerOffsets) {
-        return fragment.logicalToVisualColumn(logicalColumn);
-      }
-      maxColumn = fragment.getEndVisualColumn();
-    }
-    return maxColumn;
-  }
-
-  public int visualColumnToOffsetInFoldRegion(@NotNull FoldRegion region, int visualColumn, boolean leansRight) {
-    if (visualColumn < 0 || visualColumn == 0 && !leansRight) return 0;
-    String text = region.getPlaceholderText();
-    for (LineLayout.VisualFragment fragment : getFoldRegionLayout(region).getFragmentsInVisualOrder(0)) {
-      int startVC = fragment.getStartVisualColumn();
-      int endVC = fragment.getEndVisualColumn();
-      if (visualColumn > startVC && visualColumn < endVC ||
-          visualColumn == startVC && leansRight ||
-          visualColumn == endVC && !leansRight) {
-        int logicalColumn = fragment.visualToLogicalColumn(visualColumn);
-        return LogicalPositionCache.calcOffset(text, logicalColumn, 0, 0, text.length(), getTabSize());
-      }
-    }
-    return text.length();
-  }
-
-  LineLayout getFoldRegionLayout(FoldRegion foldRegion) {
-    LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
-    if (layout == null) {
-      TextAttributes placeholderAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
-      layout = LineLayout.create(this, StringUtil.replace(foldRegion.getPlaceholderText(), "\n", " "),
-                              placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType());
-      foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
-    }
-    return layout;
-  }
-
-  private void invalidateFoldRegionLayouts() {
-    ReadAction.run(() -> {
-      for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
-        invalidateFoldRegionLayout(region);
-      }
-    });
-  }
-
-  public void invalidateFoldRegionLayout(FoldRegion region) {
-    region.putUserData(FOLD_REGION_TEXT_LAYOUT, null);
-  }
-
-  float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
-    return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
-  }
-
-  Insets getInsets() {
-    return myEditor.getContentComponent().getInsets();
-  }
-
-  int getBidiFlags() {
-    return myBidiFlags;
-  }
-
-  @Override
-  public void drawChars(@NotNull Graphics g, char @NotNull [] data, int start, int end, int x, int y, @NotNull Color color, @NotNull FontInfo fontInfo) {
-    myPainter.drawChars(g, data, start, end, x, y, color, fontInfo);
-  }
-
-  @Override
-  public @NotNull String dumpState() {
-    String prefixText = myPrefixText;
-    TextAttributes prefixAttributes = myPrefixAttributes;
-    synchronized (myLock) {
-      return "[prefix text: " + prefixText +
-             ", prefix attributes: " + prefixAttributes +
-             ", space width: " + myPlainSpaceWidth +
-             ", line height: " + myLineHeight +
-             ", descent: " + myDescent +
-             ", char height: " + myCharHeight +
-             ", max char width: " + myMaxCharWidth +
-             ", tab size: " + myTabSize +
-             " ,size manager: " + mySizeManager.dumpState() +
-             " ,logical position cache: " + myLogicalPositionCache.dumpState() +
-             "]";
-    }
-  }
-
-  @TestOnly
-  public void validateState() {
-    myLogicalPositionCache.validateState();
-    mySizeManager.validateState();
-  }
-
-  private void assertNotInBulkMode() {
-    if (myDocument instanceof DocumentImpl) {
-      ((DocumentImpl)myDocument).assertNotInBulkUpdate();
-    }
-    else if (myDocument.isInBulkUpdate()) {
-      throw new IllegalStateException("Current operation is not permitted in bulk mode");
-    }
-    if (myEditor.getInlayModel().isInBatchMode()) {
-      throw new IllegalStateException("Current operation is not permitted during batch inlay update");
+  private class DefaultDoubleWidthCharacterStrategy implements DoubleWidthCharacterStrategy {
+    @Override
+    public boolean isDoubleWidth(int codePoint) {
+      int width = Math.round(myCharWidthCache.getCodePointWidth(codePoint, Font.PLAIN) / getMaxCharWidth());
+      return Math.min(2, Math.max(1, width)) == 2;
     }
   }
 }

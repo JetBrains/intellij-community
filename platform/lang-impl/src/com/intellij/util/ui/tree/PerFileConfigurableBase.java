@@ -46,17 +46,15 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -110,7 +108,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   protected abstract @Nullable <S> Object getParameter(@NotNull Key<S> key);
 
-  protected @NotNull List<Mapping<T>> getDefaultMappings() {
+  protected @Unmodifiable @NotNull List<Mapping<T>> getDefaultMappings() {
     return ContainerUtil.emptyList();
   }
 
@@ -503,7 +501,12 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         return ObjectUtils.notNull(newFile, startValue);
       }
     });
-    myTable.getColumnModel().getColumn(1).setCellEditor(new AbstractTableCellEditor() {
+    myTable.getColumnModel().getColumn(1).setCellEditor(createMappingCellEditor());
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull TableCellEditor createMappingCellEditor() {
+    return new AbstractTableCellEditor() {
       T editorValue;
 
       @Override
@@ -547,7 +550,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       public Object getCellEditorValue() {
         return editorValue;
       }
-    });
+    };
   }
 
   protected @NotNull JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value) {
@@ -702,7 +705,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return param(NULL_TEXT);
   }
 
-  protected @NotNull Collection<T> getValueVariants(@Nullable Object target) {
+  protected @Unmodifiable @NotNull Collection<T> getValueVariants(@Nullable Object target) {
     if (myMappings instanceof PerFileMappingsBase) return ((PerFileMappingsBase<T>)myMappings).getAvailableValues();
     throw new UnsupportedOperationException();
   }

@@ -7,11 +7,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiPackage
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.refactoring.util.RefactoringMessageUtil
 import com.intellij.testIntegration.createTest.CreateTestDialog
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.util.removeSuffixIfPresent
 
 class KotlinCreateTestDialog(
     project: Project,
@@ -34,4 +36,11 @@ class KotlinCreateTestDialog(
                 KotlinFileType.INSTANCE
             }
         )
+
+    override fun suggestTestClassName(targetClass: PsiClass): String {
+        val customSettings = JavaCodeStyleSettings.getInstance(targetClass.containingFile)
+        val prefix = customSettings.TEST_NAME_PREFIX
+        val suffix = customSettings.TEST_NAME_SUFFIX
+        return prefix + targetClass.name?.removeSuffixIfPresent("Kt") + suffix
+    }
 }

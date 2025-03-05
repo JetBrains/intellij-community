@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.*;
@@ -345,8 +345,7 @@ public class GroovyBlockGenerator {
     return getGenericBlocks(visibleChildren(myNode));
   }
 
-  @NotNull
-  private List<Block> getGenericBlocks(@NotNull List<ASTNode> astNodes) {
+  private @NotNull List<Block> getGenericBlocks(@NotNull List<ASTNode> astNodes) {
     return ContainerUtil.map(astNodes, it -> myContext.createBlock(it, getIndent(it), getChildWrap(it)));
   }
 
@@ -359,9 +358,8 @@ public class GroovyBlockGenerator {
       GroovyIndentProcessor.getIndentInBlock(settings.BRACE_STYLE),
       myContext) {
 
-      @NotNull
       @Override
-      public ChildAttributes getChildAttributes(int newChildIndex) {
+      public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
         List<Block> subBlocks = getSubBlocks();
         if (newChildIndex > 0) {
           Block block = subBlocks.get(newChildIndex - 1);
@@ -391,8 +389,7 @@ public class GroovyBlockGenerator {
     return myWrappingProcessor.getChildWrap(childNode);
   }
 
-  @NotNull
-  public List<Block> generateCodeSubBlocks(final List<ASTNode> children) {
+  public @NotNull List<Block> generateCodeSubBlocks(final List<ASTNode> children) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
 
     List<ASTNode> flattenChildren = flattenChildren(children);
@@ -838,7 +835,7 @@ public class GroovyBlockGenerator {
                                            boolean topLevel,
                                            List<ASTNode> children,
                                            Wrap wrap) {
-    LOG.assertTrue(children.size() > 0);
+    LOG.assertTrue(!children.isEmpty());
     ASTNode fst = children.get(0);
     if (NESTED.contains(fst.getElementType())) {
       addNestedChildren(fst.getPsi(), list, aligner, false, wrap);

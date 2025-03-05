@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class RestElement extends ASTWrapperPsiElement implements NavigatablePsiElement {
 
-  public RestElement(@NotNull final ASTNode node) {
+  public RestElement(final @NotNull ASTNode node) {
     super(node);
   }
 

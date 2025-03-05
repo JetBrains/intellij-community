@@ -3,10 +3,6 @@ f:com.intellij.internal.statistic.eventLog.DefaultEventLogFilesProvider
 - <init>(java.nio.file.Path,kotlin.jvm.functions.Function0):V
 - getLogFiles():java.util.List
 - getLogFilesExceptActive():java.util.List
-f:com.intellij.internal.statistic.eventLog.DefaultFilesToSendProvider
-- com.intellij.internal.statistic.eventLog.FilesToSendProvider
-- <init>(com.intellij.internal.statistic.eventLog.EventLogFilesProvider,I,Z):V
-- getFilesToSend():java.util.List
 f:com.intellij.internal.statistic.eventLog.EventLogFile
 - sf:Companion:com.intellij.internal.statistic.eventLog.EventLogFile$Companion
 - <init>(java.io.File):V

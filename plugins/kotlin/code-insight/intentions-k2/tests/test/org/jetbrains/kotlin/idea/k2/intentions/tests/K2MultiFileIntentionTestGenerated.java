@@ -86,4 +86,23 @@ public abstract class K2MultiFileIntentionTestGenerated extends AbstractK2MultiF
             runTest("../../../idea/tests/testData/multiFileIntentions/implementAbstractMember/implementVarInJava/implementAllInJava.test");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/multiFileIntentions/convertMemberToExtension")
+    public static class ConvertMemberToExtension extends AbstractK2MultiFileIntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("addImports/addImports.test")
+        public void testAddImports_AddImports() throws Exception {
+            runTest("../../../idea/tests/testData/multiFileIntentions/convertMemberToExtension/addImports/addImports.test");
+        }
+    }
 }

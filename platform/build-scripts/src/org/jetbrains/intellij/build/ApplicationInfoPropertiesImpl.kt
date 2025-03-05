@@ -18,6 +18,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlin.io.path.name
 
 private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
 
@@ -143,7 +144,7 @@ internal fun computeAppInfoXml(context: BuildContext, appInfo: ApplicationInfoPr
   val artifactServer = context.proprietaryBuildTools.artifactsServer
   var builtinPluginsRepoUrl = ""
   if (artifactServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-    builtinPluginsRepoUrl = artifactServer.urlToArtifact(context, "${appInfo.productCode}-plugins/plugins.xml")!!
+    builtinPluginsRepoUrl = artifactServer.urlToArtifact(context, "${context.nonBundledPlugins.name}/plugins.xml")!!
     check(!builtinPluginsRepoUrl.startsWith("http:")) {
       "Insecure artifact server: $builtinPluginsRepoUrl"
     }

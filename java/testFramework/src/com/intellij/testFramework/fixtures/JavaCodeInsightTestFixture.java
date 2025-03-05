@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.project.Project;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public interface JavaCodeInsightTestFixture extends CodeInsightTestFixture {
   JavaPsiFacadeEx getJavaFacade();
 
-  PsiClass addClass(@NotNull @NonNls @Language("JAVA") final String classText);
+  PsiClass addClass(@Language("JAVA") final @NotNull @NonNls String classText);
 
   /**
    * Finds class by given fully-qualified name in {@link GlobalSearchScope#allScope(Project)}.

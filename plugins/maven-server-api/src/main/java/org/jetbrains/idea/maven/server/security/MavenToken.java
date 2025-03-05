@@ -9,6 +9,7 @@ public class MavenToken implements Serializable {
 
   public MavenToken(String str) {myUUID = UUID.fromString(str);}
 
+  @Override
   public String toString() {
     return myUUID.toString();
   }

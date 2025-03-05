@@ -15,7 +15,8 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -25,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class SingleClassImportInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "single.class.import.problem.descriptor");
   }

@@ -1,25 +1,33 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html
 
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.html.HtmlFileImpl
 import com.intellij.psi.util.siblings
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.asSafely
+import com.intellij.util.io.URLUtil
 import com.intellij.xml.Html5SchemaProvider
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.io.File
 import java.io.FileNotFoundException
+import java.net.URL
 
+@RunWith(JUnit4::class)
 class Html5TagAndAttributeNamesProviderTest : BasePlatformTestCase() {
 
+  @Test
   fun testHtml5TagAndAttributeNamesProvider() {
     val location = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') +
                    "/xml/xml-psi-impl/gen/com/intellij/xml/util/Html5TagAndAttributeNamesProvider.kt"
@@ -34,10 +42,16 @@ class Html5TagAndAttributeNamesProviderTest : BasePlatformTestCase() {
   }
 
   private fun generateFile(version: Int): String {
+    val virtualFile: VirtualFile?
     val location = Html5SchemaProvider.getHtml5SchemaLocation()
-
+    if (location.startsWith(URLUtil.JAR_PROTOCOL)) {
+      virtualFile = myFixture.createFile("html5.rnc", URL(location).openStream().reader().use { it.readText() })
+    }
+    else {
+      virtualFile = VfsUtil.findFileByIoFile(File(location), true)
+    }
     val descriptor = (PsiManager.getInstance(project).findFile(
-      VfsUtil.findFileByIoFile(File(location), true)
+      virtualFile
       ?: throw FileNotFoundException(location)
     ) as XmlFile).document!!.metaData as RelaxedHtmlNSDescriptor
 

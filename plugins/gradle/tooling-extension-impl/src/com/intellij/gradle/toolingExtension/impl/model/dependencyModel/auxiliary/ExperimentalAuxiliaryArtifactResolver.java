@@ -6,6 +6,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ComponentArtifactIdentifier;
 import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.result.ResolvedArtifactResult;
 import org.gradle.api.attributes.Bundling;
 import org.gradle.api.attributes.Category;
@@ -31,10 +32,15 @@ public class ExperimentalAuxiliaryArtifactResolver implements AuxiliaryArtifactR
 
   private final @NotNull Project project;
   private final @NotNull GradleDependencyDownloadPolicy policy;
+  private final Set<String> allowedDependencyGroups;
 
-  public ExperimentalAuxiliaryArtifactResolver(@NotNull Project project, @NotNull GradleDependencyDownloadPolicy policy) {
+  public ExperimentalAuxiliaryArtifactResolver(@NotNull Project project,
+                                               @NotNull GradleDependencyDownloadPolicy policy,
+                                               Set<String> allowedDependencyGroups
+  ) {
     this.project = project;
     this.policy = policy;
+    this.allowedDependencyGroups = allowedDependencyGroups;
   }
 
   @Override
@@ -78,6 +84,13 @@ public class ExperimentalAuxiliaryArtifactResolver implements AuxiliaryArtifactR
     return configuration
       .getIncoming()
       .artifactView(view -> {
+        view.componentFilter(componentIdentifier ->  {
+          if (allowedDependencyGroups.isEmpty()) return true;
+          if (componentIdentifier instanceof ModuleComponentIdentifier) {
+            return allowedDependencyGroups.contains(((ModuleComponentIdentifier)componentIdentifier).getGroup());
+          }
+          return false;
+        });
         // we are interested only in variant reselection
         view.withVariantReselection();
         // do not propagate resolution exceptions; try to resolve as many artifacts as possible

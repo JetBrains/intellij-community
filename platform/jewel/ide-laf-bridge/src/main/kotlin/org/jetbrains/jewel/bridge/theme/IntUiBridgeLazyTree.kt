@@ -22,22 +22,23 @@ internal fun readLazyTreeStyle(): LazyTreeStyle {
     val selectedElementBackground = retrieveColorOrUnspecified("Tree.selectionBackground")
     val inactiveSelectedElementBackground = retrieveColorOrUnspecified("Tree.selectionInactiveBackground")
 
-    val colors =
+    val itemColors =
         SimpleListItemColors(
             content = normalContent,
-            contentFocused = normalContent,
+            contentActive = normalContent,
             contentSelected = selectedContent,
-            contentSelectedFocused = selectedContent,
-            backgroundFocused = Color.Transparent,
+            contentSelectedActive = selectedContent,
+            background = Color.Unspecified,
+            backgroundActive = Color.Unspecified,
             backgroundSelected = inactiveSelectedElementBackground,
-            backgroundSelectedFocused = selectedElementBackground,
+            backgroundSelectedActive = selectedElementBackground,
         )
 
     val leftIndent = retrieveIntAsDpOrUnspecified("Tree.leftChildIndent").takeOrElse { 7.dp }
     val rightIndent = retrieveIntAsDpOrUnspecified("Tree.rightChildIndent").takeOrElse { 11.dp }
 
     return LazyTreeStyle(
-        colors = colors,
+        colors = itemColors,
         metrics =
             LazyTreeMetrics(
                 indentSize = leftIndent + rightIndent,
@@ -46,6 +47,7 @@ internal fun readLazyTreeStyle(): LazyTreeStyle {
                         innerPadding = PaddingValues(horizontal = 12.dp),
                         outerPadding = PaddingValues(4.dp),
                         selectionBackgroundCornerSize = CornerSize(JBUI.CurrentTheme.Tree.ARC.dp / 2),
+                        iconTextGap = 2.dp,
                     ),
                 elementMinHeight = retrieveIntAsDpOrUnspecified("Tree.rowHeight").takeOrElse { 24.dp },
                 chevronContentGap = 2.dp, // See com.intellij.ui.tree.ui.ClassicPainter.GAP

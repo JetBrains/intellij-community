@@ -67,7 +67,9 @@ class SuggestedRefactoringChangeCollector(
     var initialState = state ?: return
     val stateLock = Any()
     require(initialState.errorLevel != ErrorLevel.INCONSISTENT)
-    val psiFile = initialState.anchor.containingFile
+    val anchor = initialState.anchor
+    if (!anchor.isValid) return
+    val psiFile = anchor.containingFile
     val project = psiFile.project
     val psiDocumentManager = PsiDocumentManager.getInstance(project)
     val document = psiDocumentManager.getDocument(psiFile)!!

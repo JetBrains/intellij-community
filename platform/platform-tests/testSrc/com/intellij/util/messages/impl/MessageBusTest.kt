@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.LoggedErrorProcessor.Action
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.createSimpleMessageBusOwner

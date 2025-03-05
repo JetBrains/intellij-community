@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Locale
 
 abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTest() {
     companion object {
@@ -44,7 +45,7 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
         val projectFile = projectRoot.resolve("projectFile.ipr")
         val projectRoot = (if (projectFile.exists()) projectFile else projectRoot).toPath()
 
-        val testName = getTestName(true).toLowerCase()
+        val testName = getTestName(true).lowercase(Locale.getDefault())
         val originalStdlibFile = if (testName.contains("latestruntime") || testName.endsWith("withstdlib"))
             TestKotlinArtifacts.kotlinStdlib
         else

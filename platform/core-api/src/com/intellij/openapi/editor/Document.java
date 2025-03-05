@@ -165,7 +165,7 @@ public interface Document extends UserDataHolder {
   void replaceString(int startOffset, int endOffset, @NlsSafe @NotNull CharSequence s);
 
   /**
-   * Checks if the document text is read-only.
+   * Checks if the document text is writable (i.e., not read-only).
    *
    * @return {@code true} if the document text is writable, {@code false} if it is read-only.
    * @see #fireReadOnlyModificationAttempt()

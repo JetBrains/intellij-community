@@ -1,7 +1,7 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameItemProvider;
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel;
 import com.intellij.openapi.Disposable;
@@ -18,6 +18,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,17 +43,16 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
+  public @NotNull List<String> filterNames(@NotNull ChooseByNameViewModel base, String @NotNull [] names, @NotNull String pattern) {
     return ContainerUtil.emptyList();
   }
 
   @Override
   public boolean filterElements(@NotNull ChooseByNameViewModel base,
-                                @NotNull final String pattern,
+                                final @NotNull String pattern,
                                 final boolean everywhere,
-                                @NotNull final ProgressIndicator cancelled,
+                                final @NotNull ProgressIndicator cancelled,
                                 @NotNull Processor<Object> consumer) {
 
     GotoTaskAction.CREATE_NEW_TASK_ACTION.setTaskName(pattern);
@@ -100,6 +100,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       // was contained in server response (as not remotely closed). Moreover on next request with pagination when the
       // same issues was not returned again by server it was *excluded* from popup (thus subsequent update reduced total
       // number of items shown).
+      tasks = new ArrayList<>(tasks);
       tasks.removeAll(allCachedAndLocalTasks);
       return processTasks(tasks, consumer, cancelled);
     }

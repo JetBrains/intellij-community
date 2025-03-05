@@ -29,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.*;
@@ -273,7 +273,7 @@ public final class JavaRearranger implements Rearranger<JavaElementArrangementEn
       for (ArrangementEntryDependencyInfo fieldInInitializerInfo : root.getDependentEntriesInfos()) {
         JavaElementArrangementEntry fieldInInitializer = fieldInInitializerInfo.getAnchorEntry();
         if (arrangedFields.indexOf(fieldInInitializer) > anchorEntryIndex ||
-            fieldInInitializerInfo.getDependentEntriesInfos().size() > 0) {
+            !fieldInInitializerInfo.getDependentEntriesInfos().isEmpty()) {
           anchorField.addDependency(fieldInInitializer);
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -113,8 +113,7 @@ public final class BasicJavaAstTreeUtil {
     return results;
   }
 
-  @Nullable
-  public static ASTNode getReferenceNameElement(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getReferenceNameElement(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
@@ -155,16 +154,14 @@ public final class BasicJavaAstTreeUtil {
     return null;
   }
 
-  @Nullable
-  public static ASTNode getElseElement(@NotNull ASTNode element) {
+  public static @Nullable ASTNode getElseElement(@NotNull ASTNode element) {
     if (!is(element, BASIC_IF_STATEMENT)) {
       return null;
     }
     return findChildByType(element, JavaTokenType.ELSE_KEYWORD);
   }
 
-  @Nullable
-  public static ASTNode getThenBranch(@NotNull ASTNode element) {
+  public static @Nullable ASTNode getThenBranch(@NotNull ASTNode element) {
     if (!is(element, BASIC_IF_STATEMENT)) {
       return null;
     }
@@ -188,18 +185,15 @@ public final class BasicJavaAstTreeUtil {
     return null;
   }
 
-  @Nullable
-  public static ASTNode getLParenth(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getLParenth(@Nullable ASTNode element) {
     return findChildByType(element, JavaTokenType.LPARENTH);
   }
 
-  @Nullable
-  public static ASTNode getRParenth(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getRParenth(@Nullable ASTNode element) {
     return findChildByType(element, RPARENTH);
   }
 
-  @Nullable
-  public static ASTNode getFinallyBlock(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getFinallyBlock(@Nullable ASTNode element) {
     if (!is(element, BASIC_TRY_STATEMENT)) {
       return null;
     }
@@ -213,39 +207,32 @@ public final class BasicJavaAstTreeUtil {
     return null;
   }
 
-  @Nullable
-  public static ASTNode getNameIdentifier(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getNameIdentifier(@Nullable ASTNode element) {
     return findChildByType(element, JavaTokenType.IDENTIFIER);
   }
 
-  @Nullable
-  public static ASTNode getInitializer(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getInitializer(@Nullable ASTNode element) {
     return findChildByType(element, EXPRESSION_SET);
   }
 
 
-  @Nullable
-  public static ASTNode getDocComment(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getDocComment(@Nullable ASTNode element) {
     return findChildByType(element, BASIC_DOC_COMMENT);
   }
 
-  @Nullable
-  public static ASTNode getTypeElement(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getTypeElement(@Nullable ASTNode element) {
     return findChildByType(element, BASIC_TYPE);
   }
 
-  @Nullable
-  public static ASTNode getModifierList(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getModifierList(@Nullable ASTNode element) {
     return findChildByType(element, BASIC_MODIFIER_LIST);
   }
 
-  @Nullable
-  public static ASTNode getLBrace(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getLBrace(@Nullable ASTNode element) {
     return findChildByType(element, JavaTokenType.LBRACE);
   }
 
-  @Nullable
-  public static ASTNode getRBrace(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getRBrace(@Nullable ASTNode element) {
     return findChildByType(element, JavaTokenType.RBRACE);
   }
 
@@ -291,21 +278,18 @@ public final class BasicJavaAstTreeUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiElement toPsi(@Nullable ASTNode astNode) {
+  public static @Nullable PsiElement toPsi(@Nullable ASTNode astNode) {
     return SourceTreeToPsiMap.treeElementToPsi(astNode);
   }
 
-  @Nullable
-  public static ASTNode toNode(@Nullable PsiElement psiElement) {
+  public static @Nullable ASTNode toNode(@Nullable PsiElement psiElement) {
     if (psiElement == null) {
       return null;
     }
     return psiElement.getNode();
   }
 
-  @Nullable
-  public static ASTNode getParentOfType(@Nullable ASTNode e, @NotNull ParentAwareTokenSet set) {
+  public static @Nullable ASTNode getParentOfType(@Nullable ASTNode e, @NotNull ParentAwareTokenSet set) {
     if (e == null) {
       return null;
     }
@@ -327,29 +311,25 @@ public final class BasicJavaAstTreeUtil {
   }
 
 
-  @Nullable
-  public static ASTNode getParentOfType(@Nullable ASTNode e, @NotNull IElementType elementType) {
+  public static @Nullable ASTNode getParentOfType(@Nullable ASTNode e, @NotNull IElementType elementType) {
     if (e == null) {
       return null;
     }
     return findParent(e, elementType);
   }
 
-  @Nullable
-  public static ASTNode getMethodExpression(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getMethodExpression(@Nullable ASTNode element) {
     if (!is(element, BASIC_METHOD_CALL_EXPRESSION)) {
       return null;
     }
     return element.getFirstChildNode();
   }
 
-  @Nullable
-  public static ASTNode getExpressionList(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getExpressionList(@Nullable ASTNode element) {
     return findChildByType(element, BASIC_EXPRESSION_LIST);
   }
 
-  @Nullable
-  public static ASTNode getTypeParameterList(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getTypeParameterList(@Nullable ASTNode element) {
     return findChildByType(element, BASIC_TYPE_PARAMETER_LIST);
   }
 
@@ -364,8 +344,7 @@ public final class BasicJavaAstTreeUtil {
       !is(element, BASIC_DOC_SNIPPET_ATTRIBUTE_VALUE);
   }
 
-  @Nullable
-  public static String getTagName(@Nullable ASTNode element) {
+  public static @Nullable String getTagName(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
@@ -380,8 +359,7 @@ public final class BasicJavaAstTreeUtil {
     return text.substring(1);
   }
 
-  @Nullable
-  public static ASTNode getROperand(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getROperand(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
@@ -391,14 +369,12 @@ public final class BasicJavaAstTreeUtil {
     return findChildByType(element, EXPRESSION_SET);
   }
 
-  @Nullable
-  public static ASTNode getBlock(@Nullable ASTNode statement) {
+  public static @Nullable ASTNode getBlock(@Nullable ASTNode statement) {
     if (statement == null) return null;
     return findChildByType(statement, STATEMENT_SET);
   }
 
-  @Nullable
-  public static ASTNode getAnonymousClass(@Nullable ASTNode expression) {
+  public static @Nullable ASTNode getAnonymousClass(@Nullable ASTNode expression) {
     if (expression == null) return null;
     return findChildByType(expression, BASIC_ANONYMOUS_CLASS);
   }
@@ -424,8 +400,7 @@ public final class BasicJavaAstTreeUtil {
     return element;
   }
 
-  @Nullable
-  public static ASTNode findElementInRange(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull IElementType elementType) {
+  public static @Nullable ASTNode findElementInRange(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull IElementType elementType) {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, JavaLanguage.INSTANCE);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, JavaLanguage.INSTANCE);
     if (element1 instanceof PsiWhiteSpace) {
@@ -449,8 +424,7 @@ public final class BasicJavaAstTreeUtil {
     return element;
   }
 
-  @Nullable
-  public static ASTNode getForInitialization(@Nullable ASTNode forStatement) {
+  public static @Nullable ASTNode getForInitialization(@Nullable ASTNode forStatement) {
 
     if (!is(forStatement, BASIC_FOR_STATEMENT)) {
       return null;
@@ -494,16 +468,14 @@ public final class BasicJavaAstTreeUtil {
     return result == null ? null : result.getNode();
   }
 
-  @Nullable
-  public static ASTNode getParentOfType(@Nullable ASTNode e, @NotNull ParentAwareTokenSet types, boolean strict) {
+  public static @Nullable ASTNode getParentOfType(@Nullable ASTNode e, @NotNull ParentAwareTokenSet types, boolean strict) {
     if (!strict && is(e, types)) {
       return e;
     }
     return getParentOfType(e, types);
   }
 
-  @Nullable
-  public static PsiElement getParentOfType(@Nullable PsiElement e, @NotNull Set<IElementType> types, boolean strict) {
+  public static @Nullable PsiElement getParentOfType(@Nullable PsiElement e, @NotNull Set<IElementType> types, boolean strict) {
     if (!strict && e != null && is(e.getNode(), types)) {
       return e;
     }
@@ -513,29 +485,25 @@ public final class BasicJavaAstTreeUtil {
     return toPsi(getParentOfType(e.getNode(), ParentAwareTokenSet.create(types)));
   }
 
-  @Nullable
-  public static ASTNode getCatchBlock(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getCatchBlock(@Nullable ASTNode element) {
     if (!is(element, BASIC_CATCH_SECTION)) {
       return null;
     }
     return findChildByType(element, BASIC_CODE_BLOCK);
   }
 
-  @Nullable
-  public static ASTNode getParameter(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getParameter(@Nullable ASTNode element) {
     return findChildByType(element, BASIC_PARAMETER);
   }
 
-  @Nullable
-  public static ASTNode getWhileKeyword(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getWhileKeyword(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
     return findChildByType(element, JavaTokenType.WHILE_KEYWORD);
   }
 
-  @Nullable
-  public static ASTNode getWhileCondition(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getWhileCondition(@Nullable ASTNode element) {
     if (!is(element, BASIC_DO_WHILE_STATEMENT) &&
         !is(element, BASIC_WHILE_STATEMENT)) {
       return null;
@@ -543,16 +511,14 @@ public final class BasicJavaAstTreeUtil {
     return findChildByType(element, EXPRESSION_SET);
   }
 
-  @Nullable
-  public static ASTNode getDoWhileBody(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getDoWhileBody(@Nullable ASTNode element) {
     if (!is(element, BASIC_DO_WHILE_STATEMENT)) {
       return null;
     }
     return findChildByType(element, STATEMENT_SET);
   }
 
-  @Nullable
-  public static ASTNode getForUpdate(@Nullable ASTNode statement) {
+  public static @Nullable ASTNode getForUpdate(@Nullable ASTNode statement) {
     if (!is(statement, BASIC_FOR_STATEMENT)) {
       return null;
     }
@@ -569,16 +535,14 @@ public final class BasicJavaAstTreeUtil {
     return null;
   }
 
-  @Nullable
-  public static ASTNode getForCondition(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getForCondition(@Nullable ASTNode element) {
     if (!is(element, BASIC_FOR_STATEMENT)) {
       return null;
     }
     return findChildByType(element, EXPRESSION_SET);
   }
 
-  @Nullable
-  public static ASTNode getIfCondition(@Nullable ASTNode statement) {
+  public static @Nullable ASTNode getIfCondition(@Nullable ASTNode statement) {
     if (!is(statement, BASIC_IF_STATEMENT)) {
       return null;
     }
@@ -639,8 +603,7 @@ public final class BasicJavaAstTreeUtil {
     return getChildren(element).stream().filter(ch -> is(ch, BASIC_NAME_VALUE_PAIR)).toArray(ASTNode[]::new);
   }
 
-  @Nullable
-  public static ASTNode getFirstBodyElement(@Nullable ASTNode block) {
+  public static @Nullable ASTNode getFirstBodyElement(@Nullable ASTNode block) {
     if (block == null) {
       return null;
     }
@@ -650,14 +613,12 @@ public final class BasicJavaAstTreeUtil {
     return nextSibling == getRBrace(block) ? null : nextSibling;
   }
 
-  @Nullable
-  public static ASTNode getCodeBlock(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getCodeBlock(@Nullable ASTNode element) {
     if (element == null) return null;
     return findChildByType(element, BASIC_CODE_BLOCK);
   }
 
-  @Nullable
-  public static ASTNode getForBody(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getForBody(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
@@ -686,8 +647,7 @@ public final class BasicJavaAstTreeUtil {
     return ASTNode.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public static ASTNode getConditionalExpressionThenExpression(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getConditionalExpressionThenExpression(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
@@ -704,8 +664,7 @@ public final class BasicJavaAstTreeUtil {
     return child;
   }
 
-  @Nullable
-  public static IElementType getAssignmentOperationTokenType(@Nullable ASTNode expr) {
+  public static @Nullable IElementType getAssignmentOperationTokenType(@Nullable ASTNode expr) {
     if (expr == null) {
       return null;
     }
@@ -716,24 +675,21 @@ public final class BasicJavaAstTreeUtil {
     return ASTNode.getElementType();
   }
 
-  @Nullable
-  public static ASTNode getPatternVariable(@Nullable ASTNode ASTNode) {
+  public static @Nullable ASTNode getPatternVariable(@Nullable ASTNode ASTNode) {
     if (ASTNode == null) {
       return null;
     }
     return findChildByType(ASTNode, BASIC_DECONSTRUCTION_PATTERN_VARIABLE, BASIC_PATTERN_VARIABLE);
   }
 
-  @Nullable
-  public static ASTNode getExpression(@Nullable ASTNode ASTNode) {
+  public static @Nullable ASTNode getExpression(@Nullable ASTNode ASTNode) {
     if (ASTNode == null) {
       return null;
     }
     return findChildByType(ASTNode, EXPRESSION_SET);
   }
 
-  @Nullable
-  public static ASTNode getRecordComponentContainingClass(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getRecordComponentContainingClass(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
@@ -748,16 +704,14 @@ public final class BasicJavaAstTreeUtil {
     return null;
   }
 
-  @Nullable
-  public static ASTNode getRecordHeader(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getRecordHeader(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
     return findChildByType(element, BASIC_RECORD_HEADER);
   }
 
-  @Nullable
-  public static ASTNode getRuleBody(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getRuleBody(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
@@ -766,32 +720,28 @@ public final class BasicJavaAstTreeUtil {
       ParentAwareTokenSet.create(BASIC_BLOCK_STATEMENT, BASIC_THROW_STATEMENT), EXPRESSION_SET));
   }
 
-  @Nullable
-  public static ASTNode getCaseLabelElementList(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getCaseLabelElementList(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
     return findChildByType(element, BASIC_CASE_LABEL_ELEMENT_LIST);
   }
 
-  @Nullable
-  public static ASTNode getReturnValue(@Nullable ASTNode element) {
+  public static @Nullable ASTNode getReturnValue(@Nullable ASTNode element) {
     if (element == null) {
       return null;
     }
     return findChildByType(element, EXPRESSION_SET);
   }
 
-  @Nullable
-  public static ASTNode getForEachIteratedValue(@Nullable ASTNode statement) {
+  public static @Nullable ASTNode getForEachIteratedValue(@Nullable ASTNode statement) {
     if (!is(statement, BASIC_FOREACH_STATEMENT)) {
       return null;
     }
     return findChildByType(statement, EXPRESSION_SET);
   }
 
-  @Nullable
-  public static ASTNode getForEachIterationParameter(@Nullable ASTNode statement) {
+  public static @Nullable ASTNode getForEachIterationParameter(@Nullable ASTNode statement) {
     if (statement == null) {
       return null;
     }
@@ -801,8 +751,7 @@ public final class BasicJavaAstTreeUtil {
     return findChildByType(statement, BASIC_PARAMETER);
   }
 
-  @Nullable
-  public static ASTNode getForeachBody(@Nullable ASTNode statement) {
+  public static @Nullable ASTNode getForeachBody(@Nullable ASTNode statement) {
     if (statement == null) {
       return null;
     }
@@ -812,8 +761,7 @@ public final class BasicJavaAstTreeUtil {
     return findChildByType(statement, STATEMENT_SET);
   }
 
-  @Nullable
-  public static ASTNode getWhileBody(@Nullable ASTNode statement) {
+  public static @Nullable ASTNode getWhileBody(@Nullable ASTNode statement) {
     if (statement == null) {
       return null;
     }

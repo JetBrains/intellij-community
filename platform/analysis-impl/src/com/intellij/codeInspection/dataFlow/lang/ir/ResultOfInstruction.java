@@ -23,6 +23,7 @@ public class ResultOfInstruction extends EvalInstruction {
     return arguments[0];
   }
 
+  @Override
   public String toString() {
     return "RESULT_OF " + getDfaAnchor();
   }

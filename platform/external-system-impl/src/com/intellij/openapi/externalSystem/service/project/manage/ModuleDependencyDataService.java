@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.ReadAction;
@@ -29,15 +29,13 @@ import static com.intellij.util.containers.ContainerUtil.concat;
 public final class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {
   private static final Logger LOG = Logger.getInstance(ModuleDependencyDataService.class);
 
-  @NotNull
   @Override
-  public Key<ModuleDependencyData> getTargetDataKey() {
+  public @NotNull Key<ModuleDependencyData> getTargetDataKey() {
     return ProjectKeys.MODULE_DEPENDENCY;
   }
 
-  @NotNull
   @Override
-  public Class<ModuleOrderEntry> getOrderEntryType() {
+  public @NotNull Class<ModuleOrderEntry> getOrderEntryType() {
     return ModuleOrderEntry.class;
   }
 
@@ -53,8 +51,8 @@ public final class ModuleDependencyDataService extends AbstractDependencyDataSer
 
   @Override
   protected Map<OrderEntry, OrderAware> importData(final @NotNull Collection<? extends DataNode<ModuleDependencyData>> toImport,
-                                                   @NotNull final Module module,
-                                                   @NotNull final IdeModifiableModelsProvider modelsProvider) {
+                                                   final @NotNull Module module,
+                                                   final @NotNull IdeModifiableModelsProvider modelsProvider) {
     final Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope>, ModuleOrderEntry> toRemove =
       new HashMap<>();
     final Map<OrderEntry, OrderAware> orderEntryDataMap = new LinkedHashMap<>();

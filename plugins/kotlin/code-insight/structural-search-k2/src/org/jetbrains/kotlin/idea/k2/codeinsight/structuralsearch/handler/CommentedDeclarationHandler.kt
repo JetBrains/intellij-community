@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.handler
 
 import com.intellij.psi.PsiComment
@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 
-class CommentedDeclarationHandler : MatchingHandler() {
+internal class CommentedDeclarationHandler : MatchingHandler() {
     private fun KtDeclaration.getNonKDocCommentChild(): PsiComment? =
         this.getChildrenOfType<PsiComment>().firstOrNull { it !is KDoc }
 

@@ -4,26 +4,604 @@ package com.intellij.psi.controlFlow;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Predicates;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
 public final class ControlFlowUtil {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class);
 
-  private static class SSAInstructionState implements Cloneable {
+  /**
+   * @param variable variable
+   * @param context the context that references to the variable
+   * @return the scope around context that enforces variable to be effectively final. Currently, it could be
+   * an inner class, lambda expression, or {@link PsiSwitchLabelStatementBase} for switch guard. Returns null if there's no such scope, 
+   * or the variable declaration is within the same scope, so it should not be effectively final.
+   * Note that if null is returned, it doesn't mean that the variable could be modified, as another reference from 
+   * another place might exist.
+   */
+  public static @Nullable PsiElement getScopeEnforcingEffectiveFinality(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    PsiElement[] scope = getVariableScope(variable);
+    if (scope.length < 1 || scope[0] == null || scope[0].getContainingFile() != context.getContainingFile()) return null;
+    PsiElement parent = context.getParent();
+    PsiElement prevParent = context;
+    outer:
+    while (parent != null) {
+      for (PsiElement scopeElement : scope) {
+        if (parent.equals(scopeElement)) break outer;
+      }
+      if (parent instanceof PsiClass && !(prevParent instanceof PsiExpressionList && parent instanceof PsiAnonymousClass)) {
+        return parent;
+      }
+      if (parent instanceof PsiLambdaExpression) {
+        return parent;
+      }
+      if (parent instanceof PsiSwitchLabelStatementBase && ((PsiSwitchLabelStatementBase)parent).getGuardExpression() == prevParent) {
+        return parent;
+      }
+      prevParent = parent;
+      parent = parent.getParent();
+    }
+    return null;
+  }
+
+  private static PsiElement @NotNull [] getVariableScope(@NotNull PsiVariable variable) {
+    PsiElement[] scope;
+    if (variable instanceof PsiResourceVariable) {
+      scope = ((PsiResourceVariable)variable).getDeclarationScope();
+    }
+    else if (variable instanceof PsiLocalVariable) {
+      PsiElement parent = variable.getParent();
+      scope = new PsiElement[]{parent != null ? parent.getParent() : null}; // code block or for statement
+    }
+    else if (variable instanceof PsiParameter) {
+      scope = new PsiElement[]{((PsiParameter)variable).getDeclarationScope()};
+    }
+    else {
+      scope = new PsiElement[]{variable.getParent()};
+    }
+    return scope;
+  }
+
+  /**
+   * @param variable variable to check
+   * @param scope variable scope
+   * @return true if the variable is effectively final
+   */
+  public static boolean isEffectivelyFinal(@NotNull PsiVariable variable, @NotNull PsiElement scope) {
+    return isEffectivelyFinal(variable, scope, null);
+  }
+
+  /**
+   * @param variable variable to check
+   * @param scope variable scope
+   * @param context context element (actual for fields, ignored for local variables and parameters)
+   * @return true if the variable is effectively final
+   */
+  public static boolean isEffectivelyFinal(@NotNull PsiVariable variable, @NotNull PsiElement scope, @Nullable PsiJavaCodeReferenceElement context) {
+    boolean effectivelyFinal;
+    if (variable instanceof PsiParameter) {
+      effectivelyFinal = !variableIsAssigned(variable, ((PsiParameter)variable).getDeclarationScope());
+    }
+    else {
+      PsiElement codeBlock = PsiUtil.getVariableCodeBlock(variable, context);
+      if (codeBlock == null) return true;
+      ControlFlow controlFlow = getControlFlow(codeBlock);
+      if (controlFlow == null) return true;
+
+      Collection<VariableInfo> initializedTwice = getInitializedTwice(controlFlow);
+      effectivelyFinal = !initializedTwice.contains(new VariableInfo(variable, null));
+      if (effectivelyFinal) {
+        for (PsiReferenceExpression expression : getReadBeforeWriteLocals(controlFlow)) {
+          if (expression.resolve() == variable) {
+            return PsiUtil.isAccessedForReading(expression);
+          }
+        }
+        effectivelyFinal = !variableIsAssigned(variable, scope);
+        if (effectivelyFinal) {
+          // TODO: check; probably this traversal is redundant
+          Ref<Boolean> stopped = new Ref<>(false);
+          codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+              if (expression.isReferenceTo(variable) &&
+                  PsiUtil.isAccessedForWriting(expression) &&
+                  isVariableAssignedInLoop(expression, variable)) {
+                stopWalking();
+                stopped.set(true);
+              }
+            }
+          });
+          return !stopped.get();
+        }
+      }
+    }
+    return effectivelyFinal;
+  }
+
+  private static @Nullable ControlFlow getControlFlow(PsiElement codeBlock) {
+    try {
+      LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+      return ControlFlowFactory.getControlFlow(
+          codeBlock, policy, ControlFlowOptions.create(true, true, true));
+    }
+    catch (AnalysisCanceledException e) {
+      return null;
+    }
+  }
+
+  private static boolean variableIsAssigned(@NotNull PsiVariable variable, @NotNull PsiElement scope) {
+    return !PsiTreeUtil.processElements(scope, PsiReferenceExpression.class, e -> {
+      return !(PsiUtil.isAccessedForWriting(e) && e.isReferenceTo(variable));
+    });
+  }
+
+  /**
+   * @param field field to check
+   * @return true if the field is initialized (in class initializer, own initializer, another field initializer, or constructor)
+   */
+  public static boolean isFieldInitializedAfterObjectConstruction(@NotNull PsiField field) {
+    if (field.hasInitializer()) return true;
+    boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    PsiClass aClass = field.getContainingClass();
+    if (aClass == null) return false;
+    // field might be assigned in the other field initializers
+    if (isFieldInitializedInOtherFieldInitializer(aClass, field, Predicates.alwaysTrue())) return true;
+    if (isFieldInitializedInClassInitializer(field)) return true;
+    if (isFieldStatic) return false;
+    // instance field should be initialized at the end of each constructor
+    PsiMethod[] constructors = aClass.getConstructors();
+
+    if (constructors.length == 0) return false;
+    nextConstructor:
+    for (PsiMethod constructor : constructors) {
+      PsiCodeBlock ctrBody = constructor.getBody();
+      if (ctrBody == null) return false;
+      for (PsiMethod redirectedConstructor : JavaPsiConstructorUtil.getChainedConstructors(constructor)) {
+        PsiCodeBlock body = redirectedConstructor.getBody();
+        if (body != null && variableDefinitelyAssignedIn(field, body, true)) continue nextConstructor;
+      }
+      if (!ctrBody.isValid() || variableDefinitelyAssignedIn(field, ctrBody, true)) {
+        continue;
+      }
+      return false;
+    }
+    return true;
+  }
+  
+  /**
+   * @param field field to check
+   * @return true if the field is initialized in its class initializers
+   */
+  private static boolean isFieldInitializedInClassInitializer(@NotNull PsiField field) {
+    PsiClass aClass = field.getContainingClass();
+    if (aClass == null) return false;
+    PsiClassInitializer[] initializers = aClass.getInitializers();
+    boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    return ContainerUtil.find(initializers, initializer -> initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
+                                                           && variableDefinitelyAssignedIn(field, initializer.getBody(), true)) != null;
+  }
+
+  private static boolean isFieldInitializedInOtherFieldInitializer(@NotNull PsiClass aClass,
+                                                                   @NotNull PsiField field,
+                                                                   @NotNull Predicate<? super PsiField> condition) {
+    boolean fieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    for (PsiField psiField : aClass.getFields()) {
+      if (psiField != field
+          && psiField.hasModifierProperty(PsiModifier.STATIC) == fieldStatic
+          && variableDefinitelyAssignedIn(field, psiField, true)
+          && condition.test(psiField)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @return field that has initializer with this element as subexpression or null if not found
+   */
+  private static PsiField findEnclosingFieldInitializer(@NotNull PsiElement entry) {
+    PsiElement element = entry;
+    while (element != null) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiField) {
+        PsiField field = (PsiField)parent;
+        if (element == field.getInitializer()) return field;
+        if (field instanceof PsiEnumConstant && element == ((PsiEnumConstant)field).getArgumentList()) return field;
+      }
+      if (element instanceof PsiClass || element instanceof PsiMethod) return null;
+      element = parent;
+    }
+    return null;
+  }
+
+  /**
+   * see JLS chapter 16
+   * @param variable variable to check
+   * @param scope variable scope (code block, field initializer, etc.)
+   * @return true if variable assigned (maybe more than once)
+   */
+  public static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement scope) {
+    return variableDefinitelyAssignedIn(variable, scope, false);
+  }
+
+  private static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable,
+                                                      @NotNull PsiElement scope,
+                                                      boolean resultOnIncompleteCode) {
+    ControlFlow flow = getControlFlow(scope);
+    return flow == null ? resultOnIncompleteCode : isVariableDefinitelyAssigned(variable, flow);
+  }
+
+  /**
+   * @param expression variable reference (usage)
+   * @param variable variable
+   * @param uninitializedVarProblems map to cache results from the same code block
+   * @param treatNonFinalFieldsAsNonInitialized if true, the non-final field will not be considered as initialized with the default value
+   * @return true if the variable is initialized before usage
+   */
+  public static boolean isInitializedBeforeUsage(@NotNull PsiReferenceExpression expression,
+                                                 @NotNull PsiVariable variable,
+                                                 @NotNull Map<? super PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems,
+                                                 boolean treatNonFinalFieldsAsNonInitialized) {
+    if (variable instanceof ImplicitVariable) return true;
+    if (!PsiUtil.isAccessedForReading(expression)) return true;
+    int startOffset = expression.getTextRange().getStartOffset();
+    PsiElement topBlock = getTopBlock(expression, variable);
+    if (topBlock == null) return true;
+    if (!variable.hasInitializer()) {
+      if (variable instanceof PsiField) {
+        PsiField field = (PsiField)variable;
+        // non-final field already initialized with default value
+        if (!treatNonFinalFieldsAsNonInitialized && !variable.hasModifierProperty(PsiModifier.FINAL)) return true;
+        // a final field may be initialized in ctor or class initializer only
+        // if we're inside a non-constructor method, skip it
+        if (PsiUtil.findEnclosingConstructorOrInitializer(expression) == null
+            && findEnclosingFieldInitializer(expression) == null) {
+          return true;
+        }
+        PsiElement parent = topBlock.getParent();
+        // access to final fields from inner classes always allowed
+        if (inInnerClass(expression, field.getContainingClass())) return true;
+        PsiCodeBlock block;
+        PsiClass aClass;
+        if (parent instanceof PsiMethod) {
+          PsiMethod constructor = (PsiMethod)parent;
+          if (!constructor.getManager().areElementsEquivalent(constructor.getContainingClass(), field.getContainingClass())) return true;
+          // static variables already initialized in class initializers
+          if (variable.hasModifierProperty(PsiModifier.STATIC)) return true;
+          // as a last chance, the field may be initialized in this() call
+          for (PsiMethod redirectedConstructor : JavaPsiConstructorUtil.getChainedConstructors(constructor)) {
+            // variable must be initialized before its usage
+            //???
+            //if (startOffset < redirectedConstructor.getTextRange().getStartOffset()) continue;
+            if (JavaPsiRecordUtil.isCompactConstructor(redirectedConstructor)) return true;
+            PsiCodeBlock body = redirectedConstructor.getBody();
+            if (body != null && variableDefinitelyAssignedIn(variable, body, true)) {
+              return true;
+            }
+          }
+          block = constructor.getBody();
+          aClass = constructor.getContainingClass();
+        }
+        else if (parent instanceof PsiClassInitializer) {
+          PsiClassInitializer classInitializer = (PsiClassInitializer)parent;
+          if (!classInitializer.getManager().areElementsEquivalent(classInitializer.getContainingClass(), field.getContainingClass())) {
+            return true;
+          }
+          block = classInitializer.getBody();
+          aClass = classInitializer.getContainingClass();
+
+          if (aClass == null || isFieldInitializedInOtherFieldInitializer(aClass, field, f -> startOffset > f.getTextOffset())) {
+            return true;
+          }
+        }
+        else {
+          // field reference outside code block
+          // check variable initialized before its usage
+          aClass = field.getContainingClass();
+          PsiField anotherField = PsiTreeUtil.getTopmostParentOfType(expression, PsiField.class);
+          if (aClass == null ||
+              isFieldInitializedInOtherFieldInitializer(aClass, field, f -> f != anotherField && startOffset > f.getTextOffset())) {
+            return true;
+          }
+          if (anotherField != null
+              && !anotherField.hasModifierProperty(PsiModifier.STATIC)
+              && field.hasModifierProperty(PsiModifier.STATIC)
+              && isFieldInitializedInClassInitializer(field)) {
+            return true;
+          }
+          if (anotherField != null && anotherField.hasInitializer() && !PsiAugmentProvider.canTrustFieldInitializer(anotherField)) {
+            return true;
+          }
+
+          int offset = startOffset;
+          if (anotherField != null && anotherField.getContainingClass() == aClass && !field.hasModifierProperty(PsiModifier.STATIC)) {
+            offset = 0;
+          }
+          block = null;
+          // initializers will be checked later
+          for (PsiMethod constructor : aClass.getConstructors()) {
+            // the variable must be initialized before its usage
+            if (offset < constructor.getTextRange().getStartOffset()) continue;
+            PsiCodeBlock body = constructor.getBody();
+            if (body != null && variableDefinitelyAssignedIn(variable, body)) {
+              return true;
+            }
+            // as a last chance, the field may be initialized in this() call
+            for (PsiMethod redirectedConstructor : JavaPsiConstructorUtil.getChainedConstructors(constructor)) {
+              // the variable must be initialized before its usage
+              if (offset < redirectedConstructor.getTextRange().getStartOffset()) continue;
+              PsiCodeBlock redirectedBody = redirectedConstructor.getBody();
+              if (redirectedBody != null && variableDefinitelyAssignedIn(variable, redirectedBody)) {
+                return true;
+              }
+            }
+          }
+        }
+
+        if (aClass != null) {
+          // field may be initialized in class initializer
+          for (PsiClassInitializer initializer : aClass.getInitializers()) {
+            PsiCodeBlock body = initializer.getBody();
+            if (body == block) break;
+            // variable referenced in initializer must be initialized in initializer preceding assignment
+            // variable referenced in field initializer or in class initializer
+            boolean shouldCheckInitializerOrder = block == null || block.getParent() instanceof PsiClassInitializer;
+            if (shouldCheckInitializerOrder && startOffset < initializer.getTextRange().getStartOffset()) continue;
+            if (initializer.hasModifierProperty(PsiModifier.STATIC) == variable.hasModifierProperty(PsiModifier.STATIC)) {
+              if (variableDefinitelyAssignedIn(variable, body)) return true;
+            }
+          }
+        }
+      }
+    }
+    Collection<PsiReferenceExpression> codeBlockProblems = uninitializedVarProblems.get(topBlock);
+    if (codeBlockProblems == null) {
+      try {
+        ControlFlow controlFlow = getControlFlow(topBlock);
+        codeBlockProblems = controlFlow == null ? Collections.emptyList() : getReadBeforeWriteLocals(controlFlow);
+      }
+      catch (IndexNotReadyException e) {
+        codeBlockProblems = Collections.emptyList();
+      }
+      uninitializedVarProblems.put(topBlock, codeBlockProblems);
+    }
+    return !codeBlockProblems.contains(expression);
+  }
+
+  private static @Nullable PsiElement getTopBlock(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable variable) {
+    if (variable.hasInitializer()) {
+      return PsiUtil.getVariableCodeBlock(variable, variable);
+    }
+    PsiElement scope = variable instanceof PsiField
+                       ? ((PsiField)variable).getContainingClass()
+                       : variable.getParent() != null ? variable.getParent().getParent() : null;
+    while (scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchBlock) {
+      scope = PsiTreeUtil.getParentOfType(scope, PsiCodeBlock.class);
+    }
+
+    return FileTypeUtils.isInServerPageFile(scope) && scope instanceof PsiFile
+                 ? scope
+                 : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
+  }
+
+  private static boolean inInnerClass(@NotNull PsiElement psiElement, @Nullable PsiClass containingClass) {
+    for (PsiElement element = psiElement; element != null; element = element.getParent()) {
+      if (element instanceof PsiClass) {
+        PsiClass aClass = (PsiClass)element;
+        boolean innerClass = !psiElement.getManager().areElementsEquivalent(element, containingClass);
+        if (innerClass) {
+          if (element instanceof PsiAnonymousClass) {
+            if (PsiTreeUtil.isAncestor(((PsiAnonymousClass)element).getArgumentList(), psiElement, false)) {
+              continue;
+            }
+            return !insideClassInitialization(containingClass, aClass);
+          }
+          PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(psiElement, PsiLambdaExpression.class);
+          return lambdaExpression == null || !insideClassInitialization(containingClass, aClass);
+        }
+        return false;
+      }
+    }
+    return false;
+  }
+
+  private static boolean insideClassInitialization(@Nullable PsiClass containingClass, PsiClass aClass) {
+    PsiMember member = aClass;
+    while (member != null) {
+      if (member.getContainingClass() == containingClass) {
+        return member instanceof PsiField ||
+               member instanceof PsiMethod && ((PsiMethod)member).isConstructor() ||
+               member instanceof PsiClassInitializer;
+      }
+      member = PsiTreeUtil.getParentOfType(member, PsiMember.class, true);
+    }
+    return false;
+  }
+
+  private static boolean variableDefinitelyNotAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    ControlFlow flow = getControlFlow(context);
+    return flow == null || isVariableDefinitelyNotAssigned(variable, flow);
+  }
+
+  /**
+   * Kind of double initialization problem
+   *
+   * @see #findFinalVariableAlreadyInitializedProblem(PsiVariable, PsiReferenceExpression, Map)
+   */
+  public enum DoubleInitializationProblem {
+    NO_PROBLEM,
+    /**
+     * Final variable is reassigned normally
+     */
+    NORMAL,
+    /**
+     * Final variable is reassigned in loop
+     */
+    IN_LOOP,
+    /**
+     * Double initialization of a final field due to chained constructor call
+     */
+    IN_CONSTRUCTOR,
+    /**
+     * Double initialization of a final field in other initializer
+     */
+    IN_INITIALIZER,
+    /**
+     * Double initialization of a final field in other field initializer
+     */
+    IN_FIELD_INITIALIZER
+  }
+
+  /**
+   * @param variable         final variable to check
+   * @param expression       variable reference (write location)
+   * @param finalVarProblems a map to cache the results
+   * @return DoubleInitializationProblem object that depicts the problem kind
+   */
+  public static @NotNull DoubleInitializationProblem findFinalVariableAlreadyInitializedProblem(@NotNull PsiVariable variable,
+                                                                                                @NotNull PsiReferenceExpression expression,
+                                                                                                @NotNull Map<PsiElement, Collection<VariableInfo>> finalVarProblems) {
+    if (!PsiUtil.isAccessedForWriting(expression)) return DoubleInitializationProblem.NO_PROBLEM;
+
+    PsiElement scope = variable instanceof PsiField
+                       ? variable.getParent()
+                       : variable.getParent() == null ? null : variable.getParent().getParent();
+    PsiElement codeBlock = PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
+    if (codeBlock == null) return DoubleInitializationProblem.NO_PROBLEM;
+    Collection<VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, codeBlock);
+
+    VariableInfo variableInfo = ContainerUtil.find(codeBlockProblems, vi -> vi.expression == expression);
+    if (variableInfo == null) {
+      if (variable instanceof PsiField) {
+        DoubleInitializationProblem problem = isFieldInitializedInAnotherMember((PsiField)variable, expression, codeBlock);
+        if (problem != null) {
+          return problem;
+        }
+      }
+      return DoubleInitializationProblem.NO_PROBLEM;
+    }
+    return variableInfo instanceof InitializedInLoopProblemInfo ? DoubleInitializationProblem.IN_LOOP : DoubleInitializationProblem.NORMAL;
+  }
+
+  private static DoubleInitializationProblem isFieldInitializedInAnotherMember(@NotNull PsiField field,
+                                                                               @NotNull PsiReferenceExpression expression,
+                                                                               @NotNull PsiElement codeBlock) {
+    PsiClass aClass = field.getContainingClass();
+    if (aClass == null) return null;
+    boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
+
+    if (!isFieldStatic) {
+      // constructor that delegates to another constructor cannot assign final fields
+      if (enclosingConstructorOrInitializer instanceof PsiMethod) {
+        PsiMethodCallExpression chainedCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(
+          (PsiMethod)enclosingConstructorOrInitializer);
+        if (JavaPsiConstructorUtil.isChainedConstructorCall(chainedCall)) {
+          return DoubleInitializationProblem.IN_CONSTRUCTOR;
+        }
+      }
+    }
+
+    // field can get assigned in other field initializers or in class initializers
+    List<PsiMember> members = new ArrayList<>(Arrays.asList(aClass.getFields()));
+    if (enclosingConstructorOrInitializer != null
+        && aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getContainingClass(), aClass)) {
+      members.addAll(Arrays.asList(aClass.getInitializers()));
+      members.sort(PsiUtil.BY_POSITION);
+    }
+
+    for (PsiMember member : members) {
+      if (member == field) continue;
+      PsiElement context = member instanceof PsiField ? ((PsiField)member).getInitializer() : ((PsiClassInitializer)member).getBody();
+
+      if (context != null
+          && member.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
+          && !variableDefinitelyNotAssignedIn(field, context)) {
+        return context == codeBlock ? null :
+               member instanceof PsiField ? DoubleInitializationProblem.IN_FIELD_INITIALIZER :
+               DoubleInitializationProblem.IN_INITIALIZER;
+      }
+    }
+    return null;
+  }
+
+  private static @NotNull Collection<VariableInfo> getFinalVariableProblemsInBlock(
+    @NotNull Map<PsiElement, Collection<VariableInfo>> finalVarProblems, @NotNull PsiElement codeBlock) {
+    Collection<VariableInfo> codeBlockProblems =
+      finalVarProblems.computeIfAbsent(codeBlock, cb -> {
+        ControlFlow controlFlow = getControlFlow(codeBlock);
+        return controlFlow == null ? Collections.emptyList() : addReassignedInLoopProblems(getInitializedTwice(controlFlow), controlFlow);
+      });
+    return codeBlockProblems;
+  }
+
+  private static Collection<VariableInfo> addReassignedInLoopProblems(
+    @NotNull Collection<VariableInfo> codeBlockProblems,
+    @NotNull ControlFlow controlFlow) {
+    List<Instruction> instructions = controlFlow.getInstructions();
+    for (int index = 0; index < instructions.size(); index++) {
+      Instruction instruction = instructions.get(index);
+      if (instruction instanceof WriteVariableInstruction) {
+        PsiVariable variable = ((WriteVariableInstruction)instruction).variable;
+        if (variable instanceof PsiLocalVariable || variable instanceof PsiField) {
+          PsiElement anchor = controlFlow.getElement(index);
+          if (anchor instanceof PsiAssignmentExpression) {
+            PsiExpression ref = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)anchor).getLExpression());
+            if (ref instanceof PsiReferenceExpression) {
+              VariableInfo varInfo = new InitializedInLoopProblemInfo(variable, ref);
+              if (!codeBlockProblems.contains(varInfo) && isInstructionReachable(controlFlow, index, index)) {
+                if (!(codeBlockProblems instanceof HashSet)) {
+                  codeBlockProblems = new HashSet<>(codeBlockProblems);
+                }
+                codeBlockProblems.add(varInfo);
+              }
+            }
+          }
+        }
+      }
+    }
+    return codeBlockProblems;
+  }
+
+  /**
+   * @param variable         variable to check (local variable or parameter)
+   * @param finalVarProblems cache map to reuse information
+   * @return true if the variable is reassigned
+   */
+  public static boolean isReassigned(@NotNull PsiVariable variable, @NotNull Map<PsiElement, Collection<VariableInfo>> finalVarProblems) {
+    if (variable instanceof PsiLocalVariable) {
+      PsiElement parent = variable.getParent();
+      if (parent == null) return false;
+      PsiElement declarationScope = parent.getParent();
+      if (declarationScope == null) return false;
+      Collection<VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, declarationScope);
+      return codeBlockProblems.contains(new VariableInfo(variable, null));
+    }
+    if (variable instanceof PsiParameter) {
+      PsiParameter parameter = (PsiParameter)variable;
+      return variableIsAssigned(parameter, parameter.getDeclarationScope());
+    }
+    return false;
+  }
+
+  private static class SSAInstructionState {
     private final int myWriteCount;
     private final int myInstructionIdx;
 
@@ -32,6 +610,7 @@ public final class ControlFlowUtil {
       myInstructionIdx = instructionIdx;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof SSAInstructionState)) return false;
@@ -42,6 +621,7 @@ public final class ControlFlowUtil {
       return Math.min(2, myWriteCount) == Math.min(2, ssaInstructionState.myWriteCount);
     }
 
+    @Override
     public int hashCode() {
       int result = Math.min(2, myWriteCount);
       result = 29 * result + myInstructionIdx;
@@ -271,7 +851,7 @@ public final class ControlFlowUtil {
   }
 
   /**
-   * If the variable occurs only once in the element and it's read access return that occurrence
+   * If the variable occurs only once in the element, and it's read access return that occurrence
    */
   public static PsiReferenceExpression findSingleReadOccurrence(@NotNull ControlFlow flow,
                                                                 @NotNull PsiElement element,
@@ -474,10 +1054,10 @@ public final class ControlFlowUtil {
 
   /**
    * Detect throw instructions which might affect observable control flow via side effects with local variables.
-   *
-   * The side effect of exception thrown occurs when a local variable is written in the try block, and then accessed
-   * in the finally section or in/after a catch section.
-   *
+   * <p>
+   * The side effect of exception thrown occurs when a local variable is written in the try block and then accessed
+   * in the {@code finally} section or in/after a catch section.
+   * <p>
    * Example:
    * <pre>
    * { // --- start of theOuterBlock ---
@@ -490,9 +1070,13 @@ public final class ControlFlowUtil {
    *     status = FINISHED;
    *   } // --- end of theTryBlock ---
    *   catch (Exception e) {
-   *      LOG.error("Failed when " + status, e); // can get PREPARING or WORKING here
+   *      // can get PREPARING or WORKING here
+   *      LOG.error("Failed when " + status, e); 
    *   }
-   *   if (status == FINISHED) LOG.info("Finished"); // can get PREPARING or WORKING here in the case of exception
+   *   // can get PREPARING or WORKING here in the case of exception
+   *   if (status == FINISHED) {
+   *     LOG.info("Finished");
+   *   }
    * } // --- end of theOuterBlock ---
    * </pre>
    * In the example above {@code hasObservableThrowExitPoints(theTryBlock) == true},
@@ -749,11 +1333,11 @@ public final class ControlFlowUtil {
         parent = resolveResult.getCurrentFileResolveScope();
       }
       if (parent instanceof PsiClass) {
-        final PsiClass clss = (PsiClass)parent;
-        if (PsiTreeUtil.isAncestor(targetClassMember, clss, false)) return false;
+        final PsiClass psiClass = (PsiClass)parent;
+        if (PsiTreeUtil.isAncestor(targetClassMember, psiClass, false)) return false;
         PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
         while (containingClass != null) {
-          if (containingClass.isInheritor(clss, true) &&
+          if (containingClass.isInheritor(psiClass, true) &&
               PsiTreeUtil.isAncestor(targetClassMember, containingClass, false)) {
             return false;
           }
@@ -773,7 +1357,7 @@ public final class ControlFlowUtil {
    * @param scope             scope to be scanned (part of code fragment to be extracted)
    * @param member            member containing the code to be extracted
    * @param targetClassMember member in target class containing code fragment
-   * @return true if code fragment can be extracted outside
+   * @return true if a code fragment can be extracted outside
    */
   public static boolean collectOuterLocals(@NotNull List<? super PsiVariable> array, @NotNull PsiElement scope, @NotNull PsiElement member,
                                            @NotNull PsiElement targetClassMember) {
@@ -843,7 +1427,7 @@ public final class ControlFlowUtil {
 
 
   /**
-   * @return true if each control flow path results in return statement or exception thrown
+   * @return true if each control flow path results in reaching a return statement or exception thrown
    */
   public static boolean returnPresent(@NotNull ControlFlow flow) {
     InstructionClientVisitor<Boolean> visitor = new ReturnPresentClientVisitor(flow);
@@ -1048,6 +1632,12 @@ public final class ControlFlowUtil {
           if (element instanceof PsiBreakStatement) {
             PsiStatement exitedStatement = ((PsiBreakStatement)element).findExitedStatement();
             if (exitedStatement == null || flow.getStartOffset(exitedStatement) < startOffset) {
+              isNormal = false;
+            }
+          }
+          else if (element instanceof PsiYieldStatement) {
+            PsiSwitchExpression exitedSwitch = ((PsiYieldStatement)element).findEnclosingExpression();
+            if (exitedSwitch == null || flow.getStartOffset(exitedSwitch) < startOffset) {
               isNormal = false;
             }
           }
@@ -1874,12 +2464,24 @@ public final class ControlFlowUtil {
       this.expression = expression;
     }
 
+    @Override
     public boolean equals(Object o) {
       return this == o || o instanceof VariableInfo && variable.equals(((VariableInfo)o).variable);
     }
 
+    @Override
     public int hashCode() {
       return variable.hashCode();
+    }
+  }
+
+  /**
+   * A kind of final variable problem returned from {@link #getFinalVariableProblemsInBlock(Map, PsiElement)}
+   * which designates a final variable which is initialized in a loop.
+   */
+  private static class InitializedInLoopProblemInfo extends VariableInfo {
+    InitializedInLoopProblemInfo(@NotNull PsiVariable variable, @Nullable PsiElement expression) {
+      super(variable, expression);
     }
   }
 
@@ -1900,16 +2502,12 @@ public final class ControlFlowUtil {
   }
 
   public static @NotNull List<PsiReferenceExpression> getReadBeforeWrite(@NotNull ControlFlow flow) {
-    return getReadBeforeWrite(flow, 0);
-  }
-
-  private static @NotNull List<PsiReferenceExpression> getReadBeforeWrite(@NotNull ControlFlow flow, int startOffset) {
-    if (startOffset < 0 || startOffset >= flow.getSize()) {
+    if (flow.getSize() == 0) {
       return Collections.emptyList();
     }
     final ReadBeforeWriteClientVisitor visitor = new ReadBeforeWriteClientVisitor(flow, false);
     depthFirstSearch(flow, visitor);
-    return visitor.getResult(startOffset);
+    return visitor.getResult(0);
   }
 
   private static class ReadBeforeWriteClientVisitor extends InstructionClientVisitor<List<PsiReferenceExpression>> {
@@ -2310,7 +2908,7 @@ public final class ControlFlowUtil {
 
     boolean depthFirstSearch(final int startOffset, @NotNull BitSet visitedOffsets) {
       // traverse the graph starting with the startOffset
-      IntArrayList walkThroughStack = new IntArrayList(Math.max(size() / 2, 2));
+      IntStack walkThroughStack = new IntArrayList(Math.max(size() / 2, 2));
       visitedOffsets.clear();
       walkThroughStack.push(startOffset);
       while (!walkThroughStack.isEmpty()) {

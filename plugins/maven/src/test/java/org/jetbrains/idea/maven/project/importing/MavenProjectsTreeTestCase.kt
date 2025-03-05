@@ -29,11 +29,11 @@ abstract class MavenProjectsTreeTestCase : MavenMultiVersionImportingTestCase() 
     myTree = MavenProjectsManager.getInstance(project).getProjectsTree()
   }
 
-  protected suspend fun updateAll(vararg files: VirtualFile?) {
+  protected suspend fun updateAll(vararg files: VirtualFile) {
     updateAll(emptyList<String>(), *files)
   }
 
-  protected suspend fun updateAll(profiles: List<String?>?, vararg files: VirtualFile?) {
+  protected suspend fun updateAll(profiles: List<String?>?, vararg files: VirtualFile) {
     tree.resetManagedFilesAndProfiles(listOf(*files), MavenExplicitProfiles(profiles))
     tree.updateAll(false, mavenGeneralSettings, rawProgressReporter)
   }

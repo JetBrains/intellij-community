@@ -8,12 +8,12 @@ public class LombokDumbModeApplication {
 
     public static void main(String[] args) {
         <info descr="Not resolved until the project is fully loaded">Request</info> a = new <info descr="Not resolved until the project is fully loaded">Request</info>();
-        <error descr="Incompatible types. Found: 'capture<?>', required: 'UserDao'">UserDao userDao = UserDao.builder()
+        UserDao userDao = UserDao.builder()
                 .id(1)
                 .name("2")
                 .surname("3")
                 .email("4")
-                .name("1")</error><error descr="';' expected">a</error>
+                .<error descr="Incompatible types. Found: 'capture<?>', required: 'UserDao'">name</error>("1")<error descr="';' expected">a</error>
                 .<info descr="Not resolved until the project is fully loaded">id</info>(1)
                 .<info descr="Not resolved until the project is fully loaded">build</info>();
 

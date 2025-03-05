@@ -79,8 +79,7 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
     });
   };
 
-  @NotNull
-  public static List<Injectable> getAllInjectables() {
+  public static @NotNull List<Injectable> getAllInjectables() {
     Language[] languages = InjectedLanguage.getAvailableLanguages();
     List<Injectable> list = new ArrayList<>();
     for (Language language : languages) {
@@ -92,14 +91,12 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return IntelliLangBundle.message("intelliLang.inject.language.action.text");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -123,9 +120,8 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
     return new IntentionPreviewInfo.Html(IntelliLangBundle.message("intelliLang.inject.language.action.preview", text));
   }
 
-  @Nullable
-  private static PsiLanguageInjectionHost findInjectionHost(@NotNull Editor editor,
-                                                            @NotNull PsiFile file) {
+  private static @Nullable PsiLanguageInjectionHost findInjectionHost(@NotNull Editor editor,
+                                                                      @NotNull PsiFile file) {
     if (editor instanceof EditorWindow) return null;
     int offset = editor.getCaretModel().getOffset();
 
@@ -311,8 +307,7 @@ public final class InjectLanguageAction implements IntentionAction, LowPriorityA
       myFix = fix;
     }
 
-    @NlsContexts.PopupContent
-    public String getText() {
+    public @NlsContexts.PopupContent String getText() {
       return myText;
     }
 

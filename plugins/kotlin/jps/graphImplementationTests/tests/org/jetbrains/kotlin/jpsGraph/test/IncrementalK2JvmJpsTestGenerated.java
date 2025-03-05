@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.jpsGraph.test;
 
 
@@ -11,9 +11,9 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.jps.build.AbstractIncrementalK2JvmJpsTest;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.junit.runner.RunWith;
 
 import java.io.File;
@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 @TestRoot("jps/graphImplementationTests/testData/incremental")
 public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJpsTest {
     static void setUpTests() {
-        File kotlincFolder = getKotlincFolder("2.0.20-dev-1563");
+        File kotlincFolder = getKotlincFolder("2.1.10");
         System.setProperty("jps.kotlin.home", kotlincFolder.getAbsolutePath());
 
         // enable graph implementation
@@ -610,6 +610,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("pureKotlin/removeTopLevelTypeAlias/");
         }
 
+        @TestMetadata("changeTopLevelTypeAlias")
+        public void testChangeTopLevelTypeAlias() throws Exception {
+            runTest("pureKotlin/changeTopLevelTypeAlias/");
+        }
+
         @TestMetadata("removeUnusedFile")
         public void testRemoveUnusedFile() throws Exception {
             runTest("pureKotlin/removeUnusedFile/");
@@ -902,6 +907,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         @TestMetadata("methodRemoved")
         public void testMethodRemoved() throws Exception {
             runTest("classHierarchyAffected/methodRemoved/");
+        }
+
+        @TestMetadata("syntheticMethodRemoved")
+        public void testSyntheticMethodRemoved() throws Exception {
+            runTest("classHierarchyAffected/syntheticMethodRemoved/");
         }
 
         @TestMetadata("overrideExplicit")
@@ -3023,6 +3033,28 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         @TestMetadata("invokeOverFun")
         public void testInvokeShadowsFunction() throws Exception {
             runTest("resolution/invokeOverFun");
+        }
+    }
+
+    @TestMetadata("scopeExpansion")
+    @TestDataPath(".")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class ScopeExpansionTests extends AbstractIncrementalK2JvmJpsTest {
+        @Override
+        protected void setUp() {
+            super.setUp();
+            setUpTests();
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+        }
+
+        // todo: do we need to run other two tests in this cathegory?
+
+        @TestMetadata("protectedBecomesInternal")
+        public void testProtectedBecomesInternal() throws Exception {
+            runTest("scopeExpansion/protectedBecomesInternal");
         }
     }
 

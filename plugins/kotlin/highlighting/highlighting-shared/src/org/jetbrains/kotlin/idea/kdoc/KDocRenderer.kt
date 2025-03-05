@@ -468,7 +468,8 @@ object KDocRenderer {
                 MarkdownTokenTypes.RBRACKET,
                 MarkdownTokenTypes.EXCLAMATION_MARK,
                 GFMTokenTypes.CHECK_BOX,
-                GFMTokenTypes.GFM_AUTOLINK -> {
+                GFMTokenTypes.GFM_AUTOLINK,
+                GFMTokenTypes.DOLLAR -> {
                     sb.append(nodeText)
                 }
 

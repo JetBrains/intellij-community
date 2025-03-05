@@ -1,7 +1,7 @@
 fun foo() {
     <selection>val a = "aaa"
-    val b = "aaa"</selection>
+    val b = "bbb"</selection>
 
-    a.charAt(1)
-    b.charAt(1)
+    a.get(1)
+    b.get(1)
 }

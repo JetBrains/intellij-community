@@ -101,6 +101,7 @@ style:
     active: true
   ExpressionBodySyntax:
     active: true
+    autoCorrect: true
     includeLineWrapping: false
   ForbiddenComment:
     active: true
@@ -187,3 +188,9 @@ naming:
     active: false
     ignoreAnnotated:
       - Composable
+jewel:
+  EqualityMembersRule:
+    active: true
+    annotated:
+      - GenerateDataFunctions
+

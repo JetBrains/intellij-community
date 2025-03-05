@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -107,7 +108,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                                            @NotNull Set<? extends PsiMember> membersToMove,
                                                            @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                            @NotNull Condition<? super PsiReference> ignorePredicate) {
-    for (PsiReference psiReference : ReferencesSearch.search(member)) {
+    for (PsiReference psiReference : ReferencesSearch.search(member).asIterable()) {
       if (ignorePredicate.value(psiReference)) {
         checkAccessibilityConflictsAfterMove(psiReference, member, modifierListCopy, targetClass, membersToMove, conflicts);
       }
@@ -115,14 +116,14 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
   }
 
   public static void checkAccessibilityConflictsAfterMove(@NotNull PsiReference reference,
-                                                   @NotNull PsiMember member,
-                                                   @Nullable PsiModifierList modifierListCopy,
-                                                   @Nullable PsiClass targetClass,
-                                                   @NotNull Set<? extends PsiMember> membersToMove,
-                                                   @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
-    JavaPsiFacade manager = JavaPsiFacade.getInstance(member.getProject());
+                                                          @NotNull PsiMember member,
+                                                          @Nullable PsiModifierList modifierListCopy,
+                                                          @Nullable PsiClass targetClass,
+                                                          @NotNull Set<? extends PsiMember> membersToMove,
+                                                          @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     PsiElement ref = reference.getElement();
-    if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
+    if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, true)) {
+      JavaPsiFacade manager = JavaPsiFacade.getInstance(member.getProject());
       // check for target class accessibility
       if (targetClass != null && !manager.getResolveHelper().isAccessible(targetClass, targetClass.getModifierList(), ref, null, null)) {
         String message = JavaRefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
@@ -133,9 +134,9 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
         conflicts.putValue(targetClass, message);
       }
       // check for member accessibility
-      else if (!manager.getResolveHelper().isAccessible(member, modifierListCopy, ref, targetClass, null)) {
+      else if (!JavaResolveUtil.isAccessible(member, targetClass, modifierListCopy, ref, null, null)) {
         String message = JavaRefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
-                                                       RefactoringUIUtil.getDescription(member, true),
+                                                       RefactoringUIUtil.getDescription(member, false),
                                                        VisibilityUtil.toPresentableText(
                                                          VisibilityUtil.getVisibilityModifier(modifierListCopy)),
                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));

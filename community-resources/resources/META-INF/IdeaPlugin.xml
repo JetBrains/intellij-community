@@ -7,6 +7,8 @@
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in Python plugin -->
+  <module value="com.intellij.platform.ide.provisioner"/>
+
   <content>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
@@ -14,7 +16,6 @@
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.platform.ide.newUsersOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
-    <module name="intellij.settingsSync.core"/>
     <module name="intellij.kotlin.onboarding-promoter"/>
     <module name="intellij.idea.customization.base"/>
     <module name="intellij.platform.tips"/>
@@ -28,6 +29,7 @@
   </xi:include>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
                         serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"
                         overrides="true"/>

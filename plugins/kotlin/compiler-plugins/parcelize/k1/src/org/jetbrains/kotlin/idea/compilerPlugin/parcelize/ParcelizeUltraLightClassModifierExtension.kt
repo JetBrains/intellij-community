@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize
 
@@ -16,14 +16,13 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.parcelize.ParcelizeSyntheticComponent
-import org.jetbrains.kotlin.parcelize.isParcelize
 import org.jetbrains.kotlin.parcelize.serializers.ParcelizeExtensionBase
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.util.isAnnotated
 import org.jetbrains.kotlin.util.isOrdinaryClass
 
-class ParcelizeUltraLightClassModifierExtension : ParcelizeExtensionBase, UltraLightClassModifierExtension {
+private class ParcelizeUltraLightClassModifierExtension : ParcelizeExtensionBase, UltraLightClassModifierExtension {
     private fun tryGetParcelizeClass(declaration: KtDeclaration, descriptor: Lazy<DeclarationDescriptor?>): ClassDescriptor? {
         if (!declaration.isOrdinaryClass || !declaration.isAnnotated) {
             return null

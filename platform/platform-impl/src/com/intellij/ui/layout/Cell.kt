@@ -4,21 +4,17 @@
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
-import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.*
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -82,12 +78,8 @@ private fun <T> PropertyBinding<T>.intToNullable(): PropertyBinding<T?> {
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-inline fun <reified T : Any> KMutableProperty0<T>.toBinding(): PropertyBinding<T> {
-  return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
-}
-
-inline fun <reified T : Any> KMutableProperty0<T>.intToBinding(): PropertyBinding<T> {
+@Deprecated("Use Kotlin UI DSL 2")
+internal inline fun <reified T : Any> KMutableProperty0<T>.intToBinding(): PropertyBinding<T> {
   return createPropertyBinding(this, T::class.javaPrimitiveType ?: T::class.java)
 }
 
@@ -141,13 +133,6 @@ interface CellBuilder<out T : JComponent> {
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun constraints(vararg constraints: CCFlags): CellBuilder<T>
 
-  /**
-   * If this method is called, the value of the component will be stored to the backing property only if the component is enabled.
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun applyIfEnabled(): CellBuilder<T>
-
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun <V> withBinding(
@@ -155,9 +140,9 @@ interface CellBuilder<out T : JComponent> {
     componentSet: (T, V) -> Unit,
     modelBinding: PropertyBinding<V>
   ): CellBuilder<T> {
-    onApply { if (shouldSaveOnApply()) modelBinding.set(componentGet(component)) }
+    onApply { modelBinding.set(componentGet(component)) }
     onReset { componentSet(component, modelBinding.get()) }
-    onIsModified { shouldSaveOnApply() && componentGet(component) != modelBinding.get() }
+    onIsModified { componentGet(component) != modelBinding.get() }
     return this
   }
 
@@ -169,35 +154,15 @@ interface CellBuilder<out T : JComponent> {
     componentSet: (T, V) -> Unit,
     modelBinding: PropertyBinding<V>
   ): CellBuilder<T> {
-    onApply { if (shouldSaveOnApply()) modelBinding.set(componentGet(component)) }
+    onApply { modelBinding.set(componentGet(component)) }
     onReset { componentSet(component, modelBinding.get()) }
-    onIsModified { shouldSaveOnApply() && componentGet(component) != modelBinding.get() }
+    onIsModified { componentGet(component) != modelBinding.get() }
     return this
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun withGraphProperty(property: GraphProperty<*>): CellBuilder<T>
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun enabled(isEnabled: Boolean)
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun enableIf(predicate: ComponentPredicate): CellBuilder<T>
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  @ApiStatus.Internal
-  fun shouldSaveOnApply(): Boolean
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun withLargeLeftGap(): CellBuilder<T>
 }
 
 @ApiStatus.ScheduledForRemoval
@@ -240,15 +205,8 @@ abstract class Cell : BaseBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   val grow: CCFlags = CCFlags.grow
 
-  /**
-   * Makes the row that the component is residing in grow with `weight`.
-   */
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  val pushY: CCFlags = CCFlags.pushY
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
   @ApiStatus.Internal
   fun label(@Label text: String,
             style: UIUtil.ComponentStyle? = null,
@@ -293,12 +251,12 @@ abstract class Cell : BaseBuilder {
 
   @JvmOverloads
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun checkBox(@Checkbox text: String,
                isSelected: Boolean = false,
                @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
     val result = JBCheckBox(text, isSelected)
-    return result(comment = comment)
+    return result.intInvoke(comment = comment)
   }
 
   @ApiStatus.ScheduledForRemoval
@@ -319,16 +277,7 @@ abstract class Cell : BaseBuilder {
                        modelBinding: PropertyBinding<Boolean>,
                        @DetailedDescription comment: String?): CellBuilder<JBCheckBox> {
     val component = JBCheckBox(text, modelBinding.get())
-    return component(comment = comment).withBindingInt(AbstractButton::isSelected, AbstractButton::setSelected, modelBinding)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun checkBox(text: @Checkbox String,
-               property: GraphProperty<Boolean>,
-               comment: @DetailedDescription String? = null): CellBuilder<JBCheckBox> {
-    val component = JBCheckBox(text, property.get())
-    return component(comment = comment).withGraphProperty(property).intApplyToComponent { component.bind(property) }
+    return component.intInvoke(comment = comment).withBindingInt(AbstractButton::isSelected, AbstractButton::setSelected, modelBinding)
   }
 
   @ApiStatus.ScheduledForRemoval
@@ -368,18 +317,6 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun <T> comboBox(
-    model: ComboBoxModel<T>,
-    property: GraphProperty<T>,
-    renderer: ListCellRenderer<T?>? = null
-  ): CellBuilder<ComboBox<T>> {
-    return comboBoxInt(model, PropertyBinding(property::get, property::set).intToNullable(), renderer)
-      .withGraphProperty(property)
-      .intApplyToComponent { bind(property) }
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JBTextField> = textFieldInt(prop.intToBinding(), columns)
 
   @ApiStatus.ScheduledForRemoval
@@ -398,29 +335,22 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun spinner(getter: () -> Int, setter: (Int) -> Unit, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
-    val spinner = JBIntSpinner(getter(), minValue, maxValue, step)
-    return component(spinner).withBindingInt(JBIntSpinner::getNumber, JBIntSpinner::setNumber, PropertyBinding(getter, setter))
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun scrollPane(component: Component): CellBuilder<JScrollPane> {
-    return component(JBScrollPane(component))
-  }
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  abstract fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T>
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   operator fun <T : JComponent> T.invoke(
+    vararg constraints: CCFlags,
+    growPolicy: GrowPolicy? = null,
+    @DetailedDescription comment: String? = null
+  ): CellBuilder<T> = component(this).apply {
+    constraints(*constraints)
+    if (comment != null) comment(comment)
+    if (growPolicy != null) growPolicy(growPolicy)
+  }
+
+  private fun <T : JComponent> T.intInvoke(
     vararg constraints: CCFlags,
     growPolicy: GrowPolicy? = null,
     @DetailedDescription comment: String? = null
@@ -448,12 +378,6 @@ class InnerCell(val cell: Cell) : Cell() {
   @Deprecated("Use Kotlin UI DSL Version 2")
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     return cell.component(component)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T> {
-    return cell.component(component, viewComponent)
   }
 }
 

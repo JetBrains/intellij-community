@@ -61,10 +61,17 @@ suspend fun <X> Collection<X>.forEachConcurrent(
     items.size <= concurrency -> {
       // a coroutine per item
       coroutineScope {
+        val scopeJob = coroutineContext.job
         for (item in items) {
           yield()
           launch {
-            action(item)
+            try {
+              action(item)
+            }
+            catch (e: CancellationException) {
+              scopeJob.cancel(e)
+              throw e
+            }
           }
         }
       }
@@ -72,12 +79,19 @@ suspend fun <X> Collection<X>.forEachConcurrent(
     else -> {
       // X=concurrency coroutines processing items
       coroutineScope {
+        val scopeJob = coroutineContext.job
         val ch = items.asChannelIn(this)
         repeat(concurrency) {
           launch {
             for (item in ch) {
               yield()
-              action(item)
+              try {
+                action(item)
+              }
+              catch (e: CancellationException) {
+                scopeJob.cancel(e)
+                throw e
+              }
             }
           }
         }

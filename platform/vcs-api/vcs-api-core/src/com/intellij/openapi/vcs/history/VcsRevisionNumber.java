@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
   VcsRevisionNumber NULL = new VcsRevisionNumber() {
-    @NotNull
-    @Override public String asString() {
+    @Override
+    public @NotNull String asString() {
       return "";
     }
 
@@ -32,9 +32,8 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return myValue;
     }
 
-    @NotNull
     @Override
-    public String asString() {
+    public @NotNull String asString() {
       return String.valueOf(myValue);
     }
 
@@ -46,6 +45,7 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return 0;
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -57,6 +57,7 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return true;
     }
 
+    @Override
     public int hashCode() {
       return myValue;
     }
@@ -83,9 +84,8 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return myValue;
     }
 
-    @NotNull
     @Override
-    public String asString() {
+    public @NotNull String asString() {
       return String.valueOf(myValue);
     }
 
@@ -101,6 +101,7 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return myValue;
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -112,10 +113,12 @@ public interface VcsRevisionNumber extends Comparable<VcsRevisionNumber>{
       return true;
     }
 
+    @Override
     public int hashCode() {
       return java.lang.Long.hashCode(myValue);
     }
 
+    @Override
     public String toString() {
       return asString();
     }

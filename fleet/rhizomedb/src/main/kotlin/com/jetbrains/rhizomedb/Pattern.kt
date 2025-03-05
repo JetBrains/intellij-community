@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
+import kotlin.jvm.JvmInline
+import kotlin.jvm.JvmStatic
+
 @JvmInline
 value class Pattern private constructor(val hash: Long) {
   companion object {

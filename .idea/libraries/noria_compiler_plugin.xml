@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="noria-compiler-plugin" type="repository">
+    <properties include-transitive-deps="false" maven-id="jetbrains.fleet:noria-compiler-plugin:2.1.10-0.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/jetbrains/fleet/noria-compiler-plugin/2.1.10-0.1/noria-compiler-plugin-2.1.10-0.1.jar">
+          <sha256sum>0343917854d11f7b85fcf1bf014e07c1a958fdc6fdb89771be64a6785fddc6c7</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/noria-compiler-plugin/2.1.10-0.1/noria-compiler-plugin-2.1.10-0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/jetbrains/fleet/noria-compiler-plugin/2.1.10-0.1/noria-compiler-plugin-2.1.10-0.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

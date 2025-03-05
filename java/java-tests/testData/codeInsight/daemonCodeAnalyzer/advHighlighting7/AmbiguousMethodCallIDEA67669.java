@@ -12,6 +12,6 @@ class B
 {
     public static void main(String[] args) {
         A a = null;
-        char c = a.foo(null).<error descr="Cannot resolve method 'charAt(int)'">charAt</error>(0);
+        char c = a.foo(null).<error descr="Cannot call methods on 'void' type">charAt</error>(0);
     }
 }

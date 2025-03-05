@@ -2,7 +2,7 @@
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Enable option 'Property types' for 'Types' inlay hints
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class A {
     suspend fun foo() {}
 }

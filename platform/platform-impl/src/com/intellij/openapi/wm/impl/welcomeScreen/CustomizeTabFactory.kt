@@ -42,6 +42,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
@@ -193,7 +194,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
   }
 
   override fun buildComponent(): JComponent {
-    return panel {
+    val component = panel {
       val autodetectSupportedPredicate = ComponentPredicate.fromValue(laf.autodetectSupported)
       val syncThemeAndEditorSchemePredicate = autodetectSupportedPredicate.and(
         ComponentPredicate.fromObservableProperty(syncThemeProperty, parentDisposable))
@@ -293,6 +294,10 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
       .withBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground())
+
+    val scrollPane = JBScrollPane(component)
+    scrollPane.border = JBUI.Borders.empty()
+    return scrollPane
   }
 
   private fun updateKeymaps() {

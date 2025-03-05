@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -58,6 +57,8 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor;
+import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -76,10 +77,8 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_UNDO;
-import static com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponentKt.shouldHaveSplitterDiffPreview;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.subscribeOnVcsToolWindowLayoutChanges;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -88,7 +87,6 @@ import static java.util.Objects.requireNonNull;
 
 public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
-  private static final String HELP_ID = "ideaInterface.shelf";
   static final @NonNls String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
   private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"; //NON-NLS
 
@@ -99,6 +97,8 @@ public class ShelvedChangesViewManager implements Disposable {
   private final List<Runnable> myPostUpdateEdtActivity = new ArrayList<>();
 
   private @Nullable ShelfToolWindowPanel myPanel = null;
+
+  public static final String HELP_ID = "ideaInterface.shelf";
 
   public static final DataKey<ChangesTree> SHELVED_CHANGES_TREE =
     DataKey.create("ShelveChangesManager.ShelvedChangesTree");
@@ -416,11 +416,13 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void initTabContent(@NotNull Content content) {
-      ShelfToolWindowPanel panel = getInstance(myProject).initToolWindowPanel();
-      content.setHelpId(HELP_ID);
-      content.setComponent(panel);
-      content.setDisposer(panel);
-      content.setPreferredFocusableComponent(panel.myTree);
+      if (!Registry.is("vcs.shelves.rhizome.enabled")) {
+        ShelfToolWindowPanel panel = getInstance(myProject).initToolWindowPanel();
+        content.setHelpId(HELP_ID);
+        content.setComponent(panel);
+        content.setDisposer(panel);
+        content.setPreferredFocusableComponent(panel.myTree);
+      }
     }
   }
 
@@ -441,10 +443,11 @@ public class ShelvedChangesViewManager implements Disposable {
     deleteShelves(project, shelvedListsToDelete, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
   }
 
-  private static void deleteShelves(@NotNull Project project, @NotNull List<ShelvedChangeList> shelvedListsToDelete,
-                                    @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
-                                    @NotNull List<ShelvedChange> selectedChanges,
-                                    @NotNull List<ShelvedBinaryFile> selectedBinaryChanges) {
+  @ApiStatus.Internal
+  public static void deleteShelves(@NotNull Project project, @NotNull List<ShelvedChangeList> shelvedListsToDelete,
+                                   @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
+                                   @NotNull List<ShelvedChange> selectedChanges,
+                                   @NotNull List<ShelvedBinaryFile> selectedBinaryChanges) {
     List<ShelvedChange> changesToDelete = getChangesNotInLists(shelvedListsToDelete, selectedChanges);
     List<ShelvedBinaryFile> binariesToDelete = getBinariesNotInLists(shelvedListsToDelete, selectedBinaryChanges);
 
@@ -771,9 +774,8 @@ public class ShelvedChangesViewManager implements Disposable {
         super(myTree, myTreeScrollPane, MyShelvedPreviewProcessor.ShelveTreeDiffPreviewHandler.INSTANCE);
       }
 
-      @NotNull
       @Override
-      protected DiffEditorViewer createViewer() {
+      protected @NotNull DiffEditorViewer createViewer() {
         return new MyShelvedPreviewProcessor(myProject, myTree, true);
       }
 
@@ -788,9 +790,8 @@ public class ShelvedChangesViewManager implements Disposable {
         DiffShelvedChangesActionProvider.updateAvailability(event);
       }
 
-      @Nullable
       @Override
-      public String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
+      public @Nullable String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
         return wrapper != null
                ? VcsBundle.message("shelve.editor.diff.preview.title", wrapper.getPresentableName())
                : VcsBundle.message("shelved.version.name");

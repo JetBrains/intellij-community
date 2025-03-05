@@ -50,18 +50,9 @@ import com.intellij.ui.icons.TextIcon
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Color
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Insets
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.InputEvent
 import java.util.function.Predicate
 import javax.swing.Icon
@@ -80,7 +71,10 @@ class RunWidgetResumeManager(private val project: Project) {
 
   fun getDebugDescriptor(configuration: RunnerAndConfigurationSettings): RunContentDescriptor? {
     val executionManager = ExecutionManagerImpl.getInstance(project)
-    return executionManager.getRunningDescriptors { configuration === it }.firstOrNull {
+    return executionManager.getRunningDescriptors {
+      configuration === it ||
+      configuration.configuration === ExecutionManagerImpl.getDelegatedRunProfile(it.configuration)
+    }.firstOrNull {
       executionManager.getExecutors(it).firstOrNull { it.id == ToolWindowId.DEBUG } != null
     }
   }

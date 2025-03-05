@@ -23,9 +23,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
@@ -35,11 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 public final class PyDeprecationInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 final boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -93,8 +90,7 @@ public final class PyDeprecationInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private PyElement resolve(@NotNull PyReferenceExpression node) {
+    private @Nullable PyElement resolve(@NotNull PyReferenceExpression node) {
       final PyElement resolve = PyUtil.as(node.getReference(getResolveContext()).resolve(), PyElement.class);
       return resolve == null ? null : PyiUtil.getOriginalElementOrLeaveAsIs(resolve, PyElement.class);
     }

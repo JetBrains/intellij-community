@@ -110,10 +110,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       return formatDescription(0);
     }
 
-    @NotNull
-    private static IntroduceVariableBase.JavaReplaceChoice allOccurrencesInside(PsiElement parent,
-                                                                                int sameKeywordCount,
-                                                                                String finalKeyword) {
+    private static @NotNull IntroduceVariableBase.JavaReplaceChoice allOccurrencesInside(PsiElement parent,
+                                                                                         int sameKeywordCount,
+                                                                                         String finalKeyword) {
       return new JavaReplaceChoice(ReplaceChoice.ALL, null, false) {
         @Override
         public PsiExpression[] filter(ExpressionOccurrenceManager manager) {
@@ -130,12 +129,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  @NonNls private static final String REFACTORING_ID = "refactoring.extractVariable";
+  private static final @NonNls String REFACTORING_ID = "refactoring.extractVariable";
 
   private JavaVariableInplaceIntroducer myInplaceIntroducer;
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
@@ -167,11 +166,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  @NotNull
-  public static Pair<TextRange, List<PsiExpression>> getExpressionsAndSelectionRange(@NotNull final Project project,
-                                                                                     final Editor editor,
-                                                                                     final PsiFile file,
-                                                                                     int offset) {
+  public static @NotNull Pair<TextRange, List<PsiExpression>> getExpressionsAndSelectionRange(final @NotNull Project project,
+                                                                                              final Editor editor,
+                                                                                              final PsiFile file,
+                                                                                              int offset) {
     final PsiElement[] statementsInRange = IntroduceVariableUtil.findStatementsAtOffset(editor, file, offset);
 
     Document document = editor.getDocument();
@@ -239,8 +237,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return CommonJavaRefactoringUtil.isExtractable(tempExpr) ? tempExpr : null;
   }
 
-  @NotNull
-  public Pair<List<PsiElement>, List<PsiExpression>> getPossibleAnchorsAndOccurrences(final Project project, final PsiExpression expr) {
+  public @NotNull Pair<List<PsiElement>, List<PsiExpression>> getPossibleAnchorsAndOccurrences(final Project project, final PsiExpression expr) {
     OccurrencesInfo occurrencesInfo = buildOccurrencesInfo(project, expr);
 
     final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = occurrencesInfo.buildOccurrencesMap(expr);
@@ -253,8 +250,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return Pair.create(anchors, occurrencesInfo.myOccurrences);
   }
 
-  @NotNull
-  public Map<String, JavaReplaceChoice> getPossibleReplaceChoices(final Project project, final PsiExpression expr) {
+  public @NotNull Map<String, JavaReplaceChoice> getPossibleReplaceChoices(final Project project, final PsiExpression expr) {
     OccurrencesInfo occurrencesInfo = buildOccurrencesInfo(project, expr);
     final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = occurrencesInfo.buildOccurrencesMap(expr);
     return occurrencesMap.entrySet().stream().collect(Collectors.toMap(
@@ -263,8 +259,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     ));
   }
 
-  @NotNull
-  private OccurrencesInfo buildOccurrencesInfo(Project project, PsiExpression expr) {
+  private @NotNull OccurrencesInfo buildOccurrencesInfo(Project project, PsiExpression expr) {
     final PsiElement anchorStatement = getAnchor(expr);
     PsiElement tempContainer = checkAnchorStatement(project, null, anchorStatement);
 
@@ -274,9 +269,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return new OccurrencesInfo(occurrences);
   }
 
-  @Nullable
-  private static JavaReplaceChoice findChoice(@NotNull LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap,
-                                              @NotNull JavaReplaceChoice replaceChoice) {
+  private static @Nullable JavaReplaceChoice findChoice(@NotNull LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap,
+                                                        @NotNull JavaReplaceChoice replaceChoice) {
     return ContainerUtil.find(occurrencesMap.entrySet(), entry -> {
       return entry.getKey().formatDescription(0).equals(replaceChoice.formatDescription(0));
     }).getKey();
@@ -490,8 +484,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return callback.wasSucceed;
   }
 
-  @NotNull
-  public static OccurrencesChooser<PsiExpression> createOccurrencesChooser(Editor editor) {
+  public static @NotNull OccurrencesChooser<PsiExpression> createOccurrencesChooser(Editor editor) {
     return new OccurrencesChooser<>(editor) {
       @Override
       protected TextRange getOccurrenceRange(PsiExpression occurrence) {
@@ -575,8 +568,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return false;
   }
 
-  @Nullable
-  private static PsiType getNormalizedType(PsiExpression expr) {
+  private static @Nullable PsiType getNormalizedType(PsiExpression expr) {
     PsiType type = expr.getType();
     PsiClass refClass = PsiUtil.resolveClassInType(type);
     if (refClass instanceof PsiAnonymousClass) {
@@ -585,8 +577,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return type;
   }
 
-  @Nullable
-  public static PsiElement getAnchor(PsiElement place) {
+  public static @Nullable PsiElement getAnchor(PsiElement place) {
     place = getPhysicalElement(place);
     PsiElement anchorStatement = CommonJavaRefactoringUtil.getParentStatement(place, false);
     if (anchorStatement == null) {
@@ -929,8 +920,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       return extractor.getMethodName(parameter, expression, type);
     }
 
-    @NotNull
-    public LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> buildOccurrencesMap(PsiExpression expr) {
+    public @NotNull LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> buildOccurrencesMap(PsiExpression expr) {
       final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = new LinkedHashMap<>();
       if (myChainMethodName != null) {
         if (myOccurrences.size() > 1 && !myCantReplaceAll) {

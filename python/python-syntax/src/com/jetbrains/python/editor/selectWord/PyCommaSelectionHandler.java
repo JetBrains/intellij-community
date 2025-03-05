@@ -24,7 +24,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.*;
-import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -37,7 +36,7 @@ import java.util.List;
  */
 public final class PyCommaSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(@NotNull final PsiElement e) {
+  public boolean canSelect(final @NotNull PsiElement e) {
     return e instanceof PyAstReferenceExpression || e instanceof PyAstKeyValueExpression || e instanceof PyAstKeywordArgument
       || e instanceof PyAstNumericLiteralExpression || e instanceof PyAstStringLiteralExpression || e instanceof PyAstNamedParameter
       || e instanceof PyAstStarArgument;

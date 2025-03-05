@@ -11,10 +11,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Ilya.Kazakevich
  */
 public final class Help {
-  @NotNull
-  private final @NlsSafe String myHelpString;
-  @Nullable
-  private final @NlsSafe String myExternalHelpUrl;
+  private final @NotNull @NlsSafe String myHelpString;
+  private final @Nullable @NlsSafe String myExternalHelpUrl;
 
   /**
    * @param helpString help text (no external url provided)
@@ -35,16 +33,14 @@ public final class Help {
   /**
    * @return help text
    */
-  @NotNull
-  public @NlsSafe String getHelpString() {
+  public @NotNull @NlsSafe String getHelpString() {
     return myHelpString;
   }
 
   /**
    * @return external help url (if any)
    */
-  @Nullable
-  public @NlsSafe String getExternalHelpUrl() {
+  public @Nullable @NlsSafe String getExternalHelpUrl() {
     return myExternalHelpUrl;
   }
 }

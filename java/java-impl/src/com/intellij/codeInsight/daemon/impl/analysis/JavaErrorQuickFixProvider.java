@@ -27,7 +27,7 @@ public final class JavaErrorQuickFixProvider implements ErrorQuickFixProvider, D
     List<IntentionAction> registrar = new ArrayList<>();
     if (description.equals(JavaPsiBundle.message("expected.semicolon"))) {
       info.registerFix(new InsertMissingTokenFix(";"), null, null, null, null);
-      HighlightFixUtil.registerFixesForExpressionStatement(parent, registrar);
+      HighlightFixUtil.registerFixesForExpressionStatement(parent, action -> registrar.add(action.asIntention()));
     }
     if (parent instanceof PsiTryStatement && description.equals(JavaPsiBundle.message("expected.catch.or.finally"))) {
       registrar.add(new AddExceptionToCatchFix(false).asIntention());

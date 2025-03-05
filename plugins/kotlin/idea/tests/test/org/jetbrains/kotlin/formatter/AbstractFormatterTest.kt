@@ -4,16 +4,27 @@ package org.jetbrains.kotlin.formatter
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.test.util.invalidateCaches
 import java.io.File
 
 abstract class AbstractFormatterTest : KotlinLightCodeInsightFixtureTestCase() {
+
+    override fun tearDown() {
+        runAll(
+            { runInEdtAndWait { project.invalidateCaches() } },
+            { super.tearDown() },
+        )
+    }
+
     fun doTestInverted(expectedFileNameWithExtension: String) {
         doTest(expectedFileNameWithExtension, true, false)
     }

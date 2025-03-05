@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchTask;
-
 
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.largeFilesEditor.Utils;
 import com.intellij.largeFilesEditor.search.Position;
 import com.intellij.largeFilesEditor.search.SearchResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,7 +15,8 @@ import java.util.ArrayList;
  * Class, that finds all occurrences in certain frame.
  * Frame is consisted of two strings, that can be set for this class.
  */
-final class FrameSearcher {
+@ApiStatus.Internal
+public final class FrameSearcher {
   /**
    * Use this field if bordering symbol (beforeFrameStartSymbol, afterFrameEndSymbol) doesn't exist
    */
@@ -37,7 +38,7 @@ final class FrameSearcher {
   private char afterFrameEndSymbol;
 
 
-  FrameSearcher(SearchTaskOptions options, SmartStringSearcher smartStringSearcher) {
+  public FrameSearcher(SearchTaskOptions options, SmartStringSearcher smartStringSearcher) {
     this.smartStringSearcher = smartStringSearcher;
     this.options = options;
 
@@ -56,8 +57,7 @@ final class FrameSearcher {
     this.afterFrameEndSymbol = afterFrameEndSymbol;
   }
 
-  @NotNull
-  ArrayList<SearchResult> findAllMatchesAtFrame() {
+  public @NotNull ArrayList<SearchResult> findAllMatchesAtFrame() {
     String frameText;
     boolean isNeedAfterFrameEndSymbol;
     FindResult ijFindResult;

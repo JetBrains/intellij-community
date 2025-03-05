@@ -8,7 +8,6 @@ import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.nj2k.isPresent
-import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isKotlinFunctionalType
 import org.jetbrains.kotlin.psi.KtNamedFunction

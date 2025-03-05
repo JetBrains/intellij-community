@@ -11,8 +11,9 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction
 import com.intellij.psi.PsiFile
 import com.intellij.vcsUtil.VcsSelection
-import com.intellij.vcsUtil.VcsSelectionUtil
 
+// The intention doesn't change the code, so it can't have `.before` and `.after` templates.
+@Suppress("IntentionDescriptionNotFoundInspection")
 class SelectedBlockHistoryIntention : IntentionAction, LowPriorityAction {
 
   override fun startInWriteAction(): Boolean = false

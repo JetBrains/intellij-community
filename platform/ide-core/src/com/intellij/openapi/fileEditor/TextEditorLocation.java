@@ -38,6 +38,7 @@ public final class TextEditorLocation implements FileEditorLocation {
     return myPosition.compareTo(otherLocation.myPosition);
   }
 
+  @Override
   public String toString() {
     return myPosition.toString();
   }

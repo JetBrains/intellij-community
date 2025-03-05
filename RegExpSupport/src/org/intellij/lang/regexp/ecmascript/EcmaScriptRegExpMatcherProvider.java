@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.ecmascript;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,9 +25,8 @@ import java.util.List;
 public class EcmaScriptRegExpMatcherProvider implements RegExpMatcherProvider {
   private static final Logger LOG = Logger.getInstance(EcmaScriptRegExpMatcherProvider.class);
 
-  @Nullable
   @Override
-  public RegExpMatchResult matches(String regExp, PsiFile regExpFile, PsiElement elementInHost, String sampleText, long timeoutMillis) {
+  public @Nullable RegExpMatchResult matches(String regExp, PsiFile regExpFile, PsiElement elementInHost, String sampleText, long timeoutMillis) {
     String modifiers = "";
     if (elementInHost instanceof PsiLiteralValue) {
       final String text = elementInHost.getText();

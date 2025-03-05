@@ -1,6 +1,8 @@
 FunctionBreakpoint created at ReadWrite.kt
+FunctionBreakpoint created at functionBreakpointInStdlib.kt:6
 Run Java
 Connected to the target VM
+functionBreakpointInStdlib.kt:8
 ReadWrite.!EXT!
 ReadWrite.!EXT!
 Disconnected from the target VM

@@ -8,9 +8,10 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInliner.replaceUsagesInWholeProject
+import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.replaceUsagesInWholeProject
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
@@ -37,6 +38,7 @@ class DeprecatedSymbolUsageInWholeProjectFix(
             progressTitle = KotlinBundle.message("applying.0", text),
             commandName = text,
             unwrapSpecialUsages = false,
+            unwrapper = { unwrapSpecialUsageOrNull(it) }
         )
     }
 
@@ -45,7 +47,7 @@ class DeprecatedSymbolUsageInWholeProjectFix(
         is KtProperty -> referenceTarget
         is KtTypeAlias -> referenceTarget
         is KtConstructor<*> -> referenceTarget.getContainingClassOrObject() //TODO: constructor can be deprecated itself
-        is KtClass -> referenceTarget.takeIf { it.isAnnotation() }
+        is KtClass -> referenceTarget
         else -> null
     }
 

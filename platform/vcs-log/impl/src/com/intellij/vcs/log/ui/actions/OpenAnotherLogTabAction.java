@@ -36,7 +36,7 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || Registry.is("toolwindow.open.tab.in.editor")) {
+    if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -117,6 +117,10 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
   public static class InEditor extends OpenAnotherLogTabAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
+      if (Registry.is("toolwindow.open.tab.in.editor")) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
       super.update(e);
       if (e.getData(PlatformDataKeys.TOOL_WINDOW) != null && ActionPlaces.VCS_LOG_TOOLBAR_PLACE.equals(e.getPlace())) {
         e.getPresentation().setEnabledAndVisible(false);

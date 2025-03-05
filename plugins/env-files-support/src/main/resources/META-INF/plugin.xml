@@ -1,6 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="ru.adelf.idea.dotenv">
     <id>ru.adelf.idea.dotenv</id>
-    <name>.env files support</name>
+    <name>.env files</name>
     <vendor>JetBrains</vendor>
 
     <description><![CDATA[
@@ -55,85 +55,143 @@
 
         <lang.foldingBuilder language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvValuesHiding"/>
 
-        <psi.symbolReferenceProvider hostElementClass="ru.adelf.idea.dotenv.psi.DotEnvKey"
+        <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+                  implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyReferenceUsageSearcher"/>
+
+        <psi.declarationProvider implementation="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeySymbolDeclarationProvider"/>
+
+        <psi.symbolReferenceProvider hostElementClass="ru.adelf.idea.dotenv.psi.DotEnvNestedVariableKey"
                                      hostLanguage="DotEnv"
-                                     implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvSymbolReferenceProvider"
-                                     targetClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyUsageSymbol"/>
+                                     implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvNestedVariableReferenceProvider"
+                                     targetClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeySymbol"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvDuplicateKeyInspection"
-                         displayName="Duplicate keys"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.duplicate.keys"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvSpaceInsideNonQuotedInspection"
-                         displayName="Space inside non-quoted value"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.space.inside.non.quoted.value"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.SpaceInsideNonQuotedInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvExtraBlankLineInspection"
-                         displayName="Extra blank line"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.extra.blank.line"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.ExtraBlankLineInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvIncorrectDelimiterInspection"
-                         displayName="Incorrect delimiter"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.incorrect.delimiter"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.IncorrectDelimiterInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvLeadingCharacterInspection"
-                         displayName="Invalid leading character"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.invalid.leading.character"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.LeadingCharacterInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvLowercaseKeyInspection"
-                         displayName="Key uses lowercase chars"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.key.uses.lowercase.chars"
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="ru.adelf.idea.dotenv.inspections.LowercaseKeyInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvTrailingWhitespaceInspection"
-                         displayName="Value has trailing whitespace"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.value.has.trailing.whitespace"
                          enabledByDefault="true"
                          level="WARNING" implementationClass="ru.adelf.idea.dotenv.inspections.TrailingWhitespaceInspection"/>
 
         <localInspection language="DotEnv"
-                         groupName="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
                          shortName="DotEnvSpaceAroundSeparatorInspection"
-                         displayName="Extra spaces surrounding '='"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.extra.spaces.surrounding"
                          enabledByDefault="true" 
                          implementationClass="ru.adelf.idea.dotenv.inspections.SpaceAroundSeparatorInspection"/>
-        
+
+        <localInspection language="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
+                         shortName="UndefinedNestedVariableInspection"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.undefined.nested.variable"
+                         enabledByDefault="true"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.UndefinedNestedVariableInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
+                         shortName="EmptyNestedVariableInspection"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.empty.nested.variable"
+                         enabledByDefault="true"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.EmptyNestedVariableInspection"/>
+
+        <localInspection language="DotEnv"
+                         groupBundle="messages.DotEnvBundle"
+                         groupKey="group.dotenv"
+                         shortName="NestedVariableOutsideDoubleQuotesInspection"
+                         bundle="messages.DotEnvBundle"
+                         key="inspection.name.nested.variable.outside.double.quotes"
+                         enabledByDefault="true"
+                         implementationClass="ru.adelf.idea.dotenv.inspections.NestedVariableOutsideDoubleQuotesInspection"/>
+
         <lang.syntaxHighlighterFactory language="DotEnv"
                                        implementationClass="ru.adelf.idea.dotenv.DotEnvSyntaxHighlighterFactory"/>
 
         <applicationConfigurable instance="ru.adelf.idea.dotenv.ui.DotEnvSettingsConfigurable"
-                             id="DotEnv.SettingsForm"
-                             displayName="DotEnv"
-                             groupId="language"
+                                 id="DotEnv.SettingsForm"
+                                 bundle="messages.DotEnvBundle"
+                                 key="group.dotenv"
+                                 groupId="language"
         />
+
+        <completion.contributor
+            language="DotEnv"
+            implementationClass="ru.adelf.idea.dotenv.completion.NestedEnvVariableCompletionContributor"
+        />
+
+        <typedHandler implementation="ru.adelf.idea.dotenv.completion.NestedVariableTypedHandlerDelegate"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
         <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
+        <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.DotEnvNestedVariablesProvider"/>
     </extensions>
 
     <actions>

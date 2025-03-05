@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAnnotationProvider {
   private final VcsHistoryCache myCache;
   private final AbstractVcs myVcs;
-  private final static Logger LOG = Logger.getInstance(VcsAnnotationCachedProxy.class);
+  private static final Logger LOG = Logger.getInstance(VcsAnnotationCachedProxy.class);
   private final AnnotationProvider myAnnotationProvider;
 
   public VcsAnnotationCachedProxy(@NotNull AbstractVcs vcs, @NotNull AnnotationProvider provider) {
@@ -116,7 +116,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
   }
 
   private VcsAbstractHistorySession getHistory(VcsRevisionNumber revision, FilePath filePath, VcsHistoryProvider historyProvider,
-                                               @Nullable final VcsRevisionNumber firstRevision) throws VcsException {
+                                               final @Nullable VcsRevisionNumber firstRevision) throws VcsException {
     final boolean historyCacheSupported = historyProvider instanceof VcsCacheableHistorySessionFactory;
     if (historyCacheSupported) {
       final VcsCacheableHistorySessionFactory cacheableHistorySessionFactory = (VcsCacheableHistorySessionFactory)historyProvider;
@@ -150,7 +150,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider, CacheableAn
     return myAnnotationProvider.isAnnotationValid(rev);
   }
 
-  private VcsAbstractHistorySession limitedHistory(final FilePath filePath, @NotNull final VcsRevisionNumber firstNumber) throws VcsException {
+  private VcsAbstractHistorySession limitedHistory(final FilePath filePath, final @NotNull VcsRevisionNumber firstNumber) throws VcsException {
     final VcsAbstractHistorySession[] result = new VcsAbstractHistorySession[1];
     final VcsException[] exc = new VcsException[1];
 

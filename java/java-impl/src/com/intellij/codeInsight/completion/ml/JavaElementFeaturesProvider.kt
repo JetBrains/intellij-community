@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.Locale
 
 @VisibleForTesting
 class JavaElementFeaturesProvider : ElementFeatureProvider {
@@ -27,7 +28,7 @@ class JavaElementFeaturesProvider : ElementFeatureProvider {
     if (psi is PsiModifierListOwner) {
       for (modifier in POPULAR_MODIFIERS) {
         if (psi.hasModifier(modifier)) {
-          features["is_${modifier.name.toLowerCase()}"] = MLFeatureValue.binary(true)
+          features["is_${modifier.name.lowercase(Locale.getDefault())}"] = MLFeatureValue.binary(true)
         }
       }
     }
@@ -46,7 +47,7 @@ class JavaElementFeaturesProvider : ElementFeatureProvider {
         JavaCompletionFeatures.getChildClassTokensMatchingFeature(contextFeatures, element.lookupString)?.let {
           features["child_class_tokens_matches"] = it
         }
-        if (element.lookupString.toLowerCase().contains("util")) {
+        if (element.lookupString.lowercase(Locale.getDefault()).contains("util")) {
           features["util_in_class_name"] = MLFeatureValue.binary(true)
         }
         if (psi.isInterface) {

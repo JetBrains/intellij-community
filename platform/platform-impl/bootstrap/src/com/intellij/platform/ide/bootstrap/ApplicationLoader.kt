@@ -7,6 +7,7 @@ package com.intellij.platform.ide.bootstrap
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.WriteLockMeasurer
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
@@ -17,7 +18,10 @@ import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.saveBundledPluginsState
-import com.intellij.ide.ui.*
+import com.intellij.ide.ui.IconMapLoader
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.NotRoamableUiSettings
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.html.initGlobalStyleSheet
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -215,6 +219,7 @@ internal suspend fun loadApp(
 
     asyncScope.launch {
       enableCoroutineDumpAndJstack()
+      enableLockMonitoring(app)
     }
 
     launch {
@@ -356,6 +361,10 @@ private suspend fun enableCoroutineDumpAndJstack() {
   }
 }
 
+private suspend fun enableLockMonitoring(application: ApplicationImpl) {
+  application.serviceAsync<WriteLockMeasurer>()
+}
+
 private suspend fun enableJstack() {
   span("coroutine jstack configuration") {
     JBR.getJstack()?.includeInfoFrom {
@@ -427,6 +436,9 @@ suspend fun initConfigurationStore(app: ApplicationImpl, args: List<String>) {
     span("init app store") {
       // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
       app._getComponentStore().setPath(configDir)
+      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+        LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
+      }
     }
   }
 }

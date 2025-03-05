@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 
 import com.intellij.psi.PsiElement
@@ -48,7 +48,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
             p.accept(object : KtTreeVisitorVoid() {
                 override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
                     super.visitNamedDeclaration(declaration)
-                    ReferencesSearch.search(declaration).forEach { ref ->
+                    ReferencesSearch.search(declaration).asIterable().forEach { ref ->
                         if (extractionData.expressions.none { PsiTreeUtil.isAncestor(it, ref.element, false) }) {
                             definedDeclarations.add(declaration)
                             return
@@ -71,7 +71,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         extractionData.expressions.forEach { it.accept(collector) }
         for (prop in allProperties) {
             val name = prop.name ?: continue
-            val afterwardsRef = ReferencesSearch.search(prop).firstOrNull { ref ->
+            val afterwardsRef = ReferencesSearch.search(prop).asIterable().firstOrNull { ref ->
                 extractionData.expressions.none { PsiTreeUtil.isAncestor(it, ref.element, false) }
             }
             if (afterwardsRef != null) {

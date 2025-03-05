@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.project.Project;
@@ -30,8 +30,7 @@ public class DeleteOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "svn4idea.delete.options";
   }
 
@@ -40,8 +39,7 @@ public class DeleteOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBagConstraints gc = new GridBagConstraints();

@@ -33,8 +33,8 @@ internal class PyMiscFileAction(private val miscFileType: MiscFileType) : AnActi
     MiscProjectUsageCollector.projectCreated()
     when (val r = createMiscProject(
       miscFileType,
-      obtainPythonStrategy = object : ObtainPythonStrategy.FindOnSystem {
-        override suspend fun confirmInstallation(): Boolean = withContext(Dispatchers.EDT) {
+      confirmInstallation = {
+        withContext(Dispatchers.EDT) {
           MessageDialogBuilder.yesNo(
             PyCharmCommunityCustomizationBundle.message("misc.no.python.found"),
             PyCharmCommunityCustomizationBundle.message("misc.install.python.question")
@@ -44,7 +44,7 @@ internal class PyMiscFileAction(private val miscFileType: MiscFileType) : AnActi
       scopeProvider = { it.service<MyService>().scope })) {
       is Result.Success -> Unit
       is Result.Failure -> {
-        Messages.showErrorDialog(null as Project?, r.error.text, PyCharmCommunityCustomizationBundle.message("misc.project.error.title"))
+        Messages.showErrorDialog(null as Project?, r.error, PyCharmCommunityCustomizationBundle.message("misc.project.error.title"))
       }
     }
   }

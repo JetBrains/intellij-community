@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.navbar;
 
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
@@ -17,9 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 
 public final class GrNavBarModelExtension extends AbstractNavBarModelExtension {
 
-  @Nullable
   @Override
-  public String getPresentableText(Object object) {
+  public @Nullable String getPresentableText(Object object) {
     return null;
   }
 

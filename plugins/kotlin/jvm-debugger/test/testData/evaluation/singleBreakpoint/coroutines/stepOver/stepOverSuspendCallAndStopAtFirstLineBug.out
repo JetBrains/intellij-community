@@ -1,0 +1,10 @@
+LineBreakpoint created at stepOverSuspendCallAndStopAtFirstLineBug.kt:18
+Run Java
+Connected to the target VM
+stepOverSuspendCallAndStopAtFirstLineBug.kt:18
+stepOverSuspendCallAndStopAtFirstLineBug.kt:19
+stepOverSuspendCallAndStopAtFirstLineBug.kt:20
+stepOverSuspendCallAndStopAtFirstLineBug.kt:21
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,10 +10,8 @@ import java.util.List;
 import java.util.Objects;
 
 public final class MavenArtifactResolutionRequest implements Serializable {
-  @NotNull
-  private final MavenArtifactInfo myArtifactInfo;
-  @NotNull
-  private final List<MavenRemoteRepository> myRemoteRepositories;
+  private final @NotNull MavenArtifactInfo myArtifactInfo;
+  private final @NotNull List<MavenRemoteRepository> myRemoteRepositories;
   private boolean myUpdateSnapshots;
 
   public MavenArtifactResolutionRequest(@NotNull MavenArtifactInfo mavenArtifactInfo,
@@ -29,13 +27,11 @@ public final class MavenArtifactResolutionRequest implements Serializable {
     this(mavenArtifactInfo, repositories, false);
   }
 
-  @NotNull
-  public MavenArtifactInfo getArtifactInfo() {
+  public @NotNull MavenArtifactInfo getArtifactInfo() {
     return myArtifactInfo;
   }
 
-  @NotNull
-  public List<MavenRemoteRepository> getRemoteRepositories() {
+  public @NotNull List<MavenRemoteRepository> getRemoteRepositories() {
     return myRemoteRepositories;
   }
 

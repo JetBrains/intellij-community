@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.builder;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,9 +37,8 @@ import java.util.List;
 public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProvider {
   private static final Logger LOG = Logger.getInstance(JpsPluginSyntheticArtifactProvider.class);
 
-  @NotNull
   @Override
-  public List<JpsArtifact> createArtifacts(@NotNull JpsModel model) {
+  public @NotNull List<JpsArtifact> createArtifacts(@NotNull JpsModel model) {
     List<JpsArtifact> artifacts = new ArrayList<>();
     for (JpsTypedModule<JpsSimpleElement<JpsPluginModuleProperties>> module : model.getProject().getModules(JpsPluginModuleType.INSTANCE)) {
       artifacts.add(createArtifact(module, module.getProperties().getData()));

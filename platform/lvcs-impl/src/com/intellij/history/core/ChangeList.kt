@@ -30,8 +30,7 @@ open class ChangeList(private val storage: ChangeListStorage) {
     storage.close()
   }
 
-  @Synchronized
-  fun force() = storage.force()
+  fun force(): Unit = storage.force()
 
   @Synchronized
   fun nextId(): Long = storage.nextId()
@@ -144,13 +143,13 @@ open class ChangeList(private val storage: ChangeListStorage) {
     v.finished()
   }
 
-  @Synchronized
   fun purgeObsolete(period: Long) {
     storage.purge(period, intervalBetweenActivities) { changeSet ->
       for (each in changeSet.contentsToPurge) {
         each.release()
       }
     }
+    storage.force()
   }
 
   @TestOnly

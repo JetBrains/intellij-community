@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.Notification;
@@ -27,8 +27,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public final class VcsTestUtil {
-  public static VirtualFile createFile(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name,
-                                       @Nullable final String content) {
+  public static VirtualFile createFile(@NotNull Project project, final @NotNull VirtualFile parent, final @NotNull String name,
+                                       final @Nullable String content) {
     try {
       return WriteCommandAction.writeCommandAction(project)
         .withName("VcsTestUtil CreateFile") //NON-NLS
@@ -53,7 +53,7 @@ public final class VcsTestUtil {
    * @param name   Name of the directory.
    * @return reference to the created or already existing directory.
    */
-  public static VirtualFile findOrCreateDir(@NotNull final Project project, @NotNull final VirtualFile parent, @NotNull final String name) {
+  public static VirtualFile findOrCreateDir(final @NotNull Project project, final @NotNull VirtualFile parent, final @NotNull String name) {
     try {
       return WriteCommandAction.writeCommandAction(project)
         .withName("VcsTestUtil FindOrCreateDir") //NON-NLS
@@ -70,7 +70,7 @@ public final class VcsTestUtil {
     }
   }
 
-  public static void renameFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final String newName) {
+  public static void renameFileInCommand(@NotNull Project project, final @NotNull VirtualFile file, final @NotNull String newName) {
     WriteCommandAction.writeCommandAction(project)
       .withName("VcsTestUtil RenameFileInCommand") //NON-NLS
       .run(() -> {
@@ -83,7 +83,7 @@ public final class VcsTestUtil {
       });
   }
 
-  public static void deleteFileInCommand(@NotNull Project project, @NotNull final VirtualFile file) {
+  public static void deleteFileInCommand(@NotNull Project project, final @NotNull VirtualFile file) {
     WriteCommandAction.writeCommandAction(project)
       .withName("VcsTestUtil DeleteFileInCommand") //NON-NLS
       .run(() -> {
@@ -96,7 +96,7 @@ public final class VcsTestUtil {
       });
   }
 
-  public static void editFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final String newContent) {
+  public static void editFileInCommand(@NotNull Project project, final @NotNull VirtualFile file, final @NotNull String newContent) {
     assertTrue(file.isValid());
     file.getTimeStamp();
     WriteCommandAction.writeCommandAction(project)
@@ -116,9 +116,8 @@ public final class VcsTestUtil {
       });
   }
 
-  @NotNull
-  public static VirtualFile copyFileInCommand(@NotNull Project project, @NotNull final VirtualFile file,
-                                              @NotNull final VirtualFile newParent, @NotNull final String newName) {
+  public static @NotNull VirtualFile copyFileInCommand(@NotNull Project project, final @NotNull VirtualFile file,
+                                                       final @NotNull VirtualFile newParent, final @NotNull String newName) {
     try {
       return WriteCommandAction.writeCommandAction(project)
         .withName("VcsTestUtil CopyFileInCommand") //NON-NLS
@@ -129,7 +128,7 @@ public final class VcsTestUtil {
     }
   }
 
-  public static void moveFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) {
+  public static void moveFileInCommand(@NotNull Project project, final @NotNull VirtualFile file, final @NotNull VirtualFile newParent) {
     // Workaround for IDEA-182560, try to wait until ongoing refreshes are finished
     VfsUtil.markDirty(true, true, file);
     var semaphore = new Semaphore(1);
@@ -220,19 +219,16 @@ public final class VcsTestUtil {
     boolean areEqual(T actual, E expected);
   }
 
-  @NotNull
-  public static String stringifyActualExpected(@NotNull Object actual, @NotNull Object expected) {
+  public static @NotNull String stringifyActualExpected(@NotNull Object actual, @NotNull Object expected) {
     return "\nExpected:\n" + expected + "\nActual:\n" + actual;
   }
 
-  @NotNull
-  public static String toAbsolute(@NotNull String relPath, @NotNull Project project) {
+  public static @NotNull String toAbsolute(@NotNull String relPath, @NotNull Project project) {
     new File(toAbsolute(Collections.singletonList(relPath), project).get(0)).mkdir();
     return toAbsolute(Collections.singletonList(relPath), project).get(0);
   }
 
-  @NotNull
-  public static List<String> toAbsolute(@NotNull Collection<String> relPaths, @NotNull final Project project) {
+  public static @NotNull List<String> toAbsolute(@NotNull Collection<String> relPaths, final @NotNull Project project) {
     return ContainerUtil.map(relPaths, s -> {
       try {
         return FileUtil.toSystemIndependentName((new File(project.getBasePath() + "/" + s).getCanonicalPath()));

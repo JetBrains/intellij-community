@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -28,14 +28,12 @@ import org.jetbrains.annotations.Nullable;
 public final class EditRangeIntention extends BaseIntentionAction implements LowPriorityAction {
   private static final String JETBRAINS_RANGE = "org.jetbrains.annotations.Range";
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.edit.range");
   }
 
-  @Nullable
-  private static PsiModifierListOwner getTarget(Editor editor, PsiFile file) {
+  private static @Nullable PsiModifierListOwner getTarget(Editor editor, PsiFile file) {
     final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     LongRangeSet rangeFromType = rangeFromType(owner);
     if (rangeFromType == null || !ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) return null;
@@ -70,8 +68,7 @@ public final class EditRangeIntention extends BaseIntentionAction implements Low
     return false;
   }
 
-  @Nullable
-  private static String getElementName(PsiModifierListOwner owner) {
+  private static @Nullable String getElementName(PsiModifierListOwner owner) {
     String name = ((PsiNamedElement)owner).getName();
     if (owner instanceof PsiMethod) name += "()";
     return name;
@@ -156,11 +153,10 @@ public final class EditRangeIntention extends BaseIntentionAction implements Low
                                  mockAnno.getParameterList().getAttributes());
     }
     catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
-    DaemonCodeAnalyzer.getInstance(project).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(project).restart("EditRangeIntention.updateRange");
   }
 
-  @NotNull
-  private static Couple<@Nls String> getErrorMessages(String minText, String maxText, LongRangeSet fromType) {
+  private static @NotNull Couple<@Nls String> getErrorMessages(String minText, String maxText, LongRangeSet fromType) {
     Long minValue = parseValue(minText, fromType, true);
     Long maxValue = parseValue(maxText, fromType, false);
     String minError = null;
@@ -181,8 +177,7 @@ public final class EditRangeIntention extends BaseIntentionAction implements Low
     return Couple.of(minError, maxError);
   }
 
-  @Nullable
-  private static Long parseValue(String text, LongRangeSet fromType, boolean isMin) {
+  private static @Nullable Long parseValue(String text, LongRangeSet fromType, boolean isMin) {
     text = text.trim();
     if (text.isEmpty()) {
       return isMin ? fromType.min() : fromType.max();

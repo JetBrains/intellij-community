@@ -43,9 +43,8 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
     this.theme = theme;
   }
 
-  @Nls
   @Override
-  public @NotNull String getName() {
+  public @Nls @NotNull String getName() {
     //noinspection HardCodedStringLiteral
     return Objects.requireNonNullElse(theme.getName(), theme.getId());
   }

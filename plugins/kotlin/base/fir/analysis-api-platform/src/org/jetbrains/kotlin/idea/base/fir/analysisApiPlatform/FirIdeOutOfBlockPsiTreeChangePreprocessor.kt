@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificat
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.idea.util.publishGlobalSourceOutOfBlockModification
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
@@ -56,6 +57,12 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
             /**
              * Element which do not belong to a project should not cause OOBM
              */
+            return
+        }
+
+        val containingFile = rootElement.containingFile
+        if (containingFile is KtCodeFragment && containingFile.context?.isValid == false) {
+            // no need in cache invalidation for already invalid code fragments
             return
         }
 

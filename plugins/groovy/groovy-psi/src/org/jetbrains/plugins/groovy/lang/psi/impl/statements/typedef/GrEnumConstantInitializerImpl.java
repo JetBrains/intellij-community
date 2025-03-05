@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
@@ -30,15 +30,13 @@ public class GrEnumConstantInitializerImpl extends GrAnonymousClassDefinitionImp
     super(stub, GroovyStubElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
-  @NotNull
   @Override
-  public GrEnumConstant getEnumConstant() {
+  public @NotNull GrEnumConstant getEnumConstant() {
     return (GrEnumConstant)getParent();
   }
 
-  @NotNull
   @Override
-  public GrCodeReferenceElement getBaseClassReferenceGroovy() {
+  public @NotNull GrCodeReferenceElement getBaseClassReferenceGroovy() {
     return new GrLightClassReferenceElement(getBaseClass(), this);
   }
 
@@ -50,15 +48,13 @@ public class GrEnumConstantInitializerImpl extends GrAnonymousClassDefinitionImp
     return containingClass;
   }
 
-  @NotNull
   @Override
-  public PsiElement getNameIdentifierGroovy() {
+  public @NotNull PsiElement getNameIdentifierGroovy() {
     return getEnumConstant().getNameIdentifierGroovy();
   }
 
-  @Nullable
   @Override
-  public GrArgumentList getArgumentListGroovy() {
+  public @Nullable GrArgumentList getArgumentListGroovy() {
     return getEnumConstant().getArgumentList();
   }
 

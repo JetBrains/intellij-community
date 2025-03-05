@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class TestSuiteStack {
   private static final Logger LOG = Logger.getInstance(TestSuiteStack.class.getName());
 
-  @NonNls private static final String EMPTY = "empty";
+  private static final @NonNls String EMPTY = "empty";
 
   private final ConcurrentLinkedDeque<SMTestProxy> myStack = new ConcurrentLinkedDeque<>();
   private final String myTestFrameworkName;
@@ -27,15 +27,14 @@ public class TestSuiteStack {
     myTestFrameworkName = testFrameworkName;
   }
 
-  public void pushSuite(@NotNull final SMTestProxy suite) {
+  public void pushSuite(final @NotNull SMTestProxy suite) {
     myStack.push(suite);
   }
 
   /**
    * @return Top element of non stack or null for empty stack
    */
-  @Nullable
-  public SMTestProxy getCurrentSuite() {
+  public @Nullable SMTestProxy getCurrentSuite() {
     return myStack.peek();
   }
 
@@ -43,8 +42,7 @@ public class TestSuiteStack {
    * Pop element form stack and checks consistency
    * @param suiteName Predictable name of top suite in stack. May be null if 
    */
-  @Nullable
-  public SMTestProxy popSuite(final String suiteName) throws EmptyStackException {
+  public @Nullable SMTestProxy popSuite(final String suiteName) throws EmptyStackException {
     if (myStack.isEmpty()) {
       if (SMTestRunnerConnectionUtil.isInDebugMode()) {
         LOG.error(

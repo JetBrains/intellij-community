@@ -23,5 +23,5 @@ package com.jetbrains.python.psi.types;
  * @see <a href="https://peps.python.org/pep-0646/#type-variable-tuples">PEP 646 – Variadic Generics</a>
  * @see PyUnpackedTupleType
  */
-public interface PyTypeVarTupleType extends PyTypeParameterType, PyVariadicType {
+public non-sealed interface PyTypeVarTupleType extends PyTypeParameterType, PyPositionalVariadicType {
 }

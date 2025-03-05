@@ -244,7 +244,7 @@ public class MyTestInjector {
           if (!method.hasModifierProperty(PsiModifier.NATIVE) || !method.hasModifierProperty(PsiModifier.PUBLIC)) return;
           StringBuilder paramList = new StringBuilder();
           for (PsiParameter parameter : method.getParameterList().getParameters()) {
-            if (paramList.length() > 0) paramList.append(",");
+            if (!paramList.isEmpty()) paramList.append(",");
             paramList.append(parameter.getName());
           }
           @NonNls String header = "function " + method.getName() + "("+paramList+") {";

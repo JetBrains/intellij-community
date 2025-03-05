@@ -1,18 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Implementation of the markup element for the editor and document.
- * @author max
  */
-final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
+@ApiStatus.Internal
+public final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
   // temporary fields, to investigate exception
   short prevStartOffset;
   short prevEndOffset;
@@ -28,6 +29,18 @@ final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
     int startOffset = normalizeStartOffset ? model.getDocument().getLineStartOffset(line) : offset;
     int endOffset = model.getDocument().getLineEndOffset(line);
     return new PersistentRangeHighlighterImpl(model, startOffset, endOffset, layer, target, textAttributesKey);
+  }
+
+  public short getPrevStartOffset() {
+    return prevStartOffset;
+  }
+
+  public short getPrevEndOffset() {
+    return prevEndOffset;
+  }
+
+  public byte getModificationStamp() {
+    return modificationStamp;
   }
 
   private PersistentRangeHighlighterImpl(@NotNull MarkupModelImpl model,

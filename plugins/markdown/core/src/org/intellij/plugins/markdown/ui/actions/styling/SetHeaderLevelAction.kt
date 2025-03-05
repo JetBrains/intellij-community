@@ -4,15 +4,17 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
-import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBBox
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.PopupFactoryImpl.ActionItem
 import com.intellij.ui.popup.list.PopupListElementRenderer
+import com.intellij.util.application
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -26,7 +28,7 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
 
   override fun update(event: AnActionEvent) {
     // CustomComponentAction doesn't seem to be handled well by the backend action manager
-    val session = ClientSessionsManager.getAppSession()
+    val session = application.currentSessionOrNull
     if (session?.isRemote == true) {
       event.presentation.isEnabledAndVisible = false
       return
@@ -131,7 +133,7 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
             }
 
             override fun createIconBar(): JComponent? {
-              val res = Box.createHorizontalBox()
+              val res = JBBox.createHorizontalBox()
               res.border = JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap())
               res.add(myIconLabel)
               return res

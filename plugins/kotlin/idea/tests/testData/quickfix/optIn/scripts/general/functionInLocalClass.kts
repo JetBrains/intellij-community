@@ -1,4 +1,5 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to 'outer'" "true"
+// PRIORITY: HIGH
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Go To Super Method
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'functionInLocalClass.kts'
@@ -27,4 +28,4 @@ class Outer {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityPropagateOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix

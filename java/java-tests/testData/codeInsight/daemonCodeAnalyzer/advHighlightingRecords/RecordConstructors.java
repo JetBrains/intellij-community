@@ -7,7 +7,7 @@ record Generic(String x) {
   public <T> Generic() {this("");}
 }
 record Throws() {
-  public Throws() <error descr="'throws' not allowed on canonical constructor">throws</error> Throwable {}
+  public Throws() <error descr="Canonical constructor should not declare a 'throws' clause">throws</error> Throwable {}
   public Throws(int x) throws Throwable { this(); }
 }
 record TypeMismatch<T>(T t) {
@@ -35,7 +35,7 @@ record VarArgMismatch2(int[] x) {
 record Delegate(int x) {
   public Delegate(int x) {
     <error descr="Canonical constructor cannot delegate to another constructor">this()</error>;
-    <error descr="Variable 'x' might already have been assigned to">this.x</error> = 0;
+    <error descr="Cannot assign final field 'x' after chained constructor call">this.x</error> = 0;
   }
   
   public <error descr="Non-canonical record constructor must delegate to another constructor">Delegate</error>() {
@@ -67,7 +67,7 @@ record ImplicitCanonicalConstructor(String s) {
 record AssignmentInNonCanonical(int x, int y, long depth) {
   public AssignmentInNonCanonical(int x, int y) {
     this(x, y, 10);
-    <error descr="Variable 'x' might already have been assigned to">this.x</error> = x;
+    <error descr="Cannot assign final field 'x' after chained constructor call">this.x</error> = x;
   }
 
   void method() {
@@ -78,5 +78,18 @@ record DelegateInitializesField(int n) {
   DelegateInitializesField(boolean b) {
     this(b ? 1 : 0);
     System.out.println(n);
+  }
+}
+record BrokenRecord(int x, int y) {
+  BrokenRecord(int x, int y) {
+    this.x = x;
+    this.y = y;
+            <error descr="Unexpected token">.</error>
+  }
+}
+class NonRecord {
+  final int a;
+  <error descr="Parameter list expected">NonRecord</error> {
+    a = 10;
   }
 }

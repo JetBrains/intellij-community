@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.icons.AllIcons;
@@ -105,8 +105,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     }
   }
 
-  @Nullable
-  private synchronized List<RangeHighlighter> getOrCreateHighlighters(boolean init) {
+  private synchronized @Nullable List<RangeHighlighter> getOrCreateHighlighters(boolean init) {
     var editor = myEditor;
     if (editor == null || editor.isDisposed()) return null;
     var highlighters = editor.getUserData(COVERAGE_HIGHLIGHTERS);
@@ -203,7 +202,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
 
     final DocumentListener documentListener = new DocumentListener() {
       @Override
-      public void documentChanged(@NotNull final DocumentEvent e) {
+      public void documentChanged(final @NotNull DocumentEvent e) {
         myMapper.clear();
         int offset = e.getOffset();
         final int lineNumber = document.getLineNumber(offset);
@@ -336,8 +335,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
    * Additional highlighter in case user redefines coverage color scheme in edtior.
    * It is separated from gutter highlighter as it should have lower layer to be compatible with other inspections.
    */
-  @Nullable
-  private static RangeHighlighter createBackgroundHighlighter(MarkupModel markupModel,
+  private static @Nullable RangeHighlighter createBackgroundHighlighter(MarkupModel markupModel,
                                                               @NotNull TreeMap<Integer, LineData> executableLines,
                                                               int line, int lineNumberInCurrent) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -350,11 +348,11 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
   }
 
   private RangeHighlighter createRangeHighlighter(final MarkupModel markupModel,
-                                                  @NotNull final TreeMap<Integer, LineData> executableLines,
-                                                  @Nullable final String className,
+                                                  final @NotNull TreeMap<Integer, LineData> executableLines,
+                                                  final @Nullable String className,
                                                   final int line,
                                                   final int lineNumberInCurrent,
-                                                  @NotNull final CoverageSuitesBundle coverageSuite) {
+                                                  final @NotNull CoverageSuitesBundle coverageSuite) {
     // Use maximum layer here for coverage markers to be visible in diff view
     var highlighter = markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.SELECTION - 1, null);
     Function<Integer, Integer> newToOldConverter = newLine -> {
@@ -443,7 +441,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
   }
 
   protected final void addHighlighter(final MarkupModel markupModel,
-                                      @NotNull final TreeMap<Integer, LineData> executableLines,
+                                      final @NotNull TreeMap<Integer, LineData> executableLines,
                                       final CoverageSuitesBundle coverageSuite,
                                       final int lineNumber,
                                       final int updatedLineNumber,

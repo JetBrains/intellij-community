@@ -20,7 +20,7 @@ class GradleDCLImportingTest: GradleImportingTestCase() {
       }
       
       plugins {
-          id("org.gradle.experimental.jvm-ecosystem") version "0.1.13"
+          id("org.gradle.experimental.jvm-ecosystem").version("0.1.21")
       }
       
       rootProject.name = "test-dcl"

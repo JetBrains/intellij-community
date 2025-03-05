@@ -1,0 +1,2 @@
+sealed class <caret>ClassModifierBSealed
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">sealed</span> <span style="color:#000080;font-weight:bold;">class</span> <span style="color:#000000;">ClassModifierBSealed</span></pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.Kotlin_file"/>&nbsp;ClassModifierBSealed.kt<br/></div>

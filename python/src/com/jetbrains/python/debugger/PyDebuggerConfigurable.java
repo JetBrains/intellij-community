@@ -43,6 +43,8 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
   private JBIntSpinner myDebuggerPort;
   private JBCheckBox myRunDebuggerInServerMode;
   private JPanel myDebuggerPortPanel;
+  private JBLabel myDebuggerEvaluationResponseTimeoutLabel;
+  private JBIntSpinner myDebuggerEvaluationResponseTimeout;
 
   private enum PyQtBackend {
     AUTO(PyBundle.messagePointer("python.debugger.qt.backend.auto")),
@@ -130,7 +132,8 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
             !StringUtil.toLowerCase((((PyQtBackend)myPyQtBackend.getSelectedItem()).name())).equals(settings.getPyQtBackend())) ||
            myRunDebuggerInServerMode.isSelected() != settings.isRunDebuggerInServerMode() ||
            myDebuggerPort.getNumber() != settings.getDebuggerPort() ||
-           !myAttachProcessFilter.getText().equals(settings.getAttachProcessFilter());
+           !myAttachProcessFilter.getText().equals(settings.getAttachProcessFilter()) ||
+           myDebuggerEvaluationResponseTimeout.getNumber() != settings.getEvaluationResponseTimeout();
   }
 
   @Override
@@ -151,6 +154,7 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
     settings.setDebuggerPort(myDebuggerPort.getNumber());
 
     settings.setAttachProcessFilter(myAttachProcessFilter.getText());
+    settings.setEvaluationResponseTimeout(myDebuggerEvaluationResponseTimeout.getNumber());
   }
 
   @Override
@@ -165,6 +169,7 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
     myDebuggerPort.setNumber(settings.getDebuggerPort());
     myRunDebuggerInServerMode.setSelected(settings.isRunDebuggerInServerMode());
     myAttachProcessFilter.setText(settings.getAttachProcessFilter());
+    myDebuggerEvaluationResponseTimeout.setNumber(settings.getEvaluationResponseTimeout());
   }
 
   private void createUIComponents() {
@@ -175,15 +180,15 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
                                                PyBundle.message("debugger.warning.message")));
 
     myActionLink = new ActionLink(PyBundle.message("form.debugger.clear.caches.action"), e -> {
-        boolean cleared = PySignatureCacheManager.getInstance(myProject).clearCache();
-        String message;
-        if (cleared) {
-          message = PyBundle.message("python.debugger.collection.signatures.deleted");
-        }
-        else {
-          message = PyBundle.message("python.debugger.nothing.to.delete");
-        }
-        Messages.showInfoMessage(myProject, message, PyBundle.message("debugger.delete.signature.cache"));
+      boolean cleared = PySignatureCacheManager.getInstance(myProject).clearCache();
+      String message;
+      if (cleared) {
+        message = PyBundle.message("python.debugger.collection.signatures.deleted");
+      }
+      else {
+        message = PyBundle.message("python.debugger.nothing.to.delete");
+      }
+      Messages.showInfoMessage(myProject, message, PyBundle.message("debugger.delete.signature.cache"));
     });
 
     myRunDebuggerInServerMode = new JBCheckBox();
@@ -197,5 +202,8 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
       myDebuggerPortLabel.setVisible(false);
       myDebuggerPort.setVisible(false);
     }
+
+    myDebuggerEvaluationResponseTimeoutLabel = new JBLabel(PyBundle.message("form.debugger.response.timeout"));
+    myDebuggerEvaluationResponseTimeout = new JBIntSpinner(0, 0, Integer.MAX_VALUE, 500);
   }
 }

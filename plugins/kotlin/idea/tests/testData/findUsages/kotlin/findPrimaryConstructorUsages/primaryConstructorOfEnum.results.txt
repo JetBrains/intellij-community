@@ -1,1 +1,2 @@
-
+Supertype 5 A(false),
+Supertype 6 B(true)

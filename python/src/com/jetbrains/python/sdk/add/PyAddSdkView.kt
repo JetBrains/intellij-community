@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon

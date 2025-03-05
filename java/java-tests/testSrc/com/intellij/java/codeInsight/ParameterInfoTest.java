@@ -410,7 +410,9 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
       "}";
 
     myFixture.configureByText(JavaFileType.INSTANCE, text.replace("/*caret*/", "<caret>"));
-    assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+    if (!DumbService.isDumb(myFixture.getProject()) || Registry.is("ide.dumb.mode.check.awareness")) {
+      assertEmpty(myFixture.doHighlighting(HighlightSeverity.ERROR));
+    }
     assertEquals("<html>Collection&lt;? super Object&gt; c, Object... elements</html>", parameterPresentation(-1));
   }
 

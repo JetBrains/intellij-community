@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
@@ -87,10 +88,13 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
       }
     }
 
-    RefElement parentRef = findParentRef(sourcePsi, method, myManager);
+    WritableRefEntity parentRef = (WritableRefEntity)findParentRef(sourcePsi, method, myManager);
     if (parentRef == null) return;
-    setOwner((WritableRefEntity)parentRef);
-    if (!myManager.isDeclarationsFound()) return;
+    if (!myManager.isDeclarationsFound()) {
+      parentRef.add(this);
+      return;
+    }
+    setOwner(parentRef);
 
     PsiMethod javaPsi = method.getJavaPsi();
     if (!method.isConstructor()) {
@@ -170,8 +174,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
   }
 
   @Override
-  @NotNull
-  public synchronized Collection<RefMethod> getSuperMethods() {
+  public synchronized @NotNull Collection<RefMethod> getSuperMethods() {
     if (mySuperMethods instanceof Collection) {
       //noinspection unchecked
       return (Collection<RefMethod>)mySuperMethods;
@@ -180,10 +183,13 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
   }
 
   @Override
-  @NotNull
-  public synchronized Collection<RefMethod> getDerivedMethods() {
+  public synchronized @NotNull @Unmodifiable Collection<RefMethod> getDerivedMethods() {
     if (myDerivedReferences == null) return Collections.emptyList();
     return ContainerUtil.filterIsInstance(myDerivedReferences, RefMethod.class);
+  }
+  private synchronized void removeDerivedMethod(@NotNull RefMethod toRemove) {
+    if (myDerivedReferences == null) return;
+    myDerivedReferences.remove(toRemove);
   }
 
   @Override
@@ -321,7 +327,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
   }
 
   @Override
-  public void accept(@NotNull final RefVisitor visitor) {
+  public void accept(final @NotNull RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor javaVisitor) {
       ReadAction.run(() -> javaVisitor.visitMethod(this));
     }
@@ -401,9 +407,8 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     return checkFlag(IS_CONSTRUCTOR_MASK);
   }
 
-  @Nullable
   @Override
-  public RefClass getOwnerClass() {
+  public @Nullable RefClass getOwnerClass() {
     return ObjectUtils.tryCast(getOwner(), RefClass.class);
   }
 
@@ -417,8 +422,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     });
   }
 
-  @Nullable
-  static RefJavaElement methodFromExternalName(RefManager manager, String externalName) {
+  static @Nullable RefJavaElement methodFromExternalName(RefManager manager, String externalName) {
     PsiElement method = RefJavaUtilImpl.returnToPhysical(findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName));
     RefElement reference = manager.getReference(method);
     if (!(reference instanceof RefJavaElement) && reference != null) {
@@ -428,8 +432,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     return (RefJavaElement)reference;
   }
 
-  @Nullable
-  public static PsiMethod findPsiMethod(PsiManager manager, String externalName) {
+  public static @Nullable PsiMethod findPsiMethod(PsiManager manager, String externalName) {
     final int spaceIdx = externalName.indexOf(' ');
     final String className = externalName.substring(0, spaceIdx);
     final PsiClass psiClass = ClassUtil.findPsiClass(manager, className);
@@ -459,11 +462,11 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     super.referenceRemoved();
 
     for (RefMethod superMethod : getSuperMethods()) {
-      superMethod.getDerivedMethods().remove(this);
+      ((RefMethodImpl)superMethod).removeDerivedMethod(this);
     }
 
     for (RefMethod subMethod : getDerivedMethods()) {
-      subMethod.getDerivedReferences().remove(this);
+      ((RefMethodImpl)subMethod).removeDerivedMethod(this);
     }
   }
 
@@ -652,8 +655,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     return expression instanceof UBlockExpression blockExpression && blockExpression.getExpressions().isEmpty();
   }
 
-  @Nullable
-  static RefElement findParentRef(@NotNull PsiElement psiElement, @NotNull UElement uElement, @NotNull RefManagerImpl refManager) {
+  static @Nullable RefElement findParentRef(@NotNull PsiElement psiElement, @NotNull UElement uElement, @NotNull RefManagerImpl refManager) {
     UDeclaration containingUDecl = UDeclarationKt.getContainingDeclaration(uElement);
     PsiElement containingDeclaration = RefJavaUtilImpl.returnToPhysical(containingUDecl == null ? null : containingUDecl.getSourcePsi());
     final RefElement parentRef;

@@ -1,0 +1,7 @@
+[NotNull Values]
+7 	val c = <bold>C()</bold>.apply { (in foo())
+12 		fun <bold>C</bold>.extensionFun() {} (in C.extensionFun())
+7 			[LAMBDA CALLS RECEIVER] val c = C().apply <bold>{</bold> (in foo())
+LIB 				(INLINE CALL apply) [LAMBDA CALLS RECEIVER] public inline fun <T> T.apply(<bold>block: T.() -> Unit</bold>): T { (in T.apply(T.() -> Unit))
+LIB 					(INLINE CALL apply) public inline fun <T> <bold>T</bold>.apply(block: T.() -> Unit): T { (in T.apply(T.() -> Unit))
+7 						val c = <bold>C()</bold>.apply { (in foo())

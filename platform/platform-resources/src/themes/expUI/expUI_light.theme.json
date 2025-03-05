@@ -338,7 +338,10 @@
       "Gray": "#F0F1F5"
     },
 
-    "Label.errorForeground": "Red4",
+    "Label": {
+      "errorForeground": "Red4",
+      "warningForeground": "Yellow1"
+    },
 
     "Link": {
       "activeForeground": "Blue2",
@@ -775,6 +778,41 @@
       "hash": "Gray11",
       "border": "4,12,4,12",
       "errorForeground": "Red4"
+    },
+
+    "TrialWidget": {
+      "Default": {
+        "foreground": "Gray12",
+        "background": "Gray2",
+        "borderColor": "Gray11",
+        "hoverForeground": "Gray12",
+        "hoverBackground": "Gray3",
+        "hoverBorderColor": "Gray10"
+      },
+      "Active": {
+        "foreground": "Green6",
+        "background": "#1E6B3320",
+        "borderColor": "Green7",
+        "hoverForeground": "Green6",
+        "hoverBackground": "#1E6B3340",
+        "hoverBorderColor": "Green7"
+      },
+      "Alert": {
+        "foreground": "Yellow4",
+        "background": "#A4670420",
+        "borderColor": "Yellow3",
+        "hoverForeground": "Yellow6",
+        "hoverBackground": "#A4670440",
+        "hoverBorderColor": "Yellow3"
+      },
+      "Expiring": {
+        "foreground": "Red12",
+        "background": "Red4",
+        "borderColor": "Red4",
+        "hoverForeground": "Red12",
+        "hoverBackground": "Red5",
+        "hoverBorderColor": "Red5"
+      }
     },
 
     "MenuBar.borderColor": "Gray3",

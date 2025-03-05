@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ModalityState;
@@ -11,8 +11,12 @@ public final class AnyModalityState extends ModalityState {
   }
 
   @Override
-  public boolean dominates(@NotNull ModalityState anotherState) {
-    return false;
+  public boolean accepts(@NotNull ModalityState requestedModality) {
+    // There is no point in checking whether a computation can be run in `any` modality
+    // because `any` modality never happens, i.e., the current modality is never `any`.
+    // Such check is most likely a programming error.
+    // TODO add logging
+    return true;
   }
 
   @Override

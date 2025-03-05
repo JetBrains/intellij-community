@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.platform.workspace.jps.serialization.impl.ApplicationLevelUrlRelativizer
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.isConsistent
@@ -16,13 +17,20 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : GlobalWorkspaceModelCache {
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  override val cacheFile: Path by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/cache.data") }
+  private val cacheFiles: ConcurrentHashMap<String, Path> = ConcurrentHashMap()
+
+  override fun cacheFile(id: GlobalWorkspaceModelCache.InternalEnvironmentName): Path {
+    return cacheFiles[id.name]
+           ?: throw IllegalArgumentException("Global workspace storage with id $id must be registered with `registerCachePartition` before it can be loaded")
+  }
+
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 
   private val urlRelativizer =
@@ -40,7 +48,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   }
 
   init {
-    LOG.debug("Global Model Cache at $cacheFile")
+    LOG.debug("Global Model Cache")
 
     coroutineScope.launch {
       saveRequests
@@ -71,28 +79,37 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   }
 
   private suspend fun doCacheSaving() {
-    val storage = GlobalWorkspaceModel.getInstance().currentSnapshot
-    if (!storage.isConsistent) {
-      invalidateCaches()
-    }
-
-    withContext(Dispatchers.IO) {
-      if (!cachesInvalidated.get()) {
-        cacheSerializer.saveCacheToFile(storage, cacheFile)
+    cacheFiles.entries.forEachConcurrent { (id, cacheFile) ->
+      val storage = GlobalWorkspaceModel.getInstanceByInternalName(InternalEnvironmentNameImpl(id)).currentSnapshot
+      if (!storage.isConsistent) {
+        invalidateCaches()
       }
-      else {
-        Files.deleteIfExists(cacheFile)
+
+      withContext(Dispatchers.IO) {
+        if (!cachesInvalidated.get()) {
+          cacheSerializer.saveCacheToFile(storage, cacheFile)
+        }
+        else {
+          Files.deleteIfExists(cacheFile)
+        }
       }
     }
   }
 
-  override fun loadCache(): MutableEntityStorage? {
-    if (ApplicationManager.getApplication().isUnitTestMode) return null
+  override fun loadCache(id: GlobalWorkspaceModelCache.InternalEnvironmentName): MutableEntityStorage? {
+    if (ApplicationManager.getApplication().isUnitTestMode && !System.getProperty("ide.tests.permit.global.workspace.model.serialization", "false").toBoolean()) return null
+    val cacheFile = cacheFile(id)
     return cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateCachesMarkerFile)
   }
 
   override fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager) {
     virtualFileUrlManager = vfuManager
+  }
+
+  override fun registerCachePartition(id: GlobalWorkspaceModelCache.InternalEnvironmentName) {
+    val cacheSuffix = if (id.name == GlobalWorkspaceModelRegistry.GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID) "$DATA_DIR_NAME/cache.data" else "$DATA_DIR_NAME/${id.name}/cache.data"
+    val path = PathManager.getSystemDir().resolve(cacheSuffix)
+    cacheFiles[id.name] = path
   }
 
   companion object {

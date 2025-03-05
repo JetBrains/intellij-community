@@ -53,7 +53,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
       new ArrayList<>(holder.getProblems(myCellValueDomElement, true, HighlightSeverity.WARNING));
     warningProblems.removeAll(errorProblems);
 
-    final boolean hasErrors = errorProblems.size() > 0;
+    final boolean hasErrors = !errorProblems.isEmpty();
     if (hasErrors) {
       component.setForeground(JBColor.RED);
       if (component instanceof JComponent) {
@@ -68,10 +68,10 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     }
 
     // highlight empty cell with errors
-    if (hasErrors && (value == null || value.toString().trim().length() == 0)) {
+    if (hasErrors && (value == null || value.toString().trim().isEmpty())) {
       component.setBackground(BaseControl.ERROR_BACKGROUND);
     }
-    else if (warningProblems.size() > 0) {
+    else if (!warningProblems.isEmpty()) {
       component.setBackground(BaseControl.WARNING_BACKGROUND);
       if(isSelected) component.setForeground(JBColor.foreground());
     }
@@ -80,7 +80,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
       annotationsManager.getCachedProblemHolder(myRowDomElement).getProblems(myRowDomElement, true, true);
 
     if (table.getModel().getColumnCount() - 1 == column) {
-      if (errorDescriptors.size() > 0) {
+      if (!errorDescriptors.isEmpty()) {
         final JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.add(component, BorderLayout.CENTER);
 

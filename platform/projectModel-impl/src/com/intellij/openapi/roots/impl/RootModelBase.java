@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -99,15 +99,13 @@ public abstract class RootModelBase implements ModuleRootModel {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType) {
+  public @NotNull List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType) {
     return getSourceRoots(Collections.singleton(rootType));
   }
 
-  @NotNull
   @Override
-  public List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+  public @NotNull List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     List<VirtualFile> result = new SmartList<>();
     for (ContentEntry contentEntry : getContent()) {
       final List<SourceFolder> sourceFolders = contentEntry.getSourceFolders(rootTypes);
@@ -149,9 +147,8 @@ public abstract class RootModelBase implements ModuleRootModel {
     return false;
   }
 
-  @NotNull
   @Override
-  public OrderEnumerator orderEntries() {
+  public @NotNull OrderEnumerator orderEntries() {
     return new ModuleOrderEnumerator(this, null);
   }
 
@@ -200,9 +197,8 @@ public abstract class RootModelBase implements ModuleRootModel {
   }
 
   public static class CollectDependentModules extends RootPolicy<List<String>> {
-    @NotNull
     @Override
-    public List<String> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, @NotNull List<String> arrayList) {
+    public @NotNull List<String> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, @NotNull List<String> arrayList) {
       arrayList.add(moduleOrderEntry.getModuleName());
       return arrayList;
     }

@@ -61,8 +61,7 @@ public final class ObjectAllocationInLoopInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     Kind kind = (Kind)infos[0];
     return kind.toString();
   }

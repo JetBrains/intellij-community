@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
@@ -39,7 +39,7 @@ class KotlinAwareMoveFilesOrDirectoriesProcessor @JvmOverloads constructor(
         return MoveFilesWithDeclarationsViewDescriptor(elementsToMove.toTypedArray(), targetDirectory)
     }
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
         try {
             markScopeToMove(elementsToMove)
             return if (searchReferences) super.findUsages() else UsageInfo.EMPTY_ARRAY
@@ -48,7 +48,7 @@ class KotlinAwareMoveFilesOrDirectoriesProcessor @JvmOverloads constructor(
         }
     }
 
-    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val (conflicts, usages) = MoveConflictUsages.preprocess(refUsages)
         return showConflicts(conflicts, usages)
     }

@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,17 +19,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.sh.ShLanguage;
+import com.intellij.platform.eel.EelPlatform;
 import com.intellij.sh.ShNotificationDisplayIds;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
-import com.intellij.util.download.FileDownloader;
-import com.intellij.util.system.CpuArch;
 import com.intellij.util.text.SemVer;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +33,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 
+import static com.intellij.platform.eel.EelPlatformKt.*;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
+import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
 import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXTERNAL_FORMATTER_DOWNLOADED_EVENT_ID;
+import static com.intellij.sh.utils.ExternalServicesUtil.computeDownloadPath;
 
 public final class ShShfmtFormatterUtil {
   private static final Logger LOG = Logger.getInstance(ShShfmtFormatterUtil.class);
@@ -54,7 +53,6 @@ public final class ShShfmtFormatterUtil {
   private static final @NlsSafe String SHFMT = "shfmt";
   private static final @NlsSafe String OLD_SHFMT = "old_shfmt";
   private static final @NlsSafe String SHFMT_VERSION = "v3.3.1";
-  private static final @NlsSafe String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
   private static final @NlsSafe String ARCH_i386 = "_386";
   private static final @NlsSafe String ARCH_x86_64 = "_amd64";
@@ -65,44 +63,55 @@ public final class ShShfmtFormatterUtil {
   private static final @NlsSafe String LINUX = "_linux";
   private static final @NlsSafe String FREE_BSD = "_freebsd";
 
-  public static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+  public static void download(@NotNull Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     download(project, onSuccess, onFailure, false);
   }
 
-  private static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure, boolean withReplace) {
-    File directory = new File(DOWNLOAD_PATH);
-    if (!directory.exists()) {
-      //noinspection ResultOfMethodCallIgnored
-      directory.mkdirs();
-    }
-
-    File formatter = new File(DOWNLOAD_PATH + File.separator + SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
-    File oldFormatter = new File(DOWNLOAD_PATH + File.separator + OLD_SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
-    if (formatter.exists()) {
-      if (withReplace) {
-        boolean successful = renameOldFormatter(formatter, oldFormatter, onFailure);
-        if (!successful) return;
-      } else {
-        setupFormatterPath(formatter, onSuccess, onFailure);
-        return;
-      }
-    }
-
-    String downloadName = SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : "");
-    DownloadableFileService service = DownloadableFileService.getInstance();
-    DownloadableFileDescription description = service.createFileDescription(getShfmtDistributionLink(), downloadName);
-    FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
-
+  private static void download(@NotNull Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure, boolean withReplace) {
     Task.Backgroundable task = new Task.Backgroundable(project, message("sh.label.download.shfmt.formatter")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        final var eelDescriptor = getEelDescriptor(project);
+        final var eel = upgradeBlocking(eelDescriptor);
+        final var eelPlatform = eel.getPlatform();
+
+        final var downloadPath = computeDownloadPath(eel);
+
+        if (!Files.exists(downloadPath)) {
+          try {
+            Files.createDirectory(downloadPath);
+          }
+          catch (IOException e) {
+            //
+          }
+        }
+
+        final var formatter = downloadPath.resolve(SHFMT + (isWindows(eelPlatform) ? WINDOWS_EXTENSION : ""));
+        final var oldFormatter = downloadPath.resolve(OLD_SHFMT + (isWindows(eelPlatform) ? WINDOWS_EXTENSION : ""));
+
+        if (Files.exists(formatter)) {
+          if (withReplace) {
+            boolean successful = renameOldFormatter(formatter.toFile(), oldFormatter.toFile(), onFailure);
+            if (!successful) return;
+          }
+          else {
+            setupFormatterPath(project, formatter.toFile(), onSuccess, onFailure);
+            return;
+          }
+        }
+
+        final var downloadName = SHFMT + (isWindows(eelPlatform) ? WINDOWS_EXTENSION : "");
+        final var service = DownloadableFileService.getInstance();
+        final var description = service.createFileDescription(getShfmtDistributionLink(eel.getPlatform()), downloadName);
+        final var downloader = service.createDownloader(Collections.singletonList(description), downloadName);
+
         try {
-          List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(new File(DOWNLOAD_PATH));
-          Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
-          File file = first != null ? first.first : null;
+          final var pairs = downloader.download(downloadPath.toFile());
+          final var first = ContainerUtil.getFirstItem(pairs);
+          final var file = first != null ? first.first : null;
           if (file != null) {
             FileUtil.setExecutable(file);
-            ShSettings.setShfmtPath(file.getCanonicalPath());
+            ShSettings.setShfmtPath(project, file.getCanonicalPath());
             if (withReplace) {
               LOG.info("Remove old formatter");
               FileUtil.delete(oldFormatter);
@@ -113,24 +122,24 @@ public final class ShShfmtFormatterUtil {
         }
         catch (IOException e) {
           LOG.warn("Can't download shfmt formatter", e);
-          if (withReplace) rollbackToOldFormatter(formatter, oldFormatter);
+          if (withReplace) rollbackToOldFormatter(formatter.toFile(), oldFormatter.toFile());
           ApplicationManager.getApplication().invokeLater(onFailure);
         }
       }
     };
-    BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(task);
+    final var processIndicator = new BackgroundableProcessIndicator(task);
     processIndicator.setIndeterminate(false);
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
   }
 
-  private static void setupFormatterPath(@NotNull File formatter, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+  private static void setupFormatterPath(@NotNull Project project, @NotNull File formatter, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     try {
       String formatterPath = formatter.getCanonicalPath();
-      if (ShSettings.getShfmtPath().equals(formatterPath)) {
+      if (ShSettings.getShfmtPath(project).equals(formatterPath)) {
         LOG.info("Shfmt formatter already downloaded");
       }
       else {
-        ShSettings.setShfmtPath(formatterPath);
+        ShSettings.setShfmtPath(project, formatterPath);
       }
       if (!formatter.canExecute()) FileUtil.setExecutable(formatter);
       ApplicationManager.getApplication().invokeLater(onSuccess);
@@ -180,14 +189,15 @@ public final class ShShfmtFormatterUtil {
 
     if (application.isDispatchThread()) {
       application.executeOnPooledThread(() -> checkForUpdateInBackgroundThread(project));
-    } else {
+    }
+    else {
       checkForUpdateInBackgroundThread(project);
     }
   }
 
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    Pair<String, String> newVersionAvailable = getVersionUpdate();
+    Pair<String, String> newVersionAvailable = getVersionUpdate(project);
     if (newVersionAvailable == null) return;
 
     String currentVersion = newVersionAvailable.first;
@@ -221,13 +231,13 @@ public final class ShShfmtFormatterUtil {
   /**
    * @return pair of old and new versions or null if there's no update
    */
-  private static Pair<String, String> getVersionUpdate() {
+  private static Pair<String, String> getVersionUpdate(@NotNull Project project) {
     final String updateVersion = StringsKt.removePrefix(SHFMT_VERSION, "v");
     final SemVer updateVersionVer = SemVer.parseFromText(updateVersion);
     if (updateVersionVer == null) return null;
     if (ShSettings.getSkippedShfmtVersion().equals(updateVersion)) return null;
 
-    String path = ShSettings.getShfmtPath();
+    String path = ShSettings.getShfmtPath(project);
     if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return null;
     File file = new File(path);
     if (!file.canExecute()) return null;
@@ -264,39 +274,38 @@ public final class ShShfmtFormatterUtil {
     return null;
   }
 
-  @NotNull
-  private static String getShfmtDistributionLink() {
+  private static @NotNull String getShfmtDistributionLink(@NotNull EelPlatform platform) {
     StringBuilder baseUrl = new StringBuilder("https://github.com/mvdan/sh/releases/download/")
-        .append(SHFMT_VERSION)
-        .append('/')
-        .append(SHFMT)
-        .append('_')
-        .append(SHFMT_VERSION);
+      .append(SHFMT_VERSION)
+      .append('/')
+      .append(SHFMT)
+      .append('_')
+      .append(SHFMT_VERSION);
 
-    if (SystemInfo.isMac) {
+    if (isMac(platform)) {
       baseUrl.append(MAC);
     }
-    else if (SystemInfo.isLinux) {
+    else if (isLinux(platform)) {
       baseUrl.append(LINUX);
     }
-    else if (SystemInfo.isWindows) {
+    else if (isWindows(platform)) {
       baseUrl.append(WINDOWS);
     }
-    else if (SystemInfo.isFreeBSD) {
+    else if (isFreeBSD(platform)) {
       baseUrl.append(FREE_BSD);
     }
 
-    if (CpuArch.isIntel64()) {
+    if (isX86_64(platform)) {
       baseUrl.append(ARCH_x86_64);
     }
-    if (CpuArch.isIntel32()) {
+    if (isX86(platform)) {
       baseUrl.append(ARCH_i386);
     }
-    else if (CpuArch.isArm64()) {
+    else if (isArm64(platform)) {
       baseUrl.append(ARCH_ARM64);
     }
 
-    if (SystemInfo.isWindows) {
+    if (isWindows(platform)) {
       baseUrl.append(WINDOWS_EXTENSION);
     }
 

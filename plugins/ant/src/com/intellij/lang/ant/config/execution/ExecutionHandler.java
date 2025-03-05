@@ -7,12 +7,11 @@ import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.*;
 import com.intellij.execution.target.*;
+import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.util.ExecutionErrorDialog;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
@@ -50,16 +49,15 @@ import java.util.concurrent.TimeUnit;
 public final class ExecutionHandler {
   private static final Logger LOG = Logger.getInstance(ExecutionHandler.class);
 
-  @NonNls public static final String PARSER_JAR = "xerces1.jar";
+  public static final @NonNls String PARSER_JAR = "xerces1.jar";
 
   private ExecutionHandler() {
   }
 
-  @Nullable
-  public static ProcessHandler executeRunConfiguration(AntRunConfiguration antRunConfiguration,
-                                                       final DataContext dataContext,
-                                                       List<BuildFileProperty> additionalProperties,
-                                                       @NotNull final AntBuildListener antBuildListener) {
+  public static @Nullable ProcessHandler executeRunConfiguration(AntRunConfiguration antRunConfiguration,
+                                                                 final DataContext dataContext,
+                                                                 List<BuildFileProperty> additionalProperties,
+                                                                 final @NotNull AntBuildListener antBuildListener) {
     AntBuildTarget target = antRunConfiguration.getTarget();
     if (target != null) {
       try {
@@ -80,27 +78,25 @@ public final class ExecutionHandler {
    */
   public static void runBuild(final AntBuildFileBase buildFile,
                               List<@NlsSafe String> targets,
-                              @Nullable final AntBuildMessageView buildMessageViewToReuse,
+                              final @Nullable AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
-                              List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
+                              List<BuildFileProperty> additionalProperties, final @NotNull AntBuildListener antBuildListener) {
       runBuildImpl(buildFile, targets, buildMessageViewToReuse, dataContext, additionalProperties, antBuildListener, true);
   }
 
   /**
    * @param antBuildListener should not be null. Use {@link AntBuildListener#NULL}
    */
-  @NotNull
-  private static Future<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
+  private static @NotNull Future<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
                                                      List<@NlsSafe String> targets,
-                                                     @Nullable final AntBuildMessageView buildMessageViewToReuse,
+                                                     final @Nullable AntBuildMessageView buildMessageViewToReuse,
                                                      final DataContext dataContext,
                                                      List<BuildFileProperty> additionalProperties,
-                                                     @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
+                                                     final @NotNull AntBuildListener antBuildListener, final boolean waitFor) {
     final Project project = buildFile.getProject();
     CompletableFuture<ProcessHandler> future = new CompletableFuture<>();
 
     MessageView.getInstance(project).runWhenInitialized(() -> {
-      final TargetEnvironmentRequest request;
       final SimpleJavaParameters javaParameters;
       final AntBuildListenerWrapper listenerWrapper = new AntBuildListenerWrapper(buildFile, antBuildListener);
       try {
@@ -115,13 +111,6 @@ public final class ExecutionHandler {
 
         javaParameters = builder.getCommandLine();
 
-        WslTargetEnvironmentConfiguration wslConfiguration = JavaCommandLineState.checkCreateWslConfiguration(javaParameters.getJdk());
-        if (wslConfiguration != null) {
-          request = new WslTargetEnvironmentRequest(wslConfiguration);
-        }
-        else {
-          request = new LocalTargetEnvironmentRequest();
-        }
 
         final AntBuildMessageView messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
         project.getMessageBus().syncPublisher(AntExecutionListener.TOPIC).beforeExecution(new AntBeforeExecutionEvent(buildFile, messageView));
@@ -134,7 +123,17 @@ public final class ExecutionHandler {
           }
 
           @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
+          public void run(final @NotNull ProgressIndicator indicator) {
+            final TargetEnvironmentRequest request;
+
+            final var configuration = JavaCommandLineState.checkCreateNonLocalConfiguration(javaParameters.getJdk());
+            if (configuration != null) {
+              request = new EelTargetEnvironmentRequest(configuration);
+            }
+            else {
+              request = new LocalTargetEnvironmentRequest();
+            }
+
             try {
               TargetedCommandLineBuilder builder = javaParameters.toCommandLine(request);
               TargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
@@ -182,13 +181,12 @@ public final class ExecutionHandler {
     return future;
   }
 
-  @Nullable
-  private static ProcessHandler runBuild(@NotNull final ProgressIndicator progress,
-                                         @NotNull final AntBuildMessageView errorView,
-                                         @NotNull final AntBuildFileBase buildFile,
-                                         @NotNull final AntBuildListener antBuildListener,
-                                         @NotNull TargetedCommandLine commandLine,
-                                         @NotNull TargetEnvironment targetEnvironment) {
+  private static @Nullable ProcessHandler runBuild(final @NotNull ProgressIndicator progress,
+                                                   final @NotNull AntBuildMessageView errorView,
+                                                   final @NotNull AntBuildFileBase buildFile,
+                                                   final @NotNull AntBuildListener antBuildListener,
+                                                   @NotNull TargetedCommandLine commandLine,
+                                                   @NotNull TargetEnvironment targetEnvironment) {
     final Project project = buildFile.getProject();
 
     final long startTime = System.currentTimeMillis();
@@ -328,10 +326,8 @@ public final class ExecutionHandler {
   }
 
   private static class AntBuildListenerWrapper implements AntBuildListener {
-    @NotNull
-    private final AntBuildFile myBuildFile;
-    @NotNull
-    private final AntBuildListener myDelegate;
+    private final @NotNull AntBuildFile myBuildFile;
+    private final @NotNull AntBuildListener myDelegate;
 
     AntBuildListenerWrapper(@NotNull AntBuildFile buildFile, @NotNull AntBuildListener delegate) {
       myBuildFile = buildFile;

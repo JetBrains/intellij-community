@@ -6,12 +6,13 @@ import training.dsl.parseLessonSample
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.util.DataLoader
+import java.util.Locale
 
 abstract class LearningCourseBase(val lang: String) : LearningCourse {
   val langSupport: LangSupport by lazy { LangManager.getInstance().getLangSupportById(lang) ?: error("No language with id $lang") }
 
   fun loadSample(path: String): LessonSample {
-    val content = DataLoader.getResourceAsStream("modules/${lang.toLowerCase()}/$path", javaClass.classLoader)
+    val content = DataLoader.getResourceAsStream("modules/${lang.lowercase(Locale.getDefault())}/$path", javaClass.classLoader)
       .readBytes().toString(Charsets.UTF_8)
     return parseLessonSample(content)
   }

@@ -67,7 +67,9 @@ public final class NewActionGroup extends ActionGroup {
   @Deprecated(forRemoval = true)
   public static boolean anyActionFromGroupMatches(@NotNull ActionGroup group, boolean processPopupSubGroups,
                                                   @NotNull Predicate<? super AnAction> condition) {
-    for (AnAction child : group.getChildren(null)) {
+    AnAction[] actions = group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
+                         group.getChildren(null);
+    for (AnAction child : actions) {
       if (condition.test(child)) return true;
       if (child instanceof ActionGroup o) {
         if ((processPopupSubGroups || !o.isPopup()) && anyActionFromGroupMatches(o, processPopupSubGroups, condition)) {

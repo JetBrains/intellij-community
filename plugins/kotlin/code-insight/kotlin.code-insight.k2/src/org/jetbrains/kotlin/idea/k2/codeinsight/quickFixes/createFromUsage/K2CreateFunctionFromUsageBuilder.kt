@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageBuilder.buildRequestsAndActions
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.canRefactor
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getReceiverOrContainerClass
@@ -53,7 +54,7 @@ object K2CreateFunctionFromUsageBuilder {
     private fun KtSimpleNameExpression.referenceNameOfElement(): Boolean = getReferencedNameElementType() == KtTokens.IDENTIFIER
 
     internal fun buildRequestsAndActions(callExpression: KtCallExpression): List<IntentionAction> {
-        val methodRequests = buildRequests(callExpression)
+        val methodRequests = analyze(callExpression) { buildRequests(callExpression) }
         val extensions = EP_NAME.extensions
         return methodRequests.flatMap { (targetClass, request) ->
             extensions.flatMap { ext ->
@@ -62,11 +63,11 @@ object K2CreateFunctionFromUsageBuilder {
         }
     }
 
+    context (KaSession)
     private fun buildRequests(callExpression: KtCallExpression): List<Pair<JvmClass, CreateMethodRequest>> {
         val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return emptyList()
         val requests = mutableListOf<Pair<JvmClass, CreateMethodRequest>>()
         val receiverExpression = calleeExpression.getReceiverExpression()
-        analyze(callExpression) {
         // Register default create-from-usage request.
         // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
         val defaultContainerPsi = calleeExpression.getReceiverOrContainerPsiElement()
@@ -127,7 +128,6 @@ object K2CreateFunctionFromUsageBuilder {
             if (!hasExtensionFunction(containerClassForExtension, request.methodName)) {
                 requests.add(jvmClassWrapper to request)
             }
-        }
         }
         return requests
     }

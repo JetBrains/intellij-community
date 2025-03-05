@@ -51,11 +51,37 @@ interface EelPosixFileInfo : EelFileInfo {
   sealed interface Type : EelFileInfo.Type {
     sealed interface Symlink : Type {
       interface Unresolved : Symlink
-      interface Resolved : Symlink {
-        val result: EelPath.Absolute
+
+      sealed interface Resolved : Symlink {
+        /**
+         * This instance is returned in the following scenario:
+         * ```sh
+         * /tmp/d$ ls -l
+         * lrwxrwxrwx 1 knisht knisht    3 Dec 24 18:43 link -> /tmp/p1/p2/d1/.././d5
+         * ```
+         */
+        interface Absolute : Resolved {
+          val result: EelPath
+        }
+
+
+        /**
+         * This instance is returned in each of these scenarios (for `link`, `link2`, `link3`):
+         * ```sh
+         * /tmp/d$ ls -l
+         * drwxr-xr-x 2 knisht knisht 4096 Dec 24 18:45 d1
+         * lrwxrwxrwx 1 knisht knisht    3 Dec 24 18:43 link -> ../    # result == ".."
+         * lrwxrwxrwx 1 knisht knisht    3 Dec 24 18:43 link2 -> ./    # result == "."
+         * lrwxrwxrwx 1 knisht knisht    3 Dec 24 18:43 link3 -> d1/d3 # result == "d1/d3"
+         * ```
+         */
+        interface Relative : Resolved {
+          val result: String
+        }
       }
     }
   }
+
 
   interface Permissions : EelFileInfo.Permissions {
     /** TODO */

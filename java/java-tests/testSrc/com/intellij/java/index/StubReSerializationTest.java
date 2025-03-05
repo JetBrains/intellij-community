@@ -12,7 +12,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.io.PersistentStringEnumerator;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 

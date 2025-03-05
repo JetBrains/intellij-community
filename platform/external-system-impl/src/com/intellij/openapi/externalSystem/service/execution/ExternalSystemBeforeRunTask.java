@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.BeforeRunTask;
@@ -13,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  */
 public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBeforeRunTask> {
-  @NotNull
-  private final ExternalSystemTaskExecutionSettings myTaskExecutionSettings;
+  private final @NotNull ExternalSystemTaskExecutionSettings myTaskExecutionSettings;
 
   public ExternalSystemBeforeRunTask(@NotNull Key<ExternalSystemBeforeRunTask> providerId, @NotNull ProjectSystemId systemId) {
     super(providerId);
@@ -27,8 +26,7 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
     myTaskExecutionSettings = source.myTaskExecutionSettings.clone();
   }
 
-  @NotNull
-  public ExternalSystemTaskExecutionSettings getTaskExecutionSettings() {
+  public @NotNull ExternalSystemTaskExecutionSettings getTaskExecutionSettings() {
     return myTaskExecutionSettings;
   }
 

@@ -7,6 +7,7 @@ package org.jetbrains.intellij.build.impl.compilation
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,6 +19,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
@@ -253,7 +255,7 @@ private suspend fun upload(
 }
 
 internal fun getArchiveStorage(fallbackPersistentCacheRoot: Path): Path {
-  return (System.getProperty("agent.persistent.cache")?.let { Path.of(it) } ?: fallbackPersistentCacheRoot).resolve("idea-compile-parts-v2")
+  return (TeamCityHelper.persistentCachePath ?: fallbackPersistentCacheRoot).resolve("idea-compile-parts-v2")
 }
 
 @VisibleForTesting
@@ -414,9 +416,10 @@ private suspend fun checkPreviouslyUnpackedDirectories(
 
   val start = System.nanoTime()
   withContext(Dispatchers.IO) {
-    launch {
+    val name = "remove stalled directories not present in metadata"
+    launch(CoroutineName(name)) {
       @Suppress("RemoveRedundantQualifierName")
-      spanBuilder("remove stalled directories not present in metadata").setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).use {
+      spanBuilder(name).setAttribute(AttributeKey.stringArrayKey("keys"), java.util.List.copyOf(metadata.files.keys)).use {
         removeStalledDirs(metadata, classOutput)
       }
     }
@@ -494,7 +497,7 @@ private fun CoroutineScope.removeStalledDirs(
   }
 
   for (dir in stalledDirs) {
-    launch {
+    launch(CoroutineName("delete stalled dir $dir")) {
       spanBuilder("delete stalled dir").setAttribute("dir", dir.toString()).use {
         dir.deleteRecursively()
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.create;
 
 import com.intellij.icons.AllIcons;
@@ -6,8 +6,8 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.application.ReadAction;
@@ -32,6 +32,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -43,7 +44,7 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 public final class CreateResourceBundleDialogComponent {
-  private final static Logger LOG = Logger.getInstance(CreateResourceBundleDialogComponent.class);
+  private static final Logger LOG = Logger.getInstance(CreateResourceBundleDialogComponent.class);
 
   private static final Comparator<Locale> LOCALE_COMPARATOR = (l1, l2) -> {
     if (l1 == PropertiesUtil.DEFAULT_LOCALE) {
@@ -89,7 +90,7 @@ public final class CreateResourceBundleDialogComponent {
   }
 
   public static class Dialog extends DialogWrapper {
-    @NotNull private final PsiDirectory myDirectory;
+    private final @NotNull PsiDirectory myDirectory;
     private final CreateResourceBundleDialogComponent myComponent;
     private PsiElement[] myCreatedFiles;
 
@@ -119,9 +120,8 @@ public final class CreateResourceBundleDialogComponent {
       }
     }
 
-    @Nullable
     @Override
-    protected ValidationInfo doValidate() {
+    protected @Nullable ValidationInfo doValidate() {
       for (String fileName : myComponent.getFileNamesToCreate()) {
         if (!PathUtil.isValidFileName(fileName)) {
           return new ValidationInfo(
@@ -136,15 +136,13 @@ public final class CreateResourceBundleDialogComponent {
       return null;
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myComponent.getPanel();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myComponent.myResourceBundleBaseNameTextField;
     }
 
@@ -176,8 +174,7 @@ public final class CreateResourceBundleDialogComponent {
     return createdFiles;
   }
 
-  @NotNull
-  private Set<String> getFileNamesToCreate() {
+  private @NotNull @Unmodifiable Set<String> getFileNamesToCreate() {
     final String name = getBaseName();
     final String suffix = getPropertiesFileSuffix();
     return ContainerUtil.map2Set(myLocalesModel.getItems(),
@@ -260,8 +257,7 @@ public final class CreateResourceBundleDialogComponent {
     return myPanel;
   }
 
-  @Nullable
-  private static Map<Locale, String> extractLocalesFromString(final String rawLocales) {
+  private static @Nullable Map<Locale, String> extractLocalesFromString(final String rawLocales) {
     if (rawLocales.isEmpty()) {
       return Collections.emptyMap();
     }
@@ -333,9 +329,8 @@ public final class CreateResourceBundleDialogComponent {
                                                   PropertiesBundle.message("create.resource.bundle.dialog.add.locales.validator.message"),
                                                   PropertiesBundle.message("create.resource.bundle.dialog.add.locales.validator.title"),
                                                   null, null, new InputValidatorEx() {
-            @Nullable
             @Override
-            public String getErrorText(String inputString) {
+            public @Nullable String getErrorText(String inputString) {
               return checkInput(inputString) ? null : PropertiesBundle.message("create.resource.bundle.invalid.locales.error.text");
             }
 
@@ -400,8 +395,7 @@ public final class CreateResourceBundleDialogComponent {
     }.installOn(myAddAllButton);
   }
 
-  @NotNull
-  private ColoredListCellRenderer<Locale> getLocaleRenderer() {
+  private @NotNull ColoredListCellRenderer<Locale> getLocaleRenderer() {
     return new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Locale locale, int index, boolean selected, boolean hasFocus) {
@@ -448,8 +442,7 @@ public final class CreateResourceBundleDialogComponent {
     }
   }
 
-  @Nullable
-  static PsiDirectory getResourceBundlePlacementDirectory(ResourceBundle resourceBundle) {
+  static @Nullable PsiDirectory getResourceBundlePlacementDirectory(ResourceBundle resourceBundle) {
     PsiDirectory containingDirectory = null;
     for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
       if (containingDirectory == null) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.ignore;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -51,15 +37,13 @@ public class IgnoreGroupHelperAction {
   private IgnoreGroupHelperAction() {
   }
 
-  @Nullable
-  public static IgnoreGroupHelperAction createFor(@NotNull AnActionEvent e) {
+  public static @Nullable IgnoreGroupHelperAction createFor(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
     Optional<IgnoreGroupHelperAction> helper = session.sharedData(KEY, () -> tryCreateFor(e));
     return helper.orElse(null);
   }
 
-  @NotNull
-  private static Optional<IgnoreGroupHelperAction> tryCreateFor(@NotNull AnActionEvent e) {
+  private static @NotNull Optional<IgnoreGroupHelperAction> tryCreateFor(@NotNull AnActionEvent e) {
     // TODO: This logic was taken from BasicAction.update(). Probably it'll be more convenient to share these conditions for correctness.
     Project project = e.getProject();
     SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
@@ -129,8 +113,7 @@ public class IgnoreGroupHelperAction {
     return myAllAreIgnored;
   }
 
-  @NotNull
-  public FileGroupInfo getFileGroupInfo() {
+  public @NotNull FileGroupInfo getFileGroupInfo() {
     return myFileGroupInfo;
   }
 

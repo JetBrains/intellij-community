@@ -78,7 +78,7 @@ private fun String.toKotlinVisibility(psiMember: PsiMember, referenceSearcher: R
 internal fun PsiMethod.overriddenMethodVisibility(referenceSearcher: ReferenceSearcher): JKVisibilityModifierElement {
     // In some implementations (ex. compiled Java/Kotlin classes), modifierList.children() returns null.
     // However, modifierList.text still contains the modifiers as a string.
-    val modifiers = modifierList.text?.split(" ").orEmpty()
+    val modifiers = modifierList.text?.split(" ", "\n").orEmpty()
     val visibilityFromModifier = modifiers.firstNotNullOfOrNull { modifier ->
         modifier.toKotlinVisibility(psiMember = this@overriddenMethodVisibility, referenceSearcher)
     }

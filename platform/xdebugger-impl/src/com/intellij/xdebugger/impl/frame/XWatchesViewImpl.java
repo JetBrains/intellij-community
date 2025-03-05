@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.codeInsight.inline.completion.InlineCompletion;
 import com.intellij.execution.ui.UIExperiment;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -38,10 +39,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
+import com.intellij.xdebugger.impl.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector;
@@ -67,8 +65,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 
 @ApiStatus.Internal
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
@@ -79,6 +79,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   private XDebuggerExpressionComboBox myEvaluateComboBox;
 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
+  private final @NotNull String myConfigurationName;
   private final boolean myWatchesInVariables;
   private final boolean inlineWatchesEnabled;
 
@@ -92,6 +93,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean withToolbar) {
     super(session);
+    myConfigurationName = session.getSessionData().getConfigurationName();
     myWatchesInVariables = watchesInVariables;
     inlineWatchesEnabled = Registry.is("debugger.watches.inline.enabled");
 
@@ -158,7 +160,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         .addToTop(top);
       localsPanelComponent.add(panel, BorderLayout.CENTER);
       return super.createMainPanel(localsPanelComponent);
-    } else {
+    }
+    else {
       return new BorderLayoutPanel()
         .addToCenter(localsPanelComponent)
         .addToTop(top);
@@ -203,6 +206,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
             toolbar.setReservePlaceAutoPopupIcon(false);
             toolbar.setTargetComponent(tree);
             XDebuggerEmbeddedComboBox<XExpression> comboBox = new XDebuggerEmbeddedComboBox<>(model, width);
+            comboBox.setName("Debugger.EvaluateExpression.combobox");
             comboBox.setExtension(toolbar);
             return comboBox;
           }
@@ -232,6 +236,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
                 }
               }
             });
+            XDebugSessionImpl session = getSession();
+            if (session != null) {
+              InlineCompletion.INSTANCE.install(editor, session.getCoroutineScope());
+            }
           }
         };
       final JComponent editorComponent = myEvaluateComboBox.getEditorComponent();
@@ -300,7 +308,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
           .inlineEvaluatorInvoked(session, expression);
       }
       else {
-        LOG.error("No session available while trying evaluate " + expression);
+        // It is not an error: it may be so if evaluating when the session is finished already
       }
       myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
       DebuggerEvaluationStatisticsCollector.INLINE_EVALUATE.log(getTree().getProject());
@@ -323,7 +331,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         if (!SwingUtilities.isLeftMouseButton(event) ||
-            ((event.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) !=0) ) {
+            ((event.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) != 0)) {
           return false;
         }
         boolean sameRow = isAboveSelectedItem(event, watchTree, false);
@@ -443,16 +451,12 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   @Override
   protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
     if (inlineWatchesEnabled) {
-      myRootNode = new InlineWatchesRootNode(getTree(), this, getExpressions(), getInlineExpressions(), stackFrame, myWatchesInVariables);
-    } else {
-      myRootNode = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame, myWatchesInVariables);
+      myRootNode = new InlineWatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables);
+    }
+    else {
+      myRootNode = new WatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables);
     }
     return myRootNode;
-  }
-
-  @NotNull
-  private List<InlineWatch> getInlineExpressions() {
-    return getWatchesManager().getInlineWatches();
   }
 
   private XDebuggerWatchesManager getWatchesManager() {
@@ -465,7 +469,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     ThreadingAssertions.assertEventDispatchThread();
     XDebugSessionImpl session = getSession();
 
-    ((InlineWatchesRootNode)myRootNode).addInlineWatchExpression(session != null ? session.getCurrentStackFrame() : null, watch, index, navigateToWatchNode);
+    ((InlineWatchesRootNode)myRootNode).addInlineWatchExpression(session != null ? session.getCurrentStackFrame() : null, watch, index,
+                                                                 navigateToWatchNode);
 
     if (navigateToWatchNode && session != null) {
       XDebugSessionTab.showWatchesView(session);
@@ -517,19 +522,12 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
   }
 
-  @NotNull
-  protected List<XExpression> getExpressions() {
-    XDebuggerTree tree = getTree();
-    XDebugSessionImpl session = getSession();
-    List<XExpression> expressions;
-    if (session != null) {
-      expressions = session.getSessionData().getWatchExpressions();
-    }
-    else {
-      XDebuggerTreeNode root = tree.getRoot();
-      expressions = root instanceof WatchesRootNode ? ((WatchesRootNode)root).getWatchExpressions() : Collections.emptyList();
-    }
-    return expressions;
+  /**
+   * @deprecated Use {@link XDebuggerWatchesManager#getWatches(String)} directly
+   */
+  @Deprecated
+  protected @NotNull List<XExpression> getExpressions() {
+    return getWatchesManager().getWatches(myConfigurationName);
   }
 
   @Override
@@ -594,14 +592,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   public void updateSessionData() {
-    List<XExpression> watchExpressions = myRootNode.getWatchExpressions();
-    XDebugSessionImpl session = getSession();
-    XDebugSessionData data = (session != null) ? session.getSessionData()
-                                               : getData(XDebugSessionData.DATA_KEY, getTree());
-    if (data != null) {
-      data.setWatchExpressions(watchExpressions);
-      getWatchesManager().setWatches(data.getConfigurationName(), watchExpressions);
-    }
+    List<XWatch> watches = myRootNode.getWatches();
+    getWatchesManager().setWatchEntries(myConfigurationName, watches);
   }
 
   @Override

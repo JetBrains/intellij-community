@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.DataManager;
@@ -17,7 +17,7 @@ import javax.swing.*;
 
 public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   private JPanel myMainPanel;
   private JCheckBox myUseCommonProxy;
@@ -59,9 +59,8 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     myAllRadioButton.setEnabled(true);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myMainPanel;
   }
 

@@ -12,9 +12,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class DotEnvVariablesProvider implements EnvironmentVariablesProvider {
-    @NotNull
     @Override
-    public FileAcceptResult acceptFile(VirtualFile file) {
+    public @NotNull FileAcceptResult acceptFile(VirtualFile file) {
         if(!file.getFileType().equals(DotEnvFileType.INSTANCE)) {
             return FileAcceptResult.NOT_ACCEPTED;
         }
@@ -23,9 +22,8 @@ public class DotEnvVariablesProvider implements EnvironmentVariablesProvider {
         return file.getName().equals(".env") ? FileAcceptResult.ACCEPTED : FileAcceptResult.ACCEPTED_SECONDARY;
     }
 
-    @NotNull
     @Override
-    public Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
+    public @NotNull Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
         if(psiFile instanceof DotEnvFile) {
             DotEnvPsiElementsVisitor visitor = new DotEnvPsiElementsVisitor();
             psiFile.acceptChildren(visitor);

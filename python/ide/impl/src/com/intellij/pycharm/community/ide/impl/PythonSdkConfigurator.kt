@@ -32,6 +32,7 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReady
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingExtension
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * @see [PyConfigureSdkOnWslTest]
@@ -85,8 +86,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       it.getIntention(module) != null && (!ApplicationManager.getApplication().isHeadlessEnvironment || it.supportsHeadlessModel())
     }
   }
-
-  fun configureSdk(
+  // TODO: PythonInterpreterService: detect and validate system python
+@Internal
+fun configureSdk(
     project: Project,
     module: Module,
     extension: PyProjectSdkConfigurationExtension?,

@@ -17,12 +17,14 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +36,7 @@ import java.util.stream.Collectors;
 public final class MapReplaceableByEnumMapInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("map.replaceable.by.enum.map.problem.descriptor");
   }
 
@@ -44,9 +45,8 @@ public final class MapReplaceableByEnumMapInspection extends BaseInspection {
     return new MapReplaceableByEnumMapVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     if (infos.length != 1) return null;
     PsiLocalVariable localVariable = (PsiLocalVariable)infos[0];
     PsiType[] parameters = CollectionReplaceableByEnumCollectionVisitor.extractParameterType(localVariable, 2);
@@ -62,27 +62,23 @@ public final class MapReplaceableByEnumMapInspection extends BaseInspection {
   private static class MapReplaceableByEnumMapVisitor extends CollectionReplaceableByEnumCollectionVisitor {
 
     @Override
-    @NotNull
-    protected List<String> getUnreplaceableCollectionNames() {
+    protected @NotNull List<String> getUnreplaceableCollectionNames() {
       return Arrays.asList(CommonClassNames.JAVA_UTIL_CONCURRENT_HASH_MAP, "java.util.concurrent.ConcurrentSkipListMap",
                            "java.util.LinkedHashMap");
     }
 
-    @NotNull
     @Override
-    protected List<String> getReplaceableCollectionNames() {
+    protected @NotNull List<String> getReplaceableCollectionNames() {
       return Collections.singletonList(CommonClassNames.JAVA_UTIL_HASH_MAP);
     }
 
     @Override
-    @NotNull
-    protected String getReplacementCollectionName() {
+    protected @NotNull String getReplacementCollectionName() {
       return "java.util.EnumMap";
     }
 
     @Override
-    @NotNull
-    protected String getBaseCollectionName() {
+    protected @NotNull String getBaseCollectionName() {
       return CommonClassNames.JAVA_UTIL_MAP;
     }
 

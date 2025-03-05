@@ -48,9 +48,8 @@ public final class HeaderParserRepository {
   }
 
   private final ClearableLazyValue<Map<String, HeaderParser>> myParsers = new ClearableLazyValue<>() {
-    @NotNull
     @Override
-    protected Map<String, HeaderParser> compute() {
+    protected @NotNull Map<String, HeaderParser> compute() {
       Map<String, HeaderParser> map = CollectionFactory.createCaseInsensitiveStringMap();
       for (HeaderParserProvider provider : HeaderParserProvider.EP_NAME.getExtensionList()) {
         map.putAll(provider.getHeaderParsers());
@@ -63,18 +62,15 @@ public final class HeaderParserRepository {
     HeaderParserProvider.EP_NAME.addChangeListener(myParsers::drop, null);
   }
 
-  @Nullable
-  public HeaderParser getHeaderParser(@Nullable String headerName) {
+  public @Nullable HeaderParser getHeaderParser(@Nullable String headerName) {
     return myParsers.getValue().get(headerName);
   }
 
-  @NotNull
-  public Set<String> getAllHeaderNames() {
+  public @NotNull Set<String> getAllHeaderNames() {
     return myParsers.getValue().keySet();
   }
 
-  @Nullable
-  public Object getConvertedValue(@NotNull Header header) {
+  public @Nullable Object getConvertedValue(@NotNull Header header) {
     HeaderParser parser = getHeaderParser(header.getName());
     return parser != null ? parser.getConvertedValue(header) : null;
   }

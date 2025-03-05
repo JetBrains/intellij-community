@@ -28,11 +28,11 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.useProject
-import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.ui.UiInterceptors
 import com.intellij.ui.UiInterceptors.UiInterceptor
 import com.intellij.util.SystemProperties
@@ -150,7 +150,6 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
         relativePath: String,
         addSampleCode: Boolean,
         useCompactProjectStructure: Boolean = true,
-        generateOnboardingTips: Boolean = false,
         sdk: Sdk = mySdk
     ) {
         val kotlinData = kotlinData!!
@@ -160,14 +159,12 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
         kotlinData.sdk = sdk
         kotlinData.addSampleCode = addSampleCode
         kotlinData.useCompactProjectStructure = useCompactProjectStructure
-        kotlinData.generateOnboardingTips = generateOnboardingTips
     }
 
     private fun createProjectWithData(
         name: String = "project",
         addSampleCode: Boolean = false,
-        useCompactProjectStructure: Boolean = true,
-        generateOnboardingTips: Boolean = false
+        useCompactProjectStructure: Boolean = true
     ): Project {
         return createProjectFromTemplate(KOTLIN) {
             it.setWizardData(
@@ -175,7 +172,6 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
                 relativePath = "",
                 addSampleCode = addSampleCode,
                 useCompactProjectStructure = useCompactProjectStructure,
-                generateOnboardingTips = generateOnboardingTips
             )
         }
     }
@@ -184,10 +180,9 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
         name: String = "project",
         addSampleCode: Boolean = false,
         useCompactProjectStructure: Boolean = true,
-        generateOnboardingTips: Boolean = false,
         f: (Project) -> Unit = { }
     ) {
-        createProjectWithData(name, addSampleCode, useCompactProjectStructure, generateOnboardingTips).useProject { project ->
+        createProjectWithData(name, addSampleCode, useCompactProjectStructure).useProject { project ->
             assertCorrectContent()
             assertEquals(1, project.modules.size)
             project.assertHasKotlinJavaRuntime()
@@ -262,7 +257,6 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
         relativePath: String,
         addSampleCode: Boolean = false,
         useCompactProjectStructure: Boolean = true,
-        generateOnboardingTips: Boolean = false,
         sdk: Sdk = mySdk
     ): Module {
         val module = createModuleFromTemplate(this, KOTLIN) {
@@ -271,7 +265,6 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
                 relativePath = relativePath,
                 addSampleCode = addSampleCode,
                 useCompactProjectStructure = useCompactProjectStructure,
-                generateOnboardingTips = generateOnboardingTips,
                 sdk = sdk
             )
         }
@@ -336,49 +329,33 @@ class IntelliJKotlinNewProjectWizardTest : NewProjectWizardTestCase() {
     }
 
     fun testSampleCode() {
-        runProjectTestCase(addSampleCode = true, useCompactProjectStructure = false) {
-            assertTrue("Sample file should exist", resolvePathInProject("project/src/main/kotlin/Main.kt").exists())
+        runProjectTestCase(addSampleCode = true, useCompactProjectStructure = false) { project ->
+            val mainFile = getOutputFile("project/src/main/kotlin/Main.kt")
+            assertTrue(mainFile.exists())
+            val text = mainFile.readText()
+            assertTrue(text.contains(ONBOARDING_TIPS_SEARCH_STR))
+            assertTrue(text.contains("//TIP"))
         }
     }
 
     fun testSampleCodeCompact() {
-        runProjectTestCase(addSampleCode = true, useCompactProjectStructure = true) {
-            assertTrue("Sample file should exist", resolvePathInProject("project/src/Main.kt").exists())
+        runProjectTestCase(addSampleCode = true, useCompactProjectStructure = true) { project ->
+            val mainFile = getOutputFile("project/src/Main.kt")
+            assertTrue(mainFile.exists())
+            val text = mainFile.readText()
+            assertTrue(text.contains(ONBOARDING_TIPS_SEARCH_STR))
+            assertTrue(text.contains("//TIP"))
         }
     }
 
-    fun testOnboardingTips() {
+    fun testSampleCodeRawOnboardingTips() {
         Registry.get("doc.onboarding.tips.render").withValue(false) {
-            runProjectTestCase(addSampleCode = true, generateOnboardingTips = true, useCompactProjectStructure = false) { project ->
-                val mainFile = getOutputFile("project/src/main/kotlin/Main.kt")
-                assertTrue(mainFile.exists())
-                val text = mainFile.readText()
-                assertTrue(text.contains(ONBOARDING_TIPS_SEARCH_STR))
-                assertFalse(text.contains("//TIP"))
-            }
-        }
-    }
-
-    fun testOnboardingTipsCompact() {
-        Registry.get("doc.onboarding.tips.render").withValue(false) {
-            runProjectTestCase(addSampleCode = true, generateOnboardingTips = true, useCompactProjectStructure = true) { project ->
+            runProjectTestCase(addSampleCode = true, useCompactProjectStructure = true) { project ->
                 val mainFile = getOutputFile("project/src/Main.kt")
                 assertTrue(mainFile.exists())
                 val text = mainFile.readText()
                 assertTrue(text.contains(ONBOARDING_TIPS_SEARCH_STR))
                 assertFalse(text.contains("//TIP"))
-            }
-        }
-    }
-
-    fun testRenderedOnboardingTips() {
-        Registry.get("doc.onboarding.tips.render").withValue(true) {
-            runProjectTestCase(addSampleCode = true, generateOnboardingTips = true, useCompactProjectStructure = true) { project ->
-                val mainFile = getOutputFile("project/src/Main.kt")
-                assertTrue(mainFile.exists())
-                val text = mainFile.readText()
-                assertTrue(text.contains(ONBOARDING_TIPS_SEARCH_STR))
-                assertTrue(text.contains("//TIP"))
             }
         }
     }

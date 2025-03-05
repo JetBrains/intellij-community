@@ -1,5 +1,8 @@
 // "Implement members" "true"
-// DISABLE-ERRORS
-// IGNORE_K2
+// DISABLE_ERRORS
 
-actual class <caret>C : I
+interface Interf {
+    fun m()
+}
+
+actual class <caret>C : I, Interf

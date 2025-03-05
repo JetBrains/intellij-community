@@ -8,42 +8,41 @@ import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Marks given variables as escaped (usually necessary for captured variables in lambdas/local classes)
  */
 public class EscapeInstruction extends Instruction {
-  private final @NotNull Set<@NotNull DfaVariableValue> myEscapedVars;
+  private final @NotNull List<@NotNull VariableDescriptor> myEscapedDescriptors;
 
-  public EscapeInstruction(@NotNull Set<@NotNull DfaVariableValue> escapedVars) {myEscapedVars = escapedVars;}
-
-  public @NotNull Set<@NotNull DfaVariableValue> getEscapedVars() {
-    return myEscapedVars;
+  public EscapeInstruction(@NotNull List<@NotNull VariableDescriptor> descriptors) {
+    myEscapedDescriptors = descriptors;
   }
 
   @Override
-  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    return new EscapeInstruction(ContainerUtil.map2Set(myEscapedVars, var -> var.bindToFactory(factory)));
-  }
-
-  @Override
-  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
-    return List.copyOf(myEscapedVars);
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
+    return myEscapedDescriptors;
   }
 
   @Override
   public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
-    getEscapedVars().forEach(var -> JavaDfaHelpers.dropLocality(var, stateBefore));
+    List<DfaVariableValue> escapedVars = StreamEx.of(interpreter.getFactory().getValues())
+      .select(DfaVariableValue.class)
+      .filter(var -> myEscapedDescriptors.contains(var.getDescriptor()))
+      .toList();
+    for (DfaVariableValue var : escapedVars) {
+      JavaDfaHelpers.dropLocality(var, stateBefore);
+    }
     return nextStates(interpreter, stateBefore);
   }
 
   @Override
   public String toString() {
-    return "ESCAPE " + myEscapedVars;
+    return "ESCAPE " + myEscapedDescriptors;
   }
 }

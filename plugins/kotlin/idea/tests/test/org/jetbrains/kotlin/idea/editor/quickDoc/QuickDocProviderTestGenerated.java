@@ -80,6 +80,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/AtImplicitLambdaParameter.kt");
     }
 
+    @TestMetadata("AtLocalClass.kt")
+    public void testAtLocalClass() throws Exception {
+        runTest("testData/editor/quickDoc/AtLocalClass.kt");
+    }
+
     @TestMetadata("AtLocalFunction.kt")
     public void testAtLocalFunction() throws Exception {
         runTest("testData/editor/quickDoc/AtLocalFunction.kt");
@@ -95,9 +100,29 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/AtVariableDeclaration.kt");
     }
 
+    @TestMetadata("ClassPropertyWithInitializer.kt")
+    public void testClassPropertyWithInitializer() throws Exception {
+        runTest("testData/editor/quickDoc/ClassPropertyWithInitializer.kt");
+    }
+
+    @TestMetadata("ConstDefaultLongParameterValue.kt")
+    public void testConstDefaultLongParameterValue() throws Exception {
+        runTest("testData/editor/quickDoc/ConstDefaultLongParameterValue.kt");
+    }
+
+    @TestMetadata("ConstDefaultParameter.kt")
+    public void testConstDefaultParameter() throws Exception {
+        runTest("testData/editor/quickDoc/ConstDefaultParameter.kt");
+    }
+
     @TestMetadata("ConstructorVarParameter.kt")
     public void testConstructorVarParameter() throws Exception {
         runTest("testData/editor/quickDoc/ConstructorVarParameter.kt");
+    }
+
+    @TestMetadata("ConstructorVarVarargParameter.kt")
+    public void testConstructorVarVarargParameter() throws Exception {
+        runTest("testData/editor/quickDoc/ConstructorVarVarargParameter.kt");
     }
 
     @TestMetadata("DataClass.kt")
@@ -230,6 +255,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/MethodFromStdLib.kt");
     }
 
+    @TestMetadata("NoDefaultValueForValParameter.kt")
+    public void testNoDefaultValueForValParameter() throws Exception {
+        runTest("testData/editor/quickDoc/NoDefaultValueForValParameter.kt");
+    }
+
     @TestMetadata("ObjectLiteral.kt")
     public void testObjectLiteral() throws Exception {
         runTest("testData/editor/quickDoc/ObjectLiteral.kt");
@@ -278,6 +308,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("OnEnumDeclaration.kt")
     public void testOnEnumDeclaration() throws Exception {
         runTest("testData/editor/quickDoc/OnEnumDeclaration.kt");
+    }
+
+    @TestMetadata("OnEnumEntries.kt")
+    public void testOnEnumEntries() throws Exception {
+        runTest("testData/editor/quickDoc/OnEnumEntries.kt");
     }
 
     @TestMetadata("OnEnumEntry.kt")

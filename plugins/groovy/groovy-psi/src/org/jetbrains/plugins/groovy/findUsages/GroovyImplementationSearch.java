@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.codeInsight.navigation.MethodImplementationsSearch;
@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
  */
 public final class GroovyImplementationSearch implements QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final DefinitionsScopedSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
+  public boolean execute(final @NotNull DefinitionsScopedSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiElement> consumer) {
     return ReadAction.compute(() -> {
       final PsiElement source = queryParameters.getElement();
       if (!source.isValid()) return true;

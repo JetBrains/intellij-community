@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -101,7 +101,7 @@ public interface ChangelistBuilder {
 
   boolean reportChangesOutsideProject();
 
-  void reportAdditionalInfo(@NlsContexts.Label final String text);
+  void reportAdditionalInfo(final @NlsContexts.Label String text);
 
   void reportAdditionalInfo(@NotNull Factory<@Nullable JComponent> infoComponent);
 }

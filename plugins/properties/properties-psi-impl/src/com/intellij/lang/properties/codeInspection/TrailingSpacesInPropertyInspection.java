@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.codeInspection;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.IProperty;
@@ -13,6 +12,7 @@ import com.intellij.lang.properties.PropertiesInspectionBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -36,8 +36,7 @@ public final class TrailingSpacesInPropertyInspection extends PropertiesInspecti
   public boolean myIgnoreVisibleSpaces;
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "TrailingSpacesInProperty";
   }
 
@@ -63,7 +62,7 @@ public final class TrailingSpacesInPropertyInspection extends PropertiesInspecti
   }
 
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, final @NotNull InspectionManager manager, final boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
     final List<IProperty> properties = ((PropertiesFile)file).getProperties();
     final List<ProblemDescriptor> descriptors = new SmartList<>();
@@ -84,8 +83,7 @@ public final class TrailingSpacesInPropertyInspection extends PropertiesInspecti
     return descriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private static TextRange getTrailingSpaces(PsiElement element, boolean ignoreVisibleTrailingSpaces) {
+  private static @Nullable TextRange getTrailingSpaces(PsiElement element, boolean ignoreVisibleTrailingSpaces) {
     String key = element.getText();
     if (ignoreVisibleTrailingSpaces) {
       for (int i = key.length() - 1; i > -1; i--) {
@@ -107,8 +105,7 @@ public final class TrailingSpacesInPropertyInspection extends PropertiesInspecti
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PropertiesBundle.message("remove.trailing.spaces.fix.family.name");
     }
 

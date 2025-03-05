@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -119,8 +119,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       myFileTypeManager.reDetectAsync(false);
       assertNull(myFileTypeManager.findFileTypeByName("x." + MyTestFileType.EXTENSION));
       assertNull(myFileTypeManager.getExtensionMap().findByExtension(MyTestFileType.EXTENSION));
+      myFileTypeManager.detectionService.drainReDetectQueue();
       Disposer.dispose(myFileTypeManager);
-      Element globalStateAfter = ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).getState();
+      FileTypeManagerImpl globalFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
+      Element globalStateAfter = globalFileTypeManager.getState();
+      globalFileTypeManager.drainReDetectQueue();
       assertEquals(JDOMUtil.writeElement(myGlobalStateBefore), JDOMUtil.writeElement(globalStateAfter));
     }
     catch (Throwable e) {
@@ -1664,6 +1667,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     VirtualFile vFile = createChildData(vDir, "X.html");
     setFileText(vFile, "<c></c>");
     assertEquals("HTML", getFileType(vFile).getName());
-    assertFalse(myFileTypeManager.myDetectionService.wasAutoDetectedBefore(vFile));
+    assertFalse(myFileTypeManager.detectionService.wasAutoDetectedBefore(vFile));
   }
 }

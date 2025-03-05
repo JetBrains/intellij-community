@@ -1,4 +1,4 @@
-// IS_APPLICABLE: true
+// FIX: Remove explicit type arguments
 // AFTER-WARNING: Parameter 't' is never used
 fun foo(x: String) {
     bar(x)

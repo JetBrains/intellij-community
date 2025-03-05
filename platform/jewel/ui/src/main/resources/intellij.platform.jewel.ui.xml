@@ -1,0 +1,6 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.jewel.foundation" />
+    <module name="intellij.libraries.compose.foundation.desktop"/>
+  </dependencies>
+</idea-plugin>

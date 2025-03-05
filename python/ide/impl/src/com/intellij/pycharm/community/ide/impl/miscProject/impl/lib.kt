@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
-import com.intellij.execution.ExecutionException
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator.Companion.locateProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -18,10 +18,8 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -32,55 +30,49 @@ import com.intellij.psi.PsiManager
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
-import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStrategy.FindOnSystem
-import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStrategy.UseThesePythons
+import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.io.awaitExit
-import com.jetbrains.python.LocalizedErrorString
-import com.jetbrains.python.PythonModuleTypeBase
-import com.jetbrains.python.Result
-import com.jetbrains.python.mapResult
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PySdkToInstallManager
-import com.jetbrains.python.sdk.PythonBinary
-import com.jetbrains.python.sdk.VirtualEnvReader
-import com.jetbrains.python.sdk.add.v2.createSdk
-import com.jetbrains.python.sdk.add.v2.createVirtualenv
+import com.jetbrains.python.*
+import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.installer.installBinary
+import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
-import kotlin.io.path.pathString
+import kotlin.io.path.name
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 private val logger = fileLogger()
 
 internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject") }
-internal val miscProjectEnabled: Lazy<Boolean> = lazy { ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(PyMiscProjectExperimentOption::class.java) }
 
 /**
- * Creates project in [projectPath] in modal window. Once created, uses [scopeProvider] to get scope
+ * Creates a project in [projectPath] in a modal window.
+ * Once created, uses [scopeProvider] to get scope
  * to launch [miscFileType] generation in background, returns it as a job.
  *
- * Pythons are obtained with [obtainPythonStrategy]
+ * Pythons are obtained with [systemPythonService]
  */
 @RequiresEdt
 fun createMiscProject(
   miscFileType: MiscFileType,
   scopeProvider: (Project) -> CoroutineScope,
-  obtainPythonStrategy: ObtainPythonStrategy,
+  confirmInstallation: suspend () -> Boolean,
   projectPath: Path = miscProjectDefaultPath.value,
-): Result<Job, LocalizedErrorString> =
+  systemPythonService: SystemPythonService = SystemPythonService(),
+): Result<Job, @Nls String> =
   runWithModalProgressBlocking(ModalTaskOwner.guess(),
                                PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
                                TaskCancellation.cancellable()) {
-    createProjectAndSdk(projectPath, obtainPythonStrategy)
+    createProjectAndSdk(projectPath, confirmInstallation = confirmInstallation, systemPythonService = systemPythonService)
   }.mapResult { (project, sdk) ->
     Result.Success(scopeProvider(project).launch {
       withBackgroundProgress(project, PyCharmCommunityCustomizationBundle.message("misc.project.filling.file")) {
@@ -101,8 +93,8 @@ private suspend fun openFile(project: Project, file: Path): PsiFile {
   val vfsFile = withContext(Dispatchers.IO) {
     VfsUtil.findFile(file, true) ?: error("Can't find VFS $file")
   }
-  // `navigate` throws `AssertionError` from time to time due to platform API bug.
-  // We "fix" it by means of retries
+  // `Navigate` throws `AssertionError` from time to time due to a platform API bug.
+  // We "fix" it by retries
   return callWithRetry {
     withContext(Dispatchers.EDT) {
       val psiFile = readAction { PsiManager.getInstance(project).findFile(vfsFile) } ?: error("Can't find PSI for $vfsFile")
@@ -144,31 +136,28 @@ private suspend fun generateFile(where: Path, templateFileName: TemplateFileName
 }
 
 /**
- * Creates project with 1 module in [projectPath] and sdk using the highest python.
- * Pythons are searched in system ([findPythonsOnSystem]) or provided explicitly (depends on [obtainPythonStrategy]).
- * In former case if no python were found, we [installLatestPython] (not in a latter case, though).
+ * Creates a project with one module in [projectPath] and sdk using the highest python.
+ * Pythons are searched using [systemPythonService].
+ * If no Python found and [confirmInstallation] we install it using [SystemPythonService.getInstaller]
  */
 private suspend fun createProjectAndSdk(
   projectPath: Path,
-  obtainPythonStrategy: ObtainPythonStrategy,
-): Result<Pair<Project, Sdk>, LocalizedErrorString> {
+  confirmInstallation: suspend () -> Boolean,
+  systemPythonService: SystemPythonService,
+): Result<Pair<Project, Sdk>, @Nls String> {
   val projectPathVfs = createProjectDir(projectPath).getOr { return it }
   val venvDirPath = projectPath.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
 
-  // Find venv in project
+  // Find venv in a project
   var venvPython: PythonBinary? = findExistingVenv(venvDirPath)
 
   if (venvPython == null) {
     // No venv found -- find system python to create venv
-    val systemPythonBinary = getSystemPython(obtainPythonStrategy).getOr { return it }
+    val systemPythonBinary = getSystemPython(confirmInstallation = confirmInstallation, systemPythonService).getOr { return it }
     logger.info("no venv in $venvDirPath, using system python $systemPythonBinary to create venv")
     // create venv using this system python
-    createVenv(systemPythonBinary, venvDirPath = venvDirPath, projectPath = projectPath).getOr { return it }
-    // try to find venv again
-    venvPython = findExistingVenv(venvDirPath)
-    if (venvPython == null) {
-      // No venv even after venv installation
-      return Result.failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", "", venvDirPath)))
+    venvPython = createVenv(systemPythonBinary, venvDir = venvDirPath).getOr {
+      return Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", it.error.message, venvDirPath))
     }
   }
 
@@ -177,7 +166,12 @@ private suspend fun createProjectAndSdk(
   val sdk = getSdk(venvPython, project)
   val module = project.modules.first()
   ensureModuleHasRoot(module, projectPathVfs)
-  ModuleRootModificationUtil.setModuleSdk(module, sdk)
+  withContext(Dispatchers.IO) {
+    // generated files should be readable by VFS
+    VfsUtil.markDirtyAndRefresh(false, true, true, projectPathVfs)
+  }
+  configurePythonSdk(project, module, sdk)
+  sdk.getOrCreateAdditionalData().associateWithModule(module)
   return Result.Success(Pair(project, sdk))
 }
 
@@ -194,69 +188,64 @@ private suspend fun findExistingVenv(
     logger.warn("No flavor found for $pythonPath")
     return@withContext null
   }
-  if (validatePythonAndGetVersion(pythonPath, flavor) == null) {
-    logger.warn("No version string. python seems to be broken: $pythonPath")
-    return@withContext null
+  return@withContext when (val p = pythonPath.validatePythonAndGetVersion()) {
+    is Result.Success -> pythonPath
+    is Result.Failure -> {
+      logger.warn("No version string. python seems to be broken: $pythonPath. ${p.error}")
+      null
+    }
   }
-  return@withContext pythonPath
 }
 
-private suspend fun createVenv(systemPython: PythonBinary, venvDirPath: Path, projectPath: Path): Result<Unit, LocalizedErrorString> =
-  try {
-    createVirtualenv(systemPython, venvDirPath, projectPath)
-    Result.success(Unit)
-  }
-  catch (e: ExecutionException) {
-    Result.failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", e.toString(), venvDirPath)))
-  }
 
-private suspend fun getSystemPython(obtainPythonStrategy: ObtainPythonStrategy): Result<PythonBinary, LocalizedErrorString> {
+private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, pythonService: SystemPythonService): Result<PythonBinary, @Nls String> {
+
+
   // First, find the latest python according to strategy
-  var systemPythonBinary = filterLatestUsablePython(
-    when (obtainPythonStrategy) {
-      is UseThesePythons -> obtainPythonStrategy.pythons
-      is FindOnSystem -> findPythonsOnSystem()
-    })
+  var systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
 
   // No python found?
   if (systemPythonBinary == null) {
-    // Only install if pythons weren't provided explicitly, see fun doc
-    when (obtainPythonStrategy) {
-      is UseThesePythons -> Unit
-      is FindOnSystem -> {
-        // User is ok with installation
-        if (obtainPythonStrategy.confirmInstallation()) {
-          // Install
-          installLatestPython().onFailure { exception ->
-            // Failed to install python?
-            logger.warn("Python installation failed", exception)
-            return Result.Failure(LocalizedErrorString(
-              PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", exception.toString())))
-          }
-          // Find latest python again, after installation
-          systemPythonBinary = filterLatestUsablePython(findPythonsOnSystem())
+    // Install it
+    val installer = pythonService.getInstaller()
+                    ?: return Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.install.not.supported"))
+    if (confirmInstallation()) {
+      // Install
+      when (val r = installer.installLatestPython()) {
+        is Result.Failure -> {
+          val error = r.error
+          logger.warn("Python installation failed $error")
+          return Result.Failure(
+            PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", error))
+        }
+        is Result.Success -> {
+          // Find the latest python again, after installation
+          systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
         }
       }
     }
   }
 
   return if (systemPythonBinary == null) {
-    Result.Failure(LocalizedErrorString(PyCharmCommunityCustomizationBundle.message("misc.project.error.all.pythons.bad")))
+    Result.Failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.all.pythons.bad"))
   }
   else {
-    Result.Success(systemPythonBinary)
+    Result.Success(systemPythonBinary.pythonBinary)
   }
 }
 
 private suspend fun openProject(projectPath: Path): Project {
+  TrustedProjects.setProjectTrusted(locateProject(projectPath, null), isTrusted = true)
   val projectManager = ProjectManagerEx.getInstanceEx()
   val project = projectManager.openProjectAsync(projectPath, OpenProjectTask {
     runConfigurators = false
+    isProjectCreatedWithWizard = true
+
   }) ?: error("Failed to open project in $projectPath, check logs")
   // There are countless number of reasons `openProjectAsync` might return null
   if (project.modules.isEmpty()) {
-    writeAction {
-      ModuleManager.getInstance(project).newModule(projectPath, PythonModuleTypeBase.getInstance().id)
+    edtWriteAction {
+      ModuleManager.getInstance(project).newModule(projectPath.resolve("${projectPath.name}.iml"), PythonModuleTypeBase.getInstance().id)
     }
   }
   return project
@@ -274,26 +263,26 @@ private suspend fun getSdk(pythonPath: PythonBinary, project: Project): Sdk =
 
 
 /**
- * Creating project != creating directory for it, but we need directory to create template file
+ * Creating a project != creating a directory for it, but we need a directory to create a template file
  */
-private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, LocalizedErrorString> = withContext(Dispatchers.IO) {
+private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, @Nls String> = withContext(Dispatchers.IO) {
   try {
     projectPath.createDirectories()
   }
   catch (e: IOException) {
     thisLogger().warn("Couldn't create $projectPath", e)
-    return@withContext Result.Failure(LocalizedErrorString(
-      PyCharmCommunityCustomizationBundle.message("misc.project.error.create.dir", projectPath, e.localizedMessage)))
+    return@withContext Result.Failure(
+      PyCharmCommunityCustomizationBundle.message("misc.project.error.create.dir", projectPath, e.localizedMessage))
   }
   val projectPathVfs = VfsUtil.findFile(projectPath, true)
                        ?: error("Can't find VFS $projectPath")
   return@withContext Result.Success(projectPathVfs)
 }
 
-private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit = writeAction {
+private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit = edtWriteAction {
   with(module.rootManager.modifiableModel) {
     try {
-      if (root in contentRoots) return@writeAction
+      if (root in contentRoots) return@edtWriteAction
       addContentEntry(root)
     }
     finally {
@@ -301,85 +290,3 @@ private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit
     }
   }
 }
-
-/**
- * Looks for system pythons. Returns flavor and all its pythons.
- */
-fun findPythonsOnSystem(): List<Pair<PythonSdkFlavor<*>, Collection<Path>>> =
-  PythonSdkFlavor.getApplicableFlavors(false) //system=platform dependent (exclude venv)
-    .map { flavor ->
-      flavor.dropCaches()
-      flavor to flavor.suggestLocalHomePaths(null, null)
-    }
-    .filter { (_, pythons) ->
-      pythons.isNotEmpty() // No need to have flavors without pythons
-    }
-
-suspend fun installLatestPython(): kotlin.Result<Unit> = withContext(Dispatchers.IO) {
-  val pythonToInstall = PySdkToInstallManager.getAvailableVersionsToInstall().toSortedMap().values.last()
-  return@withContext withContext(Dispatchers.EDT) {
-    installBinary(pythonToInstall, null) {
-    }
-  }
-}
-
-/**
- * Looks for the latest python among [flavorsToPythons]: each flavour might have 1 or more pythons.
- * Broken pythons are filtered out. If `null` is returned, no python found, you probably need to [installLatestPython]
- */
-private suspend fun filterLatestUsablePython(flavorsToPythons: List<Pair<PythonSdkFlavor<*>, Collection<Path>>>): PythonBinary? {
-  var current: Pair<LanguageLevel, Path>? = null
-  for ((flavor, paths) in flavorsToPythons) {
-    for (pythonPath in paths) {
-      val versionString = validatePythonAndGetVersion(pythonPath, flavor) ?: continue
-      val languageLevel = flavor.getLanguageLevelFromVersionString(versionString)
-
-      // Highest possible, no need to search further
-      if (languageLevel == LanguageLevel.getLatest()) {
-        return pythonPath
-      }
-      if (current == null || current.first < languageLevel) {
-        // More recent Python found!
-        current = Pair(languageLevel, pythonPath)
-      }
-    }
-  }
-
-  return current?.second
-}
-
-/**
- * Ensures that [pythonBinary] is executable and returns its version. `null` if python is broken (reports error to logs).
- *
- * Some pythons might be broken: they may be executable, even return a version, but still fail to execute it.
- * As we need workable pythons, we validate it by executing
- */
-private suspend fun validatePythonAndGetVersion(pythonBinary: PythonBinary, flavor: PythonSdkFlavor<*>): String? = withContext(Dispatchers.IO) {
-  val fileLogger = fileLogger()
-  val process =
-    try {
-      GeneralCommandLine(pythonBinary.toString(), "-c", "print(1)").createProcess()
-    }
-    catch (e: ExecutionException) {
-      fileLogger.warn("$pythonBinary is bad, skipping", e)
-      return@withContext null
-    }
-  val timeout = 5.seconds
-  return@withContext withTimeoutOrNull(timeout) {
-    val exitCode = process.awaitExit()
-    return@withTimeoutOrNull if (exitCode != 0) {
-      fileLogger.warn("$pythonBinary returned $exitCode, skipping")
-      null
-    }
-    else {
-      flavor.getVersionString(pythonBinary.pathString)
-    }
-  }.also {
-    if (it == null) {
-      fileLogger.warn("$pythonBinary didn't return in $timeout, skipping")
-      process.destroyForcibly()
-    }
-  }
-}
-
-

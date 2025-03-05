@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.roots.*;
@@ -22,11 +8,10 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 class ClasspathTableItem<T extends OrderEntry> {
-  @Nullable protected final T myEntry;
+  protected final @Nullable T myEntry;
   private final boolean myRemovable;
 
-  @Nullable
-  public static ClasspathTableItem<?> createItem(OrderEntry orderEntry, StructureConfigurableContext context) {
+  public static @Nullable ClasspathTableItem<?> createItem(OrderEntry orderEntry, StructureConfigurableContext context) {
     if (orderEntry instanceof JdkOrderEntry) {
       return new ClasspathTableItem<>(orderEntry, false);
     }
@@ -65,8 +50,7 @@ class ClasspathTableItem<T extends OrderEntry> {
     }
   }
 
-  @Nullable
-  public final DependencyScope getScope() {
+  public final @Nullable DependencyScope getScope() {
     return myEntry instanceof ExportableOrderEntry ? ((ExportableOrderEntry) myEntry).getScope() : null;
   }
 
@@ -76,8 +60,7 @@ class ClasspathTableItem<T extends OrderEntry> {
     }
   }
 
-  @Nullable
-  public final T getEntry() {
+  public final @Nullable T getEntry() {
     return myEntry;
   }
 
@@ -89,8 +72,7 @@ class ClasspathTableItem<T extends OrderEntry> {
     return false;
   }
 
-  @Nullable
-  public @NlsContexts.Tooltip String getTooltipText() {
+  public @Nullable @NlsContexts.Tooltip String getTooltipText() {
     return null;
   }
 

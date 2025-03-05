@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -21,7 +22,7 @@ public abstract class AbstractXmlTagTreeElement<T extends XmlElement> extends Ps
     super(psiElement);
   }
 
-  protected static Collection<StructureViewTreeElement> getStructureViewTreeElements(XmlTag[] subTags) {
+  protected static @Unmodifiable Collection<StructureViewTreeElement> getStructureViewTreeElements(XmlTag[] subTags) {
     return ContainerUtil.map(subTags, xmlTag -> {
       for (final XmlStructureViewElementProvider provider : XmlStructureViewElementProvider.EP_NAME.getExtensionList()) {
         final StructureViewTreeElement element = provider.createCustomXmlTagTreeElement(xmlTag);

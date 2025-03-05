@@ -48,6 +48,7 @@ internal class DiffEditorTabFilesManagerImpl(val project: Project) : DiffEditorT
   }
 }
 
+@Suppress("RemoveRedundantQualifierName")
 internal abstract class MoveDiffEditorAction(private val openInNewWindow: Boolean) : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
@@ -115,6 +116,7 @@ internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsCh
 /**
  * Toggle option on drag-n-drop
  */
+@Suppress("RemoveRedundantQualifierName")
 internal class DiffInWindowDndListener : FileOpenedSyncListener {
   override fun fileOpenedSync(editorManager: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
     if (file !is DiffContentVirtualFile) return

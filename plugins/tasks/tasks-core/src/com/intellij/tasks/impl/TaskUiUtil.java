@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,15 +63,13 @@ public final class TaskUiUtil {
      * {@link #onSuccess()} can't be used for this purpose, because it doesn't consider current modality state
      * which will prevent UI updating in modal dialog (e.g. in {@link TaskRepositoryEditor}).
      */
-    @Nullable
     @Override
-    public final NotificationInfo notifyFinished() {
+    public final @Nullable NotificationInfo notifyFinished() {
       ApplicationManager.getApplication().invokeLater(() -> updateUI(), myModalityState);
       return null;
     }
 
-    @NotNull
-    protected abstract T fetch(@NotNull ProgressIndicator indicator) throws Exception;
+    protected abstract @NotNull T fetch(@NotNull ProgressIndicator indicator) throws Exception;
 
     protected abstract void updateUI();
   }
@@ -80,7 +78,7 @@ public final class TaskUiUtil {
    * Auxiliary remote fetcher designed to simplify updating of combo boxes in repository editors, which is
    * indeed a rather common task.
    */
-  public static abstract class ComboBoxUpdater<T> extends RemoteFetchTask<Collection<T>> {
+  public abstract static class ComboBoxUpdater<T> extends RemoteFetchTask<Collection<T>> {
     protected final JComboBox<T> myComboBox;
 
     public ComboBoxUpdater(@Nullable Project project, @NotNull @NlsContexts.ProgressTitle String title, @NotNull JComboBox<T> comboBox) {
@@ -93,8 +91,7 @@ public final class TaskUiUtil {
      *
      * @return extra first combo box item
      */
-    @Nullable
-    public T getExtraItem() {
+    public @Nullable T getExtraItem() {
       return null;
     }
 
@@ -105,8 +102,7 @@ public final class TaskUiUtil {
      * @return selected combo box item
      * @see #addSelectedItemIfMissing()
      */
-    @Nullable
-    public T getSelectedItem() {
+    public @Nullable T getSelectedItem() {
       return getExtraItem();
     }
 

@@ -44,9 +44,8 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
     return Registry.is("lombok.dumb.mode.enabled", false);
   }
 
-  @NotNull
   @Override
-  protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+  protected @NotNull Set<String> transformModifiers(@NotNull PsiModifierList modifierList, final @NotNull Set<String> modifiers) {
     // skip if no lombok library is present
     if (!hasLombokLibrary(modifierList.getProject()) && !DumbIncompleteModeUtil.isIncompleteModeWithLombokAnnotation(modifierList)) {
       return modifiers;
@@ -123,27 +122,24 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
     return isLazyGetter;
   }
 
-  @Nullable
   @Override
-  protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
+  protected @Nullable PsiType inferType(@NotNull PsiTypeElement typeElement) {
     //skip if dumb mode, allow only `getAugments`
     if (DumbService.isDumb(typeElement.getProject())) return null;
 
     return hasLombokLibrary(typeElement.getProject()) ? ValProcessor.inferType(typeElement) : null;
   }
 
-  @NotNull
   @Override
-  public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
-                                                        @NotNull final Class<Psi> type) {
+  public @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                                 final @NotNull Class<Psi> type) {
     return getAugments(element, type, null);
   }
 
-  @NotNull
   @Override
-  public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
-                                                        @NotNull final Class<Psi> type,
-                                                        @Nullable String nameHint) {
+  public @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+                                                                 final @NotNull Class<Psi> type,
+                                                                 @Nullable String nameHint) {
     final List<Psi> emptyResult = Collections.emptyList();
     if (type != PsiClass.class && type != PsiField.class && type != PsiMethod.class || !(element instanceof PsiExtensibleClass psiClass)) {
       return emptyResult;
@@ -177,8 +173,7 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
     return getPsis(psiClass, type, nameHint);
   }
 
-  @NotNull
-  private static <Psi extends PsiElement> List<Psi> getPsis(PsiClass psiClass, Class<Psi> type, String nameHint) {
+  private static @NotNull <Psi extends PsiElement> List<Psi> getPsis(PsiClass psiClass, Class<Psi> type, String nameHint) {
     final List<Psi> result = new ArrayList<>();
     for (Processor processor : LombokProcessorManager.getProcessors(type)) {
       final List<? super PsiElement> generatedElements = processor.process(psiClass, nameHint);

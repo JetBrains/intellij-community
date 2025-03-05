@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -111,8 +111,7 @@ public final class MismatchedStringCaseInspection extends AbstractBaseJavaLocalI
     return StringCase.UNSURE;
   }
 
-  @Nullable
-  private static PsiExpression resolveDefinition(@NotNull PsiExpression expression) {
+  private static @Nullable PsiExpression resolveDefinition(@NotNull PsiExpression expression) {
     PsiReferenceExpression referenceExpression = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiReferenceExpression.class);
     if (referenceExpression == null) return null;
     PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
@@ -156,9 +155,8 @@ public final class MismatchedStringCaseInspection extends AbstractBaseJavaLocalI
     return new StringCase(hasLower, hasUpper);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {

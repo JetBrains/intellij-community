@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -198,7 +199,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
   }
 
-  public static @NotNull Collection<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
+  public static @Unmodifiable @NotNull Collection<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) {
       PsiUtilCore.ensureValid(element);
@@ -234,8 +235,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     };
   }
 
-  private static @NotNull Collection<InspectionSuppressor> checkDumbMode(@NotNull PsiFile file,
-                                                                         @NotNull Collection<InspectionSuppressor> suppressors) {
+  private static @Unmodifiable @NotNull Collection<InspectionSuppressor> checkDumbMode(@NotNull PsiFile file,
+                                                                                       @NotNull Collection<InspectionSuppressor> suppressors) {
     DumbService dumbService = DumbService.getInstance(file.getProject());
     if (dumbService.isDumb()) {
       return ContainerUtil.filter(suppressors, suppressor -> DumbService.isDumbAware(suppressor));
@@ -251,8 +252,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
   public void initialize(@NotNull GlobalInspectionContext context) {
   }
 
-  interface DefaultNameProvider {
-
+  @ApiStatus.Internal
+  public interface DefaultNameProvider {
     @NonNls
     @Nullable
     String getDefaultShortName();
@@ -273,7 +274,19 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     String getDefaultGroupDisplayName();
   }
 
-  volatile DefaultNameProvider myNameProvider;
+  private volatile DefaultNameProvider myNameProvider;
+
+  @ApiStatus.Internal
+  @Transient
+  public DefaultNameProvider getNameProvider() {
+    return myNameProvider;
+  }
+
+  @ApiStatus.Internal
+  @Transient
+  public void setNameProvider(DefaultNameProvider nameProvider) {
+    myNameProvider = nameProvider;
+  }
 
   /**
    * @see InspectionEP#groupDisplayName
@@ -524,7 +537,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return null;
   }
 
-  private @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  protected @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getClass();
   }
 

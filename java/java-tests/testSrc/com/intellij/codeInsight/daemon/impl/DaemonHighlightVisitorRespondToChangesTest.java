@@ -33,11 +33,13 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TestTimeOut;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +63,6 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    DaemonProgressIndicator.setDebug(true);
     PlatformTestUtil.assumeEnoughParallelism();
   }
 
@@ -84,6 +85,11 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -151,6 +157,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
   }
 
   @NotNull
+  @Unmodifiable
   private static List<HighlightInfo> filterMy(@NotNull List<? extends HighlightInfo> infos) {
     return ContainerUtil.filter(infos, h -> MyHighlightCommentsSubstringVisitor.isMy(h));
   }
@@ -310,7 +317,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     try {
       myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), TextEditorProvider.getInstance().getTextEditor(getEditor()), ArrayUtilRt.EMPTY_INT_ARRAY, true, () -> {});
@@ -398,7 +405,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
 
     STATE.put("MSG1", new State(new AtomicBoolean(), new AtomicBoolean(true), new AtomicBoolean()));
     STATE.put("MSG2", new State(new AtomicBoolean(), new AtomicBoolean(true), new AtomicBoolean()));
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     TestTimeOut timeOut = TestTimeOut.setTimeout(1, TimeUnit.MINUTES);
     myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), TextEditorProvider.getInstance().getTextEditor(getEditor()), ArrayUtilRt.EMPTY_INT_ARRAY, true, () -> {
@@ -593,10 +600,10 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     configureByText(JavaFileType.INSTANCE, text);
     assertEmpty(ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
     CodeInsightTestFixtureImpl.runWithRainbowEnabled(true, () -> {
-      myDaemonCodeAnalyzer.restart();
+      myDaemonCodeAnalyzer.restart(getTestName(false));
       assertNotEmpty(ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
     });
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     assertEmpty(ContainerUtil.filter(doHighlighting(), info -> info.type == RainbowHighlighter.RAINBOW_ELEMENT));
   }
 }

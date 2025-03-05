@@ -16,10 +16,10 @@
 package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -48,8 +48,7 @@ public final class PointlessBitwiseExpressionInspection extends BaseInspection {
   static final @NotNull TokenSet bitwiseTokens = TokenSet.create(AND, OR, XOR, LTLT, GTGT, GTGTGT);
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final String replacementExpression = calculateReplacementExpression(expression, new CommentTracker());
     return InspectionGadgetsBundle.message(
@@ -94,11 +93,11 @@ public final class PointlessBitwiseExpressionInspection extends BaseInspection {
     for (int i = 0, length = operands.length; i < length; i++) {
       final PsiExpression operand = operands[i];
       if (isZero(operand)) {
-        if (tokenType.equals(AND) || ExpressionParser.SHIFT_OPS.contains(tokenType) && previousOperand == null) {
+        if (tokenType.equals(AND) || BasicExpressionParser.SHIFT_OPS.contains(tokenType) && previousOperand == null) {
           return getText(expression, operands[0], operands[length - 1], PsiTypes.longType().equals(expression.getType()) ? "0L" : "0", ct);
         }
         else if (tokenType.equals(OR) || tokenType.equals(XOR) ||
-                 ExpressionParser.SHIFT_OPS.contains(tokenType) && previousOperand != null) {
+                 BasicExpressionParser.SHIFT_OPS.contains(tokenType) && previousOperand != null) {
           return getText(expression, i == length - 1 ? expression.getTokenBeforeOperand(operand) : operand, ct);
         }
       }
@@ -203,8 +202,7 @@ public final class PointlessBitwiseExpressionInspection extends BaseInspection {
   private class PointlessBitwiseFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "pointless.bitwise.expression.simplify.quickfix");
     }
@@ -263,7 +261,7 @@ public final class PointlessBitwiseExpressionInspection extends BaseInspection {
       if (sign.equals(AND) || sign.equals(OR) || sign.equals(XOR)) {
         isPointless = booleanExpressionIsPointless(operands);
       }
-      else if (ExpressionParser.SHIFT_OPS.contains(sign)) {
+      else if (BasicExpressionParser.SHIFT_OPS.contains(sign)) {
         isPointless = shiftExpressionIsPointless(operands);
       }
       else {

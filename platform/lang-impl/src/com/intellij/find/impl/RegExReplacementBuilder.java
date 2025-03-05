@@ -151,7 +151,7 @@ public final class RegExReplacementBuilder {
           break;
         }
       }
-      if (gsb.length() == 0) throw new IllegalArgumentException("named capturing group has 0 length name");
+      if (gsb.isEmpty()) throw new IllegalArgumentException("named capturing group has 0 length name");
       if (nextChar != '}') throw new IllegalArgumentException("named capturing group is missing trailing '}'");
       String gname = gsb.toString();
       if (isDigit(gname.charAt(0))) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -48,16 +48,14 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
     return JavaCompilerBundle.message("java.compiler.description");
   }
 
-  @NotNull
   @Override
   @SuppressWarnings("SpellCheckingInspection")
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.projectsettings.compiler.javacompiler";
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 
@@ -120,9 +118,8 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
     myUi.show(compiler.getId());
   }
 
-  @NotNull
   @Override
-  protected List<Configurable> createConfigurables() {
+  protected @NotNull List<Configurable> createConfigurables() {
     return myConfigurables;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -22,8 +22,7 @@ public class SearchRequestCollector {
     mySession = session;
   }
 
-  @NotNull
-  public SearchSession getSearchSession() {
+  public @NotNull SearchSession getSearchSession() {
     return mySession;
   }
 
@@ -94,7 +93,7 @@ public class SearchRequestCollector {
     searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), searchTarget, processor);
   }
 
-  private static String getContainerName(@NotNull final PsiElement target) {
+  private static String getContainerName(final @NotNull PsiElement target) {
     return ReadAction.compute(() -> {
       PsiElement container = getContainer(target);
       return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
@@ -147,13 +146,11 @@ public class SearchRequestCollector {
     }
   }
 
-  @NotNull
-  public List<QuerySearchRequest> takeQueryRequests() {
+  public @NotNull List<QuerySearchRequest> takeQueryRequests() {
     return takeRequests(myQueryRequests);
   }
 
-  @NotNull
-  private <T> List<T> takeRequests(@NotNull List<? extends T> list) {
+  private @NotNull <T> List<T> takeRequests(@NotNull List<? extends T> list) {
     synchronized (lock) {
       final List<T> requests = new ArrayList<>(list);
       list.clear();
@@ -161,13 +158,11 @@ public class SearchRequestCollector {
     }
   }
 
-  @NotNull
-  public List<PsiSearchRequest> takeSearchRequests() {
+  public @NotNull List<PsiSearchRequest> takeSearchRequests() {
     return takeRequests(myWordRequests);
   }
 
-  @NotNull
-  public List<Processor<? super Processor<? super PsiReference>>> takeCustomSearchActions() {
+  public @NotNull List<Processor<? super Processor<? super PsiReference>>> takeCustomSearchActions() {
     return takeRequests(myCustomSearchActions);
   }
 

@@ -14,8 +14,7 @@ public class MultiChildDescriptor {
     myElements = elements;
   }
 
-  @NotNull
-  public MyType getType() {
+  public @NotNull MyType getType() {
     return myType;
   }
 

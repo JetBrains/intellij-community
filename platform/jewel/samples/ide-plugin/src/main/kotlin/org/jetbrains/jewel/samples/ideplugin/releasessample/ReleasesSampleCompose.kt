@@ -74,6 +74,7 @@ import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.items
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.modifier.onHover
+import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.HorizontalSplitLayout
 import org.jetbrains.jewel.ui.component.Icon
@@ -89,10 +90,9 @@ import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
-import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
-fun ReleasesSampleCompose(project: Project) {
+internal fun ReleasesSampleCompose(project: Project) {
     var selectedItem: ContentItem? by remember { mutableStateOf(null) }
     HorizontalSplitLayout(
         first = {
@@ -243,7 +243,9 @@ private fun SearchBar(service: ReleasesSampleService, modifier: Modifier = Modif
     TextField(
         state = state,
         modifier = modifier.focusRequester(focusRequester),
-        leadingIcon = { Icon(AllIconsKeys.Actions.Find, contentDescription = null, Modifier.padding(end = 8.dp)) },
+        leadingIcon = {
+            Icon(AllIconsKeys.Actions.Find, contentDescription = "Find icon", Modifier.padding(end = 8.dp))
+        },
         trailingIcon = {
             if (filterText.isNotBlank()) {
                 CloseIconButton(service)
@@ -300,7 +302,7 @@ private fun OverflowMenu(currentContentSource: ContentSource<*>, onContentSource
 
     var menuVisible by remember { mutableStateOf(false) }
 
-    // Emulates Swing actions that pop up menus — they stay pressed while the menu is open
+    // Emulates Swing actions that pop up menus ï¿½ they stay pressed while the menu is open
     IconButton(
         modifier =
             Modifier.fillMaxHeight().thenIf(menuVisible) {
@@ -344,7 +346,7 @@ private fun OverflowMenu(currentContentSource: ContentSource<*>, onContentSource
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (it.isSameAs(currentContentSource)) {
-                            Icon(AllIconsKeys.Actions.Checked, null)
+                            Icon(AllIconsKeys.Actions.Checked, "Checked icon")
                         } else {
                             Spacer(Modifier.width(16.dp))
                         }

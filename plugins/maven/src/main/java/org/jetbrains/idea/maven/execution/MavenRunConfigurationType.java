@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -53,9 +53,8 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
     myFactory = new MavenRunConfigurationFactory(this);
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return RunnerBundle.message("maven.run.configuration.name");
   }
 
@@ -80,9 +79,7 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getId() {
+  public @NonNls @NotNull String getId() {
     return "MavenRunConfiguration";
   }
 
@@ -120,8 +117,7 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
     }
   }
 
-  @Nullable
-  private static String getMavenProjectName(final Project project, final MavenRunnerParameters runnerParameters) {
+  private static @Nullable String getMavenProjectName(final Project project, final MavenRunnerParameters runnerParameters) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(runnerParameters.getWorkingDirPath() + "/pom.xml");
     if (virtualFile != null) {
       MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile);
@@ -192,23 +188,20 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
     });
   }
 
-  @NotNull
-
-  public static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
-                                                                                    @Nullable MavenRunnerSettings runnerSettings,
-                                                                                    @NotNull MavenRunnerParameters params,
-                                                                                    @NotNull Project project) {
+  public static @NotNull RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
+                                                                                             @Nullable MavenRunnerSettings runnerSettings,
+                                                                                             @NotNull MavenRunnerParameters params,
+                                                                                             @NotNull Project project) {
     return createRunnerAndConfigurationSettings(generalSettings, runnerSettings, params, project, generateName(project, params), false);
   }
 
 
-  @NotNull
-  public static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
-                                                                                    @Nullable MavenRunnerSettings runnerSettings,
-                                                                                    @NotNull MavenRunnerParameters params,
-                                                                                    @NotNull Project project,
-                                                                                    @NotNull String name,
-                                                                                    boolean isDelegate) {
+  public static @NotNull RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
+                                                                                             @Nullable MavenRunnerSettings runnerSettings,
+                                                                                             @NotNull MavenRunnerParameters params,
+                                                                                             @NotNull Project project,
+                                                                                             @NotNull String name,
+                                                                                             boolean isDelegate) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
 
     RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration(name, type.myFactory);
@@ -228,15 +221,13 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
   public static class MavenRunConfigurationFactory extends ConfigurationFactory {
     public MavenRunConfigurationFactory(ConfigurationType type) {super(type);}
 
-    @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new MavenRunConfiguration(project, this, "");
     }
 
-    @NotNull
     @Override
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project, @NotNull RunManager runManager) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project, @NotNull RunManager runManager) {
       return new MavenRunConfiguration(project, this, "");
     }
 
@@ -245,9 +236,8 @@ public final class MavenRunConfigurationType implements ConfigurationType, DumbA
       return "Maven";
     }
 
-    @NotNull
     @Override
-    public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
+    public @NotNull RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
       MavenRunConfiguration cfg = (MavenRunConfiguration)super.createConfiguration(name, template);
 
       if (!StringUtil.isEmptyOrSpaces(cfg.getRunnerParameters().getWorkingDirPath())) return cfg;

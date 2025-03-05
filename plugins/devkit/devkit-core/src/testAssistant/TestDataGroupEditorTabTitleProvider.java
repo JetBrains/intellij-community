@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
@@ -9,9 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
 final class TestDataGroupEditorTabTitleProvider implements EditorTabTitleProvider {
-  @Nullable
   @Override
-  public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     if (!(file instanceof TestDataGroupVirtualFile)) {
       return null;
     }

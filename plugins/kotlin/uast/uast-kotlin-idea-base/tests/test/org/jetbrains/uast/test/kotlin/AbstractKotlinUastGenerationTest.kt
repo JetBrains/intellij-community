@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:OptIn(UnsafeCastFunction::class)
 
 package org.jetbrains.uast.test.kotlin
 
@@ -18,6 +20,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
@@ -25,7 +28,6 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.refreshed
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.kotlin.generate.KotlinUastElementFactory
-import org.jetbrains.uast.visitor.UastVisitor
 import kotlin.test.fail as kfail
 
 abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -717,27 +719,4 @@ abstract class AbstractKotlinUastGenerationTest : KotlinLightCodeInsightFixtureT
             assertNotNull(expression)
         }
     }
-}
-
-// it is a copy of org.jetbrains.uast.UastUtils.asRecursiveLogString with `appendLine` instead of `appendln` to avoid windows related issues
-fun UElement.asRecursiveLogString(render: (UElement) -> String = { it.asLogString() }): String {
-    val stringBuilder = StringBuilder()
-    val indent = "    "
-
-    accept(object : UastVisitor {
-        private var level = 0
-
-        override fun visitElement(node: UElement): Boolean {
-            stringBuilder.append(indent.repeat(level))
-            stringBuilder.appendLine(render(node))
-            level++
-            return false
-        }
-
-        override fun afterVisitElement(node: UElement) {
-            super.afterVisitElement(node)
-            level--
-        }
-    })
-    return stringBuilder.toString()
 }

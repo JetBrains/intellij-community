@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -29,7 +29,7 @@ public final class ClearTextAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     final Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component instanceof JTextComponent textComponent) {
-      e.getPresentation().setEnabled(textComponent.getText().length() > 0 && textComponent.isEditable());
+      e.getPresentation().setEnabled(!textComponent.getText().isEmpty() && textComponent.isEditable());
     }
     else {
       e.getPresentation().setEnabled(false);

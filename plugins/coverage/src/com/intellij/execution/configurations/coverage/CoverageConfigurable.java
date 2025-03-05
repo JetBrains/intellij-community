@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.configurations.coverage;
 
@@ -37,14 +37,14 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
   }
 
   @Override
-  protected void resetEditorFrom(@NotNull final RunConfigurationBase<?> runConfiguration) {
+  protected void resetEditorFrom(final @NotNull RunConfigurationBase<?> runConfiguration) {
     var configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
     myClassFilterEditor.setFilters(getCoveragePatterns(configuration, true));
     myExcludeClassFilterEditor.setFilters(getCoveragePatterns(configuration, false));
   }
 
   @Override
-  protected void applyEditorTo(@NotNull final RunConfigurationBase runConfiguration) {
+  protected void applyEditorTo(final @NotNull RunConfigurationBase runConfiguration) {
     var configuration = (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(runConfiguration);
     ClassFilter[] newCoveragePatterns = ArrayUtil.mergeArrays(myClassFilterEditor.getFilters(), myExcludeClassFilterEditor.getFilters());
     ClassFilter[] oldCoveragePatterns = ObjectUtils.chooseNotNull(configuration.getCoveragePatterns(), ClassFilter.EMPTY_ARRAY);
@@ -56,8 +56,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
   }
 
   @Override
-  @NotNull
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     JPanel result = new JPanel(new VerticalLayout(UIUtil.DEFAULT_VGAP));
 
     //noinspection DialogTitleCapitalization
@@ -68,9 +67,8 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
     //noinspection DialogTitleCapitalization
     result.add(new TitledSeparator(JavaCoverageBundle.message("exclude.coverage.filters.title")));
     myExcludeClassFilterEditor = new CoverageClassFilterEditor(myProject) {
-      @NotNull
       @Override
-      protected ClassFilter createFilter(String pattern) {
+      protected @NotNull ClassFilter createFilter(String pattern) {
         ClassFilter filter = super.createFilter(pattern);
         filter.setInclude(false);
         return filter;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -119,11 +119,10 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     return myTypeSelectorManager.getDefaultType();
   }
 
-  @Nullable
-  public static PsiExpression restoreExpression(PsiFile containingFile,
-                                                PsiVariable psiVariable,
-                                                PsiElementFactory elementFactory,
-                                                RangeMarker marker, String exprText) {
+  public static @Nullable PsiExpression restoreExpression(PsiFile containingFile,
+                                                          PsiVariable psiVariable,
+                                                          PsiElementFactory elementFactory,
+                                                          RangeMarker marker, String exprText) {
     if (exprText == null) return null;
     if (psiVariable == null || !psiVariable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());

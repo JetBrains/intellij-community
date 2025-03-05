@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.PathUtilRt;
@@ -13,34 +13,34 @@ import java.nio.file.Path;
 
 @ApiStatus.Internal
 public final class BuildDataPathsImpl implements BuildDataPaths {
-  private final File myDataStorageRoot;
+  private final Path dir;
 
+  /**
+   * @deprecated Use {@link #BuildDataPathsImpl(Path)}
+   */
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Deprecated
   public BuildDataPathsImpl(@NotNull File dataStorageRoot) {
-    myDataStorageRoot = dataStorageRoot;
+    dir = dataStorageRoot.toPath();
+  }
+
+  public BuildDataPathsImpl(@NotNull Path dataStorageRoot) {
+    dir = dataStorageRoot;
   }
 
   @Override
-  public @NotNull File getDataStorageRoot() {
-    return myDataStorageRoot;
+  public @NotNull Path getDataStorageDir() {
+    return dir;
   }
 
   @Override
-  public @NotNull File getTargetsDataRoot() {
-    return new File(myDataStorageRoot, "targets");
+  public @NotNull Path getTargetsDataRoot() {
+    return dir.resolve("targets");
   }
 
   @Override
-  public @NotNull File getTargetTypeDataRoot(@NotNull BuildTargetType<?> targetType) {
-    return new File(getTargetsDataRoot(), targetType.getTypeId());
-  }
-
   public @NotNull Path getTargetTypeDataRootDir(@NotNull BuildTargetType<?> targetType) {
-    return getTargetsDataRoot().toPath().resolve(targetType.getTypeId());
-  }
-
-  @Override
-  public @NotNull File getTargetDataRoot(@NotNull BuildTarget<?> target) {
-    return getTargetDataRootDir(target).toFile();
+    return dir.resolve("targets").resolve(targetType.getTypeId());
   }
 
   @Override

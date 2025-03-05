@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -31,30 +31,24 @@ import java.util.*;
 public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, Void> {
   private static final ID<String, Void> NAME = ID.create("PluginIdDependenciesIndex");
 
-  @NonNls
-  private static final String FILENAME_KEY_PREFIX = "___FILENAME___";
+  private static final @NonNls String FILENAME_KEY_PREFIX = "___FILENAME___";
 
-  @NonNls
-  private static final String PLUGIN_ID_KEY_PREFIX = "___PLUGIN_ID___";
+  private static final @NonNls String PLUGIN_ID_KEY_PREFIX = "___PLUGIN_ID___";
 
-  @NonNls
-  private static final String CONTENT_KEY_PREFIX = "___CONTENT_ID___";
+  private static final @NonNls String CONTENT_KEY_PREFIX = "___CONTENT_ID___";
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Void> getValueExternalizer() {
+  public @NotNull DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
   }
 
@@ -118,15 +112,12 @@ public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, 
     return ids;
   }
 
-  @Nullable
-  @NlsSafe
-  public static String getPluginId(Project project, VirtualFile file) {
+  public static @Nullable @NlsSafe String getPluginId(Project project, VirtualFile file) {
     final Set<String> keys = FileBasedIndex.getInstance().getFileData(NAME, file, project).keySet();
     return findPluginId(keys);
   }
 
-  @Nullable
-  private static String findPluginId(Set<String> data) {
+  private static @Nullable String findPluginId(Set<String> data) {
     final String pluginIdEntry = ContainerUtil.find(data, s -> StringUtil.startsWith(s, PLUGIN_ID_KEY_PREFIX));
     return pluginIdEntry == null ? null : StringUtil.trimStart(pluginIdEntry, PLUGIN_ID_KEY_PREFIX);
   }

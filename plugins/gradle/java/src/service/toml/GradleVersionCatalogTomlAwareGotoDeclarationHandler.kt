@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.toml
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
@@ -15,8 +15,7 @@ import org.jetbrains.plugins.gradle.util.isInVersionCatalogAccessor
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyBase
 
-class GradleVersionCatalogTomlAwareGotoDeclarationHandler : GotoDeclarationHandler {
-
+internal class GradleVersionCatalogTomlAwareGotoDeclarationHandler : GotoDeclarationHandler {
   override fun getGotoDeclarationTargets(sourceElement: PsiElement?, offset: Int, editor: Editor?): Array<PsiElement>? {
     if (!Registry.`is`(CommonGradleProjectResolverExtension.GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
       return null

@@ -1,7 +1,9 @@
 {
   "language": "Kotlin",
-  "projectPath": "../../eval-projects/intellij",
-  "outputDir": "ml-eval-name-suggestion-kotlin-output",
+  "projectPath": "../ml-eval/okhttp",
+  "repository": "https://github.com/square/okhttp",
+  "revision": "02df2bbe05248028cf64ea87e312748f42570072",
+  "outputDir": "bin/ml-eval-name-suggestion-kotlin-output",
   "strategy": {
     "placeholderName": "DUMMY",
     "suggestionsProvider": "LLM-Rename",
@@ -19,7 +21,8 @@
     "sessionsLimit": 10,
     "filesLimit": 5,
     "order": "LINEAR",
-    "trainTestSplit": 70
+    "trainTestSplit": 70,
+    "registry": ""
   },
   "reports": {
     "evaluationTitle": "Default",

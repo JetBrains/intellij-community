@@ -126,8 +126,7 @@ public class ConstExprent extends Exprent {
     DOUBLE_CONSTANTS.put((double)Long.MIN_VALUE, "(double)Long.MIN_VALUE");
   }
 
-  @NotNull
-  private VarType constType;
+  private @NotNull VarType constType;
   private final Object value;
   private final boolean boolPermitted;
 
@@ -185,9 +184,8 @@ public class ConstExprent extends Exprent {
     return new ConstExprent(constType, value, bytecode);
   }
 
-  @NotNull
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     return constType;
   }
 

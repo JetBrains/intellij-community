@@ -40,15 +40,13 @@ public final class ConstantConditionalExpressionInspection extends BaseInspectio
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiConditionalExpression expression = (PsiConditionalExpression)infos[0];
     return InspectionGadgetsBundle.message("constant.conditional.expression.problem.descriptor",
       calculateReplacementExpression(expression).getText());
   }
 
-  @NotNull
-  static PsiExpression calculateReplacementExpression(@NotNull PsiConditionalExpression exp) {
+  static @NotNull PsiExpression calculateReplacementExpression(@NotNull PsiConditionalExpression exp) {
     final PsiExpression thenExpression = exp.getThenExpression();
     final PsiExpression elseExpression = exp.getElseExpression();
     final PsiExpression condition = exp.getCondition();
@@ -65,8 +63,7 @@ public final class ConstantConditionalExpressionInspection extends BaseInspectio
   private static class ConstantConditionalFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "constant.conditional.expression.simplify.quickfix");
     }

@@ -25,6 +25,7 @@ abstract class AbstractControlFlow implements ControlFlow {
     return (int)(myElementToOffsetMap.getOrDefault(element, -1L) >>> 32);
   }
 
+  @Override
   public String toString() {
     StringBuilder buffer = new StringBuilder();
     List<Instruction> instructions = getInstructions();

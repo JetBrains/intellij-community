@@ -2,14 +2,13 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
@@ -29,15 +28,13 @@ import org.jetbrains.kotlin.types.typeUtil.isLong
 class RoundNumberFix(
     element: KtExpression,
     type: KotlinType,
-    private val disableIfAvailable: IntentionAction? = null
 ) : KotlinQuickFixAction<KtExpression>(element), LowPriorityAction {
 
     private val isTarget = type.isLongOrInt() && element.analyze(BodyResolveMode.PARTIAL).getType(element)?.isDoubleOrFloat() == true
 
     private val roundFunction = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(type).let { "roundTo$it" }
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile) =
-        disableIfAvailable?.isAvailable(project, editor, file) != true && isTarget
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile) = isTarget
 
     override fun getText() = KotlinBundle.message("round.using.0", roundFunction)
 

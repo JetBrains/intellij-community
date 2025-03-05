@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -139,8 +139,9 @@ public non-sealed class ModuleDescriptor implements Dependency {
   /**
    * For debug purposes only
    */
+  @Override
   public String toString() {
-    @NonNls final StringBuilder builder = new StringBuilder();
+    final @NonNls StringBuilder builder = new StringBuilder();
     builder.append("[Module: ").append(getContentRoots()).append(" | ");
     for (DetectedProjectRoot sourceRoot : getSourceRoots()) {
       builder.append(sourceRoot.getDirectory().getName()).append(",");
@@ -157,8 +158,7 @@ public non-sealed class ModuleDescriptor implements Dependency {
     myLibraryFiles.clear();
   }
 
-  @NotNull
-  public String computeModuleFilePath() throws InvalidDataException {
+  public @NotNull String computeModuleFilePath() throws InvalidDataException {
     final String name = getName();
     final Set<File> contentRoots = getContentRoots();
     if (!contentRoots.isEmpty()) {

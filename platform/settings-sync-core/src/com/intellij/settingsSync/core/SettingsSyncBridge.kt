@@ -73,18 +73,18 @@ class SettingsSyncBridge(
               }
             }
             while (!locked)
-            LOG.info("Lock obtained for exclusive event")
+            LOG.debug("Lock obtained for exclusive event")
             processExclusiveEvent(event)
           }
           catch (th: Throwable) {
-            LOG.error("An error occurred while obtaining lock for exclusive event", th)
+            LOG.warn("An error occurred while obtaining lock for exclusive event", th)
           }
           finally {
             if (locked) {
               if (!eventsLock.compareAndSet(true, false)) {
-                LOG.error("eventsLock already unlocked by someone else!!!")
+                LOG.warn("eventsLock already unlocked by someone else!!!")
               }
-              LOG.info("Lock released for exclusive event")
+              LOG.debug("Lock released for exclusive event")
             }
             pendingExclusiveEvents.remove(event)
           }

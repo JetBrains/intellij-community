@@ -19,7 +19,8 @@ import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.Ac
  * data. To compress data even further, we also use the fact that total record size is always a multiple 8
  * (see OFFSET_BUCKET) -- thus we could store capacity in 3 bits less.
  * <p>
- * <b>BEWARE</b>: header[a..b] notation below means _bits_ 'a' to 'b' -- not bytes as it is usually written!
+ * <b>BEWARE</b>: header[a..b] notation below means _bits_ 'a' to 'b' (inclusive) -- not bytes as it is usually
+ * written!
  * <pre>
  * Record format:
  *
@@ -34,13 +35,13 @@ import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.Ac
  *                       length   = header[8..15]               =[0..256]
  *                 LARGE(header: 5 bytes):
  *                       capacity = header[3..7]+[8..19] * 8 + 3 [3..1048_579]
- *                       length   = [20..40]                     [0..1048_576]
+ *                       length   = header[20..40]               [0..1048_576]
  *     MOVED: data is absent, length is absent (=0)
- *            header: 7bytes
+ *            header: 7 bytes
  *            capacity = header[2..7][8..23] * 8 + 1             [1.. 2^24+1]
  *            redirectToId = header[24..55]                      [32 bits]
  *     PADDING: data is absent, length is absent (=capacity), redirectTo is absent
- *            header: 3 byte
+ *            header: 3 bytes
  *            capacity = header[2..23]*8 + 5                     =[5..33_554_437]
  *     PARTIAL: data is absent, length is absent (=capacity)
  *            header: 7 bytes
@@ -66,21 +67,21 @@ public abstract class RecordLayout {
   public static final int OFFSET_BUCKET_BITS = 3;
 
   /** @return one of RECORD_TYPE_XXX constants */
-  public static byte recordType(final ByteBuffer source,
-                                final int offset) {
-    final byte headerByte0 = source.get(offset);
+  public static byte recordType(ByteBuffer source,
+                                int offset) {
+    byte headerByte0 = source.get(offset);
     return recordType(headerByte0);
   }
 
   /** @return one of RECORD_TYPE_XXX constants */
-  public static byte recordType(final byte headerByte0) {
+  public static byte recordType(byte headerByte0) {
     return (byte)(headerByte0 & RECORD_TYPE_MASK);
   }
 
-  public static RecordLayout recordLayout(final ByteBuffer source,
-                                          final int offset) {
-    final byte headerByte0 = source.get(offset);
-    final byte recordType = recordType(headerByte0);
+  public static RecordLayout recordLayout(ByteBuffer source,
+                                          int offset) {
+    byte headerByte0 = source.get(offset);
+    byte recordType = recordType(headerByte0);
     return switch (recordType) {
       case RECORD_TYPE_ACTUAL -> recordLayoutForType(ActualRecords.recordSizeType(headerByte0));
       case RECORD_TYPE_MOVED -> MovedRecord.INSTANCE;
@@ -95,31 +96,31 @@ public abstract class RecordLayout {
 
   public abstract int headerSize();
 
-  public abstract void putRecord(final ByteBuffer target,
-                                 final int offset,
-                                 final int capacity,
-                                 final int length,
-                                 final int redirectTo,
-                                 final ByteBuffer payload);
+  public abstract void putRecord(ByteBuffer target,
+                                 int offset,
+                                 int capacity,
+                                 int length,
+                                 int redirectTo,
+                                 ByteBuffer payload);
 
-  public void putLength(final ByteBuffer buffer,
-                        final int offset,
-                        final int newLength) {
+  public void putLength(ByteBuffer buffer,
+                        int offset,
+                        int newLength) {
     throw new UnsupportedOperationException("Method not implemented for " + getClass());
   }
 
-  public abstract int capacity(final ByteBuffer source,
-                               final int offset);
+  public abstract int capacity(ByteBuffer source,
+                               int offset);
 
-  public abstract int length(final ByteBuffer source,
-                             final int offset);
+  public abstract int length(ByteBuffer source,
+                             int offset);
 
-  public int redirectToId(final ByteBuffer source,
-                          final int offset) {
+  public int redirectToId(ByteBuffer source,
+                          int offset) {
     return StreamlinedBlobStorage.NULL_ID;
   }
 
-  public int fullRecordSize(final int capacity) {
+  public int fullRecordSize(int capacity) {
     return headerSize() + capacity;
   }
 
@@ -135,11 +136,11 @@ public abstract class RecordLayout {
     private static final byte RECORD_SIZE_TYPE_LARGE = (byte)0b0010_0000;
     private static final byte RECORD_SIZE_TYPE_SMALL = (byte)0b0000_0000;
 
-    public static byte recordSizeType(final byte headerByte0) {
+    public static byte recordSizeType(byte headerByte0) {
       return (byte)(headerByte0 & RECORD_SIZE_TYPE_MASK);
     }
 
-    public static byte recordSizeTypeByCapacity(final int capacity) {
+    public static byte recordSizeTypeByCapacity(int capacity) {
       if (capacity <= ActualRecords.SmallRecord.MAX_CAPACITY) {
         return RECORD_SIZE_TYPE_SMALL;
       }
@@ -149,7 +150,7 @@ public abstract class RecordLayout {
       throw new IllegalArgumentException("capacity(=" + capacity + ") is too large for a storage");
     }
 
-    public static RecordLayout recordLayoutForType(final byte recordSizeType) {
+    public static RecordLayout recordLayoutForType(byte recordSizeType) {
       return switch (recordSizeType) {
         case RECORD_SIZE_TYPE_SMALL -> ActualRecords.SmallRecord.INSTANCE;
         case RECORD_SIZE_TYPE_LARGE -> ActualRecords.LargeRecord.INSTANCE;
@@ -174,25 +175,25 @@ public abstract class RecordLayout {
       public static final int MAX_CAPACITY = (CAPACITY_MASK << OFFSET_BUCKET_BITS) + MIN_CAPACITY;
 
       @Override
-      public void putRecord(final ByteBuffer target,
-                            final int offset,
-                            final int capacity,
-                            final int length,
-                            final int redirectTo,
-                            final ByteBuffer payload) {
+      public void putRecord(ByteBuffer target,
+                            int offset,
+                            int capacity,
+                            int length,
+                            int redirectTo,
+                            ByteBuffer payload) {
         if (capacity < MIN_CAPACITY || capacity > MAX_CAPACITY) {
           throw new IllegalArgumentException("capacity(" + capacity + ") must be in [" + MIN_CAPACITY + ".." + MAX_CAPACITY + "]");
         }
         if (length < 0 || length > MAX_CAPACITY) {
           throw new IllegalArgumentException("length(" + length + ") must be in [0, " + MAX_CAPACITY + "]");
         }
-        final int capacityOverFirstBucket = capacity - MIN_CAPACITY;
+        int capacityOverFirstBucket = capacity - MIN_CAPACITY;
         if ((capacityOverFirstBucket % OFFSET_BUCKET) != 0) {
           throw new IllegalArgumentException("capacity-MIN (=" + capacityOverFirstBucket + ") must be rounded up to " + OFFSET_BUCKET);
         }
-        final int packedCapacity = capacityOverFirstBucket >> OFFSET_BUCKET_BITS;
-        final byte headerByte0 = (byte)(RECORD_TYPE_ACTUAL | RECORD_SIZE_TYPE_SMALL | packedCapacity);
-        final byte headerByte1 = (byte)length;
+        int packedCapacity = capacityOverFirstBucket >> OFFSET_BUCKET_BITS;
+        byte headerByte0 = (byte)(RECORD_TYPE_ACTUAL | RECORD_SIZE_TYPE_SMALL | packedCapacity);
+        byte headerByte1 = (byte)length;
         target.put(offset, headerByte0);
         target.put(offset + 1, headerByte1);
         target.put(offset + HEADER_SIZE, payload, payload.position(), length);
@@ -200,40 +201,40 @@ public abstract class RecordLayout {
 
 
       @Override
-      public void putLength(final ByteBuffer target,
-                            final int offset,
-                            final int newLength) {
+      public void putLength(ByteBuffer target,
+                            int offset,
+                            int newLength) {
         if (newLength < 0 || newLength > MAX_CAPACITY) {
           throw new IllegalArgumentException("length(" + newLength + ") must be in [0, " + MAX_CAPACITY + "]");
         }
-        final byte headerByte1 = (byte)newLength;
+        byte headerByte1 = (byte)newLength;
         target.put(offset + 1, headerByte1);
       }
 
       @Override
-      public int capacity(final ByteBuffer source,
-                          final int offset) {
-        final byte headerByte0 = source.get(offset);
+      public int capacity(ByteBuffer source,
+                          int offset) {
+        byte headerByte0 = source.get(offset);
         return capacity(headerByte0);
       }
 
       @Override
-      public int length(final ByteBuffer source,
-                        final int offset) {
-        final byte headerByte1 = source.get(offset + 1);
+      public int length(ByteBuffer source,
+                        int offset) {
+        byte headerByte1 = source.get(offset + 1);
         return Byte.toUnsignedInt(headerByte1);
       }
 
-      public static int capacity(final byte headerByte0) {
-        final byte recordSizeType = recordSizeType(headerByte0);
+      public static int capacity(byte headerByte0) {
+        byte recordSizeType = recordSizeType(headerByte0);
         if (recordSizeType != RECORD_SIZE_TYPE_SMALL) {
           throw new IllegalArgumentException("headerByte0(" + headerByte0 + ") doesn't encode SMALL record!");
         }
         return ((headerByte0 & CAPACITY_MASK) << OFFSET_BUCKET_BITS) + MIN_CAPACITY;
       }
 
-      public static int length(final byte headerByte0,
-                               final byte headerByte1) {
+      public static int length(byte headerByte0,
+                               byte headerByte1) {
         return Byte.toUnsignedInt(headerByte1);
       }
 
@@ -285,18 +286,18 @@ public abstract class RecordLayout {
       }
 
       @Override
-      public void putRecord(final ByteBuffer target,
-                            final int offset,
-                            final int capacity,
-                            final int length,
-                            final int redirectTo,
-                            final ByteBuffer payload) {
-        final int packedCapacity = getPackedCapacity(capacity, length);
-        final int first5BitsOfCapacity = packedCapacity >> CAPACITY_BITS_1;
-        final byte headerByte0 = (byte)(RECORD_TYPE_ACTUAL | RECORD_SIZE_TYPE_LARGE | first5BitsOfCapacity);
+      public void putRecord(ByteBuffer target,
+                            int offset,
+                            int capacity,
+                            int length,
+                            int redirectTo,
+                            ByteBuffer payload) {
+        int packedCapacity = getPackedCapacity(capacity, length);
+        int first5BitsOfCapacity = packedCapacity >> CAPACITY_BITS_1;
+        byte headerByte0 = (byte)(RECORD_TYPE_ACTUAL | RECORD_SIZE_TYPE_LARGE | first5BitsOfCapacity);
 
-        final int headerBytes1_4 = Integer.rotateRight(packedCapacity & CAPACITY_MASK_1, CAPACITY_BITS_1)
-                                   | (length & LENGTH_MASK);
+        int headerBytes1_4 = Integer.rotateRight(packedCapacity & CAPACITY_MASK_1, CAPACITY_BITS_1)
+                             | (length & LENGTH_MASK);
 
         target.put(offset, headerByte0);
         target.putInt(offset + 1, headerBytes1_4);
@@ -310,7 +311,7 @@ public abstract class RecordLayout {
         if (length < 0 || length > MAX_CAPACITY) {
           throw new IllegalArgumentException("length(" + length + ") must be in [0, " + MAX_CAPACITY + "]");
         }
-        final int capacityOverFirstBucket = capacity - MIN_CAPACITY;
+        int capacityOverFirstBucket = capacity - MIN_CAPACITY;
         if ((capacityOverFirstBucket % OFFSET_BUCKET) != 0) {
           throw new IllegalArgumentException("capacity-MIN (=" + capacityOverFirstBucket + ") must be rounded up to " + OFFSET_BUCKET);
         }
@@ -318,41 +319,41 @@ public abstract class RecordLayout {
       }
 
       @Override
-      public void putLength(final ByteBuffer target,
-                            final int offset,
-                            final int length) {
+      public void putLength(ByteBuffer target,
+                            int offset,
+                            int length) {
         if (length < 0 || length > MAX_CAPACITY) {
           throw new IllegalArgumentException("length(" + length + ") must be in [0, " + MAX_CAPACITY + "]");
         }
-        final int headerBytes1_4 = target.getInt(offset + 1);
-        final int headerBytes1_4_New = (headerBytes1_4 & (~LENGTH_MASK)) | (length & LENGTH_MASK);
+        int headerBytes1_4 = target.getInt(offset + 1);
+        int headerBytes1_4_New = (headerBytes1_4 & (~LENGTH_MASK)) | (length & LENGTH_MASK);
         target.putInt(offset + 1, headerBytes1_4_New);
       }
 
       @Override
-      public int capacity(final ByteBuffer source,
-                          final int offset) {
-        final byte headerByte0 = source.get(offset);
-        final int headerBytes1_4 = source.getInt(offset + 1);
+      public int capacity(ByteBuffer source,
+                          int offset) {
+        byte headerByte0 = source.get(offset);
+        int headerBytes1_4 = source.getInt(offset + 1);
         return capacity(headerByte0, headerBytes1_4);
       }
 
       @Override
-      public int length(final ByteBuffer source,
-                        final int offset) {
-        final int headerBytes1_4 = source.getInt(offset + 1);
+      public int length(ByteBuffer source,
+                        int offset) {
+        int headerBytes1_4 = source.getInt(offset + 1);
         return headerBytes1_4 & LENGTH_MASK;
       }
 
-      public static int capacity(final byte headerByte0,
-                                 final int headerBytes1_4) {
-        final byte recordSizeType = recordSizeType(headerByte0);
+      public static int capacity(byte headerByte0,
+                                 int headerBytes1_4) {
+        byte recordSizeType = recordSizeType(headerByte0);
         if (recordSizeType != RECORD_SIZE_TYPE_LARGE) {
           throw new IllegalArgumentException("headerByte0(" + headerByte0 + ") doesn't encode LARGE record!");
         }
-        final int first5bits = headerByte0 & CAPACITY_MASK_0;
-        final int next12bits = (headerBytes1_4 >> LENGTH_BITS) & CAPACITY_MASK_1;
-        final int allBits = (first5bits << CAPACITY_BITS_1) | next12bits;
+        int first5bits = headerByte0 & CAPACITY_MASK_0;
+        int next12bits = (headerBytes1_4 >> LENGTH_BITS) & CAPACITY_MASK_1;
+        int allBits = (first5bits << CAPACITY_BITS_1) | next12bits;
         return (allBits << 3) + MIN_CAPACITY;
       }
     }
@@ -392,28 +393,28 @@ public abstract class RecordLayout {
     }
 
     @Override
-    public void putRecord(final ByteBuffer target,
-                          final int offset,
-                          final int capacity,
-                          final int length,
-                          final int redirectToId,
-                          final ByteBuffer payload) {
+    public void putRecord(ByteBuffer target,
+                          int offset,
+                          int capacity,
+                          int length,
+                          int redirectToId,
+                          ByteBuffer payload) {
       if (capacity < MIN_CAPACITY || capacity > MAX_CAPACITY) {
         throw new IllegalArgumentException("capacity(" + capacity + ") must be in [" + MIN_CAPACITY + ".." + MAX_CAPACITY + "]");
       }
       if (length != 0) {
         throw new IllegalArgumentException("length(" + length + ") must be in 0 for MOVED records");
       }
-      final int capacityOverFirstBucket = capacity - MIN_CAPACITY;
+      int capacityOverFirstBucket = capacity - MIN_CAPACITY;
       if ((capacityOverFirstBucket % OFFSET_BUCKET) != 0) {
         throw new IllegalArgumentException("capacity-MIN (=" + capacityOverFirstBucket + ") must be rounded up to " + OFFSET_BUCKET);
       }
 
-      final int packedCapacity = capacityOverFirstBucket >> OFFSET_BUCKET_BITS;
-      final int highest6BitsOfCapacity = packedCapacity >> CAPACITY_BITS_1_2;
-      final byte headerByte0 = (byte)(RECORD_TYPE_MOVED | highest6BitsOfCapacity);
+      int packedCapacity = capacityOverFirstBucket >> OFFSET_BUCKET_BITS;
+      int highest6BitsOfCapacity = packedCapacity >> CAPACITY_BITS_1_2;
+      byte headerByte0 = (byte)(RECORD_TYPE_MOVED | highest6BitsOfCapacity);
 
-      final short headerBytes1_2 = (short)(packedCapacity & CAPACITY_MASK_1_2);
+      short headerBytes1_2 = (short)(packedCapacity & CAPACITY_MASK_1_2);
 
 
       target.put(offset, headerByte0);
@@ -421,34 +422,34 @@ public abstract class RecordLayout {
       target.putInt(offset + REDIRECT_TO_OFFSET, redirectToId);
     }
 
-    public void putRedirectTo(final ByteBuffer target,
-                              final int offset,
-                              final int redirectToId) {
+    public void putRedirectTo(ByteBuffer target,
+                              int offset,
+                              int redirectToId) {
       target.putInt(offset + REDIRECT_TO_OFFSET, redirectToId);
     }
 
     @Override
-    public int capacity(final ByteBuffer source,
-                        final int offset) {
-      final byte headerByte0 = source.get(offset);
-      final short headerBytes1_2 = source.getShort(offset + 1);
-      final int packedCapacity = ((headerByte0 & CAPACITY_MASK_0) << CAPACITY_BITS_1_2)
-                                 | (headerBytes1_2 & CAPACITY_MASK_1_2);
-      final int capacity = (packedCapacity << OFFSET_BUCKET_BITS)
-                           + MIN_CAPACITY;
+    public int capacity(ByteBuffer source,
+                        int offset) {
+      byte headerByte0 = source.get(offset);
+      short headerBytes1_2 = source.getShort(offset + 1);
+      int packedCapacity = ((headerByte0 & CAPACITY_MASK_0) << CAPACITY_BITS_1_2)
+                           | (headerBytes1_2 & CAPACITY_MASK_1_2);
+      int capacity = (packedCapacity << OFFSET_BUCKET_BITS)
+                     + MIN_CAPACITY;
       assert capacity <= MAX_CAPACITY : "capacity(" + capacity + ") > MAX " + MAX_CAPACITY;
       return capacity;
     }
 
     @Override
-    public int length(final ByteBuffer source,
-                      final int offset) {
+    public int length(ByteBuffer source,
+                      int offset) {
       return 0;
     }
 
     @Override
-    public int redirectToId(final ByteBuffer source,
-                            final int offset) {
+    public int redirectToId(ByteBuffer source,
+                            int offset) {
       return source.getInt(offset + REDIRECT_TO_OFFSET);
     }
   }
@@ -485,18 +486,18 @@ public abstract class RecordLayout {
     }
 
     @Override
-    public void putRecord(final ByteBuffer target,
-                          final int offset,
-                          final int capacity,
-                          final int length,
-                          final int redirectToId,
-                          final ByteBuffer payload) {
-      final int packedCapacity = getPackedCapacity(capacity);
+    public void putRecord(ByteBuffer target,
+                          int offset,
+                          int capacity,
+                          int length,
+                          int redirectToId,
+                          ByteBuffer payload) {
+      int packedCapacity = getPackedCapacity(capacity);
 
-      final byte headerByte0 = (byte)(RECORD_TYPE_PADDING
-                                      | (((packedCapacity >> CAPACITY_BITS_2) >> CAPACITY_BITS_1) & CAPACITY_MASK_0));
-      final byte headerByte1 = (byte)((packedCapacity >> CAPACITY_BITS_2) & CAPACITY_MASK_1);
-      final byte headerByte2 = (byte)(packedCapacity & CAPACITY_MASK_2);
+      byte headerByte0 = (byte)(RECORD_TYPE_PADDING
+                                | (((packedCapacity >> CAPACITY_BITS_2) >> CAPACITY_BITS_1) & CAPACITY_MASK_0));
+      byte headerByte1 = (byte)((packedCapacity >> CAPACITY_BITS_2) & CAPACITY_MASK_1);
+      byte headerByte2 = (byte)(packedCapacity & CAPACITY_MASK_2);
       target.put(offset, headerByte0);
       target.put(offset + 1, headerByte1);
       target.put(offset + 2, headerByte2);
@@ -507,7 +508,7 @@ public abstract class RecordLayout {
         throw new IllegalArgumentException(
           "PaddingRecord capacity(" + capacity + ") must be in [" + MIN_CAPACITY + ".." + MAX_CAPACITY + "]");
       }
-      final int capacityOverFirstBucket = capacity - MIN_CAPACITY;
+      int capacityOverFirstBucket = capacity - MIN_CAPACITY;
       if ((capacityOverFirstBucket % OFFSET_BUCKET) != 0) {
         throw new IllegalArgumentException("capacity-MIN (=" + capacityOverFirstBucket + ") must be rounded up to " + OFFSET_BUCKET);
       }
@@ -516,20 +517,20 @@ public abstract class RecordLayout {
     }
 
     @Override
-    public int capacity(final ByteBuffer source,
-                        final int offset) {
-      final byte headerByte0 = source.get(offset);
-      final byte headerByte1 = source.get(offset + 1);
-      final byte headerByte2 = source.get(offset + 2);
-      final int packedCapacity = ((((headerByte0 & CAPACITY_MASK_0) << CAPACITY_BITS_1)
-                                   | (headerByte1 & CAPACITY_MASK_1)) << CAPACITY_BITS_2)
-                                 | (headerByte2 & CAPACITY_MASK_2);
+    public int capacity(ByteBuffer source,
+                        int offset) {
+      byte headerByte0 = source.get(offset);
+      byte headerByte1 = source.get(offset + 1);
+      byte headerByte2 = source.get(offset + 2);
+      int packedCapacity = ((((headerByte0 & CAPACITY_MASK_0) << CAPACITY_BITS_1)
+                             | (headerByte1 & CAPACITY_MASK_1)) << CAPACITY_BITS_2)
+                           | (headerByte2 & CAPACITY_MASK_2);
       return (packedCapacity << OFFSET_BUCKET_BITS) + MIN_CAPACITY;
     }
 
     @Override
-    public int length(final ByteBuffer source,
-                      final int offset) {
+    public int length(ByteBuffer source,
+                      int offset) {
       return 0;
     }
   }

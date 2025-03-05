@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.AnchoredPoint
@@ -87,7 +89,7 @@ class CodeFloatingToolbar(
   }
 
   override fun isEnabled(): Boolean {
-    return editor.selectionModel.hasSelection() && !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
+    return !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
            && editor.document.isWritable && !TEMPORARILY_DISABLED
   }
 
@@ -184,7 +186,7 @@ class CodeFloatingToolbar(
     val project = editor.project ?: return null
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
     val elementAtOffset = psiFile?.findElementAt(editor.caretModel.primaryCaret.offset)
-    val targetLanguage = elementAtOffset?.language ?: return null
+    val targetLanguage = elementAtOffset?.let { PsiUtilCore.findLanguageFromElement(it) } ?: return null
     return findActionGroupFor(targetLanguage)
   }
 
@@ -195,6 +197,10 @@ class CodeFloatingToolbar(
       addAction(customizeAction)
       addAction(disableAction)
     }
+  }
+
+  override fun isAvailableForSelection(editor: Editor, elementAtStart: PsiElement, elementAtEnd: PsiElement): Boolean {
+    return editor.selectionModel.hasSelection() || !isSelectionRequiredForFloatingToolbar(PsiUtilCore.findLanguageFromElement(elementAtStart))
   }
 
   fun attachPopupToButton(button: ActionButton, popup: JBPopup) {
@@ -300,7 +306,10 @@ class CodeFloatingToolbar(
             cancel()
           }
           withContext(Dispatchers.EDT + modality.asContextElement()) {
-            if (isPopupButton) button.click() else activeMenuPopup?.cancel()
+            if (isPopupButton) writeIntentReadAction {
+              button.click()
+            }
+            else activeMenuPopup?.cancel()
           }
         }
       }

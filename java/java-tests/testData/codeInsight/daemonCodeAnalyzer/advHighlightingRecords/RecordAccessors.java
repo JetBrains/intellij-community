@@ -15,7 +15,7 @@ record RecNonPublic(int x, int y, int z) {
   private int <error descr="Record component accessor must be 'public'">z</error>() {return z;}
 }
 record RecThrows(int x) {
-  public int x() <error descr="'throws' not allowed on record component accessor">throws</error> Exception {return x;}
+  public int x() <error descr="Record component accessor should not declare a 'throws' clause">throws</error> Exception {return x;}
   public int y() throws Exception {return x;}
 }
 record CheckOverride(int x) {
@@ -29,4 +29,4 @@ record VarArg(int... x) {
 interface I {
   String bar();
 }
-record Impl(<error descr="'bar()' in 'Impl' clashes with 'bar()' in 'I'; attempting to use incompatible return type">int</error> bar) implements I {}
+record Impl(<error descr="'bar()' in 'Impl' clashes with 'bar()' in 'I'; incompatible return type">int</error> bar) implements I {}

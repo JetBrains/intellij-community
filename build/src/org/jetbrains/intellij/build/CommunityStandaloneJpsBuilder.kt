@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.Dispatchers
@@ -101,7 +101,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
     "aalto-xml",
     "caffeine",
     "mvstore",
-    "jetbrains.kotlinx.metadata.jvm",
+    "kotlin-metadata",
     "hash4j"
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)

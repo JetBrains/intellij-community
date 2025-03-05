@@ -1,0 +1,34 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.slicer
+
+import com.intellij.slicer.SliceLanguageSupportProvider
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.codeInsight.slicer.HackedSliceNullnessAnalyzerBase
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.k2.codeinsight.slicer.KotlinSliceProvider
+import org.jetbrains.kotlin.idea.slicer.AbstractSlicerNullnessGroupingTest
+import java.io.File
+
+abstract class AbstractFirSlicerNullnessGroupingTest: AbstractSlicerNullnessGroupingTest() {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K2
+    override fun createNullnessAnalyzer(sliceProvider: SliceLanguageSupportProvider): HackedSliceNullnessAnalyzerBase {
+        return (sliceProvider as KotlinSliceProvider).nullnessAnalyzer
+    }
+
+    override fun getResultsFile(path: String): File {
+        val file = File(path.replace(".kt", ".k2.nullnessGroups.txt"))
+        if (file.exists()) {
+            return file
+        }
+        return super.getResultsFile(path)
+    }
+
+    override fun tearDown() {
+        runAll(
+            { runInEdtAndWait { project.invalidateCaches() } },
+            { super.tearDown() }
+        )
+    }
+}

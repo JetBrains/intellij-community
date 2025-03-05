@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -86,7 +86,7 @@ public final class DocumentOfPagesModel {
   }
 
   public void removeLastPage(Project project) {
-    if (pagesInDocument.size() > 0) {
+    if (!pagesInDocument.isEmpty()) {
       int indexOfLastPage = pagesInDocument.size() - 1;
       Page lastPage = pagesInDocument.get(indexOfLastPage);
       pagesInDocument.remove(indexOfLastPage);
@@ -131,7 +131,7 @@ public final class DocumentOfPagesModel {
   }
 
   public int absoluteSymbolPositionToOffset(AbsoluteSymbolPosition absolutePosition) {
-    if (absolutePosition == null || pagesInDocument.size() == 0) {
+    if (absolutePosition == null || pagesInDocument.isEmpty()) {
       return 0;
     }
 

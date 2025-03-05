@@ -159,9 +159,9 @@ internal class NonIncrementalContributors(private val project: Project) {
         }
         //todo use comparisonId for incremental updates?
         val sourceRoots = checkNotNull(library.sourceRoots, "getSourceRoots()", library) ?: emptyList<VirtualFile>()
-        registerRoots(sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE, if (library is JavaSyntheticLibrary) LibrarySourceRootFileSetData(null, "") else SyntheticLibrarySourceRootData)
+        registerRoots(sourceRoots, WorkspaceFileKind.EXTERNAL_SOURCE, if (library is JavaSyntheticLibrary) LibrarySourceRootFileSetData(null) else SyntheticLibrarySourceRootData)
         val binaryRoots = checkNotNull(library.binaryRoots, "getBinaryRoots()", library) ?: emptyList<VirtualFile>()
-        registerRoots(binaryRoots, WorkspaceFileKind.EXTERNAL, if (library is JavaSyntheticLibrary) LibraryRootFileSetData(null, "") else DummyWorkspaceFileSetData)
+        registerRoots(binaryRoots, WorkspaceFileKind.EXTERNAL, if (library is JavaSyntheticLibrary) LibraryRootFileSetData(null) else DummyWorkspaceFileSetData)
         val excludedRoots = checkNotNull(library.excludedRoots, "getExcludedRoots()", library) ?: emptySet<VirtualFile>()
         excludedRoots.forEach {
           result.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, NonIncrementalMarker))

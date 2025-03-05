@@ -113,6 +113,7 @@ public class LocalDebugger implements Debugger {
     }
   }
 
+  @Override
   public void resume() throws DebuggerStoppedException {
     synchronized (theLock) {
       if (myState == State.STOPPED) {
@@ -126,6 +127,7 @@ public class LocalDebugger implements Debugger {
     }
   }
 
+  @Override
   public void pause() {
     synchronized (theLock) {
       if (myState == State.STOPPED) {
@@ -150,12 +152,14 @@ public class LocalDebugger implements Debugger {
     }
   }
 
+  @Override
   public State getState() {
     synchronized (theLock) {
       return myState;
     }
   }
 
+  @Override
   @SuppressWarnings({ "deprecation" })
   public void stop(boolean force) {
     stop0();
@@ -174,6 +178,7 @@ public class LocalDebugger implements Debugger {
     }
   }
 
+  @Override
   public State waitForStateChange(State state) {
     try {
       synchronized (theLock) {
@@ -191,6 +196,7 @@ public class LocalDebugger implements Debugger {
     }
   }
 
+  @Override
   public boolean waitForDebuggee() {
     try {
       synchronized (theLock) {
@@ -205,12 +211,14 @@ public class LocalDebugger implements Debugger {
     }
   }
 
+  @Override
   public boolean isStopped() {
     synchronized (theLock) {
       return myState == State.STOPPED;
     }
   }
 
+  @Override
   public boolean start() {
     assert myState == State.CREATED : "Already started";
 
@@ -272,7 +280,7 @@ public class LocalDebugger implements Debugger {
   }
 
   private boolean evalCondition(String condition) throws EvaluationException {
-    if (condition != null && condition.length() > 0) {
+    if (condition != null && !condition.isEmpty()) {
       if (!"true".equals(eval("boolean(" + condition + ")").getValue().toString())) {
         return false;
       }
@@ -284,7 +292,7 @@ public class LocalDebugger implements Debugger {
     if (logMessage != null) {
       final String uri = frame.getURI();
       final String pos = uri.substring(uri.lastIndexOf('/') + 1) + ":" + frame.getLineNumber();
-      System.out.println("[" + pos + "]: " + (logMessage.length() > 0 ? eval(logMessage).getValue().toString() : "<no message>"));
+      System.out.println("[" + pos + "]: " + (!logMessage.isEmpty() ? eval(logMessage).getValue().toString() : "<no message>"));
 
       if (traceMessage != null) {
         myEventQueue.trace(makeTraceMessage(traceMessage));
@@ -298,7 +306,7 @@ public class LocalDebugger implements Debugger {
   }
 
   private String makeTraceMessage(String traceMessage) throws EvaluationException {
-    if (traceMessage.length() > 0) {
+    if (!traceMessage.isEmpty()) {
       return eval(traceMessage).getValue().toString();
     } else {
       return null;
@@ -317,10 +325,12 @@ public class LocalDebugger implements Debugger {
     ((AbstractFrame<?>)myFrames.removeFirst()).invalidate();
   }
 
+  @Override
   public void step() {
     final int targetSize = myFrames.size();
 
     myCurrentStopCondition = new Condition() {
+      @Override
       public boolean value() {
         return myFrames.size() <= targetSize;
       }
@@ -328,12 +338,14 @@ public class LocalDebugger implements Debugger {
     resume();
   }
 
+  @Override
   public void stepInto() {
     myCurrentStopCondition = Condition.TRUE;
 
     resume();
   }
 
+  @Override
   public Value eval(String expr) throws EvaluationException {
     final StyleFrame frame = getCurrentFrame();
     if (frame == null) {
@@ -342,14 +354,17 @@ public class LocalDebugger implements Debugger {
     return frame.eval(expr);
   }
 
+  @Override
   public StyleFrame getCurrentFrame() {
-    return myFrames.size() > 0 ? myFrames.getFirst() : null;
+    return !myFrames.isEmpty() ? myFrames.getFirst() : null;
   }
 
+  @Override
   public SourceFrame getSourceFrame() {
-    return mySourceFrames.size() > 0 ? mySourceFrames.getFirst() : null;
+    return !mySourceFrames.isEmpty() ? mySourceFrames.getFirst() : null;
   }
 
+  @Override
   public List<Debugger.Variable> getGlobalVariables() {
     final List<Variable> vars = getCurrentFrame().getVariables();
     for (Iterator<Variable> it = vars.iterator(); it.hasNext(); ) {
@@ -361,6 +376,7 @@ public class LocalDebugger implements Debugger {
     return vars;
   }
 
+  @Override
   public BreakpointManager getBreakpointManager() {
     return myBreakpointManager;
   }
@@ -375,6 +391,7 @@ public class LocalDebugger implements Debugger {
 
   interface Condition {
     Condition TRUE = new Condition() {
+      @Override
       public boolean value() {
         return true;
       }
@@ -383,10 +400,12 @@ public class LocalDebugger implements Debugger {
     boolean value();
   }
 
+  @Override
   public OutputEventQueueImpl getEventQueue() {
     return myEventQueue;
   }
 
+  @Override
   public boolean ping() {
     return true;
   }

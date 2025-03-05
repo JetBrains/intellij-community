@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -30,6 +31,7 @@ public interface ServiceViewContributor<T> {
 
   /// @return list of child domain model entities, contained in this [ServiceViewContributor]
   @NotNull
+  @Unmodifiable
   List<T> getServices(@NotNull Project project);
 
   /// @return a [ServiceViewDescriptor] for the child node [T]

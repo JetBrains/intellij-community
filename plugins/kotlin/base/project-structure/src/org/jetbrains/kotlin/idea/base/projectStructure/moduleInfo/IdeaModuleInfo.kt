@@ -10,18 +10,22 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleCapability
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
+@K1ModeProjectStructureApi
 val OriginCapability = ModuleCapability<ModuleOrigin>("MODULE_ORIGIN")
 
+@K1ModeProjectStructureApi
 enum class ModuleOrigin {
     MODULE,
     LIBRARY,
     OTHER
 }
 
+@K1ModeProjectStructureApi
 interface IdeaModuleInfo : ModuleInfo {
     val contentScope: GlobalSearchScope
 

@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.FList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class MatcherWithFallback extends MinusculeMatcher {
+@ApiStatus.Internal
+public class MatcherWithFallback extends MinusculeMatcher {
   private final @NotNull MinusculeMatcher myMainMatcher;
 
   private final @Nullable MinusculeMatcher myFallbackMatcher;

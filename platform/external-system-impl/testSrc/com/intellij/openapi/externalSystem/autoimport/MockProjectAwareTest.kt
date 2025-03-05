@@ -22,9 +22,9 @@ class MockProjectAwareTest : AutoReloadParallelTestCase() {
     test {
       enableAsyncExecution()
 
-      val expectedReloads = 10
+      val threadNum = maxOf(Runtime.getRuntime().availableProcessors(), 10)
       parallel {
-        repeat(expectedReloads) {
+        repeat(threadNum) {
           thread {
             waitForAllProjectActivities {
               forceReloadProject()
@@ -32,7 +32,7 @@ class MockProjectAwareTest : AutoReloadParallelTestCase() {
           }
         }
       }
-      assertStateAndReset(numReload = expectedReloads, notified = false, event = "$expectedReloads parallel project reloads")
+      assertStateAndReset(numReload = threadNum, notified = false, event = "$threadNum parallel project reloads")
     }
   }
 

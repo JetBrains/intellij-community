@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -25,15 +25,12 @@ import org.jetbrains.annotations.NotNull;
 public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlAnalysisBundle.message("xml.intention.replace.tag.empty.body.with.empty.end");
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return getName();
   }
 
@@ -80,7 +77,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
     return true;
   }
 
-  protected static void applyFix(@NotNull final Project project, @NotNull final PsiElement tag) {
+  protected static void applyFix(final @NotNull Project project, final @NotNull PsiElement tag) {
     final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
     if (child == null) return;
     final int offset = child.getTextRange().getStartOffset();

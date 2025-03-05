@@ -147,8 +147,7 @@ public class CompletionCommand extends PerformanceCommand {
     return Promises.toPromise(actionCallback);
   }
 
-  @Nullable
-  public static Path getCompletionItemsDir() {
+  public static @Nullable Path getCompletionItemsDir() {
     String property = System.getProperty(DUMP_COMPLETION_ITEMS_DIR);
     if (property != null) {
       return Paths.get(property);
@@ -164,8 +163,7 @@ public class CompletionCommand extends PerformanceCommand {
     DataDumper.dump(report, file.toPath());
   }
 
-  @NotNull
-  private String createTestReportFilename() {
+  private @NotNull String createTestReportFilename() {
     return "completion-" + getCompletionType() + "-" + System.currentTimeMillis() + (isWarmupMode() ? "_warmup" : "") + ".txt";
   }
 

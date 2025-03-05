@@ -329,7 +329,7 @@ public final class SdkListModelBuilder {
 
   public void reloadActions() {
     Map<SdkType, NewSdkAction> downloadActions = mySdkModel.createDownloadActions(mySdkTypeCreationFilter);
-    Map<SdkType, NewSdkAction> addActions = mySdkModel.createAddActions(mySdkTypeCreationFilter);
+    Map<SdkType, NewSdkAction> addActions = mySdkModel.createAddActions(myProject, mySdkTypeCreationFilter);
 
     myDownloadActions = createActions(ActionRole.DOWNLOAD, downloadActions);
     myAddActions = createActions(ActionRole.ADD, addActions);
@@ -350,7 +350,12 @@ public final class SdkListModelBuilder {
 
       @Override
       public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home) {
-        SuggestedItem item = new SuggestedItem(type, version, home);
+        onSdkDetected(type, new SdkType.SdkEntry(version, home));
+      }
+
+      @Override
+      public void onSdkDetected(@NotNull SdkType type, @NotNull SdkType.SdkEntry entry) {
+        SuggestedItem item = new SuggestedItem(type, entry);
 
         if (!mySuggestedItemsFilter.value(item)) return;
         mySuggestions = ImmutableList.<SuggestedItem>builder()

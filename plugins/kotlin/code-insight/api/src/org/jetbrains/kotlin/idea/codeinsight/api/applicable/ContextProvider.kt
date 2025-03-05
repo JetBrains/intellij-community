@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtElement
  * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiBasedModCommandAction.ClassBased]
  * and [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase].
  */
-interface ContextProvider<E : KtElement, C> {
+interface ContextProvider<E : KtElement, C : Any> {
 
     /**
      * Provides some context for [apply]. If the tool is not applicable (by analyze), [prepareContext] should return `null`. Guaranteed to
@@ -27,11 +27,10 @@ interface ContextProvider<E : KtElement, C> {
      *
      * @param element a physical PSI
      */
-    context(KaSession)
-    fun prepareContext(element: E): C?
+    fun KaSession.prepareContext(element: E): C?
 }
 
-internal fun <E : KtElement, C> ContextProvider<E, C>.getElementContext(
+internal fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
     element: E,
 ): C? = if (element.isPhysical) analyze(element) {
     prepareContext(element)

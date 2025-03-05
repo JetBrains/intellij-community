@@ -6,6 +6,9 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.isAssociatedWithModule
@@ -14,7 +17,6 @@ import com.jetbrains.python.sdk.uv.pyProjectToml
 import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
-import java.io.FileNotFoundException
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
@@ -23,27 +25,27 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
   override val executable: ObservableMutableProperty<String> = model.state.uvExecutable
   override val interpreterType: InterpreterType = InterpreterType.UV
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
-    val selectedInterpreterPath = selectedEnv.get()?.homePath ?: return Result.failure(FileNotFoundException("No selected interpreter"))
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Sdk, PyError> {
+    val selectedInterpreterPath = selectedEnv.get()?.homePath ?: return failure("No selected interpreter")
     val existingSdk = ProjectJdkTable.getInstance().allJdks.find { it.homePath == selectedInterpreterPath }
     val associatedModule = extractModule(moduleOrProject)
 
     // uv sdk in current module
     if (existingSdk != null && existingSdk.isUv && existingSdk.isAssociatedWithModule(associatedModule)) {
-      return Result.success(existingSdk)
+      return com.jetbrains.python.Result.success(existingSdk)
     }
 
     val existingWorkingDir = existingSdk?.associatedModulePath?.let { Path.of(it) }
     val usePip = existingWorkingDir!= null && !existingSdk.isUv
 
-    return setupUvSdkUnderProgress(moduleOrProject, ProjectJdkTable.getInstance().allJdks.toList(), Path.of(selectedInterpreterPath), existingWorkingDir, usePip)
+    return setupUvSdkUnderProgress(moduleOrProject, ProjectJdkTable.getInstance().allJdks.toList(), Path.of(selectedInterpreterPath), existingWorkingDir, usePip).asPythonResult()
   }
 
   override suspend fun detectEnvironments(modulePath: Path) {
     val existingEnvs = ProjectJdkTable.getInstance().allJdks.filter {
       it.isUv && (it.associatedModulePath == modulePath.pathString || it.associatedModulePath == null)
     }.mapNotNull { env ->
-      env.homePath?.let { path -> DetectedSelectableInterpreter(path, env.version) }
+      env.homePath?.let { path -> DetectedSelectableInterpreter(path, env.version, false) }
     }
 
     existingEnvironments.value = existingEnvs

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -11,11 +10,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
-import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -46,9 +46,8 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
     return Set.of(JavaFeature.PATTERNS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -56,7 +55,9 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         PsiTypeCastExpression qualifier = getQualifierReferenceExpression(call);
         if (qualifier == null) return;
         PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(qualifier);
-        if (candidate == null) return;
+        PsiTypeElement castTypeElement = qualifier.getCastType();
+        if (castTypeElement == null || candidate == null) return;
+        if (!compatibleTypes(candidate, castTypeElement.getType())) return;
         PsiPrimaryPattern pattern = candidate.getPattern();
         if (pattern instanceof PsiDeconstructionPattern deconstruction) {
           PsiPatternVariable existingPatternVariable = findExistingPatternVariable(qualifier, deconstruction, call);
@@ -90,11 +91,10 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         if (scope == null) return false;
         return localVariable.hasModifierProperty(PsiModifier.FINAL) ||
                !patternVariable.hasModifierProperty(PsiModifier.FINAL) ||
-               HighlightControlFlowUtil.isEffectivelyFinal(localVariable, scope, null);
+               ControlFlowUtil.isEffectivelyFinal(localVariable, scope);
       }
 
-      @Nullable
-      private static PsiTypeCastExpression getQualifierReferenceExpression(@NotNull PsiMethodCallExpression call) {
+      private static @Nullable PsiTypeCastExpression getQualifierReferenceExpression(@NotNull PsiMethodCallExpression call) {
         while (true) {
           if (!call.getArgumentList().isEmpty()) return null;
           PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
@@ -133,6 +133,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
 
       @Override
       public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
+        if (expression.getParent() instanceof PsiVariable) return;
         InstanceOfCandidateResult result = findInstanceOfCandidateResult(expression);
         if (result == null) return;
         if (result.instanceOf() != null) {
@@ -178,7 +179,9 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         if (operand == null) return;
         PsiType castType = cast.getCastType().getType();
         if (castType instanceof PsiPrimitiveType &&
-            !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, operand)) return;
+            !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, operand)) {
+          return;
+        }
         if (!variable.getType().equals(castType)) return;
         PsiType operandType = operand.getType();
         if (operandType == null || castType.isAssignableFrom(operandType)) return;
@@ -187,34 +190,54 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         PsiDeclarationStatement declaration = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
         if (declaration == null) return;
         PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(cast, variable);
-        if (instanceOf != null) {
-          PsiPattern pattern = instanceOf.getPattern();
-          PsiPatternVariable existingPatternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
-          //it is a deconstruction pattern and we can't add new variable here
-          if (pattern != null && existingPatternVariable == null) {
+        if (instanceOf == null) return;
+        if (!compatibleTypes(instanceOf, castType)) return;
+        PsiPattern pattern = instanceOf.getPattern();
+        PsiPatternVariable existingPatternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
+        //it is a deconstruction pattern and we can't add new variable here
+        if (pattern != null && existingPatternVariable == null) {
+          return;
+        }
+        String name = identifier.getText();
+        if (existingPatternVariable != null) {
+          if (!canReplaceLocalVariableWithPatternVariable(variable, existingPatternVariable) ||
+              !isFinalOrEffectivelyFinal(existingPatternVariable)) {
             return;
           }
-          String name = identifier.getText();
-          if (existingPatternVariable != null) {
-            if (!canReplaceLocalVariableWithPatternVariable(variable, existingPatternVariable) ||
-                !isFinalOrEffectivelyFinal(existingPatternVariable)) {
-              return;
-            }
-            holder.registerProblem(identifier,
-                                   InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message",
-                                                                   existingPatternVariable.getName(), name),
-                                   new ExistingPatternVariableCanBeUsedFix(name, existingPatternVariable));
-          } else {
-            if (!isOnTheFly && InstanceOfUtils.hasConflictingDeclaredNames(variable, instanceOf)) {
-              return;
-            }
-            holder.registerProblem(identifier,
-                                   InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.message", name),
-                                   new PatternVariableCanBeUsedFix(name, instanceOf));
+          holder.registerProblem(identifier,
+                                 InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.message",
+                                                                 existingPatternVariable.getName(), name),
+                                 new ExistingPatternVariableCanBeUsedFix(name, existingPatternVariable));
+        }
+        else {
+          if (!isOnTheFly && InstanceOfUtils.hasConflictingDeclaredNames(variable, instanceOf)) {
+            return;
           }
+          holder.registerProblem(identifier,
+                                 InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.message", name),
+                                 new PatternVariableCanBeUsedFix(name, instanceOf));
         }
       }
     };
+  }
+
+  private static boolean compatibleTypes(@NotNull PsiInstanceOfExpression instanceOfExpression, @NotNull PsiType castType) {
+    PsiTypeElement typeElement = instanceOfExpression.getCheckType();
+    if (typeElement == null) {
+      if (instanceOfExpression.getPattern() instanceof PsiTypeTestPattern typeTestPattern) {
+        typeElement = typeTestPattern.getCheckType();
+      }
+      if (instanceOfExpression.getPattern() instanceof PsiDeconstructionPattern deconstructionPattern) {
+        return deconstructionPattern.getTypeElement().getType().equals(castType);
+      }
+    }
+    if (typeElement == null) return false;
+    PsiType instanceOfType = typeElement.getType();
+    if (instanceOfType instanceof PsiClassType instanceOfClassType && !instanceOfClassType.isRaw() &&
+        castType instanceof PsiClassType castClassType && castClassType.isRaw()) {
+      return false;
+    }
+    return castType.isAssignableFrom(instanceOfType);
   }
 
   private static class ExistingPatternVariableCanBeUsedFix extends PsiUpdateModCommandQuickFix {
@@ -232,20 +255,16 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
       myPatternName = existingVariable.getName();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       if (myName != null) {
         return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.fix.name", myName, myPatternName);
       }
       return InspectionGadgetsBundle.message("inspection.pattern.variable.instead.of.cast.can.be.used.existing.fix.name", myPatternName);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.existing.fix.family.name");
     }
 
@@ -280,8 +299,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
 
   private static class CastExpressionsCanBeReplacedWithPatternVariableFix extends PsiUpdateModCommandQuickFix {
 
-    @NotNull
-    private final SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
+    private final @NotNull SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
 
     private CastExpressionsCanBeReplacedWithPatternVariableFix(@NotNull PsiInstanceOfExpression instanceOf) {
       myInstanceOfPointer = SmartPointerManager.createPointer(instanceOf);
@@ -303,12 +321,10 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
       PsiInstanceOfExpression instanceOf = PsiTreeUtil.findSameElementInCopy(originalInstanceOf, element.getContainingFile());
       if (instanceOf.getPattern() instanceof PsiDeconstructionPattern) return;
       PsiTypeElement instanceOfType = instanceOf.getCheckType();
-      PsiTypeElement typeElement = originalTypeElement;
-      if (instanceOfType != null && instanceOfType.getType() instanceof PsiClassType classType && !classType.isRaw()) {
-        typeElement = instanceOfType;
-      }
-      PsiStatement psiIfStatement = PsiTreeUtil.getParentOfType(instanceOf, PsiStatement.class);
-      if (psiIfStatement == null || psiIfStatement.getParent() == null) return;
+      PsiTypeElement typeElement = getTypeElement(originalTypeElement, instanceOfType);
+      if (typeElement == null) return;
+      PsiStatement expectedScopeOfInstanceOf = PsiTreeUtil.getParentOfType(instanceOf, PsiStatement.class);
+      if (expectedScopeOfInstanceOf == null || expectedScopeOfInstanceOf.getParent() == null) return;
       var visitor = new JavaRecursiveElementVisitor() {
         final List<PsiTypeCastExpression> myCasts = new ArrayList<>();
 
@@ -326,7 +342,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
         }
       };
 
-      psiIfStatement.getParent().accept(visitor);
+      expectedScopeOfInstanceOf.getParent().accept(visitor);
       List<PsiTypeCastExpression> casts = visitor.myCasts;
       if (casts.isEmpty()) return;
 
@@ -361,28 +377,80 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
     }
   }
 
+  private static PsiTypeElement getTypeElement(PsiTypeElement originalTypeElement, PsiTypeElement instanceOfType) {
+    PsiTypeElement typeElement = instanceOfType;
+    if (instanceOfType != null && instanceOfType.getType() instanceof PsiClassType instanceOfClassType && instanceOfClassType.isRaw()) {
+      if (originalTypeElement.getType() instanceof PsiClassType originalClassType && !originalClassType.isRaw()) {
+        PsiClassType.ClassResolveResult instanceOfClassResult = instanceOfClassType.resolveGenerics();
+        PsiClass instanceOfClass = instanceOfClassResult.getElement();
+        PsiClassType.ClassResolveResult originalClassResult = originalClassType.resolveGenerics();
+        PsiClass originalClass = originalClassResult.getElement();
+        if (originalClass != null && originalClass.getQualifiedName() != null) {
+          if (InheritanceUtil.isInheritor(instanceOfClass, false, originalClass.getQualifiedName())) {
+            PsiElementFactory factory = JavaPsiFacade.getElementFactory(instanceOfClass.getProject());
+            PsiSubstitutor classSubstitutor;
+            if (originalClass.getManager().areElementsEquivalent(originalClass, instanceOfClass)) {
+              classSubstitutor = PsiSubstitutor.EMPTY;
+              for (PsiTypeParameter parameter : originalClass.getTypeParameters()) {
+                classSubstitutor = classSubstitutor.put(parameter, factory.createType(parameter));
+              }
+            }
+            else {
+              classSubstitutor = JavaClassSupers.getInstance()
+                .getSuperClassSubstitutor(originalClass, instanceOfClass, instanceOfClass.getResolveScope(), PsiSubstitutor.EMPTY);
+            }
+            if (classSubstitutor == null) return typeElement;
+            PsiSubstitutor target = instanceOfClassResult.getSubstitutor();
+            for (Map.Entry<PsiTypeParameter, PsiType> originalTypeEntry : originalClassResult.getSubstitutor().getSubstitutionMap()
+              .entrySet()) {
+              PsiType keyType = classSubstitutor.getSubstitutionMap().get(originalTypeEntry.getKey());
+              if (keyType instanceof PsiClassType classType && classType.resolve() instanceof PsiTypeParameter targetTypeParameter) {
+                PsiType value = originalTypeEntry.getValue();
+                if (value != null && !(value instanceof PsiWildcardType valueWildCard && !valueWildCard.isBounded())) {
+                  PsiType previousValue = target.getSubstitutionMap().get(targetTypeParameter);
+                  if (previousValue != null && (!(previousValue instanceof PsiWildcardType wildcardType) || wildcardType.isBounded())) {
+                    continue;
+                  }
+                  target = target.put(targetTypeParameter, value);
+                }
+              }
+            }
+            for (Map.Entry<PsiTypeParameter, PsiType> entry : target.getSubstitutionMap().entrySet()) {
+              if (entry.getValue() == null) {
+                target = target.put(entry.getKey(), PsiWildcardType.createUnbounded(originalClass.getManager()));
+              }
+            }
+            for (PsiTypeParameter parameter : instanceOfClass.getTypeParameters()) {
+              if (target.getSubstitutionMap().containsKey(parameter)) {
+                continue;
+              }
+              target = target.put(parameter, PsiWildcardType.createUnbounded(originalClass.getManager()));
+            }
+            PsiType substituted = factory.createType(instanceOfClass, target);
+            typeElement = factory.createTypeElement(substituted);
+          }
+        }
+      }
+    }
+    return typeElement;
+  }
+
   private static class PatternVariableCanBeUsedFix extends PsiUpdateModCommandQuickFix {
-    @NotNull
-    private final SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
-    @NotNull
-    private final String myName;
+    private final @NotNull SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
+    private final @NotNull String myName;
 
     private PatternVariableCanBeUsedFix(@NotNull String name, @NotNull PsiInstanceOfExpression instanceOf) {
       myName = name;
       myInstanceOfPointer = SmartPointerManager.createPointer(instanceOf);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.fix.name", myName);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.fix.family.name");
     }
 
@@ -392,14 +460,10 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
       PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()),
                                                        PsiTypeCastExpression.class);
       if (cast == null) return;
-      PsiTypeElement typeElement = cast.getCastType();
-      if (typeElement == null) return;
       PsiInstanceOfExpression instanceOf = PsiTreeUtil.findSameElementInCopy(myInstanceOfPointer.getElement(), element.getContainingFile());
       if (instanceOf == null) return;
-      PsiTypeElement instanceOfType = instanceOf.getCheckType();
-      if (instanceOfType != null && instanceOfType.getType() instanceof PsiClassType classType && !classType.isRaw()) {
-        typeElement = instanceOfType;
-      }
+      PsiTypeElement typeElement = getTypeElement(cast.getCastType(), instanceOf.getCheckType());
+      if (typeElement == null) return;
       CommentTracker ct = new CommentTracker();
       StringBuilder text = generateTextForInstanceOf(variable, ct, instanceOf, typeElement);
       if (text == null) return;
@@ -430,13 +494,17 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
     PsiTypeElement castTypeElement = expression.getCastType();
     if (castTypeElement == null) return null;
     PsiExpression operand = expression.getOperand();
-    if (operand == null) return null;
+    if (!(operand instanceof PsiReferenceExpression)) return null;
     PsiType castType = castTypeElement.getType();
     if (castType instanceof PsiPrimitiveType &&
-        !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, operand)) return null;
+        !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, operand)) {
+      return null;
+    }
     PsiType operandType = operand.getType();
     if (operandType == null || castType.isAssignableFrom(operandType)) return null;
     PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(expression, null);
+    if (instanceOf == null) return null;
+    if (!compatibleTypes(instanceOf, castType)) return null;
     return new InstanceOfCandidateResult(castTypeElement, instanceOf);
   }
 
@@ -451,7 +519,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
     StringBuilder text = new StringBuilder(ct.text(instanceOf.getOperand()));
     text.append(" instanceof ");
     PsiModifierList modifierList = variable != null ? variable.getModifierList() : null;
-    JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(typeElement.getContainingFile());
+    JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(instanceOf.getContainingFile());
     if (modifierList != null && modifierList.getTextLength() > 0) {
       modifierList.setModifierProperty(PsiModifier.FINAL, codeStyleSettings.GENERATE_FINAL_LOCALS);
       text.append(ct.text(modifierList)).append(' ');

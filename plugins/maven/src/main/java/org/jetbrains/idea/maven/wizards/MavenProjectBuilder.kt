@@ -47,8 +47,7 @@ private val LOG = Logger.getInstance(MavenProjectBuilder::class.java)
  * Use [com.intellij.ide.impl.ProjectUtil.openOrImport] to open (import) a new project.
  */
 @Deprecated("use MavenProjectAsyncBuilder")
-class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProjectBuilderForImport {
-
+internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProjectBuilderForImport {
   private class Parameters {
     var myProjectToUpdate: Project? = null
 
@@ -56,7 +55,7 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
     var myImportingSettingsCache: MavenImportingSettings? = null
     var myImportRootDirectory: Path? = null
     var myImportProjectFile: VirtualFile? = null
-    var myFiles: List<VirtualFile?>? = null
+    var myFiles: List<VirtualFile>? = null
 
     var myMavenProjectTree: MavenProjectsTree? = null
     var mySelectedProjects: List<MavenProject>? = null
@@ -136,7 +135,7 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
     return setRootDirectory(projectToUpdate, Paths.get(root))
   }
 
-  private fun runConfigurationProcess(message: @NlsContexts.DialogTitle String?, p: MavenTask): Boolean {
+  private fun runConfigurationProcess(message: @NlsContexts.DialogTitle String, p: MavenTask): Boolean {
     try {
       MavenUtil.run(message, p)
     }
@@ -174,7 +173,7 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
 
   private fun readMavenProjectTree(process: MavenProgressIndicator) {
     val tree = MavenProjectsTree(projectOrDefault)
-    tree.addManagedFilesWithProfiles(parameters.myFiles, MavenExplicitProfiles.NONE)
+    tree.addManagedFilesWithProfiles(parameters.myFiles!!, MavenExplicitProfiles.NONE)
 
     runBlockingMaybeCancellable {
       tree.updateAll(false, generalSettings, process.indicator)
@@ -211,8 +210,7 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
           val newSettings = directProjectsSettings.generalSettings.clone()
           var rootFiles = parameters.myFiles
           if (rootFiles == null) {
-            rootFiles = listOf(LocalFileSystem.getInstance().findFileByNioFile(
-              rootPath!!))
+            rootFiles = listOf(LocalFileSystem.getInstance().findFileByNioFile(rootPath!!)!!)
           }
           newSettings.updateFromMavenConfig(rootFiles)
           newSettings
@@ -246,7 +244,7 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
       return MavenWorkspaceSettingsComponent.getInstance(project).settings
     }
 
-  fun setFiles(files: List<VirtualFile?>?) {
+  fun setFiles(files: List<VirtualFile>?) {
     parameters.myFiles = files
   }
 
@@ -301,9 +299,9 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
   }
 
   @Throws(MavenProcessCanceledException::class)
-  private fun getProjectFiles(indicator: MavenProgressIndicator): List<VirtualFile?> {
+  private fun getProjectFiles(indicator: MavenProgressIndicator): List<VirtualFile> {
     if (parameters.myImportProjectFile != null) {
-      return listOf(parameters.myImportProjectFile)
+      return listOf(parameters.myImportProjectFile!!)
     }
     val file = rootPath
     val virtualFile = if (file == null) null

@@ -36,7 +36,38 @@ public final class DeclarationSearchUtils {
     return target.equals(variable);
   }
 
-  public static PsiExpression findDefinition(@NotNull PsiReferenceExpression referenceExpression, @Nullable PsiVariable variable) {
+  /// Finds the definition expression of a given variable or reference expression within the provided context.
+  ///
+  /// ### Example 1
+  ///
+  /// Consider the following code:
+  ///
+  /// ```
+  /// String[] names = {"charlie", "joe"};
+  /// Assert.assertEquals(Arrays.asList(names), List.of("charlie", "joe"));
+  /// ```
+  ///
+  /// The usage of `names` in a call to `assertEquals` is a [PsiReferenceExpression].
+  ///
+  /// When this method is called on that [PsiReferenceExpression], it returns [PsiExpression] that defined `names`.
+  /// In this case, it will be an instance of [PsiArrayInitializerExpression].
+  ///
+  /// ### Example 2
+  ///
+  /// ```java
+  /// String expected = "foo";
+  /// assertEquals(expected, something());
+  /// expected = "bar";
+  /// assertEquals(expected, somethingElse());
+  /// ```
+  ///
+  /// Thanks to this method, we can learn that the value of `expected` in the second call to `assertEquals` will be "bar".
+  /// It would be an instance of [PsiLiteralExpression].
+  ///
+  /// @param referenceExpression the reference expression whose definition is to be found.
+  /// @param variable the optional variable that is associated with the reference expression.
+  /// @return the definition expression if found, otherwise null.
+  public static @Nullable PsiExpression findDefinition(@NotNull PsiReferenceExpression referenceExpression, @Nullable PsiVariable variable) {
     if (variable == null) {
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiVariable)) {

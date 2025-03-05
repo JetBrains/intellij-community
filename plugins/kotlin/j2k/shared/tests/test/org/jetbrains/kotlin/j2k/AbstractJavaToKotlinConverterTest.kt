@@ -73,30 +73,20 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         )
     }
 
-    // A hack to workaround KTIJ-26751 bug in K2 import optimizer
-    // that leads to trivial test failures.
-    // TODO remove this hack once the optimizer is fixed
-    protected fun removeRedundantImports(actualText: String): String {
-        if (!isFirPlugin) return actualText
-
-        var result = actualText
-        for (regex in redundantImportLines) {
-            result = result.replace(regex, "")
-        }
-
-        return result
+    protected fun addJunitTestAnnotations() {
+        myFixture.addClass(
+            """
+            package org.junit;
+            
+            public @interface Test {}
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+            package org.junit.jupiter.api;
+            
+            public @interface Test {}
+            """.trimIndent()
+        )
     }
-
-    private val redundantImportLines: List<Regex> = listOf(
-        Regex("""import kotlin\.\w+\n\n"""),
-        Regex("""import kotlin\.\w+\n"""),
-        Regex("""import kotlin\.jvm\..+\n\n"""),
-        Regex("""import kotlin\.jvm\..+\n"""),
-        Regex("""import java\.lang\.\w+\n\n"""),
-        Regex("""import java\.lang\.\w+\n"""),
-        Regex("""import java\.util\.Hash\w+\n\n"""),
-        Regex("""import java\.util\.Hash\w+\n"""),
-        Regex("""import java\.util\.ArrayList\n\n"""),
-        Regex("""import java\.util\.ArrayList\n"""),
-    )
 }

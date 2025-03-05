@@ -6,17 +6,14 @@ import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
-import org.gradle.tooling.BuildActionExecuter
-import org.gradle.tooling.GradleConnectionException
-import org.gradle.tooling.LongRunningOperation
-import org.gradle.tooling.StreamedValueListener
+import org.gradle.tooling.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
+import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner.Companion.runBuildAction
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
-import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.statistics.GradleSyncCollector
+
 /**
  * This class handles setting up and running the [BuildActionExecuter] it deals with calling the correct APIs based on the version of
  * Gradle that is present.
@@ -30,8 +27,8 @@ import org.jetbrains.plugins.gradle.statistics.GradleSyncCollector
  */
 @ApiStatus.Internal
 class GradleModelFetchActionRunner private constructor(
+  private val connection: ProjectConnection,
   private val resolverContext: DefaultProjectResolverContext,
-  private val settings: GradleExecutionSettings,
   private val modelFetchAction: GradleModelFetchAction,
   private val modelFetchActionListener: GradleModelFetchActionListener,
 ) {
@@ -64,7 +61,7 @@ class GradleModelFetchActionRunner private constructor(
   private fun notifyConnectionAboutChangedPaths() {
     ApplicationManager.getApplication()
       .getService(GradleFileModificationTracker::class.java)
-      .notifyConnectionAboutChangedPaths(resolverContext.connection)
+      .notifyConnectionAboutChangedPaths(connection)
   }
 
   /**
@@ -72,36 +69,32 @@ class GradleModelFetchActionRunner private constructor(
    */
   private fun runPhasedBuildAction(resultHandler: GradleModelFetchActionResultHandlerBridge) {
     modelFetchAction.isUseProjectsLoadedPhase = true
-    resolverContext.connection.action()
+    connection.action()
       .projectsLoaded(modelFetchAction, resultHandler.asProjectLoadedResultHandler())
       .buildFinished(modelFetchAction, resultHandler.asBuildFinishedResultHandler())
       .build()
       .prepareOperationForSync()
-      .withCancellationToken(resolverContext.cancellationToken)
       .withStreamedValueListener(resultHandler.asStreamValueListener())
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
       .run(resultHandler.asResultHandler())
   }
 
   private fun runDefaultBuildAction(resultHandler: GradleModelFetchActionResultHandlerBridge) {
-    resolverContext.connection.action(modelFetchAction)
+    connection.action(modelFetchAction)
       .prepareOperationForSync()
-      .withCancellationToken(resolverContext.cancellationToken)
       .withStreamedValueListener(resultHandler.asStreamValueListener())
       .run(resultHandler.asResultHandler())
   }
 
   private fun <T : LongRunningOperation> T.prepareOperationForSync(): T {
-    GradleExecutionHelper.prepare(
-      resolverContext.connection,
+    GradleExecutionHelper.prepareForExecution(
       this,
+      resolverContext.cancellationToken,
       resolverContext.externalSystemTaskId,
-      settings,
-      resolverContext.listener
+      resolverContext.settings,
+      resolverContext.listener,
+      resolverContext.buildEnvironment
     )
-    GradleOperationHelperExtension.EP_NAME.forEachExtensionSafe {
-      it.prepareForSync(this, resolverContext)
-    }
     return this
   }
 
@@ -116,18 +109,18 @@ class GradleModelFetchActionRunner private constructor(
   companion object {
 
     private fun runBuildAction(
+      connection: ProjectConnection,
       resolverContext: DefaultProjectResolverContext,
-      settings: GradleExecutionSettings,
       modelFetchAction: GradleModelFetchAction,
       modelFetchActionListener: GradleModelFetchActionListener,
     ) {
-      GradleModelFetchActionRunner(resolverContext, settings, modelFetchAction, modelFetchActionListener).runBuildAction()
+      GradleModelFetchActionRunner(connection, resolverContext, modelFetchAction, modelFetchActionListener).runBuildAction()
     }
 
     @JvmStatic
     fun runAndTraceBuildAction(
+      connection: ProjectConnection,
       resolverContext: DefaultProjectResolverContext,
-      settings: GradleExecutionSettings,
       modelFetchAction: GradleModelFetchAction,
       modelFetchActionListener: GradleModelFetchActionListener,
     ) {
@@ -143,7 +136,7 @@ class GradleModelFetchActionRunner private constructor(
             collector.logModelFetchFailure(exception)
           }
         }
-        runBuildAction(resolverContext, settings, modelFetchAction, modelFetchActionListenerWithTrace)
+        runBuildAction(connection, resolverContext, modelFetchAction, modelFetchActionListenerWithTrace)
       }
     }
   }

@@ -18,9 +18,8 @@ import com.intellij.restructuredtext.python.run.RestRunConfigurationType;
 import org.jetbrains.annotations.NotNull;
 
 public final class SphinxConfigurationProducer extends LazyRunConfigurationProducer<RestRunConfiguration> {
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return RestRunConfigurationType.getInstance().SPHINX_FACTORY;
   }
 

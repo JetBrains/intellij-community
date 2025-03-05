@@ -53,10 +53,8 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PsiUpdateM
     myRightBrace = rightBrace;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.convert.collection.literal", myTargetCollectionName);
   }
 
@@ -104,8 +102,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PsiUpdateM
     replacedElement.replace(newLiteral);
   }
 
-  @NotNull
-  protected PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
+  protected @NotNull PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
     final PySequenceExpression sequence = unwrapCollection(copy);
     if (sequence instanceof PyTupleExpression) {
       final PyExpression[] elements = sequence.getElements();
@@ -120,8 +117,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PsiUpdateM
     return copy;
   }
 
-  @NotNull
-  protected static PySequenceExpression unwrapCollection(@NotNull PsiElement literal) {
+  protected static @NotNull PySequenceExpression unwrapCollection(@NotNull PsiElement literal) {
     final PyParenthesizedExpression parenthesizedExpression = as(literal, PyParenthesizedExpression.class);
     if (parenthesizedExpression != null) {
       final PyExpression containedExpression = parenthesizedExpression.getContainedExpression();
@@ -131,16 +127,14 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PsiUpdateM
     return (PySequenceExpression)literal;
   }
 
-  @NotNull
-  protected static PsiElement wrapCollection(@NotNull PySequenceExpression literal) {
+  protected static @NotNull PsiElement wrapCollection(@NotNull PySequenceExpression literal) {
     if (literal instanceof PyTupleExpression && literal.getParent() instanceof PyParenthesizedExpression) {
       return literal.getParent();
     }
     return literal;
   }
 
-  @NotNull
-  private static TextRange getRangeOfContentWithoutBraces(@NotNull PsiElement literal) {
+  private static @NotNull TextRange getRangeOfContentWithoutBraces(@NotNull PsiElement literal) {
     if (literal instanceof PyTupleExpression) {
       return TextRange.create(0, literal.getTextLength());
     }
@@ -168,8 +162,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PsiUpdateM
     return TextRange.create(contentStartOffset, contentEndOffset);
   }
 
-  @Nullable
-  private static PySequenceExpression findCollectionLiteralUnderElement(PsiElement curElem) {
+  private static @Nullable PySequenceExpression findCollectionLiteralUnderElement(PsiElement curElem) {
     final PySequenceExpression seqExpr = PsiTreeUtil.getParentOfType(curElem, PySequenceExpression.class);
     if (seqExpr != null) {
       return seqExpr;

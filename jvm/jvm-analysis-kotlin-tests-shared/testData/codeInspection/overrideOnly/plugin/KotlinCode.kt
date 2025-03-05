@@ -30,6 +30,12 @@ class Invoker {
     javaInterfaceOverrideOnly.<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>()
     kotlinClassOverrideOnly.<warning descr="Method 'overrideOnlyMethod()' can only be overridden">overrideOnlyMethod</warning>()
     kotlinInterfaceOverrideOnly.<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>()
+
+    //No warning
+    JavaClassOverrideOnly.staticMethod()
+    JavaInterfaceOverrideOnly.staticMethod()
+    KotlinClassOverrideOnly.staticMethod()
+    KotlinInterfaceOverrideOnly.staticMethod()
   }
 
   @Suppress("UNUSED_VARIABLE")
@@ -45,6 +51,12 @@ class Invoker {
 
     val c1 = KotlinClassOverrideOnly::<warning descr="Method 'overrideOnlyMethod()' can only be overridden">overrideOnlyMethod</warning>
     val d1 = KotlinInterfaceOverrideOnly::<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>
+
+    //No warning
+    val a2 = JavaClassOverrideOnly::staticMethod
+    val b2 = JavaInterfaceOverrideOnly::staticMethod
+    val c2 = KotlinClassOverrideOnly.Companion::staticMethod
+    val d2 = KotlinInterfaceOverrideOnly.Companion::staticMethod
   }
 }
 

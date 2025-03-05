@@ -101,7 +101,6 @@ public abstract class JavaTestFramework implements JvmTestFramework {
         .computeWithAlternativeResolveEnabled((ThrowableComputable<T, Throwable>)() -> callable.call());
     }
     catch (IndexNotReadyException e) {
-      LOG.error(e);
       return defaultValue;
     }
   }

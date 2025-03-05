@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -30,9 +30,8 @@ public final class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalI
     return Set.of(JavaFeature.VARARGS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -91,10 +90,8 @@ public final class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalI
 
     AddToArrayFix(String className) {myClassName = className;}
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.call", "toArray(new " + StringUtil.getShortName(myClassName) + "[0])");
     }
 

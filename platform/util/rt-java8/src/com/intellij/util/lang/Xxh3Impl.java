@@ -18,7 +18,7 @@ package com.intellij.util.lang;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Adapted version of XXH3 implementation from https://github.com/Cyan4973/xxHash.
+ * AN adapted version of XXH3 implementation from <a href="https://github.com/Cyan4973/xxHash">xxHash</a>.
  * This implementation provides endian-independent hash values, but it's slower on big-endian platforms.
  */
 @SuppressWarnings({"DuplicatedCode", "CommentedOutCode"})
@@ -142,10 +142,6 @@ public final class Xxh3Impl {
   // only support fixed size secret
   private static final int nbStripesPerBlock = (192 - 64) / 8;
   private static final int block_len = 64 * nbStripesPerBlock;
-
-  static int getBlockLength() {
-    return block_len;
-  }
 
   public static <T> long hash(final T input, final Access<T> access, final int off, final int length, final long seed) {
     if (length <= 16) {

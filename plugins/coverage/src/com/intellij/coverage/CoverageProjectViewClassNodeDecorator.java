@@ -16,11 +16,12 @@ import org.jetbrains.annotations.Nullable;
 
 final class CoverageProjectViewClassNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
   @Override
-  public void decorate(ProjectViewNode node, PresentationData data) {
+  public void decorate(@NotNull ProjectViewNode node, @NotNull PresentationData data) {
     final Project project = node.getProject();
     if (project == null) {
       return;
     }
+    if (!CoverageOptionsProvider.getInstance(project).showInProjectView()) return;
 
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
     CoverageSuitesBundle javaSuite = getJavaSuite(coverageDataManager, project);

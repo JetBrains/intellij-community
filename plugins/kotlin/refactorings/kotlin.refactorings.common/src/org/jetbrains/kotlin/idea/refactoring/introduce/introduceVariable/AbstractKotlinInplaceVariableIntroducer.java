@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable;
 
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.ASTNode;
@@ -60,12 +63,9 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
     private static final Consumer<? super JComponent> DO_NOTHING = __ -> {};
 
     protected static final class ControlWrapper {
-        @NotNull
-        private final Function0<JComponent> factory;
-        @NotNull
-        private final Function0<Boolean> condition;
-        @NotNull
-        private final Consumer<? super JComponent> initializer;
+        private final @NotNull Function0<JComponent> factory;
+        private final @NotNull Function0<Boolean> condition;
+        private final @NotNull Consumer<? super JComponent> initializer;
         private JComponent component;
 
         public ControlWrapper(
@@ -89,8 +89,7 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
             initializer.accept(getComponent());
         }
 
-        @NotNull
-        public JComponent getComponent() {
+        public @NotNull JComponent getComponent() {
             if (component == null) {
                 component = factory.invoke();
             }
@@ -102,7 +101,7 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
     protected D myDeclaration;
     private final boolean isVar;
     private final boolean myDoNotChangeVar;
-    @Nullable protected final KotlinType myExprType;
+    protected final @Nullable KotlinType myExprType;
     private final boolean noTypeInference;
     private final List<ControlWrapper> panelControls = new ArrayList<>();
     private JPanel contentPanel;
@@ -139,13 +138,11 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
         handler.invoke(myProject, myEditor, file, null);
     }
 
-    @Nullable
-    protected String getAdvertisementActionId() {
+    protected @Nullable String getAdvertisementActionId() {
         return null;
     }
 
-    @NotNull
-    private JPanel getContentPanel() {
+    private @NotNull JPanel getContentPanel() {
         if (contentPanel == null) {
             contentPanel = new JPanel(new GridBagLayout());
             contentPanel.setBorder(null);
@@ -186,9 +183,8 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
         revalidate();
     }
 
-    @NotNull
     @Override
-    protected final JComponent getComponent() {
+    protected final @NotNull JComponent getComponent() {
         panelControls.clear();
         initPanelControls();
 
@@ -199,8 +195,7 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
 
     protected abstract String renderType(KotlinType kotlinType);
 
-    @Nullable
-    protected final Function0<JComponent> getCreateExplicitTypeCheckBox() {
+    protected final @Nullable Function0<JComponent> getCreateExplicitTypeCheckBox() {
         if (myExprType == null || noTypeInference) return null;
 
         return new Function0<>() {
@@ -230,8 +225,7 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
         };
     }
 
-    @Nullable
-    protected final Function0<JComponent> getCreateVarCheckBox() {
+    protected final @Nullable Function0<JComponent> getCreateVarCheckBox() {
         if (myDoNotChangeVar) return null;
 
         return new Function0<>() {
@@ -440,8 +434,7 @@ public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallab
         }
     }
 
-    @Nullable
-    public static AbstractKotlinInplaceVariableIntroducer getActiveInstance(@NotNull Editor editor) {
+    public static @Nullable AbstractKotlinInplaceVariableIntroducer getActiveInstance(@NotNull Editor editor) {
         return editor.getUserData(ACTIVE_INTRODUCER);
     }
 }

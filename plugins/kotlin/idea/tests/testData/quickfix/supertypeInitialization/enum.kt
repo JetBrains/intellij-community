@@ -1,5 +1,5 @@
 // "Change to constructor invocation" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Introduce import alias
 enum class E
 

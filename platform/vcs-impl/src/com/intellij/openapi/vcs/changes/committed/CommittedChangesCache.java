@@ -64,8 +64,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return project.getService(CommittedChangesCache.class);
   }
 
-  @Nullable
-  public static CommittedChangesCache getInstanceIfCreated(Project project) {
+  public static @Nullable CommittedChangesCache getInstanceIfCreated(Project project) {
     return project.getServiceIfCreated(CommittedChangesCache.class);
   }
 
@@ -200,7 +199,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
         if (myProject.isDisposed()) {
           return;
         }
-        if (myExceptions.size() > 0) {
+        if (!myExceptions.isEmpty()) {
           myErrorConsumer.consume(myExceptions);
         }
         else if (!myDisposed) {
@@ -398,7 +397,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     if (maxCount > 0 && changes.size() < getState().getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
-    if (changes.size() > 0) {
+    if (!changes.isEmpty()) {
       fireChangesLoaded(location, changes);
     }
     return changes;
@@ -462,12 +461,13 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private List<CommittedChangeList> appendLoadedChanges(@NotNull ChangesCacheFile cacheFile,
                                                         @NotNull List<? extends CommittedChangeList> newChanges) throws IOException {
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
-    if (savedChanges.size() > 0) {
+    if (!savedChanges.isEmpty()) {
       fireChangesLoaded(cacheFile.getLocation(), savedChanges);
     }
     return savedChanges;
   }
 
+  @Contract(mutates = "param1,param2")
   private static List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile,
                                                                     @NotNull List<? extends CommittedChangeList> newChanges)
     throws IOException {
@@ -692,7 +692,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
         try {
           debug("Processing updated files after refresh in " + cache.getLocation());
           boolean result = true;
-          if (committedChangeLists.size() > 0) {
+          if (!committedChangeLists.isEmpty()) {
             // received some new changelists, try to process updated files again
             result = cache.processUpdatedFiles(updatedFiles, myNewIncomingChanges);
           }

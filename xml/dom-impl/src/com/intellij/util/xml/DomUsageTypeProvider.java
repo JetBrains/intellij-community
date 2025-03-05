@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml;
 
@@ -11,11 +11,7 @@ import com.intellij.usages.impl.rules.UsageTypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Gregory.Shrago
- */
-public class DomUsageTypeProvider implements UsageTypeProvider {
-
+final class DomUsageTypeProvider implements UsageTypeProvider {
   @Override
   public @Nullable UsageType getUsageType(@NotNull PsiElement element) {
     final PsiFile psiFile = element.getContainingFile();

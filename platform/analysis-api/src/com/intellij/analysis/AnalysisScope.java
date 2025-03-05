@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
@@ -100,9 +99,13 @@ public class AnalysisScope {
   }
 
   public AnalysisScope(@NotNull PsiDirectory psiDirectory) {
+    this(psiDirectory, null);
+  }
+
+  public AnalysisScope(@NotNull PsiDirectory psiDirectory, @Nullable Module module) {
     myProject = psiDirectory.getProject();
     myModules = null;
-    myModule = null;
+    myModule = module;
     myScope = null;
     myElement = psiDirectory;
     myType = DIRECTORY;
@@ -110,9 +113,13 @@ public class AnalysisScope {
   }
 
   public AnalysisScope(@NotNull PsiFile psiFile) {
+    this(psiFile, null);
+  }
+
+  public AnalysisScope(@NotNull PsiFile psiFile, @Nullable Module module) {
     myProject = psiFile.getProject();
     myElement = psiFile;
-    myModule = null;
+    myModule = module;
     myModules = null;
     myScope = null;
     myType = FILE;
@@ -126,7 +133,7 @@ public class AnalysisScope {
     myModules = null;
     myScope = scope;
     myType = CUSTOM;
-    mySearchInLibraries = scope instanceof GlobalSearchScope && ((GlobalSearchScope)scope).isSearchInLibraries();
+    mySearchInLibraries = scope instanceof GlobalSearchScope gss && gss.isSearchInLibraries();
     myVFiles = null;
   }
 
@@ -182,10 +189,11 @@ public class AnalysisScope {
            ModuleRootManager.getInstance(myModule).getFileIndex();
   }
 
-  private static @NotNull String displayProjectRelativePath(@NotNull PsiFileSystemItem item) {
+  private static @NotNull String displayProjectRelativePath(@NotNull PsiFileSystemItem item, @Nullable Module module) {
     VirtualFile virtualFile = item.getVirtualFile();
     LOG.assertTrue(virtualFile != null, item);
-    return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), item.getProject(), true, false);
+    String filePath = ProjectUtilCore.displayFilePath(item.getProject(), virtualFile);
+    return module == null ? filePath : ProjectUtilCore.appendModuleName(module, filePath, false);
   }
 
   public boolean contains(@NotNull PsiElement psiElement) {
@@ -264,8 +272,7 @@ public class AnalysisScope {
       if (file.isDirectory()) return true;
       if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
       boolean isInContent = ReadAction.compute(() -> fileIndex.isInContent(file));
-      if (isInContent && !isFilteredOut(file)
-          && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
+      if (isInContent && !isFilteredOut(file) && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
         return processFile(file, visitor, psiManager, needReadAction, idempotent);
       }
       return true;
@@ -291,8 +298,8 @@ public class AnalysisScope {
       }
       return true;
     }
-    if (myScope instanceof LocalSearchScope) {
-      PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
+    if (myScope instanceof LocalSearchScope lss) {
+      PsiElement[] psiElements = lss.getScope();
       Set<VirtualFile> files = new HashSet<>();
       for (PsiElement element : psiElements) {
         VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(element));
@@ -302,6 +309,14 @@ public class AnalysisScope {
       }
       return true;
     }
+    if (myElement instanceof PsiDirectory dir) {
+      return accept(dir, processor);
+    }
+    if (myElement != null) {
+      VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(myElement));
+      return file == null || processor.process(file);
+    }
+
     List<Module> modules = myModule != null ? Collections.singletonList(myModule) : myModules;
     if (modules != null) {
       for (Module module : modules) {
@@ -311,14 +326,6 @@ public class AnalysisScope {
         }
       }
       return true;
-    }
-
-    if (myElement instanceof PsiDirectory) {
-      return accept((PsiDirectory)myElement, processor);
-    }
-    if (myElement != null) {
-      VirtualFile file = ReadAction.compute(() -> PsiUtilCore.getVirtualFile(myElement));
-      return file == null || processor.process(file);
     }
 
     return projectFileIndex.iterateContent(createScopeIterator(processor, null));
@@ -447,13 +454,12 @@ public class AnalysisScope {
     return switch (myType) {
       case CUSTOM -> myScope.getDisplayName();
       case MODULE -> AnalysisBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
-      case MODULES -> {
-        String modules = StringUtil.join(myModules, module -> pathToName(module.getModuleFilePath()), ", ");
-        yield AnalysisBundle.message("scope.module.list", modules, myModules.size());
-      }
+      case MODULES -> AnalysisBundle.message("scope.module.list",
+                                             StringUtil.join(myModules, module -> pathToName(module.getModuleFilePath()), ", "),
+                                             myModules.size());
       case PROJECT -> AnalysisBundle.message("scope.project", myProject.getName());
-      case FILE -> AnalysisBundle.message("scope.file", displayProjectRelativePath((PsiFileSystemItem)myElement));
-      case DIRECTORY -> AnalysisBundle.message("scope.directory", displayProjectRelativePath((PsiFileSystemItem)myElement));
+      case FILE -> AnalysisBundle.message("scope.file", displayProjectRelativePath((PsiFileSystemItem)myElement, myModule));
+      case DIRECTORY -> AnalysisBundle.message("scope.directory", displayProjectRelativePath((PsiFileSystemItem)myElement, myModule));
       case VIRTUAL_FILES -> AnalysisBundle.message("scope.virtual.files");
       default -> "";
     };
@@ -463,20 +469,18 @@ public class AnalysisScope {
     return switch (myType) {
       case CUSTOM -> myScope.getDisplayName();
       case MODULE -> AnalysisBundle.message("scope.option.module", myModule.getName());
-      case MODULES -> {
-        String modules = StringUtil.join(myModules, Module::getName, ", ");
-        yield AnalysisBundle.message("scope.module.list", modules, myModules.size());
-      }
+      case MODULES -> AnalysisBundle.message("scope.module.list", StringUtil.join(myModules, Module::getName, ", "), myModules.size());
       case PROJECT -> AnalysisBundle.message("scope.project", myProject.getName());
-      case FILE -> {
-        String relativePath = getRelativePath();
-        yield AnalysisBundle.message("scope.file", relativePath);
+      case FILE -> AnalysisBundle.message("scope.file", getRelativePath());
+      case DIRECTORY -> AnalysisBundle.message("scope.directory", getRelativePath());
+      case VIRTUAL_FILES -> {
+        int types = 0;
+        for (VirtualFile file : myVFiles) {
+          types |= file.isDirectory() ? 2 : 1;
+          if (types == 3) break;
+        }
+        yield AnalysisBundle.message("scope.selected.files", types);
       }
-      case DIRECTORY -> {
-        String relativeDirPath = getRelativePath();
-        yield AnalysisBundle.message("scope.directory", relativeDirPath);
-      }
-      case VIRTUAL_FILES -> AnalysisBundle.message("scope.selected.files");
       default -> "";
     };
   }
@@ -503,7 +507,7 @@ public class AnalysisScope {
   }
 
   private @NotNull String getRelativePath() {
-    String relativePath = displayProjectRelativePath((PsiFileSystemItem)myElement);
+    String relativePath = displayProjectRelativePath((PsiFileSystemItem)myElement, myModule);
     if (relativePath.length() > 100) {
       return ((PsiFileSystemItem)myElement).getName();
     }
@@ -533,14 +537,14 @@ public class AnalysisScope {
     if (myElement != null) {
       Project project = myElement.getProject();
       ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-      if (myElement instanceof PsiDirectory) {
-        VirtualFile directory = ((PsiFileSystemItem)myElement).getVirtualFile();
+      if (myElement instanceof PsiDirectory dir) {
+        VirtualFile directory = dir.getVirtualFile();
         if (index.isInSourceContent(directory)) {
           return isTest == TestSourcesFilter.isTestSources(directory, myProject);
         }
       }
-      else if (myElement instanceof PsiFile) {
-        VirtualFile file = ((PsiFileSystemItem)myElement).getVirtualFile();
+      else if (myElement instanceof PsiFile f) {
+        VirtualFile file = f.getVirtualFile();
         if (file != null) {
           return isTest == TestSourcesFilter.isTestSources(file, myProject);
         }
@@ -582,11 +586,9 @@ public class AnalysisScope {
   private static @NotNull Set<Module> getExportBackwardDependencies(@NotNull Module fromModule, Module @NotNull [] allModules) {
     Set<Module> result = new HashSet<>();
     for (Module module : allModules) {
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
+      OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof ModuleOrderEntry && ((ExportableOrderEntry)orderEntry).isExported() &&
-            fromModule == ((ModuleOrderEntry)orderEntry).getModule()) {
+        if (orderEntry instanceof ModuleOrderEntry moe && moe.isExported() && fromModule == moe.getModule()) {
           result.addAll(getDirectBackwardDependencies(module, allModules));
         }
       }
@@ -683,6 +685,6 @@ public class AnalysisScope {
 
   @Override
   public String toString() {
-    return ReadAction.compute(() -> toSearchScope().toString());
+    return getDisplayName();
   }
 }

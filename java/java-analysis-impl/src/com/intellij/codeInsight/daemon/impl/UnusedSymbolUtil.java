@@ -83,18 +83,16 @@ public final class UnusedSymbolUtil {
    * @deprecated use {@link #createUnusedSymbolInfoBuilder(PsiElement, String, HighlightInfoType, String)} instead
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
+  public static @Nullable HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
                                                      @NotNull @NlsContexts.DetailedDescription String message,
-                                                     @NotNull final HighlightInfoType highlightInfoType,
+                                                     final @NotNull HighlightInfoType highlightInfoType,
                                                      @Nullable String shortName) {
     return createUnusedSymbolInfoBuilder(element, message, highlightInfoType, shortName).create();
   }
-  @NotNull
-  public static HighlightInfo.Builder createUnusedSymbolInfoBuilder(@NotNull PsiElement element,
-                                                                    @NotNull @NlsContexts.DetailedDescription String message,
-                                                                    @NotNull final HighlightInfoType highlightInfoType,
-                                                                    @Nullable String shortName) {
+  public static @NotNull HighlightInfo.Builder createUnusedSymbolInfoBuilder(@NotNull PsiElement element,
+                                                                             @NotNull @NlsContexts.DetailedDescription String message,
+                                                                             final @NotNull HighlightInfoType highlightInfoType,
+                                                                             @Nullable String shortName) {
     String tooltip;
     if (shortName != null) {
       tooltip = DaemonTooltipsUtil.getWrappedTooltip(message, shortName, true);
@@ -180,7 +178,7 @@ public final class UnusedSymbolUtil {
 
   private static boolean weAreSureThereAreNoUsages(@NotNull Project project,
                                                    @NotNull PsiFile containingFile,
-                                                   @NotNull final PsiMember member,
+                                                   final @NotNull PsiMember member,
                                                    @NotNull GlobalUsageHelper helper) {
     log("* " + member.getName() + ": call wearesure");
     if (!helper.shouldCheckUsages(member)) {
@@ -210,8 +208,7 @@ public final class UnusedSymbolUtil {
     //System.out.println(s);
   }
 
-  @NotNull
-  public static SearchScope getUseScope(@NotNull PsiMember member) {
+  public static @NotNull SearchScope getUseScope(@NotNull PsiMember member) {
     Project project = member.getProject();
     SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(member);
     // some classes may have references from within XML outside dependent modules, e.g. our actions
@@ -227,7 +224,7 @@ public final class UnusedSymbolUtil {
    * @deprecated use {@link #processUsages(Project, PsiFile, SearchScope, PsiMember, PsiFile, Processor)}
    */
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean processUsages(@NotNull Project project,
                                       @NotNull PsiFile containingFile,
                                       @NotNull PsiMember member,
@@ -248,7 +245,7 @@ public final class UnusedSymbolUtil {
 
   public static boolean processUsages(@NotNull Project project,
                                       @NotNull PsiFile containingFile,
-                                      @NotNull final SearchScope useScope,
+                                      final @NotNull SearchScope useScope,
                                       @NotNull PsiMember member,
                                       @Nullable PsiFile ignoreFile,
                                       @NotNull Processor<? super UsageInfo> usageInfoProcessor) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -103,8 +103,7 @@ public final class SwitchExpressionCanBePushedDownInspection extends AbstractBas
     return true;
   }
 
-  @Nullable
-  private static List<PsiExpression> extractBranches(PsiSwitchBlock block) {
+  private static @Nullable List<PsiExpression> extractBranches(PsiSwitchBlock block) {
     PsiCodeBlock body = block.getBody();
     if (body == null) return null;
     PsiStatement[] statements = body.getStatements();

@@ -1,4 +1,4 @@
-<error descr="Functional interface can't be declared as 'sealed'">@FunctionalInterface</error>
+<error descr="Functional interface cannot be declared as 'sealed'">@FunctionalInterface</error>
 sealed interface I {
   void m();
 }
@@ -16,10 +16,10 @@ final class MyFn implements Fn {
 class Test {
 
   void test() {
-    Fn fn = <error descr="Sealed class can not be used as functional interface">() -> 1</error>;
-    Fn fn1 = <error descr="Sealed class can not be used as functional interface">this::doSmth</error>;
-    foo(<error descr="Sealed class can not be used as functional interface">() -> 1</error>);
-    foo(<error descr="Sealed class can not be used as functional interface">this::doSmth</error>);
+    Fn fn = <error descr="Lambda cannot implement a sealed interface">() -> 1</error>;
+    Fn fn1 = <error descr="Method reference cannot implement a sealed interface">this::doSmth</error>;
+    foo(<error descr="Lambda cannot implement a sealed interface">() -> 1</error>);
+    foo(<error descr="Method reference cannot implement a sealed interface">this::doSmth</error>);
   }
   
   int doSmth() {

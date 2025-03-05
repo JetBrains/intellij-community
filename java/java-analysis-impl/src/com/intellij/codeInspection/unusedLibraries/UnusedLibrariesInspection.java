@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unusedLibraries;
 
 import com.intellij.analysis.AnalysisScope;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.analysis.bytecode.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -137,15 +138,13 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
     collectClassesPerRoots(givenRoots, fromClasses, toClasses);
 
     Graph<VirtualFile> graph = GraphGenerator.generate(new InboundSemiGraph<>() {
-      @NotNull
       @Override
-      public Collection<VirtualFile> getNodes() {
+      public @NotNull Collection<VirtualFile> getNodes() {
         return Arrays.asList(givenRoots);
       }
 
-      @NotNull
       @Override
-      public Iterator<VirtualFile> getIn(VirtualFile n) {
+      public @NotNull Iterator<VirtualFile> getIn(VirtualFile n) {
         Set<String> classesInCurrentRoot = fromClasses.get(n);
         return toClasses.entrySet().stream()
           .filter(entry -> ContainerUtil.intersects(entry.getValue(), classesInCurrentRoot))
@@ -168,20 +167,29 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
     for (VirtualFile root : givenRoots) {
       Set<String> fromClassNames = new HashSet<>();
       Set<String> toClassNames = new HashSet<>();
-
-      VfsUtilCore.iterateChildrenRecursively(root, null, fileOrDir -> {
-        if (!fileOrDir.isDirectory() && fileOrDir.getName().endsWith(".class")) {
-          AbstractDependencyVisitor visitor = new AbstractDependencyVisitor() {
+      ClassFileAnalyzer analyzer =
+        JvmBytecodeAnalysis.getInstance().createDeclarationAndReferencesAnalyzer(
+          new JvmBytecodeDeclarationProcessor() {
             @Override
-            protected void addClassName(String name) {
+            public void processClass(@NotNull JvmClassBytecodeDeclaration jvmClass) {
+              fromClassNames.add(jvmClass.getTopLevelSourceClassName());
+            }
+          },
+          new JvmBytecodeReferenceProcessor() {
+            @Override
+            public void processClassReference(@NotNull JvmClassBytecodeDeclaration targetClass,
+                                              @NotNull JvmClassBytecodeDeclaration sourceClass) {
+              String name = targetClass.getTopLevelSourceClassName();
               if (!name.startsWith("java.") && !name.startsWith("javax.")) { //ignore jdk classes
                 toClassNames.add(name);
               }
             }
-          };
+          });
+
+      VfsUtilCore.iterateChildrenRecursively(root, null, fileOrDir -> {
+        if (!fileOrDir.isDirectory() && fileOrDir.getName().endsWith(".class")) {
           try {
-            visitor.processStream(fileOrDir.getInputStream());
-            fromClassNames.add(visitor.getCurrentClassName());
+            analyzer.processInputStream(fileOrDir.getInputStream());
           }
           catch (IOException e) {
             LOG.error(e);
@@ -203,16 +211,12 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return "UnusedLibrary";
   }
 
@@ -221,9 +225,8 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
     return new RemoveUnusedLibrary(hint, null);
   }
 
-  @Nullable
   @Override
-  public String getHint(@NotNull QuickFix fix) {
+  public @Nullable String getHint(@NotNull QuickFix fix) {
     if (fix instanceof RemoveUnusedLibrary && ((RemoveUnusedLibrary)fix).myFiles == null) {
       return ((RemoveUnusedLibrary)fix).myLibraryName;
     }
@@ -240,13 +243,12 @@ public final class UnusedLibrariesInspection extends GlobalInspectionTool {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return myFiles == null ? JavaAnalysisBundle.message("detach.library.quickfix.name") : JavaAnalysisBundle.message("detach.library.roots.quickfix.name");
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ModuleProblemDescriptor descriptor) {
+    public void applyFix(final @NotNull Project project, final @NotNull ModuleProblemDescriptor descriptor) {
       final Module module = descriptor.getModule();
 
       final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();

@@ -35,8 +35,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
   }
 
   @Override
-  @NonNls
-  public String getToolWindowId() {
+  public @NonNls String getToolWindowId() {
     return NAV_BAR_ID;
   }
 
@@ -79,10 +78,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
       if (panel instanceof StaticNavBarPanel navBarPanel) {
         NavBarVm vm = navBarPanel.getModel();
         if (vm != null) {
-          vm.selectTail();
-          if (showPopup) {
-            vm.showPopup();
-          }
+          vm.selectTail(showPopup);
         }
       }
     });
@@ -98,6 +94,7 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
     return null;
   }
 
+  @Override
   public String toString() {
     return IdeBundle.message("navigation.bar");
   }

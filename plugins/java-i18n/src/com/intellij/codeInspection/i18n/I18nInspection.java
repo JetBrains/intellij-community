@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.i18n;
 
@@ -49,10 +49,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
@@ -109,13 +106,13 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   private boolean reportUnannotatedReferences = false;
   public boolean ignoreAssignedToConstants;
   public boolean ignoreToString;
-  @NlsSafe private String nonNlsLiteralPattern;
-  @NlsSafe public String nonNlsCommentPattern;
+  private @NlsSafe String nonNlsLiteralPattern;
+  public @NlsSafe String nonNlsCommentPattern;
   private boolean ignoreForEnumConstants;
 
-  @Nullable private Pattern myCachedCommentPattern;
-  @Nullable private Pattern myCachedLiteralPattern;
-  @NonNls private static final String TO_STRING = "toString";
+  private @Nullable Pattern myCachedCommentPattern;
+  private @Nullable Pattern myCachedLiteralPattern;
+  private static final @NonNls String TO_STRING = "toString";
 
   public I18nInspection() {
     setNonNlsCommentPattern("NON-NLS");
@@ -197,14 +194,12 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HardCodedStringLiteral";
   }
 
@@ -282,8 +277,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     );
   }
 
-  @NotNull
-  private static HtmlChunk exampleDescription(@NlsSafe String exampleText) {
+  private static @NotNull HtmlChunk exampleDescription(@NlsSafe String exampleText) {
     return HtmlChunk.fragment(
       HtmlChunk.text(JavaI18nBundle.message("tooltip.example")),
       HtmlChunk.br(),
@@ -321,13 +315,11 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     return "nls";
   }
 
-  @NotNull
-  private static LocalQuickFix createIntroduceConstantFix() {
+  private static @NotNull LocalQuickFix createIntroduceConstantFix() {
     return new IntroduceConstantFix();
   }
 
-  @Nullable
-  private static ULocalVariable getVariableToSearch(UExpression passThrough) {
+  private static @Nullable ULocalVariable getVariableToSearch(UExpression passThrough) {
     UElement uastParent = passThrough.getUastParent();
     ULocalVariable uVar = null;
     if (uastParent instanceof ULocalVariable) {
@@ -349,8 +341,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     return uVar;
   }
 
-  @Nullable
-  private static List<@NotNull UExpression> findUsages(UExpression passThrough, ULocalVariable uVar) {
+  private static @Nullable @Unmodifiable List<@NotNull UExpression> findUsages(UExpression passThrough, ULocalVariable uVar) {
     PsiElement psiVar = uVar.getSourcePsi();
     PsiElement psi = passThrough.getSourcePsi();
     if (psi != null && psiVar != null) {
@@ -863,7 +854,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (parent == null || !UastExpressionUtils.isMethodCall(parent)) {
       return false;
     }
-    @NonNls final String methodName = ((UCallExpression)parent).getMethodName();
+    final @NonNls String methodName = ((UCallExpression)parent).getMethodName();
     if (methodName == null) {
       return false;
     }

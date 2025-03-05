@@ -1,0 +1,6 @@
+Additional checking of reference Getter: WithCompanionWithInvokeAlias
+Additional checking of reference KtSimpleNameReference: WithCompanionWithInvokeAlias
+Changed resolve of KtSimpleNameReference: WithCompanionWithInvokeAlias
+Additional checking of reference KtInvokeFunctionReference: WithCompanionWithInvokeAlias()
+Changed resolve of KtInvokeFunctionReference: WithCompanionWithInvokeAlias()
+Trying to build import list again with import rules: +dependency.WithCompanionWithInvokeAlias, -dependency.WithCompanionWithInvoke.Companion.*

@@ -133,12 +133,12 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   @Override
-  public synchronized void close() {
+  public void close() {
     Disposer.dispose(myStorage);
   }
 
   @Override
-  public synchronized void force() {
+  public void force() {
     try {
       myStorage.force();
     }
@@ -226,7 +226,6 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
         eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
       }
       myStorage.deleteRecordsUpTo(firstObsoleteId);
-      force();
     }
     catch (IOException e) {
       handleError(e, null);

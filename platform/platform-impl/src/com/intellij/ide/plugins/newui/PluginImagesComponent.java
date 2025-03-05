@@ -205,6 +205,7 @@ public final class PluginImagesComponent extends JPanel {
             }
             else {
               images.add(image);
+              if (images.size() >= 10) break;
             }
           }
           catch (IOException e) {

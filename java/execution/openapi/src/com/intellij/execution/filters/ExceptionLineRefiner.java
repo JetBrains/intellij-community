@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.psi.PsiElement;
@@ -56,8 +56,7 @@ public interface ExceptionLineRefiner {
    */
   record RefinerMatchResult(@NotNull PsiElement target, @NotNull PsiElement reason){
 
-    @Nullable
-    public static ExceptionLineRefiner.RefinerMatchResult of(@Nullable PsiElement element) {
+    public static @Nullable ExceptionLineRefiner.RefinerMatchResult of(@Nullable PsiElement element) {
       if (element == null) return null;
       return new RefinerMatchResult(element, element);
     }

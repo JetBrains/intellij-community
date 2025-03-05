@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async

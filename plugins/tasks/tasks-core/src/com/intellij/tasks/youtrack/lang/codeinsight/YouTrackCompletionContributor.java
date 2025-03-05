@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack.lang.codeinsight;
 
 import com.intellij.codeInsight.completion.*;
@@ -34,7 +34,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
   private static final InsertHandler<LookupElement> INSERT_HANDLER = new MyInsertHandler();
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(DebugUtil.psiToString(parameters.getOriginalFile(), false));
     }
@@ -70,8 +70,7 @@ public class YouTrackCompletionContributor extends CompletionContributor {
   /**
    * Find first word left boundary before cursor and strip leading braces and '#' signs
    */
-  @NotNull
-  private static String extractPrefix(CompletionParameters parameters) {
+  private static @NotNull String extractPrefix(CompletionParameters parameters) {
     String text = parameters.getOriginalFile().getText();
     final int caretOffset = parameters.getOffset();
     if (text.isEmpty() || caretOffset == 0) {

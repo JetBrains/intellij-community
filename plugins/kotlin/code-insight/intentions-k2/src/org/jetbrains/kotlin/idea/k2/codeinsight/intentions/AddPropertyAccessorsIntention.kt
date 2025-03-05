@@ -2,9 +2,10 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -56,9 +57,8 @@ internal abstract class AbstractAddAccessorIntention(
         return true
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtProperty): Unit? {
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
         if (element.isPropertyNotInitialized()) return null
         if (element.annotationEntries.isEmpty()) return Unit
         val symbol = element.symbol as? KaPropertySymbol ?: return null
@@ -88,6 +88,10 @@ internal abstract class AbstractAddAccessorIntention(
 
 private val JVM_FIELD_CLASS_ID = ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
 
-internal class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true), LowPriorityAction
+internal class AddPropertyAccessorsIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = true) {
+    override fun getPresentation(context: ActionContext, element: KtProperty): Presentation {
+        return Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
+    }
+}
 internal class AddPropertyGetterIntention : AbstractAddAccessorIntention(addGetter = true, addSetter = false)
 internal class AddPropertySetterIntention : AbstractAddAccessorIntention(addGetter = false, addSetter = true)

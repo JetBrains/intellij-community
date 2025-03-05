@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
@@ -24,12 +25,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.Scope
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.performancePlugin.utils.HighlightingTestUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
 import java.util.*
@@ -49,6 +49,15 @@ private fun Collection<FileEditor>.getWorthy(): List<TextEditor> {
     else it
   }
 }
+
+private fun isTrafficLightExists(editor: Editor): Boolean {
+  //MD file in preview mode doesn't have traffic light.
+  //TODO Learn how to determine MD file view mode
+  val isMdFile = editor.virtualFile.extension?.contains("md", ignoreCase = true) ?: false
+  return (editor.markupModel as EditorMarkupModel).errorStripeRenderer != null || isMdFile
+}
+
+private fun checkTrafficLightRenderer() = java.lang.Boolean.getBoolean("is.test.traffic.light")
 
 internal class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
@@ -283,6 +292,12 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       while (iterator.hasNext()) {
         val (editor, exceptionWithTime) = iterator.next()
         val highlightedEditor = highlightedEditors[editor]
+
+        if (status == "stopped" && checkTrafficLightRenderer() && !isTrafficLightExists(editor.editor)) {
+          LOG.error("Highlighting traffic light should be shown in the top right corner of the editor, in case of $status")
+          takeFullScreenshot("traffic-light-screenshot")
+        }
+
         if (highlightedEditor == null) {
           if (!UIUtil.isShowing(editor.getComponent())) {
             iterator.remove()
@@ -326,17 +341,17 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   internal fun printStatistic() {
     sessions.forEach {
       val editor = it.key.editor
-      printCodeAnalyzerStatistic(editor)
+      printCodeAnalyzerStatus(editor)
       printFileStatusMapInfo(editor)
     }
   }
 
-  internal fun printCodeAnalyzerStatistic(editor: Editor) {
+  internal fun printCodeAnalyzerStatus(editor: Editor) {
     //Status can't be retrieved from EDT
     if (EDT.isCurrentThreadEdt()) return
     try {
       ReadAction.run<Throwable> {
-        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).use { it.daemonCodeAnalyzerStatus }}")
+        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor).use { it.daemonCodeAnalyzerStatus }}")
       }
     }
     catch (ex: Throwable) {
@@ -434,6 +449,8 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
   abstract val wasStartedInLimitedSetup: Boolean
 
   companion object {
+    val highlightingScopeName = "highlighting"
+
     private class DaemonAnalysisStarted(editor: TextEditor, override val wasStartedInLimitedSetup: Boolean) :
       ExceptionWithTime(message = "Previous daemon start trace (editor = ${editor.description})") {
       private var analysisFinished = false
@@ -457,11 +474,7 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
       return when (exceptionWithTime) {
         null -> "Editor ${editor} wasn't opened, and highlighting didn't start, but it finished, and the editor was highlighted"
         is DaemonAnalysisStarted -> {
-          TelemetryManager.getTracer(Scope("highlighting"))
-            .spanBuilder("highlighting_${editor.file.name}")
-            .setStartTimestamp(exceptionWithTime.timestamp, TimeUnit.MILLISECONDS)
-            .startSpan()
-            .end(currentTime, TimeUnit.MILLISECONDS)
+          HighlightingTestUtil.storeProcessFinishedTime(highlightingScopeName, "highlighting_${editor.file.name}")
           "Total highlighting time is : ${currentTime - exceptionWithTime.timestamp} ms for ${editor.description}"
         }
       }

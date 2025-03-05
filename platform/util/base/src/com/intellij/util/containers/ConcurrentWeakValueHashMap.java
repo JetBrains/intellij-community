@@ -14,7 +14,7 @@ import java.util.function.BiConsumer;
  * Concurrent strong key:K -> weak value:V map
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * Use {@link ContainerUtil#createConcurrentWeakValueMap()} to create this
+ * Use {@link ContainerUtil#createConcurrentWeakValueMap()} to create
  */
 final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
 
@@ -36,6 +36,7 @@ final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
 
     // When referent is collected, equality should be identity-based (for the processQueues() remove this very same SoftValue)
     // otherwise it's just canonical equals on referents for replace(K,V,V) to work
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;

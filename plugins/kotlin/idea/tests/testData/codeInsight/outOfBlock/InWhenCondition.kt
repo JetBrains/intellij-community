@@ -1,5 +1,5 @@
 // OUT_OF_CODE_BLOCK: FALSE
-// ENABLE-WARNINGS
+// ENABLE_WARNINGS
 
 fun foo(s: String): Int {
     return when (s) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview.jcef;
 
 import com.intellij.idea.AppMode;
@@ -12,9 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
 
-  @NotNull
   @Override
-  public MarkdownHtmlPanel createHtmlPanel() {
+  public @NotNull MarkdownHtmlPanel createHtmlPanel() {
     return new MarkdownJCEFHtmlPanel();
   }
 
@@ -26,15 +25,13 @@ public final class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
     return new MarkdownJCEFHtmlPanel(project, virtualFile);
   }
 
-  @NotNull
   @Override
-  public AvailabilityInfo isAvailable() {
+  public @NotNull AvailabilityInfo isAvailable() {
     return canBeUsed() ? AvailabilityInfo.AVAILABLE : AvailabilityInfo.UNAVAILABLE;
   }
 
-  @NotNull
   @Override
-  public ProviderInfo getProviderInfo() {
+  public @NotNull ProviderInfo getProviderInfo() {
     return new ProviderInfo("JCEF Browser", JCEFHtmlPanelProvider.class.getName());
   }
 

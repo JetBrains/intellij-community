@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.icons.AllIcons;
@@ -23,6 +23,7 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -119,8 +120,8 @@ public final class BranchFilterPopupComponent extends MultipleValueFilterPopupCo
     return ContainerUtil.map(branches, VcsRef::getName);
   }
 
-  private static @NotNull List<List<String>> processRecentBranchFilters(@NotNull Set<String> availableBranches,
-                                                                        @NotNull List<List<String>> recentBranchFilters) {
+  private static @Unmodifiable @NotNull List<List<String>> processRecentBranchFilters(@NotNull Set<String> availableBranches,
+                                                                                      @NotNull List<List<String>> recentBranchFilters) {
     if (availableBranches.isEmpty()) {
       return recentBranchFilters;
     }

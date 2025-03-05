@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 public class Emoji implements Serializable {
   private final int myId;
-  @NonNls private final String myValue;
+  private final @NonNls String myValue;
   private final boolean myToned;
 
   public Emoji(int id, @NonNls String value, boolean toned) {
@@ -21,8 +21,7 @@ public class Emoji implements Serializable {
     return myId;
   }
 
-  @NlsSafe
-  public String getTonedValue(EmojiSkinTone tone) {
+  public @NlsSafe String getTonedValue(EmojiSkinTone tone) {
     return myToned ? myValue + tone.getStringValue() : myValue;
   }
 }

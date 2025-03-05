@@ -31,9 +31,8 @@ fun response(contentType: String?, content: ByteBuf?): FullHttpResponse {
   return response
 }
 
-fun response(content: CharSequence, charset: Charset = CharsetUtil.US_ASCII): FullHttpResponse {
-  return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset))
-}
+fun response(content: CharSequence, charset: Charset = CharsetUtil.US_ASCII): FullHttpResponse =
+  DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset))
 
 fun responseStatus(status: HttpResponseStatus, keepAlive: Boolean, channel: Channel) {
   val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status)
@@ -48,8 +47,8 @@ fun responseStatus(status: HttpResponseStatus, keepAlive: Boolean, channel: Chan
 }
 
 fun HttpResponse.addNoCache(): HttpResponse {
-  headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")//NON-NLS
-  headers().add(HttpHeaderNames.PRAGMA, "no-cache")//NON-NLS
+  headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
+  headers().add(HttpHeaderNames.PRAGMA, "no-cache")
   return this
 }
 
@@ -101,11 +100,11 @@ fun HttpResponse.addCommonHeaders() {
     headers().set(HttpHeaderNames.X_FRAME_OPTIONS, "SameOrigin")
   }
   @Suppress("SpellCheckingInspection")
-  headers().set("X-Content-Type-Options", "nosniff")//NON-NLS
-  headers().set("x-xss-protection", "1; mode=block")//NON-NLS
+  headers().set("X-Content-Type-Options", "nosniff")
+  headers().set("x-xss-protection", "1; mode=block")
 
   if (status() < HttpResponseStatus.MULTIPLE_CHOICES) {
-    headers().set(HttpHeaderNames.ACCEPT_RANGES, "bytes")//NON-NLS
+    headers().set(HttpHeaderNames.ACCEPT_RANGES, "bytes")
   }
 }
 
@@ -124,7 +123,8 @@ fun HttpResponse.send(channel: Channel, close: Boolean) {
   }
 }
 
-fun HttpResponseStatus.response(request: HttpRequest? = null, description: String? = null): HttpResponse = createStatusResponse(this, request, description)
+fun HttpResponseStatus.response(request: HttpRequest? = null, description: String? = null): HttpResponse =
+  createStatusResponse(this, request, description)
 
 @JvmOverloads
 fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, description: String? = null, extraHeaders: HttpHeaders? = null) {
@@ -149,8 +149,7 @@ fun createStatusResponse(
 
   val message = responseStatus.toString()
 
-  @NlsSafe
-  val builder = StringBuilder()
+  val builder = @NlsSafe StringBuilder()
   if (usePlainText) {
     builder.append(message)
     if (description != null) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -41,19 +27,19 @@ import java.util.List;
  */
 final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   private final Project myProject;
-  @NotNull private final HgRepositoryFiles myRepositoryFiles;
-  @Nullable private final MessageBusConnection myMessageBusConnection;
-  @NotNull private final MergingUpdateQueue myUpdateQueue;
-  @Nullable private final VirtualFile myBranchHeadsDir;
+  private final @NotNull HgRepositoryFiles myRepositoryFiles;
+  private final @Nullable MessageBusConnection myMessageBusConnection;
+  private final @NotNull MergingUpdateQueue myUpdateQueue;
+  private final @Nullable VirtualFile myBranchHeadsDir;
   private static final int TIME_SPAN = 300;
-  @Nullable private VirtualFile myMqDir;
-  @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
-  @NotNull private final MergingUpdateQueue myUpdateConfigQueue;
+  private @Nullable VirtualFile myMqDir;
+  private final @Nullable LocalFileSystem.WatchRequest myWatchRequest;
+  private final @NotNull MergingUpdateQueue myUpdateConfigQueue;
   private final HgRepository myRepository;
   private final VcsDirtyScopeManager myDirtyScopeManager;
 
 
-  HgRepositoryUpdater(@NotNull final HgRepository repository) {
+  HgRepositoryUpdater(final @NotNull HgRepository repository) {
     myRepository = repository;
     VirtualFile hgDir = myRepository.getHgDir();
     myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(hgDir.getPath(), true);

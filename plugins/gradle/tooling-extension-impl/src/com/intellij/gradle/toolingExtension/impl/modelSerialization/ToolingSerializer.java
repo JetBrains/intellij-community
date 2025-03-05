@@ -23,7 +23,7 @@ import java.util.ServiceLoader;
 public final class ToolingSerializer {
   private final DefaultSerializationService myDefaultSerializationService;
   private final ClassMap<SerializationService<?>> mySerializationServices;
-  @Nullable private final ClassLoader myModelBuildersClassLoader;
+  private final @Nullable ClassLoader myModelBuildersClassLoader;
 
   public ToolingSerializer() {
     this(null);
@@ -78,15 +78,13 @@ public final class ToolingSerializer {
     return getService(modelClazz, false).write(object, modelClazz);
   }
 
-  @Nullable
-  public <T> T read(byte @NotNull [] object, @NotNull Class<T> modelClazz) throws IOException, SerializationServiceNotFoundException {
+  public @Nullable <T> T read(byte @NotNull [] object, @NotNull Class<T> modelClazz) throws IOException, SerializationServiceNotFoundException {
     assert myModelBuildersClassLoader == null;
     return getService(modelClazz, true).read(object, modelClazz);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  @NotNull
-  private <T> SerializationService<T> getService(@NotNull Class<T> modelClazz, boolean useDefaultSerializer)
+  private @NotNull <T> SerializationService<T> getService(@NotNull Class<T> modelClazz, boolean useDefaultSerializer)
     throws SerializationServiceNotFoundException {
     SerializationService service = mySerializationServices.get(modelClazz);
     if (service != null) return service;
@@ -96,8 +94,7 @@ public final class ToolingSerializer {
     throw new SerializationServiceNotFoundException(modelClazz);
   }
 
-  @NotNull
-  private static Object maybeUnpack(@NotNull Object object) {
+  private static @NotNull Object maybeUnpack(@NotNull Object object) {
     try {
       return new ProtocolToModelAdapter().unpack(object);
     }
@@ -124,8 +121,7 @@ public final class ToolingSerializer {
     }
   }
 
-  @Nullable
-  private static Method findMethodIncludingSuperclasses(Class<?> clazz, String name, Class<?>... parameterType) {
+  private static @Nullable Method findMethodIncludingSuperclasses(Class<?> clazz, String name, Class<?>... parameterType) {
     try {
       return clazz.getDeclaredMethod(name, parameterType);
     }

@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -161,13 +162,13 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     return aClass;
   }
 
-  static List<? extends LookupElement> wrap(@NotNull JavaPsiClassReferenceElement classItem, @NotNull PsiElement position) {
+  static @Unmodifiable List<? extends LookupElement> wrap(@NotNull JavaPsiClassReferenceElement classItem, @NotNull PsiElement position) {
     PsiClass psiClass = classItem.getObject();
     return wrap(classItem, psiClass, position, () -> JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, PsiSubstitutor.EMPTY));
   }
 
-  static List<? extends LookupElement> wrap(@NotNull LookupElement classItem, @NotNull PsiClass psiClass,
-                                            @NotNull PsiElement position, @NotNull Supplier<? extends PsiClassType> type) {
+  static @Unmodifiable List<? extends LookupElement> wrap(@NotNull LookupElement classItem, @NotNull PsiClass psiClass,
+                                                          @NotNull PsiElement position, @NotNull Supplier<? extends PsiClassType> type) {
     if ((Registry.is("java.completion.show.constructors") || CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) &&
         isConstructorCallPlace(position)) {
       List<PsiMethod> constructors = ContainerUtil.filter(psiClass.getConstructors(), c -> shouldSuggestConstructor(psiClass, position, c));

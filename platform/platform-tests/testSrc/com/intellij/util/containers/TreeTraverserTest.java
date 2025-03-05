@@ -13,8 +13,8 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
 import java.util.*;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.util.Conditions.not;
@@ -954,11 +954,14 @@ public class TreeTraverserTest extends TestCase {
 
   public void testSimpleExpand() {
     assertEquals(Arrays.asList(1, 2, 3, 8, 9, 10, 4), numTraverser().expand(IS_ODD).toList());
+    assertEquals(Arrays.asList(1, 2, 3, 8, 9, 26, 27, 28, 10, 4), num2Traverser().expand(IS_ODD).toList());
   }
 
   public void testExpandFilter() {
     assertEquals(Arrays.asList(1, 3, 9), numTraverser().expand(IS_ODD).filter(IS_ODD).toList());
     assertEquals(Arrays.asList(1, 3, 9), numTraverser().expandAndFilter(IS_ODD).toList());
+    assertEquals(Arrays.asList(1, 3, 9, 27), num2Traverser().expandAndFilter(IS_ODD).toList());
+    assertEquals(Arrays.asList(2, 8, 26, 28, 10, 4), num2Traverser().expandAndSkip(IS_ODD).toList());
   }
 
   public void testSkipExpandedDfs() {

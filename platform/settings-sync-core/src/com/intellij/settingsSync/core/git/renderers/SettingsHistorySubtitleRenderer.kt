@@ -11,6 +11,7 @@ internal class SettingsHistorySubtitleRenderer : SettingsHistoryCellRenderer() {
   private val windowsIcon = AllIcons.FileTypes.MicrosoftWindows
   private val linuxIcon = AllIcons.Linux.Linux
 
+  @Suppress("HardCodedStringLiteral")
   override fun customizeHistoryCellRenderer(table: SettingsHistoryTable,
                                             row: SettingsHistoryTableRow,
                                             selected: Boolean,

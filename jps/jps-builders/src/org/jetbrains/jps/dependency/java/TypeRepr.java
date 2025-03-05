@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +13,10 @@ public abstract class TypeRepr {
 
   public abstract @NotNull String getDescriptor();
 
+  @Override
   public abstract boolean equals(Object o);
 
+  @Override
   public abstract int hashCode();
 
   public Iterable<Usage> getUsages() {
@@ -177,13 +179,11 @@ public abstract class TypeRepr {
     return types == null || types.length == 0? Collections.emptySet() : Iterators.map(Arrays.asList(types), t -> getType(t));
   }
 
-  public static TypeRepr getType(final Type t) {
-    return getType(t.getDescriptor());
+  public static TypeRepr getType(final String descriptor) {
+    return getType(Type.getType(descriptor));
   }
 
-  public static TypeRepr getType(final String descriptor) {
-    final Type t = Type.getType(descriptor);
-
+  public static TypeRepr getType(final Type t) {
     switch (t.getSort()) {
       case Type.OBJECT:
         return new ClassType(t.getClassName().replace('.', '/'));
@@ -192,8 +192,7 @@ public abstract class TypeRepr {
         return new ArrayType(getType(t.getElementType().getDescriptor()));
 
       default: // todo: support 'method' type?
-        return new PrimitiveType(descriptor);
+        return new PrimitiveType(t.getDescriptor());
     }
   }
-
 }

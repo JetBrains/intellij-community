@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class DeclarationParser extends BasicDeclarationParser {
   public enum Context {
-    FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
+    FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE, JSHELL
   }
 
   public DeclarationParser(final @NotNull JavaParser javaParser) {
@@ -30,6 +30,8 @@ public class DeclarationParser extends BasicDeclarationParser {
         return Context.CODE_BLOCK;
       case ANNOTATION_INTERFACE:
         return Context.ANNOTATION_INTERFACE;
+      case JSHELL:
+        return Context.JSHELL;
       default:
         throw new UnsupportedOperationException();
     }
@@ -49,6 +51,8 @@ public class DeclarationParser extends BasicDeclarationParser {
         return BaseContext.CODE_BLOCK;
       case ANNOTATION_INTERFACE:
         return BaseContext.ANNOTATION_INTERFACE;
+      case JSHELL:
+        return BaseContext.JSHELL;
       default:
         throw new UnsupportedOperationException();
     }

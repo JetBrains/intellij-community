@@ -11,7 +11,6 @@ import fleet.tracing.span
 import fleet.tracing.spannedScope
 import fleet.util.async.catching
 import fleet.util.async.use
-import fleet.util.cast
 import fleet.util.causeOfType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +23,6 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.produceIn
 import kotlinx.coroutines.yield
-import java.lang.reflect.Proxy
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -102,7 +100,6 @@ fun SuspendInvocationHandler.outOfScope(
             }) {
               publish(it.map { res ->
                 when (res) {
-                  is Proxy -> res
                   is RemoteObject -> {
                     val remoteObject = remoteApiDescriptor.getSignature(method).returnType as RemoteKind.RemoteObject
                     suspendProxy(remoteObject.descriptor, delegatingHandler(res).outOfScope(callerContext, hotScope, calleeScope))
@@ -158,7 +155,7 @@ fun SuspendInvocationHandler.poisoned(poison: () -> CancellationException?): Sus
                               publish: (SuspendInvocationHandler.CallResult) -> Unit) {
       when (val cause = poison()) {
         null -> this@poisoned.call(remoteApiDescriptor, method, args, publish)
-        else -> throw java.lang.RuntimeException("RequestQueue is terminated", cause)
+        else -> throw RuntimeException("RequestQueue is terminated", cause)
       }
     }
   }

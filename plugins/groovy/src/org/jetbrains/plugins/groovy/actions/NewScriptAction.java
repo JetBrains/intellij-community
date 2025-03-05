@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
@@ -49,8 +49,7 @@ public final class NewScriptAction extends JavaCreateTemplateInPackageAction<Gro
   }
 
   @Override
-  @NotNull
-  protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
+  protected @NotNull GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
     String fileName = newName + "." + extractExtension(templateName);
     PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, newName, fileName, templateName, true);
     if (file instanceof GroovyFile) return (GroovyFile)file;

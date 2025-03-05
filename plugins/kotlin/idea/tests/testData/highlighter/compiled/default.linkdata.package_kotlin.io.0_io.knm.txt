@@ -3,9 +3,21 @@
 
 package kotlin.io
 
-<symbolName descr="null">internal</symbolName> <symbolName descr="null">final</symbolName> class <symbolName descr="null">ReadAfterEOFException</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">constructor</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.<symbolName descr="null">String</symbolName>?) : kotlin.<symbolName descr="null">RuntimeException</symbolName> {
-}
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">print</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.<symbolName descr="null">String</symbolName>): kotlin.<symbolName descr="null">Unit</symbolName> { /* compiled code */ }
 
-<symbolName descr="null">internal</symbolName> interface <symbolName descr="null">Serializable</symbolName> {
-}
+<symbolName descr="null">public</symbolName> fun <symbolName descr="null">print</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.<symbolName descr="null">Any</symbolName>?): kotlin.<symbolName descr="null">Unit</symbolName> { /* compiled code */ }
+
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.PublishedApi</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">println</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.<symbolName descr="null">String</symbolName>): kotlin.<symbolName descr="null">Unit</symbolName> { /* compiled code */ }
+
+<symbolName descr="null">public</symbolName> fun <symbolName descr="null">println</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.<symbolName descr="null">Any</symbolName>?): kotlin.<symbolName descr="null">Unit</symbolName> { /* compiled code */ }
+
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">println</symbolName>(): kotlin.<symbolName descr="null">Unit</symbolName> { /* compiled code */ }
+
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">internal</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">printlnToStdErr</symbolName>(<symbolName descr="null">message</symbolName>: kotlin.<symbolName descr="null">String</symbolName>): kotlin.<symbolName descr="null">Unit</symbolName> { /* compiled code */ }
+
+<symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">@kotlin.Deprecated</symbolName> <symbolName descr="null">@kotlin.DeprecatedSinceKotlin</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">readLine</symbolName>(): kotlin.<symbolName descr="null">String</symbolName>? { /* compiled code */ }
+
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">public</symbolName> fun <symbolName descr="null">readln</symbolName>(): kotlin.<symbolName descr="null">String</symbolName> { /* compiled code */ }
+
+<symbolName descr="null">@kotlin.SinceKotlin</symbolName> <symbolName descr="null">@kotlin.native.internal.GCUnsafeCall</symbolName> <symbolName descr="null">@kotlin.native.internal.escapeAnalysis.Escapes.Nothing</symbolName> <symbolName descr="null">public</symbolName> <symbolName descr="null">external</symbolName> fun <symbolName descr="null">readlnOrNull</symbolName>(): kotlin.<symbolName descr="null">String</symbolName>? { /* compiled code */ }
 

@@ -16,6 +16,10 @@
     <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.ProjectActivity" dynamic="true"/>
     <extensionPoint name="requiredForSmartModeStartupActivity" interface="com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode" dynamic="true"/>
 
+    <extensionPoint name="multiverseEnabler" interface="com.intellij.codeInsight.multiverse.MultiverseEnabler" dynamic="false"/>
+    <extensionPoint name="multiverse.codeInsightContextProvider" interface="com.intellij.codeInsight.multiverse.CodeInsightContextProvider" dynamic="true"/>
+    <extensionPoint name="multiverse.codeInsightContextPresentationProvider" interface="com.intellij.codeInsight.multiverse.CodeInsightContextPresentationProvider" dynamic="true"/>
+
     <extensionPoint name="fileTypeDetector" interface="com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector" dynamic="true"/>
     <extensionPoint name="editorFactoryDocumentListener" interface="com.intellij.openapi.editor.event.DocumentListener" dynamic="true"/>
     <extensionPoint name="multiHostInjector" interface="com.intellij.lang.injection.MultiHostInjector" area="IDEA_PROJECT" dynamic="true"/>
@@ -51,6 +55,9 @@
     <extensionPoint dynamic="true" name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.LanguageSubstitutor"/>
     </extensionPoint>
+    <!--We need to define extension point for Eel Provider here because it is used in GeneralCommandLine.
+        If something unfortunate happens to GeneralCommandLine, we would need to remove this definition -->
+    <extensionPoint name="eelProvider" interface="com.intellij.platform.eel.provider.EelProvider" dynamic="true"/>
     <extensionPoint name="iconProvider" interface="com.intellij.ide.IconProvider" dynamic="true"/>
     <extensionPoint name="inspection.basicVisitor" beanClass="com.intellij.psi.BasicInspectionVisitorBean" dynamic="true">
       <with attribute="class" implements="com.intellij.psi.PsiElementVisitor"/>

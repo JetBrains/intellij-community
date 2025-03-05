@@ -178,8 +178,7 @@ public class VarType implements Type {  // TODO: optimize switch
     };
   }
 
-  @NotNull
-  public VarType decreaseArrayDim() {
+  public @NotNull VarType decreaseArrayDim() {
     if (getArrayDim() > 0) {
       return new VarType(getType(), getArrayDim() - 1, getValue());
     }

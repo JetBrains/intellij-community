@@ -156,6 +156,11 @@ public abstract class FirFoldingTestGenerated extends AbstractFirFoldingTest {
             runTest("../../idea/tests/testData/folding/checkCollapse/imports.kt");
         }
 
+        @TestMetadata("multilineCall.kt")
+        public void testMultilineCall() throws Exception {
+            runTest("../../idea/tests/testData/folding/checkCollapse/multilineCall.kt");
+        }
+
         @TestMetadata("multilineStrings.kt")
         public void testMultilineStrings() throws Exception {
             runTest("../../idea/tests/testData/folding/checkCollapse/multilineStrings.kt");

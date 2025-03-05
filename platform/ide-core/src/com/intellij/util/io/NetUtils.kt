@@ -17,7 +17,7 @@ import java.net.NoRouteToHostException
  */
 @Internal
 object NetUtils {
-  private const val URL = "https://youtrack.jetbrains.com/articles/SUPPORT-A-564/Cannot-connect-to-remote-host-No-route-to-host-macOS-15-Sequoia"
+  const val URL = "https://youtrack.jetbrains.com/articles/SUPPORT-A-564/Cannot-connect-to-remote-host-No-route-to-host-macOS-15-Sequoia"
 
   private fun isNoRouteException(error: Throwable) = error is NoRouteToHostException || error.cause is NoRouteToHostException
 

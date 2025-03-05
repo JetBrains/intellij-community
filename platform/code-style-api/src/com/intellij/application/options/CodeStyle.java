@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static java.lang.Math.max;
 
@@ -44,8 +45,7 @@ public final class CodeStyle {
   /**
    * @return Default application-wide root code style settings.
    */
-  @NotNull
-  public static CodeStyleSettings getDefaultSettings() {
+  public static @NotNull CodeStyleSettings getDefaultSettings() {
     //noinspection deprecation
     return CodeStyleSettingsManager.getInstance().getCurrentSettings();
   }
@@ -56,8 +56,7 @@ public final class CodeStyle {
    * @param project The project to get code style settings for.
    * @return The current root code style settings associated with the project.
    */
-  @NotNull
-  public static CodeStyleSettings getSettings(@NotNull Project project) {
+  public static @NotNull CodeStyleSettings getSettings(@NotNull Project project) {
     //noinspection deprecation
     return CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
   }
@@ -68,8 +67,7 @@ public final class CodeStyle {
    * @param project The project to return the settings for or {@code null} for default settings.
    * @return Project or default code style settings.
    */
-  @NotNull
-  public static CodeStyleSettings getProjectOrDefaultSettings(@Nullable Project project) {
+  public static @NotNull CodeStyleSettings getProjectOrDefaultSettings(@Nullable Project project) {
     return project != null ? getSettings(project) : getDefaultSettings();
   }
 
@@ -86,8 +84,7 @@ public final class CodeStyle {
    * @param file The file to get code style settings for.
    * @return The current root code style settings associated with the file or default settings if the file is invalid.
    */
-  @NotNull
-  public static CodeStyleSettings getSettings(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @NotNull CodeStyleSettings getSettings(@NotNull Project project, @NotNull VirtualFile file) {
     CodeStyleSettings localOrTempSettings = getLocalOrTemporarySettings(project);
     if (localOrTempSettings != null) {
       if (LOG.isDebugEnabled()) {
@@ -128,8 +125,7 @@ public final class CodeStyle {
     return cachedSettings != null ? cachedSettings : getSettings(project);
   }
 
-  @Nullable
-  private static CodeStyleSettings getLocalOrTemporarySettings(@NotNull Project project) {
+  private static @Nullable CodeStyleSettings getLocalOrTemporarySettings(@NotNull Project project) {
     CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
     CodeStyleSettings localSettings = settingsManager.getLocalSettings();
     if (localSettings != null) {
@@ -156,8 +152,7 @@ public final class CodeStyle {
    * @param file The initial file.
    * @return The PSI file or {@code null} if neither the initial file nor any other associated file can be used for settings.
    */
-  @Nullable
-  public static PsiFile getSettingsPsi(@NotNull PsiFile file) {
+  public static @Nullable PsiFile getSettingsPsi(@NotNull PsiFile file) {
     if (hasLocalVirtualFile(file)) return file;
     PsiFile originalFile = file.getUserData(PsiFileFactory.ORIGINAL_FILE);
     if (originalFile != null) {
@@ -193,8 +188,7 @@ public final class CodeStyle {
    * @param editor The editor to get settings for.
    * @return The language code style settings for the editor or {@code null}.
    */
-  @Nullable
-  public static CommonCodeStyleSettings getLanguageSettings(@NotNull Editor editor) {
+  public static @Nullable CommonCodeStyleSettings getLanguageSettings(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -212,8 +206,7 @@ public final class CodeStyle {
    * @param <T> Settings class type.
    * @return The current custom settings associated with the PSI file.
    */
-  @NotNull
-  public static <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull PsiFile file, Class<T> customSettingsClass) {
+  public static @NotNull <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull PsiFile file, Class<T> customSettingsClass) {
     CodeStyleSettings rootSettings = getSettings(file);
     return rootSettings.getCustomSettings(customSettingsClass);
   }
@@ -223,8 +216,7 @@ public final class CodeStyle {
    * @param file The file to retrieve language settings for.
    * @return The associated language settings.
    */
-  @NotNull
-  public static CommonCodeStyleSettings getLanguageSettings(@NotNull PsiFile file) {
+  public static @NotNull CommonCodeStyleSettings getLanguageSettings(@NotNull PsiFile file) {
     CodeStyleSettings rootSettings = getSettings(file);
     return rootSettings.getCommonSettings(file.getLanguage());
   }
@@ -235,8 +227,7 @@ public final class CodeStyle {
    * @param file The file to retrieve language settings for.
    * @return The associated language settings.
    */
-  @NotNull
-  public static CommonCodeStyleSettings getLanguageSettings(@NotNull PsiFile file, @NotNull Language language) {
+  public static @NotNull CommonCodeStyleSettings getLanguageSettings(@NotNull PsiFile file, @NotNull Language language) {
     CodeStyleSettings rootSettings = getSettings(file);
     return rootSettings.getCommonSettings(language);
   }
@@ -244,8 +235,7 @@ public final class CodeStyle {
   /**
    * Works similarly to {@link #getIndentOptions(Project, VirtualFile)} but for a PSI file.
    */
-  @NotNull
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file) {
+  public static @NotNull CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull PsiFile file) {
     CodeStyleSettings rootSettings = getSettings(file);
     return rootSettings.getIndentOptionsByFile(file);
   }
@@ -271,8 +261,7 @@ public final class CodeStyle {
    * @param document The document to get indent options for.
    * @return The indent options associated with document's PSI file if the file is available or other indent options otherwise.
    */
-  @NotNull
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project, @NotNull Document document) {
+  public static @NotNull CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project, @NotNull Document document) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file != null) {
       return getIndentOptions(file);
@@ -337,7 +326,13 @@ public final class CodeStyle {
    * Invoke a runnable using the specified settings.
    * <p>
    * Inside the <code>runnable</code>, <code>localSettings</code> override code style settings for all files associated with
-   * <code>project</code>. This effect is limited to current thread.
+   * <code>project</code>. This effect is limited to the current thread.
+   * <p>
+   * <code>localSettings</code> <b>must not</b> be an instance representing actual settings
+   * (e.g. the output of {@link CodeStyle#getSettings}).
+   * It is preferable to use {@link CodeStyle#runWithLocalSettings(Project, CodeStyleSettings, Consumer)}
+   * or {@link CodeStyle#computeWithLocalSettings(Project, CodeStyleSettings, Function)} instead,
+   * which provides a copy of provided base settings out-of-the-box.
    *
    * @param project The current project.
    * @param localSettings The local settings.
@@ -353,7 +348,7 @@ public final class CodeStyle {
    * Invoke the specified consumer with a copy of the given <code>baseSettings</code>.
    * <p>
    * Inside <code>localSettingsConsumer</code>, this copy will override code style settings for all files associated with <code>project</code>.
-   * This effect is limited to current thread. It is safe to make any changes to the copy of settings passed to the consumer, these changes
+   * This effect is limited to the current thread. It is safe to make any changes to the copy of settings passed to the consumer, these changes
    * will not affect any currently set code style.
    *
    * @param project              The current project.
@@ -364,6 +359,25 @@ public final class CodeStyle {
                                           @NotNull CodeStyleSettings baseSettings,
                                           @NotNull Consumer<? super @NotNull CodeStyleSettings> localSettingsConsumer) {
     CodeStyleSettingsManager.getInstance(project).runWithLocalSettings(baseSettings, localSettingsConsumer);
+  }
+
+  /**
+   * Invoke the specified function with a copy of the given <code>baseSettings</code>.
+   * <p>
+   * Inside <code>localSettingsFunction</code>,
+   * this copy will override code style settings for all files associated with <code>project</code>.
+   * This effect is limited to the current thread.
+   * It is safe to make any changes to the copy of settings passed to the function, these changes
+   * will not affect any currently set code style.
+   *
+   * @param project               The current project.
+   * @param baseSettings          The base settings to be cloned and used in the function.
+   * @param localSettingsFunction The function to execute with the base settings copy.
+   */
+  public static <T> T computeWithLocalSettings(@NotNull Project project,
+                                               @NotNull CodeStyleSettings baseSettings,
+                                               @NotNull Function<? super @NotNull CodeStyleSettings, T> localSettingsFunction) {
+    return CodeStyleSettingsManager.getInstance(project).computeWithLocalSettings(baseSettings, localSettingsFunction);
   }
 
   /**
@@ -484,8 +498,7 @@ public final class CodeStyle {
     return indent != null ? indent : allowDocCommit ? getLineIndent(project, editor.getDocument(), offset) : null;
   }
 
-  @Nullable
-  private static String getLineIndent(@Nullable Project project, @NotNull final Document document, int offset) {
+  private static @Nullable String getLineIndent(@Nullable Project project, final @NotNull Document document, int offset) {
     if (project == null) return null;
     PsiDocumentManager.getInstance(project).commitDocument(document);
     return CodeStyleManager.getInstance(project).getLineIndent(document, offset);
@@ -531,13 +544,11 @@ public final class CodeStyle {
     return CodeStyleSettingsManager.createTestSettings(null);
   }
 
-  @NotNull
-  public static CodeStyleSettingsFacade getFacade(@NotNull PsiFile file) {
+  public static @NotNull CodeStyleSettingsFacade getFacade(@NotNull PsiFile file) {
     return new DefaultCodeStyleSettingsFacade(getSettings(file), file.getFileType());
   }
 
-  @NotNull
-  public static CodeStyleSettingsFacade getFacade(@NotNull Project project, @NotNull Document document, @NotNull FileType fileType) {
+  public static @NotNull CodeStyleSettingsFacade getFacade(@NotNull Project project, @NotNull Document document, @NotNull FileType fileType) {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     return new DefaultCodeStyleSettingsFacade(psiFile == null ? getSettings(project) : getSettings(psiFile), fileType);
   }

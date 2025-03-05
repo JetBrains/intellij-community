@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
@@ -142,8 +142,7 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
     return null;
   }
 
-  @NotNull
-  private static String formatMethodCallExpression(@NotNull UCallExpression methodCallExpression) {
+  private static @NotNull String formatMethodCallExpression(@NotNull UCallExpression methodCallExpression) {
     return format(methodCallExpression).first;
   }
 
@@ -153,11 +152,10 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
    * offset in the formatted string. For each placeholder value substituted in the property value, two couples of offsets are returned -
    * one for the start of the placeholder, and one for the end.
    */
-  @NotNull
-  public static Pair<String, List<Couple<Integer>>> format(@NotNull UCallExpression methodCallExpression) {
+  public static @NotNull Pair<String, List<Couple<Integer>>> format(@NotNull UCallExpression methodCallExpression) {
     final List<UExpression> args = methodCallExpression.getValueArguments();
     PsiElement callSourcePsi = methodCallExpression.getSourcePsi();
-    if (args.size() > 0 && args.get(0) instanceof UInjectionHost injectionHost && isI18nProperty(injectionHost)) {
+    if (!args.isEmpty() && args.get(0) instanceof UInjectionHost injectionHost && isI18nProperty(injectionHost)) {
       final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(args.get(0));
       if (args.size() == 1 + count) {
         String text = getI18nMessage((UInjectionHost)args.get(0));
@@ -217,14 +215,12 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
     return text;
   }
 
-  @NotNull
-  private static String getI18nMessage(@NotNull UInjectionHost injectionHost) {
+  private static @NotNull String getI18nMessage(@NotNull UInjectionHost injectionHost) {
     final IProperty property = getI18nProperty(injectionHost);
-    return property == null ? UastLiteralUtils.getValueIfStringLiteral(injectionHost) : formatI18nProperty(injectionHost, property);
+    return property == null ? injectionHost.evaluateToString() : formatI18nProperty(injectionHost, property);
   }
 
-  @Nullable
-  public static IProperty getI18nProperty(@NotNull UInjectionHost injectionHost) {
+  public static @Nullable IProperty getI18nProperty(@NotNull UInjectionHost injectionHost) {
     PsiElement sourcePsi = injectionHost.getSourcePsi();
     if (sourcePsi == null) return null;
     final Property property = (Property)sourcePsi.getUserData(CACHE);
@@ -262,8 +258,7 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
     return StringUtil.unquoteString(((String)result)).equals(property.getKey());
   }
 
-  @NotNull
-  private static String formatI18nProperty(@NotNull UInjectionHost injectionHost, IProperty property) {
+  private static @NotNull String formatI18nProperty(@NotNull UInjectionHost injectionHost, IProperty property) {
     Object evaluated = injectionHost.evaluate();
     return property == null ?
            evaluated != null ? evaluated.toString() : "null" : "\"" + property.getValue() + "\"";

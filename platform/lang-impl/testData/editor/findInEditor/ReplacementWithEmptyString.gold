@@ -1,0 +1,120 @@
+--- FIND MODEL ---
+myStringToFind = null
+myStringToReplace = ''
+isReplaceState = false
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = true
+isRegularExpressions = true
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+a
+--
+------------
+--- FIND MODEL ---
+myStringToFind = 'a'
+myStringToReplace = ''
+isReplaceState = false
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = true
+isRegularExpressions = true
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+[[<a>]]
+--
+highlighter: (0,1); layer: 5999 : BOXED
+highlighter: (0,1); layer: 5999 : ROUNDED_BOX
+------------
+--- FIND MODEL ---
+myStringToFind = 'a'
+myStringToReplace = ''
+isReplaceState = true
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = true
+isRegularExpressions = true
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+Replacement Preview: 
+--
+
+[[<a>]]
+--
+highlighter: (0,1); layer: 5999 : BOXED
+highlighter: (0,1); layer: 5999 : ROUNDED_BOX
+------------
+--- FIND MODEL ---
+myStringToFind = 'a'
+myStringToReplace = ''
+isReplaceState = true
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = true
+isRegularExpressions = true
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+
+--
+Not Found
+--
+------------

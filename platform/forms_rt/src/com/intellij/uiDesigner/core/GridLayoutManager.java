@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.core;
 
 import javax.swing.*;
@@ -56,10 +42,8 @@ public final class GridLayoutManager extends AbstractLayout {
   private final int[] myWidths;
 
   private LayoutState myLayoutState;
-  /**
-   * package-private because is used in tests
-   */
-  DimensionInfo myHorizontalInfo;
+
+  private DimensionInfo myHorizontalInfo;
   /**
    * package-private because is used in tests
    */
@@ -101,6 +85,11 @@ public final class GridLayoutManager extends AbstractLayout {
     myHeights = new int[rowCount];
   }
 
+  //@VisibleForTesting
+  public DimensionInfo getHorizontalInfo() {
+    return myHorizontalInfo;
+  }
+
   /**
    * don't delete this constructor! don't use this constructor!!! should be used ONLY in generated code or in tests
    */
@@ -129,6 +118,7 @@ public final class GridLayoutManager extends AbstractLayout {
     mySameSizeVertically = sameSizeVertically;
   }
 
+  @Override
   public void addLayoutComponent(final Component comp, final Object constraints) {
     final GridConstraints c = (GridConstraints)constraints;
     final int row = c.getRow();
@@ -205,10 +195,12 @@ public final class GridLayoutManager extends AbstractLayout {
     myColumnStretches[columnIndex] = stretch;
   }
 
+  @Override
   public Dimension maximumLayoutSize(final Container target) {
     return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
   }
 
+  @Override
   public Dimension minimumLayoutSize(final Container container) {
     validateInfos(container);
     
@@ -259,6 +251,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return widths;
   }
 
+  @Override
   public Dimension preferredLayoutSize(final Container container) {
     validateInfos(container);
 
@@ -385,6 +378,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return true;
   }
 
+  @Override
   public void layoutContainer(final Container container) {
     validateInfos(container);
 
@@ -568,6 +562,7 @@ public final class GridLayoutManager extends AbstractLayout {
     return skipLayout;
   }
 
+  @Override
   public void invalidateLayout(final Container container) {
     myLayoutState = null;
     myHorizontalInfo = null;

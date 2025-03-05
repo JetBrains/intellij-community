@@ -31,7 +31,24 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="library" name="Gradle" level="project" />
-    <orderEntry type="library" exported="" name="Ant" level="project" />
+    <orderEntry type="module-library">
+      <library name="ant" type="repository">
+        <properties maven-id="org.apache.ant:ant:1.10.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/ant/ant/1.10.15/ant-1.10.15.jar">
+              <sha256sum>763acda4a69588c9ea8817a952851ff0c2fc4bffa1d081c2565dc407f29d5794</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ant/ant/1.10.15/ant-1.10.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ant/ant/1.10.15/ant-1.10.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.groovy.jps" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

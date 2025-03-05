@@ -1,0 +1,9 @@
+// IGNORE_K1
+
+class Class {
+    val test = 5
+
+    companion object {
+        fun foo(klass: Class): Int = klass.test
+    }
+}

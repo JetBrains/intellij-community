@@ -96,6 +96,7 @@ final class ModuleRequiresRepr extends Proto {
     };
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -106,6 +107,7 @@ final class ModuleRequiresRepr extends Proto {
     return name == ((ModuleRequiresRepr)o).name;
   }
 
+  @Override
   public int hashCode() {
     return 31 * name;
   }

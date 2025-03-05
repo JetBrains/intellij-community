@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -40,7 +40,7 @@ public interface OverrideText extends DomElement {
 
   class PlaceConverter extends ResolvingConverter<PsiField> {
 
-    @NonNls private static final String PLACES_CLASSNAME_SUFFIX = "Places";
+    private static final @NonNls String PLACES_CLASSNAME_SUFFIX = "Places";
 
     @Override
     public @Nullable PsiField fromString(@Nullable String s,
@@ -73,9 +73,8 @@ public interface OverrideText extends DomElement {
         .withTypeText(Objects.requireNonNull(field.getContainingClass()).getName());
     }
 
-    @NotNull
     @Override
-    public Collection<PsiField> getVariants(@NotNull ConvertContext context) {
+    public @NotNull Collection<PsiField> getVariants(@NotNull ConvertContext context) {
       CommonProcessors.CollectProcessor<PsiField> collectProcessor = new CommonProcessors.CollectProcessor<>();
       processAllActionPlaces(context, collectProcessor);
       return collectProcessor.getResults();
@@ -96,8 +95,7 @@ public interface OverrideText extends DomElement {
         });
     }
 
-    @Nullable
-    private static String getPlaceName(PsiField field) {
+    private static @Nullable String getPlaceName(PsiField field) {
       final PsiExpression initializer = field.getInitializer();
       return initializer != null ? Pair.getSecond(StringExpressionHelper.evaluateExpression(initializer)) : null;
     }

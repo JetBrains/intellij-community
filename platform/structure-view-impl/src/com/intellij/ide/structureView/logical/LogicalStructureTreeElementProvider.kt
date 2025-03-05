@@ -3,12 +3,14 @@ package com.intellij.ide.structureView.logical
 
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Provides logical structure view for logical elements
  * It is supposed to apply when we want to reuse existing tree for some logical elements branch
  * By default it's better to provide [com.intellij.ide.presentation.PresentationProvider] for [T]
  */
+@ApiStatus.Experimental
 interface LogicalStructureTreeElementProvider<T> {
 
   companion object {

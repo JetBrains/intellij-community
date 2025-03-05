@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -13,6 +15,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
+import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -27,7 +30,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinMethodReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -61,7 +65,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         element: PsiElement,
         searchParameters: KotlinReferencesSearchParameters
     ): Collection<PsiReference> {
-        val references = ReferencesSearch.search(searchParameters).toMutableSet()
+        val references = ReferencesSearch.search(searchParameters).asIterable().toMutableSet()
         if (element is KtNamedFunction || (element is KtProperty && !element.isLocal) || (element is KtParameter && element.hasValOrVar())) {
             element.toLightMethods().flatMapTo(references) { method ->
                 MethodReferencesSearch.search(
@@ -71,7 +75,7 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
                             acceptImportAlias = false
                         )
                     )
-                )
+                ).asIterable()
             }
         }
         return references.filter {
@@ -126,9 +130,9 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
             val declaration = element.namedUnwrappedElement as? KtNamedDeclaration
             if (declaration != null) {
-                ExpectActualUtils.liftToExpected(declaration)?.let { expectDeclaration ->
+                ExpectActualUtils.liftToExpect(declaration)?.let { expectDeclaration ->
                     allRenames[expectDeclaration] = safeNewName
-                    expectDeclaration.actualsForExpected().forEach { allRenames[it] = safeNewName }
+                    expectDeclaration.actualsForExpect().forEach { allRenames[it] = safeNewName }
                 }
             }
         }
@@ -272,4 +276,40 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         return findReferences(element, searchParameters)
     }
 
+    protected fun prepareOverrideRenaming(
+        declaration: PsiElement,
+        baseName: @NlsSafe String,
+        newBaseName: String,
+        safeNewName: String,
+        allRenames: MutableMap<PsiElement, String>
+    ) {
+        val project = declaration.project
+        val searchHelper = PsiSearchHelper.getInstance(project)
+        val overriders = ActionUtil.underModalProgress(project, KotlinBundle.message("rename.searching.for.all.overrides")) {
+            val multiplatformDeclarations =
+                if (declaration is KtNamedDeclaration) { withExpectedActuals(declaration) } else listOf(declaration)
+
+            multiplatformDeclarations.forEach {
+                allRenames[it] = safeNewName
+            }
+
+            multiplatformDeclarations.flatMap { d ->
+                renameRefactoringSupport.findAllOverridingMethods(d, searchHelper.getUseScope(d))
+            }
+        }
+
+        for (originalOverrider in overriders) {
+            // for possible Groovy wrappers
+            val overrider = (originalOverrider as? PsiMirrorElement)?.prototype as? PsiMethod ?: originalOverrider
+
+            if (overrider is SyntheticElement) continue
+
+            val overriderName = (((overrider as? KtLightMethod)?.kotlinOrigin as? PsiNamedElement) ?: (overrider as PsiNamedElement)).name
+            val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newBaseName)
+            if (newOverriderName != null) {
+                RenameUtil.assertNonCompileElement(overrider)
+                allRenames[overrider] = newOverriderName
+            }
+        }
+    }
 }

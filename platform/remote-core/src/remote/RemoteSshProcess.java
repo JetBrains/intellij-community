@@ -4,4 +4,4 @@ package com.intellij.remote;
 import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.execution.process.SelfKiller;
 
-abstract public class RemoteSshProcess extends RemoteProcess implements SelfKiller, Tunnelable, PtyBasedProcess { }
+public abstract class RemoteSshProcess extends RemoteProcess implements SelfKiller, Tunnelable, PtyBasedProcess { }

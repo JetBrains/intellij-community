@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.Map;
  * Methods for storing CPU profiler data for inspection run session and retrieve it later during the next inspection pass
  * to optimize "run inspection tool-to-warning onscreen" latency
  */
-class InspectionProfilerDataHolder {
+final class InspectionProfilerDataHolder {
   /**
    * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder})
    * to use later in {@link #sortByLatencies(PsiFile, List, HighlightInfoUpdaterImpl)}
@@ -37,12 +38,13 @@ class InspectionProfilerDataHolder {
    * - second, contexts with inspection tools which produced warnings in previous run, ordered by latency to the 1st created warning
    * - last, contexts with inspection tools which produced all other problems in previous run, ordered by latency to the 1st created problem
    */
+  @Contract(mutates = "param2")
   static void sortByLatencies(@NotNull PsiFile psiFile, @NotNull List<InspectionRunner.InspectionContext> init,
                               @NotNull HighlightInfoUpdaterImpl highlightInfoUpdater) {
     init.sort((context1, context2) -> {
       String toolId1 = context1.tool().getShortName();
       String toolId2 = context2.tool().getShortName();
-      return HighlightInfoUpdaterImpl.compareLatencies(psiFile, toolId1, toolId2);
+      return highlightInfoUpdater.compareLatencies(psiFile, toolId1, toolId2);
     });
   }
 }

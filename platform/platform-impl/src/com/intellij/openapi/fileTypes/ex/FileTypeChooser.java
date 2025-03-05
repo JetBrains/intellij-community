@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,8 +18,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,18 +62,18 @@ public final class FileTypeChooser extends DialogWrapper {
       myList.setEnabled(false);
     }
 
-    FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    var fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     Arrays.sort(fileTypes, (ft1, ft2) -> ft1 == null ? 1 : ft2 == null ? -1 : ft1.getDescription().compareToIgnoreCase(ft2.getDescription()));
 
-    final DefaultListModel<FileType> model = new DefaultListModel<>();
-    for (FileType type : fileTypes) {
+    var model = new DefaultListModel<FileType>();
+    for (var type : fileTypes) {
       if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType) && type != DetectedByContentFileType.INSTANCE) {
         model.addElement(type);
       }
     }
     myList.setModel(model);
     myList.addListSelectionListener(e -> updateContextHelp());
-    myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
+    myPattern.setModel(new CollectionComboBoxModel<>(new ArrayList<>(patterns), patterns.get(0)));
     ListSpeedSearch.installOn(myList, o -> o.getDescription());
 
     myContextHelpLabel.setForeground(UIUtil.getContextHelpForeground());
@@ -83,15 +83,15 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   private void updateContextHelp() {
-    FileType selectedType = getSelectedType();
-    String fileTypeString = selectedType == null ? "" : (" | " + selectedType.getDescription());
+    var selectedType = getSelectedType();
+    var fileTypeString = selectedType == null ? "" : (" | " + selectedType.getDescription());
     myContextHelpLabel.setText(FileTypesBundle.message("label.help.change.association", ShowSettingsUtil.getSettingsMenuName(),
                                                        fileTypeString));
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(myFileName);
+    var fileType = FileTypeManager.getInstance().getFileTypeByFileName(myFileName);
     myTitleLabel.setText(fileType == FileTypes.UNKNOWN ?
                          FileTypesBundle.message("filetype.chooser.prompt", myFileName) :
                          FileTypesBundle.message("filetype.chooser.change.prompt", myFileName, fileType.getName()));
@@ -116,8 +116,7 @@ public final class FileTypeChooser extends DialogWrapper {
       }
     }.installOn(myList);
 
-    myList.getSelectionModel().addListSelectionListener(__ -> updateButtonsState()
-    );
+    myList.getSelectionModel().addListSelectionListener(__ -> updateButtonsState());
 
     ScrollingUtil.selectItem(myList, FileTypes.PLAIN_TEXT);
 
@@ -139,50 +138,43 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   public FileType getSelectedType() {
-    if (myDetectFileType.isSelected()) return DetectedByContentFileType.INSTANCE;
-    return myOpenAsNative.isSelected() ? NativeFileType.INSTANCE : myList.getSelectedValue();
+    return myDetectFileType.isSelected() ? DetectedByContentFileType.INSTANCE :
+           myOpenAsNative.isSelected() ? NativeFileType.INSTANCE :
+           myList.getSelectedValue();
   }
 
-  /**
-   * If fileName is already associated any known file type returns it.
-   * Otherwise, asks user to select file type and associates it with fileName extension if any selected.
-   * @return Known file type or null. Never returns {@link FileTypes#UNKNOWN}.
-   *
-   * @deprecated Method requires both EDT and BGT. Use {@link #associateFileType(String)} directly
-   */
+  /** @deprecated Method requires both EDT and BGT. Use {@link #associateFileType(String)} directly */
   @Deprecated(forRemoval = true)
-  public static @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
-    FileType type = file.getFileType();
+  public static @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @SuppressWarnings("unused") @Nullable Project project) {
+    var type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
       type = getKnownFileTypeOrAssociate(file.getName());
     }
     return type;
   }
 
-  /**
-   * Speculates if file with newName had known file type
-   * @deprecated Method requires both EDT and BGT. Use {@link #associateFileType(String)} directly
-   */
+  /** @deprecated Method requires both EDT and BGT. Use {@link #associateFileType(String)} directly */
   @Deprecated(forRemoval = true)
   public static @Nullable FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile parent, @NotNull String newName, @Nullable Project project) {
     return getKnownFileTypeOrAssociate(new FakeVirtualFile(parent, newName), project);
   }
 
   public static @Nullable FileType getKnownFileTypeOrAssociate(@NotNull String fileName) {
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType type = fileTypeManager.getFileTypeByFileName(fileName);
+    var fileTypeManager = FileTypeManager.getInstance();
+    var type = fileTypeManager.getFileTypeByFileName(fileName);
     if (type == FileTypes.UNKNOWN) {
       type = associateFileType(fileName);
     }
     return type;
   }
 
-  public static @Nullable FileType associateFileType(final @NotNull String fileName) {
-    final FileTypeChooser chooser = new FileTypeChooser(suggestPatterns(fileName), fileName);
+  @RequiresEdt
+  public static @Nullable FileType associateFileType(@NotNull String fileName) {
+    var chooser = new FileTypeChooser(suggestPatterns(fileName), fileName);
     if (!chooser.showAndGet()) {
       return null;
     }
-    final FileType type = chooser.getSelectedType();
+    var type = chooser.getSelectedType();
     if (type == FileTypes.UNKNOWN || type == null) return null;
 
     ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().associatePattern(type, chooser.getSelectedPattern()));
@@ -195,11 +187,11 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   static @NotNull List<String> suggestPatterns(@NotNull String fileName) {
-    List<String> patterns = new LinkedList<>();
+    var patterns = new LinkedList<String>();
 
-    int i = -1;
+    var i = -1;
     while ((i = fileName.indexOf('.', i + 1)) > 0) {
-      String extension = fileName.substring(i);
+      var extension = fileName.substring(i);
       if (!StringUtil.isEmpty(extension)) {
         patterns.add(0, "*" + extension);
       }

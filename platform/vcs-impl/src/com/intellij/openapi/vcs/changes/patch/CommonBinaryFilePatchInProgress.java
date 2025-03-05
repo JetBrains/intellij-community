@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -42,15 +42,12 @@ public abstract class CommonBinaryFilePatchInProgress<T extends FilePatch> exten
     return myNewContentRevision;
   }
 
-  @NotNull
-  protected abstract BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath);
+  protected abstract @NotNull BinaryContentRevision createNewContentRevision(@NotNull FilePath newFilePath);
 
-  @NotNull
-  protected abstract Change createChange(Project project);
+  protected abstract @NotNull Change createChange(Project project);
 
-  @NotNull
   @Override
-  public DiffRequestProducer getDiffRequestProducers(final Project project, final PatchReader baseContents) {
+  public @NotNull DiffRequestProducer getDiffRequestProducers(final Project project, final PatchReader baseContents) {
     return new DiffRequestProducer() {
       @Override
       public @NotNull DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)

@@ -18,15 +18,12 @@
 
   <incompatible-with>com.intellij.modules.ultimate</incompatible-with>
 
-  <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
-    <plugin id="Git4Idea"/>
-    <module name="intellij.platform.collaborationTools"/>
-  </dependencies>
+  <content>
+    <module name="intellij.vcs.github" loading="embedded"/>
+    <module name="intellij.vcs.github.tracker"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <pluginSuggestionProvider implementation="org.jetbrains.plugins.github.GitHubUltimateSuggestionProvider"/>
   </extensions>
-
-  <xi:include href="/META-INF/github-core-config.xml"/>
 </idea-plugin>

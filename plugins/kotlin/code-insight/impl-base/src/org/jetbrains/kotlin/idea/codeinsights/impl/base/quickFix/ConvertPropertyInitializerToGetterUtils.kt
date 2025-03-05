@@ -43,7 +43,7 @@ fun convertPropertyInitializerToGetter(
 ) {
     convertPropertyInitializerToGetterInner(element) {
         if (!typeInfo.defaultType.isUnit) {
-            CallableReturnTypeUpdaterUtils.updateType(element, typeInfo, project, updater = updater)
+            CallableReturnTypeUpdaterUtils.updateType(element, typeInfo, project, updater)
         }
     }
 }

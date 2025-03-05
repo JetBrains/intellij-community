@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.testIntegration;
 
 import com.intellij.execution.junit.JUnitTestFramework;
@@ -104,15 +104,13 @@ public class GroovyTestFramework extends JUnitTestFramework {
     return inClass;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Groovy JUnit";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return JetgroovyIcons.Groovy.Groovy_16x16;
   }
 
@@ -141,15 +139,13 @@ public class GroovyTestFramework extends JUnitTestFramework {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEAR_DOWN_METHOD_GROOVY);
   }
 
-  @NotNull
   @Override
-  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+  public @NotNull FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor(GroovyTemplates.GROOVY_JUNIT_TEST_METHOD_GROOVY);
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return GroovyLanguage.INSTANCE;
   }
 }

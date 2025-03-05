@@ -44,7 +44,9 @@ public class MessagesServiceImpl implements MessagesService {
                                @Nullable Icon icon,
                                @Nullable DoNotAskOption doNotAskOption,
                                boolean alwaysUseIdeaUI,
-                               @Nullable String helpId) {
+                               @Nullable String helpId,
+                               @Nullable String invocationPlace,
+                               ExitActionType @NotNull [] exitActionTypes) {
     if (isApplicationInUnitTestOrHeadless()) {
       return TestDialogManager.getTestImplementation().show(message);
     }
@@ -52,11 +54,11 @@ public class MessagesServiceImpl implements MessagesService {
     AlertMessagesManager alertMessagesManager = AlertMessagesManager.getInstanceIfPossible();
     if (alertMessagesManager != null) {
       return alertMessagesManager.showMessageDialog(project, parentComponent, message, title, options, defaultOptionIndex,
-                                                    focusedOptionIndex, icon, doNotAskOption, helpId);
+                                                    focusedOptionIndex, icon, doNotAskOption, helpId, invocationPlace, exitActionTypes);
     }
 
     MessageDialog dialog = new MessageDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex,
-                                             icon, doNotAskOption, false, helpId);
+                                             icon, doNotAskOption, false, helpId, invocationPlace, exitActionTypes);
     dialog.show();
     return dialog.getExitCode();
   }
@@ -78,8 +80,8 @@ public class MessagesServiceImpl implements MessagesService {
     if (moreInfo == null) {
       AlertMessagesManager alertMessagesManager = AlertMessagesManager.getInstanceIfPossible();
       if (alertMessagesManager != null) {
-        return alertMessagesManager.showMessageDialog(project, null, message, title, options, defaultOptionIndex,
-                                                      focusedOptionIndex, icon, null, null);
+        return alertMessagesManager.showMessageDialog(project, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon,
+                                                      null, null, null, new ExitActionType[]{});
       }
     }
 

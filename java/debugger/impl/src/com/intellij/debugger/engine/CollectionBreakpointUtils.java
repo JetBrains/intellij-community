@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
@@ -89,8 +88,8 @@ public final class CollectionBreakpointUtils {
       public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
         try {
           requestsManager.deleteRequest(this);
-          Field field = referenceType.fieldByName(fieldName);
-          Value trueValue = debugProcess.getVirtualMachineProxy().mirrorOf(value);
+          Field field = DebuggerUtils.findField(referenceType, fieldName);
+          Value trueValue = referenceType.virtualMachine().mirrorOf(value);
           ((ClassType)referenceType).setValue(field, trueValue);
         }
         catch (Exception e) {
@@ -112,11 +111,10 @@ public final class CollectionBreakpointUtils {
     return frameProxy != null ? frameProxy.getVirtualMachine() : null;
   }
 
-  @NotNull
-  public static List<Value> getFieldModificationsHistory(SuspendContextImpl context,
-                                                         String fieldName,
-                                                         String clsName,
-                                                         @Nullable Value clsInstance) {
+  public static @NotNull List<Value> getFieldModificationsHistory(SuspendContextImpl context,
+                                                                  String fieldName,
+                                                                  String clsName,
+                                                                  @Nullable Value clsInstance) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachine(context);
     if (virtualMachineProxy == null) {
@@ -138,12 +136,11 @@ public final class CollectionBreakpointUtils {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public static List<StackFrameItem> getFieldModificationStack(SuspendContextImpl context,
-                                                               String fieldName,
-                                                               String clsName,
-                                                               @Nullable Value collectionInstance,
-                                                               IntegerValue modificationIndex) {
+  public static @NotNull List<StackFrameItem> getFieldModificationStack(SuspendContextImpl context,
+                                                                        String fieldName,
+                                                                        String clsName,
+                                                                        @Nullable Value collectionInstance,
+                                                                        IntegerValue modificationIndex) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachine(context);
     if (virtualMachineProxy == null) {
@@ -167,13 +164,13 @@ public final class CollectionBreakpointUtils {
                                                      String message,
                                                      VirtualMachineProxyImpl virtualMachineProxy) {
     List<StackFrameItem> items = new ArrayList<>();
-    ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());
     try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(message.getBytes(StandardCharsets.ISO_8859_1)))) {
       while (dis.available() > 0) {
         String className = dis.readUTF();
         String methodName = dis.readUTF();
         int line = dis.readInt();
-        Location location = DebuggerUtilsEx.findOrCreateLocation(debugProcess, classesByName, className, methodName, line);
+        Location location =
+          DebuggerUtilsEx.findOrCreateLocation(virtualMachineProxy.getVirtualMachine(), className, methodName, line);
         StackFrameItem item = new StackFrameItem(location, null);
         items.add(item);
       }
@@ -184,8 +181,7 @@ public final class CollectionBreakpointUtils {
     return items;
   }
 
-  @NotNull
-  public static List<Value> getCollectionModificationsHistory(SuspendContextImpl context, Value collectionInstance) {
+  public static @NotNull List<Value> getCollectionModificationsHistory(SuspendContextImpl context, Value collectionInstance) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachine(context);
     if (virtualMachineProxy == null) {
@@ -229,10 +225,9 @@ public final class CollectionBreakpointUtils {
     return list;
   }
 
-  @Nullable
-  public static Pair<ObjectReference, BooleanValue> getCollectionModificationInfo(DebugProcessImpl debugProcess,
-                                                                                  EvaluationContext evaluationContext,
-                                                                                  ObjectReference collectionInstance) {
+  public static @Nullable Pair<ObjectReference, BooleanValue> getCollectionModificationInfo(DebugProcessImpl debugProcess,
+                                                                                            EvaluationContext evaluationContext,
+                                                                                            ObjectReference collectionInstance) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     ClassType cls = getClass(debugProcess, evaluationContext, COLLECTION_MODIFICATION_INFO_CLASS_NAME);
     if (cls != null) {

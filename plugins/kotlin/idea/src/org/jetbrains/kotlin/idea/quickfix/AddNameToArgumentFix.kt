@@ -75,6 +75,7 @@ class AddNameToArgumentFix(argument: KtValueArgument) : KotlinQuickFixAction<KtV
             .asSequence()
             .filter { it !in usedParameters }
             .map { it.name }
+            .filterNot { it.isSpecial }
             .toList()
     }
 

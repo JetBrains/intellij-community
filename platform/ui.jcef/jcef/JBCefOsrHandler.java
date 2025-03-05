@@ -36,8 +36,8 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
     RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
-  final private @NotNull JComponent myComponent;
-  final private @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
+  private final @NotNull JComponent myComponent;
+  private final @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
 
   protected volatile @Nullable JBHiDPIScaledImage myImage;
 

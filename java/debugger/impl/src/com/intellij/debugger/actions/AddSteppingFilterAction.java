@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -22,14 +23,16 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddSteppingFilterAction extends DebuggerAction {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+  public void actionPerformed(final @NotNull AnActionEvent e) {
+    final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     DebugProcessImpl process = debuggerContext.getDebugProcess();
     if (process == null) {
       return;
     }
     StackFrameProxyImpl proxy = getStackFrameProxy(e);
-    process.getManagerThread().schedule(new DebuggerCommandImpl() {
+    DebuggerManagerThreadImpl managerThread = debuggerContext.getManagerThread();
+    if (managerThread == null) return;
+    managerThread.schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() {
         final String name = getClassName(proxy != null ? proxy : debuggerContext.getFrameProxy());

@@ -53,14 +53,12 @@ import java.util.*;
 public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return PyPsiBundle.message("INTN.convert.variadic.param");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.variadic.param");
   }
 
@@ -101,8 +99,7 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Nullable
-  private static PyParameter getKeywordContainer(@NotNull PyParameterList parameterList) {
+  private static @Nullable PyParameter getKeywordContainer(@NotNull PyParameterList parameterList) {
     return StreamEx
       .of(parameterList.getParameters())
       .select(PyNamedParameter.class)
@@ -120,8 +117,7 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     }
   }
 
-  @NotNull
-  private static Usages findKeywordContainerUsages(@NotNull PyFunction function, boolean skipReferencesToContainer) {
+  private static @NotNull Usages findKeywordContainerUsages(@NotNull PyFunction function, boolean skipReferencesToContainer) {
     final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
     if (keywordContainer == null) return new Usages(false, new LinkedHashMap<>(), MultiMap.empty(), MultiMap.empty());
 
@@ -167,8 +163,7 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     return new Usages(!allReferences.isEmpty(), names, calls, subscriptions);
   }
 
-  @Nullable
-  private static String getIndexValueToReplace(@NotNull PySubscriptionExpression subscription) {
+  private static @Nullable String getIndexValueToReplace(@NotNull PySubscriptionExpression subscription) {
     return Optional
       .ofNullable(subscription.getIndexExpression())
       .map(indexExpression -> PyUtil.as(indexExpression, PyStringLiteralExpression.class))
@@ -177,8 +172,7 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       .orElse(null);
   }
 
-  @Nullable
-  private static String getIndexValueToReplace(@NotNull PyCallExpression call) {
+  private static @Nullable String getIndexValueToReplace(@NotNull PyCallExpression call) {
     return Optional
       .of(call.getArguments())
       .map(ArrayUtil::getFirstElement)
@@ -248,8 +242,7 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     parameterList.addBefore((PsiElement)elementGenerator.createComma(), placeToInsertParameter);
   }
 
-  @NotNull
-  private static DefaultValue getDefaultKeyValue(@NotNull PyCallExpression call) {
+  private static @NotNull DefaultValue getDefaultKeyValue(@NotNull PyCallExpression call) {
     final PyExpression[] arguments = call.getArguments();
     if (arguments.length > 1) {
       final PyExpression argument = PyUtil.peelArgument(arguments[1]);
@@ -265,8 +258,7 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     return DefaultValue.noDefault();
   }
 
-  @Nullable
-  private static PyElement findCompatiblePlaceToInsertParameter(@NotNull PyParameterList parameterList, boolean hasDefaultValue) {
+  private static @Nullable PyElement findCompatiblePlaceToInsertParameter(@NotNull PyParameterList parameterList, boolean hasDefaultValue) {
     if (hasDefaultValue) return getKeywordContainer(parameterList);
 
     final List<PyParameter> parameters = Arrays.asList(parameterList.getParameters());
@@ -285,14 +277,11 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
     private final boolean hasMoreReferences;
 
-    @NotNull
-    private final LinkedHashMap<String, DefaultValue> names;
+    private final @NotNull LinkedHashMap<String, DefaultValue> names;
 
-    @NotNull
-    private final MultiMap<String, PyCallExpression> calls;
+    private final @NotNull MultiMap<String, PyCallExpression> calls;
 
-    @NotNull
-    private final MultiMap<String, PySubscriptionExpression> subscriptions;
+    private final @NotNull MultiMap<String, PySubscriptionExpression> subscriptions;
 
     private Usages(boolean hasMoreReferences,
                    @NotNull LinkedHashMap<String, DefaultValue> names,
@@ -309,16 +298,13 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
     private final boolean unableToHasDefaultValue;
 
-    @Nullable
-    private final String defaultValue;
+    private final @Nullable String defaultValue;
 
-    @NotNull
-    private static DefaultValue noDefault() {
+    private static @NotNull DefaultValue noDefault() {
       return new DefaultValue(false, null);
     }
 
-    @NotNull
-    private static DefaultValue defaultValue(@NotNull String defaultValue) {
+    private static @NotNull DefaultValue defaultValue(@NotNull String defaultValue) {
       return new DefaultValue(false, defaultValue);
     }
 
@@ -327,8 +313,7 @@ public final class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       this.defaultValue = defaultValue;
     }
 
-    @NotNull
-    private static DefaultValue merge(@NotNull DefaultValue self, @NotNull DefaultValue other) {
+    private static @NotNull DefaultValue merge(@NotNull DefaultValue self, @NotNull DefaultValue other) {
       if (self.unableToHasDefaultValue) return self;
       if (other.unableToHasDefaultValue) return other;
 

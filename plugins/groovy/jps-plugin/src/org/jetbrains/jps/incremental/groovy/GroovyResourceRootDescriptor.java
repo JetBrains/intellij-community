@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,11 +37,6 @@ final class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   @Override
   public String toString() {
     return myDescriptor.toString();
-  }
-
-  @Override
-  public boolean canUseFileCache() {
-    return myDescriptor.canUseFileCache();
   }
 
   @Override

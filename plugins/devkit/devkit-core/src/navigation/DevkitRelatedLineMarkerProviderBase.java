@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -17,14 +17,19 @@ import java.util.List;
 public abstract class DevkitRelatedLineMarkerProviderBase extends RelatedItemLineMarkerProvider {
 
   @Override
-  public void collectNavigationMarkers(@NotNull List<? extends PsiElement> elements,
-                                       @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result,
-                                       boolean forNavigation) {
+  public final void collectNavigationMarkers(@NotNull List<? extends PsiElement> elements,
+                                             @NotNull Collection<? super RelatedItemLineMarkerInfo<?>> result,
+                                             boolean forNavigation) {
     final PsiElement psiElement = ContainerUtil.getFirstItem(elements);
     if (psiElement == null || !DevKitInspectionUtil.isAllowed(psiElement.getContainingFile())) {
       return;
     }
 
     super.collectNavigationMarkers(elements, result, forNavigation);
+  }
+
+  @Override
+  public final boolean isDumbAware() {
+    return false;
   }
 }

@@ -11,9 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * Restrictions: bitsPerChunk<=32; every bit chunk is stored in one word only (no splitting) so storage required for N chunks = ceil(N/(32 div bitsPerChunk))*4 bytes
  */
 public interface ConcurrentPackedBitsArray {
-  @NotNull
   @Contract("_->new")
-  static ConcurrentPackedBitsArray create(int bitsPerChunk) {
+  static @NotNull ConcurrentPackedBitsArray create(int bitsPerChunk) {
     return new ConcurrentPackedBitsArrayImpl(bitsPerChunk);
   }
 

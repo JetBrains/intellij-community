@@ -7,6 +7,6 @@ fun foo(b: Boolean) {
         <caret>else -> error()
     }
 }
-/* IGNORE_K2 */
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveWhenBranchFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveWhenBranchFix

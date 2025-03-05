@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browserCache;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +12,7 @@ import java.util.List;
 
 public class CacheLoader extends Loader {
 
-  @NotNull private final Loader myRepositoryLoader;
+  private final @NotNull Loader myRepositoryLoader;
 
   public static Loader getInstance() {
     return ApplicationManager.getApplication().getService(Loader.class);
@@ -24,7 +24,7 @@ public class CacheLoader extends Loader {
   }
 
   @Override
-  public void load(@NotNull final RepositoryTreeNode node, @NotNull final Expander expander) {
+  public void load(final @NotNull RepositoryTreeNode node, final @NotNull Expander expander) {
     SwingUtilities.invokeLater(() -> {
       final List<DirectoryEntry> cached = myCache.getChildren(node.getURL());
       if (cached != null) {
@@ -40,8 +40,7 @@ public class CacheLoader extends Loader {
   }
 
   @Override
-  @NotNull
-  protected NodeLoadState getNodeLoadState() {
+  protected @NotNull NodeLoadState getNodeLoadState() {
     return NodeLoadState.CACHED;
   }
 }

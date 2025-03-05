@@ -4,7 +4,7 @@ import com.intellij.psi.*;
 
 import java.util.List;
 
-class JavaPsiHelper {
+final class JavaPsiHelper {
     /**
      * Checks that this element environment string
      *

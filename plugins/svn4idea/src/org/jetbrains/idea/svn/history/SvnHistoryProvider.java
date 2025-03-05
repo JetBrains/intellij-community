@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -171,8 +171,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   @Override
-  @Nullable
-  public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
+  public @Nullable VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     final VcsAppendableHistoryPartnerAdapter adapter = new VcsAppendableHistoryPartnerAdapter();
     reportAppendableHistory(filePath, adapter);
     adapter.check();
@@ -191,7 +190,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   public void reportAppendableHistory(FilePath path, final VcsAppendableHistorySessionPartner partner,
-                                      @Nullable final Revision from, @Nullable final Revision to, final int limit,
+                                      final @Nullable Revision from, final @Nullable Revision to, final int limit,
                                       Revision peg, final boolean forceBackwards) throws VcsException {
     FilePath committedPath = path;
     Change change = ChangeListManager.getInstance(myVcs.getProject()).getChange(path);
@@ -224,7 +223,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     final SvnHistorySession historySession =
-      new SvnHistorySession(myVcs, Collections.emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
+      new SvnHistorySession(myVcs, Collections.emptyList(), committedPath, showMergeSources && logLoader.mySupport15, null, false,
                             ! path.isNonLocal());
 
     final Ref<Boolean> sessionReported = new Ref<>();
@@ -245,7 +244,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     logLoader.check();
   }
 
-  private static abstract class LogLoader {
+  private abstract static class LogLoader {
     protected final boolean myShowMergeSources;
     protected Url myUrl;
     protected boolean mySupport15;
@@ -518,7 +517,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private boolean checkForParentChanges(LogEntry logEntry) {
       final String lastPathBefore = myLastPathCorrector.getBefore();
       String path = Url.removeTail(lastPathBefore);
-      while (path.length() > 0) {
+      while (!path.isEmpty()) {
         final LogEntryPath entryPath = logEntry.getChangedPaths().get(path);
         // A & D are checked since we are not interested in parent folders property changes, only in structure changes
         // TODO: seems that R (replaced) should also be checked here
@@ -597,14 +596,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   private static final class RevisionMergeSourceInfo {
 
-    @NotNull private final VcsFileRevision revision;
+    private final @NotNull VcsFileRevision revision;
 
     private RevisionMergeSourceInfo(@NotNull VcsFileRevision revision) {
       this.revision = revision;
     }
 
-    @NotNull
-    public SvnFileRevision getRevision() {
+    public @NotNull SvnFileRevision getRevision() {
       return (SvnFileRevision)revision;
     }
 
@@ -686,8 +684,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       return false;
     }
 
-    @Nullable
-    private static SvnFileRevision getSelectedRevision(final MouseEvent e) {
+    private static @Nullable SvnFileRevision getSelectedRevision(final MouseEvent e) {
       JTable table = (JTable)e.getSource();
       int row = table.rowAtPoint(e.getPoint());
       int column = table.columnAtPoint(e.getPoint());
@@ -780,7 +777,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                                            final boolean hasFocus,
                                            final int row,
                                            final int column) {
-        if (value instanceof String && ((String)value).length() > 0) {
+        if (value instanceof String && !((String)value).isEmpty()) {
           setIcon(myIcon);
           setToolTipText(message("copy.column.tooltip", value));
         }

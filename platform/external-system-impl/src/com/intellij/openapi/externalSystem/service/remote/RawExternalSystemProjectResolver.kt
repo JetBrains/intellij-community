@@ -13,41 +13,33 @@ import java.io.ObjectOutputStream
 import java.rmi.RemoteException
 
 /**
- * Interface for wrappers of RemoteExternalSystemProjectResolver, that operate on results as byte arrays.
+ * Interface for wrappers of [RemoteExternalSystemProjectResolver], that operate on results as byte arrays.
  */
 @ApiStatus.Internal
-interface RawExternalSystemProjectResolver<S : ExternalSystemExecutionSettings>
-  : RemoteExternalSystemService<S> {
+interface RawExternalSystemProjectResolver<S : ExternalSystemExecutionSettings> : RemoteExternalSystemService<S> {
 
   @Throws(RemoteException::class)
-  fun resolveProjectInfo(id: ExternalSystemTaskId,
-                         projectPath: String,
-                         isPreviewMode: Boolean,
-                         settings: S?,
-                         resolverPolicy: ProjectResolverPolicy?): ByteArray?
+  fun resolveProjectInfo(
+    id: ExternalSystemTaskId,
+    projectPath: String,
+    isPreviewMode: Boolean,
+    settings: S?,
+    resolverPolicy: ProjectResolverPolicy?,
+  ): ByteArray?
 
   companion object {
-    val NULL_OBJECT = object: RawExternalSystemProjectResolver<ExternalSystemExecutionSettings> {
-      override fun resolveProjectInfo(id: ExternalSystemTaskId,
-                                      projectPath: String,
-                                      isPreviewMode: Boolean,
-                                      settings: ExternalSystemExecutionSettings?,
-                                      resolverPolicy: ProjectResolverPolicy?): ByteArray? = null
-
-      override fun getTasksInProgress(): MutableMap<ExternalSystemTaskType, MutableSet<ExternalSystemTaskId>> = mutableMapOf()
-
-
-      override fun setNotificationListener(notificationListener: ExternalSystemTaskNotificationListener) {
+    @JvmField
+    val NULL_OBJECT: RawExternalSystemProjectResolver<ExternalSystemExecutionSettings> =
+      object : RawExternalSystemProjectResolver<ExternalSystemExecutionSettings> {
+        //@formatter:off
+        override fun resolveProjectInfo(id: ExternalSystemTaskId, projectPath: String, isPreviewMode: Boolean, settings: ExternalSystemExecutionSettings?, resolverPolicy: ProjectResolverPolicy?): ByteArray? = null
+        override fun getTasksInProgress(): MutableMap<ExternalSystemTaskType, MutableSet<ExternalSystemTaskId>> = mutableMapOf()
+        override fun setNotificationListener(notificationListener: ExternalSystemTaskNotificationListener) = Unit
+        override fun isTaskInProgress(id: ExternalSystemTaskId): Boolean = false
+        override fun cancelTask(id: ExternalSystemTaskId): Boolean = true
+        override fun setSettings(settings: ExternalSystemExecutionSettings) = Unit
+        //@formatter:on
       }
-
-      override fun isTaskInProgress(id: ExternalSystemTaskId): Boolean = false
-
-      override fun cancelTask(id: ExternalSystemTaskId): Boolean = true
-
-      override fun setSettings(settings: ExternalSystemExecutionSettings) {
-      }
-
-    }
   }
 }
 
@@ -57,20 +49,23 @@ interface RawExternalSystemProjectResolver<S : ExternalSystemExecutionSettings>
  */
 @ApiStatus.Internal
 class RawExternalSystemProjectResolverImpl<S: ExternalSystemExecutionSettings>(
-  private val resolverDelegate: RemoteExternalSystemProjectResolver<S>
-)
-  : AbstractRemoteExternalSystemService<S>(), RawExternalSystemProjectResolver<S> {
-  override fun cancelTask(id: ExternalSystemTaskId): Boolean = resolverDelegate.cancelTask(id)
+  private val resolverDelegate: RemoteExternalSystemProjectResolver<S>,
+) : AbstractRemoteExternalSystemService<S>(), RawExternalSystemProjectResolver<S> {
 
-  override fun resolveProjectInfo(id: ExternalSystemTaskId,
-                                  projectPath: String,
-                                  isPreviewMode: Boolean,
-                                  settings: S?,
-                                  resolverPolicy: ProjectResolverPolicy?): ByteArray? {
+  override fun resolveProjectInfo(
+    id: ExternalSystemTaskId,
+    projectPath: String,
+    isPreviewMode: Boolean,
+    settings: S?,
+    resolverPolicy: ProjectResolverPolicy?,
+  ): ByteArray? {
     val result = resolverDelegate.resolveProjectInfo(id, projectPath, isPreviewMode, settings, resolverPolicy) ?: return null
     val outputStream = ByteArrayOutputStream()
     ObjectOutputStream(outputStream).writeObject(result)
     return outputStream.toByteArray()
   }
 
+  override fun cancelTask(id: ExternalSystemTaskId): Boolean {
+    return resolverDelegate.cancelTask(id)
+  }
 }

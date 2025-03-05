@@ -3,12 +3,12 @@ package org.jetbrains.idea.maven.indices.archetype
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.staticOrBundled
-import org.jetbrains.idea.maven.utils.MavenWslUtil
+import org.jetbrains.idea.maven.utils.MavenEelUtil
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import java.io.File
 import java.net.URL
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -26,17 +26,20 @@ sealed interface MavenCatalog {
     }
 
     data class DefaultLocal(private val project: Project) : System {
-      val file: File
+      val file: Path
         get() {
           val generalSettings = MavenProjectsManager.getInstance(project).generalSettings
           val mavenConfig = generalSettings.mavenConfig
           val mavenHome = generalSettings.mavenHomeType.staticOrBundled()
-          val userSettings = MavenWslUtil.getUserSettings(project, "", mavenConfig).path
-          return MavenWslUtil.getLocalRepo(project, "", mavenHome, userSettings, mavenConfig)
+
+          return runWithModalProgressBlocking(project, MavenConfigurableBundle.message("maven.progress.title.computing.repository.location")) {
+            val settings = MavenEelUtil.getUserSettingsAsync(project, "", mavenConfig).toString()
+            MavenEelUtil.getLocalRepoAsync(project, "", mavenHome, settings, mavenConfig)
+          }
         }
 
       override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.default.local.name")
-      override val location: String get() = file.systemIndependentPath
+      override val location: String get() = file.invariantSeparatorsPathString
     }
 
     object MavenCentral : System {

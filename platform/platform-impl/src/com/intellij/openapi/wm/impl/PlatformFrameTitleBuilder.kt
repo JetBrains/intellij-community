@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
@@ -60,7 +61,7 @@ private fun doGetFileTitle(
 ): String {
   return when {
     overriddenTitle != null -> overriddenTitle
-    file.parent == null -> file.presentableName
+    PathUtil.getParentPath(file.path).isEmpty() -> file.presentableName
     UISettings.getInstance().fullPathsInWindowHeader && !ExperimentalUI.isNewUI() -> {
       displayUrlRelativeToProject(
         file = file,

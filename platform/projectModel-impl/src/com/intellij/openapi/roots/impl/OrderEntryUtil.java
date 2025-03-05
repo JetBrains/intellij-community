@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -20,8 +20,7 @@ import java.util.List;
 public final class OrderEntryUtil {
   private OrderEntryUtil() { }
 
-  @Nullable
-  public static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @Nullable Library library) {
+  public static @Nullable LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @Nullable Library library) {
     if (library == null) return null;
     for (OrderEntry orderEntry : model.getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)orderEntry).getLibrary())) {
@@ -32,8 +31,7 @@ public final class OrderEntryUtil {
     return null;
   }
 
-  @Nullable
-  public static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @NotNull String libraryName) {
+  public static @Nullable LibraryOrderEntry findLibraryOrderEntry(@NotNull ModuleRootModel model, @NotNull String libraryName) {
     for (OrderEntry orderEntry : model.getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry) {
         final String libName = ((LibraryOrderEntry)orderEntry).getLibraryName();
@@ -45,8 +43,7 @@ public final class OrderEntryUtil {
     return null;
   }
 
-  @Nullable
-  public static ModuleOrderEntry findModuleOrderEntry(@NotNull ModuleRootModel model, @Nullable Module module) {
+  public static @Nullable ModuleOrderEntry findModuleOrderEntry(@NotNull ModuleRootModel model, @Nullable Module module) {
     if (module == null) return null;
 
     for (OrderEntry orderEntry : model.getOrderEntries()) {
@@ -57,8 +54,7 @@ public final class OrderEntryUtil {
     return null;
   }
 
-  @Nullable
-  public static JdkOrderEntry findJdkOrderEntry(@NotNull ModuleRootModel model, @Nullable Sdk sdk) {
+  public static @Nullable JdkOrderEntry findJdkOrderEntry(@NotNull ModuleRootModel model, @Nullable Sdk sdk) {
     if (sdk == null) return null;
 
     for (OrderEntry orderEntry : model.getOrderEntries()) {
@@ -199,8 +195,7 @@ public final class OrderEntryUtil {
     }
   }
 
-  @NotNull
-  public static DependencyScope intersectScopes(@NotNull DependencyScope scope1, @NotNull DependencyScope scope2) {
+  public static @NotNull DependencyScope intersectScopes(@NotNull DependencyScope scope1, @NotNull DependencyScope scope2) {
     if (scope1 == scope2) return scope1;
     if (scope1 == DependencyScope.COMPILE) return scope2;
     if (scope2 == DependencyScope.COMPILE) return scope1;
@@ -208,8 +203,7 @@ public final class OrderEntryUtil {
     return scope1;
   }
 
-  @NotNull
-  public static List<Library> getModuleLibraries(@NotNull ModuleRootModel model) {
+  public static @NotNull List<Library> getModuleLibraries(@NotNull ModuleRootModel model) {
     OrderEntry[] orderEntries = model.getOrderEntries();
     List<Library> libraries = new ArrayList<>();
     for (OrderEntry orderEntry : orderEntries) {

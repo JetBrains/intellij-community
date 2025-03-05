@@ -11,7 +11,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
 @Suppress("MemberVisibilityCanBePrivate")
-object MarkdownPsiUtils {
+internal object MarkdownPsiUtils {
   internal fun ASTNode.isMarkdownLinkType() = when (elementType) {
     MarkdownElementTypes.LINK_DEFINITION,
     MarkdownElementTypes.LINK_LABEL,

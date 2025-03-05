@@ -23,10 +23,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.ints.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -41,7 +38,7 @@ import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRAT
 public final class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
   private final @NotNull Project myProject;
-  private final @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
+  private final @Unmodifiable @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
   private final @NotNull VcsLogStorageBackend myIndexStorageBackend;
   private final @NotNull VcsLogStorage myLogStorage;
   private final @NotNull VcsLogErrorHandler myErrorHandler;
@@ -49,7 +46,7 @@ public final class IndexDataGetter {
   private final boolean myIsProjectLog;
 
   IndexDataGetter(@NotNull Project project,
-                  @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                  @NotNull @Unmodifiable Map<VirtualFile, VcsLogProvider> providers,
                   @NotNull VcsLogStorageBackend indexStorageBackend,
                   @NotNull VcsLogStorage logStorage,
                   @NotNull VcsLogErrorHandler errorHandler) {

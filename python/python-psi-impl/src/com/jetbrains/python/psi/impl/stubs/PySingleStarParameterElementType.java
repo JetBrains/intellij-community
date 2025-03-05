@@ -20,9 +20,8 @@ public class PySingleStarParameterElementType extends PyStubElementType<PySingle
     super("SINGLE_STAR_PARAMETER");
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(@NotNull ASTNode node) {
+  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return new PySingleStarParameterImpl(node);
   }
 
@@ -31,9 +30,8 @@ public class PySingleStarParameterElementType extends PyStubElementType<PySingle
     return new PySingleStarParameterImpl(stub);
   }
 
-  @NotNull
   @Override
-  public PySingleStarParameterStub createStub(@NotNull PySingleStarParameter psi, StubElement parentStub) {
+  public @NotNull PySingleStarParameterStub createStub(@NotNull PySingleStarParameter psi, StubElement parentStub) {
     return new PySingleStarParameterStubImpl(parentStub);
   }
 
@@ -42,8 +40,7 @@ public class PySingleStarParameterElementType extends PyStubElementType<PySingle
   }
 
   @Override
-  @NotNull
-  public PySingleStarParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PySingleStarParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PySingleStarParameterStubImpl(parentStub);
   }
 }

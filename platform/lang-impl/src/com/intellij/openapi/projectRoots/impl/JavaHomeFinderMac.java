@@ -13,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
@@ -86,7 +85,7 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
   }
 
   private static void processSubfolders(@Nullable Path dir, Consumer<? super Path> processor) {
-    if (dir == null || !Files.isDirectory(dir) || Files.isSymbolicLink(dir)) { return; }
+    if (dir == null || !Files.isDirectory(dir)) { return; }
     try (Stream<Path> files = Files.list(dir)) {
       files.forEach(candidate -> {
         if (Files.isDirectory(candidate)) {
@@ -96,26 +95,19 @@ public class JavaHomeFinderMac extends JavaHomeFinderBasic {
     } catch (IOException ignore) {}
   }
 
-  /**
-   * Finds directories for JDKs installed by <a href="https://brew.sh/">homebrew</a>.
-   */
+  /// Finds directories for JDKs installed by <a href="https://brew.sh/">homebrew</a>.
+  /// Searches in `homebrew/opt/` to return symlinks that are safe after updating the formula.
   private @NotNull Set<String> findJavaInstalledByBrew() {
     var found = new HashSet<String>();
-    var paths = List.of("/opt/homebrew/Cellar/", "/usr/homebrew/Cellar/");
+    var paths = List.of("/opt/homebrew/opt/", "/usr/homebrew/opt/");
     for (String path : paths) {
       Path parentFolder = getPathInUserHome(path);
       // JDKs installed by Homebrew can be hidden in `libexec`
       processSubfolders(parentFolder, formula -> {
-        processSubfolders(formula, version -> {
-          processSubfolders(version, subFolder -> {
-            if (subFolder.getFileName().toString().equals("libexec")) {
-              found.addAll(
-                scanAll(subFolder, true).stream()
-                  .filter(jdkPath -> !Files.isSymbolicLink(Path.of(jdkPath)))
-                  .collect(Collectors.toSet())
-              );
-            }
-          });
+        processSubfolders(formula, subFolder -> {
+          if (subFolder.getFileName().toString().equals("libexec")) {
+            found.addAll(scanAll(subFolder, true));
+          }
         });
       });
     }

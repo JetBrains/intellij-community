@@ -16,6 +16,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val TESTS_SUBDIR = "/testPytestFixtureResolving"
     const val STR_TYPE_NAME = "str"
     const val STR_TYPE_DICT = "dict[$STR_TYPE_NAME, $STR_TYPE_NAME]"
+    const val INT_STR_UNION = "int | str"
 
     const val SIMPLE_TEST_DIR = "/testSimple"
     const val SIMPLE_TEST_CONFTEST_FIXTURE = "/test_conftest_fixture.py"
@@ -98,6 +99,9 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val TEST_ASYNC_GENERATOR = "/test_async_generator.py"
     const val TEST_ASYNC_ITERABLE = "/test_async_iterable.py"
     const val TEST_ASYNC_ITERATOR = "/test_async_iterator.py"
+
+    const val PARAMETRIZED_DIR = "/testParameters"
+    const val TEST_PARAMETER_TYPES = "/test_parameter_types.py"
 
   }
 
@@ -336,5 +340,9 @@ class PyTestFixtureResolvingTest : PyTestCase() {
 
   fun testAsyncFunction() {
     assertCorrectType(ASYNC_DIR, TEST_ASYNC_FUNCTION, STR_TYPE_DICT)
+  }
+
+  fun testNamedParameterTypes() {
+    assertCorrectType(PARAMETRIZED_DIR, TEST_PARAMETER_TYPES, INT_STR_UNION)
   }
 }

@@ -71,15 +71,13 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return (ThreadReference)getObjectReference();
   }
 
-  @NotNull
   @Override
-  public VirtualMachineProxyImpl getVirtualMachine() {
+  public @NotNull VirtualMachineProxyImpl getVirtualMachine() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return (VirtualMachineProxyImpl)myTimer;
   }
 
-  @NotNull
-  public String name() {
+  public @NotNull String name() {
     checkValid();
     if (myName == null) {
       try {
@@ -124,8 +122,8 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     getThreadReference().suspend();
   }
 
-  @NonNls
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     try {
       String name = DebuggerDiagnosticsUtil.needAnonymizedReports() ? ("Thread(uniqueID=" + getThreadReference().uniqueID() + ")") : name();
       return name + ": " + DebuggerUtilsEx.getThreadStatusText(status());
@@ -294,8 +292,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
    * this is useful when you need all frames but do not plan to invoke anything
    * as only one request is sent
    */
-  @NotNull
-  public List<StackFrameProxyImpl> forceFrames() throws EvaluateException {
+  public @NotNull List<StackFrameProxyImpl> forceFrames() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ThreadReference threadRef = getThreadReference();
     try {
@@ -327,8 +324,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return myFrames;
   }
 
-  @NotNull
-  public List<StackFrameProxyImpl> frames() throws EvaluateException {
+  public @NotNull List<StackFrameProxyImpl> frames() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ThreadReference threadRef = getThreadReference();
     try {
@@ -347,7 +343,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return myFrames;
   }
 
-  private void checkFrames(@NotNull final ThreadReference threadRef) throws EvaluateException {
+  private void checkFrames(final @NotNull ThreadReference threadRef) throws EvaluateException {
     int frameCount = frameCount();
     if (myFramesFromBottom.size() < frameCount) {
       List<StackFrame> frames;

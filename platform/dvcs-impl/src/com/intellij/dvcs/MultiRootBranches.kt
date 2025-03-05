@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("MultiRootBranches")
 package com.intellij.dvcs
 
+import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.repo.Repository
 
 fun <T> getCommonName(repositories: Collection<T>, nameSupplier: (T) -> String?): String? {
@@ -18,3 +19,5 @@ fun Collection<Repository>.getCommonCurrentBranch(): String? {
 }
 
 fun Collection<Repository>.diverged() = getCommonCurrentBranch() == null
+
+fun DvcsSyncSettings.isSyncOptionEnabled(): Boolean = getSyncSetting() == DvcsSyncSettings.Value.SYNC

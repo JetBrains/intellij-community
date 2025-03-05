@@ -56,11 +56,12 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public @NotNull PsiClassStub<PsiClass> createStub(final @NotNull LighterAST tree, final @NotNull LighterASTNode node, final @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiClassStub<PsiClass> createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     boolean isDeprecatedByComment = false;
     boolean isInterface = false;
     boolean isEnum = false;
     boolean isRecord = false;
+    boolean isValueClass = false;
     boolean isEnumConst = false;
     boolean isAnonymous = false;
     boolean isAnnotation = false;
@@ -91,6 +92,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
       }
       else if (type == JavaElementType.MODIFIER_LIST) {
         hasDeprecatedAnnotation = RecordUtil.isDeprecatedByAnnotation(tree, child);
+        isValueClass = RecordUtil.hasValueModifier(tree, child);
       }
       else if (type == JavaTokenType.AT) {
         isAnnotation = true;
@@ -139,7 +141,8 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
     boolean isImplicit = node.getTokenType() == JavaElementType.IMPLICIT_CLASS;
     final short flags = PsiClassStubImpl.packFlags(isDeprecatedByComment, isInterface, isEnum, isEnumConst, isAnonymous, isAnnotation,
-                                                  isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment, isRecord, isImplicit);
+                                                  isInQualifiedNew, hasDeprecatedAnnotation, false, false, hasDocComment, isRecord,
+                                                   isImplicit, isValueClass);
     final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst, isImplicit);
     return new PsiClassStubImpl<>(type, parentStub, qualifiedName, name, baseRef, flags);
   }

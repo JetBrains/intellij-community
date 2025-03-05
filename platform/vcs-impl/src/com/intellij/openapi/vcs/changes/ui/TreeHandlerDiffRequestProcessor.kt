@@ -43,6 +43,10 @@ open class TreeHandlerDiffRequestProcessor(
   final override fun selectChange(change: Wrapper) {
     handler.selectChange(tree, change)
   }
+
+  override fun showAllChangesForEmptySelection(): Boolean {
+    return handler.isShowAllChangesForEmptySelection
+  }
 }
 
 open class TreeHandlerChangesTreeTracker(
@@ -232,6 +236,8 @@ abstract class TreeHandlerEditorDiffPreview(
 
 
 abstract class ChangesTreeDiffPreviewHandler {
+  open val isShowAllChangesForEmptySelection: Boolean get() = true
+
   abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
   abstract fun iterateAllChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
@@ -239,7 +245,8 @@ abstract class ChangesTreeDiffPreviewHandler {
   abstract fun selectChange(tree: ChangesTree, change: Wrapper)
 
   fun hasContent(tree: ChangesTree): Boolean {
-    return JBIterable.from(iterateAllChanges(tree)).isNotEmpty
+    val producers = if (isShowAllChangesForEmptySelection) iterateAllChanges(tree) else iterateSelectedChanges(tree)
+    return JBIterable.from(producers).isNotEmpty
   }
 
   fun collectDiffProducers(tree: ChangesTree, selectedOnly: Boolean): ListSelection<out DiffRequestProducer> {

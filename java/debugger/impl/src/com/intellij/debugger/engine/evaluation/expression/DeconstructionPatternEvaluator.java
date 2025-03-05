@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
@@ -31,17 +32,15 @@ public class DeconstructionPatternEvaluator extends PatternEvaluator {
   boolean match(Value value, EvaluationContextImpl context) throws EvaluateException {
     if (value instanceof ObjectReference objRef && myComponentEvaluators.size() == myRecordComponentNames.size()) {
       assert myTypeEvaluator != null;
-      String typeName = myTypeEvaluator.evaluate(context).name();
-      if (typeName == null) return false;
       ReferenceType refType = objRef.referenceType();
-      boolean res = DebuggerUtils.instanceOf(refType, typeName);
+      boolean res = DebuggerUtilsImpl.instanceOf(refType, myTypeEvaluator.evaluate(context));
       for (int i = 0; i < myComponentEvaluators.size() && res; i++) {
         PatternEvaluator componentEvaluator = myComponentEvaluators.get(i);
-        Field field = refType.fieldByName(myRecordComponentNames.get(i));
+        Field field = DebuggerUtils.findField(refType, myRecordComponentNames.get(i));
         res = componentEvaluator.match(objRef.getValue(field), context);
       }
       if (res && myVariableEvaluator != null) {
-        AssignmentEvaluator.assign(myVariableEvaluator.getModifier(), value, context);
+        AssignmentEvaluator.assign(myVariableEvaluator.evaluateModifiable(context).getModifier(), value, context);
       }
       return res;
     }

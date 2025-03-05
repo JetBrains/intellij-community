@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +24,10 @@ final class JpsGlobalImpl extends JpsGlobalBase {
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 
-  @NotNull
   @Override
-  public
+  public @NotNull
   <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
-  JpsLibrary addLibrary(@NotNull LibraryType libraryType, @NotNull final String name) {
+  JpsLibrary addLibrary(@NotNull LibraryType libraryType, final @NotNull String name) {
     return myLibraryCollection.addLibrary(name, libraryType);
   }
 
@@ -61,9 +46,8 @@ final class JpsGlobalImpl extends JpsGlobalBase {
     return addSdk(name, homePath, versionString, type, type.createDefaultProperties());
   }
 
-  @NotNull
   @Override
-  public JpsLibraryCollection getLibraryCollection() {
+  public @NotNull JpsLibraryCollection getLibraryCollection() {
     return myLibraryCollection;
   }
 }

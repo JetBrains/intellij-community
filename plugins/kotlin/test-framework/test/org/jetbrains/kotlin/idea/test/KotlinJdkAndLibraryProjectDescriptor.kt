@@ -3,12 +3,10 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.IdeaTestUtil
 import java.io.File
 
 open class KotlinJdkAndLibraryProjectDescriptor(
@@ -24,8 +22,6 @@ open class KotlinJdkAndLibraryProjectDescriptor(
             assert(libraryFile.exists()) { "Library file doesn't exist: " + libraryFile.absolutePath }
         }
     }
-
-    override fun getSdk(): Sdk? = IdeaTestUtil.getMockJdk18()
 
     override fun configureModule(module: Module, model: ModifiableRootModel) {
         ConfigLibraryUtil.addLibrary(model, LIBRARY_NAME) {

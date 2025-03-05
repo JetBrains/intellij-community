@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.RoamingType;
@@ -42,14 +42,12 @@ final class StorageImpl implements Storage {
     myUseSaveThreshold = useSaveThreshold;
   }
 
-  @NotNull
-  static Storage copyWithNewValue(@NotNull Storage original, @NotNull String newValue) {
+  static @NotNull Storage copyWithNewValue(@NotNull Storage original, @NotNull String newValue) {
     return new StorageImpl(newValue, newValue, original.deprecated(), original.exclusive(), original.exportable(), original.roamingType(),
                            original.stateSplitter(), original.storageClass(), original.useSaveThreshold());
   }
 
-  @NotNull
-  static Storage deprecatedCopy(@NotNull Storage original) {
+  static @NotNull Storage deprecatedCopy(@NotNull Storage original) {
     //noinspection deprecation
     return new StorageImpl(original.value(), original.file(), true, original.exclusive(), original.exportable(),
                            original.roamingType(), original.stateSplitter(), original.storageClass(), original.useSaveThreshold());

@@ -20,6 +20,7 @@
     <orderEntry type="library" name="jbr-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
   </component>
   <component name="copyright">

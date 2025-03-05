@@ -1,0 +1,263 @@
+com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:getDelegateDispatcher():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:onceWhenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- onceWhenEventHappened(kotlin.jvm.functions.Function0):V
+- a:whenEventHappened(I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- whenEventHappened(I,kotlin.jvm.functions.Function0):V
+- a:whenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- whenEventHappened(kotlin.jvm.functions.Function0):V
+com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0$Multicaster
+- com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:fireEvent():V
+com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
+- a:filterEvents(kotlin.jvm.functions.Function2):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
+- a:getDelegateDispatcher():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:ignoreParameters():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
+- a:mapParameters(kotlin.jvm.functions.Function2):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
+- a:mapParameters(kotlin.jvm.functions.Function2):com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:onceWhenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function2):V
+- onceWhenEventHappened(kotlin.jvm.functions.Function2):V
+- a:whenEventHappened(I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function2):V
+- whenEventHappened(I,kotlin.jvm.functions.Function2):V
+- a:whenEventHappened(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function2):V
+- whenEventHappened(kotlin.jvm.functions.Function2):V
+com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2$Multicaster
+- com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
+- a:fireEvent(java.lang.Object,java.lang.Object):V
+com.intellij.openapi.observable.operation.OperationExecutionContext
+- sf:Companion:com.intellij.openapi.observable.operation.OperationExecutionContext$Companion
+- a:findData(com.intellij.openapi.observable.operation.OperationExecutionContext$ContextKey):java.lang.Object
+- a:getData(com.intellij.openapi.observable.operation.OperationExecutionContext$ContextKey):java.lang.Object
+com.intellij.openapi.observable.operation.OperationExecutionContext$Builder
+- com.intellij.openapi.observable.operation.OperationExecutionContext
+- putData(com.intellij.openapi.observable.operation.OperationExecutionContext$ContextKey,java.lang.Object):V
+- a:putData(com.intellij.openapi.observable.operation.OperationExecutionContext$ContextKey,java.lang.Object,com.intellij.openapi.Disposable):V
+f:com.intellij.openapi.observable.operation.OperationExecutionContext$Companion
+- f:create(kotlin.jvm.functions.Function1):com.intellij.openapi.observable.operation.OperationExecutionContext
+- f:createKey(java.lang.String):com.intellij.openapi.observable.operation.OperationExecutionContext$ContextKey
+- bs:createKey$default(com.intellij.openapi.observable.operation.OperationExecutionContext$Companion,java.lang.String,I,java.lang.Object):com.intellij.openapi.observable.operation.OperationExecutionContext$ContextKey
+com.intellij.openapi.observable.operation.OperationExecutionContext$ContextKey
+com.intellij.openapi.observable.operation.OperationExecutionId
+- sf:Companion:com.intellij.openapi.observable.operation.OperationExecutionId$Companion
+- a:getExecutionContext():com.intellij.openapi.observable.operation.OperationExecutionContext
+f:com.intellij.openapi.observable.operation.OperationExecutionId$Companion
+- f:createId(java.lang.String,com.intellij.openapi.observable.operation.OperationExecutionContext):com.intellij.openapi.observable.operation.OperationExecutionId
+- f:createId(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.openapi.observable.operation.OperationExecutionId
+- bs:createId$default(com.intellij.openapi.observable.operation.OperationExecutionId$Companion,java.lang.String,com.intellij.openapi.observable.operation.OperationExecutionContext,I,java.lang.Object):com.intellij.openapi.observable.operation.OperationExecutionId
+- bs:createId$default(com.intellij.openapi.observable.operation.OperationExecutionId$Companion,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.observable.operation.OperationExecutionId
+- f:getNONE():com.intellij.openapi.observable.operation.OperationExecutionId
+com.intellij.openapi.observable.operation.OperationExecutionStatus
+- sf:Companion:com.intellij.openapi.observable.operation.OperationExecutionStatus$Companion
+f:com.intellij.openapi.observable.operation.OperationExecutionStatus$Cancel
+- com.intellij.openapi.observable.operation.OperationExecutionStatus
+- sf:INSTANCE:com.intellij.openapi.observable.operation.OperationExecutionStatus$Cancel
+f:com.intellij.openapi.observable.operation.OperationExecutionStatus$Companion
+- f:getKEY():com.intellij.openapi.actionSystem.DataKey
+f:com.intellij.openapi.observable.operation.OperationExecutionStatus$Failure
+- com.intellij.openapi.observable.operation.OperationExecutionStatus
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.Throwable):V
+- f:getCause():java.lang.Throwable
+- f:getMessage():java.lang.String
+f:com.intellij.openapi.observable.operation.OperationExecutionStatus$Success
+- com.intellij.openapi.observable.operation.OperationExecutionStatus
+- sf:INSTANCE:com.intellij.openapi.observable.operation.OperationExecutionStatus$Success
+com.intellij.openapi.observable.operation.core.MutableOperationTrace
+- com.intellij.openapi.observable.operation.core.ObservableTaskOperationTrace
+- a:detach(com.intellij.openapi.observable.operation.OperationExecutionId):V
+- bs:detach$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,I,java.lang.Object):V
+- a:detachAll():V
+- a:traceFinish(com.intellij.openapi.observable.operation.OperationExecutionId,com.intellij.openapi.observable.operation.OperationExecutionStatus):V
+- bs:traceFinish$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,com.intellij.openapi.observable.operation.OperationExecutionStatus,I,java.lang.Object):V
+- a:traceSchedule(com.intellij.openapi.observable.operation.OperationExecutionId):V
+- bs:traceSchedule$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,I,java.lang.Object):V
+- a:traceStart(com.intellij.openapi.observable.operation.OperationExecutionId):V
+- bs:traceStart$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,I,java.lang.Object):V
+com.intellij.openapi.observable.operation.core.ObservableOperationState
+- a:component1():com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+- a:component2():java.util.Map
+- a:component3():java.util.Map
+- a:getScheduled():java.util.Map
+- a:getStarted():java.util.Map
+- a:getStatus():com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+e:com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+- java.lang.Enum
+- sf:COMPLETED:com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+- sf:IN_PROGRESS:com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+- sf:SCHEDULED:com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.observable.operation.core.ObservableOperationStatus
+- s:values():com.intellij.openapi.observable.operation.core.ObservableOperationStatus[]
+f:com.intellij.openapi.observable.operation.core.ObservableOperationTraceUtil
+- sf:onceWhenOperationFinished(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:onceWhenOperationFinished(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,kotlin.jvm.functions.Function0):V
+- sf:onceWhenOperationScheduled(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:onceWhenOperationScheduled(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,kotlin.jvm.functions.Function0):V
+- sf:onceWhenOperationStarted(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:onceWhenOperationStarted(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,kotlin.jvm.functions.Function0):V
+- sf:whenOperationFinished(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:whenOperationFinished(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,I,kotlin.jvm.functions.Function0):V
+- sf:whenOperationFinished(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:whenOperationFinished(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,kotlin.jvm.functions.Function0):V
+- sf:whenOperationScheduled(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:whenOperationScheduled(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,I,kotlin.jvm.functions.Function0):V
+- sf:whenOperationScheduled(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:whenOperationScheduled(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,kotlin.jvm.functions.Function0):V
+- sf:whenOperationStarted(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:whenOperationStarted(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,I,kotlin.jvm.functions.Function0):V
+- sf:whenOperationStarted(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:whenOperationStarted(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,kotlin.jvm.functions.Function0):V
+- sf:withCompletedOperation(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:withCompletedOperation(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,kotlin.jvm.functions.Function0):V
+- sf:withScheduledOperation(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:withScheduledOperation(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,kotlin.jvm.functions.Function0):V
+- sf:withStartedOperation(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:withStartedOperation(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,kotlin.jvm.functions.Function0):V
+com.intellij.openapi.observable.operation.core.ObservableTaskOperationTrace
+- com.intellij.openapi.observable.operation.core.ObservableOperationTrace
+- a:getDetachTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:getFinishTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
+- a:getScheduleTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:getStartTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
+- a:getState():com.intellij.openapi.observable.operation.core.ObservableOperationState
+f:com.intellij.openapi.observable.operation.core.OperationUtilKt
+- sf:getOperationInProgressProperty(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):com.intellij.openapi.observable.properties.ObservableBooleanProperty
+- sf:isOperationCompleted(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):Z
+- sf:isOperationInProgress(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):Z
+- sf:isOperationScheduled(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):Z
+- sf:traceRun(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,kotlin.jvm.functions.Function0):java.lang.Object
+- bs:traceRun$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,kotlin.jvm.functions.Function0,I,java.lang.Object):java.lang.Object
+f:com.intellij.openapi.observable.operation.core.PromiseUtilKt
+- sf:awaitOperation-jKevqZI(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,J,J,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- sf:awaitOperationCompletion-8Mi8wO0(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,J,kotlin.coroutines.Continuation):java.lang.Object
+- sf:getOperationCompletionPromise(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable):org.jetbrains.concurrency.Promise
+- sf:getOperationFinishPromise(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable):org.jetbrains.concurrency.Promise
+- sf:getOperationSchedulePromise(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable):org.jetbrains.concurrency.Promise
+- sf:getOperationStartPromise(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,com.intellij.openapi.Disposable):org.jetbrains.concurrency.Promise
+- sf:waitForOperation-vLdBGDU(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,J,J,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- sf:waitForOperationCompletion-HG0u8IE(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,J):V
+f:com.intellij.openapi.observable.operation.core.ResultUtilKt
+- sf:onFailureCatching(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
+Fa:com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
+- com.intellij.openapi.observable.properties.AbstractObservableProperty
+- com.intellij.openapi.observable.properties.ObservableBooleanProperty
+- <init>():V
+- afterReset(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- afterSet(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+a:com.intellij.openapi.observable.properties.AbstractObservableClearableProperty
+- com.intellij.openapi.observable.properties.AbstractObservableProperty
+- com.intellij.openapi.observable.properties.ObservableClearableProperty
+- <init>():V
+- afterReset(kotlin.jvm.functions.Function0):V
+- afterReset(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
+- pf:fireResetEvent():V
+Fa:com.intellij.openapi.observable.properties.AbstractObservableProperty
+- com.intellij.openapi.observable.properties.ObservableProperty
+- <init>():V
+- afterChange(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+f:com.intellij.openapi.observable.properties.AtomicBooleanProperty
+- com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
+- com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
+- com.intellij.openapi.observable.properties.BooleanProperty
+- <init>(Z):V
+- afterReset(kotlin.jvm.functions.Function0):V
+- afterReset(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
+- afterSet(kotlin.jvm.functions.Function0):V
+- afterSet(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
+- f:compareAndSet(Z,Z):Z
+- get():java.lang.Boolean
+- getAndSet(Z):Z
+- reset():V
+- set():V
+- set(Z):V
+- updateAndGet(kotlin.jvm.functions.Function1):java.lang.Boolean
+Fc:com.intellij.openapi.observable.properties.AtomicLazyProperty
+- com.intellij.openapi.observable.properties.AbstractObservableClearableProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
+- sf:Companion:com.intellij.openapi.observable.properties.AtomicLazyProperty$Companion
+- <init>(kotlin.jvm.functions.Function0):V
+- get():java.lang.Object
+- reset():V
+- set(java.lang.Object):V
+- updateAndGet(kotlin.jvm.functions.Function1):java.lang.Object
+f:com.intellij.openapi.observable.properties.AtomicLazyProperty$Companion
+com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
+- com.intellij.openapi.observable.properties.MutableBooleanProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
+- a:getAndSet(Z):Z
+f:com.intellij.openapi.observable.properties.AtomicProperty
+- com.intellij.openapi.observable.properties.AbstractObservableClearableProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
+- <init>(java.lang.Object):V
+- get():java.lang.Object
+- reset():V
+- set(java.lang.Object):V
+- updateAndGet(kotlin.jvm.functions.Function1):java.lang.Object
+com.intellij.openapi.observable.properties.BooleanProperty
+- com.intellij.openapi.observable.properties.ObservableClearableProperty
+- a:afterReset(kotlin.jvm.functions.Function0):V
+- a:afterReset(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
+- a:afterSet(kotlin.jvm.functions.Function0):V
+- a:afterSet(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
+- a:reset():V
+- a:set():V
+com.intellij.openapi.observable.properties.GraphProperty
+- com.intellij.openapi.observable.properties.ObservableClearableProperty
+- afterPropagation(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- a:afterPropagation(kotlin.jvm.functions.Function0):V
+- afterReset(kotlin.jvm.functions.Function0):V
+- afterReset(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
+- dependsOn(com.intellij.openapi.observable.properties.ObservableClearableProperty):V
+- b:dependsOn(com.intellij.openapi.observable.properties.ObservableClearableProperty,kotlin.jvm.functions.Function0):V
+- dependsOn(com.intellij.openapi.observable.properties.ObservableProperty,kotlin.jvm.functions.Function0):V
+- dependsOn(com.intellij.openapi.observable.properties.ObservableProperty,Z,kotlin.jvm.functions.Function0):V
+- reset():V
+f:com.intellij.openapi.observable.properties.ListenerUtilKt
+- sf:whenPropertyChanged(com.intellij.openapi.observable.properties.ObservableProperty,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- sf:whenPropertyChanged(com.intellij.openapi.observable.properties.ObservableProperty,kotlin.jvm.functions.Function1):V
+- sf:whenPropertyReset(com.intellij.openapi.observable.properties.ObservableBooleanProperty,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:whenPropertyReset(com.intellij.openapi.observable.properties.ObservableBooleanProperty,kotlin.jvm.functions.Function0):V
+- sf:whenPropertySet(com.intellij.openapi.observable.properties.ObservableBooleanProperty,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- sf:whenPropertySet(com.intellij.openapi.observable.properties.ObservableBooleanProperty,kotlin.jvm.functions.Function0):V
+com.intellij.openapi.observable.properties.MutableBooleanProperty
+- com.intellij.openapi.observable.properties.ObservableBooleanProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
+- a:reset():V
+- a:set():V
+com.intellij.openapi.observable.properties.ObservableBooleanProperty
+- com.intellij.openapi.observable.properties.ObservableProperty
+- a:afterReset(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- afterReset(kotlin.jvm.functions.Function0):V
+- a:afterSet(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- afterSet(kotlin.jvm.functions.Function0):V
+com.intellij.openapi.observable.properties.ObservableClearableProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
+- afterReset(kotlin.jvm.functions.Function0):V
+- afterReset(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
+- reset():V
+com.intellij.openapi.observable.properties.ObservableMutableProperty
+- com.intellij.openapi.observable.properties.ObservableProperty
+- kotlin.properties.ReadWriteProperty
+- getValue(java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
+- a:set(java.lang.Object):V
+- setValue(java.lang.Object,kotlin.reflect.KProperty,java.lang.Object):V
+com.intellij.openapi.observable.properties.ObservableProperty
+- kotlin.properties.ReadOnlyProperty
+- afterChange(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
+- afterChange(kotlin.jvm.functions.Function1):V
+- afterChange(kotlin.jvm.functions.Function1,com.intellij.openapi.Disposable):V
+- bs:afterChange$default(com.intellij.openapi.observable.properties.ObservableProperty,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- a:get():java.lang.Object
+- getValue(java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
+f:com.intellij.openapi.observable.properties.PropertyGraph
+- <init>():V
+- <init>(java.lang.String,Z):V
+- b:<init>(java.lang.String,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:afterPropagation(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
+- f:afterPropagation(kotlin.jvm.functions.Function0):V
+- f:dependsOn(com.intellij.openapi.observable.properties.ObservableMutableProperty,com.intellij.openapi.observable.properties.ObservableProperty,Z,kotlin.jvm.functions.Function0):V
+- bs:dependsOn$default(com.intellij.openapi.observable.properties.PropertyGraph,com.intellij.openapi.observable.properties.ObservableMutableProperty,com.intellij.openapi.observable.properties.ObservableProperty,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+- f:lateinitProperty():com.intellij.openapi.observable.properties.GraphProperty
+- f:lazyProperty(kotlin.jvm.functions.Function0):com.intellij.openapi.observable.properties.GraphProperty
+- f:property(java.lang.Object):com.intellij.openapi.observable.properties.GraphProperty

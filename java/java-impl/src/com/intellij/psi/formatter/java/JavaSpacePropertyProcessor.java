@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -6,7 +6,7 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1110,13 +1110,13 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       else if (i == JavaTokenType.GT || i == JavaTokenType.LT || i == JavaTokenType.GE || i == JavaTokenType.LE) {
         createSpaceInCode(mySettings.SPACE_AROUND_RELATIONAL_OPERATORS);
       }
-      else if (ExpressionParser.ADDITIVE_OPS.contains(i)) {
+      else if (BasicExpressionParser.ADDITIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
       }
-      else if (ExpressionParser.MULTIPLICATIVE_OPS.contains(i)) {
+      else if (BasicExpressionParser.MULTIPLICATIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
       }
-      else if (ExpressionParser.SHIFT_OPS.contains(i)) {
+      else if (BasicExpressionParser.SHIFT_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_SHIFT_OPERATORS);
       }
       else {
@@ -1305,7 +1305,8 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER, myJavaSettings.SPACE_WITHIN_RECORD_HEADER);
     }
     else if (myType1 == JavaTokenType.COMMA) {
-      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+      int minLineFeed = myJavaSettings.BLANK_LINES_BETWEEN_RECORD_COMPONENTS == 0 ? 0 : myJavaSettings.BLANK_LINES_BETWEEN_RECORD_COMPONENTS + 1;
+      createSpaceProperty(mySettings.SPACE_AFTER_COMMA, mySettings.KEEP_LINE_BREAKS, minLineFeed, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
     }
     else if (myType2 == JavaTokenType.COMMA) {
       createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
@@ -1663,6 +1664,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private void createSpaceProperty(boolean space, boolean keepLineBreaks, int keepBlankLines) {
+    createSpaceProperty(space, keepLineBreaks, 0, keepBlankLines);
+  }
+
+  private void createSpaceProperty(boolean space, boolean keepLineBreaks, int minLineFeeds, int keepBlankLines) {
     ASTNode prev = getPrevElementType(myChild2);
     if (prev != null && prev.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
@@ -1671,7 +1676,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       if (!space && !canStickChildrenTogether(myChild1, myChild2)) {
         space = true;
       }
-      myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
+      myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, minLineFeeds, keepLineBreaks, keepBlankLines);
     }
   }
 

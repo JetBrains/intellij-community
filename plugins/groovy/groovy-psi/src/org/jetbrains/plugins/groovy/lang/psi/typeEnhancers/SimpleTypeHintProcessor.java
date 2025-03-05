@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
@@ -15,11 +15,10 @@ public final class SimpleTypeHintProcessor extends SignatureHintProcessor {
     return "groovy.transform.stc.SimpleType";
   }
 
-  @NotNull
   @Override
-  public List<PsiType[]> inferExpectedSignatures(@NotNull final PsiMethod method,
-                                                 @NotNull PsiSubstitutor substitutor,
-                                                 String @NotNull [] options) {
+  public @NotNull List<PsiType[]> inferExpectedSignatures(final @NotNull PsiMethod method,
+                                                          @NotNull PsiSubstitutor substitutor,
+                                                          String @NotNull [] options) {
     return Collections.singletonList(ContainerUtil.map(options, value -> {
       try {
         return JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(value, method);

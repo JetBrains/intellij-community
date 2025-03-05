@@ -24,10 +24,12 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="cli-parser" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
     <orderEntry type="library" name="protobuf" level="project" />
   </component>
 </module>

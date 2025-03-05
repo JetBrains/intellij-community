@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,8 +26,7 @@ import java.util.List;
 public abstract class SourcePosition implements Navigatable {
   private static final Logger LOG = Logger.getInstance(SourcePosition.class);
 
-  @NotNull
-  public abstract PsiFile getFile();
+  public abstract @NotNull PsiFile getFile();
 
   public abstract @Nullable PsiElement getElementAt();
 
@@ -41,8 +40,8 @@ public abstract class SourcePosition implements Navigatable {
   public abstract Editor openEditor(boolean requestFocus);
 
   private abstract static class SourcePositionCache extends SourcePosition {
-    @NotNull private final PsiFile myFile;
-    @Nullable private final SmartPsiElementPointer<PsiFile> myFilePointer;
+    private final @NotNull PsiFile myFile;
+    private final @Nullable SmartPsiElementPointer<PsiFile> myFilePointer;
     private long myModificationStamp;
 
     private WeakReference<PsiElement> myPsiElementRef;
@@ -57,8 +56,7 @@ public abstract class SourcePosition implements Navigatable {
     }
 
     @Override
-    @NotNull
-    public PsiFile getFile() {
+    public @NotNull PsiFile getFile() {
       PsiFile file = myFilePointer != null ? ReadAction.compute(myFilePointer::getElement) : null;
       return file != null ? file : myFile; // in case of full invalidation, rollback to the original psiFile
     }
@@ -173,8 +171,7 @@ public abstract class SourcePosition implements Navigatable {
       return -1;
     }
 
-    @Nullable
-    private static Document getDocument(@NotNull PsiFile file) {
+    private static @Nullable Document getDocument(@NotNull PsiFile file) {
       Project project = file.getProject();
       if (project.isDisposed()) {
         return null;
@@ -196,8 +193,7 @@ public abstract class SourcePosition implements Navigatable {
       return -1;
     }
 
-    @Nullable
-    protected PsiElement calcPsiElement() {
+    protected @Nullable PsiElement calcPsiElement() {
       // currently PsiDocumentManager does not store documents for mirror file, so we store original file
       PsiFile psiFile = getFile();
       if (!psiFile.isValid()) {
@@ -261,7 +257,7 @@ public abstract class SourcePosition implements Navigatable {
     }
   }
 
-  public static SourcePosition createFromLineComputable(@NotNull final PsiFile file, final Computable<Integer> line) {
+  public static SourcePosition createFromLineComputable(final @NotNull PsiFile file, final Computable<Integer> line) {
     return new SourcePositionCache(file) {
       @Override
       protected int calcLine() {
@@ -270,7 +266,7 @@ public abstract class SourcePosition implements Navigatable {
     };
   }
 
-  public static SourcePosition createFromLine(@NotNull final PsiFile file, final int line) {
+  public static SourcePosition createFromLine(final @NotNull PsiFile file, final int line) {
     return new SourcePositionCache(file) {
       @Override
       protected int calcLine() {
@@ -284,7 +280,7 @@ public abstract class SourcePosition implements Navigatable {
     };
   }
 
-  public static SourcePosition createFromOffset(@NotNull final PsiFile file, final int offset) {
+  public static SourcePosition createFromOffset(final @NotNull PsiFile file, final int offset) {
     return new SourcePositionCache(file) {
       @Override
       protected int calcOffset() {
@@ -298,8 +294,7 @@ public abstract class SourcePosition implements Navigatable {
     };
   }
 
-  @Nullable
-  public static SourcePosition createFromElement(@NotNull PsiElement element) {
+  public static @Nullable SourcePosition createFromElement(@NotNull PsiElement element) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiElement navigationElement = element.getNavigationElement();
     final SmartPsiElementPointer<PsiElement> pointer =
@@ -328,6 +323,7 @@ public abstract class SourcePosition implements Navigatable {
     };
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof SourcePosition sourcePosition) {
       return Comparing.equal(sourcePosition.getFile(), getFile()) && sourcePosition.getOffset() == getOffset();

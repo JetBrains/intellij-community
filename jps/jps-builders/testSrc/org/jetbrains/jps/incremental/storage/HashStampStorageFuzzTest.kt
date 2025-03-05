@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
@@ -7,7 +7,6 @@ import net.jqwik.api.*
 import net.jqwik.api.lifecycle.AfterProperty
 import net.jqwik.api.lifecycle.BeforeProperty
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.Path
@@ -28,7 +27,7 @@ class HashStampStorageFuzzTest {
     storageManager = StorageManager(file!!)
     hashStampStorage = HashStampStorage.createSourceToStampMap(
       storageManager = storageManager,
-      relativizer = PathRelativizerService(),
+      relativizer = TestPathTypeAwareRelativizer,
       targetId = "test-module",
       targetTypeId = "java"
     )

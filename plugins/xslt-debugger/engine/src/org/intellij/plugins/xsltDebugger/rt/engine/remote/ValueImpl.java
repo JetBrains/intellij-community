@@ -33,10 +33,12 @@ class ValueImpl implements Value {
     myType = type;
   }
 
+  @Override
   public Serializable getValue() {
     return myValue;
   }
 
+  @Override
   public Type getType() {
     return myType;
   }

@@ -556,6 +556,7 @@ public final class Strings {
     return count;
   }
 
+  @Contract(mutates = "param2")
   public static @NotNull StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
@@ -663,6 +664,7 @@ public final class Strings {
     return result.toString();
   }
 
+  @Contract(mutates = "param4")
   public static <T> void join(@NotNull Iterable<? extends T> items,
                               @NotNull Function<? super T, ? extends CharSequence> f,
                               @NotNull String separator,
@@ -692,6 +694,7 @@ public final class Strings {
     return result.toString();
   }
 
+  @Contract(mutates = "param3")
   public static void join(@NotNull Collection<String> strings, @NotNull String separator, @NotNull StringBuilder result) {
     boolean isFirst = true;
     for (String string : strings) {
@@ -845,6 +848,7 @@ public final class Strings {
     return StringUtilRt.convertLineSeparators(text, newSeparator);
   }
 
+  @Contract(pure = true)
   public static @NotNull String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, int @Nullable [] offsetsToKeep) {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
   }
@@ -858,6 +862,7 @@ public final class Strings {
    * </ul>
    */
   @SuppressWarnings({"StringEquality", "StringEqualitySSR"})
+  @Contract(pure = true)
   public static boolean areSameInstance(@Nullable String s1, @Nullable String s2) {
     return s1 == s2;
   }

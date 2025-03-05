@@ -3,11 +3,12 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class AssignmentExpressionUnfoldingConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         val unfolded = when (element) {

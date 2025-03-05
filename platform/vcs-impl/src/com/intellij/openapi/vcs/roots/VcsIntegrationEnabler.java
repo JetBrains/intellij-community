@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.project.Project;
@@ -32,9 +18,9 @@ import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.ROOT_ADDED;
 import static java.util.stream.Collectors.toList;
 
 public abstract class VcsIntegrationEnabler {
-  @NotNull protected final Project myProject;
-  @NotNull private final AbstractVcs myVcs;
-  @Nullable private final VirtualFile myTargetDirectory;
+  protected final @NotNull Project myProject;
+  private final @NotNull AbstractVcs myVcs;
+  private final @Nullable VirtualFile myTargetDirectory;
 
   @SuppressWarnings("unused") // Used in 3rd-party plugins
   protected VcsIntegrationEnabler(@NotNull AbstractVcs vcs) {
@@ -84,12 +70,11 @@ public abstract class VcsIntegrationEnabler {
     return ContainerUtil.exists(roots, root -> VfsUtilCore.isAncestor(root, myProject.getBaseDir(), true));
   }
 
-  @NotNull
-  public static String joinRootsPaths(@NotNull Collection<? extends VirtualFile> roots) {
+  public static @NotNull String joinRootsPaths(@NotNull Collection<? extends VirtualFile> roots) {
     return StringUtil.join(roots, VirtualFile::getPresentableUrl, ", ");
   }
 
-  protected abstract boolean initOrNotifyError(@NotNull final VirtualFile directory);
+  protected abstract boolean initOrNotifyError(final @NotNull VirtualFile directory);
 
   protected void notifyAddedRoots(Collection<? extends VirtualFile> roots) {
     String message = VcsBundle.message("roots.notification.content.added.vcs.name.roots", myVcs.getName(), roots.size(), joinRootsPaths(roots));

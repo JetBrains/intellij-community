@@ -189,7 +189,6 @@ c:com.intellij.reference.SoftReference
 - java.lang.ref.SoftReference
 - java.util.function.Supplier
 - <init>(java.lang.Object):V
-- <init>(java.lang.Object,java.lang.ref.ReferenceQueue):V
 - s:deref(java.util.function.Supplier):java.lang.Object
 - s:dereference(java.lang.ref.Reference):java.lang.Object
 e:com.intellij.smRunner.OutputStreamType
@@ -244,7 +243,6 @@ f:com.intellij.util.ArrayUtil
 - s:copyOf(java.lang.Object[]):java.lang.Object[]
 - s:copyOf(Z[]):Z[]
 - s:ensureExactSize(I,java.lang.Object[]):java.lang.Object[]
-- s:equals(java.lang.Object[],java.lang.Object[],java.util.Comparator):Z
 - s:find(I[],I):I
 - s:find(java.lang.Object[],java.lang.Object):I
 - s:getComponentType(java.lang.Object[]):java.lang.Class
@@ -440,6 +438,8 @@ f:com.intellij.util.containers.CollectionFactory
 - s:createSmallMemoryFootprintSet(java.util.Collection):java.util.Set
 - s:createSoftKeySoftValueMap():java.util.Map
 - s:createSoftMap():java.util.Map
+- s:createSoftMap(com.intellij.util.containers.HashingStrategy,java.util.function.BiConsumer):java.util.Map
+- s:createSoftMap(java.util.function.BiConsumer):java.util.Map
 - s:createWeakIdentityMap(I,F):java.util.Map
 - s:createWeakKeySoftValueMap():java.util.Map
 - s:createWeakKeyWeakValueMap():java.util.Map
@@ -502,10 +502,13 @@ f:com.intellij.util.containers.FileCollectionFactory
 - sf:createCanonicalFilePathSet():java.util.Set
 - sf:createCanonicalFileSet():java.util.Set
 - sf:createCanonicalFileSet(java.util.Collection):java.util.Set
+- sf:createCanonicalLinkedPathSet():java.util.Set
 - sf:createCanonicalPathLinkedMap():java.util.Map
 - sf:createCanonicalPathMap():java.util.Map
 - sf:createCanonicalPathSet():java.util.Set
+- sf:createCanonicalPathSet(I):java.util.Set
 - sf:createCanonicalPathSet(java.util.Collection):java.util.Set
+- sf:createCaseSensitiveAwarePathSet():java.util.Set
 com.intellij.util.containers.HashingStrategy
 - s:canonical():com.intellij.util.containers.HashingStrategy
 - s:caseInsensitive():com.intellij.util.containers.HashingStrategy

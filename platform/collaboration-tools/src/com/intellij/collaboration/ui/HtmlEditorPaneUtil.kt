@@ -51,7 +51,7 @@ fun SimpleHtmlPane(
       addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
     }
     margin = JBInsets.emptyInsets()
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent())
 
     (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
 

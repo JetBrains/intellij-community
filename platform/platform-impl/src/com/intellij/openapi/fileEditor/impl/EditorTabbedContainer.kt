@@ -10,10 +10,12 @@ import com.intellij.ide.actions.MaximizeEditorInSplitAction
 import com.intellij.ide.actions.ShowFilePathAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomisedActionGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -222,6 +224,7 @@ class EditorTabbedContainer internal constructor(
         if (UISettings.getInstance().showFileIconInTabs) {
           it.setIcon(icon)
         }
+        InternalUICustomization.getInstance().componentMarker.markAIComponent(it.component, selectedEditor)
       }
     )
     selectedEditor?.tabActions?.let {
@@ -630,11 +633,22 @@ private class EditorTabs(
       return null
     }
 
-    val closeTabAction = info.tabLabelActions?.getChildren(null)?.lastOrNull() as? CloseTab
+    val group = info.tabLabelActions ?: return null
+    val actions: Array<AnAction?> = if (group is DefaultActionGroup) {
+      group.getChildren(ActionManager.getInstance())
+    }
+    else if (group is CustomisedActionGroup && group.delegate is DefaultActionGroup) {
+      (group.delegate as DefaultActionGroup).getChildren(ActionManager.getInstance())
+    }
+    else {
+      group.getChildren(null)
+    }
+
+    val closeTabAction = actions.lastOrNull() as? CloseTab
     return closeTabAction?.getIcon(isHovered)
   }
 
-  override fun createTabPainterAdapter(): TabPainterAdapter = EditorTabPainterAdapter()
+  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance().editorTabPainterAdapter
 
   override fun createTabBorder(): JBTabsBorder = JBEditorTabsBorder(this)
 

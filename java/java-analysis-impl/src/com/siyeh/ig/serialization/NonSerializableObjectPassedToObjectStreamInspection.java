@@ -26,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public final class NonSerializableObjectPassedToObjectStreamInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.serializable.object.passed.to.object.stream.problem.descriptor");
   }

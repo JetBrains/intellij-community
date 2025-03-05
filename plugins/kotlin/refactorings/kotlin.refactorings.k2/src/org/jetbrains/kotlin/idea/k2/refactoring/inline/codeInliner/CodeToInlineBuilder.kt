@@ -11,10 +11,13 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeToInlineBuilder
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ResolvedImportPath
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.ImportPath
 
 open class CodeToInlineBuilder(
-    private val original: KtDeclaration, fallbackToSuperCall: Boolean = false
+    private val original: KtDeclaration, private val imports: List<String> = emptyList(), fallbackToSuperCall: Boolean = false
 ) : AbstractCodeToInlineBuilder(original.project, original, fallbackToSuperCall) {
 
     @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class) //called under potemkin progress
@@ -35,7 +38,7 @@ open class CodeToInlineBuilder(
                     mainExpression,
                     original,
                     statementsBefore.toMutableList(),
-                    mutableSetOf(),
+                    imports.map { ResolvedImportPath(ImportPath(FqName(it), false, null), null) }.toMutableSet(),
                     alwaysKeepMainExpression,
                     extraComments = null,
                 )

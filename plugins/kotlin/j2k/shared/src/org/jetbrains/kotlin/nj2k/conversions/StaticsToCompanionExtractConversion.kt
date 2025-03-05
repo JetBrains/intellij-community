@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.declarationList
 import org.jetbrains.kotlin.nj2k.getOrCreateCompanionObject
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.COMPANION
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.OBJECT
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 
-class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class StaticsToCompanionExtractConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKClass) return recurse(element)

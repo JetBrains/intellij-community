@@ -12,12 +12,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
+final class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings,
                                                            @NotNull CodeStyleSettings originalSettings) {
@@ -45,17 +44,17 @@ public class JsonCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   }
 
   @Override
-  public @Nullable String getConfigurableDisplayName() {
+  public @NotNull String getConfigurableDisplayName() {
     return JsonLanguage.INSTANCE.getDisplayName();
   }
 
   @Override
-  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @NotNull CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new JsonCodeStyleSettings(settings);
   }
 
   @Override
-  public @Nullable Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JsonLanguage.INSTANCE;
   }
 }

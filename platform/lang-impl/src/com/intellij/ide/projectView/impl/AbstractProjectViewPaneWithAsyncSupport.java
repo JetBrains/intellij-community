@@ -46,7 +46,9 @@ import java.util.Comparator;
 
 import static com.intellij.ide.projectView.ProjectViewSelectionTopicKt.PROJECT_VIEW_SELECTION_TOPIC;
 
-public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractProjectViewPane {
+public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractProjectViewPane
+  implements AbstractProjectViewPane.ProjectViewPaneWithAsyncSelect {
+
   private ProjectViewPaneSupport myAsyncSupport;
   private JComponent myComponent;
 
@@ -201,6 +203,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     selectCB(element, file, requestFocus);
   }
 
+  @Override
   public @NotNull ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
       if (myAsyncSupport != null) {

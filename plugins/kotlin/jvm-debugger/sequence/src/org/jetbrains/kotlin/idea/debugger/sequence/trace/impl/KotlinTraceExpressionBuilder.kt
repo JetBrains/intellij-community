@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl
 
-import com.intellij.debugger.streams.lib.HandlerFactory
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderBase
-import com.intellij.debugger.streams.wrapper.StreamChain
+import com.intellij.debugger.streams.core.lib.HandlerFactory
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.impl.TraceExpressionBuilderBase
+import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.openapi.diagnostic.Logger
 
 class KotlinTraceExpressionBuilder(dsl: Dsl, handlerFactory: HandlerFactory) : TraceExpressionBuilderBase(dsl, handlerFactory) {

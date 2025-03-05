@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.diagnostic.logging.LogConsoleManagerBase;
@@ -212,7 +212,7 @@ public abstract class RunTab implements Disposable {
     @Override
     public boolean isClosable(@NotNull TabInfo tab) {
       List<Content> gridContents = ((GridImpl)tab.getComponent()).getContents();
-      return gridContents.size() > 0 && gridContents.get(0).isCloseable();
+      return !gridContents.isEmpty() && gridContents.get(0).isCloseable();
     }
 
     @Override

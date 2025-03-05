@@ -24,8 +24,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
@@ -66,6 +66,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -143,6 +144,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final ToolbarUpdater myUpdater;
   private CancellablePromise<List<AnAction>> myLastUpdate;
   private boolean myForcedUpdateRequested = true;
+
+  private int myUpdatesWithNewButtons = 0;
+  private String myLastNewButtonActionClass;
 
   private @Nullable ActionButtonLook myCustomButtonLook;
   private @Nullable Border myActionButtonBorder;
@@ -383,8 +387,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  @NotNull
-  public ToolbarLayoutStrategy getLayoutStrategy() {
+  public @NotNull ToolbarLayoutStrategy getLayoutStrategy() {
     return myLayoutStrategy;
   }
 
@@ -528,6 +531,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         LOG.error("`CustomComponentAction` component is ignored due to wrapping: " +
                   Utils.operationName(action, null, myPlace));
       }
+      myLastNewButtonActionClass = action.getClass().getName();
       return createToolbarButton(action, getActionButtonLook(), myPlace, presentation, myMinimumButtonSizeSupplier);
     }
   }
@@ -537,6 +541,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                                                  @NotNull CustomComponentAction action) {
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
+      myLastNewButtonActionClass = anAction.getClass().getName();
       customComponent = createCustomComponent(action, presentation);
       if (customComponent.getParent() != null && customComponent.getClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING) == null) {
         customComponent.putClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING, true);
@@ -1011,6 +1016,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private void updateActionsImpl(boolean forced) {
     if (forced) myForcedUpdateRequested = true;
+    boolean forcedActual = forced || myForcedUpdateRequested;
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     DataContext dataContext = Utils.createAsyncDataContext(getDataContext());
@@ -1020,13 +1026,21 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     boolean firstTimeFastTrack = !hasVisibleActions() &&
                                  getComponentCount() == 1 &&
                                  getClientProperty(SUPPRESS_FAST_TRACK) == null;
-    if (firstTimeFastTrack) {
-      putClientProperty(SUPPRESS_FAST_TRACK, true);
-    }
-    CancellablePromise<List<AnAction>> promise = myLastUpdate = Utils.expandActionGroupAsync(
-      myActionGroup, myPresentationFactory, dataContext, myPlace, new ActualActionUiKind.Toolbar(this), firstTimeFastTrack || isUnitTestMode);
+    if (firstTimeFastTrack) putClientProperty(SUPPRESS_FAST_TRACK, true);
+
+    CancellablePromise<List<AnAction>> promise = Utils.expandActionGroupAsync(
+      myActionGroup, myPresentationFactory, dataContext, myPlace, new ActualActionUiKind.Toolbar(this),
+      firstTimeFastTrack || isUnitTestMode);
+    myLastUpdate = promise;
+
+    Consumer<List<AnAction>> consumer = actions -> {
+      if (myLastUpdate == promise) myLastUpdate = null;
+      myLastNewButtonActionClass = null;
+      actionsUpdated(forcedActual, actions);
+      reportActionButtonChangedEveryTimeIfNeeded();
+    };
+
     if (promise.isSucceeded()) {
-      myLastUpdate = null;
       List<AnAction> fastActions;
       try {
         fastActions = promise.get(0, TimeUnit.MILLISECONDS);
@@ -1034,15 +1048,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       catch (Throwable th) {
         throw new AssertionError(th);
       }
-      actionsUpdated(true, fastActions);
+      consumer.accept(fastActions);
     }
     else {
-      boolean forcedActual = forced || myForcedUpdateRequested;
       promise
-        .onSuccess(actions -> {
-          if (myLastUpdate == promise) myLastUpdate = null;
-          actionsUpdated(forcedActual, actions);
-        })
+        .onSuccess(consumer)
         .onError(ex -> {
           if (!(ex instanceof ControlFlowException || ex instanceof CancellationException)) {
             LOG.error(ex);
@@ -1053,6 +1063,19 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       mySecondaryActionsButton.update();
       mySecondaryActionsButton.repaint();
     }
+  }
+
+  private void reportActionButtonChangedEveryTimeIfNeeded() {
+    if (myUpdatesWithNewButtons < 0) return; // already reported
+    if (myLastNewButtonActionClass == null) {
+      myUpdatesWithNewButtons = 0;
+      return;
+    }
+    if (++myUpdatesWithNewButtons < 20) return;
+    LOG.error(new Throwable("'" + myPlace + "' toolbar creates new components for " + myUpdatesWithNewButtons +
+                            " updates in a row. The latest button is created for '" + myLastNewButtonActionClass + "'." +
+                            " Toolbar action instances must not change on every update", myCreationTrace));
+    myUpdatesWithNewButtons = -1;
   }
 
   private void addLoadingIcon() {

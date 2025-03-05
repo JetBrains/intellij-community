@@ -3,9 +3,10 @@ package org.jetbrains.uast.util
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiRecursiveVisitor
 import kotlin.reflect.KClass
 
-abstract class IndentedPrintingVisitor(val shouldIndent: (PsiElement) -> Boolean) : PsiElementVisitor() {
+abstract class IndentedPrintingVisitor(val shouldIndent: (PsiElement) -> Boolean) : PsiElementVisitor(),PsiRecursiveVisitor {
 
   constructor(vararg kClasses: KClass<*>) : this({ psi -> kClasses.any { it.isInstance(psi) } })
 

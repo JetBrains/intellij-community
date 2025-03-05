@@ -50,8 +50,7 @@ public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskDa
     context.getRunManager().setSelectedConfiguration(configuration);
   }
 
-  @Nullable
-  private static RunnerAndConfigurationSettings findOrGet(@NotNull ConfigurationContext context) {
+  private static @Nullable RunnerAndConfigurationSettings findOrGet(@NotNull ConfigurationContext context) {
     RunnerAndConfigurationSettings result = context.findExisting();
     if (result == null) {
       result = context.getConfiguration();

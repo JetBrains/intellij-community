@@ -56,6 +56,7 @@ public abstract class RParenthTailType extends TailType {
     return moveCaret(editor, existingRParenthOffset, 1);
   }
 
+  @Override
   public @NonNls String toString() {
     return "RParenth";
   }

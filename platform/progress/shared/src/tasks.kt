@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
@@ -16,19 +17,37 @@ import kotlinx.coroutines.CoroutineScope
 suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
-  action: suspend CoroutineScope.() -> T
+  action: suspend CoroutineScope.() -> T,
 ): T {
-  return withBackgroundProgress(project, title, TaskCancellation.cancellable(), action)
+  return withBackgroundProgress(project, title, TaskCancellation.cancellable(), suspender = null, action)
 }
 
 suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
   cancellable: Boolean,
-  action: suspend CoroutineScope.() -> T
+  action: suspend CoroutineScope.() -> T,
 ): T {
   val cancellation = if (cancellable) TaskCancellation.cancellable() else TaskCancellation.nonCancellable()
-  return withBackgroundProgress(project, title, cancellation, action)
+  return withBackgroundProgress(project, title, cancellation, suspender = null, action)
+}
+
+suspend fun <T> withBackgroundProgress(
+  project: Project,
+  title: @ProgressTitle String,
+  cancellation: TaskCancellation,
+  action: suspend CoroutineScope.() -> T,
+): T {
+  return withBackgroundProgress(project, title, cancellation, suspender = null, action)
+}
+
+suspend fun <T> withBackgroundProgress(
+  project: Project,
+  title: @ProgressTitle String,
+  suspender: TaskSuspender,
+  action: suspend CoroutineScope.() -> T,
+): T {
+  return withBackgroundProgress(project, title, TaskCancellation.nonCancellable(), suspender, action)
 }
 
 /**
@@ -45,15 +64,19 @@ suspend fun <T> withBackgroundProgress(
  *
  * @param project in which frame the progress should be shown
  * @param cancellation controls the UI appearance, e.g. [TaskCancellation.nonCancellable] or [TaskCancellation.cancellable]
+ * @param suspender provides an ability to pause running coroutine and displays suspension status in UI
+ * If null, the suspender is going to be retrieved from the coroutine context.
+ * If no suspender in the context, the task won't be suspendable.
  * @throws CancellationException if the calling coroutine was canceled, or if the indicator was canceled by the user in the UI
  */
 suspend fun <T> withBackgroundProgress(
   project: Project,
   title: @ProgressTitle String,
   cancellation: TaskCancellation,
-  action: suspend CoroutineScope.() -> T
+  suspender: TaskSuspender?,
+  action: suspend CoroutineScope.() -> T,
 ): T {
-  return taskSupport().withBackgroundProgressInternal(project, title, cancellation, action)
+  return taskSupport().withBackgroundProgressInternal(project, title, cancellation, suspender, action)
 }
 
 suspend fun <T> withModalProgress(

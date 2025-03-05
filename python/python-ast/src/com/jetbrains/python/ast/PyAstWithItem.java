@@ -12,13 +12,11 @@ import org.jetbrains.annotations.Nullable;
 public interface PyAstWithItem extends PyAstElement {
   PyAstWithItem[] EMPTY_ARRAY = new PyAstWithItem[0];
 
-  @NotNull
-  default PyAstExpression getExpression() {
+  default @NotNull PyAstExpression getExpression() {
     return (PyAstExpression)getFirstChild();
   }
 
-  @Nullable
-  default PyAstExpression getTarget() {
+  default @Nullable PyAstExpression getTarget() {
     ASTNode[] children = getNode().getChildren(null);
     boolean foundAs = false;
     for (ASTNode child : children) {

@@ -9,7 +9,10 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -23,6 +26,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -83,13 +87,6 @@ abstract class ProjectFrameHelper internal constructor(
   private var currentFile: Path? = null
   private var project: Project? = null
 
-  @Internal
-  protected open val isLightEdit: Boolean = false
-
-  /** a not-null action group, or `null` to use [IdeActions.GROUP_MAIN_MENU] action group */
-  @Internal
-  protected open val mainMenuActionGroup: ActionGroup? = null
-
   private val glassPane: IdeGlassPaneImpl
   private val frameHeaderHelper: ProjectFrameCustomHeaderHelper
 
@@ -124,7 +121,7 @@ abstract class ProjectFrameHelper internal constructor(
     frameDecorator?.setStoredFullScreen(getReusedFullScreenState())
 
     IdeRootPaneBorderHelper.install(ApplicationManager.getApplication(), cs, frame, frameDecorator, rootPane)
-    frameHeaderHelper = ProjectFrameCustomHeaderHelper(ApplicationManager.getApplication(), cs, frame, frameDecorator, rootPane, isLightEdit, mainMenuActionGroup)
+    frameHeaderHelper = cs.createFrameHeaderHelper(frame, frameDecorator, rootPane)
     installLinuxResizeHandler(cs, frame, glassPane)
 
     frame.setFrameHelper(object : FrameHelper {
@@ -173,6 +170,9 @@ abstract class ProjectFrameHelper internal constructor(
       balloonLayout.queueRelayout()
     })
   }
+
+  internal open fun CoroutineScope.createFrameHeaderHelper(frame: JFrame, frameDecorator: IdeFrameDecorator?, rootPane: IdeRootPane): ProjectFrameCustomHeaderHelper =
+    ProjectFrameCustomHeaderHelper(ApplicationManager.getApplication(), this, frame, frameDecorator, rootPane, false, null)
 
   private fun createContentPane(): JPanel {
     val contentPane = JPanel(BorderLayout()).apply {
@@ -248,6 +248,8 @@ abstract class ProjectFrameHelper internal constructor(
   }
 
   private fun createAndConfigureStatusBar() {
+    LOG.info("Creating status bar")
+
     val statusBar = createStatusBar()
     this.statusBar = statusBar
 
@@ -258,9 +260,14 @@ abstract class ProjectFrameHelper internal constructor(
     updateStatusBarVisibility()
     this.statusBar = statusBar
     val component = statusBar.component
-    if (component != null) {
-      contentPane.add(component, BorderLayout.SOUTH)
+
+    if (InternalUICustomization.getInstance().statusBarRequired()) {
+      component?.let {
+        contentPane.add(it, BorderLayout.SOUTH)
+      }
     }
+
+    LOG.info("Status bar created")
   }
 
   @Internal
@@ -373,7 +380,10 @@ abstract class ProjectFrameHelper internal constructor(
 
   // any activities that will not access a workspace model
   internal suspend fun setRawProject(project: Project) {
+    LOG.info("Setting project frame to $project")
+
     if (this.project === project) {
+      LOG.info("Project is already set for the frame $this")
       return
     }
 
@@ -381,8 +391,15 @@ abstract class ProjectFrameHelper internal constructor(
 
     withContext(Dispatchers.EDT) {
       applyInitBounds()
+
+      if (statusBar == null) {
+        LOG.error("Status bar is null, so it won't be initialized")
+      }
+      statusBar?.initialize()
     }
     frameDecorator?.setProject()
+
+    LOG.info("Project frame set to $project")
   }
 
   internal open suspend fun setProject(project: Project) {
@@ -398,6 +415,7 @@ abstract class ProjectFrameHelper internal constructor(
   @RequiresEdt
   internal fun setInitBounds(bounds: Rectangle?) {
     if (bounds != null && frame.isInFullScreen) {
+      checkForNonsenseBounds("ProjectFrameHelper.setInitBounds.bounds", bounds)
       frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, bounds)
     }
   }
@@ -407,13 +425,16 @@ abstract class ProjectFrameHelper internal constructor(
       val bounds = frame.rootPane.getClientProperty(INIT_BOUNDS_KEY)
       frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, null)
       if (bounds is Rectangle) {
+        checkForNonsenseBounds("ProjectFrameHelper.applyInitBounds.initBounds", bounds)
         ProjectFrameBounds.getInstance(project!!).markDirty(bounds)
         IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for full screen from client property: $bounds" }
       }
     }
     else {
-      ProjectFrameBounds.getInstance(project!!).markDirty(frame.bounds)
-      IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for non-fullscreen from the frame: ${frame.bounds}" }
+      val frameBounds = frame.bounds
+      checkForNonsenseBounds("ProjectFrameHelper.applyInitBounds.frameBounds", frameBounds)
+      ProjectFrameBounds.getInstance(project!!).markDirty(frameBounds)
+      IDE_FRAME_EVENT_LOG.debug { "Applied init bounds for non-fullscreen from the frame: $frameBounds" }
     }
   }
 

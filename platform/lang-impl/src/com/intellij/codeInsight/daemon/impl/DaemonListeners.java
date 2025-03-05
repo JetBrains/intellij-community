@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -61,7 +62,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -84,6 +84,7 @@ import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -99,6 +100,7 @@ public final class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance(DaemonListeners.class);
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
+  private final PsiChangeHandler myPsiChangeHandler;
   private boolean myEscPressed;
   volatile boolean cutOperationJustHappened;
   private List<Editor> myActiveEditors = Collections.emptyList();
@@ -108,6 +110,7 @@ public final class DaemonListeners implements Disposable {
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
 
     if (project.isDefault()) {
+      myPsiChangeHandler = null;
       return;
     }
 
@@ -224,19 +227,18 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         myActiveEditors.remove(event.getEditor());
-        // mem leak after closing last editor otherwise
-        if (myActiveEditors.isEmpty()) {
-          EdtInvocationManager.invokeLaterIfNeeded(() -> {
-            IntentionsUI intentionUI = myProject.getServiceIfCreated(IntentionsUI.class);
-            if (intentionUI != null) {
-              intentionUI.invalidateForEditor(event.getEditor());
-            }
-          });
-        }
+        // clear mem leak via IntentionsUIImpl.myLastIntentionHint
+        EdtInvocationManager.invokeLaterIfNeeded(() -> {
+          IntentionsUI intentionUI = myProject.isDisposed() ? null : myProject.getServiceIfCreated(IntentionsUI.class);
+          if (intentionUI != null) {
+            intentionUI.invalidateForEditor(event.getEditor());
+          }
+        });
       }
     }, this);
 
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiChangeHandler(myProject, connection, daemonCodeAnalyzer, this), this);
+    myPsiChangeHandler = new PsiChangeHandler(myProject, connection, daemonCodeAnalyzer, this);
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiChangeHandler, this);
 
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
@@ -261,15 +263,12 @@ public final class DaemonListeners implements Disposable {
     });
 
     connection.subscribe(PowerSaveMode.TOPIC, () -> {
-      stopDaemonAndRestartAllFiles("Power save mode changed to " + PowerSaveMode.isEnabled());
       if (PowerSaveMode.isEnabled()) {
         clearHighlightingRelatedHighlightersInAllEditors();
         reInitTrafficLightRendererForAllEditors();
         repaintTrafficLightIconForAllEditors();
       }
-      else {
-        daemonCodeAnalyzer.restart();
-      }
+      stopDaemonAndRestartAllFiles("Power save mode changed to " + PowerSaveMode.isEnabled());
     });
     connection.subscribe(EditorColorsManager.TOPIC, __ -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
     connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
@@ -304,7 +303,11 @@ public final class DaemonListeners implements Disposable {
       private void fileRenamed(@NotNull VFilePropertyChangeEvent event) {
         stopDaemonAndRestartAllFiles("Virtual file name changed");
         VirtualFile virtualFile = event.getFile();
-        PsiFile psiFile = !virtualFile.isValid() ? null : ((FileManagerImpl)PsiManagerEx.getInstanceEx(myProject).getFileManager()).getFastCachedPsiFile(virtualFile);
+        if (!virtualFile.isValid()) {
+          return;
+        }
+        FileManagerImpl fileManager = (FileManagerImpl)PsiManagerEx.getInstanceEx(myProject).getFileManager();
+        PsiFile psiFile = fileManager.getFastCachedPsiFile(virtualFile, CodeInsightContextKt.anyContext());
         if (psiFile == null || myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
           return;
         }
@@ -340,7 +343,7 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void beforeModalityStateChanged(boolean entering, @NotNull Object modalEntity) {
         // before showing dialog we are in non-modal context yet, and before closing dialog we are still in modal context
-        boolean inModalContext = Registry.is("ide.perProjectModality") || LaterInvocator.isInModalContext();
+        boolean inModalContext = LaterInvocator.isInModalContext();
         stopDaemon(inModalContext, "Modality change. Was modal: " + inModalContext);
         myDaemonCodeAnalyzer.setUpdateByTimerEnabled(inModalContext);
       }
@@ -455,7 +458,7 @@ public final class DaemonListeners implements Disposable {
       MarkupModel documentMarkupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
       List<RangeHighlighter> toRemove = documentMarkupModel == null ? List.of() : ContainerUtil.filter(documentMarkupModel.getAllHighlighters(), highlighter -> {
         HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
-        return info != null && (info.isFromInspection() || info.isFromAnnotator() || info.isFromHighlightVisitor() || info.isInjectionRelated());
+        return info != null && (info.isFromInspection() || info.isFromAnnotator() || info.isFromHighlightVisitor() || info.isFromInjection());
       });
       for (RangeHighlighter highlighter : toRemove) {
         HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
@@ -578,7 +581,7 @@ public final class DaemonListeners implements Disposable {
       if (!myDaemonCodeAnalyzer.isRunning()) {
         return;
       }
-      stopDaemon(false, commandName == null ? "Command started" : "Command started: '" + commandName + "'");
+      stopDaemon(false, commandName==null ? "Command started" : "Command started: '"+commandName+"'");
     }
 
     private static Document extractDocumentFromCommand(@NotNull CommandEvent event) {
@@ -605,7 +608,8 @@ public final class DaemonListeners implements Disposable {
       if (myEscPressed) {
         if (affectedDocument != null) {
           // prevent Esc key to leave the document in the not-highlighted state
-          if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(affectedDocument)) {
+          // todo ijpl-339 investigate this place
+          if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(affectedDocument, CodeInsightContextKt.anyContext())) {
             stopDaemon(true, "Command finish");
           }
         }
@@ -697,7 +701,7 @@ public final class DaemonListeners implements Disposable {
   }
 
   private void stopDaemonAndRestartAllFiles(@NotNull String reason) {
-    myDaemonCodeAnalyzer.stopProcessAndRestartAllFiles(reason);
+    myDaemonCodeAnalyzer.restart(reason);
   }
 
   private void removeHighlightersOnPluginUnload(@NotNull PluginDescriptor pluginDescriptor) {
@@ -773,5 +777,13 @@ public final class DaemonListeners implements Disposable {
 
   boolean isEscapeJustPressed() {
     return myEscPressed;
+  }
+  @TestOnly
+  void waitForUpdateFileStatusQueue() {
+    myPsiChangeHandler.waitForUpdateFileStatusQueue();
+  }
+  void flushUpdateFileStatusQueue() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    myPsiChangeHandler.flushUpdateFileStatusQueue();
   }
 }

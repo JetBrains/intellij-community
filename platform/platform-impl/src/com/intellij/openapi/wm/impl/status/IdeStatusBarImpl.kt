@@ -23,6 +23,8 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.impl.BridgeTaskSupport
+import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -44,11 +46,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.impl.ProgressState
-import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
@@ -60,6 +59,7 @@ import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
+import fleet.util.logging.logger
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -121,6 +121,8 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     internal val WIDGET_EFFECT_KEY: Key<WidgetEffect> = Key.create("TextPanel.widgetEffect")
 
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
+
+    private val LOG = logger<IdeStatusBarImpl>()
   }
 
   override fun findChild(c: Component): StatusBar {
@@ -191,8 +193,6 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
 
-    registerCloneTasks()
-
     if (addToolWindowWidget) {
       val disposable = Disposer.newDisposable()
       coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(disposable) }
@@ -213,6 +213,13 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     enableEvents(AWTEvent.MOUSE_EVENT_MASK)
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK)
     IdeEventQueue.getInstance().addDispatcher({ e -> if (e is MouseEvent) dispatchMouseEvent(e) else false }, coroutineScope)
+  }
+
+  internal fun initialize() {
+    LOG.info("Initializing status bar")
+
+    registerCloneTasks()
+    project?.service<PerProjectTaskInfoEntityCollector>()?.startCollectingActiveTasks()
   }
 
   private fun createInfoAndProgressPanel(): InfoAndProgressPanel {
@@ -460,78 +467,12 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
   @Suppress("UsagesOfObsoleteApi")
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
-    if (!Registry.`is`("rhizome.progress")) {
+    if (Registry.`is`("rhizome.progress")) {
+      @Suppress("DEPRECATION")
+      BridgeTaskSupport.getInstance().withBridgeBackgroundProgress(project, indicator, info)
+    }
+    else {
       addProgressImpl(indicator, info)
-      return
-    }
-
-    val indicatorFinished = CompletableDeferred<Unit>()
-    indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-      override fun stop() {
-        super.stop()
-        indicatorFinished.complete(Unit)
-      }
-    })
-
-    coroutineScope.launch {
-      val project = project ?: return@launch
-
-      withBackgroundProgress(project, info.title, info.isCancellable) {
-        val job1 = launch {
-          reportRawProgress { reporter ->
-            indicator.addStateDelegate(reporter.toBridgeIndicator())
-            indicatorFinished.await() // Keeps the reporter active, so the indicator can report new statuses there
-          }
-        }
-
-        val job2 = launch {
-          try {
-            awaitCancellation()
-          }
-          finally {
-            // User can cancel the job from UI, which will cause the job cancellation,
-            // so we need to cancel the original indicator as well
-            if (indicator.isRunning) {
-              indicator.cancel()
-            }
-          }
-        }
-
-        // Wait for the indicator to finish under the "NonCancellable" block,
-        // so we won't stop reporting progress if the job has been canceled but the indicator is yet to finish.
-        withContext(NonCancellable) {
-          indicatorFinished.await()
-          job1.cancel()
-          job2.cancel()
-        }
-      }
-    }
-  }
-
-  @Suppress("UsagesOfObsoleteApi")
-  private fun RawProgressReporter.toBridgeIndicator(): ProgressIndicatorEx {
-    val reporter = this
-    return object : AbstractProgressIndicatorExBase() {
-      override fun setText(text: String?) {
-        super.setText(text)
-        reporter.text(text)
-      }
-
-      override fun setText2(text: String?) {
-        super.setText2(text)
-        reporter.details(text)
-      }
-
-      override fun setIndeterminate(indeterminate: Boolean) {
-        super.setIndeterminate(indeterminate)
-        if (indeterminate)
-          reporter.fraction(null)
-      }
-
-      override fun setFraction(fraction: Double) {
-        super.setFraction(fraction)
-        reporter.fraction(fraction)
-      }
     }
   }
 

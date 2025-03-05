@@ -2,10 +2,8 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
@@ -34,8 +32,8 @@ import sun.font.FontUtilities;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
-import javax.swing.FocusManager;
 import javax.swing.*;
+import javax.swing.FocusManager;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
@@ -65,8 +63,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
@@ -313,17 +311,6 @@ public final class UIUtil {
   @Deprecated
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
     return component instanceof Component && ClientProperty.isTrue((Component)component, key);
-  }
-
-  /**
-   * @param component a Swing component that may hold a client property value
-   * @param key       the client property key that specifies a return type
-   * @return the property value from the specified component or {@code null}
-   * @deprecated use {@link ClientProperty#get(Component, Object)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
-    return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
 
   /**
@@ -996,14 +983,6 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated Aqua Look-n-Feel is not supported anymore
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isUnderAquaLookAndFeel() {
-    return SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
-  }
-
-  /**
    * @deprecated Nimbus Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated(forRemoval = true)
@@ -1042,11 +1021,6 @@ public final class UIUtil {
 
   public static boolean isUnderIntelliJLaF() {
     return StartupUiUtil.isUnderIntelliJLaF();
-  }
-
-  @Deprecated(forRemoval = true)
-  public static boolean isUnderGTKLookAndFeel() {
-    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static boolean isGraphite() {
@@ -1473,9 +1447,7 @@ public final class UIUtil {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-      EDT.dispatchAllInvocationEvents();
-    }
+    EDT.dispatchAllInvocationEvents();
   }
 
   public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {

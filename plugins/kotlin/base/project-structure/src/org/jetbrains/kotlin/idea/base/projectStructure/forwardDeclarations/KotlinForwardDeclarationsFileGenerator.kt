@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
 import org.jetbrains.kotlin.name.FqName

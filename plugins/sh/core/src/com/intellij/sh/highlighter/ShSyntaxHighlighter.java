@@ -61,8 +61,7 @@ public class ShSyntaxHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return new ShLexer();
   }
 }

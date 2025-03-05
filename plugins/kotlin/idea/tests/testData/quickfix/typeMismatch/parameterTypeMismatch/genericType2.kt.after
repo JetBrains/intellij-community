@@ -5,4 +5,4 @@ fun <T> bar(x: T) {
     foo(x, "")
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
-/* IGNORE_K2 */
+// IGNORE_K2

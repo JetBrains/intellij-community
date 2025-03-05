@@ -3,7 +3,8 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.pathString
 
 sealed interface MavenHomeType {
   @get:NlsContexts.Label
@@ -33,7 +34,7 @@ object BundledMaven4 : StaticResolvedMavenHomeType {
 }
 
 data class MavenInSpecificPath(val mavenHome: String) : StaticResolvedMavenHomeType {
-  constructor(home: File) : this(home.absolutePath)
+  constructor(home: Path) : this(home.toAbsolutePath().pathString)
 
   override val title = mavenHome
   override val description = MavenProjectBundle.message("maven.home.specific.label", mavenHome)

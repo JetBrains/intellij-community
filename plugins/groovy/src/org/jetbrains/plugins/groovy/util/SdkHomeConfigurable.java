@@ -92,8 +92,7 @@ public abstract class SdkHomeConfigurable implements SearchableConfigurable {
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 

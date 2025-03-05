@@ -5,10 +5,10 @@
 4(5) matched pattern: [x]
 5(6) element: PyBinaryExpression
 6(7,8) READ ACCESS: x
-7(15) element: null. Condition: x > 0:false
+7(12) element: null. Condition: x > 0:false
 8(9) element: null. Condition: x > 0:true
 9(10,11) READ ACCESS: x
-10(15) element: null. Condition: x % 2 == 0:false
+10(12) element: null. Condition: x % 2 == 0:false
 11(12) element: null. Condition: x % 2 == 0:true
 12(13) element: PyStatementList. Condition: x > 0 and x % 2 == 0:true
 13(14) element: PyExpressionStatement

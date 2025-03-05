@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -31,8 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
@@ -580,7 +580,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myFoldTree.getFoldedLinesCountBefore(offset);
   }
 
-  int getTotalNumberOfFoldedLines() {
+  @ApiStatus.Internal
+  public int getTotalNumberOfFoldedLines() {
     if (!myDocumentChangeProcessed && myEditor.getDocument().isInEventsHandling()) {
       // There is a possible case that this method is called on document update before fold regions are recalculated.
       // We return zero in such situations then.
@@ -940,7 +941,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
 
     @Override
-    void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
+    @ApiStatus.Internal
+    public void collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
                                                    int start, int end, int lengthDelta,
                                                    @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
       if (inCollectCall) {
@@ -968,7 +970,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
 
     @Override
-    void fireBeforeRemoved(@NotNull FoldRegionImpl markerEx) {
+    @ApiStatus.Internal
+    public void fireBeforeRemoved(@NotNull FoldRegionImpl markerEx) {
       if (markerEx.getUserData(DO_NOT_NOTIFY) == null) {
         beforeFoldRegionDisposed(markerEx);
       }
@@ -983,14 +986,14 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
 
       @Override
-      void onRemoved() {
+      public void onRemoved() {
         for (Supplier<? extends FoldRegionImpl> getter : intervals) {
           removeRegionFromGroup(getter.get());
         }
       }
 
       @Override
-      void addIntervalsFrom(@NotNull IntervalTreeImpl.IntervalNode<FoldRegionImpl> otherNode) {
+      public void addIntervalsFrom(@NotNull IntervalTreeImpl.IntervalNode<FoldRegionImpl> otherNode) {
         FoldRegionImpl region = getRegion(this);
         FoldRegionImpl otherRegion = getRegion(otherNode);
         if (otherRegion.mySizeBeforeUpdate > region.mySizeBeforeUpdate) {

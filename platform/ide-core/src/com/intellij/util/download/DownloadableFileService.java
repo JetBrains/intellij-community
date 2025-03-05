@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.download;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,8 +15,7 @@ public abstract class DownloadableFileService {
     return ApplicationManager.getApplication().getService(DownloadableFileService.class);
   }
 
-  @NotNull
-  public abstract DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName);
+  public abstract @NotNull DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName);
 
   /**
    * Create descriptor for set of files
@@ -24,13 +23,10 @@ public abstract class DownloadableFileService {
    * @param localUrls URLs of local copies of the descriptors
    * @return {@link DownloadableFileSetVersions} instance
    */
-  @NotNull
-  public abstract DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
+  public abstract @NotNull DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
                                                                                                     URL @NotNull ... localUrls);
 
-  @NotNull
-  public abstract FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description);
+  public abstract @NotNull FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description);
 
-  @NotNull
-  public abstract FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions, @NotNull String presentableDownloadName);
+  public abstract @NotNull FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions, @NotNull String presentableDownloadName);
 }

@@ -1,17 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
 
 public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
   @Override
@@ -20,7 +19,7 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Override
-  public UsageType getUsageType(PsiElement element, UsageTarget @NotNull [] targets) {
+  public UsageType getUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets) {
     UsageType classUsageType = getClassUsageType(element, targets);
     if (classUsageType != null) return classUsageType;
 
@@ -35,10 +34,9 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   private static @Nullable UsageType getMethodUsageType(PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
+    if (element instanceof PsiReferenceExpression referenceExpression) {
       final PsiMethod containerMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (containerMethod != null) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         final PsiExpression qualifier = referenceExpression.getQualifierExpression();
         final PsiElement p = referenceExpression.getParent();
         if (p instanceof PsiMethodCallExpression callExpression) {
@@ -80,7 +78,7 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
     }
 
     for (PsiParameter parameter : parameters) {
-      if (HighlightControlFlowUtil.isAssigned(parameter)) return false;
+      if (VariableAccessUtils.variableIsAssigned(parameter)) return false;
     }
 
     return true;

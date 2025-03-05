@@ -25,8 +25,7 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
                                        ? SingularCollectionClassNames.GUAVA_IMMUTABLE_LIST : collectionQualifiedName;
   }
 
-  @NotNull
-  private static PsiType getCollectionType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
+  private static @NotNull PsiType getCollectionType(@NotNull PsiType psiFieldType, PsiManager psiManager) {
     final PsiType elementType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager);
     return PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_LANG_ITERABLE, elementType);
   }
@@ -38,8 +37,7 @@ class SingularGuavaCollectionHandler extends SingularCollectionHandler {
   }
 
   @Override
-  @NotNull
-  protected PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
+  protected @NotNull PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiType elementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
 

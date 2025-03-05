@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.util.projectLibrary
 import java.io.File
 import java.nio.file.Paths
+import java.util.Locale
 import kotlin.script.dependencies.Environment
 import kotlin.script.experimental.api.ScriptDiagnostic
 
@@ -104,7 +105,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         }
 
         // If script is inside module
-        if (module != null && mainScriptFile.parentFile.name.toLowerCase().contains("module")) {
+        if (module != null && mainScriptFile.parentFile.name.lowercase(Locale.getDefault()).contains("module")) {
             module.addDependency(
                 projectLibrary(
                     "script-runtime",

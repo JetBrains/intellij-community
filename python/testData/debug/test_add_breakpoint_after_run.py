@@ -9,7 +9,7 @@ def calculate_sum(a, b):
 
 def greet(name):
     # Use a breakpoint here to debug the call
-    print(f"Hello, {name}!")
+    print("Hello, {name}!".format(name=name))
 
 
 if __name__ == "__main__":
@@ -20,7 +20,7 @@ if __name__ == "__main__":
         num1 = counter
         num2 = counter + 1
         sum_result = calculate_sum(num1, num2)  # Step into this function during debugging
-        print(f"The sum of {num1} and {num2} is: {sum_result}")
+        print("The sum of {num1} and {num2} is: {sum_result}".format(num1=num1, num2=num2, sum_result=sum_result))
         greet("Debugger")  # Also step into this function if needed
         counter += 1
         # Add a sleep to slow down the loop and make debugging easier

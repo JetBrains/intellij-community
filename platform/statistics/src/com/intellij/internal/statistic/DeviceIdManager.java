@@ -1,12 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic;
 
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -25,9 +26,8 @@ import java.util.prefs.Preferences;
 public final class DeviceIdManager {
   private static final Logger LOG = Logger.getInstance(DeviceIdManager.class);
 
-  private static final String UNDEFINED = "UNDEFINED";
-  private static final String DEVICE_ID_SHARED_FILE = "PermanentDeviceId";
-  private static final String DEVICE_ID_PREFERENCE_KEY = "device_id";
+  private static final String PREFERENCE_KEY = "device_id";
+  private static final String SHARED_FILE_NAME = "PermanentDeviceId";
 
   public static @NotNull String getOrGenerateId(@Nullable DeviceIdToken token, @NotNull String recorderId) throws InvalidDeviceIdTokenException {
     assertAllowed(token, recorderId);
@@ -43,12 +43,12 @@ public final class DeviceIdManager {
       LOG.info("Generating new Device ID for '" + recorderId + "'");
     }
 
-    if (appInfo.isVendorJetBrains() && SystemInfo.isWindows) {
+    if (appInfo.isVendorJetBrains() && OS.CURRENT == OS.Windows) {
       if (isBaseRecorder(recorderId)) {
-        deviceId = syncWithSharedFile(DEVICE_ID_SHARED_FILE, deviceId, preferences, preferenceKey);
+        deviceId = syncWithSharedFile(SHARED_FILE_NAME, deviceId, preferences, preferenceKey);
       }
       else {
-        deleteLegacySharedFile(recorderId + '_' + DEVICE_ID_SHARED_FILE);
+        deleteLegacySharedFile(recorderId + '_' + SHARED_FILE_NAME);
       }
     }
 
@@ -72,7 +72,7 @@ public final class DeviceIdManager {
   }
 
   private static String getPreferenceKey(String recorderId) {
-    return isBaseRecorder(recorderId) ? DEVICE_ID_PREFERENCE_KEY : recorderId.toLowerCase(Locale.ROOT) + "_" + DEVICE_ID_PREFERENCE_KEY;
+    return isBaseRecorder(recorderId) ? PREFERENCE_KEY : recorderId.toLowerCase(Locale.ROOT) + "_" + PREFERENCE_KEY;
   }
 
   private static boolean isBaseRecorder(String recorderId) {
@@ -80,7 +80,7 @@ public final class DeviceIdManager {
   }
 
   private static boolean isUndefinedRecorder(String recorderId) {
-    return UNDEFINED.equals(recorderId);
+    return "UNDEFINED".equals(recorderId);
   }
 
   @SuppressWarnings({"SameParameterValue", "DuplicatedCode"})
@@ -89,23 +89,26 @@ public final class DeviceIdManager {
     if (appdata != null) {
       try {
         var permanentIdFile = Path.of(appdata, "JetBrains", fileName);
-        Files.createDirectories(permanentIdFile.getParent());
         try {
           var bytes = Files.readAllBytes(permanentIdFile);
           var offset = CharsetToolkit.hasUTF8Bom(bytes) ? CharsetToolkit.UTF8_BOM.length : 0;
-          var fromFile = new String(bytes, offset, bytes.length - offset, StandardCharsets.UTF_8);
-          if (!fromFile.equals(installationId)) {
-            installationId = fromFile;
-            preferences.put(prefKey, installationId);
+          var fromFile = Strings.trimEnd(new String(bytes, offset, bytes.length - offset, StandardCharsets.UTF_8), '\0');
+          if (!fromFile.equals(installationId) && isValid(fromFile)) {
+            preferences.put(prefKey, fromFile);
+            return fromFile;
           }
         }
-        catch (NoSuchFileException ignored) {
-          Files.writeString(permanentIdFile, installationId);
-        }
+        catch (NoSuchFileException | IllegalArgumentException ignored) { }
+        Files.createDirectories(permanentIdFile.getParent());
+        Files.writeString(permanentIdFile, installationId);
       }
       catch (IOException ignored) { }
     }
     return installationId;
+  }
+
+  private static boolean isValid(String id) {
+    return id.length() >= 30 && id.length() <= 50 && id.chars().allMatch(c -> c == '-' || Character.isLetterOrDigit(c));
   }
 
   private static void deleteLegacySharedFile(String fileName) {
@@ -139,10 +142,12 @@ public final class DeviceIdManager {
   }
 
   private static char getOsCode() {
-    if (SystemInfo.isWindows) return '1';
-    if (SystemInfo.isMac) return '2';
-    if (SystemInfo.isLinux) return '3';
-    return '0';
+    return switch (OS.CURRENT) {
+      case Windows -> '1';
+      case macOS -> '2';
+      case Linux -> '3';
+      default -> '0';
+    };
   }
 
   /**

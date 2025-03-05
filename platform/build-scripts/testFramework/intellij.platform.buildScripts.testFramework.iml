@@ -18,6 +18,7 @@
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
@@ -32,5 +33,6 @@
     <orderEntry type="library" name="devkit.runtime.module.repository.jps" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildData" />
   </component>
 </module>

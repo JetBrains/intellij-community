@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -21,7 +22,7 @@ public class DarculaMenuItemBorder implements Border, UIResource {
   }
 
   public static @NotNull JBInsets menuBarItemOuterInsets() {
-    return JBUI.insets(0);
+    return JBUI.emptyInsets();
   }
 
   @Override
@@ -42,7 +43,7 @@ public class DarculaMenuItemBorder implements Border, UIResource {
       }
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
-      result = menuBarItemInnerInsets();
+      result = ShowMode.Companion.isMergedMainMenu() ? JBUI.insets(0, 4) : menuBarItemInnerInsets();
     }
     else {
       result = JBUI.CurrentTheme.Menu.Selection.innerInsets();

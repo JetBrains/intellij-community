@@ -1,0 +1,7 @@
+// K2_AFTER_ERROR: Unresolved reference 'Foo'.
+import foo.Bar
+
+class Test {
+    val foo: Foo
+        get() = Bar().foo()
+}

@@ -19,8 +19,8 @@ public enum ProductMode {
    */
   FRONTEND("frontend"),
   /**
-   * Indicates that this process doesn't perform heavy tasks like code analysis, and takes necessary information from another process.
-   * Currently, this is used by JetBrains Client process connected to a remote development host or CodeWithMe session.
+   * Indicates that this process doesn't perform heavy tasks like code analysis and takes necessary information from another process.
+   * Currently, this is used by an IDE running as a remote development host.
    */
   BACKEND("backend");
 

@@ -15,8 +15,8 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-internal class SimpleCustomDecorationPath(@JvmField val frame: JFrame, private val isGrey: Boolean = false) {
-  internal class SimpleCustomDecorationPathComponent(frame: JFrame, isGrey: Boolean = false): JPanel() {
+internal class SimpleCustomDecorationPath(@JvmField val frame: JFrame, private val isGrey: () -> Boolean = { false }) {
+  internal class SimpleCustomDecorationPathComponent(frame: JFrame, isGrey: () -> Boolean = { false }) : JPanel() {
     private val manager = SimpleCustomDecorationPath(frame, isGrey)
 
     init {
@@ -53,6 +53,10 @@ internal class SimpleCustomDecorationPath(@JvmField val frame: JFrame, private v
 
     fun updateBorders(rightGap: Int) {
       border = JBUI.Borders.empty(2, 0, 0, rightGap)
+    }
+
+    fun updateLabelForeground() {
+      manager.updateLabelForeground()
     }
   }
 
@@ -94,7 +98,7 @@ internal class SimpleCustomDecorationPath(@JvmField val frame: JFrame, private v
   }
 
   fun updateLabelForeground() {
-    label.foreground = if (isGrey) {
+    label.foreground = if (isGrey.invoke()) {
       JBUI.CurrentTheme.Popup.headerForeground(false)
     }
     else {

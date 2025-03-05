@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Interface DebuggerContextImpl
@@ -31,8 +31,7 @@ public final class DebuggerContextImpl implements DebuggerContext {
 
   private boolean myInitialized;
 
-  @Nullable
-  private final DebuggerSession myDebuggerSession;
+  private final @Nullable DebuggerSession myDebuggerSession;
   private final SuspendContextImpl mySuspendContext;
   private final ThreadReferenceProxyImpl myThreadProxy;
 
@@ -57,19 +56,16 @@ public final class DebuggerContextImpl implements DebuggerContext {
     myInitialized = initialized;
   }
 
-  @Nullable
-  public DebuggerSession getDebuggerSession() {
+  public @Nullable DebuggerSession getDebuggerSession() {
     return myDebuggerSession;
   }
 
-  @Nullable
   @Override
-  public DebugProcessImpl getDebugProcess() {
+  public @Nullable DebugProcessImpl getDebugProcess() {
     return myDebuggerSession != null ? myDebuggerSession.getProcess() : null;
   }
 
-  @Nullable
-  public ThreadReferenceProxyImpl getThreadProxy() {
+  public @Nullable ThreadReferenceProxyImpl getThreadProxy() {
     return myThreadProxy;
   }
 
@@ -84,10 +80,16 @@ public final class DebuggerContextImpl implements DebuggerContext {
   }
 
   @Override
-  @Nullable
-  public StackFrameProxyImpl getFrameProxy() {
+  public @Nullable StackFrameProxyImpl getFrameProxy() {
     LOG.assertTrue(myInitialized);
     return myFrameProxy;
+  }
+
+  public @Nullable DebuggerManagerThreadImpl getManagerThread() {
+    if (mySuspendContext != null) return mySuspendContext.getManagerThread();
+    DebugProcessImpl debugProcess = getDebugProcess();
+    //noinspection UsagesOfObsoleteApi
+    return debugProcess != null ? debugProcess.getManagerThread() : null;
   }
 
   public SourcePosition getSourcePosition() {
@@ -109,18 +111,16 @@ public final class DebuggerContextImpl implements DebuggerContext {
     return new EvaluationContextImpl(getSuspendContext(), getFrameProxy(), thisObject);
   }
 
-  @Nullable
-  public EvaluationContextImpl createEvaluationContext() {
+  public @Nullable EvaluationContextImpl createEvaluationContext() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     SuspendContextImpl context = getSuspendContext();
     return context != null ? new EvaluationContextImpl(context, getFrameProxy()) : null;
   }
 
-  @NotNull
-  public static DebuggerContextImpl createDebuggerContext(@Nullable DebuggerSession session,
-                                                          @Nullable SuspendContextImpl context,
-                                                          ThreadReferenceProxyImpl threadProxy,
-                                                          StackFrameProxyImpl frameProxy) {
+  public static @NotNull DebuggerContextImpl createDebuggerContext(@Nullable DebuggerSession session,
+                                                                   @Nullable SuspendContextImpl context,
+                                                                   ThreadReferenceProxyImpl threadProxy,
+                                                                   StackFrameProxyImpl frameProxy) {
     LOG.assertTrue(frameProxy == null || threadProxy == null || threadProxy == frameProxy.threadProxy());
     return new DebuggerContextImpl(session, context, threadProxy, frameProxy, null, null, context == null);
   }

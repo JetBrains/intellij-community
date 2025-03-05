@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
@@ -34,9 +34,9 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
-  @NotNull private final List<? extends EditorEx> myEditableEditors;
+  private final @NotNull List<? extends EditorEx> myEditableEditors;
 
-  @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
+  protected final @NotNull SetEditorSettingsAction myEditorSettingsAction;
 
   public OnesideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
@@ -70,9 +70,8 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   }
 
   @ApiStatus.Internal
-  @NotNull
   @Override
-  protected TextEditorHolder createEditorHolder(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
+  protected @NotNull TextEditorHolder createEditorHolder(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
     TextEditorHolder holder = super.createEditorHolder(factory);
 
     boolean[] forceReadOnly = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
@@ -81,9 +80,8 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     return holder;
   }
 
-  @Nullable
   @Override
-  protected JComponent createTitle() {
+  protected @Nullable JComponent createTitle() {
     List<JComponent> textTitles = DiffUtil.createTextTitles(this, myRequest, Arrays.asList(getEditor(), getEditor()));
     return getSide().select(textTitles);
   }
@@ -91,13 +89,11 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   //
   // Diff
   //
-  @NotNull
-  public TextDiffSettings getTextSettings() {
+  public @NotNull TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 
-  @NotNull
-  protected List<AnAction> createEditorPopupActions() {
+  protected @NotNull List<AnAction> createEditorPopupActions() {
     return TextDiffViewerUtil.createEditorPopupActions();
   }
 
@@ -118,25 +114,21 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   // Getters
   //
 
-  @NotNull
   @Override
-  public List<? extends EditorEx> getEditors() {
+  public @NotNull List<? extends EditorEx> getEditors() {
     return Collections.singletonList(getEditor());
   }
 
-  @NotNull
-  protected List<? extends EditorEx> getEditableEditors() {
+  protected @NotNull List<? extends EditorEx> getEditableEditors() {
     return myEditableEditors;
   }
 
-  @NotNull
-  public EditorEx getEditor() {
+  public @NotNull EditorEx getEditor() {
     return getEditorHolder().getEditor();
   }
 
-  @NotNull
   @Override
-  public DocumentContent getContent() {
+  public @NotNull DocumentContent getContent() {
     return (DocumentContent)super.getContent();
   }
 
@@ -153,9 +145,8 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   // Misc
   //
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getContent().getNavigatable(LineCol.fromCaret(getEditor()));
   }
 
@@ -186,9 +177,8 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
   }
 
   protected abstract class MyInitialScrollPositionHelper extends InitialScrollPositionSupport.TwosideInitialScrollHelper {
-    @NotNull
     @Override
-    protected List<? extends Editor> getEditors() {
+    protected @NotNull List<? extends Editor> getEditors() {
       return OnesideTextDiffViewer.this.getEditors();
     }
 

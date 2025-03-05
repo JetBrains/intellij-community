@@ -24,6 +24,6 @@ class ExternalSystemBasedStableModuleNameProvider(val project: Project) : Stable
     override fun getStableModuleName(module: Module): String =
         if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
             ExternalSystemModulePropertyManager.getInstance(module).getLinkedProjectId()
-                ?: module.name.also { LOG.error("Don't have a LinkedProjectId for module $this for HMPP!") }
+                ?: module.name.also { LOG.error("Don't have a LinkedProjectId for module ${module.name} for HMPP!") }
         } else module.name
 }

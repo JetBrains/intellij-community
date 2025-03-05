@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,8 +51,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   }
 
   @Override
-  @NotNull
-  public final List<Task> findTasks(@NotNull String jql, int max) throws Exception {
+  public final @NotNull List<Task> findTasks(@NotNull String jql, int max) throws Exception {
     GetMethod method = getMultipleIssuesSearchMethod(jql, max);
     String response = myRepository.executeMethod(method);
     List<JiraIssue> issues = parseIssues(response);
@@ -59,8 +59,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   }
 
   @Override
-  @Nullable
-  public final JiraRestTask findTask(@NotNull String key) throws Exception {
+  public final @Nullable JiraRestTask findTask(@NotNull String key) throws Exception {
     GetMethod method = getSingleIssueSearchMethod(key);
     try {
       return new JiraRestTask(parseIssue(myRepository.executeMethod(method)), myRepository);
@@ -71,13 +70,11 @@ public abstract class JiraRestApi extends JiraRemoteApi {
     }
   }
 
-  @NotNull
-  protected GetMethod getSingleIssueSearchMethod(String key) {
+  protected @NotNull GetMethod getSingleIssueSearchMethod(String key) {
     return new GetMethod(myRepository.getRestUrl("issue", key));
   }
 
-  @NotNull
-  protected GetMethod getMultipleIssuesSearchMethod(String jql, int max) {
+  protected @NotNull GetMethod getMultipleIssuesSearchMethod(String jql, int max) {
     GetMethod method = new GetMethod(myRepository.getRestUrl("search"));
     method.setQueryString(new NameValuePair[]{
       new NameValuePair("jql", jql),
@@ -86,11 +83,9 @@ public abstract class JiraRestApi extends JiraRemoteApi {
     return method;
   }
 
-  @NotNull
-  protected abstract List<JiraIssue> parseIssues(String response);
+  protected abstract @NotNull List<JiraIssue> parseIssues(String response);
 
-  @Nullable
-  protected abstract JiraIssue parseIssue(String response);
+  protected abstract @Nullable JiraIssue parseIssue(String response);
 
   @Override
   public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
@@ -101,8 +96,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
     myRepository.executeMethod(method);
   }
 
-  @Nullable
-  protected abstract String getRequestForStateTransition(@NotNull CustomTaskState state);
+  protected abstract @Nullable String getRequestForStateTransition(@NotNull CustomTaskState state);
 
   protected static RequestEntity createJsonEntity(String requestBody) {
     try {

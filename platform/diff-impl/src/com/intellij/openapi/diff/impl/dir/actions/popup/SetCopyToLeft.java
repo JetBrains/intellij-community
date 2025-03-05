@@ -12,9 +12,8 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.Internal
 public class SetCopyToLeft extends SetOperationToBase {
-  @NotNull
   @Override
-  protected DirDiffOperation getOperation(DirDiffElementImpl element) {
+  protected @NotNull DirDiffOperation getOperation(DirDiffElementImpl element) {
     return DirDiffOperation.COPY_FROM;
   }
 

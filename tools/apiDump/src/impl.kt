@@ -53,10 +53,13 @@ class ApiIndex private constructor(
     return classes[className]
   }
 
-  internal fun discoverPackages(packages: Map<String, ApiAnnotations>): ApiIndex {
+  internal fun discoverPackages(packages: Map<String, ApiAnnotations>, root: Path): ApiIndex {
     val builder = this.packages.builder()
     for ((packageName, packageAnnotations) in packages) {
-      check(this.packages[packageName] == null)
+      val existingAnnotations = this.packages[packageName]
+      if (existingAnnotations != null && existingAnnotations != packageAnnotations) {
+        error("$packageName has different annotations in different modules. The current root = $root")
+      }
       builder[packageName] = packageAnnotations
     }
     return ApiIndex(
@@ -65,11 +68,17 @@ class ApiIndex private constructor(
     )
   }
 
-  internal fun discoverClass(signature: ClassBinarySignature): ApiIndex {
+  internal fun discoverClass(signature: ClassBinarySignature, root: Path): ApiIndex {
     val className = signature.name
-    check(classes[className] == null) {
-      "Class already discovered $className"
+    if (className.endsWith("/package-info")) {
+      // ignore package-info.java
+      return this
     }
+
+    check(classes[className] == null) {
+      "$className already declared. The current root = $root"
+    }
+
     return ApiIndex(
       packages,
       classes = classes.put(className, signature),
@@ -104,7 +113,7 @@ fun api(index: ApiIndex, root: Path): API {
   val classFilePaths: Sequence<Path> = classFilePaths(root)
 
   val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
-  index = index.discoverPackages(packages)
+  index = index.discoverPackages(packages, root)
 
   val signatures: List<ClassBinarySignature> = classFilePaths
     .map { it.inputStream() }
@@ -118,7 +127,7 @@ fun api(index: ApiIndex, root: Path): API {
          * because the next [handleAnnotationsAndVisibility] call relies on it
          * to resolve the outer class name.
          */
-        index = index.discoverClass(it)
+        index = index.discoverClass(it, root)
       }
     }
   return API(index, signatures)

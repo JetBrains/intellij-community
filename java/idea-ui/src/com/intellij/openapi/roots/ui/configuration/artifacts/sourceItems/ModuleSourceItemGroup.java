@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -29,23 +29,23 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     myModule = module;
   }
 
-  @NotNull
   @Override
-  public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ModuleSourceItemPresentation(myModule, context);
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof ModuleSourceItemGroup && myModule.equals(((ModuleSourceItemGroup)obj).myModule);
   }
 
+  @Override
   public int hashCode() {
     return myModule.hashCode();
   }
 
   @Override
-  @NotNull
-  public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
+  public @NotNull List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     final Set<Module> modules = new LinkedHashSet<>();
     collectDependentModules(myModule, modules, context);
 
@@ -88,8 +88,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     }
   }
 
-  @NotNull
-  public Module getModule() {
+  public @NotNull Module getModule() {
     return myModule;
   }
 

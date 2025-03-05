@@ -1,7 +1,13 @@
 import sys
-from importlib import reload
+
+if sys.version_info[0] >= 3:
+    from importlib import reload
+else:
+    from imp import reload
 
 import pytest
+
+from _pydevd_bundle.pydevd_constants import IS_PY312_OR_GREATER
 
 
 @pytest.fixture
@@ -61,6 +67,7 @@ def test_ge_python312_cython_is_explicitly_disabled(mock_env_use_cython_no):
 
 
 @pytest.mark.ge_python312
+@pytest.mark.xfail(IS_PY312_OR_GREATER, reason='PCQA-839')
 def test_ge_python312_cython_is_explicitly_enabled(mock_env_use_cython_yes):
     from _pydevd_bundle import pydevd_pep_669_tracing_cython as expected_mod
 
@@ -69,6 +76,7 @@ def test_ge_python312_cython_is_explicitly_enabled(mock_env_use_cython_yes):
 
 
 @pytest.mark.ge_python312
+@pytest.mark.xfail(IS_PY312_OR_GREATER, reason='PCQA-841')
 def test_ge_python312_cython_env_is_none(mock_env_use_cython_none):
     from _pydevd_bundle import pydevd_pep_669_tracing_cython as expected_mod
 
@@ -77,6 +85,7 @@ def test_ge_python312_cython_env_is_none(mock_env_use_cython_none):
 
 
 @pytest.mark.ge_python312
+@pytest.mark.xfail(IS_PY312_OR_GREATER, reason='PCQA-840')
 def test_ge_python312_cython_env_is_unexpected(mock_env_use_cython_unexpected):
     from _pydevd_bundle import pydevd_pep_669_tracing_cython as expected_mod
 

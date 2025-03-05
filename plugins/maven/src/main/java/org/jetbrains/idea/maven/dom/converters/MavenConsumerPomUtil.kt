@@ -2,13 +2,12 @@
 package org.jetbrains.idea.maven.dom.converters
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.ConvertContext
 import com.intellij.util.xml.GenericDomValue
 import org.jetbrains.idea.maven.dom.MavenDomUtil
+import org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4
 import org.jetbrains.idea.maven.dom.model.MavenDomParent
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 
@@ -17,7 +16,7 @@ object MavenConsumerPomUtil {
   @JvmStatic
   fun isAutomaticVersionFeatureEnabled(file: VirtualFile?, project: Project): Boolean {
     //https://issues.apache.org/jira/browse/MNG-624
-    return StringUtil.compareVersionNumbers(MavenDomUtil.getMavenVersion(file, project), "4") >= 0;
+    return isAtLeastMaven4(file, project);
   }
 
   @JvmStatic
@@ -53,6 +52,15 @@ object MavenConsumerPomUtil {
       return extractor(mavenParentDomPsiModel).value
     }
     return null
+  }
+
+  @JvmStatic
+  fun getParentPomPropertyUsingRelativePath(context: ConvertContext,
+                                            extractor: (MavenDomProjectModel) -> GenericDomValue<String>): String? {
+    val parent = getMavenParentElementFromContext(context) ?: return null
+    val parentPom = parent.relativePath.value ?: return null
+    val parentPomDomModel = MavenDomUtil.getMavenDomModel(parentPom, MavenDomProjectModel::class.java) ?: return null
+    return extractor(parentPomDomModel).value
   }
 
   private fun getMavenParentElementFromContext(context: ConvertContext): MavenDomParent? {

@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -159,7 +160,9 @@ class EditorNotificationsImpl(private val project: Project,
     check(fileToUpdateNotificationJob.isEmpty())
   }
 
+  @Deprecated("Deprecated in Java")
   override fun updateNotifications(provider: EditorNotificationProvider) {
+    // TODO: run [updateEditors] instead to check for the new notifications
     for (file in FileEditorManager.getInstance(project).openFilesWithRemotes) {
       for (editor in getEditors(file).toList()) {
         updateNotification(fileEditor = editor, provider = provider, component = null)
@@ -210,6 +213,8 @@ class EditorNotificationsImpl(private val project: Project,
   }
 
   private fun updateEditors(file: VirtualFile, fileEditors: List<FileEditor>) {
+    if (fileEditors.isEmpty()) return
+
     val job = coroutineScope.launch(start = CoroutineStart.LAZY) {
       // delay for debouncing
       delay(100)
@@ -259,6 +264,8 @@ class EditorNotificationsImpl(private val project: Project,
               }
             }
           }
+        }
+        catch (_: IndexNotReadyException) {
         }
         catch (e: CancellationException) {
           throw e

@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -29,8 +29,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Utility class that updates external annotations of IntelliJ SDK.
  */
 @Service
-class IntelliJSdkExternalAnnotationsUpdater(private val cs: CoroutineScope) {
-
+internal class IntelliJSdkExternalAnnotationsUpdater(private val cs: CoroutineScope) {
   companion object {
     private val LOG = Logger.getInstance(IntelliJSdkExternalAnnotationsUpdater::class.java)
 
@@ -121,7 +120,7 @@ class IntelliJSdkExternalAnnotationsUpdater(private val cs: CoroutineScope) {
     val roots = readAction { ideaJdk.rootProvider.getFiles(rootType) }
     val attachedUrls = roots.mapNotNull { if (getAnnotationsBuildNumber(it) != null) it.url else null }
 
-    writeAction {
+    edtWriteAction {
       val sdkModificator = ideaJdk.sdkModificator
       if (annotationsUrl !in attachedUrls) {
         sdkModificator.addRoot(annotationsUrl, rootType)

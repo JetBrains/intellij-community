@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
@@ -20,7 +20,7 @@ import java.util.List;
 
 public final class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
   @Override
-  public boolean execute(@NotNull final AnnotatedElementsSearch.Parameters p, @NotNull final Processor<? super PsiModifierListOwner> consumer) {
+  public boolean execute(final @NotNull AnnotatedElementsSearch.Parameters p, final @NotNull Processor<? super PsiModifierListOwner> consumer) {
     final PsiClass annClass = p.getAnnotationClass();
     if (!annClass.isAnnotationType()) throw new IllegalArgumentException("Annotation type should be passed to annotated members search but got: "+annClass);
 
@@ -64,9 +64,8 @@ public final class AnnotatedElementsSearcher implements QueryExecutor<PsiModifie
     return true;
   }
 
-  @NotNull
-  private static Collection<PsiAnnotation> getAnnotationCandidates(@NotNull PsiClass annClass,
-                                                                   @NotNull SearchScope useScope, @NotNull Project project) {
+  private static @NotNull Collection<PsiAnnotation> getAnnotationCandidates(@NotNull PsiClass annClass,
+                                                                            @NotNull SearchScope useScope, @NotNull Project project) {
     return ReadAction.compute(() -> {
       if (useScope instanceof GlobalSearchScope) {
         return JavaAnnotationIndex.getInstance().getAnnotations(annClass.getName(), project, (GlobalSearchScope)useScope);

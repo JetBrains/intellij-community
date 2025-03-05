@@ -1,0 +1,31 @@
+public class TypePattern {
+    static fun formatter(o: java.lang.Object) : java.lang.String {
+        var formatted: java.lang.String = switch (o) 
+            java.lang.Integer i when i < 0 -> {
+                yield String.format("int %d", i)
+            }
+            
+            java.lang.Integer i -> {
+                yield String.format("int %d", i)
+            }
+            
+            java.lang.Long l when l < 0 -> {
+                yield String.format("long %d", l)
+            }
+            
+            java.lang.Double d -> {
+                yield String.format("double %f", d)
+            }
+            
+            java.lang.String s -> {
+                yield String.format("String %s", s)
+            }
+            
+            else -> {
+                yield formatted = o.toString()
+            }
+            
+        
+        return formatted
+    }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -48,10 +48,9 @@ public final class CoverageFragment<T extends RunConfigurationBase<?>> extends N
     return fragments;
   }
 
-  @NotNull
-  private SettingsEditorFragment<T, CoverageClassFilterEditor> createFilterEditor(String id,
-                                                                                  @NotNull @Nls String message,
-                                                                                  boolean included, @NotNull @Nls String optionName) {
+  private @NotNull SettingsEditorFragment<T, CoverageClassFilterEditor> createFilterEditor(String id,
+                                                                                           @NotNull @Nls String message,
+                                                                                           boolean included, @NotNull @Nls String optionName) {
     CoverageClassFilterEditor filterEditor = new CoverageClassFilterEditor(myConfiguration.getProject());
     filterEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBInsets.emptyInsets()));
     filterEditor.setupEasyFocusTraversing();
@@ -63,8 +62,7 @@ public final class CoverageFragment<T extends RunConfigurationBase<?>> extends N
                                         p -> CoverageConfigurable.getCoveragePatterns(getConfiguration(p), included).length > 0);
   }
 
-  @NotNull
-  private static JavaCoverageEnabledConfiguration getConfiguration(RunConfigurationBase<?> configuration) {
+  private static @NotNull JavaCoverageEnabledConfiguration getConfiguration(RunConfigurationBase<?> configuration) {
     return (JavaCoverageEnabledConfiguration)CoverageEnabledConfiguration.getOrCreate(configuration);
   }
 

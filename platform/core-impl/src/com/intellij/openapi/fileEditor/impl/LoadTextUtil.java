@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -371,7 +372,16 @@ public final class LoadTextUtil {
     if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
       return new DetectResult(StandardCharsets.UTF_8, CharsetToolkit.GuessedEncoding.VALID_UTF8, null); //UTF detected, ignore all directives
     }
+    if (guessed == CharsetToolkit.GuessedEncoding.INVALID_UTF8
+        && defaultCharset != StandardCharsets.UTF_8
+        && isEncodingSafe(defaultCharset, content)) {
+      return new DetectResult(defaultCharset, guessed, null);
+    }
     return new DetectResult(null, guessed, null);
+  }
+
+  private static boolean isEncodingSafe(@NotNull Charset charset, byte @NotNull [] content) {
+    return Arrays.equals(new String(content, charset).getBytes(charset), content);
   }
 
   private static @NotNull Pair.NonNull<Charset, byte[]> getOverriddenCharsetByBOM(byte @NotNull [] content, @NotNull Charset charset) {
@@ -601,7 +611,7 @@ public final class LoadTextUtil {
     Charset internalCharset = detectResult.hardCodedCharset;
     CharsetToolkit.GuessedEncoding guessed = detectResult.guessed;
     CharSequence toProcess;
-    if (internalCharset == null || guessed == CharsetToolkit.GuessedEncoding.BINARY || guessed == CharsetToolkit.GuessedEncoding.INVALID_UTF8) {
+    if (internalCharset == null || internalCharset.equals(StandardCharsets.UTF_8) && (guessed == CharsetToolkit.GuessedEncoding.BINARY || guessed == CharsetToolkit.GuessedEncoding.INVALID_UTF8)) {
       // the charset was not detected, so the file is likely binary
       toProcess = null;
     }

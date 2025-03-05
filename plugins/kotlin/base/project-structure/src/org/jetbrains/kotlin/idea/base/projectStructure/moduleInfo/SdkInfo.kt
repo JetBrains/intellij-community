@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructur
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateEntriesVirtualFileSystems
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateTopPackageNames
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.CommonPlatforms
@@ -28,12 +29,13 @@ import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 //TODO: (module refactoring) there should be separate SdkSourceInfo but there are no kotlin source in existing sdks for now :)
+@K1ModeProjectStructureApi
 data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo, SdkInfoBase {
-    private val topClassesPackageNames: Set<String>
+    private val topClassesPackageNames: Set<String>?
     private val entriesVirtualFileSystems: Set<NewVirtualFileSystem>?
 
     init {
-        val classes = sdk.rootProvider.getFiles(OrderRootType.CLASSES)
+        val classes = runReadAction { sdk.rootProvider.getFiles(OrderRootType.CLASSES) }
         topClassesPackageNames = classes.calculateTopPackageNames()
         entriesVirtualFileSystems = classes.calculateEntriesVirtualFileSystems()
     }
@@ -86,7 +88,7 @@ fun moduleSdks(module: Module): List<Sdk> =
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide 'calcHashCode()'
 private class SdkScope(
     project: Project,
-    topPackageNames: Set<String>,
+    topPackageNames: Set<String>?,
     entriesVirtualFileSystems: Set<NewVirtualFileSystem>?,
     val sdk: Sdk
 ) : PoweredLibraryScopeBase(

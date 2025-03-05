@@ -4,3 +4,6 @@
 - name: lib/gradle-jps.jar
   modules:
   - name: intellij.gradle.jps
+    libraries:
+      ant:
+      - name: $MAVEN_REPOSITORY$/org/apache/ant/ant/1/ant-1.jar

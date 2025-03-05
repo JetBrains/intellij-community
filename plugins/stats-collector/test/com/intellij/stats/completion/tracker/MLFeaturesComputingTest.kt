@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.ml.*
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.completion.ml.sorting.RankingSupport
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.lang.java.JavaLanguage

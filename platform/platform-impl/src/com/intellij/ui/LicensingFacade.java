@@ -25,13 +25,14 @@ public final class LicensingFacade {
   public Map<String, String> confirmationStamps;
   public Map<String, ProductLicenseData> productLicenses;
   public String metadata;
-  @SuppressWarnings("StaticNonFinalField")
-  public static volatile boolean isUnusedSignalled;
-  /** @deprecated Use {@link #getInstance()} instead */
+  /** @deprecated use {@link #getInstance()} instead */
   @Deprecated(forRemoval = true)
   @SuppressWarnings("StaticNonFinalField")
   public static volatile LicensingFacade INSTANCE;
   public boolean ai_enabled;
+
+  @SuppressWarnings("StaticNonFinalField")
+  public static volatile boolean isUnusedSignalled;
   /** @deprecated temporary field; use {@link #metadata} instead */
   @Deprecated(forRemoval = true)
   public String subType;

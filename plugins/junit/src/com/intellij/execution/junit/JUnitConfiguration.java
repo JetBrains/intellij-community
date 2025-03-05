@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
@@ -63,27 +63,27 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   public static final byte FRAMEWORK_ID = 0x0;
 
-  @NonNls public static final String TEST_CLASS = "class";
-  @NonNls public static final String TEST_PACKAGE = "package";
-  @NonNls public static final String TEST_DIRECTORY = "directory";
-  @NonNls public static final String TEST_CATEGORY = "category";
-  @NonNls public static final String TEST_METHOD = "method";
-  @NonNls public static final String TEST_UNIQUE_ID = "uniqueId";
-  @NonNls public static final String TEST_TAGS = "tags";
-  @NonNls public static final String BY_SOURCE_POSITION = "source location";
-  @NonNls public static final String BY_SOURCE_CHANGES = "changes";
+  public static final @NonNls String TEST_CLASS = "class";
+  public static final @NonNls String TEST_PACKAGE = "package";
+  public static final @NonNls String TEST_DIRECTORY = "directory";
+  public static final @NonNls String TEST_CATEGORY = "category";
+  public static final @NonNls String TEST_METHOD = "method";
+  public static final @NonNls String TEST_UNIQUE_ID = "uniqueId";
+  public static final @NonNls String TEST_TAGS = "tags";
+  public static final @NonNls String BY_SOURCE_POSITION = "source location";
+  public static final @NonNls String BY_SOURCE_CHANGES = "changes";
 
   //fork modes
-  @NonNls public static final String FORK_NONE = "none";
-  @NonNls public static final String FORK_METHOD = "method";
-  @NonNls public static final String FORK_KLASS = "class";
-  @NonNls public static final String FORK_REPEAT = "repeat";
+  public static final @NonNls String FORK_NONE = "none";
+  public static final @NonNls String FORK_METHOD = "method";
+  public static final @NonNls String FORK_KLASS = "class";
+  public static final @NonNls String FORK_REPEAT = "repeat";
   // See #26522
-  @NonNls public static final String JUNIT_START_CLASS = "com.intellij.rt.junit.JUnitStarter";
-  @NonNls private static final String PATTERN_EL_NAME = "pattern";
-  @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
-  @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
-  @NonNls private static final String PATTERNS_EL_NAME = "patterns";
+  public static final @NonNls String JUNIT_START_CLASS = "com.intellij.rt.junit.JUnitStarter";
+  private static final @NonNls String PATTERN_EL_NAME = "pattern";
+  public static final @NonNls String TEST_PATTERN = PATTERN_EL_NAME;
+  private static final @NonNls String TEST_CLASS_ATT_NAME = "testClass";
+  private static final @NonNls String PATTERNS_EL_NAME = "patterns";
   private final Data myData;
   private final InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
 
@@ -109,7 +109,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   };
   final RefactoringListeners.Accessor<PsiClass> myClass = new RefactoringListeners.Accessor<>() {
     @Override
-    public void setName(@NotNull final String qualifiedName) {
+    public void setName(final @NotNull String qualifiedName) {
       final boolean generatedName = isGeneratedName();
       myData.MAIN_CLASS_NAME = qualifiedName;
       if (generatedName) setGeneratedName();
@@ -130,7 +130,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<>() {
     @Override
-    public void setName(@NotNull final String qualifiedName) {
+    public void setName(final @NotNull String qualifiedName) {
       setCategory(qualifiedName);
     }
 
@@ -166,7 +166,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   @Override
-  public TestObject getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public TestObject getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) throws ExecutionException {
     TestObject testObject = TestObject.fromString(myData.TEST_OBJECT, this, env);
     DumbService dumbService = DumbService.getInstance(getProject());
     if (testObject != null && !dumbService.isUsableInCurrentContext(testObject)) {
@@ -176,8 +176,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   @Override
-  @NotNull
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     if (Registry.is("ide.new.run.config.junit", true)) {
       return new JUnitSettingsEditor(this);
     }
@@ -270,8 +269,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   @Override
-  @NotNull
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return myData.getEnvs();
   }
 
@@ -434,14 +432,13 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     return myData.getTestObject(this);
   }
 
-  @NotNull
   @Override
-  public InputRedirectOptions getInputRedirectOptions() {
+  public @NotNull InputRedirectOptions getInputRedirectOptions() {
     return myInputRedirectOptions;
   }
 
   @Override
-  public void readExternal(@NotNull final Element element) throws InvalidDataException {
+  public void readExternal(final @NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -513,7 +510,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   @Override
-  public void writeExternal(@NotNull final Element element) {
+  public void writeExternal(final @NotNull Element element) {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.write(this, element, JavaParametersUtil.getFilter(this));
@@ -637,9 +634,8 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     myData.REPEAT_MODE = repeatMode;
   }
 
-  @NotNull
   @Override
-  public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
+  public @NotNull SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
     JUnitConsoleProperties properties = new JUnitConsoleProperties(this, executor);
     properties.setIdBasedTestTree(getTestObject().isIdBasedTestTree());
     return properties;
@@ -655,15 +651,13 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
   }
 
-  @Nullable
   @Override
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+  public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
     return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
   }
 
-  @Nullable
   @Override
-  public String getDefaultTargetName() {
+  public @Nullable String getDefaultTargetName() {
     return getOptions().getRemoteTarget();
   }
 

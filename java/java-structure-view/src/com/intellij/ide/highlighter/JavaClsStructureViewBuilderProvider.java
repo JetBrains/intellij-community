@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -16,8 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class JavaClsStructureViewBuilderProvider implements StructureViewBuilderProvider {
   @Override
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(@NotNull FileType fileType, @NotNull VirtualFile file, @NotNull Project project) {
+  public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull FileType fileType, @NotNull VirtualFile file, @NotNull Project project) {
     if (fileType == JavaClassFileType.INSTANCE) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
 

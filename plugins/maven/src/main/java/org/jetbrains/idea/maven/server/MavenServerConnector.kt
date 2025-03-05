@@ -2,9 +2,11 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenModel
@@ -59,10 +61,12 @@ interface MavenServerConnector : Disposable {
 
   suspend fun assembleInheritance(model: MavenModel, parentModel: MavenModel): MavenModel
 
-  suspend fun applyProfiles(model: MavenModel,
-                            basedir: Path,
-                            explicitProfiles: MavenExplicitProfiles,
-                            alwaysOnProfiles: Collection<String>): ProfileApplicationResult
+  suspend fun applyProfiles(
+    model: MavenModel,
+    basedir: Path,
+    explicitProfiles: MavenExplicitProfiles,
+    alwaysOnProfiles: Collection<String>,
+  ): ProfileApplicationResult
 
   fun checkConnected(): Boolean
 
@@ -78,5 +82,48 @@ interface MavenServerConnector : Disposable {
     @Topic.AppLevel
     val DOWNLOAD_LISTENER_TOPIC: Topic<MavenServerDownloadListener> =
       Topic(MavenServerDownloadListener::class.java.simpleName, MavenServerDownloadListener::class.java)
+
+    @JvmStatic
+    suspend fun interpolateAndAlignModel(project: Project, model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
+      return retry { MavenServerManager.getInstance().getConnector(project, basedir.toAbsolutePath().toString()).interpolateAndAlignModel(model, basedir, pomDir) }
+    }
+
+    @JvmStatic
+    suspend fun assembleInheritance(project: Project, basedir: Path, model: MavenModel, parentModel: MavenModel): MavenModel {
+      return retry {
+        MavenServerManager.getInstance().getConnector(project, basedir.toAbsolutePath().toString())
+          .assembleInheritance(model, parentModel)
+      }
+    }
+
+    @JvmStatic
+    suspend fun applyProfiles(
+      project: Project,
+      model: MavenModel,
+      basedir: Path,
+      explicitProfiles: MavenExplicitProfiles,
+      alwaysOnProfiles: Collection<String>,
+    ): ProfileApplicationResult {
+      return retry {
+        MavenServerManager.getInstance().getConnector(project, basedir.toAbsolutePath().toString())
+          .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles)
+      }
+    }
+
+    private suspend fun <T> retry(action: suspend () -> T): T {
+      for (i in 1..3) {
+        try {
+          return action()
+
+        }
+        catch (e: Throwable) {
+          ensureActive()
+          if (i == 3) throw e;
+          delay(100L * i)
+        }
+      }
+      throw IllegalStateException()
+    }
+
   }
 }

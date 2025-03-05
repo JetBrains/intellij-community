@@ -28,18 +28,17 @@ import java.util.Objects;
 
 
 public class PyImportedModuleType implements PyType {
-  @NotNull private final PyImportedModule myImportedModule;
+  private final @NotNull PyImportedModule myImportedModule;
 
   public PyImportedModuleType(@NotNull PyImportedModule importedModule) {
     myImportedModule = importedModule;
   }
 
-  @Nullable
   @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
+  public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
 
     final List<PsiElement> importedModuleCandidates = ResolveResultList.getElements(myImportedModule.multiResolve());
     final SmartList<RatedResolveResult> primaryResults = new SmartList<>();
@@ -115,8 +114,7 @@ public class PyImportedModuleType implements PyType {
   public void assertValid(String message) {
   }
 
-  @NotNull
-  public PyImportedModule getImportedModule() {
+  public @NotNull PyImportedModule getImportedModule() {
     return myImportedModule;
   }
 

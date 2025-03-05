@@ -19,7 +19,8 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -41,8 +42,7 @@ public class PyMakeFunctionReturnTypeQuickFix extends PsiUpdateModCommandAction<
     myReturnTypeName = getReturnTypeName(function, context);
   }
 
-  @NotNull
-  private static String getReturnTypeName(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+  private static @NotNull String getReturnTypeName(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     PyType type = function.getInferredReturnType(context);
     if (function.isAsync()) {
       var unwrappedType = PyTypingTypeProvider.unwrapCoroutineReturnType(type);
@@ -54,14 +54,12 @@ public class PyMakeFunctionReturnTypeQuickFix extends PsiUpdateModCommandAction<
   }
 
   @Override
-  @Nullable
-  protected Presentation getPresentation(@NotNull ActionContext context, @NotNull PyFunction function) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyFunction function) {
     return Presentation.of(PyPsiBundle.message("QFIX.make.function.return.type", function.getName(), myReturnTypeName));
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.make.function.return.type");
   }
 

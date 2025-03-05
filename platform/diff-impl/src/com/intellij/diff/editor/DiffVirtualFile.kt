@@ -8,10 +8,12 @@ import com.intellij.openapi.ListSelection
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
-@Deprecated("Use DiffViewerVirtualFile instead", replaceWith = ReplaceWith("DiffViewerVirtualFile"))
+@Deprecated("Use DiffViewerVirtualFile instead. Instances created by the platform may not inherit from this class.", replaceWith = ReplaceWith("DiffViewerVirtualFile"))
+@ApiStatus.ScheduledForRemoval
 abstract class DiffVirtualFile(name: String) : DiffViewerVirtualFile(name) {
 
   @Deprecated("Use createViewer instead", replaceWith = ReplaceWith("createViewer"))
+  @ApiStatus.ScheduledForRemoval
   abstract fun createProcessor(project: Project): DiffRequestProcessor
 
   override fun createViewer(project: Project): DiffEditorViewer = createProcessor(project)
@@ -22,7 +24,6 @@ abstract class DiffViewerVirtualFile(name: String) : DiffVirtualFileBase(name) {
   abstract fun createViewer(project: Project): DiffEditorViewer
 }
 
-@ApiStatus.Internal
 interface DiffVirtualFileWithProducers {
   fun collectDiffProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer>?
 }

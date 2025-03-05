@@ -12,7 +12,7 @@ interface FenceSurroundingsProvider {
   fun getCodeFenceSurroundings(): Surroundings
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<FenceSurroundingsProvider>(
+    val EP_NAME: ExtensionPointName<FenceSurroundingsProvider> = ExtensionPointName<FenceSurroundingsProvider>(
       "org.intellij.plugins.markdown.fenceInjection.fenceSurroundingsProvider"
     )
   }

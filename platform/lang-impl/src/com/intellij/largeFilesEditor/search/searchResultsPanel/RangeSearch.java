@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchResultsPanel;
 
 import com.intellij.CommonBundle;
@@ -36,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -765,8 +766,8 @@ public final class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  interface EdtRangeSearchEventsListener {
-
+  @ApiStatus.Internal
+  public interface EdtRangeSearchEventsListener {
     @RequiresEdt
     void onSearchStopped();
 

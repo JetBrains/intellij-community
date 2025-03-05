@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.ui.libraries;
 
@@ -10,10 +10,10 @@ import java.util.Arrays;
 public class LibraryInfo {
   public static final LibraryInfo[] EMPTY_ARRAY = new LibraryInfo[0];
 
-  private @Nullable final LibraryDownloadInfo myDownloadInfo;
-  private @NonNls final String myName;
-  @Nullable private String myMd5;
-  private @NonNls final String[] myRequiredClasses;
+  private final @Nullable LibraryDownloadInfo myDownloadInfo;
+  private final @NonNls String myName;
+  private @Nullable String myMd5;
+  private final @NonNls String[] myRequiredClasses;
 
   public LibraryInfo(final @NonNls String name,
                      final @Nullable @NonNls String downloadingUrl,
@@ -38,21 +38,19 @@ public class LibraryInfo {
     myDownloadInfo = downloadInfo;
   }
 
-  @NonNls
-  public String getName() {
+  public @NonNls String getName() {
     return myName;
   }
 
-  @NonNls
-  public String[] getRequiredClasses() {
+  public @NonNls String[] getRequiredClasses() {
     return myRequiredClasses;
   }
 
-  @Nullable
-  public LibraryDownloadInfo getDownloadingInfo() {
+  public @Nullable LibraryDownloadInfo getDownloadingInfo() {
     return myDownloadInfo;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -66,6 +64,7 @@ public class LibraryInfo {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myDownloadInfo != null ? myDownloadInfo.hashCode() : 0);
@@ -79,8 +78,7 @@ public class LibraryInfo {
     return getName();
   }
 
-  @Nullable
-  public String getMd5() {
+  public @Nullable String getMd5() {
     return myMd5;
   }
 }

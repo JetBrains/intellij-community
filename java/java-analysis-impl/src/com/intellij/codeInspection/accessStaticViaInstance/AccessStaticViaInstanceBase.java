@@ -13,19 +13,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AccessStaticViaInstanceBase extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
-  @NonNls public static final String ACCESS_STATIC_VIA_INSTANCE = "AccessStaticViaInstance";
+  public static final @NonNls String ACCESS_STATIC_VIA_INSTANCE = "AccessStaticViaInstance";
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return "";
   }
 
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return ACCESS_STATIC_VIA_INSTANCE;
   }
 
@@ -40,8 +37,7 @@ public class AccessStaticViaInstanceBase extends AbstractBaseJavaLocalInspection
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         checkAccessStaticMemberViaInstanceReference(expression, holder);

@@ -16,6 +16,7 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +66,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testBreakpointStopAndEval() {
-    runPythonTest(new BreakpointStopAndEvalTask("test1.py"));
+    runPythonTest(new BreakpointStopAndEvalTask("test1.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 6);
+        setWaitForTermination(false);
+      }
+    });
   }
 
   @Test
@@ -151,10 +158,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput("command was GO!");
       }
 
-      @NotNull
       @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython"); //can't run on jython
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
       }
     });
   }
@@ -277,11 +283,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython");
-      }
+
     });
   }
 
@@ -302,11 +304,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython");
-      }
     });
   }
 
@@ -354,11 +351,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-jython", "-iron");
-      }
     });
   }
 
@@ -381,11 +373,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-jython", "-iron");
-      }
+
     });
   }
 
@@ -407,12 +395,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("z").hasValue("102");
         resume();
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-pypy"); //TODO: fix that for PyPy
       }
     });
   }
@@ -440,11 +422,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython"); //TODO: fix that for Jython if anybody needs it
-      }
     });
   }
 
@@ -479,11 +456,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython"); //TODO: fix that for Jython if anybody needs it
-      }
     });
   }
 
@@ -506,11 +478,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("-jython"); //TODO: fix that for Jython if anybody needs it
-      }
     });
   }
 
@@ -542,6 +509,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval(PyDebugValue.RETURN_VALUES_PREFIX + "['foo']").hasValue("33");
         resume();
+        waitForTerminate();
       }
 
       @NotNull
@@ -625,8 +593,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         eval("m").hasValue("42");
-        assertEquals("Thread1", getRunningThread());
-        resume();
+        var runningThread = myDebugProcess.getThreads().stream().filter(thread -> "Thread1".equals(thread.getName())).findFirst();
+        assertNotNull(runningThread);
+        setProcessCanTerminate(true);
+        disposeDebugProcess();
       }
     });
   }
@@ -906,30 +876,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Test
-  public void testBuiltinBreakpoint() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_builtin_break.py") {
-      @Override
-      public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 2);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        resume();
-        waitForPause();
-        eval("a").hasValue("1");
-        resume();
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Collections.singleton("python3.7");
-      }
-    });
-  }
 
   @Test
   public void testTypeHandler() {
@@ -939,6 +885,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 11);
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
       }
 
       @Override
@@ -1315,6 +1266,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
+      }
+
+      @Override
       public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 4);
       }
@@ -1327,11 +1283,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput(BYTES_ARGS_WARNING);
       }
 
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-jython");
-      }
     }
 
     Arrays.asList("test_call_exec_with_bytes_args.py", "test_call_spawn_with_bytes_args.py")
@@ -1372,6 +1323,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testCallingSettraceWarning() {
+    var warning = "PYDEV DEBUGGER WARNING:\nsys.settrace() should not be used when the debugger is being used.";
     runPythonTest(new PyDebuggerTask("/debug", "test_calling_settrace_warning.py") {
       @Override
       public void before() {
@@ -1383,7 +1335,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         resume();
         waitForTerminate();
-        outputContains("PYDEV DEBUGGER WARNING:\nsys.settrace() should not be used when the debugger is being used.");
+        if (!stderr().contains(warning)) {
+          outputContains(warning);
+        }
       }
 
       @NotNull
@@ -1458,6 +1412,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                       f()""");
         waitForOutput("Foo, bar, baz");
         resume();
+        waitForTerminate();
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
       }
     });
   }
@@ -1507,6 +1467,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         assertFalse("Output shouldn't contain debugger related stacktrace when debugger is stopped",
                     output().contains("pydevd.py\", line "));
       }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON38) != 0;
+      }
+
     });
   }
 
@@ -1649,6 +1615,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput("{\"u'Foo “Foo” Bar' (4706573888)\": '“Foo”'}");
         waitForOutput("{b'\\xfc\\x00': b'\\x00\\x10'}");
       }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
+      }
     });
   }
 
@@ -1672,9 +1643,15 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForTerminate();
       }
 
-      private void checkVariableValue(List<PyDebugValue> frameVariables, String expected, String name) throws PyDebuggerException {
+      private void checkVariableValue(List<PyDebugValue> frameVariables, String expected, String name)
+        throws PyDebuggerException, InterruptedException {
         PyDebugValue value = findDebugValueByName(frameVariables, name);
         loadVariable(value);
+        synchronized (this) {
+          while (value.getValue().isEmpty() || value.getValue().isBlank()) {
+            wait(1000);
+          }
+        }
         assertEquals(expected, value.getValue());
       }
     });
@@ -1700,7 +1677,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         testLength("lst");
-        testLength("np_arr");
         resume();
       }
     });

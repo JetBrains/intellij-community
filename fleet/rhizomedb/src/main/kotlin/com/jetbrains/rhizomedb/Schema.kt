@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rhizomedb
 
+import kotlin.jvm.JvmInline
+
 @JvmInline
 value class Schema(val value: Int) {
   constructor(cardinality: Cardinality,
@@ -58,4 +60,12 @@ internal fun Schema.validate() {
       error("invalid schema: CascadeDeleteBy makes no sense for non-ref")
     }
   }
+}
+
+/**
+ * Represents cardinality of a particular [Attribute].
+ * Every [Attribute] is either multi-valued or no-more-than-single-valued.
+ * */
+enum class Cardinality {
+  One, Many
 }

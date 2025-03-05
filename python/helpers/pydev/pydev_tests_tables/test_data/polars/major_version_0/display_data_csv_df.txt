@@ -1,0 +1,4 @@
+int_col~float_col~bool_col~str_col~date_col~datetime_col~categorical_col
+1~1.0~True~one~2022-01-01~2022-01-01 12:00:00~A
+2~2.0~False~two~2022-01-02~2022-01-02 12:00:00~B
+3~3.0~True~three~2022-01-03~2022-01-03 12:00:00~A

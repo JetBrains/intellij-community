@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.config;
 
 import com.intellij.internal.statistic.config.bean.EventLogBucketRange;
@@ -23,8 +23,7 @@ public class EventLogExternalSettings {
   public String productCode;
   public List<EventLogConfigVersions> versions;
 
-  @NotNull
-  public static EventLogExternalSendSettings parseSendSettings(@NotNull Reader reader, @NotNull String version)
+  public static @NotNull EventLogExternalSendSettings parseSendSettings(@NotNull Reader reader, @NotNull String version)
     throws EventLogConfigParserException {
     try {
       final EventLogExternalSettings parsed = SerializationHelper.INSTANCE.deserialize(reader, EventLogExternalSettings.class);
@@ -39,8 +38,7 @@ public class EventLogExternalSettings {
   }
 
 
-  @NotNull
-  private EventLogExternalSendSettings toSendSettings(@NotNull String productVersion) {
+  private @NotNull EventLogExternalSendSettings toSendSettings(@NotNull String productVersion) {
     EventLogConfigVersions version = findMajorVersion(productVersion);
     if (version == null) {
       return EMPTY;
@@ -62,8 +60,7 @@ public class EventLogExternalSettings {
     return new EventLogExternalSendSettings(version.getEndpoints(), version.getOptions(), configurations);
   }
 
-  @Nullable
-  private EventLogConfigVersions findMajorVersion(@NotNull String productVersion) {
+  private @Nullable EventLogConfigVersions findMajorVersion(@NotNull String productVersion) {
     if (versions == null || versions.isEmpty()) {
       return null;
     }

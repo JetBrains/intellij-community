@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -65,6 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -256,14 +257,14 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @RequiresEdt
   private void showPopup(boolean mouseClick) {
-    if (mouseClick && myLightBulbPanel.isShowing()) {
-      showPopup(findPositionForBulbButton(), IntentionSource.LIGHT_BULB);
-      return;
-    }
     CodeFloatingToolbar.temporarilyDisable(false);
     CodeFloatingToolbar toolbar = getFloatingToolbar();
     if (toolbar != null && toolbar.canBeShownAtCurrentSelection()) {
       showPopupFromToolbar(toolbar);
+      return;
+    }
+    if (mouseClick && myLightBulbPanel.isShowing()) {
+      showPopup(findPositionForBulbButton(), IntentionSource.LIGHT_BULB);
       return;
     }
     showPopup(null, IntentionSource.CONTEXT_ACTIONS);
@@ -290,7 +291,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   private @Nullable CodeFloatingToolbar getFloatingToolbar() {
-    if (!myEditor.getSelectionModel().hasSelection()) return null;
     return CodeFloatingToolbar.getToolbar(myEditor);
   }
 
@@ -577,7 +577,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       add(myIconLabel, BorderLayout.CENTER);
       setBorder(LightBulbUtil.createInactiveBorder(editor));
       CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
-      if (floatingToolbar != null && floatingToolbar.canBeShownAtCurrentSelection()) {
+      if (floatingToolbar != null && editor.getSelectionModel().hasSelection() && floatingToolbar.canBeShownAtCurrentSelection()) {
         setVisible(false);
       }
     }
@@ -663,7 +663,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  static final class IntentionPopup implements AbstractIntentionPopup, Disposable.Parent {
+  @ApiStatus.Internal
+  public static final class IntentionPopup implements AbstractIntentionPopup, Disposable.Parent {
     private final @NotNull Project myProject;
     private final @NotNull Editor myEditor;
     private final @NotNull PsiFile myFile;
@@ -911,7 +912,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
             PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
             PsiElement container = suppressAction.getContainer(at);
             if (container != null) {
-              return () -> injectionHighlighter.highlight(container, Collections.singletonList(container));
+              return () -> {
+                highlighter.dropHighlight();
+                injectionHighlighter.highlight(container, Collections.singletonList(container));
+              };
             }
           }
           else {

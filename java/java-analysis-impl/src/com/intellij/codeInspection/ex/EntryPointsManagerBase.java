@@ -3,8 +3,8 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.MetaAnnotationUtil;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionContainer;
@@ -47,15 +47,14 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   @ApiStatus.Internal
   public static final ExtensionPointName<EntryPoint> DEAD_CODE_EP_NAME = new ExtensionPointName<>("com.intellij.deadCode");
 
-  @NonNls private static final String[] STANDARD_ANNOS = {
+  private static final @NonNls String[] STANDARD_ANNOS = {
     "javax.ws.rs.*",
   };
 
   // null means uninitialized
   private volatile List<String> ADDITIONAL_ANNOS;
 
-  @NotNull
-  public Collection<String> getAdditionalAnnotations() {
+  public @NotNull Collection<String> getAdditionalAnnotations() {
     List<String> annos = ADDITIONAL_ANNOS;
     if (annos == null) {
       annos = new ArrayList<>();
@@ -76,8 +75,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   private final Set<ClassPattern> myPatterns = new LinkedHashSet<>(); // To keep the order between readExternal to writeExternal
   private final Set<RefElement> myTemporaryEntryPoints = Collections.synchronizedSet(new HashSet<>());
   private static final String VERSION = "2.0";
-  @NonNls private static final String VERSION_ATTR = "version";
-  @NonNls private static final String ENTRY_POINT_ATTR = "entry_point";
+  private static final @NonNls String VERSION_ATTR = "version";
+  private static final @NonNls String ENTRY_POINT_ATTR = "entry_point";
   private boolean myAddNonJavaEntries = true;
   private boolean myResolved;
   protected final Project myProject;
@@ -89,7 +88,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       if (ADDITIONAL_ANNOS != null) {
         ADDITIONAL_ANNOS = null;
       }
-      DaemonCodeAnalyzer.getInstance(project).restart();
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("EntryPointsManagerBase.DEAD_CODE_EP_NAME changed");
     }, this);
   }
 
@@ -213,8 +212,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myTemporaryEntryPoints.clear();
   }
 
-  @NotNull
-  private List<RefElementImpl> getPatternEntryPoints(@NotNull RefManager manager) {
+  private @NotNull List<RefElementImpl> getPatternEntryPoints(@NotNull RefManager manager) {
     List<RefElementImpl> entries = new ArrayList<>();
     for (ClassPattern pattern : myPatterns) {
       RefEntity refClass = ReadAction.compute(() -> manager.getReference(RefJavaManager.CLASS, pattern.pattern));
@@ -295,8 +293,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
   }
 
-  @NotNull
-  private static String getMethodName(@NotNull RefElement newEntryPoint) {
+  private static @NotNull String getMethodName(@NotNull RefElement newEntryPoint) {
     String methodSignature = newEntryPoint.getName();
     int indexOf = methodSignature.indexOf('(');
     return indexOf > 0 ? methodSignature.substring(0, indexOf) : methodSignature;
@@ -535,18 +532,15 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return false;
   }
 
-  @NotNull
-  public List<String> getCustomAdditionalAnnotations() {
+  public @NotNull List<String> getCustomAdditionalAnnotations() {
     return List.copyOf(ADDITIONAL_ANNOTATIONS);
   }
 
-  @NotNull
-  public List<String> getWriteAnnotations() {
+  public @NotNull List<String> getWriteAnnotations() {
     return List.copyOf(myWriteAnnotations);
   }
 
-  @NotNull
-  public Set<ClassPattern> getPatterns() {
+  public @NotNull Set<ClassPattern> getPatterns() {
     return myPatterns;
   }
 
@@ -572,8 +566,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
     public ClassPattern() {}
 
-    @Nullable
-    public Pattern getRegexp() {
+    public @Nullable Pattern getRegexp() {
       if (regexp == null && pattern.contains("*")) {
         regexp = createRegexp(pattern);
       }
@@ -648,8 +641,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return QuickFixBundle.message("fix.unused.symbol.injection.family");
     }
 

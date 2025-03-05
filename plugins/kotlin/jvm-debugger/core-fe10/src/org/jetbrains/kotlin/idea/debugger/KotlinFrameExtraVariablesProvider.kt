@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger
 
@@ -25,11 +25,10 @@ import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
-class KotlinFrameExtraVariablesProvider : FrameExtraVariablesProvider {
+private class KotlinFrameExtraVariablesProvider : FrameExtraVariablesProvider {
     override fun isAvailable(sourcePosition: SourcePosition, evalContext: EvaluationContext): Boolean {
         if (runReadAction { sourcePosition.line } < 0) return false
         return sourcePosition.file.fileType == KotlinFileType.INSTANCE && DebuggerSettings.getInstance().AUTO_VARIABLES_MODE

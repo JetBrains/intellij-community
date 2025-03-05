@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -18,6 +18,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.customization.CustomActionsListener;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -56,15 +57,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private boolean myWatchesInVariables = Registry.is("debugger.watches.in.variables");
   private final Map<String, XDebugView> myViews = new LinkedHashMap<>();
 
-  @Nullable
-  protected XDebugSessionImpl mySession;
+  protected @Nullable XDebugSessionImpl mySession;
   private XDebugSessionData mySessionData;
 
-  @NotNull
-  public static XDebugSessionTab create(@NotNull XDebugSessionImpl session,
-                                        @Nullable Icon icon,
-                                        @Nullable ExecutionEnvironment environment,
-                                        @Nullable RunContentDescriptor contentToReuse) {
+  public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionImpl session,
+                                                 @Nullable Icon icon,
+                                                 @Nullable ExecutionEnvironment environment,
+                                                 @Nullable RunContentDescriptor contentToReuse) {
     if (contentToReuse != null && SystemProperties.getBooleanProperty("xdebugger.reuse.session.tab", false)) {
       JComponent component = contentToReuse.getComponent();
       if (component != null) {
@@ -94,8 +93,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return tab;
   }
 
-  @NotNull
-  public RunnerLayoutUi getUi() {
+  public @NotNull RunnerLayoutUi getUi() {
     return myUi;
   }
 
@@ -142,9 +140,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return getView(getFramesContentId(), XFramesView.class);
   }
 
+  @ApiStatus.Internal
+  public @Nullable XVariablesViewBase getVariablesView() {
+    return getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase.class);
+  }
+
   protected void initFocusingVariablesFromFramesView() {
     XFramesView framesView = getView(DebuggerContentInfo.FRAME_CONTENT, XFramesView.class);
-    XVariablesViewBase variablesView = getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase.class);
+    XVariablesViewBase variablesView = getVariablesView();
     if (framesView == null || variablesView == null) return;
 
     framesView.onFrameSelectionKeyPressed(frame -> {
@@ -249,8 +252,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return watchesContent;
   }
 
-  @NotNull
-  private Content createFramesContent() {
+  private @NotNull Content createFramesContent() {
     XFramesView framesView = new XFramesView(mySession);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
@@ -259,8 +261,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return framesContent;
   }
 
-  @NotNull
-  private Content createThreadsContent() {
+  private @NotNull Content createThreadsContent() {
     XThreadsView stacksView = new XThreadsView(myProject, mySession);
     registerView(DebuggerContentInfo.THREADS_CONTENT, stacksView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, stacksView.getPanel(),
@@ -316,7 +317,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }
-    RunContentBuilder.addAvoidingDuplicates(leftToolbar, leftGroup.getChildren(null));
+    RunContentBuilder.addAvoidingDuplicates(leftToolbar, ((CustomisedActionGroup)leftGroup).getDefaultChildrenOrStubs());
 
     for (AnAction action : session.getExtraStopActions()) {
       leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
@@ -339,7 +340,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     ActionGroup topGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP);
     DefaultActionGroup topLeftToolbar = new DefaultActionGroupWithDelegate(topGroup);
-    RunContentBuilder.addAvoidingDuplicates(topLeftToolbar, topGroup.getChildren(null));
+    RunContentBuilder.addAvoidingDuplicates(topLeftToolbar, ((CustomisedActionGroup)topGroup).getDefaultChildrenOrStubs());
 
     registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
@@ -363,8 +364,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     mySession = null;
   }
 
-  @Nullable
-  public RunContentDescriptor getRunContentDescriptor() {
+  public @Nullable RunContentDescriptor getRunContentDescriptor() {
     return myRunContentDescriptor;
   }
 
@@ -420,7 +420,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  public void toFront(boolean focus, @Nullable final Runnable onShowCallback) {
+  public void toFront(boolean focus, final @Nullable Runnable onShowCallback) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -455,13 +455,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  @NotNull
-  protected String getWatchesContentId() {
+  protected @NotNull String getWatchesContentId() {
     return myWatchesInVariables ? DebuggerContentInfo.VARIABLES_CONTENT : DebuggerContentInfo.WATCHES_CONTENT;
   }
 
-  @NotNull
-  protected String getFramesContentId() {
+  protected @NotNull String getFramesContentId() {
     return DebuggerContentInfo.FRAME_CONTENT;
   }
 

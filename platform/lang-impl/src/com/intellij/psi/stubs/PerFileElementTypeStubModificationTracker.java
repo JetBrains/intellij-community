@@ -3,7 +3,6 @@ package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.notebook.editor.BackFileViewProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -18,7 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.StubFileElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,6 +25,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -33,14 +33,15 @@ import java.nio.file.NoSuchFileException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.FileUpdateProcessor {
   static final Logger LOG = Logger.getInstance(PerFileElementTypeStubModificationTracker.class);
   public static final int PRECISE_CHECK_THRESHOLD =
     SystemProperties.getIntProperty("stub.index.per.file.element.type.modification.tracker.precise.check.threshold", 20);
 
-  private final ConcurrentMap<String, List<StubFileElementType<?>>> myFileElementTypesCache = new ConcurrentHashMap<>();
-  private final ConcurrentMap<StubFileElementType<?>, Long> myModCounts = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, List<IFileElementType>> myFileElementTypesCache = new ConcurrentHashMap<>();
+  private final ConcurrentMap<IFileElementType, Long> myModCounts = new ConcurrentHashMap<>();
   private final SynchronizedClearableLazy<@Nullable StubUpdatingIndexStorage> myStubUpdatingIndexStorage =
     new SynchronizedClearableLazy<>(() -> {
       if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
@@ -67,6 +68,8 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
 
   private final SimpleMessageBusConnection myProjectCloseListener;
 
+  private final AtomicReference<Throwable> disposeTrace = new AtomicReference<>();
+
   PerFileElementTypeStubModificationTracker() {
     myProjectCloseListener = ApplicationManager.getApplication().getMessageBus().simpleConnect();
     myProjectCloseListener.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
@@ -79,20 +82,23 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     });
   }
 
-  private record FileInfo(@NotNull VirtualFile file, @NotNull Project project, @NotNull StubFileElementType<?> type) {
-  }
+  private record FileInfo(
+    @NotNull VirtualFile file,
+    @NotNull Project project,
+    @NotNull IFileElementType type
+  ) {}
 
   private final Queue<VirtualFile> myPendingUpdates = new ArrayDeque<>();
   private final Queue<FileInfo> myProbablyExpensiveUpdates = new ArrayDeque<>();
-  private final Set<StubFileElementType<?>> myModificationsInCurrentBatch = new HashSet<>();
+  private final Set<IFileElementType> myModificationsInCurrentBatch = new HashSet<>();
 
   private void registerModificationForAllElementTypes() {
-    for (StubFileElementType<?> fileElementType : myModCounts.keySet()) {
+    for (IFileElementType fileElementType : myModCounts.keySet()) {
       myModCounts.merge(fileElementType, 1L, (count, value) -> count + value);
     }
   }
 
-  private void registerModificationFor(@NotNull StubFileElementType<?> fileElementType) {
+  private void registerModificationFor(@NotNull IFileElementType fileElementType) {
     myModificationsInCurrentBatch.add(fileElementType);
     myModCounts.compute(fileElementType, (__, value) -> {
       if (value == null) return 1L;
@@ -100,13 +106,13 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     });
   }
 
-  private boolean wereModificationsInCurrentBatch(@NotNull StubFileElementType<?> fileElementType) {
+  private boolean wereModificationsInCurrentBatch(@NotNull IFileElementType fileElementType) {
     return myModificationsInCurrentBatch.contains(fileElementType);
   }
 
   // TODO optimization: if nobody asked for a modification tracker of fileElementType, we don't have to count stub changes for it then.
   //    Hence precise check for such fileElementTypes can be omitted.
-  public Long getModificationStamp(@NotNull StubFileElementType<?> fileElementType) {
+  public Long getModificationStamp(@NotNull IFileElementType fileElementType) {
     return myModCounts.getOrDefault(fileElementType, 0L);
   }
 
@@ -119,6 +125,9 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   public synchronized void endUpdatesBatch() {
     myModificationsInCurrentBatch.clear();
     ReadAction.run(() -> {
+      if (disposeTrace.get() != null) {
+        throw new IllegalStateException("Cannot end updates batch because the tracker is disposed! Disposal trace is in the cause", disposeTrace.get());
+      }
       fastCheck();
       if (myProbablyExpensiveUpdates.size() > PRECISE_CHECK_THRESHOLD) {
         coarseCheck();
@@ -143,11 +152,6 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
     while (!myPendingUpdates.isEmpty()) {
       VirtualFile file = myPendingUpdates.remove();
-      //noinspection deprecation
-      if (file.getUserData(BackFileViewProvider.FRONT_FILE_KEY) != null) {
-        //noinspection deprecation
-        file = file.getUserData(BackFileViewProvider.FRONT_FILE_KEY);
-      }
 
       if (file.isDirectory()) continue;
       if (!file.isValid()) {
@@ -253,7 +257,14 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     return FileContentImpl.createByText(file, content.getText(), project);
   }
 
+  void undispose() {
+    // we have a real problem when plugins are installed. At the moment suppress it, because there seems to be
+    // one more problem (possible race between dispose() and endUpdatesBatch()) which is otherwise masked by this one.
+    disposeTrace.set(null);
+  }
+
   public void dispose() {
+    disposeTrace.set(new Throwable());
     myProjectCloseListener.disconnect();
     myFileElementTypesCache.clear();
     myModCounts.clear();
@@ -263,19 +274,19 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     myStubUpdatingIndexStorage.drop();
   }
 
-  private static @Nullable StubFileElementType<?> determineCurrentFileElementType(IndexedFile indexedFile) {
+  private static @Nullable IFileElementType determineCurrentFileElementType(IndexedFile indexedFile) {
     if (shouldSkipFile(indexedFile.getFile())) return null;
     var stubBuilderType = StubTreeBuilder.getStubBuilderType(indexedFile, true);
     if (stubBuilderType == null) return null;
-    return stubBuilderType.getStubFileElementType();
+    return stubBuilderType.getFileElementType();
   }
 
-  private @NotNull List<StubFileElementType<?>> determinePreviousFileElementType(int fileId, @NotNull StubUpdatingIndexStorage index) {
+  private @NotNull List<IFileElementType> determinePreviousFileElementType(int fileId, @NotNull StubUpdatingIndexStorage index) {
     String storedVersion = index.getStoredSubIndexerVersion(fileId);
     if (storedVersion == null) return Collections.emptyList();
     return myFileElementTypesCache.compute(storedVersion, (__, value) -> {
       if (value != null) return value;
-      List<StubFileElementType<?>> types = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
+      List<IFileElementType> types = StubBuilderType.getStubFileElementTypeFromVersion(storedVersion);
       if (types.size() > 1) {
         reportStubFileElementTypeVersionConflict(types, storedVersion);
       }
@@ -283,7 +294,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     });
   }
 
-  private static void reportStubFileElementTypeVersionConflict(List<StubFileElementType<?>> types, String storedVersion) {
+  private static void reportStubFileElementTypeVersionConflict(List<IFileElementType> types, String storedVersion) {
     var data = describeStubFileElementTypes(types);
     var responsiblePluginIds = ContainerUtil.mapNotNull(data, p -> p.second);
     var responsiblePluginId = responsiblePluginIds.isEmpty()
@@ -308,14 +319,16 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
   }
 
-  private static @NotNull List<Pair<String, @Nullable PluginId>> describeStubFileElementTypes(List<StubFileElementType<?>> types) {
+  private static @Unmodifiable @NotNull List<Pair<String, @Nullable PluginId>> describeStubFileElementTypes(List<IFileElementType> types) {
+    StubElementRegistryService stubElementRegistryService = StubElementRegistryService.getInstance();
     return ContainerUtil.map(types, (elemType) -> {
       var plugin = PluginManager.getPluginByClass(elemType.getClass());
       var pluginId = plugin == null ? null : plugin.getPluginId();
+      ObjectStubSerializer<?, @NotNull Stub> serializer = Objects.requireNonNull(stubElementRegistryService.getStubSerializer(elemType));
       String desc = elemType.getClass().getName() + ": " +
                     "plugin=" + pluginId +
                     ", language=" + elemType.getLanguage() +
-                    ", externalId=" + elemType.getExternalId() +
+                    ", externalId=" + serializer.getExternalId() +
                     ", debugName=" + elemType.getDebugName();
       return Pair.pair(desc, pluginId);
     });

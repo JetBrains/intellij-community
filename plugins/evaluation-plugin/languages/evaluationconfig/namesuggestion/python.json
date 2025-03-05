@@ -1,7 +1,9 @@
 {
   "language": "Python",
-  "projectPath": "../../full-line/fl-pipeline",
-  "outputDir": "ml-eval-name-suggestion-python-output",
+  "projectPath": "../ml-eval/Django-Poll-App",
+  "repository": "https://github.com/devmahmud/Django-Poll-App",
+  "revision": "5a5062bd89090487e8e00321562f63bacc4d8833",
+  "outputDir": "bin/ml-eval-name-suggestion-python-output",
   "strategy": {
     "placeholderName": "DUMMY",
     "suggestionsProvider": "LLM-Rename",
@@ -19,7 +21,8 @@
     "sessionsLimit": 10,
     "filesLimit": 5,
     "order": "LINEAR",
-    "trainTestSplit": 70
+    "trainTestSplit": 70,
+    "registry": ""
   },
   "reports": {
     "evaluationTitle": "Default",

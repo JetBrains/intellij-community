@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.Modifier
+import java.util.Locale
 
 interface KaptSourceSetModel : Serializable {
     val sourceSetName: String
@@ -91,7 +92,7 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
                 }
 
                 val sourceSetName = compileTask.getSourceSetName()
-                val isTest = sourceSetName.toLowerCase().endsWith("test")
+                val isTest = sourceSetName.lowercase(Locale.getDefault()).endsWith("test")
 
                 val kaptGeneratedSourcesDir = getKaptDirectory("getKaptGeneratedSourcesDir", project, sourceSetName)
                 val kaptGeneratedClassesDir = getKaptDirectory("getKaptGeneratedClassesDir", project, sourceSetName)

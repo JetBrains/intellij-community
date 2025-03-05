@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.DelayQueue;
@@ -16,7 +17,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * It starts the background thread which polls the queue for tasks ready to run and sends them to the appropriate executor.
  * The {@link #shutdown(SchedulingWrapper.MyScheduledFutureTask)} must be called before disposal.
  */
-final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask<?>> {
+@ApiStatus.Internal
+public final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask<?>> {
   private static final Logger LOG = Logger.getInstance(AppDelayQueue.class);
   private final TransferThread transferThread = new TransferThread();
   private final AtomicReference<Throwable> shutdownTrace = new AtomicReference<>();

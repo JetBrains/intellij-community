@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -16,22 +16,22 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.Result
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.sdk.LOGGER
-import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.installSdkIfNeeded
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyError
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 
 
 @Service(Service.Level.APP)
-class PythonAddSdkService(val coroutineScope: CoroutineScope)
+internal class PythonAddSdkService(val coroutineScope: CoroutineScope)
 
 abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
 
@@ -41,7 +41,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
   internal val propertyGraph
     get() = model.propertyGraph
 
-  abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor)
+  abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink)
   open fun onShown() {}
 
   /**
@@ -49,7 +49,7 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
    *
    * Error is shown to user. Do not catch all exceptions, only return exceptions valuable to user
    */
-  abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk>
+  abstract suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk, PyError>
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
@@ -77,7 +77,7 @@ enum class PythonInterpreterCreationTargets(val nameKey: String, val icon: Icon)
   SSH("", AllIcons.Nodes.HomeFolder),
 }
 
-fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
+internal fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
   return when (this) {
     PythonInterpreterCreationTargets.LOCAL_MACHINE -> InterpreterTarget.LOCAL
     else -> throw NotImplementedError("PythonInterpreterCreationTargets added, but not accounted for in statistics")
@@ -121,6 +121,6 @@ internal suspend fun setupSdkIfDetected(interpreter: PythonSelectableInterpreter
                                              false,
                                              null, // todo create additional data for target
                                              null) ?: return null
-  addSdk(newSdk)
+  newSdk.persist()
   return newSdk
 }

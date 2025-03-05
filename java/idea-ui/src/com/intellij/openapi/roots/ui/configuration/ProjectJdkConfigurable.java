@@ -61,14 +61,12 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myJdksModel.addListener(myListener);
   }
 
-  @Nullable
-  public Sdk getSelectedProjectJdk() {
+  public @Nullable Sdk getSelectedProjectJdk() {
     return myCbProjectJdk != null ? myJdksModel.findSdk(myCbProjectJdk.getSelectedJdk()) : null;
   }
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     if (myJdkPanel == null) {
       final var ui = new ProjectJdkConfigurableUi();
       myJdkPanel = ui.panel(myProject, myJdksModel);

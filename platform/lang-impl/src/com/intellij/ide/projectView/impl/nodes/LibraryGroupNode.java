@@ -46,7 +46,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
           continue;
         }
         final String libraryName = library.getName();
-        if (libraryName == null || libraryName.length() == 0) {
+        if (libraryName == null || libraryName.isEmpty()) {
           addLibraryChildren(libraryOrderEntry, children, getProject(), this);
         }
         else {

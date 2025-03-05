@@ -9,6 +9,7 @@ import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Set;
@@ -34,7 +35,7 @@ public final class RemoteServerListConfigurableProvider extends ConfigurableProv
     return new RemoteServerListConfigurable(RemoteServersManager.getInstance(), getServerTypesIncludedInList(), null);
   }
 
-  private static @NotNull List<ServerType<?>> getServerTypesIncludedInList() {
+  private static @Unmodifiable @NotNull List<ServerType<?>> getServerTypesIncludedInList() {
     Set<String> includedTypes = IncludeServerType.EP_NAME.getExtensionList().stream().map(type -> type.myServerType).collect(Collectors.toSet());
     return ContainerUtil.filter(ServerType.EP_NAME.getExtensionList(), type -> includedTypes.contains(type.getClass().getName()));
   }

@@ -25,9 +25,9 @@ import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import java.util.concurrent.Callable
 
 @Deprecated("If called on EDT, callback is called on EDT. Use overload, passing `failOnEmptySuggestion = false` instead")
@@ -116,10 +116,10 @@ fun getSmartSelectSuggestions(
     var element: PsiElement? = file.findElementAt(offset) ?: return emptyList()
 
     if (element is PsiWhiteSpace
-        || isOriginalOffset && element?.node?.elementType == KtTokens.RPAR
+        || isOriginalOffset && element is LeafPsiElement && element.elementType == KtTokens.RPAR
         || element is PsiComment
-        || element?.getStrictParentOfType<KDoc>() != null
         || element is LeafPsiElement && (element.elementType == KtTokens.DOT || element.elementType == KtTokens.COMMA)
+        || element?.getParentOfType<KDoc>(strict = true, KtDeclaration::class.java) != null
     ) return getSmartSelectSuggestions(file, offset - 1, elementKind, isOriginalOffset = false)
 
     val elements = ArrayList<KtElement>()

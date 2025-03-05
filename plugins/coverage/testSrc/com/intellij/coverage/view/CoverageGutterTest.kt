@@ -5,7 +5,7 @@ import com.intellij.coverage.CoverageEditorAnnotatorImpl
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -204,7 +204,7 @@ private fun findEditor(psiClass: PsiClass): EditorImpl {
 
 internal suspend fun openClass(project: Project, className: String) {
   val psiClass = getPsiClass(project, className)
-  writeAction { psiClass.navigate(true) }
+  edtWriteAction { psiClass.navigate(true) }
 }
 
 private suspend fun getPsiClass(project: Project, className: String) = readAction {

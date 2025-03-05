@@ -19,8 +19,7 @@ import java.util.Map;
 
 public final class BoxingBoxedValueInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NonNls
-  static final Map<String, String> boxedPrimitiveMap = Map.of(
+  static final @NonNls Map<String, String> boxedPrimitiveMap = Map.of(
     CommonClassNames.JAVA_LANG_INTEGER, "int",
     CommonClassNames.JAVA_LANG_SHORT, "short",
     CommonClassNames.JAVA_LANG_BOOLEAN, "boolean",
@@ -36,9 +35,8 @@ public final class BoxingBoxedValueInspection extends BaseInspection implements 
     return true;
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "boxing.boxed.value.problem.descriptor");
   }
@@ -51,8 +49,7 @@ public final class BoxingBoxedValueInspection extends BaseInspection implements 
   private static class BoxingBoxedValueFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "boxing.boxed.value.quickfix");
     }
@@ -135,7 +132,7 @@ public final class BoxingBoxedValueInspection extends BaseInspection implements 
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      @NonNls final String referenceName = methodExpression.getReferenceName();
+      final @NonNls String referenceName = methodExpression.getReferenceName();
       if (!"valueOf".equals(referenceName)) {
         return;
       }

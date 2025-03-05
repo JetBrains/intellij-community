@@ -45,6 +45,11 @@ object VcsLogNavigationUtil {
 
   @JvmStatic
   fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> {
+    return jumpToRevisionAsync(project, root, hash, filePath, true)
+  }
+
+  @JvmStatic
+  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath?, requestFocus: Boolean): CompletableFuture<Boolean> {
     val resultFuture = CompletableFuture<Boolean>()
 
     val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
@@ -52,7 +57,7 @@ object VcsLogNavigationUtil {
       runBlockingCancellable {
         resultFuture.computeResult {
           withContext(Dispatchers.EDT) {
-            jumpToRevision(project, root, hash, filePath)
+            jumpToRevision(project, root, hash, filePath, requestFocus)
           }
         }
       }
@@ -61,8 +66,8 @@ object VcsLogNavigationUtil {
     return resultFuture
   }
 
-  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): Boolean {
-    val logUi = showCommitInLogTab(project, hash, root, false) { logUi ->
+  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath?, requestFocus: Boolean): Boolean {
+    val logUi = showCommitInLogTab(project, hash, root, requestFocus && filePath == null) { logUi ->
       if (filePath == null) return@showCommitInLogTab true
       // Structure filter might prevent us from navigating to FilePath
       val hasFilteredChanges = logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
@@ -71,7 +76,7 @@ object VcsLogNavigationUtil {
       return@showCommitInLogTab !hasFilteredChanges
     } ?: return false
 
-    if (filePath != null) logUi.selectFilePath(filePath, true)
+    if (filePath != null) logUi.selectFilePath(filePath, requestFocus)
     return true
   }
 
@@ -86,9 +91,7 @@ object VcsLogNavigationUtil {
                                          root: VirtualFile,
                                          requestFocus: Boolean,
                                          predicate: (MainVcsLogUi) -> Boolean): MainVcsLogUi? {
-    VcsProjectLog.waitWhenLogIsReady(project)
-
-    val manager = VcsProjectLog.getInstance(project).logManager ?: return null
+    val manager = VcsProjectLog.awaitLogIsReady(project) ?: return null
     val isLogUpToDate = manager.isLogUpToDate
     if (!manager.containsCommit(hash, root)) {
       if (isLogUpToDate) return null
@@ -211,13 +214,13 @@ object VcsLogNavigationUtil {
   }
 
   /**
-   * Asynchronously selects the commit node at the given [row].
+   * Asynchronously selects the commit node at the given [row] in commit graph.
    * @param row      target row
    * @param silently skip showing notification when the target is not found
    * @param focus    focus the table
    */
   @JvmStatic
-  fun VcsLogUiEx.jumpToRow(row: Int, silently: Boolean, focus: Boolean) {
+  fun VcsLogUiEx.jumpToGraphRow(row: Int, silently: Boolean, focus: Boolean) {
     jumpTo(row, { visiblePack, r ->
       if (visiblePack.visibleGraph.visibleCommitCount <= r) return@jumpTo -1
       r

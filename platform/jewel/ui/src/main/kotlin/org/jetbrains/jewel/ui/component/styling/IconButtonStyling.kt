@@ -21,6 +21,26 @@ import org.jetbrains.jewel.ui.component.ToggleableIconButtonState
 @Stable
 @GenerateDataFunctions
 public class IconButtonStyle(public val colors: IconButtonColors, public val metrics: IconButtonMetrics) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IconButtonStyle
+
+        if (colors != other.colors) return false
+        if (metrics != other.metrics) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = colors.hashCode()
+        result = 31 * result + metrics.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "IconButtonStyle(colors=$colors, metrics=$metrics)"
+
     public companion object
 }
 
@@ -141,6 +161,70 @@ public class IconButtonColors(
             }
         )
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IconButtonColors
+
+        if (foregroundSelectedActivated != other.foregroundSelectedActivated) return false
+        if (background != other.background) return false
+        if (backgroundDisabled != other.backgroundDisabled) return false
+        if (backgroundSelected != other.backgroundSelected) return false
+        if (backgroundSelectedActivated != other.backgroundSelectedActivated) return false
+        if (backgroundFocused != other.backgroundFocused) return false
+        if (backgroundPressed != other.backgroundPressed) return false
+        if (backgroundHovered != other.backgroundHovered) return false
+        if (border != other.border) return false
+        if (borderDisabled != other.borderDisabled) return false
+        if (borderSelected != other.borderSelected) return false
+        if (borderSelectedActivated != other.borderSelectedActivated) return false
+        if (borderFocused != other.borderFocused) return false
+        if (borderPressed != other.borderPressed) return false
+        if (borderHovered != other.borderHovered) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = foregroundSelectedActivated.hashCode()
+        result = 31 * result + background.hashCode()
+        result = 31 * result + backgroundDisabled.hashCode()
+        result = 31 * result + backgroundSelected.hashCode()
+        result = 31 * result + backgroundSelectedActivated.hashCode()
+        result = 31 * result + backgroundFocused.hashCode()
+        result = 31 * result + backgroundPressed.hashCode()
+        result = 31 * result + backgroundHovered.hashCode()
+        result = 31 * result + border.hashCode()
+        result = 31 * result + borderDisabled.hashCode()
+        result = 31 * result + borderSelected.hashCode()
+        result = 31 * result + borderSelectedActivated.hashCode()
+        result = 31 * result + borderFocused.hashCode()
+        result = 31 * result + borderPressed.hashCode()
+        result = 31 * result + borderHovered.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "IconButtonColors(" +
+            "foregroundSelectedActivated=$foregroundSelectedActivated, " +
+            "background=$background, " +
+            "backgroundDisabled=$backgroundDisabled, " +
+            "backgroundSelected=$backgroundSelected, " +
+            "backgroundSelectedActivated=$backgroundSelectedActivated, " +
+            "backgroundFocused=$backgroundFocused, " +
+            "backgroundPressed=$backgroundPressed, " +
+            "backgroundHovered=$backgroundHovered, " +
+            "border=$border, " +
+            "borderDisabled=$borderDisabled, " +
+            "borderSelected=$borderSelected, " +
+            "borderSelectedActivated=$borderSelectedActivated, " +
+            "borderFocused=$borderFocused, " +
+            "borderPressed=$borderPressed, " +
+            "borderHovered=$borderHovered" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -152,6 +236,37 @@ public class IconButtonMetrics(
     public val padding: PaddingValues,
     public val minSize: DpSize,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IconButtonMetrics
+
+        if (cornerSize != other.cornerSize) return false
+        if (borderWidth != other.borderWidth) return false
+        if (padding != other.padding) return false
+        if (minSize != other.minSize) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = cornerSize.hashCode()
+        result = 31 * result + borderWidth.hashCode()
+        result = 31 * result + padding.hashCode()
+        result = 31 * result + minSize.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "IconButtonMetrics(" +
+            "cornerSize=$cornerSize, " +
+            "borderWidth=$borderWidth, " +
+            "padding=$padding, " +
+            "minSize=$minSize" +
+            ")"
+    }
+
     public companion object
 }
 

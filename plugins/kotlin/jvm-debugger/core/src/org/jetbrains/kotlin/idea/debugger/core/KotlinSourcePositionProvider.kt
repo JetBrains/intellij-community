@@ -9,6 +9,7 @@ import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.ui.tree.FieldDescriptor
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor
 import com.intellij.debugger.ui.tree.NodeDescriptor
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -21,14 +22,13 @@ import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameterSymbol
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_RECEIVER_FIELD
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.CAPTURED_THIS_FIELD
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.LABELED_THIS_FIELD
 import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllInterfaces
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
+import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.java.possibleGetMethodNames
 import org.jetbrains.kotlin.name.Name
@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
 class KotlinSourcePositionProvider : SourcePositionProvider() {
-    override fun computeSourcePosition(
+    override suspend fun computeSourcePositionAsync(
         descriptor: NodeDescriptor,
         project: Project,
         context: DebuggerContextImpl,
@@ -48,13 +48,16 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         return when (descriptor) {
             is FieldDescriptor -> computeSourcePosition(descriptor, context, nearest)
             is GetterDescriptor -> computeSourcePosition(descriptor, context, nearest)
-            is LocalVariableDescriptor -> computeSourcePosition(descriptor, context, nearest)
+            is LocalVariableDescriptor -> {
+                val descriptorName = descriptor.name
+                readAction { computeSourcePosition(descriptorName, context, nearest) }
+            }
             else -> null
         }
     }
 
     private fun computeSourcePosition(
-        descriptor: LocalVariableDescriptor,
+        descriptorName: String,
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition? {
@@ -62,7 +65,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         if (place.containingFile !is KtFile) return null
 
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(place) ?: return null
-        val codeFragment = KtPsiFactory(context.project).createExpressionCodeFragment(descriptor.name, contextElement)
+        val codeFragment = KtPsiFactory(context.project).createExpressionCodeFragment(descriptorName, contextElement)
         val localReferenceExpression = codeFragment.getContentElement()
 
         if (localReferenceExpression !is KtSimpleNameExpression) return null
@@ -105,7 +108,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         }
     }
 
-    private fun computeSourcePositionForPropertyDeclaration(
+    private suspend fun computeSourcePositionForPropertyDeclaration(
         name: String,
         declaringType: ReferenceType,
         context: DebuggerContextImpl,
@@ -119,31 +122,35 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         return possibleGetMethodNames(name).map(Name::asString)
     }
 
-    private fun computeSourcePositionForDeclaration(
+    /**
+     * @param declarationSelector should not perform debugger operations
+     */
+    private suspend fun computeSourcePositionForDeclaration(
         declaringType: ReferenceType,
         context: DebuggerContextImpl,
         nearest: Boolean,
         declarationSelector: (KtDeclaration) -> Boolean
     ): SourcePosition? {
-        val myClass = findClassByType(context.project, declaringType, context)?.navigationElement as? KtClassOrObject ?: return null
-        val declaration = myClass.declarations.firstOrNull(declarationSelector) ?: return null
+        val foundClass = findClassByType(context.project, declaringType, context)
+        val myClass = readAction { foundClass?.navigationElement } as? KtClassOrObject ?: return null
+        val declaration = readAction { myClass.declarations.firstOrNull(declarationSelector) } ?: return null
 
         if (nearest) {
-            return DebuggerContextUtil.findNearest(context, declaration, myClass.containingFile)
+            return readAction { DebuggerContextUtil.findNearest(context, declaration, myClass.containingFile) }
         }
-        return SourcePosition.createFromOffset(declaration.containingFile, declaration.textOffset)
+        return SourcePosition.createFromOffset(readAction { declaration.containingFile }, readAction { declaration.textOffset })
     }
 
-    private fun computeSourcePosition(
+    private suspend fun computeSourcePosition(
         descriptor: FieldDescriptor,
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition? {
         val fieldName = descriptor.field.name()
 
-        if (fieldName == CAPTURED_THIS_FIELD
-            || fieldName == CAPTURED_RECEIVER_FIELD
-            || fieldName.startsWith(LABELED_THIS_FIELD)
+        if (fieldName == AsmUtil.CAPTURED_THIS_FIELD
+            || fieldName == AsmUtil.CAPTURED_RECEIVER_FIELD
+            || fieldName.startsWith(AsmUtil.LABELED_THIS_FIELD)
         ) {
             return null
         }
@@ -153,7 +160,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         }
     }
 
-    private fun computeSourcePosition(
+    private suspend fun computeSourcePosition(
         descriptor: GetterDescriptor,
         context: DebuggerContextImpl,
         nearest: Boolean
@@ -172,32 +179,32 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         return null
     }
 
-    private fun findClassByType(project: Project, type: ReferenceType, context: DebuggerContextImpl): PsiElement? {
+    private suspend fun findClassByType(project: Project, type: ReferenceType, context: DebuggerContextImpl): PsiElement? {
         val scope = context.debuggerSession?.searchScope ?: GlobalSearchScope.allScope(project)
         val className = JvmClassName.byInternalName(type.name()).fqNameForClassNameWithoutDollars.asString()
 
-        val myClass = JavaPsiFacade.getInstance(project).findClass(className, scope)
+        val myClass = readAction { JavaPsiFacade.getInstance(project).findClass(className, scope) }
         if (myClass != null) return myClass
 
         val position = getLastSourcePosition(type, context)
         if (position != null) {
             val element = position.elementAt
             if (element != null) {
-                return element.getStrictParentOfType<KtClassOrObject>()
+                return readAction { element.getStrictParentOfType<KtClassOrObject>() }
             }
         }
 
         return null
     }
 
-    private fun getLastSourcePosition(type: ReferenceType, context: DebuggerContextImpl): SourcePosition? {
+    private suspend fun getLastSourcePosition(type: ReferenceType, context: DebuggerContextImpl): SourcePosition? {
         val debugProcess = context.debugProcess ?: return null
 
         try {
             val locations = type.safeAllLineLocations()
             if (locations.isNotEmpty()) {
                 val lastLocation = locations[locations.size - 1]
-                return debugProcess.positionManager.getSourcePosition(lastLocation)
+                return debugProcess.positionManager.getSourcePositionAsync(lastLocation)
             }
         } catch (ignored: AbsentInformationException) {
         } catch (ignored: ClassNotPreparedException) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.jlink;
 
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -8,10 +8,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactProperties> {
+@ApiStatus.Internal
+public final class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactProperties> {
   @OptionTag(converter = CompressionLevelConverter.class)
   public CompressionLevel compressionLevel = CompressionLevel.ZERO;
   public boolean verbose;
@@ -42,7 +44,8 @@ final class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactProp
   /**
    * Same as org.jetbrains.jps.packaging.jlink.JpsJLinkProperties.CompressionLevel
    */
-  enum CompressionLevel {
+  @ApiStatus.Internal
+  public enum CompressionLevel {
     ZERO(0),
     FIRST(1),
     SECOND(2);

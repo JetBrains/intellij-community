@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.RedundantRecordConstructorInspection;
@@ -7,6 +7,7 @@ import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAcce
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -39,11 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.util.NlsContexts.Command;
-import static com.intellij.openapi.util.NlsContexts.DialogMessage;
-import static com.intellij.psi.PsiModifier.PRIVATE;
-
-class ConvertToRecordProcessor extends BaseRefactoringProcessor {
+final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   private static final CallMatcher OBJECT_EQUALS = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "equals")
     .parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
   private static final CallMatcher OBJECT_HASHCODE =
@@ -101,8 +98,8 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> usages = new SmartList<>();
     for (var psiField : myRecordCandidate.getFieldAccessors().keySet()) {
-      if (!psiField.hasModifierProperty(PRIVATE)) {
-        for (PsiReference reference : ReferencesSearch.search(psiField)) {
+      if (!psiField.hasModifierProperty(PsiModifier.PRIVATE)) {
+        for (PsiReference reference : ReferencesSearch.search(psiField).asIterable()) {
           usages.add(new FieldUsageInfo(psiField, reference));
         }
       }
@@ -134,8 +131,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   /**
    * @return list of accessors which have not record-compatible names and need to be renamed separately.
    */
-  @NotNull
-  private List<@NotNull FieldAccessorCandidate> getAccessorsToRename() {
+  private @NotNull List<@NotNull FieldAccessorCandidate> getAccessorsToRename() {
     //noinspection UnnecessaryLocalVariable
     List<FieldAccessorCandidate> list = ContainerUtil.filter(
       myRecordCandidate.getFieldAccessors().values(),
@@ -148,8 +144,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
    * @param accessor a declaration to find supers methods for
    * @return a list of direct super methods, or the declaration itself if no super methods are found
    */
-  @NotNull
-  private static List<@NotNull PsiMethod> substituteWithSuperMethodsIfPossible(@NotNull PsiMethod accessor) {
+  private static @NotNull List<@NotNull PsiMethod> substituteWithSuperMethodsIfPossible(@NotNull PsiMethod accessor) {
     PsiMethod[] superMethods = accessor.findSuperMethods();
     if (superMethods.length == 0) {
       return List.of(accessor);
@@ -159,8 +154,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @NotNull
-  static List<UsageInfo> findConflicts(@NotNull RecordCandidate recordCandidate) {
+  static @NotNull List<UsageInfo> findConflicts(@NotNull RecordCandidate recordCandidate) {
     List<UsageInfo> result = new SmartList<>();
     for (var entry : recordCandidate.getFieldAccessors().entrySet()) {
       PsiField psiField = entry.getKey();
@@ -199,7 +193,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
     RenameUtil.addConflictDescriptions(usages, conflicts);
     for (UsageInfo usage : usages) {
       if (usage instanceof BrokenEncapsulationUsageInfo) {
@@ -316,7 +310,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
 
   private boolean isAccessible(@NotNull PsiElement place, @NotNull PsiField psiField) {
     return JavaPsiFacade.getInstance(myProject).getResolveHelper()
-      .isAccessible(psiField, new LightModifierList(psiField.getManager(), psiField.getLanguage(), PRIVATE),
+      .isAccessible(psiField, new LightModifierList(psiField.getManager(), psiField.getLanguage(), PsiModifier.PRIVATE),
                     place, null, null);
   }
 
@@ -501,7 +495,7 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected @NotNull @Command String getCommandName() {
+  protected @NotNull @NlsContexts.Command String getCommandName() {
     return JavaRefactoringBundle.message("convert.to.record.title");
   }
 
@@ -510,9 +504,8 @@ class ConvertToRecordProcessor extends BaseRefactoringProcessor {
                                   VisibilityUtil.getVisibilityModifier(second.getModifierList())) < 0;
   }
 
-  @Nullable
-  private static FieldAccessorCandidate getFieldAccessorCandidate(@NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors,
-                                                                  @NotNull PsiMethod psiMethod) {
+  private static @Nullable FieldAccessorCandidate getFieldAccessorCandidate(@NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors,
+                                                                            @NotNull PsiMethod psiMethod) {
     return ContainerUtil.find(fieldAccessors.values(), value -> value != null && psiMethod.equals(value.getAccessor()));
   }
 }

@@ -93,6 +93,7 @@ public final class ModuleNode extends PackageDependenciesNode implements Navigat
     return 1;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);

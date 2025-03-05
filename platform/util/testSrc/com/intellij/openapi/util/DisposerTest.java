@@ -423,6 +423,26 @@ public class DisposerTest  {
       Disposer.register(parent, () -> {
         throw new AssertionError("Expected");
       });
+
+      Disposer.register(parent, last);
+
+      UsefulTestCase.assertThrows(AssertionError.class, "Expected", () -> Disposer.dispose(parent));
+
+      assertTrue(Disposer.isDisposed(parent));
+      assertTrue(Disposer.isDisposed(first));
+      assertTrue(Disposer.isDisposed(last));
+    });
+  }
+
+  @Test
+  public void testDisposeDespitePCE() throws Exception {
+    DefaultLogger.disableStderrDumping(myRoot);
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Disposable parent = Disposer.newDisposable();
+      Disposable first = Disposer.newDisposable();
+      Disposable last = Disposer.newDisposable();
+
+      Disposer.register(parent, first);
       Disposer.register(parent, () -> {
         throw new ProcessCanceledException() {
           @Override
@@ -431,9 +451,11 @@ public class DisposerTest  {
           }
         };
       });
+
       Disposer.register(parent, last);
 
-      UsefulTestCase.assertThrows(AssertionError.class, "Expected", () -> Disposer.dispose(parent));
+      UsefulTestCase.assertThrows(RuntimeException.class, "PCE must not be thrown from a dispose() implementation",
+                                  () -> Disposer.dispose(parent));
 
       assertTrue(Disposer.isDisposed(parent));
       assertTrue(Disposer.isDisposed(first));

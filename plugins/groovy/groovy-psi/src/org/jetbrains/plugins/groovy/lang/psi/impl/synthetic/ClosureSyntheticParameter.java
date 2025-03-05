@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.NavigationItem;
@@ -64,16 +64,14 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   }
 
   @Override
-  @Nullable
-  public PsiType getTypeGroovy() {
+  public @Nullable PsiType getTypeGroovy() {
     assert isValid();
 
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
 
   @Override
-  @Nullable
-  public PsiType getDeclaredType() {
+  public @Nullable PsiType getDeclaredType() {
     return null;
   }
 
@@ -83,8 +81,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     GrClosableBlock closure = myClosure.getElement();
     if (closure == null) {
       throw new IncorrectOperationException("Pointer is invalidated");

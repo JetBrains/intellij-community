@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,20 +33,15 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
     return (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
   }
 
-  @Nullable
-  public abstract ContentManager getContentManager();
+  public abstract @Nullable ContentManager getContentManager();
 
-  @NotNull
-  public abstract PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option);
+  public abstract @NotNull PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option);
 
-  @NotNull
-  public abstract PersistentVcsShowConfirmationOption getConfirmation(VcsConfiguration.StandardConfirmation option);
+  public abstract @NotNull PersistentVcsShowConfirmationOption getConfirmation(VcsConfiguration.StandardConfirmation option);
 
-  @NotNull
-  public abstract List<PersistentVcsShowSettingOption> getAllOptions();
+  public abstract @NotNull List<PersistentVcsShowSettingOption> getAllOptions();
 
-  @NotNull
-  public abstract List<PersistentVcsShowConfirmationOption> getAllConfirmations();
+  public abstract @NotNull List<PersistentVcsShowConfirmationOption> getAllConfirmations();
 
   /**
    * @deprecated A plugin should not need to call this.
@@ -55,11 +50,10 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public abstract void notifyDirectoryMappingChanged();
 
   @RequiresEdt
-  @Nullable
-  public abstract UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
-                                                       @Nls String displayActionName,
-                                                       ActionInfo actionInfo,
-                                                       boolean canceled);
+  public abstract @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
+                                                                 @Nls String displayActionName,
+                                                                 ActionInfo actionInfo,
+                                                                 boolean canceled);
 
   public abstract void scheduleMappedRootsUpdate();
 
@@ -74,6 +68,5 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
    * empty string for &lt;None&gt; &lt;Project&gt; mapping;
    * null if no default mapping is configured.
    */
-  @Nullable
-  public abstract String haveDefaultMapping();
+  public abstract @Nullable String haveDefaultMapping();
 }

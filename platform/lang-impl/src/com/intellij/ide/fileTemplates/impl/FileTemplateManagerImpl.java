@@ -206,7 +206,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   private void validateRecentNames() {
-    final Collection<FileTemplateBase> allTemplates = getSettings().getDefaultTemplatesManager().getAllTemplates(false);
+    Collection<? extends FileTemplateBase> allTemplates = getSettings().getDefaultTemplatesManager().getAllTemplates(false);
     final List<String> allNames = new ArrayList<>(allTemplates.size());
     for (FileTemplate fileTemplate : allTemplates) {
       allNames.add(fileTemplate.getName());
@@ -309,7 +309,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
 
   @Override
   public FileTemplate @NotNull [] getAllPatterns() {
-    final Collection<FileTemplateBase> allTemplates = getSettings().getPatternsManager().getAllTemplates(false);
+    Collection<? extends FileTemplateBase> allTemplates = getSettings().getPatternsManager().getAllTemplates(false);
     return allTemplates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
@@ -320,13 +320,13 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
 
   @Override
   public FileTemplate @NotNull [] getAllCodeTemplates() {
-    final Collection<FileTemplateBase> templates = getSettings().getCodeTemplatesManager().getAllTemplates(false);
+    Collection<? extends FileTemplateBase> templates = getSettings().getCodeTemplatesManager().getAllTemplates(false);
     return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
   public FileTemplate @NotNull [] getAllJ2eeTemplates() {
-    final Collection<FileTemplateBase> templates = getSettings().getJ2eeTemplatesManager().getAllTemplates(false);
+    Collection<? extends FileTemplateBase> templates = getSettings().getJ2eeTemplatesManager().getAllTemplates(false);
     return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 

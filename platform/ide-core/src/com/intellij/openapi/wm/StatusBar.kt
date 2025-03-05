@@ -7,8 +7,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.StatusBar.Info
-import com.intellij.openapi.wm.StatusBar.StandardWidgets
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus

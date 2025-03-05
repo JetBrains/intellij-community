@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.scripting.getPlatform
 import org.jetbrains.kotlin.idea.base.scripting.getTargetPlatformVersion
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
@@ -33,6 +35,7 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@OptIn(K1ModeProjectStructureApi::class)
 data class ScriptModuleInfo(
     override val project: Project,
     val scriptFile: VirtualFile,
@@ -131,19 +134,22 @@ data class ScriptModuleInfo(
         get() = getTargetPlatformVersion(project, scriptFile, scriptDefinition)
 }
 
-internal fun VirtualFile.workspaceEntities(project: Project, snapshot: EntityStorage): Sequence<WorkspaceEntity> {
+@ApiStatus.Internal
+fun VirtualFile.workspaceEntities(project: Project, snapshot: EntityStorage): Sequence<WorkspaceEntity> {
     val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val virtualFileUrl = toVirtualFileUrl(virtualFileUrlManager)
     return snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)
 }
 
-internal fun VirtualFile.scriptModuleEntity(project: Project, snapshot: EntityStorage): ModuleEntity? {
+@ApiStatus.Internal
+fun VirtualFile.scriptModuleEntity(project: Project, snapshot: EntityStorage): ModuleEntity? {
     val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val virtualFileUrl = toVirtualFileUrl(virtualFileUrlManager)
     return snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).firstNotNullOfOrNull { it as? ModuleEntity }
 }
 
-fun VirtualFile.scriptLibraryDependencies(project: Project): Sequence<LibraryInfo> {
+@K1ModeProjectStructureApi
+internal fun VirtualFile.scriptLibraryDependencies(project: Project): Sequence<LibraryInfo> {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val cache = LibraryInfoCache.getInstance(project)
 

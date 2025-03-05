@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public interface EditorSearchAreaProvider {
   ExtensionPointName<EditorSearchAreaProvider> EP_NAME = ExtensionPointName.create("com.intellij.editorSearchAreaProvider");
 
   @RequiresEdt
-  static List<EditorSearchAreaProvider> getEnabled(@NotNull Editor editor, @NotNull FindModel findModel) {
+  static @Unmodifiable List<EditorSearchAreaProvider> getEnabled(@NotNull Editor editor, @NotNull FindModel findModel) {
     return ContainerUtil.filter(EP_NAME.getExtensionList(), p -> p.isEnabled(editor, findModel));
   }
 

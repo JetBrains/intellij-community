@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -118,9 +118,8 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     return null;
   }
 
-  @NotNull
   @Override
-  public String getChosenMethodName() {
+  public @NotNull String getChosenMethodName() {
     return myCreateInnerClassRb.isSelected() ? myInnerClassName.getText() : myMethodName.getText();
   }
 
@@ -186,9 +185,8 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
                         (!myCreateInnerClassRb.isSelected() && helper.isIdentifier(myMethodName.getText())));
   }
 
-  @NotNull
   @Override
-  public String getVisibility() {
+  public @NotNull String getVisibility() {
     if (myPublicRadioButton.isSelected()) {
       return PsiModifier.PUBLIC;
     }
@@ -319,7 +317,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
     if (myCreateInnerClassRb.isSelected()) {
       buffer.append(visibilityString);
-      if (buffer.length() > 0) {
+      if (!buffer.isEmpty()) {
         buffer.append(" ");
       }
       if (isMakeStatic()) {

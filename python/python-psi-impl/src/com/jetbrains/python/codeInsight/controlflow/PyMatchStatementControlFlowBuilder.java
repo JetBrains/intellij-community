@@ -6,13 +6,13 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.BiFunction;
-
-import static com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder.isConjunctionOrDisjunction;
 
 public final class PyMatchStatementControlFlowBuilder {
   private final ControlFlowBuilder myBuilder;
@@ -152,5 +152,14 @@ public final class PyMatchStatementControlFlowBuilder {
      }
      return pendingScope;
    });
+  }
+
+  private static boolean isConjunctionOrDisjunction(@Nullable PyExpression node) {
+    if (node instanceof PyBinaryExpression) {
+      final var operator = ((PyBinaryExpression)node).getOperator();
+      return operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD;
+    }
+
+    return false;
   }
 }

@@ -4,8 +4,6 @@ package com.intellij.codeInspection.classCanBeRecord;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -13,7 +11,9 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiAnnotation.TargetType;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
@@ -64,8 +64,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     processor.run();
   }
 
-  @Nullable
-  private ConvertToRecordProcessor getRecordProcessor(ProblemDescriptor descriptor) {
+  private @Nullable ConvertToRecordProcessor getRecordProcessor(ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
     if (psiElement == null) return null;
     PsiClass psiClass = ObjectUtils.tryCast(psiElement.getParent(), PsiClass.class);
@@ -192,7 +191,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
       for (var entry : myFieldAccessors.entrySet()) {
         PsiField field = entry.getKey();
         if (!field.hasModifierProperty(FINAL) || field.hasInitializer()) return false;
-        if (HighlightUtil.RESTRICTED_RECORD_COMPONENT_NAMES.contains(field.getName())) return false;
+        if (JavaPsiRecordUtil.ILLEGAL_RECORD_COMPONENT_NAMES.contains(field.getName())) return false;
         if (entry.getValue().size() > 1) return false;
         FieldAccessorCandidate firstAccessor = ContainerUtil.getFirstItem(entry.getValue());
         if (firstAccessor == null) continue;
@@ -280,8 +279,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
       return visitor.existsSuperMethodCalls;
     }
 
-    @Nullable
-    private FieldAccessorCandidate createFieldAccessor(@NotNull PsiMethod psiMethod) {
+    private @Nullable FieldAccessorCandidate createFieldAccessor(@NotNull PsiMethod psiMethod) {
       if (!psiMethod.getParameterList().isEmpty()) return null;
       String methodName = psiMethod.getName();
       PsiField backingField = null;
@@ -345,7 +343,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
           myCanonical = false;
           return;
         }
-        if (!HighlightControlFlowUtil.variableDefinitelyAssignedIn(instanceField, ctorBody)) {
+        if (!ControlFlowUtil.variableDefinitelyAssignedIn(instanceField, ctorBody)) {
           myCanonical = false;
           return;
         }

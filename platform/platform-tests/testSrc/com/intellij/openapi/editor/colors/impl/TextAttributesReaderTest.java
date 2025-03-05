@@ -87,7 +87,9 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     assertEquals(EffectType.BOLD_LINE_UNDERSCORE, readEffectType("BOLD_LINE"));
     assertEquals(EffectType.BOLD_DOTTED_LINE, readEffectType("5"));
     assertEquals(EffectType.BOLD_DOTTED_LINE, readEffectType("BOLD_DOTTED_LINE"));
-    assertEquals(EffectType.BOXED, readEffectType("6"));
+    assertEquals(EffectType.FADED, readEffectType("6"));
+    assertEquals(EffectType.FADED, readEffectType("FADED"));
+    assertEquals(EffectType.BOXED, readEffectType("7"));
   }
 
   private EffectType readEffectType(Object value) throws Exception {

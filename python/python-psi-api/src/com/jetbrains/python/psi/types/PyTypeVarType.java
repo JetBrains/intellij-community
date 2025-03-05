@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Represents a type parameter that should be substituted with a single type during the unification process.
@@ -14,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
  * but can also come from other sources, such as docstrings.
  */
 public interface PyTypeVarType extends PyTypeParameterType, PyInstantiableType<PyTypeVarType> {
+  @NotNull List<@Nullable PyType> getConstraints();
+
   /**
    * Returns the upper bound for this type parameter if it was specified.
    * <p>

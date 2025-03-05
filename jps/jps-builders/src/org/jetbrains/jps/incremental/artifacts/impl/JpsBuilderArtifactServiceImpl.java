@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.incremental.artifacts.JpsSyntheticArtifactProvider;
 import org.jetbrains.jps.model.JpsElementCollection;
@@ -20,7 +21,7 @@ public final class JpsBuilderArtifactServiceImpl extends JpsBuilderArtifactServi
   private static final JpsElementCollectionRole<JpsArtifact> SYNTHETIC_ARTIFACTS = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("synthetic artifact"));
 
   @Override
-  public Collection<JpsArtifact> getArtifacts(JpsModel model, boolean includeSynthetic) {
+  public @Unmodifiable Collection<JpsArtifact> getArtifacts(JpsModel model, boolean includeSynthetic) {
     List<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(model.getProject());
     if (!includeSynthetic) {
       return artifacts;

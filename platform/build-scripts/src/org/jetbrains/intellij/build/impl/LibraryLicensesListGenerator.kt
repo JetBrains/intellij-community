@@ -15,6 +15,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.name
 
 fun createLibraryLicensesListGenerator(
   project: JpsProject,
@@ -33,7 +34,7 @@ fun getLibraryFilename(lib: JpsLibrary): String {
   val name = lib.name
   if (name.startsWith('#')) {
     // unnamed module libraries in IntelliJ project may have only one root
-    return lib.getPaths(JpsOrderRootType.COMPILED).first().fileName.toString()
+    return lib.getPaths(JpsOrderRootType.COMPILED).first().name
   }
   return name
 }

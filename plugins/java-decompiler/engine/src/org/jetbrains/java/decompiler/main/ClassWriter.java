@@ -216,7 +216,12 @@ public class ClassWriter {
             IFernflowerLogger.Severity.WARN,
             ex);
           methodWrapper.decompiledWithErrors = true;
-          buffer.append(" // $FF: Couldn't be decompiled");
+          if (methodWrapper.decompiledWithErrorsMessage != null) {
+            buffer.append("// $FF: " + methodWrapper.decompiledWithErrorsMessage);
+          }
+          else {
+            buffer.append("// $FF: Couldn't be decompiled");
+          }
         }
         finally {
           tracer.addMapping(root.getDummyExit().bytecode);
@@ -399,8 +404,7 @@ public class ClassWriter {
     }
   }
 
-  @NotNull
-  private static AnnotationContainer collectAllAnnotations(@Nullable StructMember mt) {
+  private static @NotNull AnnotationContainer collectAllAnnotations(@Nullable StructMember mt) {
     AnnotationContainer result = new AnnotationContainer(new HashSet<>(), new HashSet<>());
     if (mt == null) {
       return result;
@@ -853,7 +857,12 @@ public class ClassWriter {
             }
 
             Type paramType;
-            if (descriptor != null) paramType = descriptor.parameterTypes.get(paramCount); else paramType = md.params[i];
+            if (descriptor != null && descriptor.parameterTypes.size() > paramCount) {
+              paramType = descriptor.parameterTypes.get(paramCount);
+            }
+            else {
+              paramType = md.params[i];
+            }
             appendParameterAnnotations(buffer, mt, paramType, paramCount);
 
             VarVersion pair = new VarVersion(index, 0);
@@ -968,7 +977,12 @@ public class ClassWriter {
 
         if (methodWrapper.decompiledWithErrors) {
           buffer.appendIndent(indent + 1);
-          buffer.append("// $FF: Couldn't be decompiled");
+          if (methodWrapper.decompiledWithErrorsMessage != null) {
+            buffer.append("// $FF: " + methodWrapper.decompiledWithErrorsMessage);
+          }
+          else {
+            buffer.append("// $FF: Couldn't be decompiled");
+          }
           buffer.appendLineSeparator();
           tracer.incrementCurrentSourceLine();
         }
@@ -1083,8 +1097,7 @@ public class ClassWriter {
 
   record RecordConstructorContext(boolean hideConstructor, boolean compact) { }
 
-  @NotNull
-  private static List<AnnotationExprent> collectParameterAnnotations(StructMethod mt, Type type, int param) {
+  private static @NotNull List<AnnotationExprent> collectParameterAnnotations(StructMethod mt, Type type, int param) {
     List<AnnotationExprent> result = new ArrayList<>();
     if (mt == null || type == null) return result;
     for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {
@@ -1208,7 +1221,12 @@ public class ClassWriter {
 
       if (methodWrapper.decompiledWithErrors) {
         buffer.appendIndent(indent);
-        buffer.append("// $FF: Couldn't be decompiled");
+        if (methodWrapper.decompiledWithErrorsMessage != null) {
+          buffer.append("// $FF: " + methodWrapper.decompiledWithErrorsMessage);
+        }
+        else {
+          buffer.append("// $FF: Couldn't be decompiled");
+        }
         buffer.appendLineSeparator();
       }
 

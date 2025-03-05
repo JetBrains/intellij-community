@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.UnusedImportProvider;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInspection.ExternalSourceProblemGroup;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -36,10 +38,11 @@ import java.util.function.Function;
 
 class UnusedImportsVisitor extends JavaElementVisitor {
   private final LocalRefUseInfo myRefCountHolder;
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final PsiFile myFile;
-  @NotNull private final Document myDocument;
-  private IntentionAction myOptimizeImportsFix; // when not null, there are not-optimized imports in the file
+  private final @NotNull Document myDocument;
+  private final @NotNull CodeInsightContext myContext;
+  private boolean requiresFix = false;
   private int myCurrentEntryIndex = -1;
   private boolean errorFound;
 
@@ -50,6 +53,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     myFile = file;
     myDocument = document;
     myRefCountHolder = LocalRefUseInfo.forFile(file);
+    myContext = FileViewProviderUtil.getCodeInsightContext(file);
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder holder) {
@@ -69,17 +73,19 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     if (errorFound) {
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
+      fileStatusMap.setErrorFoundFlag(myDocument, myContext, true);
     }
-    IntentionAction fix = myOptimizeImportsFix;
-    if (fix != null) {
+    IntentionAction fixNotOnFly = null;
+    if (requiresFix) {
+      IntentionAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
       OptimizeImportRestarter.getInstance(myProject).scheduleOnDaemonFinish(myFile, fix);
+      fixNotOnFly = QuickFixFactory.getInstance().createOptimizeImportsFix(false, myFile);
     }
     HighlightDisplayKey misSortedKey = HighlightDisplayKey.find(MissortedImportsInspection.SHORT_NAME);
-    if (misSortedKey != null && isToolEnabled(misSortedKey) && fix != null && importList != null) {
+    if (misSortedKey != null && isToolEnabled(misSortedKey) && fixNotOnFly != null && importList != null) {
       holder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.MISSORTED_IMPORTS)
         .range(importList)
-        .registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey)
+        .registerFix(fixNotOnFly, null, HighlightDisplayKey.getDisplayNameByKey(misSortedKey), null, misSortedKey)
         .create());
     }
   }
@@ -110,8 +116,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
            !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
   }
 
-  @NotNull
-  private static InspectionProfile getCurrentProfile(@NotNull PsiFile file) {
+  private static @NotNull InspectionProfile getCurrentProfile(@NotNull PsiFile file) {
     Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(file);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
     return custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
@@ -135,9 +140,9 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     }
 
     int entryIndex = JavaCodeStyleManager.getInstance(myProject).findEntryIndex(importStatement);
-    if (entryIndex < myCurrentEntryIndex && myOptimizeImportsFix == null) {
+    if (entryIndex < myCurrentEntryIndex && !requiresFix) {
       // mis-sorted imports found
-      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+      requiresFix = true;
     }
     myCurrentEntryIndex = entryIndex;
   }
@@ -197,8 +202,8 @@ class UnusedImportsVisitor extends JavaElementVisitor {
 
     IntentionAction switchFix = QuickFixFactory.getInstance().createEnableOptimizeImportsOnTheFlyFix();
     builder.registerFix(switchFix, null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
-    if (!predefinedImport && myOptimizeImportsFix == null) {
-      myOptimizeImportsFix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFile);
+    if (!predefinedImport && !requiresFix) {
+      requiresFix = true;
     }
     addInfo(holder, builder);
   }

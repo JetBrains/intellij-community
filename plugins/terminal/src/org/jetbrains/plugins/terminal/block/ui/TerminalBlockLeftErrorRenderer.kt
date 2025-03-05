@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -14,7 +15,8 @@ import java.awt.RenderingHints
 /**
  * @author Alexander Lobas
  */
-internal open class TerminalBlockLeftErrorRenderer : LineMarkerRenderer {
+@ApiStatus.Internal
+open class TerminalBlockLeftErrorRenderer : LineMarkerRenderer {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     val gutterWidth = (editor as EditorEx).gutterComponentEx.width
     val offset = JBUI.scale(TerminalUi.errorLineYOffset)

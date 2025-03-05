@@ -9,6 +9,8 @@ import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.testFramework.query.doTest
+import com.intellij.webSymbols.testFramework.query.printCodeCompletionItems
 import com.intellij.webSymbols.webSymbolsTestsDataPath
 import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 
@@ -307,6 +309,29 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
   fun testBasicCustomElementsManifest2() {
     doTest("html/elements/my-EleMeNt/attributes/", customElementsManifests = listOf("basic"))
+  }
+
+  fun testCssClassListSingleClass1() {
+    doTest("css/class-list/foo", 0, null, "css-class-list")
+  }
+
+  fun testCssClassListSingleClass2() {
+    doTest("css/class-list/foo", 1, null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses1() {
+    doTest("css/class-list/foo bar", 1, null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses2() {
+    doTest("css/class-list/foo bar", 4, null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses3() {
+    doTest("css/class-list/foa bar", 4, null, "css-class-list")
+  }
+  fun testCssClassListMultipleClasses4() {
+    doTest("css/class-list/foo bar", 3, null, "css-class-list")
   }
 
   private fun doTest(path: String, position: Int, framework: String?, vararg webTypes: String) {

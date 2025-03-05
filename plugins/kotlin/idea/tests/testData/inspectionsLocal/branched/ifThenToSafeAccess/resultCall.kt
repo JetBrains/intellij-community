@@ -1,6 +1,6 @@
 // HIGHLIGHT: WARNING
 // FIX: Replace 'if' expression with safe access expression
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // WITH_STDLIB
 
 val someNullableString: String? = ""

@@ -21,6 +21,8 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
@@ -95,8 +97,11 @@ private class JavaConstructorRenderer(
       PsiUtil.setModifierProperty(constructor, modifier.toPsiModifier(), true)
     }
 
+    val formatter = CodeStyleManager.getInstance(project)
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
     for (annotation in request.annotations) {
-      constructor.modifierList.addAnnotation(annotation.qualifiedName)
+      val psiAnnotation = constructor.modifierList.addAnnotation(annotation.qualifiedName)
+      codeStyleManager.shortenClassReferences(formatter.reformat(psiAnnotation))
     }
 
     return constructor

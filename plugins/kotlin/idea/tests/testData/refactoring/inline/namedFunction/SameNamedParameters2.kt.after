@@ -2,7 +2,6 @@ fun bbbbbb(b: Int, action: () -> Unit) {
     println(b)
     action()
 }
-
 fun test() {
     val variable = 1
     bbbbbb(b = variable) { bbbbbb(b = variable) {} }

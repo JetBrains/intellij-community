@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.ProjectManager
@@ -17,7 +17,7 @@ private class SuggestedRefactoringEditorHintAdvSettingListener: AdvancedSettings
     if (ADV_SETTING_NAME == id) {
       if (newValue == true) {
         ProjectManager.getInstance().openProjects.forEach {
-          DaemonCodeAnalyzer.getInstance(it).restart()
+          DaemonCodeAnalyzerEx.getInstanceEx(it).restart("SuggestedRefactoringEditorHintAdvSettingListener.advancedSettingChanged")
         }
       }
       else {

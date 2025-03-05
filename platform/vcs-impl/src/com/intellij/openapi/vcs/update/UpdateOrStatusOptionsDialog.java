@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.CommonBundle;
@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   private final JComponent myMainPanel;
@@ -45,13 +45,11 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   }
 
   @Override
-  @NlsSafe
-  protected String getDimensionServiceKey() {
+  protected @NlsSafe String getDimensionServiceKey() {
     return "com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog" + getActionNameForDimensions();
   }
 
-  @NlsSafe
-  protected abstract String getActionNameForDimensions();
+  protected abstract @NlsSafe String getActionNameForDimensions();
 
   private void addComponent(Configurable configurable, String constraint) {
     myConfigurables.add(configurable);
@@ -97,9 +95,8 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     return myMainPanel;
   }
 
-  @NotNull
   @Override
-  protected Action getHelpAction() {
+  protected @NotNull Action getHelpAction() {
     return myHelpAction;
   }
 

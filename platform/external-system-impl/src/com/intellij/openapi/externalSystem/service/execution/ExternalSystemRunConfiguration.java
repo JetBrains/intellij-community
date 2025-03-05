@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
@@ -196,14 +196,12 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     element.addContent(childElement);
   }
 
-  @NotNull
-  public ExternalSystemTaskExecutionSettings getSettings() {
+  public @NotNull ExternalSystemTaskExecutionSettings getSettings() {
     return mySettings;
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
     return new ExternalSystemRunConfigurationFragmentedEditor(this);
   }
 
@@ -216,9 +214,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     return runnableState;
   }
 
-  @Nullable
   @Override
-  public GlobalSearchScope getSearchScope() {
+  public @Nullable GlobalSearchScope getSearchScope() {
     GlobalSearchScope scope = null;
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(mySettings.getExternalSystemId());
     if (manager != null) {
@@ -323,9 +320,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       presentation.setEnabled(false);
     }
 
-    @Nullable
     @Override
-    protected RunContentDescriptor getDescriptor(AnActionEvent event) {
+    protected @Nullable RunContentDescriptor getDescriptor(AnActionEvent event) {
       return myContentDescriptor != null ? myContentDescriptor : super.getDescriptor(event);
     }
 

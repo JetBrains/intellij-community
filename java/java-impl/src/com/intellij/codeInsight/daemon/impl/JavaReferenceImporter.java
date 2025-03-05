@@ -44,7 +44,6 @@ public final class JavaReferenceImporter implements ReferenceImporter {
       if (element instanceof PsiJavaCodeReferenceElement ref) {
         ImportClassFix fix = new ImportClassFix(ref);
         if (fix.isAvailable(file.getProject(), null, file)) {
-          fix.surviveOnPSIModifications(); // make possible to apply several of these actions at once
           return fix;
         }
       }

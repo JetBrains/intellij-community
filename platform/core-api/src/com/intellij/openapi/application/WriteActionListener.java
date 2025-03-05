@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
 /**
  * Listener for Write Action life cycle.
+ * You can register this listener with {@link com.intellij.openapi.application.ex.ApplicationEx#addWriteActionListener(WriteActionListener, Disposable)}
  */
 public interface WriteActionListener extends EventListener {
   /**

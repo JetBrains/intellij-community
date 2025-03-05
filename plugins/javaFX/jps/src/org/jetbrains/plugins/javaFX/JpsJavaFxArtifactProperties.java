@@ -46,9 +46,8 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setMsgOutputLevel(state.myMsgOutputLevel);
   }
 
-  @NotNull
   @Override
-  public JpsJavaFxArtifactProperties createCopy() {
+  public @NotNull JpsJavaFxArtifactProperties createCopy() {
     return new JpsJavaFxArtifactProperties(myState);
   }
 

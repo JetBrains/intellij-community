@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.lang.Language
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.actionSystem.ActionManager
@@ -33,6 +32,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.lang.LangManager
 import training.lang.LangSupport
@@ -68,14 +68,14 @@ internal fun courseCanBeUsed(languageId: String): Boolean {
   return excludedCourses == null || !excludedCourses.contains(languageId)
 }
 
-internal fun findLanguageByID(id: String): Language? {
+internal fun findLanguageByID(id: String): com.intellij.lang.Language? {
   val effectiveId = if (id.equals("cpp", ignoreCase = true)) {
     "ObjectiveC"
   }
   else {
     id
   }
-  return Language.findLanguageByID(effectiveId)
+  return com.intellij.lang.Language.findLanguageByID(effectiveId)
 }
 
 internal fun createBalloon(@Nls text: String): Balloon = createBalloon(text, 3000)
@@ -160,7 +160,7 @@ fun invokeActionForFocusContext(action: AnAction) {
   }
 }
 
-fun getCallBackActionId(actionId: String): String {
+fun getCallBackActionId(@Language("devkit-action-id") actionId: String): String {
   val action = getActionById(actionId)
   return LearningUiManager.addCallback { invokeActionForFocusContext(action) }
 }
@@ -250,7 +250,7 @@ fun Any?.isToStringContains(string: String): Boolean {
   return this.toNullableString()?.contains(string) ?: false
 }
 
-fun getActionById(actionId: String): AnAction {
+fun getActionById(@Language("devkit-action-id") actionId: String): AnAction {
   return ActionManager.getInstance().getAction(actionId)
          ?: error("No action with id $actionId in ${ApplicationNamesInfo.getInstance().fullProductNameWithEdition}")
 }

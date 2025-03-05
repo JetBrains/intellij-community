@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.java.training
 
 import com.intellij.java.ift.JavaLessonsBundle
@@ -9,7 +9,7 @@ import com.intellij.util.PlatformUtils
 import training.ui.welcomeScreen.OnboardingLessonPromoter
 import javax.swing.Icon
 
-class JavaOnboardingTourPromoter : OnboardingLessonPromoter(
+private class JavaOnboardingTourPromoter : OnboardingLessonPromoter(
   ideaOnboardingLessonId, javaLanguageId, JavaLessonsBundle.message("java.onboarding.lesson.name")
 ) {
   override val promoImage: Icon

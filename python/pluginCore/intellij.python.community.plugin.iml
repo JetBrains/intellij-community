@@ -9,5 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.python.community.communityOnly" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.services.shared" scope="RUNTIME" />
   </component>
 </module>

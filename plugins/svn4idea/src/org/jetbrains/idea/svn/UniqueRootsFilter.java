@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +13,7 @@ import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 public class UniqueRootsFilter {
 
-  @NotNull
-  public <T extends RootUrlPair> List<T> filter(@NotNull List<T> list) {
+  public @NotNull <T extends RootUrlPair> List<T> filter(@NotNull List<T> list) {
     List<T> result = new ArrayList<>();
 
     list.sort(comparing(item -> item.getVirtualFile().getPath()));

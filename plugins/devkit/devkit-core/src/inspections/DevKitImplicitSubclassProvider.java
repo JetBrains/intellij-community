@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
@@ -17,8 +17,7 @@ final class DevKitImplicitSubclassProvider extends ImplicitSubclassProvider {
   }
 
   @Override
-  @Nullable
-  public SubclassingInfo getSubclassingInfo(@NotNull PsiClass psiClass) {
+  public @Nullable SubclassingInfo getSubclassingInfo(@NotNull PsiClass psiClass) {
     if (DevKitImplicitUsageProvider.isDomElementClass(psiClass)) {
       return new SubclassingInfo(DevKitBundle.message("implemented.at.runtime.dom"));
     }

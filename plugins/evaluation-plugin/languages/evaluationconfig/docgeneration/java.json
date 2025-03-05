@@ -1,7 +1,9 @@
 {
   "language": "Java",
-  "projectPath": "../../ml-eval/keycloak",
-  "outputDir": "ml-eval-documentation-generation-java-output",
+  "projectPath": "../ml-eval/keycloak",
+  "repository": "https://github.com/keycloak/keycloak",
+  "revision": "a21e95c5aedf755693b97cdc2425dc56b249395f",
+  "outputDir": "bin/ml-eval-documentation-generation-java-output",
   "strategy": {
   },
   "actions": {
@@ -16,7 +18,8 @@
     "sessionsLimit": 10,
     "filesLimit": 5,
     "order": "LINEAR",
-    "trainTestSplit": 70
+    "trainTestSplit": 70,
+    "registry": ""
   },
   "reports": {
     "evaluationTitle": "Default",

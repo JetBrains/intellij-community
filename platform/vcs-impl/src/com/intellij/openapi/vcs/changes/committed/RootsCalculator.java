@@ -27,12 +27,12 @@ import static java.util.function.Function.identity;
 
 @ApiStatus.Internal
 public final class RootsCalculator {
-  private final static Logger LOG = Logger.getInstance(RootsCalculator.class);
+  private static final Logger LOG = Logger.getInstance(RootsCalculator.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final AbstractVcs myVcs;
-  @NotNull private final ProjectLevelVcsManager myPlManager;
-  @NotNull private final RepositoryLocationCache myLocationCache;
+  private final @NotNull Project myProject;
+  private final @NotNull AbstractVcs myVcs;
+  private final @NotNull ProjectLevelVcsManager myPlManager;
+  private final @NotNull RepositoryLocationCache myLocationCache;
 
   public RootsCalculator(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull RepositoryLocationCache locationCache) {
     myProject = project;
@@ -41,8 +41,7 @@ public final class RootsCalculator {
     myVcs = vcs;
   }
 
-  @NotNull
-  public Map<VirtualFile, RepositoryLocation> getRoots() {
+  public @NotNull Map<VirtualFile, RepositoryLocation> getRoots() {
     LOG.debug("Collecting roots for " + myVcs);
     // TODO: It is not quite clear why using just ProjectLevelVcsManager.getRootsUnderVcs() is not sufficient
     List<VirtualFile> roots = getRootsFromMappings();
@@ -63,8 +62,7 @@ public final class RootsCalculator {
     return result;
   }
 
-  @NotNull
-  private List<VirtualFile> getRootsFromMappings() {
+  private @NotNull List<VirtualFile> getRootsFromMappings() {
     List<VirtualFile> result = new ArrayList<>();
 
     for (VcsDirectoryMapping mapping : myPlManager.getDirectoryMappings(myVcs)) {
@@ -87,8 +85,7 @@ public final class RootsCalculator {
     return result;
   }
 
-  @Nullable
-  private RepositoryLocation getLocation(@NotNull VirtualFile file) {
+  private @Nullable RepositoryLocation getLocation(@NotNull VirtualFile file) {
     return myLocationCache.getLocation(myVcs, getFilePath(file), false);
   }
 

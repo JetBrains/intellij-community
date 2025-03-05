@@ -28,7 +28,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
 
   fun <T : SwitcherListItem> wrap(model: ListModel<T>): ListModel<T> =
     NameFilteringListModel(model,
-                           { it.mainText },
+                           { it.mainText + " " + it.pathText },
                            { !isPopupActive || compare(it, enteredPrefix) },
                            { (enteredPrefix ?: "") })
 
@@ -43,7 +43,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
     else -> files.selectedIndex
   }
 
-  override fun getElementText(element: Any?): String = (element as? SwitcherListItem)?.mainText ?: ""
+  override fun getElementText(element: Any?): String = (element as? SwitcherListItem)?.let { it.mainText + " " + it.pathText } ?: ""
 
   override fun getElementCount(): Int = files.itemsCount + windows.itemsCount
 

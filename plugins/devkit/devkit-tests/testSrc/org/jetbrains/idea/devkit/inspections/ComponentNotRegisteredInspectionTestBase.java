@@ -6,7 +6,7 @@ import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Anchor;
+import org.jetbrains.idea.devkit.dom.AddToGroup;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.util.ActionData;
 
@@ -140,7 +140,7 @@ public abstract class ComponentNotRegisteredInspectionTestBase extends PluginMod
 
     @Override
     public String getSelectedAnchor() {
-      return Anchor.before.name();
+      return AddToGroup.Anchor.before.name();
     }
 
     @Nullable

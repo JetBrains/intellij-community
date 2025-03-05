@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
@@ -29,8 +29,7 @@ interface Simplifier {
 
   List<Instruction> run(@NotNull List<Instruction> instructions);
 
-  @NotNull
-  static String simplify(@NotNull List<Instruction> instructions) {
+  static @NotNull String simplify(@NotNull List<Instruction> instructions) {
     return StreamEx.of(SIMPLIFIERS).foldLeft(instructions, (acc, s) -> s.run(acc))
       .stream().map(Instruction::generate).collect(Collectors.joining());
   }
@@ -60,8 +59,7 @@ interface Simplifier {
   class MergeChecks implements Simplifier {
 
     @Override
-    @NotNull
-    public List<Instruction> run(@NotNull List<Instruction> instructions) {
+    public @NotNull List<Instruction> run(@NotNull List<Instruction> instructions) {
       List<Instruction> simplified = new ArrayList<>();
       Instruction prev = null;
       for (Instruction instruction : instructions) {
@@ -86,8 +84,7 @@ interface Simplifier {
       return simplified;
     }
 
-    @NotNull
-    private static Check mergeWithInner(@NotNull Check check) {
+    private static @NotNull Check mergeWithInner(@NotNull Check check) {
       Check innerCheck = tryCast(getSingleInstruction(check), Check.class);
       if (innerCheck == null) return check;
       List<Instruction> checkInstructions = innerCheck.myInstructions;
@@ -95,8 +92,7 @@ interface Simplifier {
       return new Check(conjunction, checkInstructions, null);
     }
 
-    @NotNull
-    private static PsiExpression mergeConditions(@NotNull Check c1, @NotNull Check c2, @NotNull String operator) {
+    private static @NotNull PsiExpression mergeConditions(@NotNull Check c1, @NotNull Check c2, @NotNull String operator) {
       PsiExpression cond1 = c1.myCondition;
       PsiExpression cond2 = c2.myCondition;
       PsiElementFactory factory = PsiElementFactory.getInstance(cond1.getProject());
@@ -105,8 +101,7 @@ interface Simplifier {
                                               ParenthesesUtils.getText(cond2, ParenthesesUtils.OR_PRECEDENCE), cond1);
     }
 
-    @Nullable
-    private static Check mergeChecks(@NotNull Instruction prev, @NotNull Check check) {
+    private static @Nullable Check mergeChecks(@NotNull Instruction prev, @NotNull Check check) {
       Check prevCheck = tryCast(prev, Check.class);
       if (prevCheck == null) return null;
       Throw prevThrow = tryCast(getSingleInstruction(prevCheck), Throw.class);
@@ -181,8 +176,7 @@ interface Simplifier {
       return simplified;
     }
 
-    @Nullable
-    private Return mergeReturn(@NotNull Return ret, @Nullable Instruction prev) {
+    private @Nullable Return mergeReturn(@NotNull Return ret, @Nullable Instruction prev) {
       PsiVariable retVariable = getReturnVariable(ret);
       if (retVariable == null) return null;
       Declaration declaration = tryCast(prev, Declaration.class);
@@ -199,9 +193,8 @@ interface Simplifier {
       return tryCast(reference.resolve(), PsiVariable.class);
     }
 
-    @Nullable
     @Contract(pure = true)
-    private static Return mergeReturn(@NotNull PsiVariable retVariable, @NotNull PsiVariable lhs, @NotNull PsiExpression rhs) {
+    private static @Nullable Return mergeReturn(@NotNull PsiVariable retVariable, @NotNull PsiVariable lhs, @NotNull PsiExpression rhs) {
       return retVariable != lhs ? null : new Return(rhs);
     }
   }

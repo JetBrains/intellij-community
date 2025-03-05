@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.refactoring;
 
 import com.intellij.lang.properties.IProperty;
@@ -27,7 +27,7 @@ public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDe
   }
 
   @Override
-  public NonCodeUsageSearchInfo findUsages(@NotNull final PsiElement element, final PsiElement @NotNull [] allElementsToDelete, final @NotNull List<? super UsageInfo> result) {
+  public NonCodeUsageSearchInfo findUsages(final @NotNull PsiElement element, final PsiElement @NotNull [] allElementsToDelete, final @NotNull List<? super UsageInfo> result) {
     PropertiesFile file = (PropertiesFile) element;
     List<PsiElement> elements = new ArrayList<>();
     elements.add(file.getContainingFile());
@@ -41,18 +41,18 @@ public class PropertiesFilesSafeDeleteProcessor implements SafeDeleteProcessorDe
   }
 
   @Override
-  public Collection<PsiElement> getElementsToSearch(@NotNull final PsiElement element, final @NotNull Collection<? extends PsiElement> allElementsToDelete) {
+  public Collection<PsiElement> getElementsToSearch(final @NotNull PsiElement element, final @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     return Collections.singletonList(element);
   }
 
   @Override
-  public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element, final @NotNull Collection<? extends PsiElement> allElementsToDelete,
+  public Collection<PsiElement> getAdditionalElementsToDelete(final @NotNull PsiElement element, final @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     return null;
   }
 
   @Override
-  public Collection<String> findConflicts(@NotNull final PsiElement element, final PsiElement @NotNull [] allElementsToDelete) {
+  public Collection<String> findConflicts(final @NotNull PsiElement element, final PsiElement @NotNull [] allElementsToDelete) {
     return null;
   }
 

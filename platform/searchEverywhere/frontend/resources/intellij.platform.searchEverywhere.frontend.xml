@@ -1,0 +1,21 @@
+<idea-plugin package="com.intellij.platform.searchEverywhere.frontend">
+  <dependencies>
+    <plugin id="com.intellij.platform.experimental.frontend"/>
+    <module name="intellij.platform.searchEverywhere"/>
+  </dependencies>
+  <actions>
+    <action id="SeInitiatorAction"
+            class="com.intellij.platform.searchEverywhere.frontend.actions.SeInitiatorAction"
+            text="Search Actions in SE 2.0"
+            internal="true"/>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsTabProvider"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.files.SeFilesTabProvider"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.SeTabProviderMockAlphaLocal"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.SeTabProviderMockBetaLocal"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.SeTabProviderMockCharlieRemote"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.SeTabProviderMockDeltaMixed"/>
+  </extensions>
+</idea-plugin>

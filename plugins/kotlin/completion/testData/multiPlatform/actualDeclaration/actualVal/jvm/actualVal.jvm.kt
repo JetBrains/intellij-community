@@ -1,7 +1,7 @@
-actual val baz: String = "baz"
+actual val bazzz: String = "bazzz"
 
-actual<caret>
+actual val ba<caret>
 
-// EXIST: {"lookupString": "actual", "module": "testModule_Common", "icon": "org/jetbrains/kotlin/idea/icons/field_value.svg", "allLookupStrings": "actual, foo", "itemText": "actual val foo: Int"}
-// EXIST: {"lookupString": "actual", "module": "testModule_Common", "icon": "org/jetbrains/kotlin/idea/icons/field_value.svg", "allLookupStrings": "actual, bar", "itemText": "actual val bar: Float"}
-// ABSENT: {"lookupString": "actual", "module": "testModule_Common", "icon": "org/jetbrains/kotlin/idea/icons/field_value.svg", "allLookupStrings": "actual, baz", "itemText": "actual val baz: String"}
+// EXIST: {"lookupString": "bar", "module": "testModule_Common", "icon": "org/jetbrains/kotlin/idea/icons/field_value.svg", "allLookupStrings": "bar", "itemText": "actual val bar: Int"}
+// EXIST: {"lookupString": "baz", "module": "testModule_Common", "icon": "org/jetbrains/kotlin/idea/icons/field_value.svg", "allLookupStrings": "baz", "itemText": "actual val baz: Float"}
+// ABSENT: {"lookupString": "bazzz", "module": "testModule_Common", "icon": "org/jetbrains/kotlin/idea/icons/field_value.svg", "allLookupStrings": "bazzz", "itemText": "actual val bazzz: String"}

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -105,8 +105,7 @@ public final class GrHighlightUtil {
     return false;
   }
 
-  @NotNull
-  public static TextRange getMethodHeaderTextRange(@NotNull PsiMethod method) {
+  public static @NotNull TextRange getMethodHeaderTextRange(@NotNull PsiMethod method) {
     int startOffset = method.getTextRange().getStartOffset();
     int endOffset = method.getParameterList().getTextRange().getEndOffset();
     return new TextRange(startOffset, endOffset);
@@ -145,8 +144,7 @@ public final class GrHighlightUtil {
     return new TextRange(startOffset, endOffset);
   }
 
-  @Nullable
-  public static GrMember findClassMemberContainer(@NotNull GrReferenceExpression ref, @NotNull PsiClass aClass) {
+  public static @Nullable GrMember findClassMemberContainer(@NotNull GrReferenceExpression ref, @NotNull PsiClass aClass) {
     for (PsiElement parent = ref.getParent(); parent != null && parent != aClass; parent = parent.getParent()) {
       if (parent instanceof GrMember && ((GrMember)parent).getContainingClass() == aClass) {
         return (GrMember)parent;

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
@@ -28,8 +29,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class ContentManagerImpl implements ContentManager, PropertyChangeListener, Disposable.Parent {
@@ -60,7 +61,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     this(contentUI, canCloseContents, project, project);
   }
 
-  public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  public ContentManagerImpl(@NotNull ContentUI contentUI,
+                            boolean canCloseContents,
+                            @NotNull Project project,
+                            @NotNull Disposable parentDisposable) {
     this(canCloseContents, project, parentDisposable, (contentManager, componentGetter) -> {
       // if some contentUI expects that myUI will be set before setManager (as it was before introducing ContentUiProducer)
       ((ContentManagerImpl)contentManager).myUI = contentUI;
@@ -74,7 +78,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @ApiStatus.Experimental
-  public ContentManagerImpl(boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable, @NotNull ContentUiProducer contentUiProducer) {
+  public ContentManagerImpl(boolean canCloseContents,
+                            @NotNull Project project,
+                            @NotNull Disposable parentDisposable,
+                            @NotNull ContentUiProducer contentUiProducer) {
     myProject = project;
     myCanCloseContents = canCloseContents;
     ContentUI ui = contentUiProducer.createContent(this, () -> {
@@ -169,6 +176,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   private void doAddContent(final @NotNull Content content, final int index) {
     ThreadingAssertions.assertEventDispatchThread();
+    String tabName = content.getTabName();
+    if (tabName != null && myUI instanceof ToolWindowContentUi toolWindowContentUi) {
+      ToolWindowContentPostProcessor contentReplacer = ToolWindowContentPostProcessor.EP_NAME
+        .findFirstSafe(ep -> ep.isEnabled(myProject, content, toolWindowContentUi.getWindow()));
+      if (contentReplacer != null) {
+        contentReplacer.postprocessContent(myProject, content, toolWindowContentUi.getWindow());
+      }
+    }
+
     if (contents.contains(content)) {
       contents.remove(content);
       contents.add(index < 0 ? contents.size() : index, content);
@@ -498,12 +514,17 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public @NotNull ActionCallback setSelectedContentCB(final @NotNull Content content, final boolean requestFocus, final boolean forcedFocus) {
+  public @NotNull ActionCallback setSelectedContentCB(final @NotNull Content content,
+                                                      final boolean requestFocus,
+                                                      final boolean forcedFocus) {
     return setSelectedContent(content, requestFocus, forcedFocus, false);
   }
 
   @Override
-  public @NotNull ActionCallback setSelectedContent(final @NotNull Content content, final boolean requestFocus, final boolean forcedFocus, boolean implicit) {
+  public @NotNull ActionCallback setSelectedContent(final @NotNull Content content,
+                                                    final boolean requestFocus,
+                                                    final boolean forcedFocus,
+                                                    boolean implicit) {
     mySelectionHistory.remove(content);
     mySelectionHistory.add(0, content);
     if (isSelected(content) && requestFocus) {
@@ -642,7 +663,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (toSelect == null) return ActionCallback.REJECTED;
     assert contents.contains(toSelect);
     JComponent preferredFocusableComponent = toSelect.getPreferredFocusableComponent();
-    return preferredFocusableComponent != null ? getFocusManager().requestFocusInProject(preferredFocusableComponent, myProject) : ActionCallback.REJECTED;
+    return preferredFocusableComponent != null
+           ? getFocusManager().requestFocusInProject(preferredFocusableComponent, myProject)
+           : ActionCallback.REJECTED;
   }
 
   /**

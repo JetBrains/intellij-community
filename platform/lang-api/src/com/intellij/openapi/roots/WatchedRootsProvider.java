@@ -4,6 +4,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -17,5 +18,6 @@ public interface WatchedRootsProvider {
    * @return paths which should be monitored via {@link LocalFileSystem#addRootToWatch(String, boolean)}.
    * @see LocalFileSystem
    */
+  @Unmodifiable
   @NotNull Set<String> getRootsToWatch(@NotNull Project project);
 }

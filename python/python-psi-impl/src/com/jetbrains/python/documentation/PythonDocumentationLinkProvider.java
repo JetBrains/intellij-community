@@ -18,8 +18,7 @@ public interface PythonDocumentationLinkProvider {
   @Nullable
   String getExternalDocumentationUrl(PsiElement element, PsiElement originalElement);
 
-  @Nullable
-  default Function<Document, @Nls String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
+  default @Nullable Function<Document, @Nls String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
     return null;
   }
 }

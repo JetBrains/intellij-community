@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.settings;
 
-import com.intellij.completion.ml.experiment.ExperimentInfo;
-import com.intellij.completion.ml.experiment.ExperimentStatus;
+import com.intellij.completion.ml.experiments.ExperimentInfo;
+import com.intellij.completion.ml.experiments.ExperimentStatus;
 import com.intellij.completion.ml.ranker.ExperimentModelProvider;
 import com.intellij.completion.ml.sorting.RankingSupport;
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy;
@@ -36,8 +36,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     myState = new State();
   }
 
-  @NotNull
-  public static CompletionMLRankingSettings getInstance() {
+  public static @NotNull CompletionMLRankingSettings getInstance() {
     return ApplicationManager.getApplication().getService(CompletionMLRankingSettings.class);
   }
 

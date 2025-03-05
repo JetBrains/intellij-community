@@ -95,8 +95,7 @@ public class RestSyntaxHighlighter extends SyntaxHighlighterBase implements Rest
   }
 
   @Override
-  @NotNull
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     return new RestFlexLexer();
   }
 }

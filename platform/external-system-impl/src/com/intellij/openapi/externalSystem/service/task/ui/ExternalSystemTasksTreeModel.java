@@ -1,12 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.task.ui;
 
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,11 +15,14 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 @ApiStatus.Internal
 public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
-  @NotNull private static final Comparator<TreeNode> NODE_COMPARATOR = (t1, t2) -> {
+  private static final @NotNull Comparator<TreeNode> NODE_COMPARATOR = (t1, t2) -> {
     Object e1 = ((ExternalSystemNode<?>)t1).getDescriptor().getElement();
     Object e2 = ((ExternalSystemNode<?>)t2).getDescriptor().getElement();
     if (e1 instanceof ExternalProjectPojo) {
@@ -43,7 +43,7 @@ public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     }
   };
 
-  @NotNull private final ExternalSystemUiAware myUiAware;
+  private final @NotNull ExternalSystemUiAware myUiAware;
 
   public ExternalSystemTasksTreeModel(@NotNull ProjectSystemId externalSystemId) {
     super(new ExternalSystemNode<>(new ExternalSystemNodeDescriptor<>("", "", "", null)));
@@ -60,8 +60,7 @@ public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
    * @param project target external project info holder
    */
   @SuppressWarnings("unchecked")
-  @NotNull
-  public ExternalSystemNode<ExternalProjectPojo> ensureProjectNodeExists(@NotNull ExternalProjectPojo project) {
+  public @NotNull ExternalSystemNode<ExternalProjectPojo> ensureProjectNodeExists(@NotNull ExternalProjectPojo project) {
     ExternalSystemNode<?> root = getRoot();
 
     // Remove outdated projects.
@@ -118,19 +117,16 @@ public final class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     }
   }
 
-  @NotNull
-  private static <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @Nullable Icon icon) {
+  private static @NotNull <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @Nullable Icon icon) {
     return descriptor(element, "", icon);
   }
 
-  @NotNull
-  private static <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @NotNull @Nls String description, @Nullable Icon icon) {
+  private static @NotNull <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @NotNull @Nls String description, @Nullable Icon icon) {
     return new ExternalSystemNodeDescriptor<>(element, element.toString(), description, icon);
   }
 
   @Override
-  @NotNull
-  public ExternalSystemNode<?> getRoot() {
+  public @NotNull ExternalSystemNode<?> getRoot() {
     return (ExternalSystemNode<?>)super.getRoot();
   }
 

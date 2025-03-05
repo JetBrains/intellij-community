@@ -6,11 +6,11 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi
 
-class AlienCommitChangeListDialog(workflow: AlienCommitWorkflow) : CommitChangeListDialog(workflow) {
-  private val browser = AlienChangeListBrowser(project, workflow.changeList)
+class AlienCommitChangeListDialog(workflow: AlienCommitWorkflow, changeList: AlienLocalChangeList) : CommitChangeListDialog(workflow) {
+  private val browser = AlienChangeListBrowser(project, changeList)
 
   init {
-    browser.viewer.setIncludedChanges(workflow.changes)
+    browser.viewer.setIncludedChanges(changeList.changes)
     browser.viewer.rebuildTree()
   }
 

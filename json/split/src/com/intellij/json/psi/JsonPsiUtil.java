@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi;
 
 import com.intellij.json.JsonElementTypes;
@@ -157,7 +157,7 @@ public final class JsonPsiUtil {
    * @param text presumably result of {@link JsonStringLiteral#getText()}
    */
   public static @NotNull String stripQuotes(@NotNull String text) {
-    if (text.length() > 0) {
+    if (!text.isEmpty()) {
       final char firstChar = text.charAt(0);
       final char lastChar = text.charAt(text.length() - 1);
       if (firstChar == '\'' || firstChar == '"') {

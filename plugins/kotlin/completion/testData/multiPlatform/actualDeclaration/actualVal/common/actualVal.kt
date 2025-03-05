@@ -1,3 +1,3 @@
-expect val foo: Int
-expect val bar: Float
-expect val baz: String
+expect val bar: Int
+expect val baz: Float
+expect val bazzz: String

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -18,14 +18,14 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   private final @InspectionMessage String myDescriptionTemplate;
 
   CommonProblemDescriptorImpl(@NotNull @InspectionMessage String descriptionTemplate, @NotNull QuickFix<?> @Nullable [] fixes) {
-    QuickFix<?>[] filteredFixes = fixes;
     if (fixes != null && fixes.length > 0) {
-      if (ApplicationManager.getApplication().isUnitTestMode() && ArrayUtil.contains(null, fixes)) {
-        // throw only in the test mode for now, to avoid irrecoverable failures in plugins
-        throw new IllegalArgumentException("'fixes' argument must not contain null elements, for consistency and performance reasons, but got: `" + Arrays.asList(fixes) + "'");
-      }
       if (ArrayUtil.contains(null, fixes)) {
-        filteredFixes = ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), ArrayUtil.newArray(ArrayUtil.getComponentType(fixes), 0));
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          // throw only in the test mode for now, to avoid irrecoverable failures in plugins
+          throw new IllegalArgumentException("'fixes' argument must not contain null elements, for consistency and performance reasons, but got: `"
+                                             + Arrays.asList(fixes) + "'");
+        }
+        fixes = ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), ArrayUtil.newArray(ArrayUtil.getComponentType(fixes), 0));
       }
       if (!(this instanceof ProblemDescriptor)) {
         for (QuickFix<?> fix : fixes) {
@@ -36,7 +36,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
         }
       }
     }
-    myFixes = filteredFixes == null || filteredFixes.length == 0 ? LocalQuickFix.EMPTY_ARRAY : filteredFixes;
+    myFixes = fixes == null || fixes.length == 0 ? LocalQuickFix.EMPTY_ARRAY : fixes;
     myDescriptionTemplate = descriptionTemplate;
   }
 

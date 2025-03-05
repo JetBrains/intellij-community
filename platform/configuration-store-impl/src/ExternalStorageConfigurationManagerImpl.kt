@@ -2,7 +2,7 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
@@ -50,7 +50,7 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
 
     coroutineScope.launch {
       val workspaceModel = project.serviceAsync<WorkspaceModel>()
-      writeAction {
+      edtWriteAction {
         updateEntitySource(workspaceModel)
       }
     }

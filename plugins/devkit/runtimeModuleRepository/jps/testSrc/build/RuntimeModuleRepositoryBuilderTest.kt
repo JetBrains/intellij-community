@@ -138,6 +138,15 @@ class RuntimeModuleRepositoryBuilderTest : RuntimeModuleRepositoryTestCase() {
       testDescriptor("a.tests", "a", resourceDirName = "a.tests")
     }
   }
+  
+  fun `test module with production roots named like a test module`() {
+    val name = "a.tests.actually.not"
+    addModule(name, withTests = false)
+    buildAndCheck {
+      descriptor(name)
+      descriptor(name)
+    }
+  }
 
   fun `test module library`() {
     val a = addModule("a", withTests = false)

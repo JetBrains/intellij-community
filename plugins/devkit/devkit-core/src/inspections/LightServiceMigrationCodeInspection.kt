@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.*
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.util.JvmInheritanceUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent

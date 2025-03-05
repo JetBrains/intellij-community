@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config.wizard
 
 import com.intellij.ide.wizard.BuildSystemNewProjectWizardData
@@ -14,8 +14,7 @@ interface BuildSystemGroovyNewProjectWizardData: BuildSystemNewProjectWizardData
   var groovySdk : DistributionInfo?
 
   companion object {
-
-    val KEY = Key.create<BuildSystemGroovyNewProjectWizardData>(BuildSystemGroovyNewProjectWizardData::class.java.name)
+    val KEY: Key<BuildSystemGroovyNewProjectWizardData> = Key.create(BuildSystemGroovyNewProjectWizardData::class.java.name)
 
     @JvmStatic
     val NewProjectWizardStep.groovyBuildSystemData: BuildSystemGroovyNewProjectWizardData?

@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging.jps;
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.awaitLogQueueProcessed
 import org.junit.After
 import org.junit.Test
 import java.nio.file.Files
@@ -30,6 +31,7 @@ class JpsFileLoggingTest {
       assert(log.isDebugEnabled())
       val debugMessage = "Debug message should be printed"
       log.debug(debugMessage)
+      awaitLogQueueProcessed()
       assert(logFile.readText().contains(debugMessage))
     }
   }
@@ -39,6 +41,7 @@ class JpsFileLoggingTest {
     `test logging`(debugCategories = "") {
       assert(!log.isDebugEnabled())
       log.debug("Debug message should not be printed")
+      awaitLogQueueProcessed()
       assert(logFile.readText().isEmpty())
     }
   }

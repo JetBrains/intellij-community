@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.arrangement;
 
 import com.google.common.util.concurrent.Futures;
@@ -30,16 +30,14 @@ public final class ProcessInfoUtil {
 
   private ProcessInfoUtil() {}
 
-  @NotNull
-  public static Future<String> getCurrentWorkingDirectory(@NotNull Process process) {
+  public static @NotNull Future<String> getCurrentWorkingDirectory(@NotNull Process process) {
     if (process.isAlive()) {
       return POOL.submit(() -> doGetCwd(process));
     }
     return Futures.immediateFuture(null);
   }
 
-  @Nullable
-  private static String doGetCwd(@NotNull Process process) throws Exception {
+  private static @Nullable String doGetCwd(@NotNull Process process) throws Exception {
     if (SystemInfo.isUnix) {
       int pid = (int)process.pid();
       String result = tryGetCwdFastOnUnix(pid);
@@ -60,8 +58,7 @@ public final class ProcessInfoUtil {
     throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
   }
 
-  @Nullable
-  private static String tryGetCwdFastOnUnix(int pid) {
+  private static @Nullable String tryGetCwdFastOnUnix(int pid) {
     String procPath = "/proc/" + pid + "/cwd";
     try {
       File dir = Paths.get(procPath).toRealPath().toFile();
@@ -95,8 +92,7 @@ public final class ProcessInfoUtil {
     return workingDir;
   }
 
-  @Nullable
-  private static String parseWorkingDirectory(@NotNull List<String> stdoutLines, int pid) {
+  private static @Nullable String parseWorkingDirectory(@NotNull List<String> stdoutLines, int pid) {
     boolean pidEncountered = false;
     for (String line : stdoutLines) {
       if (line.startsWith("p")) {

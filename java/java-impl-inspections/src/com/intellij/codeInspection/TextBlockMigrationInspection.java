@@ -42,9 +42,8 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
     return Set.of(JavaFeature.TEXT_BLOCKS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
@@ -105,10 +104,8 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
 
   private static class ReplaceWithTextBlockFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.replace.with.text.block.fix");
     }
 
@@ -135,8 +132,7 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
       tracker.replaceAndRestoreComments(toReplace, getTextBlock(lines));
     }
 
-    @NotNull
-    private static String getTextBlock(String @NotNull [] lines) {
+    private static @NotNull String getTextBlock(String @NotNull [] lines) {
       lines = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.join(lines), true, true, false).split("(?<=\n)");
       int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, true);
       if (indent != 0 && lines.length > 0 && !lines[lines.length - 1].endsWith("\n")) {
@@ -176,8 +172,7 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
       return document != null && document.getLineNumber(e1.getTextOffset()) == document.getLineNumber(e2.getTextOffset());
     }
 
-    @Nullable
-    private static String getLiteralText(@NotNull PsiLiteralExpression literal) {
+    private static @Nullable String getLiteralText(@NotNull PsiLiteralExpression literal) {
       if (!literal.isTextBlock() && ExpressionUtils.hasStringType(literal)) return PsiLiteralUtil.getStringLiteralContent(literal);
       Object value = literal.getValue();
       return value == null ? null : value.toString();
@@ -203,8 +198,7 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
     return -1;
   }
 
-  @Nullable
-  private static PsiLiteralExpression getLiteralExpression(@NotNull PsiExpression expression) {
+  private static @Nullable PsiLiteralExpression getLiteralExpression(@NotNull PsiExpression expression) {
     PsiLiteralExpression literal = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiLiteralExpression.class);
     return (literal == null || literal.isTextBlock()) ? null : literal;
   }

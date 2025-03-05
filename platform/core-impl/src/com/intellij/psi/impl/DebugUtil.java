@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -16,8 +16,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
@@ -280,9 +281,9 @@ public final class DebugUtil {
   public static void stubTreeToBuffer(@NotNull Stub node, @NotNull Appendable buffer, int indent) {
     StringUtil.repeatSymbol(buffer, ' ', indent);
     try {
-      ObjectStubSerializer<?, ?> stubType = node.getStubType();
-      if (stubType != null) {
-        buffer.append(stubType.toString()).append(':');
+      Object presentable = getPresentable(node);
+      if (presentable != null) {
+        buffer.append(presentable.toString()).append(':');
       }
       buffer.append(node.toString()).append('\n');
 
@@ -294,6 +295,19 @@ public final class DebugUtil {
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private static Object getPresentable(@NotNull Stub node) {
+    if (node instanceof PsiFileStubImpl) {
+      // psi file stubs historically don't have presentable
+      return null;
+    }
+
+    if (node instanceof StubElement) {
+      return ((StubElement<?>)node).getElementType();
+    }
+
+    return node.getStubSerializer();
   }
 
   private static void doCheckTreeStructure(@Nullable ASTNode anyElement) {
@@ -517,7 +531,7 @@ public final class DebugUtil {
       ourPsiModificationDepth.set(depth);
     }
     if (depth == 0) {
-      ourPsiModificationTrace.set(null);
+      ourPsiModificationTrace.remove();
     }
   }
 
@@ -641,7 +655,16 @@ public final class DebugUtil {
     int fileLength = file.getTextLength();
     int docLength = document.getTextLength();
     if (fileLength != docLength) {
-      return "file/doc text length different, " + fileDiagnostics + " file.length=" + fileLength + "; doc.length=" + docLength;
+      int maxTextLength = 100;
+      String fileText = StringUtil.trimMiddle(file.getText(), maxTextLength);
+      String docText = StringUtil.trimMiddle(document.getText(), maxTextLength);
+
+      return "file/doc text length different, " + fileDiagnostics +
+                      " file.length=" + fileLength +
+                      "; file.isPhysical=" + file.isPhysical() +
+                      "; doc.length=" + docLength +
+                      "\nfile.text:\n" + fileText +
+                      "\ndocument.text:\n" + docText;
     }
 
     return "unknown inconsistency in " + fileDiagnostics;

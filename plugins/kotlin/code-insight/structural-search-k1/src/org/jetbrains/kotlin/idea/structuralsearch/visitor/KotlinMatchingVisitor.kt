@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
 import com.intellij.psi.PsiComment
@@ -665,7 +665,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                     other,
                     GlobalSearchScope.allScope(other.project),
                     true
-                ).searchInheritors().any { psiClass ->
+                ).searchInheritors().asIterable().any { psiClass ->
                     arrayOf(psiClass.name, psiClass.qualifiedName).filterNotNull().any { renderedType ->
                         matchTypeAgainstElement(renderedType, identifier, otherIdentifier)
                     }

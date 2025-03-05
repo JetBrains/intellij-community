@@ -44,13 +44,11 @@ public class TreeBasedMap<T> {
       return myMappingExists;
     }
 
-    @Nullable
-    public Node<T> findRelative(String text, boolean create, final Interner<String> table) {
+    public @Nullable Node<T> findRelative(String text, boolean create, final Interner<String> table) {
       return findRelative(text, 0, create, table);
     }
 
-    @Nullable
-    private Node<T> findRelative(final String text, final int nameStartIndex, final boolean create, final Interner<String> table) {
+    private @Nullable Node<T> findRelative(final String text, final int nameStartIndex, final boolean create, final Interner<String> table) {
       if (myChildren == null && !create) {
         return null;
       }
@@ -76,8 +74,7 @@ public class TreeBasedMap<T> {
       return null;
     }
 
-    @NotNull
-    private Node<T> addChild(final Interner<String> table, final String text, final int nameStartIndex, final int nameEndIndex) {
+    private @NotNull Node<T> addChild(final Interner<String> table, final String text, final int nameStartIndex, final int nameEndIndex) {
       if (myChildren == null) {
         myChildren = new HashMap<>(3, 0.95f);
       }
@@ -215,7 +212,7 @@ public class TreeBasedMap<T> {
   private class PathElement<T> {
     final @NotNull Iterator<String> iterator;
     final @NotNull Node<T> node;
-    PathElement(@NotNull final Node<T> node, Iterator<String> iterator) {
+    PathElement(final @NotNull Node<T> node, Iterator<String> iterator) {
       this.node = node;
       this.iterator = iterator;
     }

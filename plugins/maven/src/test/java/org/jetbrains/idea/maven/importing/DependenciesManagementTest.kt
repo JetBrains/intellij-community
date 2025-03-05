@@ -18,14 +18,13 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.File
 
 class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testImportingDependencies() = runBlocking {
     if (!hasMavenInstallation()) return@runBlocking
 
-    repositoryPath = File(dir, "/repo").path
+    repositoryPath = dir.resolve("repo")
     updateSettingsXml("""
                       <localRepository>
                       ${repositoryPath}</localRepository>
@@ -78,9 +77,7 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportingNotInstalledDependencies() = runBlocking {
-    if (ignore()) return@runBlocking
-
-    repositoryPath = File(dir, "/repo").path
+    repositoryPath = dir.resolve("repo")
     updateSettingsXml("""
   <localRepository>
   ${repositoryPath}</localRepository>

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -12,8 +12,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -241,8 +241,7 @@ public final class MethodUtils {
     return overrideAnnotation != null || getSuper(method) != null;
   }
 
-  @Nullable
-  public static PsiMethod getSuper(@NotNull PsiMethod method) {
+  public static @Nullable PsiMethod getSuper(@NotNull PsiMethod method) {
     final MethodSignatureBackedByPsiMethod signature = getSuperMethodSignature(method);
     if (signature == null) {
       return null;
@@ -250,8 +249,7 @@ public final class MethodUtils {
     return signature.getMethod();
   }
 
-  @Nullable
-  public static MethodSignatureBackedByPsiMethod getSuperMethodSignature(@NotNull PsiMethod method) {
+  public static @Nullable MethodSignatureBackedByPsiMethod getSuperMethodSignature(@NotNull PsiMethod method) {
     if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
       return null;
     }
@@ -282,7 +280,7 @@ public final class MethodUtils {
       return false;
     }
     final Query<PsiClass> search = ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(), true, true, true);
-    for (PsiClass inheritor : search) {
+    for (PsiClass inheritor : search.asIterable()) {
       final PsiMethod overridingMethod = inheritor.findMethodBySignature(method, false);
       if (overridingMethod != null) {
         return true;
@@ -370,7 +368,7 @@ public final class MethodUtils {
     } else {
       expressions = List.of(bodyExpression);
     }
-    if (expressions.size() == 0) return true;
+    if (expressions.isEmpty()) return true;
     for (UExpression expression : expressions) {
       ProgressManager.checkCanceled();
       if (expression instanceof UastEmptyExpression || trivialPredicate != null && trivialPredicate.test(expression)) continue;
@@ -448,8 +446,7 @@ public final class MethodUtils {
    * @param specificType a specific type (class type or intersection type)
    * @return more specific method, or base class method if more specific method cannot be found
    */
-  @NotNull
-  public static PsiMethod findSpecificMethod(@NotNull PsiMethod method, @Nullable PsiType specificType) {
+  public static @NotNull PsiMethod findSpecificMethod(@NotNull PsiMethod method, @Nullable PsiType specificType) {
     PsiClass qualifierClass = method.getContainingClass();
     if (qualifierClass == null) return method;
     if (specificType == null || specificType instanceof PsiArrayType) return method;
@@ -550,8 +547,7 @@ public final class MethodUtils {
    * @param fqAnnotationNames  the fully qualified names of the annotations to find
    * @return the first annotation found, or null if no annotation was found.
    */
-  @Nullable
-  public static PsiAnnotation findAnnotationInTree(PsiElement element, @Nullable PsiElement stop, @NotNull Set<String> fqAnnotationNames) {
+  public static @Nullable PsiAnnotation findAnnotationInTree(PsiElement element, @Nullable PsiElement stop, @NotNull Set<String> fqAnnotationNames) {
     while (element != null) {
       if (element == stop) {
         return null;
@@ -597,8 +593,7 @@ public final class MethodUtils {
    * @param element element to find a method from
    * @return a method if the original element is inside method header; null otherwise
    */
-  @Nullable
-  public static PsiMethod getJavaMethodFromHeader(@Nullable PsiElement element) {
+  public static @Nullable PsiMethod getJavaMethodFromHeader(@Nullable PsiElement element) {
     if (element == null) return null;
     if (element.getLanguage() != JavaLanguage.INSTANCE) return null;
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);

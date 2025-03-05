@@ -10,7 +10,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
-import com.intellij.util.ui.StyleSheetUtil
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import java.awt.Color

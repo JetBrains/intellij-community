@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools.sdkTools;
 
 import com.intellij.execution.ExecutionException;
@@ -47,10 +47,9 @@ public final class PySdkTools {
    * @param sdkCreationType SDK creation strategy (see {@link SdkCreationType} doc)
    * @return sdk
    */
-  @NotNull
-  public static Sdk createTempSdk(@NotNull final VirtualFile sdkHome,
-                                  @NotNull final SdkCreationType sdkCreationType,
-                                  @Nullable final Module module,
+  public static @NotNull Sdk createTempSdk(final @NotNull VirtualFile sdkHome,
+                                  final @NotNull SdkCreationType sdkCreationType,
+                                  final @Nullable Module module,
                                   @Nullable Disposable parentDisposable
   )
     throws InvalidSdkException {
@@ -90,9 +89,9 @@ public final class PySdkTools {
    * @param module       module to associate with (if provided)
    * @throws InvalidSdkException bas sdk
    */
-  public static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
+  public static void generateTempSkeletonsOrPackages(final @NotNull Sdk sdk,
                                                      final boolean addSkeletons,
-                                                     @Nullable final Module module)
+                                                     final @Nullable Module module)
     throws InvalidSdkException, ExecutionException {
     Project project = null;
 

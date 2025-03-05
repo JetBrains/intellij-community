@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -44,6 +44,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   });
 
   private final Context myContext;
+  private final @Nullable JpsJavacFileProvider myJpsJavacFileProvider;
   private final boolean myJavacBefore9;
   private final Collection<? extends JavaSourceTransformer> mySourceTransformers;
   private final FileOperations myFileOperations = new DefaultFileOperations();
@@ -77,10 +78,14 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
   private final Map<String, JavaFileObject> myInputSourcesIndex = new HashMap<>();
   private final List<Closeable> myCloseables = new ArrayList<>();
 
-  public JpsJavacFileManager(final Context context, boolean javacBefore9, Collection<? extends JavaSourceTransformer> transformers) {
+  public JpsJavacFileManager(final Context context,
+                             boolean javacBefore9,
+                             Collection<? extends JavaSourceTransformer> transformers,
+                             @Nullable final JpsJavacFileProvider javacFileProvider) {
     super(context.getStandardFileManager());
     myJavacBefore9 = javacBefore9;
     mySourceTransformers = transformers;
+    myJpsJavacFileProvider = javacFileProvider;
     myContext = new Context() {
       @Nullable
       @Override
@@ -165,8 +170,15 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     return getFileForOutput(location, JpsFileObject.findKind(fileName), fileName, null, sibling);
   }
 
-  private OutputFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, @Nullable String className, FileObject sibling) throws IOException {
+  private JavaFileObject getFileForOutput(Location location, JavaFileObject.Kind kind, String fileName, @Nullable String className, FileObject sibling) throws IOException {
     checkCanceled();
+
+    if (myJpsJavacFileProvider != null && kind == JavaFileObject.Kind.CLASS) {
+      JavaFileObject result = myJpsJavacFileProvider.getFileForOutput(fileName, className, sibling);
+      if (result != null) {
+        return result;
+      }
+    }
 
     Iterable<URI> originatingSources = null;
     if (sibling instanceof JavaFileObject) {
@@ -398,6 +410,12 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
         return inferred;
       }
     }
+    else if (myJpsJavacFileProvider != null) {
+      String inferred = myJpsJavacFileProvider.inferBinaryName(location, file);
+      if (inferred != null) {
+        return inferred;
+      }
+    }
     return super.inferBinaryName(location, _fo);
   }
 
@@ -487,9 +505,16 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
         // we consider here only locations that are known to be file-based
         final Iterable<? extends File> locationRoots = getLocation(location);
         if (Iterators.isEmpty(locationRoots)) {
-          return Collections.emptyList();
+          if (myJpsJavacFileProvider == null) {
+            return Collections.emptyList();
+          }
+          else {
+            return myJpsJavacFileProvider.list(location, packageName, kinds, recurse);
+          }
         }
-        result = Iterators.flat(Iterators.map(locationRoots, new Function<File, Iterable<JavaFileObject>>() {
+        result = Iterators.flat(
+          myJpsJavacFileProvider == null ? null : myJpsJavacFileProvider.list(location, packageName, kinds, recurse),
+          Iterators.flat(Iterators.map(locationRoots, new Function<File, Iterable<JavaFileObject>>() {
           @Override
           public Iterable<JavaFileObject> fun(File root) {
             try {
@@ -540,7 +565,8 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
               throw new RuntimeException(e);
             }
           }
-        }));
+        }))
+        );
       }
       else {
         // locations, not supported by this class should be handled by default javac file manager

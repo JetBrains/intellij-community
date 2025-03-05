@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.OriginCapability
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
-import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
-import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
+import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +64,7 @@ public final class SSHConnectionSettings implements PersistentStateComponent<SSH
    * @param method   the last successful stored authentication method (null or empty string if entry should be dropped)
    */
   public void setLastSuccessful(@NonNls String userName, @NonNls String method) {
-    if (null == method || method.length() == 0) {
+    if (null == method || method.isEmpty()) {
       myLastSuccessful.remove(userName);
     }
     else {

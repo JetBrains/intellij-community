@@ -289,10 +289,10 @@ def jb_patch_targets(targets, fs_glue, old_python_glue, new_python_glue, fs_to_p
 
     def _patch_target(target):
         # /path/foo.py::parts.to.python
-        match = re.match("^(:?(.+)[.]py::)?(.+)$", target)
+        match = re.match("^(:?(.+)[.]py::)?([^\\[]+)(.*)$", target)
         assert match, "unexpected string: {0}".format(target)
         fs_part = match.group(2)
-        python_part = match.group(3).replace(old_python_glue, new_python_glue)
+        python_part = match.group(3).replace(old_python_glue, new_python_glue) + match.group(4)
         if python_parts_action is not None:
             python_part = python_parts_action(fs_part, python_part)
         if fs_part:

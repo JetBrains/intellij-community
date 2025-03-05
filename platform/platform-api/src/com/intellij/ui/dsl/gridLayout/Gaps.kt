@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.ScheduledForRemoval
 data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
   companion object {
-    @Deprecated("Use UnscaledGaps instead")
+    @Deprecated("Use UnscaledGaps instead", level = DeprecationLevel.HIDDEN)
     @ApiStatus.ScheduledForRemoval
     @JvmField
     val EMPTY: Gaps = Gaps(0, 0, 0, 0)
@@ -37,7 +37,7 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
 }
 
 
-@Deprecated("Use UnscaledGaps instead", replaceWith = ReplaceWith("UnscaledGaps(top, left, bottom, right)"))
+@Deprecated("Use UnscaledGaps instead", replaceWith = ReplaceWith("UnscaledGaps(top, left, bottom, right)"), level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 fun JBGaps(top: Int = 0, left: Int = 0, bottom: Int = 0, right: Int = 0): Gaps {
   return Gaps(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right))

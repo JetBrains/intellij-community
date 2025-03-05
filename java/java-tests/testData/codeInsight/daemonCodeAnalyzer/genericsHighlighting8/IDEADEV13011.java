@@ -23,7 +23,7 @@ class LimitedPool<T> {
       storage[index] = factory.create();
     }
 
-    <error descr="Incompatible types. Found: 'java.lang.Object[]', required: 'T'">return storage;</error>
+    return <error descr="Incompatible types. Found: 'java.lang.Object[]', required: 'T'">storage</error>;
   }
 
 }

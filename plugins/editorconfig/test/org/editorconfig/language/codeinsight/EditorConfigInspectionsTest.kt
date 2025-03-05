@@ -39,7 +39,16 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   fun testNumerousWildcards() = doTest(EditorConfigNumerousWildcardsInspection::class, checkWeakWarnings = true)
   fun testOptionRedundancy() = doTest(EditorConfigOptionRedundancyInspection::class)
   fun testPairAcceptability() = doTest(EditorConfigPairAcceptabilityInspection::class)
-  fun testPartialOverride() = doTest(EditorConfigPartialOverrideInspection::class, checkWarnings = true)
+  fun testPartialOverride() = doTest(EditorConfigPartialOverrideInspection::class, checkWeakWarnings = false)
+  // IJPL-162949
+  fun testPartialOverrideDoesNotLookPastChildrenWithRootDeclarations() {
+    myFixture.configureByFiles(
+      "${getTestName(true)}/withRoot/.editorconfig",
+      "${getTestName(true)}/withoutRoot/.editorconfig",
+    )
+    doTest(EditorConfigPartialOverrideInspection::class, checkWeakWarnings = true)
+  }
+
   fun testPatternRedundancy_complex() = doTest(EditorConfigPatternRedundancyInspection::class)
   fun testPatternRedundancy_simple() = doTest(EditorConfigPatternRedundancyInspection::class)
   fun testReferenceCorrectness_complex() = doTest(EditorConfigReferenceCorrectnessInspection::class)

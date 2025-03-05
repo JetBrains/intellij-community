@@ -44,6 +44,9 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
     holder.createProblem(element, highlightType, message, null, new RemoveDomElementQuickFix(element)).highlightWholeElement();
   }
 
+  /**
+   * Additional check to {@link #isAllowed(DomElementAnnotationHolder)} as quite a few descriptors in the IJ project are not "real" production.
+   */
   protected static boolean isUnderProductionSources(DomElement domElement, @NotNull Module module) {
     VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
     return virtualFile != null &&

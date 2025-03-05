@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.compiled;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -41,8 +42,7 @@ public final class ClassFileDecompilers {
       }
     }
 
-    @NotNull
-    public abstract CharSequence getText(@NotNull VirtualFile file) throws CannotDecompileException;
+    public abstract @NotNull CharSequence getText(@NotNull VirtualFile file) throws CannotDecompileException;
   }
 
   /**
@@ -51,8 +51,7 @@ public final class ClassFileDecompilers {
    * in return they have an ability to represent decompiled file in a way natural for original language.</p>
    */
   public abstract static class Full implements Decompiler {
-    @NotNull
-    public abstract ClsStubBuilder getStubBuilder();
+    public abstract @NotNull ClsStubBuilder getStubBuilder();
 
     /**
      * <h5>Notes for implementers</h5>
@@ -67,8 +66,7 @@ public final class ClassFileDecompilers {
      * A standard practice is to hide such files by returning {@code null} from
      * {@link FileViewProvider#getPsi(com.intellij.lang.Language)}.</p>
      */
-    @NotNull
-    public abstract FileViewProvider createFileViewProvider(@NotNull VirtualFile file, @NotNull PsiManager manager, boolean physical);
+    public abstract @NotNull FileViewProvider createFileViewProvider(@NotNull VirtualFile file, @NotNull PsiManager manager, boolean physical);
   }
 
   public static ClassFileDecompilers getInstance() {
@@ -78,8 +76,11 @@ public final class ClassFileDecompilers {
   public final ExtensionPointName<Decompiler> EP_NAME = new ExtensionPointName<>("com.intellij.psi.classFileDecompiler");
 
   private ClassFileDecompilers() {
-    Runnable runnable = () -> BinaryFileTypeDecompilers.getInstance().notifyDecompilerSetChange();
-    EP_NAME.addChangeListener(runnable, null);
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode()) {
+      Runnable runnable = () -> BinaryFileTypeDecompilers.getInstance().notifyDecompilerSetChange();
+      EP_NAME.addChangeListener(runnable, null);
+    }
   }
 
   @SuppressWarnings("unchecked")

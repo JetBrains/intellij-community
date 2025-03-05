@@ -26,6 +26,18 @@ public abstract class XBreakpointPropertiesSubPanel {
 
   abstract void saveProperties();
 
+  /**
+   * Tries to display a simplified ('light') version of the panel.
+   * <p>
+   * The method evaluates the configuration of the current breakpoint and returns a boolean indicating whether
+   * the panel could be hidden to provide a streamlined user interface experience.
+   * </p>
+   *
+   * @param showAllOptions a boolean flag indicating whether all panels should be forcibly displayed
+   *                       regardless of breakpoint configuration.
+   * @return {@code true} if the panel is set to be invisible;
+   *         {@code false} otherwise, meaning the full set of options is retained.
+   */
   public boolean lightVariant(boolean showAllOptions) {
     return false;
   }

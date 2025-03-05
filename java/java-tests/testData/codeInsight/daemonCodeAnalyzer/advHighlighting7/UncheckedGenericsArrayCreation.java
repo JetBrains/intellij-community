@@ -34,7 +34,7 @@ class Test {
     asList((ArrayList<String>[])null);
 
     //overload should be chosen before target type is known -> inference failure
-    <error descr="Incompatible types. Found: 'java.util.List<java.util.ArrayList<java.lang.String>>', required: 'java.util.List<java.util.ArrayList<java.lang.String>[]>'">List<ArrayList<String>[]> arraysList = asList(arrayOfStrings);</error>
+    List<ArrayList<String>[]> arraysList = <error descr="Incompatible types. Found: 'java.util.List<java.util.ArrayList<java.lang.String>>', required: 'java.util.List<java.util.ArrayList<java.lang.String>[]>'">asList</error>(arrayOfStrings);
     System.out.println(arraysList);
 
     asListSuppressed(new ArrayList<String>());

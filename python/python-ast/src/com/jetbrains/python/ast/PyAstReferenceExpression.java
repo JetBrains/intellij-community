@@ -26,8 +26,7 @@ public interface PyAstReferenceExpression extends PyAstQualifiedExpression, PyAs
   PyAstReferenceExpression[] EMPTY_ARRAY = new PyAstReferenceExpression[0];
 
   @Override
-  @Nullable
-  default PyAstExpression getQualifier() {
+  default @Nullable PyAstExpression getQualifier() {
     final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     return (PyAstExpression)(nodes.length == 1 ? nodes[0].getPsi() : null);
   }
@@ -38,21 +37,18 @@ public interface PyAstReferenceExpression extends PyAstQualifiedExpression, PyAs
   }
 
   @Override
-  @Nullable
-  default String getReferencedName() {
+  default @Nullable String getReferencedName() {
     final ASTNode nameElement = getNameElement();
     return nameElement != null ? nameElement.getText() : null;
   }
 
   @Override
-  @Nullable
-  default ASTNode getNameElement() {
+  default @Nullable ASTNode getNameElement() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
-  @Nullable
   @Override
-  default String getName() {
+  default @Nullable String getName() {
     return getReferencedName();
   }
 

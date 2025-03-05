@@ -1,7 +1,7 @@
 package com.intellij.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry
@@ -12,8 +12,8 @@ data class CompletionPerformanceParameters(
   val fixedGeneratorsOrder: Boolean,
 ) {
   companion object {
-    const val PROPERTY_SHOW_LOOKUP_EARLY = "ml.completion.performance.showLookupEarly"
-    const val PROPERTY_EXECUTE_IMMEDIATELY = "ml.completion.performance.executeImmediately"
+    const val PROPERTY_SHOW_LOOKUP_EARLY: String = "ml.completion.performance.showLookupEarly"
+    const val PROPERTY_EXECUTE_IMMEDIATELY: String = "ml.completion.performance.executeImmediately"
 
     private fun parametrizeNoPerformance() = CompletionPerformanceParameters(false, true)
 
@@ -25,9 +25,9 @@ data class CompletionPerformanceParameters(
       ONLY_PERFORMANCE(19);
 
       companion object {
-        fun numbers() = Experiment.values().map { it.number }
+        fun numbers() = Experiment.entries.map { it.number }
 
-        fun fromVersion(version: Int) = Experiment.values().find { it.number == version }
+        fun fromVersion(version: Int) = Experiment.entries.find { it.number == version }
       }
     }
 

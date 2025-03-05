@@ -34,6 +34,7 @@ public final class Anchor {
     myText = text;
   }
 
+  @Override
   public String toString() {
     return myText;
   }

@@ -1,0 +1,59 @@
+--- FIND MODEL ---
+myStringToFind = null
+myStringToReplace = ''
+isReplaceState = false
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = true
+isRegularExpressions = true
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+testtest
+--
+------------
+--- FIND MODEL ---
+myStringToFind = 'test'
+myStringToReplace = ''
+isReplaceState = false
+isWholeWordsOnly = false
+searchContext = 'ANY'
+isFromCursor = true
+isForward = true
+isGlobal = true
+isRegularExpressions = true
+isCaseSensitive = false
+isMultipleFiles = false
+isPromptOnReplace = true
+isReplaceAll = false
+isProjectScope = true
+directoryName = 'null'
+isWithSubdirectories = true
+fileFilter = null
+moduleName = 'null'
+customScopeName = 'null'
+searchInProjectFiles = false
+userDataMap = {}
+
+--
+
+[[<test>[]]test]
+--
+highlighter: (0,4); layer: 5999 : BOXED
+highlighter: (0,4); layer: 5999 : ROUNDED_BOX
+highlighter: (4,8); layer: 5999 : BOXED
+------------

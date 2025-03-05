@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.documentation;
 
 import com.intellij.model.Symbol;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -53,7 +54,7 @@ public interface SymbolDocumentationTargetProvider {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  default @NotNull List<? extends @NotNull DocumentationTarget> documentationTargets(@NotNull Project project, @NotNull Symbol symbol) {
+  default @Unmodifiable @NotNull List<? extends @NotNull DocumentationTarget> documentationTargets(@NotNull Project project, @NotNull Symbol symbol) {
     return createMaybeSingletonList(documentationTarget(project, symbol));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -35,7 +35,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                     parameterInfo.oldName != parameterInfo.name ||
                     isDataClass && i != parameterInfo.oldIndex
                 ) {
-                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope())) {
+                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope()).asIterable()) {
                         val element = reference.element
                         if (isDataClass &&
                             element is KtSimpleNameExpression &&
@@ -45,7 +45,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                         ) {
                             result.add(KotlinDataClassComponentUsage(element, "component${i + 1}"))
                         } else if ((element is KtSimpleNameExpression || element is KDocName) && element.parent !is KtValueArgumentName) {
-                            result.add(KotlinParameterUsage(element as KtElement, parameterInfo))
+                            result.add(KotlinParameterUsage(element, parameterInfo))
                         }
                     }
                 }
@@ -53,7 +53,7 @@ internal object KotlinChangeSignatureUsageSearcher {
         }
         if (isDataClass && changeInfo is KotlinChangeInfo && !changeInfo.hasAppendedParametersOnly()) {
             ktCallableDeclaration.valueParameters.firstOrNull()?.let {
-                ReferencesSearch.search(it).mapNotNullTo(result) { reference ->
+                ReferencesSearch.search(it).asIterable().mapNotNullTo(result) { reference ->
                     val destructuringEntry = reference.element as? KtDestructuringDeclarationEntry ?: return@mapNotNullTo null
                     KotlinComponentUsageInDestructuring(destructuringEntry)
                 }
@@ -83,7 +83,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                         //deleted or changed receiver, must be preserved as simple parameter
                         val parentExpression = expression.parent
                         if (parentExpression is KtThisExpression && parentExpression.parent !is KtDotQualifiedExpression &&
-                            parentExpression.expressionType?.let { originalReceiverType.semanticallyEquals(it) } == true) {
+                            parentExpression.expressionType?.isSubtypeOf(originalReceiverType) == true) {
                             result.add(
                                 KotlinParameterUsage(parentExpression, originalReceiverInfo!!)
                             )

@@ -16,11 +16,11 @@ class GradleTaskWarmUpModelProvider : ProjectImportModelProvider {
     return GradleModelFetchPhase.WARM_UP_PHASE
   }
 
-  override fun populateBuildModels(
+  override fun populateModels(
     controller: BuildController,
-    buildModel: GradleBuild,
+    buildModels: Collection<GradleBuild>,
     modelConsumer: GradleModelConsumer,
   ) {
-    GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskWarmUpRequest::class.java, GradleModelConsumer.NOOP)
+    GradleModelProviderUtil.buildModels(controller, buildModels, GradleTaskWarmUpRequest::class.java, GradleModelConsumer.NOOP)
   }
 }

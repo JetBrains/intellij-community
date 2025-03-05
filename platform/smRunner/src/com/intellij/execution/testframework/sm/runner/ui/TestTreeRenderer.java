@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -13,17 +13,14 @@ import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
 public class TestTreeRenderer extends ColoredTreeCellRenderer {
-  @NonNls private static final String SPACE_STRING = " ";
+  private static final @NonNls String SPACE_STRING = " ";
 
   private final TestConsoleProperties myConsoleProperties;
   private SMRootTestProxyFormatter myAdditionalRootFormatter;
@@ -40,7 +37,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   @Override
-  public void customizeCellRenderer(@NotNull final JTree tree,
+  public void customizeCellRenderer(final @NotNull JTree tree,
                                     final Object value,
                                     final boolean selected,
                                     final boolean expanded,
@@ -71,7 +68,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       }
 
       if (TestConsoleProperties.SHOW_INLINE_STATISTICS.value(myConsoleProperties)) {
-        myDurationText = testProxy.getDurationString(myConsoleProperties);
+        myDurationText = getDurationText(testProxy, myConsoleProperties);
         if (myDurationText != null) {
           FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
           myDurationWidth = metrics.stringWidth(myDurationText);
@@ -90,9 +87,15 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     append(text != null ? text : SPACE_STRING, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
-  @NotNull
+  @Nls
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @Nullable String getDurationText(@NotNull SMTestProxy testProxy, @NotNull TestConsoleProperties consoleProperties) {
+    return testProxy.getDurationString(myConsoleProperties);
+  }
+
   @Override
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     Dimension preferredSize = super.getPreferredSize();
     if (myDurationWidth > 0) {
       preferredSize.width += myDurationWidth + myDurationLeftInset + myDurationRightInset;
@@ -138,10 +141,8 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     if (clip != null) g.setClip(clip);
   }
 
-  @Nullable
-  @NlsSafe
   @ApiStatus.Experimental
-  public String getAccessibleStatus() {
+  public @Nullable @NlsSafe String getAccessibleStatus() {
     if (myAccessibleStatus == null) return null;
     return myAccessibleStatus.get();
   }

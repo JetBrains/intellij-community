@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
 import com.intellij.psi.*;
@@ -27,9 +27,9 @@ import java.util.Objects;
  * @author Max Medvedev
  */
 public final class MixinMemberContributor {
-  public static boolean processClassMixins(@NotNull final PsiType qualifierType,
+  public static boolean processClassMixins(final @NotNull PsiType qualifierType,
                                            @NotNull PsiScopeProcessor processor,
-                                           @NotNull final PsiElement place,
+                                           final @NotNull PsiElement place,
                                            @NotNull ResolveState state) {
     if (isInAnnotation(place)) return true;
 
@@ -65,8 +65,7 @@ public final class MixinMemberContributor {
     return true;
   }
 
-  @NonNls
-  public static String getOriginInfoForCategory(PsiMethod element) {
+  public static @NonNls String getOriginInfoForCategory(PsiMethod element) {
     PsiClass aClass = element.getContainingClass();
     if (aClass != null && aClass.getName() != null) {
       return "mixed in from " + aClass.getName();
@@ -74,8 +73,7 @@ public final class MixinMemberContributor {
     return "mixed in";
   }
 
-  @NonNls
-  public static String getOriginInfoForMixin(@NotNull PsiType subjectType) {
+  public static @NonNls String getOriginInfoForMixin(@NotNull PsiType subjectType) {
     return "mixed in " + subjectType.getPresentableText();
   }
 
@@ -112,15 +110,13 @@ public final class MixinMemberContributor {
       myPrototype = method;
     }
 
-    @Nullable
     @Override
-    public String getOriginInfo() {
+    public @Nullable String getOriginInfo() {
       return myOriginInfo;
     }
 
-    @NotNull
     @Override
-    public PsiElement getPrototype() {
+    public @NotNull PsiElement getPrototype() {
       return myPrototype;
     }
   }

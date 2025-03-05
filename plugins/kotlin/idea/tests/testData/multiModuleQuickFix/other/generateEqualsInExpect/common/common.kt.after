@@ -1,6 +1,6 @@
 // "Generate 'equals()'" "true"
-// TOOL: org.jetbrains.kotlin.idea.inspections.EqualsOrHashCodeInspection
-// IGNORE_K2
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.EqualsOrHashCodeInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.EqualsOrHashCodeInspection
 
 expect class With<caret>Constructor(x: Int, s: String) {
     val x: Int

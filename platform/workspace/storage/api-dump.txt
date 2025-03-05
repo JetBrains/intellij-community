@@ -156,6 +156,12 @@ com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 - java.lang.annotation.Annotation
 @:com.intellij.platform.workspace.storage.annotations.Open
 - java.lang.annotation.Annotation
+f:com.intellij.platform.workspace.storage.impl.indices.WrongProperty2VfuInfoTypeException
+- java.lang.RuntimeException
+- <init>(java.lang.String):V
+f:com.intellij.platform.workspace.storage.impl.indices.WrongVfuInfoTypeException
+- java.lang.RuntimeException
+- <init>(java.lang.String):V
 f:com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImplKt
 - sf:toVirtualFileUrl(java.io.File,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - sf:toVirtualFileUrl(java.nio.file.Path,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -200,8 +206,8 @@ a:com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
 - b:<init>(java.util.Map,java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - pf:addMetadata(com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata):V
 - pf:addMetadataHash(java.lang.String,I):V
-- getMetadataByTypeFqnOrNull(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
-- getMetadataHashByTypeFqnOrNull(java.lang.String):java.lang.Integer
+- f:getMetadataByTypeFqnOrNull(java.lang.String):com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+- f:getMetadataHashByTypeFqnOrNull(java.lang.String):java.lang.Integer
 - pa:initializeMetadata():V
 - pa:initializeMetadataHash():V
 f:com.intellij.platform.workspace.storage.metadata.model.EntityMetadata

@@ -14,12 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotificationIdsHolder
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
@@ -62,7 +57,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal abstract class GitApplyChangesProcess(
   protected val project: Project,
   private val commits: List<VcsCommitMetadata>,
-  forceAutoCommit: Boolean,
   @Nls private val operationName: String,
   @Nls private val appliedWord: String,
   private val abortCommand: GitAbortOperationAction,
@@ -75,7 +69,6 @@ internal abstract class GitApplyChangesProcess(
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
   private val notificationsHandler = project.service<GitApplyChangesNotificationsHandler>()
-  protected val autoCommit = forceAutoCommit || !changeListManager.areChangeListsEnabled()
 
   protected abstract fun isEmptyCommit(result: GitCommandResult): Boolean
 
@@ -179,19 +172,9 @@ internal abstract class GitApplyChangesProcess(
       val result = applyChanges(repository, commit, listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
 
       if (result.success()) {
-        if (autoCommit) {
-          refreshChangedVfs(repository, startHash)
-          successfulCommits.add(commit)
-          return true
-        }
-        else {
-          refreshStagedVfs(repository.root)
-          VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
-          changeListManager.waitForUpdate()
-          strategy.afterChangesRefreshed()
-
-          return strategy.doUserCommit(successfulCommits, alreadyPicked)
-        }
+        refreshChangedVfs(repository, startHash)
+        successfulCommits.add(commit)
+        return true
       }
       else if (conflictDetector.isDetected) {
         val mergeCompleted = ConflictResolver(project, repository.root, commit.id.toShortString(),
@@ -199,7 +182,7 @@ internal abstract class GitApplyChangesProcess(
                                               operationName).merge()
 
         refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
-        VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
+        VcsDirtyScopeManager.getInstance(project).rootDirty(repository.root)
         changeListManager.waitForUpdate()
         strategy.afterChangesRefreshed()
 

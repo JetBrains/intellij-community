@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.xdebugger.XNamedTreeNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
@@ -134,7 +133,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   @Override
-  public void nodeLoaded(@NotNull final RestorableStateNode node, @NotNull final String name) {
+  public void nodeLoaded(final @NotNull RestorableStateNode node, final @NotNull String name) {
     XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
     XDebuggerTreeState.NodeInfo nodeInfo = parentInfo != null ? parentInfo.getChild(node) : myPendingNode2State.remove(node);
     // always restore if parentInfo is available
@@ -147,19 +146,14 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private void checkFinished() {
     if (myNode2ParentState.isEmpty() && myNode2State.isEmpty() && myFinished.complete(myTree)) {
       if (myLastVisibleNodeRect != null) {
-        if (myTree.getParent() instanceof AntiFlickeringPanel antiFlickeringPanel) {
-          antiFlickeringPanel.scrollRectToVisibleAfterFreeze(myLastVisibleNodeRect);
-        }
-        else {
-          myTree.scrollRectToVisible(myLastVisibleNodeRect);
-        }
+        myTree.scrollRectToVisible(myLastVisibleNodeRect);
       }
       //dispose(); // do not dispose here, we still need tree listeners for late renderers
     }
   }
 
   @Override
-  public void childrenLoaded(@NotNull final XDebuggerTreeNode node, @NotNull final List<? extends XValueContainerNode<?>> children, final boolean last) {
+  public void childrenLoaded(final @NotNull XDebuggerTreeNode node, final @NotNull List<? extends XValueContainerNode<?>> children, final boolean last) {
     XDebuggerTreeState.NodeInfo nodeInfo = myNode2State.get(node);
     if (nodeInfo != null) {
       for (XDebuggerTreeNode child : children) {

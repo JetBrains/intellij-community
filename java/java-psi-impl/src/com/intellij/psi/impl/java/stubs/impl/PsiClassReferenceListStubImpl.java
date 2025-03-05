@@ -15,13 +15,18 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
   private final TypeInfo @NotNull [] myInfos;
   private volatile PsiClassType [] myTypes;
 
   public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, String @NotNull [] names) {
-    this(type, parent, ContainerUtil.map2Array(names, TypeInfo.class, text -> TypeInfo.fromString(text)));
+    this(type, parent, ContainerUtil.map2Array(
+      ContainerUtil.filter(names, PsiClassReferenceListStubImpl::isCorrectGenericSequence),
+      TypeInfo.class,
+      TypeInfo::fromString)
+    );
   }
 
   public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, 
@@ -89,6 +94,18 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       }
     }
     return types;
+  }
+
+  private static boolean isCorrectGenericSequence(@Nullable String text) {
+    if (text == null) return true;
+    int depth = 0;
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (ch == '<') depth++;
+      else if (ch == '>') depth--;
+      if (depth < 0) return false;
+    }
+    return depth == 0;
   }
 
   @Override

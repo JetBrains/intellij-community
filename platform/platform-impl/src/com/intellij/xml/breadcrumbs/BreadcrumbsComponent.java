@@ -23,8 +23,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.util.ui.SwingTextTrimmer.THREE_DOTS_AT_LEFT;
 
@@ -487,6 +487,7 @@ public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComp
       myOffset = offset;
     }
 
+    @Override
     public String toString() {
       return getString();
     }
@@ -578,6 +579,7 @@ public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComp
       // does nothing
     }
 
+    @Override
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "DUMMY";

@@ -1,8 +1,8 @@
 import kotlin.properties.ReadWriteProperty
 
 // "Create class 'Foo'" "true"
-// DISABLE-ERRORS
-
+// DISABLE_ERRORS
+// IGNORE_K2
 open class B
 
 class A<T>(val t: T) {

@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 class PhpEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
-    final private Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
+    private final Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
 
     @Override
     public void visitElement(@NotNull PsiElement element) {

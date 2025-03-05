@@ -1,5 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/"
-             package="com.jetbrains.python">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://www.jetbrains.com/pycharm/">
   <!--Python community support for Pycharm, DS and IC.-->
   <!--Include core Python functionality-->
 
@@ -52,7 +51,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.grazie"/>
     <module name="intellij.python.langInjection"/>
     <module name="intellij.python.markdown"/>
+    <module name="intellij.python.ml.features"/>
     <module name="intellij.python.terminal"/>
+
   </content>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
@@ -84,9 +85,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                             implementationClass="com.jetbrains.python.requirements.PoetryDependencyPackageNameCompletionContributor"/>
     <completion.contributor language="TOML"
                             implementationClass="com.jetbrains.python.requirements.PoetryDependencyVersionCompletionContributor"/>
-    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
-                    serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
-                    overrides="true"/>
     <localInspection language="Requirements" shortName="UnsatisfiedRequirementInspection" suppressId="UnsatisfiedRequirement" bundle="messages.PyBundle"
                      key="INSP.requirement.uninstalled.name" groupKey="INSP.GROUP.requirements" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.requirements.UnsatisfiedRequirementInspection"/>
@@ -94,7 +92,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <pluginSuggestionProvider order="first" implementation="com.jetbrains.python.suggestions.PycharmProSuggestionProvider"/>
     <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPostStartupActivity"/>
   </extensions>
-
 
   <projectListeners>
     <listener
@@ -412,6 +409,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.PyCustomMemberProvider"
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCustomMemberProviderImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.packaging.management.PythonPackageManagerService"
+                        serviceImplementation="com.jetbrains.python.packaging.management.PythonPackageManagerServiceImpl"/>
+
     <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
     <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>
@@ -520,8 +520,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.installer.BinaryInstallerUsagesCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.codeInsight.imports.mlapi.PyCharmImportsRankingLogs"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector"/>
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
@@ -585,7 +584,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <notificationGroup id="Python interpreter installation" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.sdk.installation.notification.group"/>
 
-
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
@@ -640,20 +638,24 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <registryKey key="python.parameter.info.show.all.hints" defaultValue="false"
                  description="Show type hints for all parameters in parameter info window"/>
 
-    <!-- Machine Learning -->
-    <registryKey
-      key="quickfix.ranking.ml"
-      defaultValue="[IN_EXPERIMENT*|ENABLED|DISABLED]"
-      description="Enable ML ranking in quick fix for missing imports"/>
-
     <registryKey key="disable.python.cache.update"
                  defaultValue="false"
                  restartRequired="false"
                  description="Disables automatic updating of PyPI package cache and ranking on project startup."/>
 
+    <!-- Setting up cross-module dependencies -->
+    <registryKey key="python.detect.cross.module.dependencies" defaultValue="false"
+                 description="Try to detect and automatically set-up module dependencies in a multi-module project"/>
+
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonUvSupportSurvey"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.feedback.PythonJobStatisticsCollector"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.statistics.feedback.PythonFirstLaunchChecker"/>
+
+    <registryKey key="python.prebuilt.skeletons.minor.version.aware" defaultValue="false"
+                 description="When disabled stripes minor version to look for prebuilt skeletons"/>
+    <registryKey key="python.activate.virtualenv.on.run" defaultValue="true"
+                 description="Whether enabled activates virtualenv before script execution and passes environment to the process"/>
   </extensions>
 
   <extensionPoints>
@@ -840,9 +842,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <!-- SDK Flavors -->
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor"/>
-    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.JythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
-    <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.PyPySdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
@@ -871,6 +871,8 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
+
+    <systemPythonProvider implementation="com.jetbrains.python.sdk.uv.UvSystemPythonProvider"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
@@ -1015,6 +1017,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
               text="Set PropertiesComponent Value" description="Set value in application-level PropertiesComponent"/>
       <action id="PyShowJobSurvey" internal="true" class="com.jetbrains.python.statistics.feedback.PythonShowJobSurveyAction"
               text="Show Python Job Survey"/>
+      <action id="PyUvSupportSurvey" internal="true" class="com.jetbrains.python.statistics.feedback.PythonShowUvSupportAction"
+              text="Show uv Support Survey"/>
+
       <add-to-group group-id="Internal"/>
     </group>
   </actions>
@@ -1036,5 +1041,11 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <numericContainerPopupCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizerDefault"/>
     <pyDebugAsyncioCustomizer implementation="com.jetbrains.python.debugger.PyDebugAsyncioCustomizerDefault"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.systemPythonProvider"
+                    dynamic="true"
+                    interface="com.intellij.python.community.services.systemPython.SystemPythonProvider"/>
+  </extensionPoints>
 
 </idea-plugin>

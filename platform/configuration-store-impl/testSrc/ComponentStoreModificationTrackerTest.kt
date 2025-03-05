@@ -174,6 +174,8 @@ internal class ComponentStoreModificationTrackerTest {
     }
 
     override val storageManager: StateStorageManagerImpl = TestStateStorageManager()
+    @Volatile
+    override var isStoreInitialized: Boolean = false
 
     init {
       setPath(testAppConfigPath)
@@ -182,6 +184,7 @@ internal class ComponentStoreModificationTrackerTest {
     override fun setPath(path: Path) {
       // yes, in tests APP_CONFIG equals to ROOT_CONFIG (as ICS does)
       storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path)))
+      isStoreInitialized = true
     }
   }
 }

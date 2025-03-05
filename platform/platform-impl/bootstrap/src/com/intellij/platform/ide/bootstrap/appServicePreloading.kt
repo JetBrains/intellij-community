@@ -107,7 +107,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
       // RegistryManager is needed for ProjectJdkTable
       registryManagerJob.join()
       span("ProjectJdkTable preloading") {
-        app.serviceAsync<ProjectJdkTable>()
+        app.getServiceAsyncIfDefined(ProjectJdkTable::class.java)
       }
     }
   }
@@ -127,10 +127,12 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
     }
 
     launch(CoroutineName("app service preloading (sync)")) {
-      app.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                          activityPrefix = "",
-                          syncScope = this,
-                          asyncScope = app.getCoroutineScope().childScope(supervisor = false))
+      app.preloadServices(
+        modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+        activityPrefix = "",
+        syncScope = this,
+        asyncScope = app.getCoroutineScope().childScope(supervisor = false, name = "app service preloading"),
+      )
     }
   }
 

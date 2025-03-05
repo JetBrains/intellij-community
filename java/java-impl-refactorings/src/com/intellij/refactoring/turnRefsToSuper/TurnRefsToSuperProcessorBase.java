@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.turnRefsToSuper;
 
 import com.intellij.internal.diGraph.analyzer.GlobalAnalyzer;
@@ -389,7 +389,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     PsiReferenceExpression methodRef = methodCall.getMethodExpression();
     tmp = methodRef.resolve();
     if (!(tmp instanceof PsiMethod method)) return;
-    @NonNls final String name = method.getName();
+    final @NonNls String name = method.getName();
     if (!name.equals("toArray")) return;
 
     PsiClass methodClass = method.getContainingClass();
@@ -407,7 +407,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       addLink(type, initializer);
     }
 
-    for (PsiReference ref : ReferencesSearch.search(variable)) {
+    for (PsiReference ref : ReferencesSearch.search(variable).asIterable()) {
       final PsiElement element = ref.getElement();
       addLink(element, type);
       addLink(type, element);
@@ -427,7 +427,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         final int index = method.getParameterList().getParameterIndex((PsiParameter)variable);
 
         {
-          for (PsiReference call : ReferencesSearch.search(method)) {
+          for (PsiReference call : ReferencesSearch.search(method).asIterable()) {
             PsiElement ref = call.getElement();
             PsiExpressionList argumentList;
             if (ref.getParent() instanceof PsiCall) {
@@ -518,7 +518,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
 
   private void processMethodReturnType(final PsiMethod method) {
     final PsiTypeElement returnType = method.getReturnTypeElement();
-    for (PsiReference call : ReferencesSearch.search(method)) {
+    for (PsiReference call : ReferencesSearch.search(method).asIterable()) {
       final PsiElement ref = call.getElement();
       if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) continue;
       final PsiElement parent = ref.getParent();

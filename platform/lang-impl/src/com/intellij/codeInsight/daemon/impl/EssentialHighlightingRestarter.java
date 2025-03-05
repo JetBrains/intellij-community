@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Tells {@link DaemonCodeAnalyzerImpl} to run full set of passes after "Save all" to show all diagnostics
+ * Tells {@link DaemonCodeAnalyzerImpl} to run full set of passes after "Save all" action was invoked, to show all diagnostics
  * if the current selected file configured as "Highlight: Essential only"
  */
 @ApiStatus.Internal
@@ -42,7 +42,8 @@ public final class EssentialHighlightingRestarter implements SaveAndSyncHandlerL
 
   @Override
   public void beforeSave(@NotNull SaveAndSyncHandler.SaveTask task, boolean forceExecuteImmediately) {
-    if (!Registry.is("highlighting.essential.should.restart.in.full.mode.on.save.all")
+    if (!myProject.isInitialized() || myProject.isDisposed()
+        || !Registry.is("highlighting.essential.should.restart.in.full.mode.on.save.all")
         || isEssentialHighlightingRestarterDisabledForProject(myProject)) {
       return;
     }
@@ -54,7 +55,7 @@ public final class EssentialHighlightingRestarter implements SaveAndSyncHandlerL
                                                       FileHighlightingSetting.ESSENTIAL).executeSynchronously());
     if (hasFilesWithEssentialHighlightingConfigured) {
       DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-      codeAnalyzer.restartToCompleteEssentialHighlighting();
+      codeAnalyzer.requestRestartToCompleteEssentialHighlighting();
     }
   }
 }

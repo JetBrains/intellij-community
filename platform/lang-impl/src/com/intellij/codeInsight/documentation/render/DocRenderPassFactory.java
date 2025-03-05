@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation.render;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,6 +30,8 @@ import static com.intellij.codeInsight.documentation.render.InlineDocumentationI
 import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS;
 
 public final class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
+  private static final Logger LOG = Logger.getInstance(DocRenderPassFactory.class);
+
   private static final Key<Long> MODIFICATION_STAMP = Key.create("doc.render.modification.stamp");
   private static final Key<Boolean> RESET_TO_DEFAULT = Key.create("doc.render.reset.to.default");
   private static final Key<Boolean> ICONS_ENABLED = Key.create("doc.render.icons.enabled");
@@ -39,14 +42,14 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
   }
 
   @Override
-  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    long current = PsiModificationTracker.getInstance(file.getProject()).getModificationCount();
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    long current = PsiModificationTracker.getInstance(psiFile.getProject()).getModificationCount();
     boolean iconsEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     Long existing = editor.getUserData(MODIFICATION_STAMP);
     Boolean iconsWereEnabled = editor.getUserData(ICONS_ENABLED);
     return editor.getProject() == null ||
            existing != null && existing == current && iconsWereEnabled != null && iconsWereEnabled == iconsEnabled
-           ? null : new DocRenderPass(editor, file);
+           ? null : new DocRenderPass(editor, psiFile);
   }
 
   static void forceRefreshOnNextPass(@NotNull Editor editor) {
@@ -92,9 +95,15 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
   }
 
   static boolean isValidRange(@NotNull Document document, @NotNull TextRange range) {
-    CharSequence text = document.getImmutableCharSequence();
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
+    int textLength = document.getTextLength();
+    if (startOffset >= textLength || endOffset > textLength) {
+      LOG.error("Invalid range: " + range + " while document length is " + textLength);
+      return false;
+    }
+
+    CharSequence text = document.getImmutableCharSequence();
     int startLine = document.getLineNumber(startOffset);
     int endLine = document.getLineNumber(endOffset);
     if (!CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(document.getLineStartOffset(startLine), startOffset)) ||

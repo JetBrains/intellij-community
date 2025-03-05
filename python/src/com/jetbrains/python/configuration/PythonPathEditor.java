@@ -26,6 +26,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -115,7 +116,7 @@ public class PythonPathEditor extends SdkPathEditor {
   protected ListCellRenderer<VirtualFile> createListCellRenderer(JBList<VirtualFile> list) {
     return SimpleListCellRenderer.create("", value -> {
       String suffix = myPathListModel.getPresentationSuffix(value);
-      if (suffix.length() > 0) suffix = "  " + suffix;
+      if (!suffix.isEmpty()) suffix = "  " + suffix;
       return getPresentablePath(value) + suffix;
     });
   }
@@ -293,6 +294,9 @@ public class PythonPathEditor extends SdkPathEditor {
         return true;
       }
       else if (PyTypeShed.INSTANCE.isInside(file)) {
+        return true;
+      }
+      else if (PyBundledStubs.INSTANCE.isInside(file)) {
         return true;
       }
       else {

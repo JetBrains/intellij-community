@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitNotificationIdsHolder;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
+import git4idea.branch.GitRebaseParams;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
@@ -76,8 +77,9 @@ public final class GitRebaseUpdater extends GitUpdater {
     GitBranchPair sourceAndTarget = getSourceAndTarget();
     String currentRef = sourceAndTarget.getSource().getFullName();
     String baseRef = sourceAndTarget.getTarget().getFullName();
+    GitRebaseParams.RebaseUpstream upstream = GitRebaseParams.RebaseUpstream.Companion.fromRefString(baseRef);
 
-    if (GitRebaseProcess.isRebasingPublishedCommit(myRepository, baseRef, currentRef)) {
+    if (GitRebaseProcess.isRebasingPublishedCommit(myRepository, upstream, currentRef)) {
       return GitRebaseProcess.askIfShouldRebasePublishedCommit();
     }
     return true;

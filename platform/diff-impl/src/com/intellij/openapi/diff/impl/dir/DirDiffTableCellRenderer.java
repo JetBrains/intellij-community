@@ -75,7 +75,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
         label.setHorizontalAlignment(LEFT);
         final String text = label.getText();
         label.setText("  " + text);
-        if (text != null && text.trim().length() > 0) {
+        if (text != null && !text.trim().isEmpty()) {
           label.setIcon(modelColumn == 0 ? element.getSourceIcon() : element.getTargetIcon());
         }
       }

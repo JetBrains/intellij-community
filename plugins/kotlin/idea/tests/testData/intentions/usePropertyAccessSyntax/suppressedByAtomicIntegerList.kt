@@ -1,7 +1,7 @@
 // WITH_STDLIB
 // WITH_JDK
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 import java.util.concurrent.atomic.AtomicInteger
 
 fun main() {

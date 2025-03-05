@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -34,16 +35,16 @@ interface KotlinBundledFirCompilerPluginProvider {
      * This method can be executed quite frequently, so it should be reasonably fast
      * and avoid any heavy IO blocking (network access, for example).
      */
-    fun provideBundledPluginJar(userSuppliedPluginJar: Path): Path?
+    fun provideBundledPluginJar(project: Project, userSuppliedPluginJar: Path): Path?
 
     companion object {
         private val EP_NAME: ExtensionPointName<KotlinBundledFirCompilerPluginProvider> =
             ExtensionPointName.create("org.jetbrains.kotlin.bundledFirCompilerPluginProvider")
 
-        fun provideBundledPluginJar(originalPluginJar: Path): Path? {
+        fun provideBundledPluginJar(project: Project, originalPluginJar: Path): Path? {
             return EP_NAME.extensionList.firstNotNullOfOrNull {
                 ProgressManager.checkCanceled()
-                it.provideBundledPluginJar(originalPluginJar)
+                it.provideBundledPluginJar(project, originalPluginJar)
             }
         }
     }

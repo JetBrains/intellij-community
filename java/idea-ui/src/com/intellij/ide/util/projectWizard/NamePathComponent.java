@@ -214,8 +214,7 @@ public final class NamePathComponent extends JPanel {
     }
   }
 
-  @NotNull
-  public JTextField getNameComponent() {
+  public @NotNull JTextField getNameComponent() {
     return myTfName;
   }
 
@@ -224,13 +223,11 @@ public final class NamePathComponent extends JPanel {
     myNameLabel.setVisible(visible);
   }
 
-  @NotNull
-  public JTextField getPathComponent() {
+  public @NotNull JTextField getPathComponent() {
     return myTfPath;
   }
 
-  @NotNull
-  public FieldPanel getPathPanel() {
+  public @NotNull FieldPanel getPathPanel() {
     return myPathPanel;
   }
 

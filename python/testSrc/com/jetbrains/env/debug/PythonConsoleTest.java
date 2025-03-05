@@ -2,7 +2,6 @@
 package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -98,12 +97,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
                """);
         waitForOutput("101");
       }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Sets.newHashSet("-jython"); //jython doesn't support multiline execution: http://bugs.jython.org/issue2106
-      }
     });
   }
 
@@ -122,12 +115,6 @@ public class PythonConsoleTest extends PyEnvTestCase {
         interrupt();
         waitForFinish();
         waitForReady();
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Sets.newHashSet("-iron", "-jython");
       }
     });
   }

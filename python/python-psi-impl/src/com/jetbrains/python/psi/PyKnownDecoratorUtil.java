@@ -15,7 +15,6 @@ import com.jetbrains.python.pyi.PyiFile;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -94,7 +93,9 @@ public final class PyKnownDecoratorUtil {
     ATTRS_MUTABLE("attrs.mutable"),
     ATTRS_FROZEN("attrs.frozen"),
 
-    PYTEST_FIXTURES_FIXTURE("_pytest.fixtures.fixture");
+    PYTEST_FIXTURES_FIXTURE("_pytest.fixtures.fixture"),
+    ENUM_MEMBER(PyNames.TYPE_ENUM_MEMBER),
+    ENUM_NONMEMBER(PyNames.TYPE_ENUM_NONMEMBER);
 
     private final QualifiedName myQualifiedName;
 
@@ -102,13 +103,11 @@ public final class PyKnownDecoratorUtil {
       myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
     }
 
-    @NotNull
-    public QualifiedName getQualifiedName() {
+    public @NotNull QualifiedName getQualifiedName() {
       return myQualifiedName;
     }
 
-    @NotNull
-    public String getShortName() {
+    public @NotNull String getShortName() {
       //noinspection ConstantConditions
       return myQualifiedName.getLastComponent();
     }
@@ -143,8 +142,7 @@ public final class PyKnownDecoratorUtil {
    *                of theirs qualified names.
    * @return list of known decorators in declaration order with duplicates (with any)
    */
-  @NotNull
-  public static List<KnownDecorator> getKnownDecorators(@NotNull PyDecoratable element, @NotNull TypeEvalContext context) {
+  public static @NotNull List<KnownDecorator> getKnownDecorators(@NotNull PyDecoratable element, @NotNull TypeEvalContext context) {
     final PyDecoratorList decoratorList = element.getDecoratorList();
     if (decoratorList == null) {
       return Collections.emptyList();
@@ -155,8 +153,7 @@ public final class PyKnownDecoratorUtil {
       .toImmutableList();
   }
 
-  @NotNull
-  public static List<KnownDecorator> asKnownDecorators(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
+  public static @NotNull List<KnownDecorator> asKnownDecorators(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
     final QualifiedName qualifiedName = decorator.getQualifiedName();
     if (qualifiedName == null) {
       return Collections.emptyList();
@@ -186,8 +183,7 @@ public final class PyKnownDecoratorUtil {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static List<KnownDecorator> asKnownDecorators(@NotNull QualifiedName qualifiedName) {
+  public static @NotNull List<KnownDecorator> asKnownDecorators(@NotNull QualifiedName qualifiedName) {
     // The method might have been called during building of PSI stub indexes. Thus, we can't leave this file's boundaries.
     // TODO Use proper local resolve to imported names here
     return Collections.unmodifiableList(BY_SHORT_NAME.getOrDefault(qualifiedName.getLastComponent(), Collections.emptyList()));

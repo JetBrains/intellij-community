@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.diagnostic.PluginException;
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,8 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     return (T)super.getUserObject();
   }
 
-  public static void sortByName(@Nullable List<? extends FrameworkSupportNodeBase<?>> nodes, @Nullable final Comparator<? super FrameworkSupportNodeBase<?>> comparator) {
+  @Contract(mutates = "param1")
+  public static void sortByName(@Nullable List<? extends FrameworkSupportNodeBase<?>> nodes, final @Nullable Comparator<? super FrameworkSupportNodeBase<?>> comparator) {
     if (nodes == null) return;
 
     nodes.sort((o1, o2) -> {
@@ -55,13 +57,11 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     }
   }
 
-  @NotNull
-  protected final @NlsContexts.Label String getTitle() {
+  protected final @NotNull @NlsContexts.Label String getTitle() {
     return getUserObject().getPresentableName();
   }
 
-  @NotNull
-  public final Icon getIcon() {
+  public final @NotNull Icon getIcon() {
     Icon icon = getUserObject().getIcon();
     //noinspection ConstantConditions
     if (icon == null) {
@@ -72,14 +72,12 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
     return icon;
   }
 
-  @NotNull
-  public final String getId() {
+  public final @NotNull String getId() {
     return getUserObject().getId();
   }
 
   @SuppressWarnings("unchecked")
-  @NotNull
-  public List<FrameworkSupportNodeBase<?>> getChildren() {
+  public @NotNull List<FrameworkSupportNodeBase<?>> getChildren() {
     return children != null ? (List<FrameworkSupportNodeBase<?>>)(List<?>)children : Collections.emptyList();
   }
 

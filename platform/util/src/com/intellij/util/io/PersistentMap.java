@@ -20,6 +20,7 @@ public interface PersistentMap<K, V> extends KeyValueStore<K, V> {
 
   boolean isClosed();
 
+  @Override
   boolean isDirty();
 
   void markDirty() throws IOException;

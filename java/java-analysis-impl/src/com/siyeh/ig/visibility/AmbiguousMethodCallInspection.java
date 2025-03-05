@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -19,24 +19,21 @@ import org.jetbrains.annotations.Nullable;
 public final class AmbiguousMethodCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiClass superClass = (PsiClass)infos[0];
     final PsiClass outerClass = (PsiClass)infos[1];
     return InspectionGadgetsBundle.message("ambiguous.method.call.problem.descriptor", superClass.getName(), outerClass.getName());
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new AmbiguousMethodCallFix();
   }
 
   private static class AmbiguousMethodCallFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("ambiguous.method.call.quickfix");
     }
 

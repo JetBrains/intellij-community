@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -32,8 +32,7 @@ import java.util.stream.Collectors;
 public final class ClassNewInstanceInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.new.instance.problem.descriptor");
   }
@@ -46,8 +45,7 @@ public final class ClassNewInstanceInspection extends BaseInspection {
   private static class ClassNewInstanceFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Class.getConstructor().newInstance()");
     }
 
@@ -79,7 +77,7 @@ public final class ClassNewInstanceInspection extends BaseInspection {
       else if (parentOfType instanceof PsiMethod method){
         addThrowsClause(method, "java.lang.NoSuchMethodException", "java.lang.reflect.InvocationTargetException");
       }
-      @NonNls final String newExpression = qualifier.getText() + ".getConstructor().newInstance()";
+      final @NonNls String newExpression = qualifier.getText() + ".getConstructor().newInstance()";
       PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression, new CommentTracker());
     }
 
@@ -134,7 +132,7 @@ public final class ClassNewInstanceInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if (!"newInstance".equals(methodName)) {
         return;
       }

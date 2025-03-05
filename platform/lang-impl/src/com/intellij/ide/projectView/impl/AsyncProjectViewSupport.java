@@ -4,6 +4,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.tree.*;
+import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,9 +27,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-
-import static com.intellij.ide.util.treeView.TreeState.expand;
-import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
 
 @ApiStatus.Internal
 public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
@@ -53,7 +52,7 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
           TreeCollector<VirtualFile> collector = TreeCollector.VirtualFileRoots.create();
           for (VirtualFile file : updatedFiles) {
             if (!file.isDirectory()) file = file.getParent();
-            if (file != null && findArea(file, project) != null) collector.add(file);
+            if (file != null && ProjectFileNode.findArea(file, project) != null) collector.add(file);
           }
           List<VirtualFile> roots = collector.get();
           LOG.debug("found ", roots.size(), " roots in ", System.currentTimeMillis() - time, "ms");
@@ -75,8 +74,8 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
 
   @Override
   public @NotNull ActionCallback select(@NotNull JTree tree, @Nullable Object object, @Nullable VirtualFile file) {
-    if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-      SelectInProjectViewImplKt.getLOG().debug(
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(
         "AsyncProjectViewSupport.select: " +
         "object=" + object
         + ", file=" + file
@@ -85,8 +84,8 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
     if (object instanceof AbstractTreeNode node) {
       object = node.getValue();
       LOG.debug("select AbstractTreeNode");
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("Retrieved the value from the node: " + object);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Retrieved the value from the node: " + object);
       }
     }
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
@@ -97,16 +96,16 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
 
     ActionCallback callback = new ActionCallback();
     //noinspection CodeBlock2Expr
-    SelectInProjectViewImplKt.getLOG().debug("Updating nodes before selecting");
-    myNodeUpdater.updateImmediately(() -> expand(tree, promise -> {
-      SelectInProjectViewImplKt.getLOG().debug("Updated nodes");
+    LOG.debug("Updating nodes before selecting");
+    myNodeUpdater.updateImmediately(() -> TreeState.expand(tree, promise -> {
+      LOG.debug("Updated nodes");
       promise.onSuccess(o -> callback.setDone());
-      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-        SelectInProjectViewImplKt.getLOG().debug("Collecting paths to select");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Collecting paths to select");
       }
       acceptOnEDT(visitor, () -> {
-        if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-          SelectInProjectViewImplKt.getLOG().debug("Collected paths to the element: " + pathsToSelect);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Collected paths to the element: " + pathsToSelect);
         }
         boolean selected = selectPaths(tree, pathsToSelect, visitor);
         if (selected ||
@@ -114,29 +113,29 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
             file == null ||
             Registry.is("async.project.view.support.extra.select.disabled")) {
           if (selected) {
-            SelectInProjectViewImplKt.getLOG().debug("Selected successfully. Done");
+            LOG.debug("Selected successfully. Done");
           }
           else {
-            SelectInProjectViewImplKt.getLOG().debug("Couldn't select, but there's nothing else to do. Done");
+            LOG.debug("Couldn't select, but there's nothing else to do. Done");
           }
           promise.setResult(null);
         }
         else {
-          SelectInProjectViewImplKt.getLOG().debug("Couldn't select the element, falling back to selecting the file");
+          LOG.debug("Couldn't select the element, falling back to selecting the file");
           // try to search the specified file instead of element,
           // because Kotlin files cannot represent containing functions
           pathsToSelect.clear();
           TreeVisitor fileVisitor = AbstractProjectViewPane.createVisitor(null, file, pathsToSelect);
           acceptOnEDT(fileVisitor, () -> {
-            if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
-              SelectInProjectViewImplKt.getLOG().debug("Collected paths to the file: " + pathsToSelect);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Collected paths to the file: " + pathsToSelect);
             }
             boolean selectedFile = selectPaths(tree, pathsToSelect, fileVisitor);
             if (selectedFile) {
-              SelectInProjectViewImplKt.getLOG().debug("Selected successfully. Done");
+              LOG.debug("Selected successfully. Done");
             }
             else {
-              SelectInProjectViewImplKt.getLOG().debug("Couldn't select, but there's nothing else to do. Done");
+              LOG.debug("Couldn't select, but there's nothing else to do. Done");
             }
             promise.setResult(null);
           });

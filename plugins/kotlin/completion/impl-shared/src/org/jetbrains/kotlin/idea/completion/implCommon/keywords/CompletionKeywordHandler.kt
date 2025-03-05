@@ -15,7 +15,7 @@ abstract class CompletionKeywordHandler<CONTEXT>(
 
     context(CONTEXT)
     abstract fun createLookups(
-        parameters: CompletionParameters,
+        parameters: CompletionParameters, // todo replace with KotlinFirCompletionParameters eventually
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project

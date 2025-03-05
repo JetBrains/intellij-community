@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.build.issue.BuildIssue;
@@ -21,27 +21,23 @@ public class NonAcceptedJavaLevelIssue implements BuildIssue {
 
   public NonAcceptedJavaLevelIssue(LanguageLevel level) { myLevel = level; }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return SyncBundle.message("maven.language.level.unaccepted.title", myLevel.getPresentableText());
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return SyncBundle.message("maven.language.level.unaccepted.description", myLevel.getPresentableText(), MyQuickFix.ID);
   }
 
-  @NotNull
   @Override
-  public List<BuildIssueQuickFix> getQuickFixes() {
+  public @NotNull List<BuildIssueQuickFix> getQuickFixes() {
     return Collections.singletonList(new MyQuickFix(myLevel));
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable(@NotNull Project project) {
+  public @Nullable Navigatable getNavigatable(@NotNull Project project) {
     return null;
   }
 
@@ -54,15 +50,13 @@ public class NonAcceptedJavaLevelIssue implements BuildIssue {
       myLevel = level;
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
-    @NotNull
     @Override
-    public CompletableFuture<?> runQuickFix(@NotNull Project project, @NotNull DataContext dataContext) {
+    public @NotNull CompletableFuture<?> runQuickFix(@NotNull Project project, @NotNull DataContext dataContext) {
       AcceptedLanguageLevelsSettings.showNotificationToAccept(project, myLevel);
       return CompletableFuture.completedFuture(null);
     }

@@ -45,9 +45,8 @@ public final class PyDecoratorStubIndex extends StringStubIndexExtension<PyDecor
     return StubIndex.getElements(KEY, name, project, scope, PyDecorator.class);
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PyDecorator> getKey() {
+  public @NotNull StubIndexKey<String, PyDecorator> getKey() {
     return KEY;
   }
 }

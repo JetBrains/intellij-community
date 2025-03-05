@@ -19,10 +19,12 @@ import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,12 +35,12 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
 
   public PythonSdkChooserCombo(final @Nullable Project project,
                                final @Nullable Module module,
-                               @NotNull List<? extends Sdk> sdks,
+                               @NotNull @Unmodifiable List<? extends Sdk> sdks,
                                final @NotNull Condition<? super Sdk> acceptableSdkCondition) {
     super(new ComboBox<>());
     final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);
     final JComboBox comboBox = getComboBox();
-    comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
+    comboBox.setModel(new CollectionComboBoxModel(new ArrayList<>(sdks), initialSelection));
     comboBox.setRenderer(new PySdkListCellRenderer());
     addActionListener(new ActionListener() {
       @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -24,18 +24,16 @@ public class CommittedChangesBrowser extends SimpleAsyncChangesBrowser {
     super(project, false, false);
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createToolbarActions() {
+  protected @NotNull List<AnAction> createToolbarActions() {
     return ContainerUtil.append(
       super.createToolbarActions(),
       ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserToolbar")
     );
   }
 
-  @NotNull
   @Override
-  protected List<AnAction> createPopupMenuActions() {
+  protected @NotNull List<AnAction> createPopupMenuActions() {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
       ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserMenu")

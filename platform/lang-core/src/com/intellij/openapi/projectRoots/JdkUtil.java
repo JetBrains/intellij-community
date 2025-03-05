@@ -86,8 +86,12 @@ public final class JdkUtil {
   }
 
   public static boolean checkForJdk(@NotNull Path homePath) {
-    return (Files.exists(homePath.resolve("bin/javac")) ||
-            (SystemInfo.isWindows && Files.exists(homePath.resolve("bin/javac.exe")))) &&
+    return checkForJdk(homePath, SystemInfo.isWindows);
+  }
+
+  public static boolean checkForJdk(@NotNull Path homePath, boolean isWindows) {
+    return (!isWindows && Files.exists(homePath.resolve("bin/javac")) ||
+            (isWindows && Files.exists(homePath.resolve("bin/javac.exe")))) &&
            (isModularRuntime(homePath) ||                               // Jigsaw JDK/JRE
             Files.exists(homePath.resolve("jre/lib/rt.jar")) ||         // pre-modular JDK
             Files.isDirectory(homePath.resolve("classes")) ||           // custom build

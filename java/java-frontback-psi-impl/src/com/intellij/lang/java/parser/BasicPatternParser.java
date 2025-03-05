@@ -47,7 +47,7 @@ public class BasicPatternParser {
         "_".equals(builder.getTokenText())) {
       emptyElement(builder, myJavaElementTypeContainer.TYPE);
       builder.advanceLexer();
-      done(patternStart, myJavaElementTypeContainer.UNNAMED_PATTERN, myWhiteSpaceAndCommentSetHolder);
+      done(patternStart, myJavaElementTypeContainer.UNNAMED_PATTERN, builder, myWhiteSpaceAndCommentSetHolder);
       return true;
     }
     patternStart.rollbackTo();
@@ -160,16 +160,16 @@ public class BasicPatternParser {
 
     if (isRecord) {
       patternVariable.drop();
-      done(pattern, myJavaElementTypeContainer.DECONSTRUCTION_PATTERN, myWhiteSpaceAndCommentSetHolder);
+      done(pattern, myJavaElementTypeContainer.DECONSTRUCTION_PATTERN, builder, myWhiteSpaceAndCommentSetHolder);
     }
     else {
       if (hasIdentifier) {
-        done(patternVariable, myJavaElementTypeContainer.PATTERN_VARIABLE, myWhiteSpaceAndCommentSetHolder);
+        done(patternVariable, myJavaElementTypeContainer.PATTERN_VARIABLE, builder, myWhiteSpaceAndCommentSetHolder);
       }
       else {
         patternVariable.drop();
       }
-      done(pattern, myJavaElementTypeContainer.TYPE_TEST_PATTERN, myWhiteSpaceAndCommentSetHolder);
+      done(pattern, myJavaElementTypeContainer.TYPE_TEST_PATTERN, builder, myWhiteSpaceAndCommentSetHolder);
     }
     return pattern;
   }

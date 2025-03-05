@@ -54,9 +54,9 @@ import java.util.function.Function;
 
 public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInjectedAnnotator() {
-    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(XmlFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyAnnotator()}, () -> {
-      doTest(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".xml",true,false);
-    });
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(XmlFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyAnnotator()}, () ->
+      doTest(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".xml",true,false)
+    );
   }
 
   public void testAnnotatorWorksWithFileLevel() {
@@ -159,7 +159,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
         try {
           iDidIt();
-          holder.newAnnotation(HighlightSeverity.ERROR, "xxx")
+          holder.newAnnotation(HighlightSeverity.ERROR, "xxx"+uniqCount++)
             .range(new TextRange(0,1))
             .create();
           fail("Must have rejected crazy annotation range");
@@ -169,11 +169,10 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       }
     }
   }
-
-
+  private static int uniqCount;
   private static void checkThrowsWhenCalledTwice(AnnotationHolder holder, Function<? super AnnotationBuilder, ? extends AnnotationBuilder> method) {
     try {
-      AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx");
+      AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx"+uniqCount++);
       method.apply(builder);
       method.apply(builder);
       builder.create();
@@ -182,7 +181,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     catch (IllegalStateException ignored) {
     }
     // once is OK
-    AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx");
+    AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx"+uniqCount++);
     AnnotationBuilder newBuilder = method.apply(builder);
     assertSame(newBuilder, builder);
     builder.create();
@@ -213,14 +212,14 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
                                                         @NotNull Function<? super AnnotationBuilder.FixBuilder, ? extends AnnotationBuilder.FixBuilder> good,
                                                         @NotNull Function<? super AnnotationBuilder.FixBuilder, ? extends AnnotationBuilder.FixBuilder> bad) {
     try {
-      AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx").newFix(fix);
+      AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx"+uniqCount++).newFix(fix);
       bad.apply(builder);
       builder.registerFix().create();
       fail("Must have failed");
     }
     catch (IllegalStateException|IllegalArgumentException ignored) {
     }
-    AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx").newFix(fix);
+    AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx"+uniqCount++).newFix(fix);
     AnnotationBuilder.FixBuilder newBuilder = good.apply(builder);
     assertSame(newBuilder, builder);
     builder.registerFix().create();
@@ -299,19 +298,19 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       }
     };
     try {
-      AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx").newLocalQuickFix(fix, descriptor);
+      AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx"+uniqCount++).newLocalQuickFix(fix, descriptor);
       bad.apply(builder);
       builder.registerFix().create();
       fail("Must have failed");
     }
     catch (IllegalStateException|IllegalArgumentException ignored) {
     }
-    AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx").newLocalQuickFix(fix, descriptor);
+    AnnotationBuilder.FixBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx"+uniqCount++).newLocalQuickFix(fix, descriptor);
     AnnotationBuilder.FixBuilder newBuilder = good.apply(builder);
     assertSame(newBuilder, builder);
     builder.registerFix().create();
   }
-  public static class MyStupidRepetitiveAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
+  public static class MyIncorrectRepetitiveAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
@@ -456,7 +455,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         checkThrowsWhenCalledTwiceOnFixBuilder(holder, stubIntention, fixBuilder -> fixBuilder.range(new TextRange(0, 0)));
 
         try {
-          AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx");
+          AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "xxx"+uniqCount++);
           builder.create();
           builder.create();
           fail("must not be able to call create() twice");
@@ -469,7 +468,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testAnnotationBuilderMethodsAllowedToBeCalledOnlyOnce() {
-    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators());
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyIncorrectRepetitiveAnnotator()}, () -> runMyAnnotators());
   }
 
   public void testDifferentAnnotatorsTryingToHighlightWarningAndErrorToTheSameElementMustNotInterfere() {
@@ -563,7 +562,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     configureFromFileText("foo.txt", "hello<caret>");
     DisabledQuickFixAnnotator.FIX_ENABLED = true;
     assertEmpty(doHighlighting());
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
     DisabledQuickFixAnnotator.FIX_ENABLED = false;
     DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new DisabledQuickFixAnnotator()}, ()-> {
       assertOneElement(highlightErrors());
@@ -571,7 +570,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
                     .stream()
                     .filter(i -> IntentionActionDelegate.unwrap(i) instanceof EmptyIntentionAction)
                     .toList()); // nothing, not even EmptyIntentionAction
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
       DisabledQuickFixAnnotator.FIX_ENABLED = true;
       assertNotEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())); // maybe a lot of CleanupIntentionAction, FixAllIntention etc
     });

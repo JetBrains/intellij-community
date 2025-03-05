@@ -3,6 +3,7 @@ package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInspection.AddToInspectionOptionListFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -116,9 +117,13 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
       if (classIdentifier == null) return;
       RecordCandidate recordCandidate = ConvertToRecordFix.getClassDefinition(aClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
       if (recordCandidate == null) return;
-      if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST || 
-          myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly()) {
-        if (!ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()) return;
+      boolean necessaryCheckConflicts = myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST ||
+                  myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS && !isOnTheFly();
+      if (necessaryCheckConflicts && !ConvertToRecordProcessor.findConflicts(recordCandidate).isEmpty()) {
+        if (myConversionStrategy == ConversionStrategy.DO_NOT_SUGGEST) {
+          registerError(classIdentifier, ProblemHighlightType.INFORMATION, true, aClass);
+        }
+        return;
       }
       registerError(classIdentifier, isOnTheFly(), aClass);
     }
@@ -129,8 +134,7 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
     SHOW_AFFECTED_MEMBERS("class.can.be.record.conversion.strategy.show.members"),
     SILENTLY("class.can.be.record.conversion.strategy.convert.silently");
 
-    @Nls
-    private final String messageKey;
+    private final @Nls String messageKey;
 
     ConversionStrategy(@Nls String messageKey) {
       this.messageKey = messageKey;

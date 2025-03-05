@@ -7,13 +7,15 @@
 6(7) element: PyIfStatement
 7(8) READ ACCESS: len
 8(9) READ ACCESS: s
-9(10,12) element: PyCallExpression: len
-10(11) element: PyStatementList. Condition: len(s) == 1:true
-11(3,15) element: PyContinueStatement
-12(13) element: PyExpressionStatement
-13(14) READ ACCESS: sys
-14(4,15) element: PyCallExpression: sys.exit
-15(16) element: PyRaiseStatement
-16(17) READ ACCESS: Exception
-17(18) element: PyCallExpression: Exception
-18() element: null
+9(10,11) element: PyCallExpression: len
+10(14) element: null. Condition: len(s) == 1:false
+11(12) element: null. Condition: len(s) == 1:true
+12(13) element: PyStatementList
+13(3,17) element: PyContinueStatement
+14(15) element: PyExpressionStatement
+15(16) READ ACCESS: sys
+16(4,17) element: PyCallExpression: sys.exit
+17(18) raise: PyRaiseStatement
+18(19) READ ACCESS: Exception
+19(20) element: PyCallExpression: Exception
+20() element: null

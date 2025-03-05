@@ -27,9 +27,8 @@ final class ChangelistConflictAccessProvider extends WritingAccessProvider {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
+  public @NotNull Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(myProject);
     ChangelistConflictTracker.Options options = conflictTracker.getOptions();

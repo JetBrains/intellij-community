@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts;
@@ -31,11 +30,10 @@ import java.awt.*;
 import java.util.List;
 
 public final class TestsUIUtil {
-  public static final NotificationGroup NOTIFICATION_GROUP = Cancellation.forceNonCancellableSectionInClassInitializer(
-    () -> NotificationGroupManager.getInstance().getNotificationGroup("Test Runner")
-  );
+  public static @NotNull NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Test Runner");
+  }
 
-  public static final Color PASSED_COLOR = new Color(0, 128, 0);
   private static final @NonNls String TESTS = "tests";
 
   private TestsUIUtil() {
@@ -93,15 +91,15 @@ public final class TestsUIUtil {
     return null;
   }
 
-  public static void notifyByBalloon(@NotNull final Project project,
+  public static void notifyByBalloon(final @NotNull Project project,
                                      boolean started,
                                      final AbstractTestProxy root,
                                      final TestConsoleProperties properties,
-                                     @Nullable final @NlsContexts.SystemNotificationText String comment) {
+                                     final @Nullable @NlsContexts.SystemNotificationText String comment) {
     notifyByBalloon(project, root, properties, new TestResultPresentation(root, started, comment).getPresentation());
   }
 
-  public static void notifyByBalloon(@NotNull final Project project,
+  public static void notifyByBalloon(final @NotNull Project project,
                                      final AbstractTestProxy root,
                                      final TestConsoleProperties properties,
                                      TestResultPresentation testResultPresentation) {
@@ -124,12 +122,11 @@ public final class TestsUIUtil {
       group.createNotification(balloonText, type).setToolWindowId(windowId).notify(project);
     }
 
-    NOTIFICATION_GROUP.createNotification(balloonText, type).notify(project);
+    getNotificationGroup().createNotification(balloonText, type).notify(project);
     SystemNotifications.getInstance().notify("TestRunner", title, text);
   }
 
-  @NlsContexts.NotificationContent
-  public static String getTestSummary(AbstractTestProxy proxy) {
+  public static @NlsContexts.NotificationContent String getTestSummary(AbstractTestProxy proxy) {
     return new TestResultPresentation(proxy).getPresentation().getBalloonText();
   }
 

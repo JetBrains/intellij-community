@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -40,9 +40,8 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog {
     return myFileList.getIncludedChanges();
   }
 
-  @NotNull
   @Override
-  protected ChangesTree getFileList() {
+  protected @NotNull ChangesTree getFileList() {
     return myFileList;
   }
 }

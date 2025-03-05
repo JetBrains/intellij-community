@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.util.Pair;
@@ -83,11 +83,11 @@ public final class ModulePathSplitter {
     myModuleNameSearch = moduleNameSearch;
   }
 
-  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path) {
+  public Pair<ModulePath, Collection<File>> splitPath(@Nullable File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path) {
     return splitPath(chunkModuleInfo, chunkOutputs, path, Collections.emptySet());
   }
 
-  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path, Collection<String> addReads) {
+  public Pair<ModulePath, Collection<File>> splitPath(@Nullable File chunkModuleInfo, Set<? extends File> chunkOutputs, Collection<? extends File> path, Collection<String> addReads) {
     if (myModuleFinderCreateMethod == null) {
       // the module API is not available
       return Pair.create(ModulePath.create(path), Collections.emptyList());
@@ -140,14 +140,16 @@ public final class ModulePathSplitter {
     return fName;
   }
 
-  private Set<String> collectRequired(File chunkModuleInfo, Iterable<? extends File> path) {
+  private Set<String> collectRequired(@Nullable File chunkModuleInfo, Iterable<? extends File> path) {
     final Set<String> result = new HashSet<>();
-    // first, add all requires from chunk module-info
-    final JavaModuleDescriptor chunkDescr = new JavaProjectBuilder(new OrderedClassLibraryBuilder()).addSourceFolder(chunkModuleInfo.getParentFile()).getDescriptor();
-    for (JavaModuleDescriptor.JavaRequires require : chunkDescr.getRequires()) {
-      final JavaModule rm = require.getModule();
-      if (rm != null) {
-        result.add(rm.getName());
+    if (chunkModuleInfo != null) {
+      // first, add all requires from chunk module-info
+      final JavaModuleDescriptor chunkDescr = new JavaProjectBuilder(new OrderedClassLibraryBuilder()).addSourceFolder(chunkModuleInfo.getParentFile()).getDescriptor();
+      for (JavaModuleDescriptor.JavaRequires require : chunkDescr.getRequires()) {
+        final JavaModule rm = require.getModule();
+        if (rm != null) {
+          result.add(rm.getName());
+        }
       }
     }
     for (File file : path) {

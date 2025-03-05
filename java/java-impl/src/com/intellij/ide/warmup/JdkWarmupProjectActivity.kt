@@ -3,7 +3,7 @@ package com.intellij.ide.warmup
 
 import com.intellij.execution.environment.JvmEnvironmentKeyProvider
 import com.intellij.ide.environment.EnvironmentService
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -40,7 +40,7 @@ internal class JdkWarmupProjectActivity : ProjectActivity {
 
     val jdk = compatibleJdk ?: JavaSdk.getInstance().createJdk(createUniqueSdkName(jdkName, jdks.toList()), configuredJdk)
 
-    writeAction {
+    edtWriteAction {
       if (compatibleJdk == null) projectJdkTable.addJdk(jdk)
       ProjectRootManager.getInstance(project).projectSdk = jdk
     }

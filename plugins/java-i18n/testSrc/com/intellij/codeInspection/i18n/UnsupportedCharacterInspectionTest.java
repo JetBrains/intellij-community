@@ -28,16 +28,23 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
         public String getString(String key) { return null; }
       }
     """);
-    Registry.get("properties.file.encoding.legacy.support").setValue(true);
+    Registry.get("properties.file.encoding.legacy.support").setValue(false);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    Registry.get("properties.file.encoding.legacy.support").resetToDefault();
-    super.tearDown();
+    try {
+      Registry.get("properties.file.encoding.legacy.support").resetToDefault();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    } finally {
+      super.tearDown();
+    }
   }
 
-  public void _testJava8WithConversion() throws IOException {
+
+  public void testJava8WithConversion() throws IOException {
     javaVersion(LanguageLevel.JDK_1_8);
 
     PsiFile javaFile = addClass("Test.java", """
@@ -80,7 +87,7 @@ public class UnsupportedCharacterInspectionTest extends JavaCodeInsightFixtureTe
     checkHighlighting(javaFile);
   }
 
-  public void _testJava8PlusConstantWithConversion() throws IOException {
+  public void testJava8PlusConstantWithConversion() throws IOException {
     javaVersion(LanguageLevel.JDK_1_8);
 
     PsiFile javaFile = addClass("Test.java", """

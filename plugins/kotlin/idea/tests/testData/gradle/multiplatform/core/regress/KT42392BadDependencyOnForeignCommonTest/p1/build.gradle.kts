@@ -7,7 +7,7 @@ plugins {
 
 kotlin {
     jvm()
-    android()
+    {{androidTargetPlaceholder}}
     sourceSets {
         named("commonMain") {
             dependencies {

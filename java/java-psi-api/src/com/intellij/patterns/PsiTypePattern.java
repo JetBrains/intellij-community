@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiArrayType;
@@ -16,7 +16,7 @@ public class PsiTypePattern extends ObjectPattern<PsiType,PsiTypePattern> {
   public PsiTypePattern arrayOf(final ElementPattern pattern) {
     return with(new PatternCondition<PsiType>("arrayOf") {
       @Override
-      public boolean accepts(@NotNull final PsiType psiType, final ProcessingContext context) {
+      public boolean accepts(final @NotNull PsiType psiType, final ProcessingContext context) {
         return psiType instanceof PsiArrayType &&
                pattern.accepts(((PsiArrayType)psiType).getComponentType(), context);
       }
@@ -26,7 +26,7 @@ public class PsiTypePattern extends ObjectPattern<PsiType,PsiTypePattern> {
   public PsiTypePattern classType(final ElementPattern<? extends PsiClass> pattern) {
     return with(new PatternCondition<PsiType>("classType") {
       @Override
-      public boolean accepts(@NotNull final PsiType psiType, final ProcessingContext context) {
+      public boolean accepts(final @NotNull PsiType psiType, final ProcessingContext context) {
         return psiType instanceof PsiClassType &&
                pattern.accepts(((PsiClassType)psiType).resolve(), context);
       }

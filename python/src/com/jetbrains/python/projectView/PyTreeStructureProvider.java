@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
@@ -62,6 +63,10 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
       final PyTypeShedNode typeShedNode = PyTypeShedNode.Companion.create(project, sdk, settings);
       if (typeShedNode != null) {
         newChildren.add(typeShedNode);
+      }
+      final PyBundledStubsNode bundledStubsNode = PyBundledStubsNode.Companion.create(project, sdk, settings);
+      if (bundledStubsNode != null) {
+        newChildren.add(bundledStubsNode);
       }
       return newChildren;
     }
@@ -119,6 +124,9 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
         if (PyTypeShed.INSTANCE.isInside(dir)) {
           continue;
         }
+        if (PyBundledStubs.INSTANCE.isInside(dir)) {
+          continue;
+        }
         VirtualFile dirParent = dir.getParent();
 
         if (dirParent != null && dirParent.getName().equals(PythonSdkUtil.SKELETON_DIR_NAME)) {
@@ -164,7 +172,7 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
         return parent;     // we don't display any nodes under functions
       }
     }
-    if (parents.size() > 0) {
+    if (!parents.isEmpty()) {
       return parents.get(parents.size() - 1);
     }
     return element.getContainingFile();

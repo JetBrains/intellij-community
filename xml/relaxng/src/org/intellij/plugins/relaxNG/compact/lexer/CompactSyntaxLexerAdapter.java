@@ -110,7 +110,7 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   private Token nextToken() {
-    if (myTokenQueue.size() > 0) {
+    if (!myTokenQueue.isEmpty()) {
       return myTokenQueue.removeFirst();
     }
 

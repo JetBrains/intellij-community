@@ -83,7 +83,7 @@ public final class FacetFinderImpl extends FacetFinder {
   @Override
   public @Nullable <F extends Facet<?> & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type) {
     final List<F> list = findFacets(file, type);
-    return list.size() > 0 ? list.get(0) : null;
+    return !list.isEmpty() ? list.get(0) : null;
   }
 
   @Override

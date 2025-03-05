@@ -1,12 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JavaDebugProcess;
-import com.intellij.debugger.engine.RemoteStateState;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -16,6 +13,7 @@ import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
@@ -26,7 +24,6 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.TargetEnvironmentRequest;
@@ -34,13 +31,16 @@ import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -53,10 +53,13 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
-import com.sun.jdi.Location;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
+import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -193,9 +196,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         return javaParameters;
       }
 
-      @NotNull
       @Override
-      protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
+      protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
         throws ExecutionException {
         return getJavaParameters().toCommandLine(request);
       }
@@ -212,8 +214,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       try {
         XDebuggerManager.getInstance(myProject).startSession(myExecutionEnvironment, new XDebugProcessStarter() {
           @Override
-          @NotNull
-          public XDebugProcess start(@NotNull XDebugSession session) {
+          public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             return JavaDebugProcess.create(session, myDebuggerSession);
           }
         });
@@ -261,9 +262,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         return javaParameters;
       }
 
-      @NotNull
       @Override
-      protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
+      protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
         throws ExecutionException {
         return getJavaParameters().toCommandLine(request);
       }
@@ -275,8 +275,10 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
                                   debuggerRunnerSettings.getDebugPort())
         .project(myProject)
         .checkValidity(true)
-        .asyncAgent(true)
+        .asyncAgent(false) // add manually to allow early tmp folder deletion
         .create(javaParameters);
+
+    AsyncStacksUtils.addDebuggerAgent(javaParameters, myProject, true, getTestRootDisposable());
 
     myExecutionEnvironment.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, getTraceMode());
     DebuggerSession debuggerSession = attachVirtualMachine(myRunnableState, myExecutionEnvironment, debugParameters, false);
@@ -460,17 +462,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return suspendContext.getFrameProxy();
   }
 
-  protected void printLocation(SuspendContextImpl suspendContext) {
-    try {
-      Location location = suspendContext.getFrameProxy().location();
-      String message = "paused at " + location.sourceName() + ":" + location.lineNumber();
-      println(message, ProcessOutputTypes.SYSTEM);
-    }
-    catch (Throwable e) {
-      addException(e);
-    }
-  }
-
   protected void createBreakpointInHelloWorld() {
     DebuggerInvocationUtil.invokeAndWait(myProject, () -> {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
@@ -485,6 +476,34 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     createLocalProcess("HelloWorld");
 
     createBreakpointInHelloWorld();
+  }
+
+  protected void printAsyncStackTrace() {
+    if (!myLogAllCommands) {
+      printContext(getDebugProcess().getDebuggerContext());
+    }
+    List<XStackFrame> frames = collectFrames(getDebuggerSession().getXDebugSession());
+    systemPrintln("vvv stack trace vvv");
+    frames.forEach(f -> {
+      if (f instanceof XDebuggerFramesList.ItemWithSeparatorAbove withSeparator && withSeparator.hasSeparatorAbove()) {
+        systemPrintln("-- " + withSeparator.getCaptionAboveOf() + " --");
+      }
+      if (f instanceof XFramesView.HiddenStackFramesItem) {
+        systemPrintln("  <hidden frames>");
+      }
+      else {
+        systemPrintln("  " + StringUtil.substringBeforeLast(getFramePresentation(f), ":"));
+      }
+    });
+    systemPrintln("^^^ stack trace ^^^");
+  }
+
+  protected @NotNull List<XStackFrame> collectFrames(@Nullable XDebugSession session) {
+    return List.of();
+  }
+
+  protected @NotNull String getFramePresentation(XStackFrame f) {
+    return f.toString();
   }
 
   @Override
@@ -516,8 +535,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       try {
         XDebuggerManager.getInstance(myProject).startSession(environment, new XDebugProcessStarter() {
           @Override
-          @NotNull
-          public XDebugProcess start(@NotNull XDebugSession session) {
+          public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             return JavaDebugProcess.create(session, debuggerSession);
           }
         });
@@ -554,9 +572,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     @Override
     public void setName(@NotNull String name) { }
 
-    @NotNull
     @Override
-    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+    public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       throw new UnsupportedOperationException();
     }
 
@@ -575,9 +592,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       return null;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return "";
     }
   }
@@ -597,13 +613,23 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       renderer.setEnabled(state);
     }
   }
+  protected void doWhenXSessionPaused(ThrowableRunnable runnable) {
+    doWhenXSessionPaused(runnable, false);
+  }
 
   protected void doWhenXSessionPausedThenResume(ThrowableRunnable runnable) {
+    doWhenXSessionPaused(runnable, true);
+  }
+
+  private void doWhenXSessionPaused(ThrowableRunnable runnable, boolean thenResume) {
     XDebugSession session = getDebuggerSession().getXDebugSession();
     assertNotNull(session);
     session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
+        if (myLogAllCommands) {
+          printContext("Stopped at ", getDebugProcess().getDebuggerContext());
+        }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           try {
             runnable.run();
@@ -612,11 +638,39 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
             addException(e);
           }
           finally {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(session::resume);
+            if (thenResume) {
+              resume();
+            }
           }
         });
       }
+    });
+  }
+
+  protected void resume() {
+    SwingUtilities.invokeLater(() -> {
+      if (myLogAllCommands) {
+        printContext("Resuming ", getDebugProcess().getDebuggerContext());
+      }
+      XDebugSession session = getDebuggerSession().getXDebugSession();
+      assertNotNull(session);
+      session.resume();
+    });
+  }
+
+  protected void setUpPacketsMeasureTest() {
+    ApplicationManagerEx.setInStressTest(true);
+    setRegistryPropertyForTest("debugger.track.instrumentation", "false");
+    setRegistryPropertyForTest("debugger.evaluate.single.threaded.timeout", "-1");
+    setRegistryPropertyForTest("debugger.preload.types.hierarchy", "false");
+
+    boolean dfa = ViewsGeneralSettings.getInstance().USE_DFA_ASSIST;
+    boolean dfaGray = ViewsGeneralSettings.getInstance().USE_DFA_ASSIST_GRAY_OUT;
+    ViewsGeneralSettings.getInstance().USE_DFA_ASSIST = false;
+    ViewsGeneralSettings.getInstance().USE_DFA_ASSIST_GRAY_OUT = false;
+    Disposer.register(getTestRootDisposable(), () -> {
+      ViewsGeneralSettings.getInstance().USE_DFA_ASSIST = dfa;
+      ViewsGeneralSettings.getInstance().USE_DFA_ASSIST_GRAY_OUT = dfaGray;
     });
   }
 }

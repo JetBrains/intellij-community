@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,6 +85,7 @@ public final class JavaImportOptimizer implements ImportOptimizer {
     if (file instanceof PsiJavaFile && !TemplateLanguageUtil.isTemplateDataFile(file)) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
       return virtualFile != null && (ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInSource(virtualFile) ||
+                                     virtualFile instanceof LightVirtualFile ||
                                      ScratchUtil.isScratch(virtualFile));
     }
     return false;

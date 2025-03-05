@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
@@ -23,12 +23,12 @@ import org.jetbrains.kotlin.gradle.GradleDaemonAnalyzerTestCase
 import org.jetbrains.kotlin.gradle.checkFiles
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.awt.Point
 import java.io.File
+import java.util.*
 
 class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
     @Test
@@ -83,7 +83,7 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
                     val kotlinRunConfigsFromContext = extractConfigurationsFromContext
                         .filter { it.configuration is KotlinRunConfiguration }
                     kotlinRunConfigsFromContext.singleOrNull()?.let {
-                        return "mainClass=\"${it.configuration.cast<KotlinRunConfiguration>().runClass}\""
+                        return "mainClass=\"${(it.configuration as KotlinRunConfiguration).runClass}\""
                     }
 
                     if ("Run Test" !in lineMarkerInfo.lineMarkerTooltip.orEmpty()) return null
@@ -153,7 +153,7 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
                 RunConfigurationsTags.SETTINGS -> settings.toString()
             }
 
-            result += tag.name.toLowerCase() to renderedTagValue
+            result += tag.name.lowercase(Locale.getDefault()) to renderedTagValue
         }
 
         return result.joinToString { (tagName, tagValue) -> tagName + "=\"" + tagValue.replace("\"", "\\\"") + "\"" }

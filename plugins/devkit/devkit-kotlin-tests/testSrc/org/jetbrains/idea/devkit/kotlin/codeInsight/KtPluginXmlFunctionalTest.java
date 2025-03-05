@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-@TestDataPath("$CONTENT_ROOT/testData/codeInsight")
+@TestDataPath("$CONTENT_ROOT/testData/codeInsight/pluginXml")
 public class KtPluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -27,7 +27,7 @@ public class KtPluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "codeInsight";
+    return DevkitKtTestsUtil.TESTDATA_PATH + "codeInsight/pluginXml";
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.fixes;
 
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -29,10 +29,8 @@ public class RemoveElementQuickFix extends PsiUpdateModCommandQuickFix {
     myElementFunction = function;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return myName;
   }
 

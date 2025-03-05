@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
@@ -45,8 +45,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponentWithMod
     }
   }
 
-  @Nullable
-  private static VirtualFile calcHome(@Nullable SdkHomeBean state) {
+  private static @Nullable VirtualFile calcHome(@Nullable SdkHomeBean state) {
     if (state == null) {
       return null;
     }
@@ -59,8 +58,7 @@ public abstract class SdkHomeSettings implements PersistentStateComponentWithMod
     return StandardFileSystems.local().findFileByPath(sdk_home);
   }
 
-  @Nullable
-  public VirtualFile getSdkHome() {
+  public @Nullable VirtualFile getSdkHome() {
     return calcHome(mySdkHome);
   }
 

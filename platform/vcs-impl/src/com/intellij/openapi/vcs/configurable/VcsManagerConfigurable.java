@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfigurable;
@@ -37,7 +37,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   private static final String ID = "project.propVCSSupport.Mappings";
   private static final int GROUP_WEIGHT = 45;
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public VcsManagerConfigurable(@NotNull Project project) {
     myProject = project;
@@ -104,9 +104,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     return result.toArray(new Configurable[0]);
   }
 
-  @NotNull
-  @NonNls
-  private static String getVcsConfigurableId(@NotNull String vcsName) {
+  private static @NotNull @NonNls String getVcsConfigurableId(@NotNull String vcsName) {
     return "vcs." + vcsName;
   }
 
@@ -124,9 +122,8 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
       groupWeight = WEIGHT;
     }
 
-    @NotNull
     @Override
-    protected ConfigurableEP.ObjectProducer createProducer() {
+    protected @NotNull ConfigurableEP.ObjectProducer createProducer() {
       return new ObjectProducer() {
         @Override
         protected Object createElement() {

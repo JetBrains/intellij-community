@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.*;
@@ -30,8 +30,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer.RevisionWithTitle;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeUtils;
@@ -266,9 +265,9 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   }
 
   private @NotNull List<DiffEditorTitleCustomizer> createTitleCustomizers() {
-    return DiffTitleFilePathCustomizer.getTitleCustomizers(myProject, myChange,
-                                                           (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE),
-                                                           (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE)
+    return DiffTitleWithDetailsCustomizers.getTitleCustomizers(myProject, myChange,
+                                                               (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE),
+                                                               (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE)
     );
   }
 
@@ -462,23 +461,19 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     return hashCode(myChange);
   }
 
-  @Nls
-  public static String getYourVersion() {
+  public static @Nls String getYourVersion() {
     return DiffBundle.message("merge.version.title.our");
   }
 
-  @Nls
-  public static String getServerVersion() {
+  public static @Nls String getServerVersion() {
     return DiffBundle.message("merge.version.title.their");
   }
 
-  @Nls
-  public static String getBaseVersion() {
+  public static @Nls String getBaseVersion() {
     return DiffBundle.message("merge.version.title.base");
   }
 
-  @Nls
-  public static String getMergedVersion() {
+  public static @Nls String getMergedVersion() {
     return DiffBundle.message("merge.version.title.merged");
   }
 }

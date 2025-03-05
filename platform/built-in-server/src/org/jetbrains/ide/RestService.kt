@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.Strictness
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import com.google.gson.stream.MalformedJsonException
@@ -12,6 +13,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil.showYesNoDialog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -34,10 +37,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.builtInWebServer.isSignedRequest
-import org.jetbrains.ide.RestService.Companion.createJsonReader
-import org.jetbrains.ide.RestService.Companion.createJsonWriter
+import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.io.*
 import java.awt.Window
 import java.io.IOException
@@ -51,11 +51,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Document your service using [apiDoc](http://apidocjs.com).
- * To extract a big example from source code, consider adding a *.coffee file near the sources
- * (or Python/Ruby, but CoffeeScript is recommended because it's plugin is lightweight).
+ * To extract a big example from source code, consider adding a `*.coffee` file near the sources
+ * (or Python/Ruby, but CoffeeScript is recommended because its plugin is lightweight).
  * See [AboutHttpService] for example.
  *
- * Don't create [JsonReader]/[JsonWriter] directly, use only provided [createJsonReader] and [createJsonWriter] methods
+ * Don't create [JsonReader]/[JsonWriter] directly, use only provided [RestService.createJsonReader] and [RestService.createJsonWriter] methods
  * (to ensure that you handle in/out according to REST API guidelines).
  *
  * @see <a href="http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api">Best Practices for Designing a Pragmatic REST API</a>.
@@ -63,9 +63,9 @@ import java.util.concurrent.atomic.AtomicInteger
 abstract class RestService : HttpRequestHandler() {
   companion object {
     @JvmField
-    val LOG = logger<RestService>()
+    val LOG: Logger = logger<RestService>()
 
-    const val PREFIX = "api"
+    const val PREFIX: String = "api"
 
     @JvmStatic
     fun activateLastFocusedFrame() {
@@ -73,23 +73,18 @@ abstract class RestService : HttpRequestHandler() {
     }
 
     @JvmStatic
-    fun createJsonReader(request: FullHttpRequest): JsonReader {
-      val reader = JsonReader(ByteBufInputStream(request.content()).reader())
-      reader.isLenient = true
-      return reader
-    }
+    fun createJsonReader(request: FullHttpRequest): JsonReader =
+      JsonReader(ByteBufInputStream(request.content()).reader())
+        .apply { strictness = Strictness.LENIENT }
 
     @JvmStatic
-    fun createJsonWriter(out: OutputStream): JsonWriter {
-      val writer = JsonWriter(out.writer())
-      writer.setIndent("  ")
-      return writer
-    }
+    fun createJsonWriter(out: OutputStream): JsonWriter =
+      JsonWriter(out.writer())
+        .apply { setIndent("  ") }
 
     @JvmStatic
-    fun getLastFocusedOrOpenedProject(): Project? {
-      return IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
-    }
+    fun getLastFocusedOrOpenedProject(): Project? =
+      IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
 
     @JvmStatic
     fun sendOk(request: FullHttpRequest, context: ChannelHandlerContext) {
@@ -116,14 +111,12 @@ abstract class RestService : HttpRequestHandler() {
 
     @Suppress("SameParameterValue")
     @JvmStatic
-    fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? {
-      return urlDecoder.parameters()[name]?.lastOrNull()
-    }
+    fun getStringParameter(name: String, urlDecoder: QueryStringDecoder): String? =
+      urlDecoder.parameters()[name]?.lastOrNull()
 
     @JvmStatic
-    fun getIntParameter(name: String, urlDecoder: QueryStringDecoder): Int {
-      return StringUtilRt.parseInt(getStringParameter(name, urlDecoder).nullize(nullizeSpaces = true), -1)
-    }
+    fun getIntParameter(name: String, urlDecoder: QueryStringDecoder): Int =
+      StringUtilRt.parseInt(getStringParameter(name, urlDecoder).nullize(nullizeSpaces = true), -1)
 
     @JvmOverloads
     @JvmStatic
@@ -134,7 +127,7 @@ abstract class RestService : HttpRequestHandler() {
       return value.toBoolean()
     }
 
-    fun parameterMissedErrorMessage(name: String) = "Parameter \"$name\" is not specified"
+    fun parameterMissedErrorMessage(name: String): String = "Parameter \"$name\" is not specified"
   }
 
   protected val gson: Gson by lazy {
@@ -152,6 +145,7 @@ abstract class RestService : HttpRequestHandler() {
     .maximumSize(1024)
     .expireAfterWrite(1, TimeUnit.DAYS)
     .build<Pair<String, String>, Boolean>()
+
   private val hostLocks = CollectionFactory.createConcurrentWeakKeyWeakValueMap<String, Any>()
 
   private var isBlockUnknownHosts = false
@@ -202,17 +196,13 @@ abstract class RestService : HttpRequestHandler() {
     return false
   }
 
-  protected open fun isMethodSupported(method: HttpMethod): Boolean {
-    return method === HttpMethod.GET
-  }
+  protected open fun isMethodSupported(method: HttpMethod): Boolean = method === HttpMethod.GET
 
   /**
    * If the requests per minute counter exceeds this value, the exception [HttpResponseStatus.TOO_MANY_REQUESTS] will be sent.
    * @return The value of "ide.rest.api.requests.per.minute" Registry key or '30', if the key does not exist.
    */
-  protected open fun getMaxRequestsPerMinute(): Int {
-    return Registry.intValue("ide.rest.api.requests.per.minute", 30)
-  }
+  protected open fun getMaxRequestsPerMinute(): Int = Registry.intValue("ide.rest.api.requests.per.minute", 30)
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     try {
@@ -250,10 +240,12 @@ abstract class RestService : HttpRequestHandler() {
     return true
   }
 
-  private fun HttpResponseStatus.sendError(channel: Channel,
-                                           request: HttpRequest,
-                                           description: String? = null,
-                                           extraHeaders: HttpHeaders? = null) {
+  private fun HttpResponseStatus.sendError(
+    channel: Channel,
+    request: HttpRequest,
+    description: String? = null,
+    extraHeaders: HttpHeaders? = null,
+  ) {
     if (reportErrorsAsPlainText) {
       sendPlainText(channel, request, description, extraHeaders)
     }
@@ -263,24 +255,22 @@ abstract class RestService : HttpRequestHandler() {
   }
 
   @Throws(InterruptedException::class, InvocationTargetException::class)
-  protected open fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
+  protected open fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean =
     @Suppress("DEPRECATION")
-    return isHostTrusted(request)
-  }
+    isHostTrusted(request)
 
   /**
    * Used to set individual API access rate limits.
    */
   @Throws(InterruptedException::class, InvocationTargetException::class)
-  protected open fun getRequesterId(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Any {
-    return (context.channel().remoteAddress() as InetSocketAddress).address
-  }
+  protected open fun getRequesterId(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Any =
+    (context.channel().remoteAddress() as InetSocketAddress).address
 
   @Deprecated("Use {@link #isHostTrusted(FullHttpRequest, QueryStringDecoder)}")
   @Throws(InterruptedException::class, InvocationTargetException::class)
-  // e.g. upsource trust to configured host
+  // e.g., Upsource trust to configured host
   protected open fun isHostTrusted(request: FullHttpRequest): Boolean {
-    if (request.isSignedRequest() || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
+    if (service<BuiltInWebServerAuth>().isRequestSigned(request) || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
       return true
     }
 
@@ -293,7 +283,7 @@ abstract class RestService : HttpRequestHandler() {
           host.nullize() to scheme
         }
     }
-    catch (ignored: URISyntaxException) {
+    catch (_: URISyntaxException) {
       return false
     }
 
@@ -309,8 +299,8 @@ abstract class RestService : HttpRequestHandler() {
           }
         }
       }
-      else {
-        if (isBlockUnknownHosts) return false
+      else if (isBlockUnknownHosts) {
+        return false
       }
 
       var isTrusted = false
@@ -325,10 +315,8 @@ abstract class RestService : HttpRequestHandler() {
           if (host != null) {
             trustedOrigins.put(host to scheme, isTrusted)
           }
-          else {
-            if (!isTrusted) {
-              isBlockUnknownHosts = showYesNoDialog(IdeBundle.message("warning.use.rest.api.block.unknown.hosts"), "title.use.rest.api")
-            }
+          else if (!isTrusted) {
+            isBlockUnknownHosts = showYesNoDialog(IdeBundle.message("warning.use.rest.api.block.unknown.hosts"), "title.use.rest.api")
           }
         }, ModalityState.any())
       return isTrusted
@@ -340,7 +328,7 @@ abstract class RestService : HttpRequestHandler() {
     val originHost = try {
       if (origin == null) null else URI(origin).takeIf { it.scheme == "https" }?.host.nullize()
     }
-    catch (ignored: URISyntaxException) {
+    catch (_: URISyntaxException) {
       return false
     }
 
@@ -356,19 +344,13 @@ abstract class RestService : HttpRequestHandler() {
   }
 
   /**
-   * Return error or send response using [sendOk], [send]
+   * Return error or send response using [RestService.sendOk], [RestService.send]
    */
   @Throws(IOException::class)
-  @NonNls
   abstract fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String?
 }
 
-fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
-  if (Registry.`is`("ide.http.server.response.actual.status", true) ||
-      ApplicationManager.getApplication()?.isUnitTestMode == true) {
-    return this
-  }
-  else {
-    return safeStatus
-  }
+fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus = when {
+  Registry.`is`("ide.http.server.response.actual.status", false) || ApplicationManager.getApplication()?.isUnitTestMode == true -> this
+  else -> safeStatus
 }

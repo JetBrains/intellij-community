@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline
 
 import com.intellij.openapi.editor.Editor
@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeInliner
@@ -29,7 +30,7 @@ class KotlinInlineAnonymousFunctionProcessor(
     editor: Editor?,
     project: Project,
 ) : AbstractKotlinDeclarationInlineProcessor<KtFunction>(function, editor, project) {
-    override fun findUsages(): Array<UsageInfo> = arrayOf(UsageInfo(usage))
+    protected override fun findUsages(): Array<UsageInfo> = arrayOf(UsageInfo(usage))
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         performRefactoring(usage, editor)
@@ -87,9 +88,13 @@ class KotlinInlineAnonymousFunctionProcessor(
         }
 
         private fun findFunction(qualifiedExpression: KtQualifiedExpression): KtFunction? =
-            when (val expression = KtPsiUtil.safeDeparenthesize(qualifiedExpression.receiverExpression)) {
+            when (val expression = qualifiedExpression.receiverExpression.safeDeparenthesize()) {
                 is KtLambdaExpression -> expression.functionLiteral
                 is KtNamedFunction -> expression
+                is KtDotQualifiedExpression -> expression.selectorExpression?.let { expr ->
+                    val deparenthesize = expr.safeDeparenthesize()
+                    (deparenthesize as? KtLambdaExpression)?.functionLiteral ?: deparenthesize as? KtNamedFunction
+                }
                 else -> null
             }
 

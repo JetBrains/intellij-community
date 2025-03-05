@@ -41,8 +41,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     super(enabled);
   }
 
-  @NotNull
-  private static Map<String, LocalInspectionToolWrapper> getSpellCheckTools() {
+  private static @NotNull Map<String, LocalInspectionToolWrapper> getSpellCheckTools() {
     Map<String, LocalInspectionToolWrapper> tools = SPELL_CHECK_TOOLS;
     if (tools == null) {
       tools = new HashMap<>();

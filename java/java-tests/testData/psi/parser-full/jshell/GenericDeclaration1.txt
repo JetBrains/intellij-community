@@ -1,0 +1,46 @@
+JSHELL_FILE
+  PsiImportList
+    <empty list>
+  PsiJShellRootClassImpl(JSHELL_ROOT_CLASS)
+    PsiField:list
+      PsiModifierList:
+        <empty list>
+      PsiTypeElement:List<String>
+        PsiJavaCodeReferenceElement:List<String>
+          PsiIdentifier:List('List')
+          PsiReferenceParameterList
+            PsiJavaToken:LT('<')
+            PsiTypeElement:String
+              PsiJavaCodeReferenceElement:String
+                PsiIdentifier:String('String')
+                PsiReferenceParameterList
+                  <empty list>
+            PsiJavaToken:GT('>')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:list('list')
+      PsiJavaToken:EQ('=')
+      PsiWhiteSpace(' ')
+      PsiMethodCallExpression:Arrays.asList("name1", "name2", "name3")
+        PsiReferenceExpression:Arrays.asList
+          PsiReferenceExpression:Arrays
+            PsiReferenceParameterList
+              <empty list>
+            PsiIdentifier:Arrays('Arrays')
+          PsiJavaToken:DOT('.')
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:asList('asList')
+        PsiExpressionList
+          PsiJavaToken:LPARENTH('(')
+          PsiLiteralExpression:"name1"
+            PsiJavaToken:STRING_LITERAL('"name1"')
+          PsiJavaToken:COMMA(',')
+          PsiWhiteSpace(' ')
+          PsiLiteralExpression:"name2"
+            PsiJavaToken:STRING_LITERAL('"name2"')
+          PsiJavaToken:COMMA(',')
+          PsiWhiteSpace(' ')
+          PsiLiteralExpression:"name3"
+            PsiJavaToken:STRING_LITERAL('"name3"')
+          PsiJavaToken:RPARENTH(')')
+      PsiJavaToken:SEMICOLON(';')

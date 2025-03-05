@@ -77,7 +77,7 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
                     project,
                     srcModule,
                     enableExternalCodeProcessing = false,
-                    forceUsingOldJ2k = true,
+                    forceUsingOldJ2k = false,
                     settings = publicByDefault
                 ).singleOrNull()
             }

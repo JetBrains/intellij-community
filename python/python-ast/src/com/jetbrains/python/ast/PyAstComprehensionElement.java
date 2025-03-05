@@ -26,8 +26,7 @@ public interface PyAstComprehensionElement extends PyAstExpression, PyAstNamedEl
    *
    * @return result expression.
    */
-  @Nullable
-  default PyAstExpression getResultExpression() {
+  default @Nullable PyAstExpression getResultExpression() {
     ASTNode[] exprs = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     return exprs.length == 0 ? null : (PyAstExpression)exprs[0].getPsi();
   }
@@ -75,8 +74,7 @@ public interface PyAstComprehensionElement extends PyAstExpression, PyAstNamedEl
   }
 
   @Override
-  @NotNull
-  default List<PsiNamedElement> getNamedElements() {
+  default @NotNull List<PsiNamedElement> getNamedElements() {
     // extract whatever names are defined in "for" components
     List<? extends PyComprehensionForComponent> fors = getForComponents();
     PyAstExpression[] for_targets = new PyAstExpression[fors.size()];
@@ -95,8 +93,7 @@ public interface PyAstComprehensionElement extends PyAstExpression, PyAstNamedEl
     return results;
   }
 
-  @Nullable
-  private static ASTNode getNextExpression(ASTNode after) {
+  private static @Nullable ASTNode getNextExpression(ASTNode after) {
     ASTNode node = after;
     do {
       node = node.getTreeNext();

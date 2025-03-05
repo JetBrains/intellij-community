@@ -25,6 +25,7 @@ import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -39,8 +40,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static com.intellij.openapi.ui.playback.commands.ActionCommand.getInputEvent;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector.wrapDataContextWithActionStartData;
+import static com.intellij.openapi.ui.playback.commands.ActionCommand.getInputEvent;
 import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.findTarget;
 
 /**
@@ -144,8 +145,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     return Promises.toPromise(actionCallback);
   }
 
-  @NotNull
-  private static Ref<String> computeTabId(String tab) {
+  private static @NotNull Ref<String> computeTabId(String tab) {
     Ref<String> tabId = new Ref<>();
     switch (tab) {
       case "text" -> tabId.set(TextSearchContributor.class.getSimpleName());
@@ -232,7 +232,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     }
   }
 
-  private @NotNull String computeActionId() {
+  private @NotNull @Language("devkit-action-id") String computeActionId() {
     String actionId;
     switch (myOptions.tab) {
       case "text" -> actionId = "TextSearchAction";

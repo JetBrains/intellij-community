@@ -15,8 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class InsertMissingTokenFix implements ModCommandAction {
-  @NotNull
-  private final String myToken;
+  private final @NotNull String myToken;
   private final boolean myMoveAfter;
 
   public InsertMissingTokenFix(@NotNull String token) {

@@ -2,7 +2,7 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.find.impl.FindSettingsImpl;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
@@ -155,7 +155,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     }
     else {
       options.searchScope = myScopeCombo.getSelectedScope();
-      FindSettings.getInstance().setDefaultScopeName(options.searchScope.getDisplayName());
+      FindUsagesSettings.getInstance().setDefaultScopeName(options.searchScope.getDisplayName());
     }
 
     options.isSearchForTextOccurrences = isToChange(myCbToSearchForTextOccurrences) && isSelected(myCbToSearchForTextOccurrences);
@@ -176,7 +176,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected void doOKAction() {
     if (!shouldDoOkAction()) return;
 
-    FindSettings settings = FindSettings.getInstance();
+    FindUsagesSettings settings = FindUsagesSettings.getInstance();
 
     if (myScopeCombo != null) {
       settings.setDefaultScopeName(myScopeCombo.getSelectedScopeName());
@@ -274,14 +274,14 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
     if (myIsShowInNewTabVisible) {
       myCbToSkipResultsWhenOneUsage = addCheckboxToPanel(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"),
-                                                         FindSettings.getInstance().isSkipResultsWithOneUsage(), panel, false);
+                                                         FindUsagesSettings.getInstance().isSkipResultsWithOneUsage(), panel, false);
     }
   }
 
   private @Nullable JComponent createSearchScopePanel() {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
-    String scope = FindSettings.getInstance().getDefaultScopeName();
+    String scope = FindUsagesSettings.getInstance().getDefaultScopeName();
     // The default name means we have to fall back to whatever the default scope is set in FindUsagesOptions.
     // (The default name itself doesn't correspond to any real scope name anyway.)
     if (Objects.equals(scope, FindSettingsImpl.getDefaultSearchScope())) {

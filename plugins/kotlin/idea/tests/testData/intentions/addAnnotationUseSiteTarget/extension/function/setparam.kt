@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: setparam
-// IS_APPLICABLE: false
+// NO_OPTION: SETTER_PARAMETER|Add use-site target 'setparam'
+// CHOSEN_OPTION: RECEIVER|Add use-site target 'receiver'
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

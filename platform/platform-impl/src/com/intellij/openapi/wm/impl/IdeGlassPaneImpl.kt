@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -346,7 +346,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
       if (eventRootPane === pane) {
         if (!listenerToCursor.isEmpty()) {
           val cursor = listenerToCursor.values.iterator().next()
-          val point = SwingUtilities.convertPoint(e.component, e.point, pane.contentPane)
+          val point = SwingUtilities.convertPoint(e.component, e.point, pane.contentPane.parent)
           var target = SwingUtilities.getDeepestComponentAt(pane.contentPane.parent, point.x, point.y)
           if (canProcessCursorFor(target)) {
             target = getCompWithCursor(target)
@@ -571,11 +571,9 @@ internal interface FrameLoadingState {
 }
 
 internal fun executeOnCancelInEdt(coroutineScope: CoroutineScope, task: () -> Unit) {
-  coroutineScope.launch {
-    awaitCancellationAndInvoke {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        task()
-      }
+  coroutineScope.awaitCancellationAndInvoke {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      task()
     }
   }
 }

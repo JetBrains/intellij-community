@@ -1,13 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.usagesSearch
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -118,11 +121,12 @@ private fun processClassDelegationCallsToSpecifiedConstructor(
     return true
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use ReferencesSearch directly to avoid light classes involvement")
 fun PsiElement.searchReferencesOrMethodReferences(): Collection<PsiReference> {
     val lightMethods = toLightMethods()
     return if (lightMethods.isNotEmpty()) {
-        lightMethods.flatMapTo(LinkedHashSet()) { MethodReferencesSearch.search(it) }
+        lightMethods.flatMapTo(LinkedHashSet()) { MethodReferencesSearch.search(it).asIterable() }
     } else {
         ReferencesSearch.search(this).findAll()
     }

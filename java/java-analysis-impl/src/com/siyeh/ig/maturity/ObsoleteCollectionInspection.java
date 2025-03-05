@@ -31,7 +31,8 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class ObsoleteCollectionInspection extends BaseInspection {
   private static final int MAX_OCCURRENCES = 20;
@@ -40,14 +41,12 @@ public final class ObsoleteCollectionInspection extends BaseInspection {
   public boolean ignoreRequiredObsoleteCollectionTypes = true;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "UseOfObsoleteCollectionType";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.obsolete.collection.type.problem.descriptor");
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -20,13 +20,15 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class RemoveSuppressWarningAction extends ModCommandQuickFix {
   private static final Logger LOG = Logger.getInstance(RemoveSuppressWarningAction.class);
 
-  @NotNull
-  private final String myID;
+  private final @NotNull String myID;
 
   RemoveSuppressWarningAction(@NotNull String id) {
     int idx = id.indexOf(';');
@@ -39,8 +41,7 @@ class RemoveSuppressWarningAction extends ModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("remove.suppression.action.family");
   }
 
@@ -91,8 +92,7 @@ class RemoveSuppressWarningAction extends ModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return QuickFixBundle.message("remove.suppression.action.name", myID);
   }
 
@@ -154,8 +154,7 @@ class RemoveSuppressWarningAction extends ModCommandQuickFix {
     }
   }
 
-  @Nullable
-  private String removeFromElementText(PsiElement @NotNull ... elements) {
+  private @Nullable String removeFromElementText(PsiElement @NotNull ... elements) {
     StringBuilder textBuilder = new StringBuilder();
     for (PsiElement element : elements) {
       textBuilder.append(StringUtil.trimStart(element.getText(), "//").trim());

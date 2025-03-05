@@ -47,9 +47,8 @@ public class AssignmentExprent extends Exprent {
     addBytecodeOffsets(bytecodeOffsets);
   }
 
-  @NotNull
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     return left.getExprType();
   }
 

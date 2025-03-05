@@ -31,8 +31,7 @@ public final class UnknownSourceRootPropertiesSerializer extends JpsModuleSource
     return forType(UnknownSourceRootType.getInstance(unknownTypeId));
   }
 
-  @NotNull
-  public static UnknownSourceRootPropertiesSerializer forType(UnknownSourceRootType type) {
+  public static @NotNull UnknownSourceRootPropertiesSerializer forType(UnknownSourceRootType type) {
     return new UnknownSourceRootPropertiesSerializer(type);
   }
 }

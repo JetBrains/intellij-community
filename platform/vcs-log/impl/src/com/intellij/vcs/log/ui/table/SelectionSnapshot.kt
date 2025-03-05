@@ -21,8 +21,12 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
 
   init {
     val selectedRows = ContainerUtil.sorted(Ints.asList(*table.selectedRows))
-    val selectedRowsToCommits = selectedRows.associateWith { table.model.getId(it) }
-    selectedCommits.addAll(selectedRowsToCommits.values)
+    val selectedRowsToCommits = mutableMapOf<Int, Int>()
+    for (row in selectedRows) {
+      val commitId = table.model.getId(row) ?: continue
+      selectedRowsToCommits[row] = commitId
+      selectedCommits.add(commitId)
+    }
 
     val visibleRows = getVisibleRows(table)
     if (visibleRows == null) {
@@ -76,7 +80,7 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
   private fun mapCommitsToRows(graph: VisibleGraph<Int>, scroll: Boolean): MutableMap<Int, Int> {
     val commits = mutableSetOf<Int>()
     commits.addAll(selectedCommits)
-    if (scroll && scrollingTarget != null) commits.add(scrollingTarget.commit)
+    if (scroll && scrollingTarget != null && scrollingTarget.commit != null) commits.add(scrollingTarget.commit)
     return mapCommitsToRows(commits, graph)
   }
 
@@ -103,4 +107,4 @@ internal class SelectionSnapshot(private val table: VcsLogGraphTable) {
   }
 }
 
-private data class ScrollingTarget(val commit: Int, val topGap: Int)
+private data class ScrollingTarget(val commit: Int?, val topGap: Int)

@@ -112,7 +112,11 @@ class TestApplicationManager private constructor() {
         {
           app.runWriteIntentReadAction<Unit, Nothing?> {
             WriteCommandAction.runWriteCommandAction(project) {
-              app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()?.dropAllUnsavedDocuments()
+              val fileDocumentManager = app.serviceIfCreated<FileDocumentManager, FileDocumentManagerImpl>()
+              if (fileDocumentManager != null) {
+                fileDocumentManager.dropAllUnsavedDocuments()
+                fileDocumentManager.clearDocumentCache()
+              }
             }
           }
         },

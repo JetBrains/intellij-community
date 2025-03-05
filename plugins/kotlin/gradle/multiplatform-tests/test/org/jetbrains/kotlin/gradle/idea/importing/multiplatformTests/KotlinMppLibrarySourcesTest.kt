@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProject
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 

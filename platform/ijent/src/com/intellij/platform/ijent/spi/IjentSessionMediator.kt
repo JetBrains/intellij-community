@@ -5,11 +5,11 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.awaitExit
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -216,7 +216,7 @@ private fun logIjentStderr(ijentLabel: String, line: String) {
   val (rawRemoteDateTime, level, message) =
     ijentLogMessageRegex.matchEntire(line)?.destructured
     ?: run {
-      LOG.debug { "$ijentLabel log: $line" }
+      LOG.info("$ijentLabel log: $line")
       return
     }
 
@@ -254,7 +254,10 @@ private suspend fun ijentProcessExitAwaiter(
   mediator: IjentSessionMediator,
   lastStderrMessages: MutableSharedFlow<String?>,
 ): Nothing {
-  val exitCode = mediator.process.awaitExit()
+  while (!mediator.process.waitFor(1, TimeUnit.SECONDS)) {
+    ensureActive()
+  }
+  val exitCode = mediator.process.exitValue()
   LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
 
   val isExitExpected = when (mediator.expectedErrorCode) {

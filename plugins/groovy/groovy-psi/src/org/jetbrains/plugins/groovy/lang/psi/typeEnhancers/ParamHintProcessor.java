@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
@@ -25,11 +25,10 @@ public abstract class ParamHintProcessor extends SignatureHintProcessor {
     return myHint;
   }
 
-  @NotNull
   @Override
-  public List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
-                                                 @NotNull PsiSubstitutor substitutor,
-                                                 String @NotNull [] options) {
+  public @NotNull List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
+                                                          @NotNull PsiSubstitutor substitutor,
+                                                          String @NotNull [] options) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (myParam < parameters.length) {
       PsiParameter parameter = parameters[myParam];
@@ -55,8 +54,7 @@ public abstract class ParamHintProcessor extends SignatureHintProcessor {
     return ContainerUtil.emptyList();
   }
 
-  @NotNull
-  protected static ArrayList<PsiType[]> produceResult(@Nullable PsiType type) {
+  protected static @NotNull ArrayList<PsiType[]> produceResult(@Nullable PsiType type) {
     PsiType notNull = type != null ? type : (PsiPrimitiveType)PsiTypes.nullType();
     PsiType[] signature = {notNull};
     ArrayList<PsiType[]> result = new ArrayList<>();

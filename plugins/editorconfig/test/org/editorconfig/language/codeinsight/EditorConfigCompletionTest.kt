@@ -41,7 +41,7 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
   fun testComplexValue1() = doTest("all", "none", "accessors", "anonymous_methods", "lambdas")
   fun testComplexValue2() = doTest("anonymous_methods", "lambdas")
   fun testComplexValue3() = doInverseTest("all", "none", "accessors")
-  fun testComplexValue4() = doExactTest("none", "silent", "suggestion", "warning", "error")
+  fun testComplexValue4() = doExactTest("none", "silent", "refactoring", "suggestion", "warning", "error")
   fun testComplexValue5() = doInverseTest("none", "silent", "suggestion", "warning", "error")
   fun testComplexValue6() = doExactTest("my_symbols", "unset")
   fun testComplexValue7() = doExactTest("unset")
@@ -80,6 +80,6 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
     val name = getTestName(true)
     configureByFile("$name/.editorconfig")
     val actual = completeBasic().map(LookupElement::getLookupString)
-    assertIterableEquals(actual, expected.toList())
+    assertIterableEquals(expected.toList(), actual)
   }
 }

@@ -19,16 +19,15 @@ import java.util.function.Supplier;
 
 import static com.intellij.java.compiler.charts.jps.ChartsBuilderService.COMPILATION_STATISTIC_BUILDER_ID;
 
-public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
+public final class CompileStatisticBuilderMessage extends CustomBuilderMessage {
   private static final Gson JSON = new Gson();
 
   private CompileStatisticBuilderMessage(@NotNull String messageType, @NotNull String data) {
     super(COMPILATION_STATISTIC_BUILDER_ID, messageType, data);
   }
 
-  @NotNull
-  public static CompileStatisticBuilderMessage create(@NotNull Set<? extends BuildTarget<?>> targets,
-                                                      @NotNull String event) {
+  public static @NotNull CompileStatisticBuilderMessage create(@NotNull Set<? extends BuildTarget<?>> targets,
+                                                               @NotNull String event) {
     List<TargetEvent>
       events = ContainerUtil.map(targets, target -> map(target, event.equals("STARTED")
                                                                 ? StartTarget::new
@@ -36,9 +35,8 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
     return new CompileStatisticBuilderMessage(event, JSON.toJson(events));
   }
 
-  @NotNull
-  private static <T extends TargetEvent> T map(@NotNull BuildTarget<?> target,
-                                                                              @NotNull Supplier<T> event) {
+  private static @NotNull <T extends TargetEvent> T map(@NotNull BuildTarget<?> target,
+                                                        @NotNull Supplier<T> event) {
     T data = event.get();
     data.name = target instanceof ModuleBasedTarget
                 ? ((ModuleBasedTarget<?>)target).getModule().getName() :
@@ -50,8 +48,7 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
     return data;
   }
 
-  @Nullable
-  public static BuildMessage create(@NotNull MemoryMXBean memory, @NotNull OperatingSystemMXBean os) {
+  public static @Nullable BuildMessage create(@NotNull MemoryMXBean memory, @NotNull OperatingSystemMXBean os) {
     CpuMemoryStatistics statistics = new CpuMemoryStatistics();
     statistics.heapUsed = memory.getHeapMemoryUsage().getUsed();
     statistics.heapMax = memory.getHeapMemoryUsage().getMax();
@@ -69,7 +66,7 @@ public class CompileStatisticBuilderMessage extends CustomBuilderMessage {
     return new CompileStatisticBuilderMessage("STATISTIC", JSON.toJson(statistics));
   }
 
-  public static abstract class TargetEvent {
+  public abstract static class TargetEvent {
     public String name;
     public String type;
     public boolean isTest;

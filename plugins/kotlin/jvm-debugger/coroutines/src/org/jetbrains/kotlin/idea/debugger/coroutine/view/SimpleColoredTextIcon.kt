@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import javax.swing.Icon
 
-class SimpleColoredTextIcon(val icon: Icon?, val hasChildren: Boolean) {
+internal class SimpleColoredTextIcon(val icon: Icon?, val hasChildren: Boolean) {
     private val texts = mutableListOf<String>()
     private val textKeyAttributes = mutableListOf<TextAttributesKey>()
 
@@ -91,15 +91,15 @@ interface CoroutineDebuggerColors {
     }
 }
 
-fun fromState(state: State, isCurrent: Boolean): Icon =
+internal fun fromState(state: State, isCurrent: Boolean): Icon =
     when (state) {
         State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
         State.RUNNING -> if (isCurrent) AllIcons.Debugger.ThreadCurrent else AllIcons.Debugger.ThreadRunning
         State.CREATED -> AllIcons.Debugger.ThreadStates.Idle
-        else -> AllIcons.Debugger.ThreadStates.Daemon_sign
+        State.UNKNOWN -> AllIcons.Debugger.ThreadGroup
     }
 
-class SimpleColoredTextIconPresentationRenderer {
+internal class SimpleColoredTextIconPresentationRenderer {
     companion object {
         val log by logger
     }
@@ -107,31 +107,20 @@ class SimpleColoredTextIconPresentationRenderer {
     private val settings: ThreadsViewSettings = ThreadsViewSettings.getInstance()
     
     fun render(infoData: CoroutineInfoData, isCurrent: Boolean, textToHideFromContext: String): SimpleColoredTextIcon {
-        val thread = infoData.activeThread
-        val name = thread?.name()?.substringBefore(" @${infoData.descriptor.name}") ?: ""
+        val thread = infoData.lastObservedThread
+        val name = thread?.name()?.substringBefore(" @${infoData.name}") ?: ""
         val threadState = if (thread != null) DebuggerUtilsEx.getThreadStatusText(thread.status()) else ""
         
-        val icon = fromState(infoData.descriptor.state, isCurrent)
+        val icon = fromState(infoData.state, isCurrent)
 
-        val label = SimpleColoredTextIcon(icon, !infoData.isCreated())
+        val label = SimpleColoredTextIcon(icon, !infoData.isCreated)
         label.append("\"")
-        label.appendValue(infoData.descriptor.formatName())
-        label.append("\": ${infoData.descriptor.state}")
+        label.appendValue(infoData.coroutineDescriptor)
+        label.append("\": ${infoData.state}")
         if (name.isNotEmpty()) {
             label.append(" on thread \"")
             label.appendValue(name)
             label.append("\": $threadState")
-        }
-        infoData.descriptor.contextSummary?.let {
-            // The context summary is the toString output of the context. We know that CombinedContext concatenates the toString output of
-            // its inner contexts, including CoroutineName, Job and the dispatcher. Remove the name, and remove the job or dispatcher
-            // depending on how we're grouped
-            val text = it.replace("CoroutineName(${infoData.descriptor.name})", "")
-                .replace(textToHideFromContext, "")
-                .replace(Regex("(, )+"), ", ")
-                .replace("[, ", "[")
-                .replace(", ]", "]")
-            label.append(" $text")
         }
         return label
     }

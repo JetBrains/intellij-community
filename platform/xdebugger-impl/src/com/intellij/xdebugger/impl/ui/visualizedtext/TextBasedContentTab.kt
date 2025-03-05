@@ -21,6 +21,7 @@ abstract class TextBasedContentTab : VisualizedContentTab {
   @VisibleForTesting
   abstract fun formatText(): String
 
+  /** File type of the formatted text. */
   protected abstract val fileType: FileType
 
   protected fun createEditor(project: Project, parentDisposable: Disposable): Editor =

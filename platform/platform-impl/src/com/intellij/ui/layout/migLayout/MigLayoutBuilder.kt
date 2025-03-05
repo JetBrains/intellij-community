@@ -61,7 +61,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
   override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = linkedMapOf()
-  override var customValidationRequestors: MutableMap<JComponent, MutableList<(() -> Unit) -> Unit>> = linkedMapOf()
   override var applyCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
   override var resetCallbacks: MutableMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
   override var isModifiedCallbacks: MutableMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
@@ -171,7 +170,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
             }
           }
 
-          if (index >= row.rightIndex) {
+          if (index >= Int.MAX_VALUE) {
             cc.horizontal.gapBefore = BoundSize(null, null, null, true, null)
           }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,9 +24,7 @@ public final class UsageCollectorBean implements PluginAware {
    * <br/>
    * <b>Do not</b> use without approval from Product Analytics Platform Team.
    */
-  @Attribute("allowOnStartup")
-  @NonNls
-  public Boolean allowOnStartup;
+  @Attribute("allowOnStartup") public @NonNls Boolean allowOnStartup;
 
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {

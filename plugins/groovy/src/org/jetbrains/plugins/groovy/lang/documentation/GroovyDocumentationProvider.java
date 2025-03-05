@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -67,8 +67,8 @@ import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendS
 public final class GroovyDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final String LINE_SEPARATOR = "\n";
 
-  @NonNls private static final String RETURN_TAG = "@return";
-  @NonNls private static final String THROWS_TAG = "@throws";
+  private static final @NonNls String RETURN_TAG = "@return";
+  private static final @NonNls String THROWS_TAG = "@throws";
   private static final String BODY_HTML = "</body></html>";
 
   private static void appendStyledSpan(
@@ -93,8 +93,7 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
   }
 
   @Override
-  @Nullable
-  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrVariable || element instanceof GrImplicitVariable) {
       @Nls StringBuilder buffer = new StringBuilder();
       PsiVariable variable = (PsiVariable)element;
@@ -323,8 +322,7 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
   }
 
   @Override
-  @Nullable
-  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+  public @Nullable List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     List<String> result = new ArrayList<>();
     PsiElement docElement = getDocumentationElement(element, originalElement);
     if (docElement != null) {
@@ -338,8 +336,7 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
   }
 
   @Override
-  @Nullable
-  public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
     GroovyDocHighlightingManager highlightingManager = GroovyDocHighlightingManager.getInstance();
 
     if (element instanceof GdslNamedParameter) {
@@ -482,7 +479,7 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
     final GroovyResolveResult[] candidates = expr.multiResolve(false);
     final String text = expr.getText();
     if (candidates.length > 0) {
-      @NonNls final StringBuilder sb = new StringBuilder();
+      final @NonNls StringBuilder sb = new StringBuilder();
       for (final GroovyResolveResult candidate : candidates) {
         final PsiElement element = candidate.getElement();
         if (!(element instanceof PsiMethod)) {
@@ -507,8 +504,7 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
   }
 
   @Override
-  @Nullable
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public @Nullable PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     if (object instanceof GroovyResolveResult) {
       return ((GroovyResolveResult)object).getElement();
     }
@@ -522,8 +518,7 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
   }
 
   @Override
-  @Nullable
-  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+  public @Nullable PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 
@@ -538,9 +533,8 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
     return null;
   }
 
-  @Nullable
   @Override
-  public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
+  public @Nullable Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
     for (PsiElement e = startPoint; e != null; e = e.getParent()) {
       if (e instanceof GrDocCommentOwner) {
         return Pair.create(e, ((GrDocCommentOwner)e).getDocComment());
@@ -585,7 +579,7 @@ public final class GroovyDocumentationProvider implements CodeDocumentationProvi
         JavaDocumentationProvider.createTypeParamsListComment(builder, commenter, typeParameterList);
       }
     }
-    return builder.length() > 0 ? builder.toString() : null;
+    return !builder.isEmpty() ? builder.toString() : null;
   }
 
   @Override

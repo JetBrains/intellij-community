@@ -100,7 +100,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         ideFrame {
           val table: VcsLogGraphTable = findComponentWithTimeout(defaultTimeout)
           val row = invokeAndWaitIfNeeded {
-            (0 until table.rowCount).find { table.model.getCommitMetadata(it).id == commitHashToHighlight }
+            (0 until table.rowCount).find { table.model.getCommitMetadata(it)?.id == commitHashToHighlight }
           } ?: error("Failed to find commit with hash: $commitHashToHighlight")
           JTableFixture(robot, table).click(TableCell.row(row).column(1), MouseButton.RIGHT_BUTTON)
         }
@@ -170,6 +170,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.fixup", LessonUtil.rawKeyStroke(fixupShortcut),
                                     strong(GitBundle.message("rebase.entry.action.name.fixup"))))
       triggerAndBorderHighlight().component { ui: BasicOptionButtonUI.ArrowButton -> isInsideRebaseDialog(ui) }
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // no Action ID available
       trigger("git4idea.rebase.interactive.dialog.FixupAction")
       test(waitEditorToBeReady = false) {
         invokeActionViaShortcut("ALT F")
@@ -197,6 +198,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.squash",
                                     LessonUtil.rawKeyStroke(squashShortcut), strong(GitBundle.message("rebase.entry.action.name.squash"))))
       triggerAndBorderHighlight().component { ui: BasicOptionButtonUI.MainButton -> isInsideRebaseDialog(ui) }
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // no Action ID available
       trigger("git4idea.rebase.interactive.dialog.SquashAction")
       restoreState {
         val table = previous.ui as? JBTable ?: return@restoreState false

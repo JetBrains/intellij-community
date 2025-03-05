@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCall
-import org.jetbrains.kotlin.idea.highlighting.highlighters.FunctionCallHighlighter
+import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinFunctionCallSemanticAnalyzer
 
 /**
  * An interface for an extension point that enables a user-defined call highlighter.
@@ -21,8 +21,8 @@ interface KotlinCallHighlighterExtension {
     /**
      * A function determines how to highlight [call] for PSI [elementToHighlight].
      *
-     * Note that this function is used by [FunctionCallHighlighter]. When this function returns a non-null [HighlightInfoType],
-     * [FunctionCallHighlighter] uses it instead of the default one to highlight [call].
+     * Note that this function is used by [KotlinFunctionCallSemanticAnalyzer]. When this function returns a non-null [HighlightInfoType],
+     * [KotlinFunctionCallSemanticAnalyzer] uses it instead of the default one to highlight [call].
      */
     context(KaSession)
     fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType?

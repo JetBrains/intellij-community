@@ -11,22 +11,17 @@ import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphBuilder;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
-import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import com.intellij.vcs.log.graph.utils.TimestampGetter;
-import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
-import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.Function;
 
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.asLiteLinearGraph;
 
@@ -34,20 +29,18 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.asLiteLinearGrap
 public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
   private final @NotNull LinearGraph myLinearGraph;
   private final @NotNull GraphLayout myGraphLayout;
-  private final @NotNull Function<? super Integer, ? extends @NotNull CommitId> myFunction;
-  private final @NotNull TimestampGetter myTimestampGetter;
   private final @NotNull Set<Integer> myBranchNodeIds;
+
+  private final @NotNull RowsMapping<CommitId> myRowsMapping;
 
   private SimpleGraphInfo(@NotNull LinearGraph linearGraph,
                           @NotNull GraphLayout graphLayout,
-                          @NotNull Function<? super Integer, ? extends @NotNull CommitId> function,
-                          @NotNull TimestampGetter timestampGetter,
-                          @NotNull Set<Integer> branchNodeIds) {
+                          @NotNull Set<Integer> branchNodeIds,
+                          @NotNull RowsMapping<CommitId> rowsMapping) {
     myLinearGraph = linearGraph;
     myGraphLayout = graphLayout;
-    myFunction = function;
-    myTimestampGetter = timestampGetter;
     myBranchNodeIds = branchNodeIds;
+    myRowsMapping = rowsMapping;
   }
 
   public static <CommitId> SimpleGraphInfo<CommitId> build(@NotNull LinearGraph linearGraph,
@@ -60,9 +53,8 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
     int start = Math.max(0, visibleRow - visibleRange);
     int end = Math.min(linearGraph.nodesCount(), start + 2 * visibleRange); // no more than 2*visibleRange commits;
 
+    RowsMapping<CommitId> rowsMapping = new RowsMapping<>(end - start, permanentCommitsInfo.getCommitId(0) instanceof Integer);
     List<GraphCommit<CommitId>> graphCommits = new ArrayList<>(end - start);
-    List<CommitId> commitsIdMap = new ArrayList<>(end - start);
-
     for (int row = start; row < end; row++) {
       int nodeId = linearGraph.getNodeId(row);
       CommitId commit = permanentCommitsInfo.getCommitId(nodeId);
@@ -72,20 +64,19 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
                                                 if (row1 < start || row1 >= end) return null;
                                                 return permanentCommitsInfo.getCommitId(linearGraph.getNodeId(row1));
                                               }));
-      graphCommits.add(GraphCommitImpl.createCommit(commit, parents, permanentCommitsInfo.getTimestamp(nodeId)));
-      commitsIdMap.add(commit);
+      long timestamp = permanentCommitsInfo.getTimestamp(nodeId);
+      rowsMapping.add(commit, timestamp);
+      graphCommits.add(GraphCommitImpl.createCommit(commit, parents, timestamp));
     }
-    IntTimestampGetter timestampGetter = PermanentCommitsInfoImpl.createTimestampGetter(graphCommits);
 
-    Function<Integer, @NotNull CommitId> commitIdMapping = createCommitIdMapFunction(commitsIdMap);
     PermanentLinearGraphImpl newLinearGraph = PermanentLinearGraphBuilder.newInstance(graphCommits).build();
 
     int[] layoutIndexes = new int[end - start];
-    it.unimi.dsi.fastutil.ints.IntList headNodeIndexes = new IntArrayList();
+    IntList headNodeIndexes = new IntArrayList();
 
     Object2IntMap<CommitId> commitIdToInteger = reverseCommitIdMap(permanentCommitsInfo, permanentGraphSize);
     for (int row = start; row < end; row++) {
-      CommitId commitId = commitsIdMap.get(row - start);
+      CommitId commitId = graphCommits.get(row - start).getId();
       int layoutIndex = oldLayout.getLayoutIndex(commitIdToInteger.getInt(commitId));
       layoutIndexes[row - start] = layoutIndex;
       if (asLiteLinearGraph(newLinearGraph).getNodes(row - start, LiteLinearGraph.NodeFilter.UP).isEmpty()) {
@@ -96,25 +87,12 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
     ContainerUtil.sort(headNodeIndexes, Comparator.comparingInt(o -> layoutIndexes[o]));
     GraphLayoutImpl newLayout = new GraphLayoutImpl(layoutIndexes, headNodeIndexes);
 
-    return new SimpleGraphInfo<>(newLinearGraph, newLayout, commitIdMapping, timestampGetter,
-                                 LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, branchNodeIds));
-  }
-
-  private static @NotNull <CommitId> Function<Integer, @NotNull CommitId> createCommitIdMapFunction(@NotNull List<? extends CommitId> commitsIdMap) {
-    if (!commitsIdMap.isEmpty() && commitsIdMap.get(0) instanceof Integer) {
-      int[] ints = new int[commitsIdMap.size()];
-      for (int row = 0; row < commitsIdMap.size(); row++) {
-        ints[row] = (Integer)commitsIdMap.get(row);
-      }
-      //noinspection unchecked
-      return (Function<Integer, CommitId>)new IntegerCommitIdMapFunction(CompressedIntList.newInstance(ints));
-    }
-    return new CommitIdMapFunction<>(commitsIdMap);
+    return new SimpleGraphInfo<>(newLinearGraph, newLayout, LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, branchNodeIds), rowsMapping);
   }
 
   private static @NotNull <CommitId> Object2IntMap<CommitId> reverseCommitIdMap(@NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo,
                                                                                 int size) {
-    Object2IntMap<CommitId> result = new Object2IntOpenHashMap<>();
+    Object2IntMap<CommitId> result = new Object2IntOpenHashMap<>(size);
     for (int i = 0; i < size; i++) {
       result.put(permanentCommitsInfo.getCommitId(i), i);
     }
@@ -126,18 +104,18 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
     return new PermanentCommitsInfo<>() {
       @Override
       public @NotNull CommitId getCommitId(int nodeId) {
-        return myFunction.apply(nodeId);
+        return myRowsMapping.getCommitId(nodeId);
       }
 
       @Override
       public long getTimestamp(int nodeId) {
-        return myTimestampGetter.getTimestamp(nodeId);
+        return myRowsMapping.getTimestamp(nodeId);
       }
 
       @Override
       public int getNodeId(@NotNull CommitId commitId) {
         for (int id = 0; id < myLinearGraph.nodesCount(); id++) {
-          if (myFunction.apply(id).equals(commitId)) {
+          if (myRowsMapping.getCommitId(id).equals(commitId)) {
             return id;
           }
         }
@@ -148,7 +126,7 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
       public @NotNull Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds) {
         Set<Integer> result = new HashSet<>();
         for (int id = 0; id < myLinearGraph.nodesCount(); id++) {
-          if (commitIds.contains(myFunction.apply(id))) {
+          if (commitIds.contains(myRowsMapping.getCommitId(id))) {
             result.add(id);
           }
         }
@@ -170,31 +148,5 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
   @Override
   public @NotNull Set<Integer> getBranchNodeIds() {
     return myBranchNodeIds;
-  }
-
-  private static final class CommitIdMapFunction<CommitId> implements Function<Integer, @NotNull CommitId> {
-    private final List<? extends CommitId> myCommitsIdMap;
-
-    CommitIdMapFunction(List<? extends CommitId> commitsIdMap) {
-      myCommitsIdMap = commitsIdMap;
-    }
-
-    @Override
-    public @NotNull CommitId apply(Integer dom) {
-      return myCommitsIdMap.get(dom);
-    }
-  }
-
-  private static final class IntegerCommitIdMapFunction implements Function<Integer, @NotNull Integer> {
-    private final IntList myCommitsIdMap;
-
-    IntegerCommitIdMapFunction(IntList commitsIdMap) {
-      myCommitsIdMap = commitsIdMap;
-    }
-
-    @Override
-    public @NotNull Integer apply(Integer dom) {
-      return myCommitsIdMap.get(dom);
-    }
   }
 }

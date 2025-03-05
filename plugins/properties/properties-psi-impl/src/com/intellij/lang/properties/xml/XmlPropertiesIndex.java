@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -32,38 +32,33 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   implements DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
              KeyDescriptor<XmlPropertiesIndex.Key> {
 
-  public final static Key MARKER_KEY = new Key();
+  public static final Key MARKER_KEY = new Key();
   public static final ID<Key,String> NAME = ID.create("xmlProperties");
 
   private static final String HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD = "http://java.sun.com/dtd/properties.dtd";
 
-  @NotNull
   @Override
-  public ID<Key, String> getName() {
+  public @NotNull ID<Key, String> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<Key, String, FileContent> getIndexer() {
+  public @NotNull DataIndexer<Key, String, FileContent> getIndexer() {
     return this;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<Key> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<Key> getKeyDescriptor() {
     return this;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<String> getValueExternalizer() {
+  public @NotNull DataExternalizer<String> getValueExternalizer() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {
@@ -82,9 +77,8 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     return 2;
   }
 
-  @NotNull
   @Override
-  public Map<Key, String> map(@NotNull FileContent inputData) {
+  public @NotNull Map<Key, String> map(@NotNull FileContent inputData) {
     CharSequence text = inputData.getContentAsText();
     if (CharArrayUtil.indexOf(text, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) == -1) {
       return Collections.emptyMap();
@@ -114,8 +108,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
     return parse(bytes, true).accepted;
   }
 
-  @NotNull
-  private static MyIXMLBuilderAdapter parse(CharSequence text, boolean stopIfAccepted) {
+  private static @NotNull MyIXMLBuilderAdapter parse(CharSequence text, boolean stopIfAccepted) {
     StdXMLReader reader = new StdXMLReader(CharArrayUtil.readerFromCharSequence(text)) {
       @Override
       public Reader openStream(String publicID, String systemID) throws IOException {

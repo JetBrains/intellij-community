@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -27,5 +27,5 @@ public interface RenameInputValidator {
    * Return {@code true} if {@link RenameInputValidatorEx} should return a custom error message,
    * otherwise default message "'[newName]' is not a valid identifier" will be shown.
    */
-  boolean isInputValid(@NotNull final String newName, @NotNull final PsiElement element, @NotNull final ProcessingContext context);
+  boolean isInputValid(final @NotNull String newName, final @NotNull PsiElement element, final @NotNull ProcessingContext context);
 }

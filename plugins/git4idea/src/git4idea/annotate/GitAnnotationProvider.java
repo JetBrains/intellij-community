@@ -21,11 +21,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.annotate.AnnotationWarning;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.vcs.AnnotationProviderEx;
@@ -52,10 +53,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -95,8 +93,12 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       }
 
       if (revision == null) {
-        Pair<FilePath, VcsRevisionNumber> pair = getPathAndRevision(file);
-        return annotate(pair.first, pair.second, file);
+        FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file));
+        VcsRevisionNumber currentRevision = getCurrentRevision(file);
+        // Only get cached last revision here to avoid slowdowns, we'll compute it on annotation caching
+        VcsRevisionNumber cachedLastRevision =
+          currentRevision != null ? myCache.getLastRevision(filePath, GitVcs.getKey(), currentRevision) : null;
+        return annotate(filePath, cachedLastRevision, file);
       }
       else {
         FilePath filePath = ((VcsFileRevisionEx)revision).getPath();
@@ -107,7 +109,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   }
 
   @Override
-  public String getActionName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) @Nullable String getCustomActionName() {
     return ActionsBundle.message("action.Annotate.with.Blame.text");
   }
 
@@ -121,10 +123,16 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   public @NotNull FileAnnotation annotate(final @NotNull FilePath path, final @NotNull VcsRevisionNumber revision) throws VcsException {
     return logTime(() -> {
       GitFileRevision fileRevision = new GitFileRevision(myProject, path, (GitRevisionNumber)revision);
-      VcsVirtualFile file = new VcsVirtualFile(path.getPath(), fileRevision, VcsFileSystem.getInstance());
+      VcsVirtualFile file = new VcsVirtualFile(path, fileRevision);
 
       return annotate(path, revision, file);
     });
+  }
+
+  @Override
+  public @Nullable AnnotationWarning getAnnotationWarnings(@NotNull FileAnnotation fileAnnotation) {
+    GitFileAnnotation gitFileAnnotation = ObjectUtils.tryCast(fileAnnotation, GitFileAnnotation.class);
+    return gitFileAnnotation == null ? null : GitAnnotationWarnings.getInstance(myProject).getAnnotationWarnings(gitFileAnnotation);
   }
 
   private @NotNull GitFileAnnotation annotate(@NotNull FilePath filePath,
@@ -132,16 +140,26 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                               @NotNull VirtualFile file) throws VcsException {
     VirtualFile root = GitUtil.getRootForFile(myProject, filePath);
 
-    GitFileAnnotation fileAnnotation;
+    GitFileAnnotation fileAnnotation = null;
     if (revision != null) {
       fileAnnotation = getCached(filePath, revision, file);
-      if (fileAnnotation == null) {
-        fileAnnotation = doAnnotate(root, filePath, revision, file);
+    }
+
+    if (fileAnnotation == null) {
+      fileAnnotation = doAnnotate(root, filePath, revision, file);
+
+      if (revision != null) {
         cache(filePath, revision, fileAnnotation);
       }
-    }
-    else {
-      fileAnnotation = doAnnotate(root, filePath, null, file);
+      else { // compute last revision and cache annotations in the background
+        GitFileAnnotation finalFileAnnotation = fileAnnotation;
+        BackgroundTaskUtil.executeOnPooledThread(GitDisposable.getInstance(myProject), () -> {
+          VcsRevisionNumber lastRevision = getLastRevision(filePath, getCurrentRevision(file));
+          if (lastRevision != null) {
+            cache(filePath, lastRevision, finalFileAnnotation);
+          }
+        });
+      }
     }
 
     if (fileAnnotation.getRevisions() == null) {
@@ -197,10 +215,6 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                                 @NotNull FilePath filePath,
                                                 @Nullable VcsRevisionNumber revision,
                                                 @NotNull VirtualFile file) throws VcsException {
-    if (revision == null) {
-      LOG.warn("Computing annotations for implicitly passed HEAD revision");
-    }
-
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
     return myProject.getService(GitAnnotationService.class).annotate(root, filePath, revision, file);
@@ -221,6 +235,12 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                                @NotNull FilePath filePath,
                                                @Nullable VcsRevisionNumber revision,
                                                @NotNull VirtualFile file) throws VcsException {
+      // parseAnnotations rely on the fact that revision should be the last file's modified revision
+      if (revision == null) {
+        GitAnnotationProvider provider = project.getService(GitAnnotationProvider.class);
+        revision = provider.getLastRevision(filePath, provider.getCurrentRevision(file));
+      }
+
       // binary handler to preserve CR symbols intact
       GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.BLAME);
       h.setStdoutSuppressed(true);

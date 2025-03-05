@@ -52,26 +52,22 @@ public final class EqualityToSafeEqualsFix extends PsiUpdateModCommandQuickFix i
     return myPriority;
   }
 
-  @Nullable
-  public static EqualityToSafeEqualsFix buildFix(PsiBinaryExpression expression) {
+  public static @Nullable EqualityToSafeEqualsFix buildFix(PsiBinaryExpression expression) {
     final Nullability nullability = NullabilityUtil.getExpressionNullability(expression.getLOperand(), true);
     if (nullability == Nullability.NOT_NULL) return null;
     final Priority priority = nullability == Nullability.UNKNOWN ? Priority.TOP : Priority.NORMAL;
     return new EqualityToSafeEqualsFix(JavaTokenType.NE.equals(expression.getOperationTokenType()), priority);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls @NotNull String getName() {
     return myNegated
            ? InspectionGadgetsBundle.message("inequality.to.safe.not.equals.quickfix")
            : InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix");
   }
 
@@ -89,7 +85,7 @@ public final class EqualityToSafeEqualsFix extends PsiUpdateModCommandQuickFix i
     CommentTracker tracker = new CommentTracker();
     final String lhsText = tracker.text(lhs);
     final String rhsText = tracker.text(rhs);
-    @NonNls final StringBuilder newExpression = new StringBuilder();
+    final @NonNls StringBuilder newExpression = new StringBuilder();
     if (PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, expression) && ClassUtils.findClass("java.util.Objects", expression) != null) {
       if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
         newExpression.append('!');

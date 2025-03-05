@@ -28,7 +28,21 @@ internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: Sy
 
 @Internal
 internal data class SdkOriginImpl(override val sdk: Sdk,
-                                  override val rootsToIndex: Collection<VirtualFile>) : SdkOrigin
+                                  override val rootsToIndex: Collection<VirtualFile>) : SdkOrigin {
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as SdkOriginImpl
+
+    return rootsToIndex == other.rootsToIndex
+  }
+
+  override fun hashCode(): Int {
+    return rootsToIndex.hashCode()
+  }
+}
 
 @Internal
 internal data class IndexableSetContributorOriginImpl(override val indexableSetContributor: IndexableSetContributor,

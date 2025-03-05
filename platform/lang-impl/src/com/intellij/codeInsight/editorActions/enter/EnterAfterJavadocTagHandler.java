@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -175,8 +175,8 @@ public final class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapt
     return new Context(text, startTagEndOffset, endTagStartOffset, startTag, offset);
   }
 
-  static final class Context {
-
+  @ApiStatus.Internal
+  public static final class Context {
     public final int startTagEndOffset;
     public final int endTagStartOffset;
     public final @Nullable String startTag;

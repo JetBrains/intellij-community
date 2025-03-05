@@ -318,6 +318,32 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     assertEquals("1", id.version)
   }
 
+  fun testTakingVersionFromParentAutomaticallyDisabledInMaven3() = runBlocking {
+    //assumeMaven3()
+    createProjectPom("""
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <version>1</version>
+                       </parent>
+                       """.trimIndent())
+    val subprojectPom = createModulePom("sub/subproject", """
+                       <parent>
+                         <groupId>test</groupId>
+                         <artifactId>project</artifactId>
+                         <relativePath>../../pom.xml</relativePath>
+                       </parent>
+                       """.trimIndent())
+
+    val id = readProject(subprojectPom).mavenId
+
+    assertEquals("test", id.groupId)
+    assertEquals("Unknown", id.artifactId)
+    assertEquals("Unknown", id.version)
+    // TODO add a similar testcase for Maven 4: the version must be found in the parent POM using <relativePath>
+    //assertEquals("1", id.version)
+  }
+
   fun testCustomSettings() = runBlocking {
     val file = WriteAction.compute<VirtualFile, IOException> {
       val res = projectRoot.createChildData(this, "pom.xml")
@@ -585,16 +611,15 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   }
 
   fun testHandlingRecursionProprielyAndDoNotForgetCoClearRecursionGuard() = runBlocking {
-    val repoPath = File(dir, "repository")
-    repositoryPath = repoPath.path
+    val repoPath = dir.resolve("repository")
+    repositoryPath = repoPath
 
-    val parentFile = File(repoPath, "test/parent/1/parent-1.pom")
-    parentFile.parentFile.mkdirs()
-    FileUtil.writeToFile(parentFile, createPomXml("""
+    val parentFile = repoPath.resolve("test/parent/1/parent-1.pom")
+    createFile(parentFile, createPomXml("""
                                                     <groupId>test</groupId>
                                                     <artifactId>parent</artifactId>
                                                     <version>1</version>
-                                                    """.trimIndent()).toByteArray(StandardCharsets.UTF_8))
+                                                    """.trimIndent()))
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -881,20 +906,18 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   }
 
   fun testExpandingPropertiesFromParentInRepository() = runBlocking {
-    val repoPath = File(dir, "repository")
-    repositoryPath = repoPath.path
+    val repoPath = dir.resolve("repository")
+    repositoryPath = repoPath
 
-    val parentFile = File(repoPath, "org/test/parent/1/parent-1.pom")
-    parentFile.parentFile.mkdirs()
-    FileUtil.writeToFile(parentFile,
-                         createPomXml("""
+    val parentFile = repoPath.resolve("org/test/parent/1/parent-1.pom")
+    createFile(parentFile, createPomXml("""
                                         <groupId>org.test</groupId>
                                         <artifactId>parent</artifactId>
                                         <version>1</version>
                                         <properties>
                                           <prop>value</prop>
                                         </properties>
-                                        """.trimIndent()).toByteArray(StandardCharsets.UTF_8))
+                                        """.trimIndent()))
 
     createProjectPom("""
                        <parent>

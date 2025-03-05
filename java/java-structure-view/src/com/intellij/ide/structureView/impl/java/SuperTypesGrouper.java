@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
@@ -21,11 +21,10 @@ import java.util.Map;
 
 public final class SuperTypesGrouper implements Grouper{
   public static final Key<WeakReference<PsiMethod>> SUPER_METHOD_KEY = Key.create("StructureTreeBuilder.SUPER_METHOD_KEY");
-  @NonNls public static final String ID = "SHOW_INTERFACES";
+  public static final @NonNls String ID = "SHOW_INTERFACES";
 
   @Override
-  @NotNull
-  public Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
+  public @NotNull Collection<Group> group(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<TreeElement> children) {
     if (isParentGrouped(parent)) return Collections.emptyList();
     Map<Group, SuperTypeGroup> groups = new HashMap<>();
 
@@ -95,15 +94,13 @@ public final class SuperTypesGrouper implements Grouper{
   }
 
   @Override
-  @NotNull
-  public ActionPresentation getPresentation() {
+  public @NotNull ActionPresentation getPresentation() {
     return new ActionPresentationData(StructureViewBundle.message("action.structureview.group.methods.by.defining.type"), null,
                                       AllIcons.General.ImplementingMethod);
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return ID;
   }
 

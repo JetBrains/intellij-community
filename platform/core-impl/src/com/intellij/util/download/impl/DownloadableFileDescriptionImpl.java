@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.download.impl;
 
 import com.intellij.openapi.util.Condition;
@@ -14,7 +14,7 @@ public class DownloadableFileDescriptionImpl implements DownloadableFileDescript
 
   public DownloadableFileDescriptionImpl(@NotNull String downloadUrl, @NotNull String fileName, @NotNull String fileExtension) {
     myFileName = fileName;
-    myFileExtension = fileExtension.length() > 0 && !fileExtension.startsWith(".") ? "." + fileExtension : fileExtension;
+    myFileExtension = !fileExtension.isEmpty() && !fileExtension.startsWith(".") ? "." + fileExtension : fileExtension;
     myDownloadUrl = downloadUrl;
   }
 

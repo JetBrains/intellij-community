@@ -19,7 +19,7 @@ import javax.swing.BorderFactory
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class KotlinSaveStylePanel(settings: CodeStyleSettings) : CodeStyleAbstractPanel(KotlinLanguage.INSTANCE, null, settings) {
+internal class KotlinSaveStylePanel(settings: CodeStyleSettings) : CodeStyleAbstractPanel(KotlinLanguage.INSTANCE, null, settings) {
     override fun getRightMargin() = throw UnsupportedOperationException()
     override fun createHighlighter(scheme: EditorColorsScheme) = throw UnsupportedOperationException()
     override fun getFileType() = throw UnsupportedOperationException()

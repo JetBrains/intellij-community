@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.config
 
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -8,7 +8,10 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.exc.StreamReadException
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.DatabindException
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.MapperFeature
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import java.io.IOException
@@ -122,7 +125,7 @@ object SerializationHelper {
   }
 }
 
-class CustomPrettyPrinter : DefaultPrettyPrinter {
+private class CustomPrettyPrinter : DefaultPrettyPrinter {
   init {
     _objectIndenter = DefaultIndenter("  ", "\n")
     _arrayIndenter = DefaultIndenter("  ", "\n")
@@ -131,12 +134,10 @@ class CustomPrettyPrinter : DefaultPrettyPrinter {
   constructor() : super()
   constructor(base: DefaultPrettyPrinter?) : super(base)
 
-  @Throws(IOException::class)
   override fun writeObjectFieldValueSeparator(g: JsonGenerator) {
     g.writeRaw(": ")
   }
 
-  @Throws(IOException::class)
   override fun writeEndArray(g: JsonGenerator, nrOfValues: Int) {
     if (!_arrayIndenter.isInline) {
       --_nesting
@@ -147,7 +148,6 @@ class CustomPrettyPrinter : DefaultPrettyPrinter {
     g.writeRaw(']')
   }
 
-  @Throws(IOException::class)
   override fun writeEndObject(g: JsonGenerator, nrOfEntries: Int) {
     if (!_objectIndenter.isInline) {
       --_nesting

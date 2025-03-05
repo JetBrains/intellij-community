@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
@@ -27,24 +27,22 @@ public final class DuplicateParentFixer {
   }
 
   private static final class DelegateGraphCommit<CommitId> implements GraphCommit<CommitId> {
-    @NotNull private final GraphCommit<CommitId> myDelegate;
+    private final @NotNull GraphCommit<CommitId> myDelegate;
 
-    @NotNull private final List<CommitId> myParents;
+    private final @NotNull List<CommitId> myParents;
 
     private DelegateGraphCommit(@NotNull GraphCommit<CommitId> delegate, @NotNull List<CommitId> parents) {
       myDelegate = delegate;
       myParents = parents;
     }
 
-    @NotNull
     @Override
-    public CommitId getId() {
+    public @NotNull CommitId getId() {
       return myDelegate.getId();
     }
 
-    @NotNull
     @Override
-    public List<CommitId> getParents() {
+    public @NotNull List<CommitId> getParents() {
       return myParents;
     }
 
@@ -54,8 +52,7 @@ public final class DuplicateParentFixer {
     }
   }
 
-  @NotNull
-  private static <CommitId> GraphCommit<CommitId> fixParentsDuplicate(@NotNull GraphCommit<CommitId> commit) {
+  private static @NotNull <CommitId> GraphCommit<CommitId> fixParentsDuplicate(@NotNull GraphCommit<CommitId> commit) {
     List<CommitId> parents = commit.getParents();
     if (parents.size() <= 1) return commit;
 

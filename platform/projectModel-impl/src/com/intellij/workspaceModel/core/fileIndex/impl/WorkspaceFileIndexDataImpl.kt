@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.SingleFileSourcesTracker
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -42,7 +43,7 @@ internal class WorkspaceFileIndexDataImpl(
   
   private val packageDirectoryCache: PackageDirectoryCacheImpl
   private val nonIncrementalContributors = NonIncrementalContributors(project)
-  private val librariesAndSdkContributors: LibrariesAndSdkContributors
+  private val librariesAndSdkContributors: LibrariesAndSdkContributors?
   private val fileIdWithoutFileSets = ConcurrentBitSet.create()
   private val fileTypeRegistry = FileTypeRegistry.getInstance()
   private val dirtyEntities = HashSet<EntityPointer<WorkspaceEntity>>()
@@ -54,15 +55,21 @@ internal class WorkspaceFileIndexDataImpl(
   init {
     Disposer.register(parentDisposable, this)
     //do not move before registration to parentDisposable
-    librariesAndSdkContributors = LibrariesAndSdkContributors(project, fileSets, fileSetsByPackagePrefix, this)
+    librariesAndSdkContributors = if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
+      null
+    } else {
+      LibrariesAndSdkContributors(project, fileSets, fileSetsByPackagePrefix, this)
+    }
     WorkspaceFileIndexDataMetrics.instancesCounter.incrementAndGet()
     val start = Nanoseconds.now()
 
     packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     registerAllEntities(EntityStorageKind.MAIN)
     registerAllEntities(EntityStorageKind.UNLOADED)
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-      librariesAndSdkContributors.registerFileSets()
+    if (librariesAndSdkContributors != null) {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
+        librariesAndSdkContributors.registerFileSets()
+      }
     }
 
     WorkspaceFileIndexDataMetrics.initTimeNanosec.addElapsedTime(start)
@@ -154,7 +161,7 @@ internal class WorkspaceFileIndexDataImpl(
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.assertReadAccess()
     nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix, nonExistingFilesRegistry)
   }
 
@@ -265,14 +272,14 @@ internal class WorkspaceFileIndexDataImpl(
   }
 
   override fun resetCustomContributors() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     nonIncrementalContributors.resetCache()
     resetFileCache()
   }
 
   override fun markDirty(entityPointers: Collection<EntityPointer<WorkspaceEntity>>,
                          filesToInvalidate: Collection<VirtualFile>) = WorkspaceFileIndexDataMetrics.markDirtyTimeNanosec.addMeasuredTime {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     dirtyEntities.addAll(entityPointers)
     dirtyFiles.addAll(filesToInvalidate)
     hasDirtyEntities = dirtyEntities.isNotEmpty()
@@ -280,7 +287,7 @@ internal class WorkspaceFileIndexDataImpl(
 
   override fun onEntitiesChanged(event: VersionedStorageChange,
                                  storageKind: EntityStorageKind) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeNanosec.addMeasuredTime {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     contributorList.filter { it.storageKind == storageKind }.forEach { 
       processChangesByContributor(it, storageKind, event)
     }
@@ -290,7 +297,7 @@ internal class WorkspaceFileIndexDataImpl(
   override fun updateDirtyEntities() {
     val start = Nanoseconds.now()
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     for (file in dirtyFiles) {
       val collection = fileSets.remove(file)
       collection?.forEach { 

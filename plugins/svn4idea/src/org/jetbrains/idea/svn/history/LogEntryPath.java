@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import org.jetbrains.annotations.NotNull;
@@ -65,38 +65,32 @@ public class LogEntryPath extends BaseNodeDescription {
       return path;
     }
 
-    @NotNull
-    public Builder setKind(@NotNull NodeKind kind) {
+    public @NotNull Builder setKind(@NotNull NodeKind kind) {
       this.kind = kind;
       return this;
     }
 
-    @NotNull
-    public Builder setType(char type) {
+    public @NotNull Builder setType(char type) {
       this.action = String.valueOf(type);
       return this;
     }
 
-    @NotNull
-    public Builder setCopyFromPath(String copyFromPath) {
+    public @NotNull Builder setCopyFromPath(String copyFromPath) {
       this.copyFromPath = copyFromPath;
       return this;
     }
 
-    @NotNull
-    public Builder setCopyFromRevision(long copyFromRevision) {
+    public @NotNull Builder setCopyFromRevision(long copyFromRevision) {
       this.copyFromRevision = copyFromRevision;
       return this;
     }
 
-    @NotNull
-    public Builder setPath(String path) {
+    public @NotNull Builder setPath(String path) {
       this.path = path;
       return this;
     }
 
-    @NotNull
-    public LogEntryPath build() {
+    public @NotNull LogEntryPath build() {
       return new LogEntryPath(this);
     }
   }

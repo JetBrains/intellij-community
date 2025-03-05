@@ -5,12 +5,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.util.io.PersistentHashMapValueStorage.CreationTimeOptions;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -18,10 +18,12 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
 @Internal
-public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, MeasurableIndexStore {
+public class MapIndexStorage<Key, Value> extends IndexStorageLockingBase implements IndexStorage<Key, Value>, MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
-  private static final boolean ENABLE_WAL = SystemProperties.getBooleanProperty("idea.index.enable.wal", false);
+  private static final boolean ENABLE_WAL = getBooleanProperty("idea.index.enable.wal", false);
 
   private ValueContainerMap<Key, Value> myMap;
 
@@ -41,7 +43,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   public MapIndexStorage(Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
-                         final int cacheSize,
+                         int cacheSize,
                          boolean keyIsUniqueForIndexedFile) throws IOException {
     this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, false, null);
   }
@@ -49,7 +51,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   public MapIndexStorage(Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
-                         final int cacheSize,
+                         int cacheSize,
                          boolean keyIsUniqueForIndexedFile,
                          boolean initialize,
                          boolean readOnly,
@@ -73,14 +75,16 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   }
 
   protected void initMapAndCache() throws IOException {
-    ValueContainerMap<Key, Value> map = createValueContainerMap();
-    myCache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
-      key -> map.getModifiableValueContainer(key),
-      (key, container) -> onDropFromCache(key, container),
-      myKeyDescriptor,
-      myCacheSize
-    );
-    myMap = map;
+    withWriteLock(() -> {
+      ValueContainerMap<Key, Value> map = createValueContainerMap();
+      myCache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
+        map::getModifiableValueContainer,
+        this::onDropFromCache,
+        myKeyDescriptor,
+        myCacheSize
+      );
+      myMap = map;
+    });
   }
 
   private void onDropFromCache(Key key, @NotNull ChangeTrackingValueContainer<Value> valueContainer) {
@@ -155,39 +159,44 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
-    try {
-      myMap.markDirty();
-      if (myKeyIsUniqueForIndexedFile) {
-        assertKeyInputIdConsistency(key, inputId);
-        updateSingleValueDirectly(key, inputId, newValue);
+    withWriteLock(() -> {
+      try {
+        myMap.markDirty();
+        if (myKeyIsUniqueForIndexedFile) {
+          assertKeyInputIdConsistency(key, inputId);
+          updateSingleValueDirectly(key, inputId, newValue);
+        }
+        else {
+          removeAllValues(key, inputId);
+          addValue(key, inputId, newValue);
+        }
       }
-      else {
-        IndexStorage.super.updateValue(key, inputId, newValue);
+      catch (IOException e) {
+        throw new StorageException(e);
       }
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+    });
   }
 
   @Override
-  public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
+  public void addValue(Key key, int inputId, Value value) throws StorageException {
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
-    try {
-      myMap.markDirty();
-      if (myKeyIsUniqueForIndexedFile) {
-        assertKeyInputIdConsistency(key, inputId);
-        putSingleValueDirectly(key, inputId, value);
+    withWriteLock(() -> {
+      try {
+        myMap.markDirty();
+        if (myKeyIsUniqueForIndexedFile) {
+          assertKeyInputIdConsistency(key, inputId);
+          putSingleValueDirectly(key, inputId, value);
+        }
+        else {
+          myCache.read(key).addValue(inputId, value);
+        }
       }
-      else {
-        read(key).addValue(inputId, value);
+      catch (IOException e) {
+        throw new StorageException(e);
       }
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+    });
   }
 
   @Override
@@ -195,20 +204,22 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     if (myReadOnly) {
       throw new IncorrectOperationException("Index storage is read-only");
     }
-    try {
-      myMap.markDirty();
-      if (myKeyIsUniqueForIndexedFile) {
-        assertKeyInputIdConsistency(key, inputId);
-        removeSingleValueDirectly(key, inputId);
+    withWriteLock(() -> {
+      try {
+        myMap.markDirty();
+        if (myKeyIsUniqueForIndexedFile) {
+          assertKeyInputIdConsistency(key, inputId);
+          removeSingleValueDirectly(key, inputId);
+        }
+        else {
+          // important: assuming the key exists in the index
+          myCache.read(key).removeAssociatedValue(inputId);
+        }
       }
-      else {
-        // important: assuming the key exists in the index
-        read(key).removeAssociatedValue(inputId);
+      catch (IOException e) {
+        throw new StorageException(e);
       }
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
+    });
   }
 
   private @NotNull Path getStorageFile() {
@@ -217,12 +228,14 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void flush() throws IOException {
-    if (!myMap.isClosed()) {
-      //TODO RC: inefficiency: we do need to _store_ all cached data -- but we don't want to clear the cache!
-      //         With current implementation we get empty cache every time the flush() is called.
-      invalidateCachedMappings();
-      if (myMap.isDirty()) myMap.force();
-    }
+    withWriteLock(() -> {
+      if (!myMap.isClosed()) {
+        //TODO RC: inefficiency: we do need to _store_ all cached data -- but we don't want to clear the cache!
+        //         With current implementation we get empty cache every time the flush() is called.
+        invalidateCachedMappings();
+        if (myMap.isDirty()) myMap.force();
+      }
+    });
   }
 
   @Override
@@ -284,12 +297,16 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   }
 
   @Override
-  public @NotNull ChangeTrackingValueContainer<Value> read(final Key key) throws StorageException {
-    try {
-      return myCache.read(key);
-    }
-    catch (RuntimeException e) {
-      return unwrapCauseAndRethrow(e);
+  public <E extends Exception> boolean read(Key key,
+                                            @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E {
+    try (LockStamp ignored = lockForRead()) {
+      try {
+        ChangeTrackingValueContainer<Value> result = myCache.read(key);
+        return processor.process(result);
+      }
+      catch (RuntimeException e) {
+        throw unwrapCauseAndRethrow(e);
+      }
     }
   }
 
@@ -354,9 +371,13 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void clearCaches() {
-    for (ChangeTrackingValueContainer<Value> container : myCache.getCachedValues()) {
-      container.dropMergedData();
-    }
+    //RC: strictly speaking we don't need a lock here, since .dropMergedData() uses volatile -- but I don't like to
+    //    rely on such a fine implementation detail
+    withWriteLock(() -> {
+      for (ChangeTrackingValueContainer<Value> container : myCache.getCachedValues()) {
+        container.dropMergedData();
+      }
+    });
   }
 
   @Internal
@@ -365,8 +386,9 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
     myCache.invalidateAll();
   }
 
-  protected static <T> T unwrapCauseAndRethrow(RuntimeException e) throws StorageException {
-    final Throwable cause = e.getCause();
+  @Contract("_ -> fail")
+  protected static StorageException unwrapCauseAndRethrow(RuntimeException e) throws StorageException {
+    Throwable cause = e.getCause();
     if (cause instanceof IOException) {
       throw new StorageException(cause);
     }
@@ -378,17 +400,19 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @TestOnly
   public boolean processKeys(@NotNull Processor<? super Key> processor) throws StorageException {
-    try {
-      invalidateCachedMappings(); // this will ensure that all new keys are made into the map
-      return doProcessKeys(processor);
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    catch (RuntimeException e) {
-      unwrapCauseAndRethrow(e);
-      return false;
-    }
+    return withReadLock(() -> {
+      try {
+        invalidateCachedMappings(); // this will ensure that all new keys are made into the map
+        return doProcessKeys(processor);
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
+      catch (RuntimeException e) {
+        unwrapCauseAndRethrow(e);
+        return false;
+      }
+    });
   }
 
   protected boolean doProcessKeys(@NotNull Processor<? super Key> processor) throws IOException {

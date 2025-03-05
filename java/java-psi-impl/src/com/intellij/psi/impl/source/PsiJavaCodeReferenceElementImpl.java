@@ -737,10 +737,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     PsiFile containingFile = getContainingFile();
-    return isReferenceTo(element, containingFile);
-  }
-
-  private boolean isReferenceTo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     Kind kind = getKindEnum(containingFile);
     switch (kind) {
       case CLASS_NAME_KIND:
@@ -793,8 +789,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     ASTNode referenceNameElement = getReferenceNameNode();
     if (referenceNameElement == null || referenceNameElement.getElementType() != JavaTokenType.IDENTIFIER) return false;
+
     String name = ((PsiClass)element).getName();
-    return name != null && referenceNameElement.getText().equals(name) && containingFile.getManager().areElementsEquivalent(resolve(), element);
+    if (name == null || !referenceNameElement.getText().equals(name)) return false;
+
+    PsiElement resolved = resolve();
+    return containingFile.getManager().areElementsEquivalent(resolved, element);
   }
 
   private @NotNull String getNormalizedText() {

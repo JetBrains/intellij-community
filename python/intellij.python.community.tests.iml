@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/testResources">
+      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+    </content>
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" />
+    <orderEntry type="module" module-name="intellij.python.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pydev" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="easymock" level="project" />
+    <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" scope="TEST" />
+    <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.copyright" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.copyright" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.psi.impl" />
+    <orderEntry type="module" module-name="intellij.python.commonTests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.pycharm.community" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.restructuredtext" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.restructuredtext.python" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.statsCollector" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.markdown" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.notebooks.visualization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.notebooks.jupyter.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.grazie" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ml" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
+    <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.commandInterface" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.remote" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.todo" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv.conda" scope="TEST" />
+  </component>
+</module>

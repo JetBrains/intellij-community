@@ -8,8 +8,8 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.memory.utils.StackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutinePreflightFrame
 
-class CoroutineAsyncStackTraceProvider : CreationStackTraceProvider {
+private class CoroutineAsyncStackTraceProvider : CreationStackTraceProvider {
     override fun getCreationStackTrace(stackFrame: JavaStackFrame, suspendContext: SuspendContextImpl): List<StackFrameItem?>? {
-        return (stackFrame as? CoroutinePreflightFrame)?.coroutineInfoData?.creationStackFrames?.takeIf { it.isNotEmpty() }
+        return (stackFrame as? CoroutinePreflightFrame)?.coroutineStacksInfoData?.creationStackFrames?.takeIf { it.isNotEmpty() }
     }
 }

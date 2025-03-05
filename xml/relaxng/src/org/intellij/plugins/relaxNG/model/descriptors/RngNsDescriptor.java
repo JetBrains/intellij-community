@@ -80,7 +80,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     XmlElementDescriptor desc;
     do {
       desc = findRootDescriptor(chain.removeFirst());
-    } while (desc == null && chain.size() > 0);
+    } while (desc == null && !chain.isEmpty());
 
     if (desc != null) {
       for (XmlTag xmlTag : chain) {
@@ -226,7 +226,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
       final Object[] a = { myElement, ExternalResourceManager.getInstance() };
       final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<>();
       RelaxIncludeIndex.processForwardDependencies(myFile, processor);
-      if (processor.getCollection().size() > 0) {
+      if (!processor.getCollection().isEmpty()) {
         return ArrayUtil.mergeArrays(a, processor.toArray());
       } else {
         return a;

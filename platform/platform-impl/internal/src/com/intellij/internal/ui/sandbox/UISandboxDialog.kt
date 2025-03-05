@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.treeView.NodeRenderer
+import com.intellij.internal.Module
 import com.intellij.internal.showSources
 import com.intellij.internal.ui.sandbox.components.*
 import com.intellij.internal.ui.sandbox.dsl.*
@@ -56,18 +57,20 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
   private val treeContent: List<Any> = listOf(
     Group("Components", children = listOf(
+      ComboBoxPanel(),
+      ComboBoxWithWidePopupPanel(),
       JBIntSpinnerPanel(),
       JButtonPanel(),
       JBOptionButtonPanel(),
+      JBPasswordFieldPanel(),
+      JBTabsPanel(),
       JBTextAreaPanel(),
       JCheckBoxPanel(),
-      JComboBoxPanel(),
       JRadioButtonPanel(),
       JSpinnerPanel(),
       JTextFieldPanel(),
       SearchTextFieldPanel(),
-      ThreeStateCheckBoxPanel(),
-      JBTabsPanel())),
+      ThreeStateCheckBoxPanel())),
 
     Group("Kotlin UI DSL", children = listOf(
       Group("ListCellRenderer", children = listOf(
@@ -100,7 +103,6 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     )),
 
     Group("Tests", children = listOf(
-      Group("Components", children = listOf(JBTextAreaTestPanel())),
       Group("Accessibility", children = listOf(
         AccessibilityFailedInspectionsPanel())
       )
@@ -348,7 +350,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
   private fun showSources() {
     val leaf = selectedNode as? SandboxTreeLeaf ?: return
     val src = "src/${leaf.sandboxPanel::class.java.name.replace('.', '/')}.kt"
-    showSources(project, src)
+    showSources(project, Module.INTERNAL, src)
   }
 }
 

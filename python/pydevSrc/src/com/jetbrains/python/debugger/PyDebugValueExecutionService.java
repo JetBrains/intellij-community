@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.components.Service;
@@ -17,9 +17,9 @@ import java.util.concurrent.TimeUnit;
 
 @Service(Service.Level.PROJECT)
 public final class PyDebugValueExecutionService {
-  @Nullable private ExecutorService myAsyncValuesExecutorService;
-  @NotNull private final List<PyFrameAccessor> myFrameAccessors;
-  @NotNull private final List<List<Future>> mySubmittedTasks;
+  private @Nullable ExecutorService myAsyncValuesExecutorService;
+  private final @NotNull List<PyFrameAccessor> myFrameAccessors;
+  private final @NotNull List<List<Future>> mySubmittedTasks;
 
   public static PyDebugValueExecutionService getInstance(Project project) {
     return project.getService(PyDebugValueExecutionService.class);
@@ -72,7 +72,7 @@ public final class PyDebugValueExecutionService {
       myFrameAccessors.remove(i);
       mySubmittedTasks.remove(i);
     }
-    if (myFrameAccessors.size() == 0 && myAsyncValuesExecutorService != null) {
+    if (myFrameAccessors.isEmpty() && myAsyncValuesExecutorService != null) {
       myAsyncValuesExecutorService.shutdownNow();
       myAsyncValuesExecutorService = null;
     }

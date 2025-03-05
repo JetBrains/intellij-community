@@ -50,10 +50,10 @@ import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsIn
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asMavenHome
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenServerUtil
+import org.jetbrains.idea.maven.utils.MavenEelUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.MavenWslUtil
 import java.awt.Component
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -363,13 +363,13 @@ class MavenRunConfigurationSettingsEditor(
   private fun SettingsEditorFragmentContainer<MavenRunConfiguration>.addDistributionFragment() =
     addDistributionFragment(
       project,
-      MavenDistributionsInfo(),
+      MavenDistributionsInfo(project),
       { asDistributionInfo(generalSettingsOrDefault.mavenHomeType) },
       { generalSettingsOrDefault.mavenHomeType = it?.let(::asMavenHome) ?: BundledMaven3 }
     ).addValidation {
       val type = it.generalSettingsOrDefault.mavenHomeType
       if (type is MavenInSpecificPath) {
-        if (!MavenUtil.isValidMavenHome(File(type.mavenHome))) {
+        if (!MavenUtil.isValidMavenHome(Path.of(type.mavenHome))) {
           throw RuntimeConfigurationError(MavenConfigurableBundle.message("maven.run.configuration.distribution.invalid.home.error"))
         }
       }
@@ -503,8 +503,8 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.setUserSettingsFile(it) },
       {
         val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
-        val userSettings = MavenWslUtil.getUserSettings(project, "", mavenConfig)
-        getCanonicalPath(userSettings.path)
+        val userSettings = MavenEelUtil.getUserSettingsUnderModalProgress(project, "", mavenConfig)
+        getCanonicalPath(userSettings.toString())
       }
     )
 
@@ -531,10 +531,10 @@ class MavenRunConfigurationSettingsEditor(
       val distributionInfo = distributionComponent.selectedDistribution
       val distribution = distributionInfo?.let(::asMavenHome) ?: BundledMaven3
       val userSettingsPath = getCanonicalPath(userSettingsComponent.text)
-      val userSettingsFile = MavenWslUtil.getUserSettings(project, userSettingsPath, mavenConfig)
-      val userSettings = getCanonicalPath(userSettingsFile.path)
-      val localRepository = MavenWslUtil.getLocalRepoForUserPreview(project, "", distribution, userSettings, mavenConfig)
-      getCanonicalPath(localRepository.path)
+      val userSettingsFile = MavenEelUtil.getUserSettingsUnderModalProgress(project, userSettingsPath, mavenConfig)
+      val userSettings = getCanonicalPath(userSettingsFile.toString())
+      val localRepository = MavenEelUtil.getLocalRepoForUserPreview(project, "", distribution, userSettings, mavenConfig)
+      getCanonicalPath(localRepository.toString())
     }
   )
 

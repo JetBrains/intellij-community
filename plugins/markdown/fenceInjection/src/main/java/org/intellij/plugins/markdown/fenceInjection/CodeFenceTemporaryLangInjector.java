@@ -10,9 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class CodeFenceTemporaryLangInjector extends CodeFenceInjector {
-  @Nullable
   @Override
-  protected Language findLangForInjection(@NotNull MarkdownCodeFence element) {
+  protected @Nullable Language findLangForInjection(@NotNull MarkdownCodeFence element) {
     final TemporaryPlacesRegistry registry = TemporaryPlacesRegistry.getInstance(element.getProject());
     final InjectedLanguage language = registry.getLanguageFor(element, element.getContainingFile());
     if (language != null) {

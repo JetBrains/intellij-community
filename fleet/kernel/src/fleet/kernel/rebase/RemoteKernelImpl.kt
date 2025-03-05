@@ -3,15 +3,12 @@ package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
-import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.rpc.core.AssumptionsViolatedException
-import fleet.util.serialization.ISerialization
 import fleet.rpc.core.toRpc
 import fleet.util.UID
 import fleet.util.async.takeUntilInclusive
-import fleet.util.causeOfType
 import fleet.util.logging.KLoggers
-import it.unimi.dsi.fastutil.ints.IntList
+import fleet.fastutil.ints.IntList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consume
@@ -32,75 +29,75 @@ fun <T> CoroutineScope.waitForCompletion(flow: Flow<T>): Flow<T> {
   }
 }
 
-class RemoteKernelImpl(val transactor: Transactor,
-                       val coroutineScope: CoroutineScope,
-                       val instructionDecoder: InstructionDecoder,
-                       val serialization: ISerialization) : RemoteKernel {
+class RemoteKernelImpl(
+  val transactor: Transactor,
+  val coroutineScope: CoroutineScope,
+  val instructionDecoder: InstructionDecoder,
+) : RemoteKernel {
 
-  companion object {
+  private companion object {
     val log = KLoggers.logger(RemoteKernelImpl::class)
   }
 
   override suspend fun subscribe(author: UID?): RemoteKernel.Subscription {
     val result = CompletableDeferred<RemoteKernel.Subscription>()
-    coroutineScope.saga {
-      transactor.subscribe { db, changes ->
-        val snapshot = asOf(db) {
-          val sharedDatoms = queryIndex(IndexQuery.All(IntList.of(SharedPart)))
-          run {
-            val problematicDatoms = sharedDatoms.filter {
-              getOne(it.eid, uidAttribute()) == null
-            }.toList()
-            require(problematicDatoms.isEmpty()) {
-              "no uids in shared datoms: ${problematicDatoms.joinToString { displayDatom(it) }}"
-            }
-          }
-          buildDurableSnapshot(sharedDatoms, serialization, emptySet())
+    coroutineScope.launch {
+      val events = transactor.log.produceIn(this)
+      val first = events.receive()
+      require(first is SubscriptionEvent.First)
+      val snapshot = asOf(first.db) {
+        val sharedDatoms = queryIndex(IndexQuery.All(IntList.of(SharedPart)))
+        val problematicDatoms = sharedDatoms.filter {
+          getOne(it.eid, uidAttribute()) == null
+        }.toList()
+        require(problematicDatoms.isEmpty()) {
+          "no uids in shared datoms: ${problematicDatoms.joinToString { displayDatom(it) }}"
         }
-
-        val broadcastFlow = changes.consumeAsFlow()
-          .mapNotNull { change -> change.meta[TransactionResultKey] }
-          .mapNotNull { transactionResult ->
-            when (transactionResult) {
-              is TransactionResult.TransactionApplied ->
-                when {
-                  transactionResult.tx.origin == author ->
-                    RemoteKernel.Broadcast.Ack(transactionResult.tx.id)
-
-                  else ->
-                    RemoteKernel.Broadcast.Tx(transactionResult.tx.let { tx ->
-                      tx.copy(instructions = tx.instructions.filter { instruction -> instruction !is SharedValidate })
-                    })
-                }
-
-              is TransactionResult.TransactionFailed ->
-                RemoteKernel.Broadcast.Failure(origin = transactionResult.tx.origin,
-                                               transactionId = transactionResult.tx.id)
-
-              is TransactionResult.TransactionRejected ->
-                when {
-                  transactionResult.tx.origin == author ->
-                    RemoteKernel.Broadcast.Rejection(transactionResult.tx.id)
-
-                  else -> null
-                }
-            }
-          }.catch { cause ->
-            when {
-              cause.causeOfType(RpcClientDisconnectedException::class) != null ->
-                emit(RemoteKernel.Broadcast.Reset)
-              else ->
-                throw cause
-            }
-          }
-          .takeUntilInclusive { it is RemoteKernel.Broadcast.Reset }
-        val vectorClock = asOf(db) { WorkspaceClockEntity.clientClock.vectorClock.clock }
-        result.complete(RemoteKernel.Subscription(
-          snapshot = snapshot.entities.asFlow().toRpc(),
-          txs = waitForCompletion(broadcastFlow).toRpc(),
-          vectorClock = vectorClock
-        ))
+        buildDurableSnapshot(sharedDatoms, emptySet())
       }
+      val vectorClock = asOf(first.db) { WorkspaceClockEntity.clientClock.vectorClock.clock }
+      val broadcastFlow = events.consumeAsFlow()
+        .mapNotNull { event ->
+          when (event) {
+            is SubscriptionEvent.First -> error("first should have been consumed already")
+            is SubscriptionEvent.Next -> {
+              event.change.meta[TransactionResultKey]?.let { transactionResult ->
+                when (transactionResult) {
+                  is TransactionResult.TransactionApplied ->
+                    when {
+                      transactionResult.tx.origin == author ->
+                        RemoteKernel.Broadcast.Ack(transactionResult.tx.id)
+
+                      else ->
+                        RemoteKernel.Broadcast.Tx(transactionResult.tx.let { tx ->
+                          tx.copy(instructions = tx.instructions.filter { instruction -> instruction.name != ValidateCoder.instructionName })
+                        })
+                    }
+
+                  is TransactionResult.TransactionFailed ->
+                    RemoteKernel.Broadcast.Failure(origin = transactionResult.tx.origin,
+                                                   transactionId = transactionResult.tx.id)
+
+                  is TransactionResult.TransactionRejected ->
+                    when {
+                      transactionResult.tx.origin == author ->
+                        RemoteKernel.Broadcast.Rejection(transactionResult.tx.id)
+
+                      else -> null
+                    }
+                }
+              }
+            }
+            is SubscriptionEvent.Reset -> RemoteKernel.Broadcast.Reset
+          }
+        }
+        .takeUntilInclusive { it is RemoteKernel.Broadcast.Reset }
+
+      result.complete(RemoteKernel.Subscription(
+        snapshot = snapshot.entities.asFlow().toRpc(),
+        txs = waitForCompletion(broadcastFlow).toRpc(),
+        vectorClock = vectorClock
+      ))
     }.invokeOnCompletion {
       result.completeExceptionally(it ?: RuntimeException("saga forgot to complete deferred"))
     }
@@ -125,8 +122,7 @@ class RemoteKernelImpl(val transactor: Transactor,
                   if (index + 1 == transaction.index) {
                     try {
                       val uidAttribute = uidAttribute()
-                      val deserContext = InstructionDecodingContext(serialization = serialization,
-                                                                    uidAttribute = uidAttribute,
+                      val deserContext = InstructionDecodingContext(uidAttribute = uidAttribute,
                                                                     decoder = instructionDecoder)
                       val mutableNovelty = meta[MutableNoveltyKey]!!
                       val effects = ArrayList<InstructionEffect>()

@@ -5,7 +5,6 @@ suspendFunStackTraceFoldedIDEA345945.kt:12
 Thread stack trace:
 	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendFunStackTraceFoldedIDEA345945Kt$main$1 (continuation)
 		($result, this)
-CoroutineInfo: 1 coroutine RUNNING
 	<hidden frames>
 Coroutine Creation Stack Trace
 	<hidden frames>

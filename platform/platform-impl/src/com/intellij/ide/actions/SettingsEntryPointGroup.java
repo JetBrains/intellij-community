@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -14,8 +15,8 @@ import java.util.List;
  */
 final class SettingsEntryPointGroup extends DefaultActionGroup {
   @Override
-  public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
-                                                                               @NotNull List<? extends @NotNull AnAction> visibleChildren) {
+  public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                                             @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     for (AnAction child : visibleChildren) {
       Presentation presentation = e.getUpdateSession().presentation(child);
       String text = presentation.getText();

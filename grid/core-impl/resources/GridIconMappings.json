@@ -1,0 +1,12 @@
+{
+  "icons": {
+    "expui": {
+      "singleRecordView.svg": "icons/singleRecordView.svg",
+      "columnFilter.svg": "icons/columnFilter.svg",
+      "filterHistory.svg": "icons/filterHistory.svg",
+      "sortHistory.svg": "icons/sortHistory.svg",
+      "statisticsPanel.svg": "icons/statisticsPanel.svg",
+      "tableHeatmap.svg": "icons/tableHeatmap.svg"
+    }
+  }
+}

@@ -3,7 +3,6 @@ package com.intellij.filePrediction.features
 
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.binary
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.fileType
-import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile

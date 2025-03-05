@@ -26,7 +26,7 @@ public final class User {
             return foo()
         }
     }
-    public fun User(@org.jetbrains.annotations.NotNull p: float, @org.jetbrains.annotations.NotNull q: float) = UastEmptyExpression
+    private fun User(@org.jetbrains.annotations.NotNull p: float, @org.jetbrains.annotations.NotNull q: float) = UastEmptyExpression
     public final fun getP() : float = UastEmptyExpression
     public final fun getQ() : float = UastEmptyExpression
     public final fun setQ(@org.jetbrains.annotations.NotNull <set-?>: float) : void = UastEmptyExpression
@@ -39,7 +39,7 @@ public final class Alignment {
     @org.jetbrains.annotations.NotNull private static final var Start: int = Horizontal.Start
     @org.jetbrains.annotations.NotNull private final var horizontal: int
     @org.jetbrains.annotations.NotNull private final var vertical: int
-    public fun Alignment(@org.jetbrains.annotations.NotNull horizontal: int, @org.jetbrains.annotations.NotNull vertical: int) = UastEmptyExpression
+    private fun Alignment(@org.jetbrains.annotations.NotNull horizontal: int, @org.jetbrains.annotations.NotNull vertical: int) = UastEmptyExpression
     public final fun getHorizontal() : int = UastEmptyExpression
     public final fun getVertical() : int = UastEmptyExpression
     public static final class Horizontal {

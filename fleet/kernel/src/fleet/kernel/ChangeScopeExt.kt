@@ -3,8 +3,6 @@ package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.Entity
-import fleet.kernel.shared
-import kotlin.reflect.*
 
 inline fun <reified E : Entity> ChangeScope.update(entity: E, crossinline f: E.() -> Unit): E? =
   if (entity.exists()) {
@@ -70,47 +68,7 @@ fun ChangeScope.cascadeDelete(parent: Entity, child: Entity?) {
   }
 }
 
-
-suspend inline fun <reified E : LegacyEntity, R : Any> getOrCreate(property: KMutableProperty1<E, R>,
-                                                             value: R,
-                                                             partition: Int? = null,
-                                                             noinline f: E.() -> Unit): E {
-  return lookupOne(property, value) ?: change { getOrCreate(property, value, partition ?: defaultPart, f) }
-}
-
-inline fun <reified E : LegacyEntity, R : Any> ChangeScope.getOrCreate(property: KMutableProperty1<E, R>, value: R,
-                                                                 partition: Int = defaultPart,
-                                                                 noinline f: E.() -> Unit): E {
-  return lookupOne(property, value) ?: new(E::class, partition) { f() }
-}
-
-inline fun <reified E : SharedEntity, R : Any> SharedChangeScope.getOrCreate(property: KMutableProperty1<E, R>, value: R,
-                                                                             noinline f: E.() -> Unit): E {
-  return lookupOne(property, value) ?: new(E::class) { f() }
-}
-
-inline fun <reified E : LegacyEntity, R : Any> ChangeScope.delete(uniqueField: KMutableProperty1<E, R>, unique: R): Boolean {
-  check(attribute(uniqueField)?.schema?.unique != false) { "the property ${uniqueField} should be unique" }
-  return lookupOne(uniqueField, unique)?.delete() != null
-}
-
-inline fun <reified E : LegacyEntity, R : Any> ChangeScope.changeOrCreate(uniqueField: KMutableProperty1<E, R>,
-                                                                    unique: R,
-                                                                    crossinline f: E.(Boolean) -> Unit): E? {
-  check(attribute(uniqueField)?.schema?.unique != false) { "the property ${uniqueField} should be unique" }
-  if (unique is Entity && !unique.exists()) return null
-  return lookupOne(uniqueField, unique)?.apply { f(false) } ?: new(E::class) { uniqueField.set(this, unique); f(true) }
-}
-
-inline fun <reified E : SharedEntity, R : Any> SharedChangeScope.changeOrCreate(uniqueField: KMutableProperty1<E, R>,
-                                                                                unique: R,
-                                                                                crossinline f: E.(Boolean) -> Unit): E? {
-  check(attribute(uniqueField)?.schema?.unique != false) { "the property ${uniqueField} should be unique" }
-  if (unique is Entity && !unique.exists()) return null
-  return lookupOne(uniqueField, unique)?.apply { f(false) } ?: new(E::class) { uniqueField.set(this, unique); f(true) }
-}
-
-internal fun ChangeScope.registerRectractionRelations() {
+internal fun ChangeScope.registerRetractionRelations() {
   register(RetractionRelation)
   register(SharedRetractionRelation)
 }

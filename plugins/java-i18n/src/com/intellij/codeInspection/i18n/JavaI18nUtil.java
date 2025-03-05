@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.StringFlowUtil;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
@@ -46,8 +46,7 @@ public final class JavaI18nUtil {
   private JavaI18nUtil() {
   }
 
-  @Nullable
-  public static TextRange getSelectedRange(Editor editor, @NotNull PsiFile psiFile) {
+  public static @Nullable TextRange getSelectedRange(Editor editor, @NotNull PsiFile psiFile) {
     if (editor == null) return null;
     String selectedText = editor.getSelectionModel().getSelectedText();
     if (selectedText != null) {
@@ -85,8 +84,7 @@ public final class JavaI18nUtil {
     });
   }
 
-  @NotNull
-  static UExpression getTopLevelExpression(@NotNull UExpression expression, boolean stopAtCall) {
+  static @NotNull UExpression getTopLevelExpression(@NotNull UExpression expression, boolean stopAtCall) {
     while (expression.getUastParent() instanceof UExpression parent) {
       if (parent instanceof UBlockExpression || parent instanceof UReturnExpression) {
         break;
@@ -152,8 +150,7 @@ public final class JavaI18nUtil {
     return true;
   }
 
-  @Nullable
-  private static ResourceBundle resolveResourceBundleByKey(@NotNull final String key, @NotNull final Project project) {
+  private static @Nullable ResourceBundle resolveResourceBundleByKey(final @NotNull String key, final @NotNull Project project) {
     final Ref<ResourceBundle> bundleRef = Ref.create();
     final boolean r = PropertiesReferenceManager.getInstance(project).processAllPropertiesFiles((baseName, propertiesFile) -> {
       if (propertiesFile.findPropertyByKey(key) != null) {
@@ -225,7 +222,7 @@ public final class JavaI18nUtil {
    *
    * @return number of parameters from single property or 0 for wrong format
    */
-  public static int getPropertyValuePlaceholdersCount(@NotNull final String propertyValue) {
+  public static int getPropertyValuePlaceholdersCount(final @NotNull String propertyValue) {
     try {
       return countFormatParameters(new MessageFormat(propertyValue));
     }
@@ -258,7 +255,7 @@ public final class JavaI18nUtil {
    * @param expression i18n literal
    * @return number of parameters
    */
-  public static int getPropertyValueParamsMaxCount(@NotNull final UExpression expression) {
+  public static int getPropertyValueParamsMaxCount(final @NotNull UExpression expression) {
     final SortedSet<Integer> paramsCount = getPropertyValueParamsCount(expression, null);
     if (paramsCount.isEmpty()) {
       return -1;
@@ -266,17 +263,15 @@ public final class JavaI18nUtil {
     return paramsCount.last();
   }
 
-  @NotNull
-  static SortedSet<Integer> getPropertyValueParamsCount(@NotNull final PsiExpression expression,
-                                                        @Nullable final String resourceBundleName) {
+  static @NotNull SortedSet<Integer> getPropertyValueParamsCount(final @NotNull PsiExpression expression,
+                                                                 final @Nullable String resourceBundleName) {
     UExpression uExpression = UastContextKt.toUElement(expression, UExpression.class);
     if (uExpression == null) return new TreeSet<>();
     return getPropertyValueParamsCount(uExpression, resourceBundleName);
   }
 
-  @NotNull
-  private static SortedSet<Integer> getPropertyValueParamsCount(@NotNull final UExpression expression,
-                                                                @Nullable final String resourceBundleName) {
+  private static @NotNull SortedSet<Integer> getPropertyValueParamsCount(final @NotNull UExpression expression,
+                                                                         final @Nullable String resourceBundleName) {
     final UInjectionHost injectionHost;
     if (expression instanceof UInjectionHost) {
       injectionHost = (UInjectionHost)expression;
@@ -400,11 +395,10 @@ public final class JavaI18nUtil {
     return true;
   }
 
-  @NotNull
-  private static String getSideText(@NotNull List<? super UExpression> formatParameters,
-                                    @NotNull Project project,
-                                    UExpression expression,
-                                    boolean nested) {
+  private static @NotNull String getSideText(@NotNull List<? super UExpression> formatParameters,
+                                             @NotNull Project project,
+                                             UExpression expression,
+                                             boolean nested) {
     String elseStr;
     if (expression instanceof ULiteralExpression) {
       Object elseValue = ((ULiteralExpression)expression).getValue();
@@ -429,8 +423,7 @@ public final class JavaI18nUtil {
     return elseStr.replaceAll("([<>|#])", "'$1'");
   }
 
-  @NotNull
-  static String composeParametersText(@NotNull List<? extends UExpression> args) {
+  static @NotNull String composeParametersText(@NotNull List<? extends UExpression> args) {
     return args.stream().map(UExpression::getSourcePsi).filter(Objects::nonNull).map(psi -> psi.getText()).collect(Collectors.joining(","));
   }
 

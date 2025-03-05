@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.jigsaw;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -62,7 +62,7 @@ public final class JigsawUtil {
     for (JvmMethod method : methods) {
       if (!method.hasParameters()) return false;
     }
-    PsiJavaModule descriptor = JavaModuleGraphUtil.findDescriptorByElement(targetClass.getContainingFile().getOriginalFile());
+    PsiJavaModule descriptor = JavaPsiModuleUtil.findDescriptorByElement(targetClass.getContainingFile().getOriginalFile());
     if (descriptor == null || descriptor instanceof LightJavaModule) return false;
 
     Iterable<PsiProvidesStatement> providers = descriptor.getProvides();

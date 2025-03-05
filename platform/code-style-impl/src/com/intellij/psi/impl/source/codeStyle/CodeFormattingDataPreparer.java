@@ -12,7 +12,7 @@ import java.util.List;
 @ApiStatus.Internal
 public abstract class CodeFormattingDataPreparer {
 
-  public final static ExtensionPointName<CodeFormattingDataPreparer>
+  public static final ExtensionPointName<CodeFormattingDataPreparer>
     EP_NAME = ExtensionPointName.create("com.intellij.codeFormattingDataPreparer");
 
   public abstract void prepareFormattingData(@NotNull PsiFile file, @NotNull List<TextRange> ranges, @NotNull CodeFormattingData data);

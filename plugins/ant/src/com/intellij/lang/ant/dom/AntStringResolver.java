@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Key;
@@ -34,8 +34,7 @@ public final class AntStringResolver extends PropertyProviderFinder{
     }
   }
 
-  @NotNull
-  public static String computeString(@NotNull final DomElement context, @NotNull @NlsSafe String valueString) {
+  public static @NotNull String computeString(final @NotNull DomElement context, @NotNull @NlsSafe String valueString) {
     PropertyExpander expander = new PropertyExpander(valueString);
     if (!expander.hasPropertiesToExpand()) {
       return valueString;
@@ -84,8 +83,7 @@ public final class AntStringResolver extends PropertyProviderFinder{
     }
 
     @Override
-    @NotNull
-    public Iterator<String> getNamesIterator() {
+    public @NotNull Iterator<String> getNamesIterator() {
       if (allNames == null) {
         allNames = new HashSet<>(myCached.keySet());
       }

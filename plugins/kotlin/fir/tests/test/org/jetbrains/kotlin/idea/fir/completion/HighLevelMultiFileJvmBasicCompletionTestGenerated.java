@@ -130,6 +130,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/ExcludedJavaClass/");
     }
 
+    @TestMetadata("ExpectedJavaEnumEntryCompletion")
+    public void testExpectedJavaEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ExpectedJavaEnumEntryCompletion/");
+    }
+
     @TestMetadata("ExtensionFunction")
     public void testExtensionFunction() throws Exception {
         runTest("../../completion/testData/basic/multifile/ExtensionFunction/");
@@ -265,6 +270,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/IncorrectGetters/");
     }
 
+    @TestMetadata("InvisibleEnumEntryCompletion")
+    public void testInvisibleEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/multifile/InvisibleEnumEntryCompletion/");
+    }
+
     @TestMetadata("JavaCallableReference")
     public void testJavaCallableReference() throws Exception {
         runTest("../../completion/testData/basic/multifile/JavaCallableReference/");
@@ -295,6 +305,26 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/KT9835/");
     }
 
+    @TestMetadata("KTIJ_27276")
+    public void testKTIJ_27276() throws Exception {
+        runTest("../../completion/testData/basic/multifile/KTIJ_27276/");
+    }
+
+    @TestMetadata("KTIJ_32378")
+    public void testKTIJ_32378() throws Exception {
+        runTest("../../completion/testData/basic/multifile/KTIJ_32378/");
+    }
+
+    @TestMetadata("KTIJ_32792")
+    public void testKTIJ_32792() throws Exception {
+        runTest("../../completion/testData/basic/multifile/KTIJ_32792/");
+    }
+
+    @TestMetadata("KTIJ_32930")
+    public void testKTIJ_32930() throws Exception {
+        runTest("../../completion/testData/basic/multifile/KTIJ_32930/");
+    }
+
     @TestMetadata("MoreSpecificExtensionGeneric")
     public void testMoreSpecificExtensionGeneric() throws Exception {
         runTest("../../completion/testData/basic/multifile/MoreSpecificExtensionGeneric/");
@@ -313,6 +343,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("NoAutoInsertionOfNotImported")
     public void testNoAutoInsertionOfNotImported() throws Exception {
         runTest("../../completion/testData/basic/multifile/NoAutoInsertionOfNotImported/");
+    }
+
+    @TestMetadata("NoExpectedEnumEntryCompletion")
+    public void testNoExpectedEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/multifile/NoExpectedEnumEntryCompletion/");
     }
 
     @TestMetadata("NoExtForOuterFromNested")

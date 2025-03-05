@@ -1,5 +1,6 @@
 // "Suppress 'DIVISION_BY_ZERO' for file ${file}" "true"
 // ERROR: This annotation is not applicable to target 'file' and use site target '@file'
+// K2_AFTER_ERROR: This annotation is not applicable to target 'file' and use-site target '@file'. Applicable targets: class, function, property, annotation class, constructor, setter, getter, typealias
 
 @file:Deprecated("Some")
 

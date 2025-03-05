@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.model;
 
 import com.intellij.lang.ASTNode;
@@ -31,9 +31,8 @@ import java.util.Map;
 public class EmptyXmlTag implements XmlTag {
   public static XmlTag INSTANCE = new EmptyXmlTag();
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "";
   }
 
@@ -42,15 +41,13 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getNamespace() {
+  public @NotNull String getNamespace() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getLocalName() {
+  public @NotNull String getLocalName() {
     return "";
   }
 
@@ -127,15 +124,13 @@ public class EmptyXmlTag implements XmlTag {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getNamespacePrefix() {
+  public @NotNull String getNamespacePrefix() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getNamespaceByPrefix(@NonNls String prefix) {
+  public @NotNull String getNamespaceByPrefix(@NonNls String prefix) {
     return "";
   }
 
@@ -154,15 +149,13 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
-  public Map<String, String> getLocalNamespaceDeclarations() {
+  public @NotNull Map<String, String> getLocalNamespaceDeclarations() {
     return Collections.emptyMap();
   }
 
-  @NotNull
   @Override
-  public XmlTagValue getValue() {
+  public @NotNull XmlTagValue getValue() {
     return new XmlTagValue() {
       @Override
       public XmlTagChild @NotNull [] getChildren() {
@@ -174,21 +167,18 @@ public class EmptyXmlTag implements XmlTag {
         return XmlText.EMPTY_ARRAY;
       }
 
-      @NotNull
       @Override
-      public String getText() {
+      public @NotNull String getText() {
         return "";
       }
 
-      @NotNull
       @Override
-      public TextRange getTextRange() {
+      public @NotNull TextRange getTextRange() {
         throw new IncorrectOperationException();
       }
 
-      @NotNull
       @Override
-      public String getTrimmedText() {
+      public @NotNull String getTrimmedText() {
         return "";
       }
 
@@ -247,15 +237,13 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
-  public Project getProject() throws PsiInvalidElementAccessException {
+  public @NotNull Project getProject() throws PsiInvalidElementAccessException {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     throw new IncorrectOperationException();
   }
 
@@ -483,15 +471,13 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     throw new IncorrectOperationException();
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     throw new IncorrectOperationException();
   }
 

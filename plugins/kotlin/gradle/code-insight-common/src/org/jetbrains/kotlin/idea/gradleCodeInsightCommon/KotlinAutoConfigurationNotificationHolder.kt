@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.idea.ActionsBundle
@@ -24,7 +24,7 @@ import java.awt.Desktop
 import java.net.URI
 
 @Service(Service.Level.PROJECT)
-class KotlinAutoConfigurationNotificationHolder(private val project: Project) : Disposable {
+internal class KotlinAutoConfigurationNotificationHolder(private val project: Project) : Disposable {
     companion object {
         fun getInstance(project: Project): KotlinAutoConfigurationNotificationHolder {
             return project.service()

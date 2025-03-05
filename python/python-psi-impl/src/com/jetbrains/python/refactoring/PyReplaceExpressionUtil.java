@@ -23,7 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.MathUtil;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -62,7 +61,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
    * @param newExpr new expression to substitute with
    * @return whether new expression should be wrapped in parentheses to preserve original semantics
    */
-  public static boolean isNeedParenthesis(@NotNull final PyElement oldExpr, @NotNull final PyElement newExpr) {
+  public static boolean isNeedParenthesis(final @NotNull PyElement oldExpr, final @NotNull PyElement newExpr) {
     final PyElement parentExpr = (PyElement)oldExpr.getParent();
     if (parentExpr instanceof PyArgumentList) {
       return newExpr instanceof PyTupleExpression;
@@ -86,8 +85,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     return false;
   }
 
-  @Nullable
-  private static PyExpression getLeastPrioritySide(@NotNull PyBinaryExpression expression) {
+  private static @Nullable PyExpression getLeastPrioritySide(@NotNull PyBinaryExpression expression) {
     if (expression.isOperator("**")) {
       return expression.getLeftExpression();
     }
@@ -96,8 +94,8 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     }
   }
 
-  public static PsiElement replaceExpression(@NotNull final PsiElement oldExpression,
-                                             @NotNull final PsiElement newExpression) {
+  public static PsiElement replaceExpression(final @NotNull PsiElement oldExpression,
+                                             final @NotNull PsiElement newExpression) {
     final Pair<PsiElement, TextRange> data = oldExpression.getUserData(SELECTION_BREAKS_AST_NODE);
     if (data != null) {
       final PsiElement element = data.first;
@@ -118,10 +116,9 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     }
   }
 
-  @Nullable
-  private static PsiElement replaceSubstringInStringLiteral(@NotNull PyStringLiteralExpression oldExpression,
-                                                            @NotNull PsiElement newExpression,
-                                                            @NotNull TextRange textRange) {
+  private static @Nullable PsiElement replaceSubstringInStringLiteral(@NotNull PyStringLiteralExpression oldExpression,
+                                                                      @NotNull PsiElement newExpression,
+                                                                      @NotNull TextRange textRange) {
     final String fullText = oldExpression.getText();
     final Pair<String, String> detectedQuotes = PyStringLiteralCoreUtil.getQuotes(fullText);
     final Pair<String, String> quotes = detectedQuotes != null ? detectedQuotes : Pair.create("'", "'");
@@ -426,7 +423,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     return parent instanceof PyBinaryExpression && ((PyBinaryExpression)parent).isOperator("+");
   }
 
-  private static boolean isNotAssociative(@NotNull final PyBinaryExpression binaryExpression) {
+  private static boolean isNotAssociative(final @NotNull PyBinaryExpression binaryExpression) {
     final IElementType opType = getOperationType(binaryExpression);
     return COMPARISON_OPERATIONS.contains(opType) || binaryExpression instanceof PySliceExpression ||
            opType == DIV || opType == FLOORDIV || opType == PERC || opType == EXP || opType == MINUS;
@@ -464,8 +461,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     return -priority;
   }
 
-  @Nullable
-  private static IElementType getOperationType(@NotNull final PyElement expr) {
+  private static @Nullable IElementType getOperationType(final @NotNull PyElement expr) {
     if (expr instanceof PyBinaryExpression) return ((PyBinaryExpression)expr).getOperator();
     return ((PyPrefixExpression)expr).getOperator();
   }

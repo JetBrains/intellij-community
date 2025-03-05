@@ -3,8 +3,9 @@ package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
-import kotlin.Unit;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.ExceptionUtilRt;
+import kotlin.Unit;
 import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ final class ContextCallable<V> implements Callable<V> {
         return (V)result;
       }
       else {
-        throw (E)result;
+        throw ExceptionUtilRt.addRethrownStackAsSuppressed((E)result);
       }
     }
   }

@@ -7,26 +7,30 @@
 6(7,10) element: PyAssignmentStatement
 7(8,10) READ ACCESS: open
 8(9,10) element: PyCallExpression: open
-9(10,19) WRITE ACCESS: status
+9(10,21) WRITE ACCESS: status
 10(11) element: PyFinallyPart
 11(12) element: PyIfStatement
 12(13) READ ACCESS: status
-13(14,18) READ ACCESS: None
-14(15) element: PyStatementList. Condition: status is not None:true
-15(16) ASSERTTYPE ACCESS: status
-16(17) element: PyPrintStatement
-17(31) READ ACCESS: status
-18(31) ASSERTTYPE ACCESS: status
-19(20) element: PyFinallyPart
-20(21) element: PyIfStatement
-21(22) READ ACCESS: status
-22(23,27) READ ACCESS: None
-23(24) element: PyStatementList. Condition: status is not None:true
-24(25) ASSERTTYPE ACCESS: status
-25(26) element: PyPrintStatement
-26(28) READ ACCESS: status
-27(28) ASSERTTYPE ACCESS: status
-28(29) element: PyExpressionStatement
-29(30) READ ACCESS: status
-30(31) element: PyCallExpression: status.close
-31() element: null
+13(14,16) READ ACCESS: None
+14(15) element: null. Condition: status is not None:false
+15() ASSERTTYPE ACCESS: status
+16(17) element: null. Condition: status is not None:true
+17(18) ASSERTTYPE ACCESS: status
+18(19) element: PyStatementList
+19(20) element: PyPrintStatement
+20() READ ACCESS: status
+21(22) element: PyFinallyPart
+22(23) element: PyIfStatement
+23(24) READ ACCESS: status
+24(25,27) READ ACCESS: None
+25(26) element: null. Condition: status is not None:false
+26(32) ASSERTTYPE ACCESS: status
+27(28) element: null. Condition: status is not None:true
+28(29) ASSERTTYPE ACCESS: status
+29(30) element: PyStatementList
+30(31) element: PyPrintStatement
+31(32) READ ACCESS: status
+32(33) element: PyExpressionStatement
+33(34) READ ACCESS: status
+34(35) element: PyCallExpression: status.close
+35() element: null

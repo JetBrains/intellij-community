@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.framework.library.DownloadableLibraryType;
@@ -52,15 +52,14 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     this(envVariable, Collections.singleton(libraryKind), frameworkName);
   }
 
-  private GroovyLibraryDescription(@NotNull String envVariable, @NotNull final Set<? extends LibraryKind> libraryKinds, String frameworkName) {
+  private GroovyLibraryDescription(@NotNull String envVariable, final @NotNull Set<? extends LibraryKind> libraryKinds, String frameworkName) {
     myEnvVariable = envVariable;
     myLibraryKinds = libraryKinds;
     myFrameworkName = frameworkName;
     myLibraryType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType.class);
   }
 
-  @Nullable
-  public static GroovyLibraryPresentationProviderBase findManager(@NotNull VirtualFile dir) {
+  public static @Nullable GroovyLibraryPresentationProviderBase findManager(@NotNull VirtualFile dir) {
     final String name = dir.getName();
 
     final List<GroovyLibraryPresentationProviderBase> providers = ContainerUtil.findAll(LibraryPresentationProvider.EP_NAME.getExtensions(), GroovyLibraryPresentationProviderBase.class);
@@ -78,9 +77,8 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     return null;
   }
 
-  @NotNull
   @Override
-  public Set<? extends LibraryKind> getSuitableLibraryKinds() {
+  public @NotNull Set<? extends LibraryKind> getSuitableLibraryKinds() {
     return myLibraryKinds;
   }
 
@@ -96,8 +94,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     return createLibraryConfiguration(parentComponent, dir);
   }
 
-  @Nullable
-  public VirtualFile findPathToGroovyHome() {
+  public @Nullable VirtualFile findPathToGroovyHome() {
     VirtualFile initial = findFile(System.getenv(myEnvVariable));
     if (initial == null && GROOVY_FRAMEWORK_NAME.equals(myFrameworkName)) {
       if (SystemInfo.isLinux) {
@@ -110,8 +107,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     return initial;
   }
 
-  @NotNull
-  public FileChooserDescriptor createFileChooserDescriptor() {
+  public @NotNull FileChooserDescriptor createFileChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
@@ -151,8 +147,7 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     };
   }
 
-  @Nullable
-  private static VirtualFile findFile(String path) {
+  private static @Nullable VirtualFile findFile(String path) {
     if (path != null && !path.isEmpty()) {
       return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
     }

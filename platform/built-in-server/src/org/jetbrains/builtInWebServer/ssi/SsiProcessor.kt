@@ -213,7 +213,7 @@ internal open class SsiProcessor {
             val paramValues = parseParamValues(command, commandName.length, paramNames.size)
             // We need to fetch this value each time, since it may change during the loop
             val configErrMsg = ssiProcessingState.configErrorMessage
-            val ssiCommand = commands[commandName.toLowerCase(Locale.ENGLISH)]
+            val ssiCommand = commands[commandName.lowercase(Locale.ENGLISH)]
             var errorMessage: String? = null
             if (ssiCommand == null) {
               errorMessage = "Unknown command: $commandName"

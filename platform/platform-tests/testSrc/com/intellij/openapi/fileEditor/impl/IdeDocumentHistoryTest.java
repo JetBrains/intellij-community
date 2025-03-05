@@ -262,6 +262,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
       return myCanBeMerged;
     }
 
+    @Override
     public String toString() {
       return myName;
     }

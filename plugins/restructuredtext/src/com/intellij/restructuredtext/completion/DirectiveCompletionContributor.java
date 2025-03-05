@@ -6,9 +6,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.restructuredtext.RestTokenTypes;
-import com.intellij.util.ProcessingContext;
 import com.intellij.restructuredtext.RestUtil;
 import com.intellij.restructuredtext.psi.RestReferenceTarget;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -32,7 +32,7 @@ public class DirectiveCompletionContributor extends CompletionContributor {
                                            @NotNull CompletionResultSet result) {
                int offset = parameters.getOffset();
                final String prefix = getPrefix(offset, parameters.getOriginalFile());
-               if (prefix.length() > 0) {
+               if (!prefix.isEmpty()) {
                  result = result.withPrefixMatcher(prefix);
                }
                for (String tag : RestUtil.getDirectives()) {

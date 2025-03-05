@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -10,17 +10,16 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class ChangeTypeArgumentsFix extends PsiUpdateModCommandAction<PsiNewExpression> {
   private static final Logger LOG = Logger.getInstance(ChangeTypeArgumentsFix.class);
@@ -40,8 +39,7 @@ public class ChangeTypeArgumentsFix extends PsiUpdateModCommandAction<PsiNewExpr
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("change.type.arguments");
   }
 
@@ -108,29 +106,20 @@ public class ChangeTypeArgumentsFix extends PsiUpdateModCommandAction<PsiNewExpr
 
 
   public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
-                                        @NotNull PsiExpressionList list,
-                                        @NotNull HighlightInfo.Builder highlightInfo,
-                                        PsiClass psiClass, TextRange fixRange) {
+                                        @NotNull PsiConstructorCall call,
+                                        @NotNull Consumer<? super CommonIntentionAction> info,
+                                        PsiClass psiClass) {
     if (candidates.length == 0) return;
+    if (!(call instanceof PsiNewExpression newExpression)) return;
+    PsiExpressionList list = newExpression.getArgumentList();
+    if (list == null) return;
     PsiExpression[] expressions = list.getExpressions();
     for (JavaResolveResult candidate : candidates) {
-      registerIntention(expressions, highlightInfo, psiClass, candidate, list, fixRange);
-    }
-  }
-
-  private static void registerIntention(PsiExpression @NotNull [] expressions,
-                                        @NotNull HighlightInfo.Builder builder,
-                                        PsiClass psiClass,
-                                        @NotNull JavaResolveResult candidate,
-                                        @NotNull PsiElement context,
-                                        TextRange fixRange) {
-    if (!candidate.isStaticsScopeCorrect()) return;
-    PsiMethod method = (PsiMethod)candidate.getElement();
-    if (method != null && BaseIntentionAction.canModify(method)) {
-      PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(context, PsiNewExpression.class);
-      if (newExpression == null) return;
-      final ChangeTypeArgumentsFix fix = new ChangeTypeArgumentsFix(method, psiClass, expressions, newExpression);
-      builder.registerFix(fix, null, null, fixRange, null);
+      if (!candidate.isStaticsScopeCorrect()) continue;
+      PsiMethod method = (PsiMethod)candidate.getElement();
+      if (method != null && BaseIntentionAction.canModify(method)) {
+        info.accept(new ChangeTypeArgumentsFix(method, psiClass, expressions, newExpression));
+      }
     }
   }
 }

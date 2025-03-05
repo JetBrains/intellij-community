@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,7 +13,6 @@ import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -304,7 +304,7 @@ public class PullUpTest extends LightRefactoringTestCase {
     );
     final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
     helper.run();
-    UIUtil.dispatchAllInvocationEvents();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
 
     if (conflictMessage != null && conflictsMap.isEmpty()) {

@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.pycharm
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
-import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
@@ -33,10 +32,13 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
       sequenceOf(
         "intellij.python.community.plugin", // Python language
         "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
-        "intellij.vcs.github.community") +
+        "intellij.pycharm.community.customization.shared",
+        "intellij.vcs.github.community",
+        "intellij.vcs.gitlab.community") +
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
 
-    productLayout.pluginModulesToPublish = persistentSetOf("intellij.python.community.plugin")
+    productLayout.skipUnresolvedContentModules = true
+    
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
     mavenArtifacts.forIdeModules = true

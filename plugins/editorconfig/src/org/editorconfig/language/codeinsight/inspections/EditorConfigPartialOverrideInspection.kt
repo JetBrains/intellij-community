@@ -13,7 +13,7 @@ class EditorConfigPartialOverrideInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
       if (!header.isValidGlob) return
-      val isPartiallyOverriding = EditorConfigOverriddenHeaderSearcher().findMatchingHeaders(header).any { it.isPartial }
+      val isPartiallyOverriding = EditorConfigOverriddenHeaderSearcher(false).findMatchingHeaders(header).any { it.isPartial }
       val isPartiallyOverridden = EditorConfigOverridingHeaderSearcher().findMatchingHeaders(header).any { it.isPartial }
       if (!isPartiallyOverridden && !isPartiallyOverriding) return
       val message = EditorConfigBundle["inspection.header.partially.overridden.message"]

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.task.event;
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -7,15 +7,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class ExternalSystemTaskExecutionEvent extends ExternalSystemTaskNotificationEvent {
 
-  @NotNull private final ExternalSystemProgressEvent<?> myProgressEvent;
+  private final @NotNull ExternalSystemProgressEvent<?> myProgressEvent;
 
   public ExternalSystemTaskExecutionEvent(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemProgressEvent<?> progressEvent) {
     super(id, progressEvent.getDisplayName());
     myProgressEvent = progressEvent;
   }
 
-  @NotNull
-  public ExternalSystemProgressEvent<?> getProgressEvent() {
+  public @NotNull ExternalSystemProgressEvent<?> getProgressEvent() {
     return myProgressEvent;
   }
 }

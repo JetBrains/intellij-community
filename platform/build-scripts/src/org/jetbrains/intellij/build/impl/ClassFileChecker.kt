@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -22,6 +23,8 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipException
+import kotlin.io.path.name
+import kotlin.io.path.relativeTo
 
 /**
  * <p>
@@ -116,13 +119,13 @@ private class ClassFileChecker(private val versionRules: List<Rule>,
       // closure must be used, otherwise variables are not captured by FJT
       for (child in dirStream) {
         if (Files.isDirectory(child)) {
-          launch {
-            visitDirectory(directory = child, relativePath = join(relativePath, "/", child.fileName.toString()), errors = errors)
+          launch(CoroutineName("verifying class files in ${child.relativeTo(directory)}")) {
+            visitDirectory(directory = child, relativePath = join(relativePath, "/", child.name), errors = errors)
           }
         }
         else {
-          launch {
-            visitFile(file = child, relativePath = join(relativePath, "/", child.fileName.toString()), errors = errors)
+          launch(CoroutineName("verifying class files in ${child.relativeTo(directory)}")) {
+            visitFile(file = child, relativePath = join(relativePath, "/", child.name), errors = errors)
           }
         }
       }

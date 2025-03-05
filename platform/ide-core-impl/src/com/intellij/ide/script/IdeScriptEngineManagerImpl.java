@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
 import com.intellij.diagnostic.PluginException;
@@ -20,6 +20,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
@@ -370,7 +371,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     }
 
     // used by kotlin engine
-    public @NotNull List<URL> getUrls() {
+    public @Unmodifiable @NotNull List<URL> getUrls() {
       return JBIterable.of(PluginManagerCore.getPlugins())
         .map(PluginDescriptor::getClassLoader)
         .unique()

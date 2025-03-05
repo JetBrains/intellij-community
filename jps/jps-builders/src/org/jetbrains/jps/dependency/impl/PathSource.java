@@ -3,6 +3,7 @@ package org.jetbrains.jps.dependency.impl;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
@@ -39,8 +40,7 @@ public final class PathSource implements NodeSource {
 
     final PathSource that = (PathSource)o;
 
-    //noinspection StringEquality,SSBasedInspection
-    if (myPath == that.myPath) {
+    if (Strings.areSameInstance(myPath, that.myPath)) {
       return true;
     }
     return SystemInfoRt.isFileSystemCaseSensitive? myPath.equals(that.myPath) : myPath.equalsIgnoreCase(that.myPath);

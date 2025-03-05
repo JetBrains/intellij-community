@@ -16,7 +16,7 @@ internal class Message(
   @JvmField val bus: MessageBusImpl,
 ) {
   @JvmField
-  val clientId: String = ClientId.getCurrentValue()
+  val clientId: ClientId? = ClientId.currentOrNull
 
   // To avoid creating Message for each handler.
   // See note about pumpMessages in createPublisher

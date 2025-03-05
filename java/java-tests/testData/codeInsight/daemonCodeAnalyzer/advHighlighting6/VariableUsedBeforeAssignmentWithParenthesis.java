@@ -5,7 +5,7 @@ class Unassigned {
   public int b;
 
   Unassigned(int value) {
-    b = <error descr="Variable '(this).a' might not have been initialized">(this).a</error>;
+    b = <error descr="Variable 'a' might not have been initialized">(this).a</error>;
     a = value;
   }
 }

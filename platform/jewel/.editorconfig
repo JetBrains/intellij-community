@@ -10,6 +10,9 @@ insert_final_newline = true
 max_line_length = 150
 tab_width = 4
 
+[*.iml]
+insert_final_newline = false
+
 [{*.html,*.js,*.css}]
 indent_size = 2
 
@@ -37,6 +40,7 @@ ktlint_standard_trailing-comma-on-call-site = disabled
 ktlint_standard_trailing-comma-on-declaration-site = disabled
 ktlint_standard_try-catch-finally-spacing = disabled
 ktlint_standard_wrapping = disabled
+trim_trailing_whitespace = false
 
 [gradlew.bat]
 end_of_line = crlf

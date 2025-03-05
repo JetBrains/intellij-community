@@ -24,7 +24,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.*;
+import org.jetbrains.plugins.terminal.TerminalOptionsConfigurable;
+import org.jetbrains.plugins.terminal.TerminalTabState;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
+import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider;
 
 import javax.swing.*;
@@ -164,7 +167,7 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
 
   private static @Nullable OpenShellAction create(@NotNull String shellPath, @NotNull List<String> shellOptions, @NlsSafe String presentableName) {
     if (Files.exists(Path.of(shellPath))) {
-      List<String> shellCommand = LocalTerminalDirectRunner.convertShellPathToCommand(shellPath);
+      List<String> shellCommand = LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath);
       List<String> otherOptions = shellOptions.stream().filter(opt -> !shellCommand.contains(opt)).toList();
       return new OpenShellAction(() -> presentableName, ContainerUtil.concat(shellCommand, otherOptions), null);
     }
@@ -201,11 +204,10 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null) {
-        var runner = DefaultTerminalRunnerFactory.getInstance().createLocalRunner(project);
         TerminalTabState tabState = new TerminalTabState();
         tabState.myTabName = myPresentableName.get();
         tabState.myShellCommand = myCommand;
-        TerminalToolWindowManager.getInstance(project).createNewSession(runner, tabState);
+        TerminalToolWindowManager.getInstance(project).createNewSession(tabState);
       }
     }
   }

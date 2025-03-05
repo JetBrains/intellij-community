@@ -19,6 +19,7 @@ import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +50,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     Ref<DeleteRemoteBranchDecision> decisionRef = Ref.create();
 
     for (String branchName : myBranchNames) {
-      Collection<String> commonTrackingBranches = getCommonTrackingBranches(branchName, repositories);
+      Collection<String> commonTrackingBranches = new ArrayList<>(getCommonTrackingBranches(branchName, repositories));
       // don't propose to remove current branch even if it tracks the remote branch
       for (GitRepository repository : repositories) {
         String currentBranch = repository.getCurrentBranchName();
@@ -107,8 +108,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     throw new UnsupportedOperationException();
   }
 
-  private static @NotNull Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch,
-                                                                       @NotNull Collection<? extends GitRepository> repositories) {
+  private static @Unmodifiable @NotNull Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch,
+                                                                                     @NotNull Collection<? extends GitRepository> repositories) {
     return new GitMultiRootBranchConfig(repositories).getCommonTrackingBranches(remoteBranch);
   }
 

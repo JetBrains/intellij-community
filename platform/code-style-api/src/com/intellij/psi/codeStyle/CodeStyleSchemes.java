@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,8 +23,7 @@ public abstract class CodeStyleSchemes {
   @TestOnly
   public abstract void deleteScheme(@NotNull CodeStyleScheme scheme);
 
-  @Nullable
-  public abstract CodeStyleScheme findSchemeByName(@NotNull String name);
+  public abstract @Nullable CodeStyleScheme findSchemeByName(@NotNull String name);
 
   /**
    * Attempts to find a scheme with a given name or an alternative suitable scheme.
@@ -33,8 +32,7 @@ public abstract class CodeStyleSchemes {
    * @return A found scheme or a default scheme if the scheme name was not found or, if neither exists or the scheme name is null, the
    *         currently selected scheme.
    */
-  @NotNull
-  public CodeStyleScheme findPreferredScheme(@Nullable String preferredSchemeName) {
+  public @NotNull CodeStyleScheme findPreferredScheme(@Nullable String preferredSchemeName) {
     CodeStyleScheme scheme = null;
     if (preferredSchemeName != null) {
       scheme = findSchemeByName(preferredSchemeName);

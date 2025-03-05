@@ -24,6 +24,7 @@ final class FileStatusImpl implements FileStatus {
     myTextSupplier = textSupplier;
   }
 
+  @Override
   public @NonNls String toString() {
     return myStatus;
   }

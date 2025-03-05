@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs;
 
@@ -16,8 +16,6 @@ import com.intellij.util.Consumer;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
 import com.intellij.vcs.commit.CommitWorkflowUi;
 import org.jetbrains.annotations.ApiStatus;
-
-import java.util.List;
 
 
 public interface VcsDataKeys {
@@ -75,7 +73,6 @@ public interface VcsDataKeys {
    * This difference might be important when {@link AbstractVcs#areDirectoriesVersionedItems()} is {@code true}.
    */
   DataKey<Change[]> CHANGE_LEAD_SELECTION = DataKey.create("ChangeListView.ChangeLeadSelection");
-  DataKey<List<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY = DataKey.create("ChangeListView.ModifiedWithoutEditing");
 
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");
   DataKey<VirtualFile> CURRENT_UNVERSIONED = DataKey.create("ChangeListView.CurrentUnversionedFile");

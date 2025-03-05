@@ -15,7 +15,7 @@ typealias Alias<caret> = OOO
 class Child : Alias() {
 
     override fun opFun() {
-        super<Alias>.opFun() //not found in K2, see KTIJ-26095
+        super<Alias>.opFun()
     }
 }
 
@@ -27,9 +27,9 @@ fun f2(par: Alias, par2: OOO) : Alias {
 
     val a: Alias
 
-    a = Alias() //not found in K2, see KTIJ-26095
+    a = Alias()
 
-    val b = WithGeneric<Alias>() //not found in K2, see KTIJ-26095
+    val b = WithGeneric<Alias>()
     val b2 = WithGeneric<OOO>()
 
     Alias.CONST //not found in K1, found in K2

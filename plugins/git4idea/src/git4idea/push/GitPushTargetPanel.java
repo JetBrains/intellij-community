@@ -3,6 +3,8 @@ package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -46,8 +48,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.ParseException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static git4idea.push.GitPushTarget.findRemote;
 import static java.util.stream.Collectors.toList;
@@ -145,8 +147,25 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         }
       }
     });
+
+    setupBranchNameInputValidation(myTargetEditor);
     //record undo only in active edit mode and set to ignore by default
     UndoUtil.disableUndoFor(myTargetEditor.getDocument());
+  }
+
+  private void setupBranchNameInputValidation(@NotNull PushTargetTextField editor) {
+    editor.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        String targetName = myTargetEditor.getText();
+        String validTargetName = GitRefNameValidator.getInstance().cleanUpBranchNameOnTyping(targetName);
+        if (validTargetName.equals(targetName)) return;
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myTargetEditor.setText(validTargetName);
+        }, ModalityState.stateForComponent(myTargetEditor));
+      }
+    });
   }
 
   private void updateComponents(@Nullable GitPushTarget target) {
@@ -313,15 +332,18 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         boolean newUpstream = myUpstreamCheckbox != null &&
                               targetBranch != null &&
                               myUpstreamCheckbox.isSelected() &&
-                              !myUpstreamCheckbox.isDefaultUpstream(targetBranch.getNameForRemoteOperations(), targetBranch.getRemote().getName());
+                              !myUpstreamCheckbox.isDefaultUpstream(targetBranch.getNameForRemoteOperations(),
+                                                                    targetBranch.getRemote().getName());
         if (newRemoteBranch || newUpstream) {
           renderer.setIconOnTheRight(true);
         }
         if (newRemoteBranch && newUpstream) {
           renderer.setIcon(BranchLabels.getNewAndUpstreamBranchLabel(renderer.getFont(), isSelected));
-        } else if (newRemoteBranch) {
+        }
+        else if (newRemoteBranch) {
           renderer.setIcon(BranchLabels.getNewBranchLabel(renderer.getFont(), isSelected));
-        } else if (newUpstream) {
+        }
+        else if (newUpstream) {
           renderer.setIcon(BranchLabels.getUpstreamBranchLabel(renderer.getFont(), isSelected));
         }
       }

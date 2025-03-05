@@ -8,4 +8,6 @@ import org.jetbrains.kotlin.psi.KtFile
 abstract class AbstractK2MultiFileQuickFixTest: AbstractQuickFixMultiFileTest() {
 
     override fun checkForUnexpectedErrors(file: KtFile) {}
+
+    override val actionPrefix: String? = "K2_ACTION:"
 }

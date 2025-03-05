@@ -3,7 +3,9 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
+import com.intellij.testFramework.refreshVfs
 import java.util.concurrent.CountDownLatch
+import kotlin.io.path.writeText
 
 class AutoReloadParallelTest : AutoReloadParallelTestCase() {
 
@@ -104,9 +106,10 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
       enableAsyncExecution()
       setDispatcherMergingSpan(MERING_SPAN)
 
+      val threadNum = maxOf(Runtime.getRuntime().availableProcessors(), 10)
       repeat(TEST_ATTEMPTS) {
         parallel {
-          repeat(50) { index ->
+          repeat(threadNum) { index ->
             thread {
 
               // see AutoImportProjectTracker.scheduleDelayedSmartProjectReload
@@ -143,6 +146,29 @@ class AutoReloadParallelTest : AutoReloadParallelTestCase() {
           forceReloadProject()
         }
         assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
+      }
+    }
+  }
+
+  fun `test settings file creating during sync`() {
+    test {
+      enableAsyncExecution()
+      setDispatcherMergingSpan(MERING_SPAN)
+
+      repeat(10 * TEST_ATTEMPTS) { attempt ->
+
+        val settingsFile = projectNioPath.resolve("$attempt.file")
+        projectAware.registerSettingsFile(settingsFile)
+        settingsFile.refreshVfs()
+
+        whenReloading(1) {
+          Thread.sleep(10)
+          settingsFile.writeText(SAMPLE_TEXT)
+        }
+        waitForAllProjectActivities {
+          forceReloadProject()
+        }
+        assertStateAndReset(numReload = 1, notified = false, event = "file created during reload.\nAttempt  :$attempt")
       }
     }
   }

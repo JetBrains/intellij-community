@@ -22,8 +22,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer.RevisionWithTitle;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -69,9 +68,7 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
                                                       ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
                                                       leftTitle, rightTitle);
     List<DiffEditorTitleCustomizer> titleCustomizers =
-      DiffTitleFilePathCustomizer.getTitleCustomizers(project,
-                                                      RevisionWithTitle.create(leftRevision, leftTitle),
-                                                      RevisionWithTitle.create(rightRevision, rightTitle));
+      DiffTitleWithDetailsCustomizers.getTitleCustomizers(project, leftRevision, leftTitle, rightRevision, rightTitle);
     return DiffUtil.addTitleCustomizers(request, titleCustomizers);
   }
 
@@ -147,14 +144,13 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
                                                                                                 indicator),
                                                         ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
                                                         leftTitle, centerTitle, rightTitle);
-      List<DiffEditorTitleCustomizer> titleCustomizers = DiffTitleFilePathCustomizer.getTitleCustomizers(
-        project,
-        RevisionWithTitle.create(leftRevision, leftTitle),
-        RevisionWithTitle.create(centerRevision, centerTitle),
-        RevisionWithTitle.create(rightRevision, rightTitle)
-      );
 
-      return DiffUtil.addTitleCustomizers(request, titleCustomizers);
+      return DiffUtil.addTitleCustomizers(request, DiffTitleWithDetailsCustomizers.getTitleCustomizers(
+        project,
+        leftRevision, leftTitle,
+        centerRevision, centerTitle,
+        rightRevision, rightTitle)
+      );
     }
 
     @Override

@@ -266,6 +266,25 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/enum")
+    public static class Enum extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("EnumEntryCompletion.kt")
+        public void testEnumEntryCompletion() throws Exception {
+            runTest("../testData/handlers/basic/enum/EnumEntryCompletion.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/exclChar")
     public static class ExclChar extends AbstractBasicCompletionHandlerTest {
         @java.lang.Override
@@ -440,6 +459,31 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunction.kt");
         }
 
+        @TestMetadata("HigherOrderFunctionParameterName.kt")
+        public void testHigherOrderFunctionParameterName() throws Exception {
+            runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionParameterName.kt");
+        }
+
+        @TestMetadata("HigherOrderFunctionParameterName2.kt")
+        public void testHigherOrderFunctionParameterName2() throws Exception {
+            runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionParameterName2.kt");
+        }
+
+        @TestMetadata("HigherOrderFunctionParameterName3.kt")
+        public void testHigherOrderFunctionParameterName3() throws Exception {
+            runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionParameterName3.kt");
+        }
+
+        @TestMetadata("HigherOrderFunctionParameterName4.kt")
+        public void testHigherOrderFunctionParameterName4() throws Exception {
+            runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionParameterName4.kt");
+        }
+
+        @TestMetadata("HigherOrderFunctionParameterName5.kt")
+        public void testHigherOrderFunctionParameterName5() throws Exception {
+            runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionParameterName5.kt");
+        }
+
         @TestMetadata("HigherOrderFunctionWithArg.kt")
         public void testHigherOrderFunctionWithArg() throws Exception {
             runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithArg.kt");
@@ -458,6 +502,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("HigherOrderFunctionWithArgs3.kt")
         public void testHigherOrderFunctionWithArgs3() throws Exception {
             runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithArgs3.kt");
+        }
+
+        @TestMetadata("HigherOrderFunctionWithDefaultArgs.kt")
+        public void testHigherOrderFunctionWithDefaultArgs() throws Exception {
+            runTest("../testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithDefaultArgs.kt");
         }
 
         @TestMetadata("HigherOrderSuspendFunctionWithArgs.kt")
@@ -567,6 +616,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("KDoc.kt")
         public void testKDoc() throws Exception {
             runTest("../testData/handlers/basic/importAliases/KDoc.kt");
+        }
+
+        @TestMetadata("OriginalTypeSubstitutedWithAlias.kt")
+        public void testOriginalTypeSubstitutedWithAlias() throws Exception {
+            runTest("../testData/handlers/basic/importAliases/OriginalTypeSubstitutedWithAlias.kt");
         }
 
         @TestMetadata("TopLevelFun.kt")
@@ -680,6 +734,25 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("FunctionShortName.kt")
         public void testFunctionShortName() throws Exception {
             runTest("../testData/handlers/basic/kdoc/FunctionShortName.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/object")
+    public static class Object extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ObjectMethodCompletion.kt")
+        public void testObjectMethodCompletion() throws Exception {
+            runTest("../testData/handlers/basic/object/ObjectMethodCompletion.kt");
         }
     }
 

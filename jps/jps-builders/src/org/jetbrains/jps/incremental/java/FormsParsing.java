@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,9 +8,12 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
 import net.n3.nanoxml.*;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 
 @ApiStatus.Internal
@@ -21,8 +24,8 @@ public final class FormsParsing {
   private FormsParsing() {
   }
 
-  public static String readBoundClassName(File formFile) throws IOException, AlienFormFileException {
-    try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(formFile))) {
+  public static String readBoundClassName(@NotNull Path formFile) throws IOException, AlienFormFileException {
+    try (BufferedInputStream in = new BufferedInputStream(Files.newInputStream(formFile))) {
       final Ref<String> result = new Ref<>(null);
       final Ref<Boolean> isAlien = new Ref<>(Boolean.FALSE);
       parse(in, new IXMLBuilderAdapter() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionBundle;
@@ -35,7 +35,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     setComponent(pathTextField);
     setText(ExecutionBundle.message("label.path.mappings"));
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, pathTextField.getChildComponent());
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     getComponent().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -70,7 +70,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     for (PathMappingSettings.PathMapping mapping : mappingSettings.getPathMappings()) {
       sb.append(mapping.getLocalRoot()).append("=").append(mapping.getRemoteRoot()).append(";");
     }
-    if (sb.length() > 0) {
+    if (!sb.isEmpty()) {
       sb.deleteCharAt(sb.length() - 1); //trim last ;
     }
     getComponent().setText(sb.toString());

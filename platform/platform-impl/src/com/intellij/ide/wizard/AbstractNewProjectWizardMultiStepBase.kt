@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.wizard
 
+import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.bindStorage
@@ -9,6 +10,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 
 
 abstract class AbstractNewProjectWizardMultiStepBase(
@@ -73,6 +75,11 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   override fun setupProject(project: Project) {
     steps[step]?.setupProject(project)
+  }
+
+  @ApiStatus.Internal
+  override fun createProjectConfigurator(): ProjectConfigurator? {
+    return steps[step]?.createProjectConfigurator()
   }
 
   init {

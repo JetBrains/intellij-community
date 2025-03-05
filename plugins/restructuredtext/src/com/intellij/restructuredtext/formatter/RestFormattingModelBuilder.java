@@ -28,9 +28,8 @@ public class RestFormattingModelBuilder implements FormattingModelBuilder, Custo
       .createFormattingModelForPsiFile(formattingContext.getContainingFile(), block, formattingContext.getCodeStyleSettings());
   }
 
-  @Nullable
   @Override
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+  public @Nullable TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     final PsiElement element = elementAtOffset.getPsi();
     final PsiElement container = element.getParent();
     return container != null ? container.getTextRange() : null;

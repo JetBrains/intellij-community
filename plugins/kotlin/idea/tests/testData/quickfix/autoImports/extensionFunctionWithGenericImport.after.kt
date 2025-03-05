@@ -10,4 +10,4 @@ fun some() {
     r.foo(<caret>"")
 }
 
-/* IGNORE_K2 */
+// IGNORE_K2

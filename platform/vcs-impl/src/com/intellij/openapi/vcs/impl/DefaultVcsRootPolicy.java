@@ -7,14 +7,14 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Set;
 
 public abstract class DefaultVcsRootPolicy {
-  @NotNull protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   protected DefaultVcsRootPolicy(@NotNull Project project) {
     myProject = project;
@@ -28,11 +28,16 @@ public abstract class DefaultVcsRootPolicy {
    * Return roots that belong to the project (ex: all content roots).
    * If 'Project' mapping is configured, all vcs roots for these roots will be put to the mappings.
    */
-  @NotNull
-  public abstract Collection<VirtualFile> getDefaultVcsRoots();
+  public final @NotNull Collection<VirtualFile> getDefaultVcsRoots() {
+    return ContainerUtil.mapNotNull(getDefaultVcsRootsCandidates(), dir -> {
+      VirtualFile canonicalDir = dir.getCanonicalFile();
+      return canonicalDir != null ? canonicalDir : dir;
+    });
+  }
 
-  @Nls
-  public String getProjectConfigurationMessage() {
+  protected abstract @NotNull Collection<VirtualFile> getDefaultVcsRootsCandidates();
+
+  public @Nls String getProjectConfigurationMessage() {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(myProject);
     if (isDirectoryBased) {
       String fileName = ProjectKt.getStateStore(myProject).getDirectoryStorePath().getFileName().toString();

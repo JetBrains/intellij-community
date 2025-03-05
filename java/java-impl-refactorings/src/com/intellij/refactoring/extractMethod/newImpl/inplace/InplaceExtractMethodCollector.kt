@@ -3,8 +3,6 @@ package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.IntEventField
-import com.intellij.internal.statistic.eventLog.events.LongEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 object InplaceExtractMethodCollector : CounterUsagesCollector() {

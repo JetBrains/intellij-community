@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.BreakpointChecker.Bre
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.Color
-import java.util.*
 
 class InspectBreakpointApplicabilityAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {

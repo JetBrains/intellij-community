@@ -79,10 +79,12 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
     return myWithSourceFrame;
   }
 
+  @Override
   public String getInstruction() {
     return myInstr;
   }
 
+  @Override
   public List<Debugger.Variable> getVariables() {
     assert isValid();
 
@@ -119,14 +121,17 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
     return result;
   }
 
+  @Override
   public String getURI() {
     return myURI;
   }
 
+  @Override
   public int getLineNumber() {
     return myLineNumber;
   }
 
+  @Override
   public Value eval(String expr) throws Debugger.EvaluationException {
     assert isValid();
 

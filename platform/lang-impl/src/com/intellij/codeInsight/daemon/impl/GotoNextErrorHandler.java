@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -9,6 +9,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -59,6 +61,8 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     int maxSeverity = settings.isNextErrorActionGoesToErrorsFirst() ? severityRegistrar.getSeveritiesCount() - 1
                                                                     : SeverityRegistrar.SHOWN_SEVERITIES_OFFSET;
 
+    EditorContextManager editorContextManager = EditorContextManager.getInstance(project);
+    CodeInsightContext context = editorContextManager.getEditorContexts(editor).getMainContext();
     for (int idx = maxSeverity; idx >= SeverityRegistrar.SHOWN_SEVERITIES_OFFSET; idx--) {
       HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
       if (minSeverity == null) continue;
@@ -69,9 +73,9 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
             // When there are multiple warnings at the same offset, this will return the HighlightInfo
             // containing all of them, not just the first one as found by findInfo()
             HighlightInfo fullInfo = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project))
-              .findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
+              .findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false, context);
             HighlightInfo info = fullInfo != null ? fullInfo : infoToGo;
-            EditorMouseHoverPopupManager.getInstance().showInfoTooltip(editor, info, editor.getCaretModel().getOffset(), false, true);
+            EditorMouseHoverPopupManager.getInstance().showInfoTooltip(editor, info, editor.getCaretModel().getOffset(), false, true, false, true);
           }
         });
         return;
@@ -83,8 +87,9 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   private HighlightInfo findInfo(@NotNull Project project, @NotNull Editor editor, int caretOffset, @NotNull HighlightSeverity minSeverity) {
     Document document = editor.getDocument();
     HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
-    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), info -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), context, info -> {
       if (mySeverity != null && info.getSeverity() != mySeverity) return true;
       int startOffset = getNavigationPositionFor(info, document);
       if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {

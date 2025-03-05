@@ -20,18 +20,18 @@ function __jetbrains_intellij_fish_preexec -a commandline --on-event fish_preexe
 end
 
 function __jetbrains_intellij_initialize --on-event fish_prompt
-  __jetbrains_intellij_report_prompt_state
   __jetbrains_intellij_debug_log 'initialized'
   set -l hist "(builtin history)"
   __jetbrains_intellij_send_message 'command_history;history_string=%s' (__jetbrains_intellij_encode "$hist")
   __jetbrains_intellij_send_message 'initialized'
+  __jetbrains_intellij_report_prompt_state
   functions --erase __jetbrains_intellij_initialize
 
   function __jetbrains_intellij_command_finished --on-event fish_prompt
     set -l exit_code "$status"
-    __jetbrains_intellij_report_prompt_state
     __jetbrains_intellij_debug_log 'command_finished: exit code %s' "$exit_code"
     __jetbrains_intellij_send_message 'command_finished;exit_code=%s' "$exit_code"
+    __jetbrains_intellij_report_prompt_state
   end
 end
 

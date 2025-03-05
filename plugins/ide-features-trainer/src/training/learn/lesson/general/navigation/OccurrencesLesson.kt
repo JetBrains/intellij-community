@@ -26,6 +26,7 @@ abstract class OccurrencesLesson : KLesson("java.occurrences.lesson", LessonsBun
       test { actions(it) }
     }
     task("FindNext") {
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences")
       trigger("com.intellij.find.editorHeaderActions.NextOccurrenceAction")
       text(LessonsBundle.message("find.occurrences.find.next", LessonUtil.rawEnter(), action(it)))
       restoreByUi()
@@ -36,6 +37,7 @@ abstract class OccurrencesLesson : KLesson("java.occurrences.lesson", LessonsBun
       }
     }
     task("FindPrevious") {
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences")
       trigger("com.intellij.find.editorHeaderActions.PrevOccurrenceAction")
       text(LessonsBundle.message("find.occurrences.find.previous", action("FindPrevious")))
       showWarning(LessonsBundle.message("find.occurrences.search.closed.warning", action("Find"))) {

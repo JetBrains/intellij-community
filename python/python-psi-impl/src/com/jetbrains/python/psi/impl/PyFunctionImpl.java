@@ -22,9 +22,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
-import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.controlflow.*;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -37,20 +35,18 @@ import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.PyUtil.getGenericTypeForClass;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
 
@@ -227,7 +223,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (substitutions != null) {
         PyClass containingClass = getContainingClass();
         if (containingClass != null && type instanceof PySelfType) {
-          PyType genericType = getGenericTypeForClass(context, containingClass);
+          PyType genericType = PyTypeChecker.findGenericDefinitionType(containingClass, context);
           if (genericType != null) {
             type = genericType;
           }
@@ -317,7 +313,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return myYieldExpressions;
     }
 
-    final private List<PyYieldExpression> myYieldExpressions = new ArrayList<>();
+    private final List<PyYieldExpression> myYieldExpressions = new ArrayList<>();
     
     @Override
     public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
@@ -389,12 +385,15 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (instruction instanceof CallInstruction ci && ci.isNoReturnCall(context)) {
         return ControlFlowUtil.Operation.CONTINUE;
       }
+      if (instruction instanceof PyRaiseInstruction) {
+        return ControlFlowUtil.Operation.CONTINUE;
+      }
+      if (instruction instanceof PyWithContextExitInstruction withExit && !withExit.isSuppressingExceptions(context)) {
+        return ControlFlowUtil.Operation.CONTINUE;
+      }
       final PsiElement element = instruction.getElement();
       if (!(element instanceof PyStatement statement)) {
         return ControlFlowUtil.Operation.NEXT;
-      }
-      if (element instanceof PyRaiseStatement) {
-        return ControlFlowUtil.Operation.CONTINUE;
       }
       returnPoints.add(statement);
       return ControlFlowUtil.Operation.CONTINUE;
@@ -411,8 +410,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return extractDeprecationMessage();
   }
 
-  @Nullable
-  public String extractDeprecationMessage() {
+  public @Nullable String extractDeprecationMessage() {
     String deprecationMessageFromDecorator = extractDeprecationMessageFromDecorator(this);
     if (deprecationMessageFromDecorator != null) {
       return deprecationMessageFromDecorator;

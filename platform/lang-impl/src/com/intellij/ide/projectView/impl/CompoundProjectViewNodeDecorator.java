@@ -40,7 +40,7 @@ public final class CompoundProjectViewNodeDecorator implements ProjectViewNodeDe
   }
 
   @Override
-  public void decorate(ProjectViewNode node, PresentationData data) {
+  public void decorate(@NotNull ProjectViewNode node, @NotNull PresentationData data) {
     forEach(decorator -> decorator.decorate(node, data));
   }
   private void forEach(@NotNull Consumer<? super ProjectViewNodeDecorator> consumer) {

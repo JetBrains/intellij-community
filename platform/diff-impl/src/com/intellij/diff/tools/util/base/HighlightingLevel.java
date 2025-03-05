@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -29,10 +29,9 @@ public enum HighlightingLevel {
   SIMPLE("option.highlighting.level.none", AllIcons.Ide.HectorOff, rangeHighlighter ->
     rangeHighlighter.getLayer() <= HighlighterLayer.SYNTAX);
 
-  @NotNull private final String myTextKey;
-  @Nullable private final Icon myIcon;
-  @NotNull
-  private final Predicate<? super RangeHighlighter> myCondition;
+  private final @NotNull String myTextKey;
+  private final @Nullable Icon myIcon;
+  private final @NotNull Predicate<? super RangeHighlighter> myCondition;
 
   HighlightingLevel(@NotNull @PropertyKey(resourceBundle = DiffBundle.BUNDLE) String textKey,
                     @Nullable Icon icon,
@@ -42,14 +41,11 @@ public enum HighlightingLevel {
     myCondition = condition;
   }
 
-  @Nls
-  @NotNull
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return DiffBundle.message(myTextKey);
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myIcon;
   }
 

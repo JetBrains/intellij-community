@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -37,8 +39,7 @@ import org.jetbrains.annotations.NotNull;
 public final class UseOfPropertiesAsHashtableInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("properties.object.as.hashtable.problem.descriptor");
   }
 
@@ -75,15 +76,13 @@ public final class UseOfPropertiesAsHashtableInspection extends BaseInspection i
       this.put = put;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", put ? "setProperty()" : "getProperty()");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("use.of.properties.as.hashtable.fix.family.name");
     }
 
@@ -96,7 +95,7 @@ public final class UseOfPropertiesAsHashtableInspection extends BaseInspection i
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       CommentTracker commentTracker = new CommentTracker();
-      @NonNls final StringBuilder newExpression = new StringBuilder();
+      final @NonNls StringBuilder newExpression = new StringBuilder();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression != null) {
         newExpression.append(commentTracker.text(qualifierExpression));

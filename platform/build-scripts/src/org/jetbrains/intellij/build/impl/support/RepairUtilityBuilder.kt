@@ -120,7 +120,7 @@ class RepairUtilityBuilder {
         }
 
         @Suppress("OPT_IN_USAGE")
-        val deferred = GlobalScope.async { buildBinaries(context) }
+        val deferred = GlobalScope.async(CoroutineName("build repair-utility")) { buildBinaries(context) }
         binaryCache.put(context, deferred)
         return deferred
       }

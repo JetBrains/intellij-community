@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -56,21 +56,18 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
     return previewHeaderPanel;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myEditor.getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return EditorConfigBundle.message("preview.file.editor.name");
   }
 
@@ -109,9 +106,8 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
-  @Nullable
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
     return null;
   }
 

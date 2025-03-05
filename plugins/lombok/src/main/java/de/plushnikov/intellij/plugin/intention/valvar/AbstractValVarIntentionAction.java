@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.intention.valvar;
 
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
@@ -12,7 +12,7 @@ import de.plushnikov.intellij.plugin.intention.AbstractLombokIntentionAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class AbstractValVarIntentionAction extends AbstractLombokIntentionAction implements LowPriorityAction {
+public abstract class AbstractValVarIntentionAction extends AbstractLombokIntentionAction {
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
@@ -33,7 +33,7 @@ public abstract class AbstractValVarIntentionAction extends AbstractLombokIntent
       available = decl != null && isAvailableOnDeclarationStatement(decl);
     }
     if (!available) return null;
-    return Presentation.of(getFamilyName());
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.LOW);
   }
 
   @Override

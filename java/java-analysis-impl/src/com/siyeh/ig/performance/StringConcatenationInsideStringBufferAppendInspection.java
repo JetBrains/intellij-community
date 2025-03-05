@@ -40,8 +40,7 @@ public final class StringConcatenationInsideStringBufferAppendInspection extends
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     final String className = aClass.getName();
     return InspectionGadgetsBundle.message("string.concatenation.inside.string.buffer.append.problem.descriptor", className);
@@ -60,8 +59,7 @@ public final class StringConcatenationInsideStringBufferAppendInspection extends
   private static class ReplaceWithChainedAppendFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "string.concatenation.inside.string.buffer.append.replace.quickfix");
     }
@@ -98,7 +96,7 @@ public final class StringConcatenationInsideStringBufferAppendInspection extends
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if (!"append".equals(methodName)) {
         return;
       }

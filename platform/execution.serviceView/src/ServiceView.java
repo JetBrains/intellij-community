@@ -2,17 +2,14 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.execution.services.*;
-import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -59,8 +56,7 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     myModel.saveState(state);
   }
 
-  @NotNull
-  abstract List<ServiceViewItem> getSelectedItems();
+  abstract @NotNull List<ServiceViewItem> getSelectedItems();
 
   abstract Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass);
 
@@ -124,20 +120,14 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     sink.set(ServiceViewActionProvider.SERVICES_SELECTED_ITEMS, selection);
 
     ServiceViewContributor<?> contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
-    sink.lazy(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, () -> {
-      DeleteProvider deleteProvider = getDeleteProvider(contributor);
-      ServiceViewDeleteProvider viewDeleteProvider = new ServiceViewDeleteProvider(this);
-      if (deleteProvider == null) {
-        return viewDeleteProvider;
-      }
-      else {
-        if (deleteProvider instanceof ServiceViewContributorDeleteProvider o) {
-          o.setFallbackProvider(viewDeleteProvider);
-        }
-        return deleteProvider;
-      }
-    });
-
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, ServiceViewDefaultDeleteProvider.getInstance());
+    ServiceViewDescriptor contributorDescriptor = contributor != null ? contributor.getViewDescriptor(myProject) : null;
+    if (contributorDescriptor instanceof UiDataProvider uiDataProvider) {
+      sink.uiDataSnapshot(uiDataProvider);
+    }
+    else {
+      DataSink.uiDataSnapshot(sink, contributorDescriptor != null ? contributorDescriptor.getDataProvider() : null);
+    }
     sink.set(PlatformDataKeys.COPY_PROVIDER, new ServiceViewCopyProvider(this));
     sink.set(ServiceViewActionUtils.CONTRIBUTORS_KEY,
              getModel().getRoots().stream().map(item -> item.getRootContributor()).collect(Collectors.toSet()));
@@ -148,34 +138,12 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
              navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
 
     ServiceViewDescriptor descriptor = onlyItem == null || onlyItem.isRemoved() ? null : onlyItem.getViewDescriptor();
-    if (descriptor instanceof UiDataProvider dp) {
-      sink.uiDataSnapshot(dp);
+    if (descriptor instanceof UiDataProvider uiDataProvider) {
+      sink.uiDataSnapshot(uiDataProvider);
     }
     else {
-      DataProvider dataProvider = descriptor == null ? null : descriptor.getDataProvider();
-      if (dataProvider != null) {
-        RecursionManager.doPreventingRecursion(
-          this, false, () -> {
-            DataSink.uiDataSnapshot(sink, dataProvider);
-            return null;
-          });
-      }
+      DataSink.uiDataSnapshot(sink, descriptor != null ? descriptor.getDataProvider() : null);
     }
-  }
-
-  private @Nullable DeleteProvider getDeleteProvider(@Nullable ServiceViewContributor<?> contributor) {
-    if (contributor == null) return null;
-    ServiceViewDescriptor viewDescriptor = contributor.getViewDescriptor(myProject);
-    if (viewDescriptor instanceof UiDataProvider dataProvider) {
-      DataContext context = CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink -> {
-        sink.uiDataSnapshot(dataProvider);
-      });
-      DeleteProvider deleteProvider = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(context);
-      if (deleteProvider != null) return deleteProvider;
-    }
-
-    DataProvider delegate = viewDescriptor.getDataProvider();
-    return delegate == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(delegate);
   }
 
   private static void setViewModelState(@NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {

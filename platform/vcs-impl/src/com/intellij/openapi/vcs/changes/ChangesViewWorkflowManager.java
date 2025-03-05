@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.Activity;
@@ -24,14 +24,13 @@ public final class ChangesViewWorkflowManager implements Disposable {
   public static final Topic<ChangesViewWorkflowListener> TOPIC =
     new Topic<>(ChangesViewWorkflowListener.class, Topic.BroadcastDirection.NONE, true);
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
-  @Nullable private ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
+  private @Nullable ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
 
   private boolean myInitialized = false;
 
-  @NotNull
-  public static ChangesViewWorkflowManager getInstance(@NotNull Project project) {
+  public static @NotNull ChangesViewWorkflowManager getInstance(@NotNull Project project) {
     return project.getService(ChangesViewWorkflowManager.class);
   }
 
@@ -43,8 +42,7 @@ public final class ChangesViewWorkflowManager implements Disposable {
     ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflowHandler(), ModalityState.nonModal(), myProject.getDisposed());
   }
 
-  @Nullable
-  public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+  public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
     if (ApplicationManager.getApplication().isDispatchThread() && !myInitialized) {
       updateCommitWorkflowHandler();
     }

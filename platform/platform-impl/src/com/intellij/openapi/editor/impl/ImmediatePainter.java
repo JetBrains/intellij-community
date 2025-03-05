@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -29,6 +29,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import sun.awt.image.SunVolatileImage;
 
 import javax.swing.*;
@@ -45,12 +46,13 @@ import static com.intellij.util.ui.UIUtil.useSafely;
 /**
  * @author Pavel Fatin
  */
-final class ImmediatePainter {
+@ApiStatus.Internal
+public final class ImmediatePainter {
   private static final Logger LOG = Logger.getInstance(ImmediatePainter.class);
   private static final int DEBUG_PAUSE_DURATION = 1000;
 
-  static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
-  static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
+  public static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
+  public static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
   private static final RegistryValue PIPELINE_FLUSH = Registry.get("editor.zero.latency.rendering.pipeline.flush");
   private static final RegistryValue DEBUG = Registry.get("editor.zero.latency.rendering.debug");
 
@@ -68,7 +70,7 @@ final class ImmediatePainter {
   }
 
   boolean paint(final Graphics g, final EditorActionPlan plan) {
-    if (ENABLED.asBoolean() && canPaintImmediately(myEditor)) {
+    if (ENABLED.asBoolean() && canPaintImmediately(myEditor) && myEditor.myAdView == null) {
       if (plan.getCaretShift() != 1) return false;
 
       final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();

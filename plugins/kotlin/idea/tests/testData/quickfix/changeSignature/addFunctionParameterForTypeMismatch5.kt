@@ -5,7 +5,7 @@
 // ACTION: Create function 'foo'
 // ACTION: Do not show hints for current method
 // ACTION: Put arguments on separate lines
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun foo(i1: Int, i2: Int, i3: Int, i4: Int) {
 }
 

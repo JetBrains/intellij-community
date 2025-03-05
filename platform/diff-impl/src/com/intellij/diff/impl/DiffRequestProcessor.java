@@ -69,10 +69,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -757,15 +754,13 @@ public abstract class DiffRequestProcessor
     return myDisposed;
   }
 
-  @NotNull
   @Override
-  public CheckedDisposable getDisposable() {
+  public @NotNull CheckedDisposable getDisposable() {
     return this;
   }
 
-  @NotNull
   @Override
-  public List<Editor> getEmbeddedEditors() {
+  public @NotNull List<Editor> getEmbeddedEditors() {
     DiffViewer viewer = getActiveViewer();
     if (viewer instanceof EditorDiffViewer editorDiffViewer) {
       return new ArrayList<>(editorDiffViewer.getHighlightEditors());
@@ -773,9 +768,8 @@ public abstract class DiffRequestProcessor
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<VirtualFile> getFilesToRefresh() {
+  public @NotNull @Unmodifiable List<VirtualFile> getFilesToRefresh() {
     DiffRequest request = getActiveRequest();
     if (request != null) {
       return request.getFilesToRefresh();
@@ -864,7 +858,7 @@ public abstract class DiffRequestProcessor
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    private @NotNull List<ShowInExternalToolAction> getShowActions() {
+    private @Unmodifiable @NotNull List<ShowInExternalToolAction> getShowActions() {
       Map<ExternalToolGroup, List<ExternalTool>> externalTools = ExternalDiffSettings.getInstance().getExternalTools();
       List<ExternalTool> diffTools = externalTools.getOrDefault(ExternalToolGroup.DIFF_TOOL, Collections.emptyList());
 
@@ -1219,7 +1213,7 @@ public abstract class DiffRequestProcessor
   }
 
   public static void notifyMessage(@NotNull AnActionEvent e, @NotNull JComponent contentPanel, boolean next) {
-    if (!contentPanel.isShowing()) return;
+    if (!UIUtil.isShowing(contentPanel)) return;
     Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
 
     // TODO: provide "change" word in chain UserData - for tests/etc
@@ -1507,8 +1501,7 @@ public abstract class DiffRequestProcessor
     @RequiresEdt
     default void destroy() { }
 
-    @Nullable
-    default JComponent getPreferredFocusedComponent() { return null; }
+    default @Nullable JComponent getPreferredFocusedComponent() { return null; }
 
     @Override
     default void uiDataSnapshot(@NotNull DataSink sink) { }

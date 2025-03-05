@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.util.Key;
@@ -13,8 +13,7 @@ import java.util.Map;
 public final class PsiLambdaNameHelper {
   private static final Key<ParameterizedCachedValue<Map<PsiLambdaExpression, String>, PsiClass>> LAMBDA_NAME = Key.create("ANONYMOUS_CLASS_NAME");
 
-  @Nullable
-  public static String getVMName(@NotNull PsiLambdaExpression lambdaExpression) {
+  public static @Nullable String getVMName(@NotNull PsiLambdaExpression lambdaExpression) {
     final PsiClass upper = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class);
     if (upper == null) {
       return null;

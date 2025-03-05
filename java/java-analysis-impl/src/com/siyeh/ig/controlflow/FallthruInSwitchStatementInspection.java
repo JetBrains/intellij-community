@@ -17,8 +17,8 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,20 +35,17 @@ import java.util.regex.Pattern;
 public final class FallthruInSwitchStatementInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "fallthrough";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("fallthru.in.switch.statement.problem.descriptor");
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return (Boolean)infos[0] ? new FallthruInSwitchStatementFix((String) infos[1]) : null;
   }
 
@@ -66,8 +63,7 @@ public final class FallthruInSwitchStatementInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("fallthru.in.switch.statement.quickfix", PsiKeyword.BREAK);
     }
 

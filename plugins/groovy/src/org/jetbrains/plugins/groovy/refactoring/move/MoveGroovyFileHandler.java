@@ -23,6 +23,9 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
@@ -52,7 +55,7 @@ public final class MoveGroovyFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
+  public @Nullable @Unmodifiable List<UsageInfo> findUsages(@NotNull PsiFile psiFile, @NotNull PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
     final List<UsageInfo> result = new ArrayList<>();
     final PsiPackage newParentPackage = JavaDirectoryService.getInstance().getPackage(newParent);
     final String qualifiedName = newParentPackage == null ? "" : newParentPackage.getQualifiedName();
@@ -65,7 +68,7 @@ public final class MoveGroovyFileHandler extends MoveFileHandler {
   }
 
   @Override
-  public void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) {
+  public void retargetUsages(@Unmodifiable @NotNull List<? extends UsageInfo> usageInfos, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
     for (UsageInfo usage : usageInfos) {
       if (usage instanceof MoveRenameUsageInfo moveRenameUsage) {
         final PsiElement oldElement = moveRenameUsage.getReferencedElement();

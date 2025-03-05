@@ -31,15 +31,13 @@ import java.util.List;
 import java.util.Set;
 
 final class ShExplainShellIntention extends BaseIntentionAction {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return ShBundle.message("sh.explain.inspection.text");
   }
 

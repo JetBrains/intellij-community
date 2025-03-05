@@ -894,7 +894,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       for (i in 0 until count) {
         val size = parent.getComponent(i).preferredSize
         result.width += size.width
-        result.height = max(result.height.toDouble(), size.height.toDouble()).toInt()
+        result.height = max(result.height, size.height)
       }
       return result
     }
@@ -973,16 +973,16 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
             if (component.isVisible) {
               val size = component.getPreferredSize()
               result.width += size.width
-              result.height = max(result.height.toDouble(), size.height.toDouble()).toInt()
+              result.height = max(result.height, size.height)
             }
           }
           if (multiProcessLink.isVisible) {
             val size = multiProcessLink.getPreferredSize()
             result.width += (if (result.width > 0) gap else 0) + size.width
-            result.height = max(result.height.toDouble(), size.height.toDouble()).toInt()
+            result.height = max(result.height, size.height)
           }
           if (processIconComponent != null) {
-            result.height = max(result.height.toDouble(), processIconComponent!!.getPreferredSize().height.toDouble()).toInt()
+            result.height = max(result.height, processIconComponent!!.getPreferredSize().height)
           }
           JBInsets.addTo(result, parent.insets)
           return result

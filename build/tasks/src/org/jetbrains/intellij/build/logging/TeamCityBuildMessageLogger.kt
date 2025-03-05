@@ -30,15 +30,16 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
      * [ServiceMessage.setFlowId] is called with [io.opentelemetry.api.trace.SpanContext.getSpanId].
      *
      * See [the docs](https://www.jetbrains.com/help/teamcity/service-messages.html#Message+FlowId).
-     *
-     * FIXME [ServiceMessage.setFlowId] is skipped as a workaround for TW-89630
      */
-    @Suppress("unused")
     @ApiStatus.Internal
     class SpanAwareServiceMessage : ServiceMessage {
-      constructor(span: Span, messageName: String, argument: String) : super(messageName, argument)
+      constructor(span: Span, messageName: String, argument: String) : super(messageName, argument) {
+        setFlowId(span.spanContext.spanId)
+      }
 
-      constructor(span: Span, messageName: String, attributes: Map<String, String>) : super(messageName, attributes)
+      constructor(span: Span, messageName: String, attributes: Map<String, String>) : super(messageName, attributes) {
+        setFlowId(span.spanContext.spanId)
+      }
     }
 
     /**
@@ -59,7 +60,7 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
       }
       finally {
         if (TeamCityHelper.isUnderTeamCity) {
-          print(ServiceMessageTypes.FLOW_FINSIHED)
+          println(SpanAwareServiceMessage(span = span, messageName = ServiceMessageTypes.FLOW_FINSIHED, attributes = java.util.Map.of()))
         }
       }
     }
@@ -152,6 +153,9 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
       }
       IMPORT_DATA -> {
         print("importData", "type" to "streamToBuildLog", "filePath" to message.text, "wrapFileContentInBlock" to "false")
+      }
+      BUILD_NUMBER -> {
+        print(ServiceMessageTypes.BUILD_NUMBER, message.text)
       }
     }
   }

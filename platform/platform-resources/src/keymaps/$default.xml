@@ -529,6 +529,9 @@
   <action id="Diff.ShowDiff">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
+  <action id="Compare.SameVersion">
+    <keyboard-shortcut first-keystroke="control D"/>
+  </action>
   <action id="Diff.ShowSettingsPopup">
     <keyboard-shortcut first-keystroke="control shift D"/>
   </action>
@@ -1171,7 +1174,7 @@
     <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>
 
-  <action id="GitNewBranchAction">
+  <action id="Git.CreateNewBranch">
     <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
 

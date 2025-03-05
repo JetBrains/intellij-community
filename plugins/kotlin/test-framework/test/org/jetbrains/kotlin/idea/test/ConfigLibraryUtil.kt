@@ -46,6 +46,7 @@ object ConfigLibraryUtil {
       "JUnit3" to TestKotlinArtifacts.junit3,
       "JUnit4" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
       "JUnit5" to File(PathUtil.getJarPathForClass(org.junit.jupiter.api.Test::class.java)),
+      "JUnit5-Pioneer" to File(PathUtil.getJarPathForClass(org.junitpioneer.jupiter.RetryingTest::class.java)),
       "TestNG" to File(PathUtil.getJarPathForClass(org.testng.annotations.Test::class.java)),
       "Coroutines" to File(PathUtil.getJarPathForClass(kotlinx.coroutines.Job::class.java)),
     )

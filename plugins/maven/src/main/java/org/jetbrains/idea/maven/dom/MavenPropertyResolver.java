@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.application.ReadAction;
@@ -97,8 +97,7 @@ public final class MavenPropertyResolver {
   }
 
   private static class AdditionalPropertySourceImpl implements AdditionalPropertySource {
-    @Nullable
-    private final MavenProject mavenProject;
+    private final @Nullable MavenProject mavenProject;
     private final MavenDomProjectModel projectDom;
 
     private Map<String, String> additionalProperties;
@@ -120,8 +119,7 @@ public final class MavenPropertyResolver {
     private static final Pattern pattern = PATTERN;
     private final MavenDomProjectModel projectDom;
     private final MavenProjectsManager mavenProjectsManager;
-    @Nullable
-    private final MavenProject mavenProject;
+    private final @Nullable MavenProject mavenProject;
     private final AdditionalPropertySource additionalPropertySource;
 
     private MavenPropertyResolverHelper(MavenDomProjectModel projectDom,
@@ -210,8 +208,7 @@ public final class MavenPropertyResolver {
       out.append(text, last, text.length());
     }
 
-    @Nullable
-    private String doResolvePropertyForMavenProject(String propName) {
+    private @Nullable String doResolvePropertyForMavenProject(String propName) {
       boolean hasPrefix = false;
       String unprefixed = propName;
 
@@ -291,14 +288,13 @@ public final class MavenPropertyResolver {
       if (result != null) return result;
 
       if ("settings.localRepository".equals(propName)) {
-        return mavenProject.getLocalRepository().getAbsolutePath();
+        return mavenProject.getLocalRepositoryPath().toAbsolutePath().toString();
       }
 
       return null;
     }
 
-    @Nullable
-    private String doResolvePropertyForMavenDomModel(String propName) {
+    private @Nullable String doResolvePropertyForMavenDomModel(String propName) {
       if (propName.startsWith("parent.")) {
         MavenDomParent parentDomElement = projectDom.getMavenParent();
         if (!parentDomElement.exists()) {
@@ -335,7 +331,7 @@ public final class MavenPropertyResolver {
 
 
       if ("settings.localRepository".equals(propName)) {
-        return MavenProjectsManager.getInstance(projectDom.getManager().getProject()).getLocalRepository().getAbsolutePath();
+        return MavenProjectsManager.getInstance(projectDom.getManager().getProject()).getRepositoryPath().toAbsolutePath().toString();
       }
 
       return null;

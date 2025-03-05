@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem;
 
 import com.intellij.execution.Executor;
@@ -86,7 +86,10 @@ public interface ExternalSystemManager<
    * @return    class of the build manager to use for the target external system
    * @see #getProjectResolverClass()
    */
-  Class<? extends ExternalSystemTaskManager<ExecutionSettings>> getTaskManagerClass();
+  default @NotNull Class<? extends ExternalSystemTaskManager<ExecutionSettings>> getTaskManagerClass() {
+    //noinspection unchecked
+    return (Class)ExternalSystemTaskManager.NoOp.class;
+  }
 
   /**
    * @return    file chooser descriptor to use when adding new external project
@@ -97,8 +100,7 @@ public interface ExternalSystemManager<
   /**
    * @return scope where to search sources for external system tasks execution
    */
-  @Nullable
-  default GlobalSearchScope getSearchScope(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings) {
+  default @Nullable GlobalSearchScope getSearchScope(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings) {
     return null;
   }
 
@@ -107,9 +109,8 @@ public interface ExternalSystemManager<
    * @deprecated to be removed in IDEA 2020, implement {@link com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider}
    * for your {@link com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration} instead
    */
-  @Nullable
   @Deprecated(forRemoval = true)
-  default Object createTestConsoleProperties(@NotNull Project project,
+  default @Nullable Object createTestConsoleProperties(@NotNull Project project,
                                              @NotNull Executor executor,
                                              @NotNull RunConfiguration runConfiguration) {
     return null;

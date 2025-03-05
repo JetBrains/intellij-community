@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.structureView;
 
 import com.intellij.ide.structureView.impl.java.FieldsFilter;
@@ -98,8 +98,7 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
 
       List<PropertyGroup> properties = getFeatures(component);
 
-      assertArrayEquals(properties.stream().map(o -> o.getPresentation().getIcon(true)).toArray(),
-                        new Object[]{
+      assertArrayEquals(new Object[]{
                           PROPERTY_READ_WRITE_ICON
                           , PROPERTY_READ_WRITE_ICON
                           , PROPERTY_READ_ICON
@@ -108,10 +107,10 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
                           , PROPERTY_READ_WRITE_STATIC_ICON
                           , PROPERTY_WRITE_STATIC_ICON
                           , PROPERTY_WRITE_ICON
-                        });
+                        },
+                        properties.stream().map(o -> o.getPresentation().getIcon(true)).toArray());
 
-      assertArrayEquals(properties.stream().map(o -> o.getAccessLevel()).toArray(),
-                        new Object[]{
+      assertArrayEquals(new Object[]{
                           ACCESS_LEVEL_PUBLIC
                           , ACCESS_LEVEL_PUBLIC
                           , ACCESS_LEVEL_PUBLIC
@@ -120,7 +119,8 @@ public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
                           , ACCESS_LEVEL_PROTECTED
                           , ACCESS_LEVEL_PUBLIC
                           , ACCESS_LEVEL_PUBLIC
-                        });
+                        },
+                        properties.stream().map(o -> o.getAccessLevel()).toArray());
     });
   }
 

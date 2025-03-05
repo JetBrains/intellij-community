@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
@@ -40,8 +40,7 @@ public class LocalQuickFixAsIntentionAdapter implements IntentionAction, Customi
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public LocalQuickFix getFix() {
+  public @NotNull LocalQuickFix getFix() {
     return myFix;
   }
 

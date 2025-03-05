@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.psi.PsiAnonymousClass;
@@ -44,21 +30,18 @@ public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
     descriptorsMap.put(myLambda.getSamName(), new FunctionalInterfaceTypeConversionDescriptor(myLambda.getSamName(), myLambda.getJavaAnalogueSamName(), myLambda.getJavaAnalogueClassQName()));
   }
 
-  @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForVariableReference(PsiExpression context) {
+  protected @Nullable TypeConversionDescriptorBase findConversionForVariableReference(PsiExpression context) {
     return new FunctionalInterfaceTypeConversionDescriptor(myLambda.getSamName(), myLambda.getJavaAnalogueSamName(), myLambda.getJavaAnalogueClassQName());
   }
 
-  @NotNull
   @Override
-  public String ruleFromClass() {
+  public @NotNull String ruleFromClass() {
     return myLambda.getClassQName();
   }
 
-  @NotNull
   @Override
-  public String ruleToClass() {
+  public @NotNull String ruleToClass() {
     return myLambda.getJavaAnalogueClassQName();
   }
 
@@ -67,10 +50,9 @@ public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
     return new TypeConversionDescriptor("$q$.$m$($args$)", "$q$.$m$($args$)::" + myLambda.getJavaAnalogueSamName());
   }
 
-  @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForAnonymous(@NotNull PsiAnonymousClass anonymousClass,
-                                                                    GuavaConversionSettings settings) {
+  protected @Nullable TypeConversionDescriptorBase findConversionForAnonymous(@NotNull PsiAnonymousClass anonymousClass,
+                                                                              GuavaConversionSettings settings) {
     final TypeConversionDescriptorBase conversion = super.findConversionForAnonymous(anonymousClass, settings);
     if (conversion != null) {
       return conversion;

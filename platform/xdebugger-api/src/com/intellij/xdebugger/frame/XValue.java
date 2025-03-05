@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.util.ThreeState;
@@ -6,10 +6,13 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Represents a value in debugger tree.
@@ -28,16 +31,14 @@ public abstract class XValue extends XValueContainer {
   /**
    * @return expression which evaluates to the current value
    */
-  @Nullable
-  public String getEvaluationExpression() {
+  public @Nullable String getEvaluationExpression() {
     return null;
   }
 
   /**
    * Asynchronously calculates expression which evaluates to the current value
    */
-  @NotNull
-  public Promise<XExpression> calculateEvaluationExpression() {
+  public @NotNull Promise<XExpression> calculateEvaluationExpression() {
     String expression = getEvaluationExpression();
     XExpression res =
       expression != null ? XDebuggerUtil.getInstance().createExpression(expression, null, null, EvaluationMode.EXPRESSION) : null;
@@ -47,17 +48,33 @@ public abstract class XValue extends XValueContainer {
   /**
    * @return evaluator to calculate value of the current object instance
    */
-  @Nullable
-  public XInstanceEvaluator getInstanceEvaluator() {
+  public @Nullable XInstanceEvaluator getInstanceEvaluator() {
     return null;
   }
 
   /**
    * @return {@link XValueModifier} instance which can be used to modify the value
    */
-  @Nullable
-  public XValueModifier getModifier() {
+  public @Nullable XValueModifier getModifier() {
     return null;
+  }
+
+  /**
+   * Asynchronously computes {@link XValueModifier} instance which can be used to modify the value.
+   */
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<@Nullable XValueModifier> getModifierAsync() {
+    return CompletableFuture.completedFuture(getModifier());
+  }
+
+
+  /**
+   * Provides {@link CompletableFuture} which finishes when all XValue's methods can be used
+   * (like {@link XValue#getModifier} or {@link XValueMarkerProvider#getMarker})
+   */
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<Void> isReady() {
+    return CompletableFuture.completedFuture(null);
   }
 
   /**
@@ -76,8 +93,7 @@ public abstract class XValue extends XValueContainer {
    * {@link ThreeState#YES} if applicable
    * {@link ThreeState#NO} if not applicable
    */
-  @NotNull
-  public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
+  public @NotNull ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
     return ThreeState.UNSURE;
   }
 
@@ -123,8 +139,15 @@ public abstract class XValue extends XValueContainer {
    * @return provider that creates an XValue returning objects that refer to the current value
    * or null if showing referrers for the value is disabled
    */
-  @Nullable
-  public XReferrersProvider getReferrersProvider() {
+  public @Nullable XReferrersProvider getReferrersProvider() {
+    return null;
+  }
+
+  /**
+   * Provides additional information about XValue, which frontend may use.
+   */
+  @ApiStatus.Internal
+  public @Nullable CompletableFuture<XValueDescriptor> getXValueDescriptorAsync() {
     return null;
   }
 }

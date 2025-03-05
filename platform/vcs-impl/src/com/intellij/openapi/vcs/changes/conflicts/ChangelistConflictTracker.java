@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.editor.Document;
@@ -42,8 +42,7 @@ public final class ChangelistConflictTracker {
   private final Set<VirtualFile> myCheckSet = new HashSet<>();
   private final AtomicBoolean myShouldIgnoreModifications = new AtomicBoolean(false);
 
-  @NotNull
-  public static ChangelistConflictTracker getInstance(@NotNull Project project) {
+  public static @NotNull ChangelistConflictTracker getInstance(@NotNull Project project) {
     return ChangeListManagerImpl.getInstanceImpl(project).getConflictTracker();
   }
 

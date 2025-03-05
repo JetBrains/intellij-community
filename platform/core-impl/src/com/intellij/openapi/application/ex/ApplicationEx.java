@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -29,12 +29,6 @@ public interface ApplicationEx extends Application {
   int ELEVATE = 0x08;
 
   /**
-   * @return true if this thread is inside read action.
-   * @see #runReadAction(Runnable)
-   */
-  boolean holdsReadLock();
-
-  /**
    * @return true if the EDT is performing write action right now.
    * @see #runWriteAction(Runnable)
    */
@@ -45,23 +39,6 @@ public interface ApplicationEx extends Application {
    * @see #runWriteAction(Runnable)
    */
   boolean isWriteActionPending();
-
-  /**
-   * Acquires IW lock if it's not acquired by the current thread.
-   *
-   * @param invokedClassFqn fully qualified name of the class requiring the write-intent lock.
-   * @return {@code true} if this call acquired lock, {@code false} if lock was taken already.
-   */
-  @ApiStatus.Internal
-  default boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
-    return false;
-  }
-
-  /**
-   * Releases IW lock.
-   */
-  @ApiStatus.Internal
-  default void releaseWriteIntentLock() {}
 
   void setSaveAllowed(boolean value);
 
@@ -229,5 +206,26 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   default void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state) {
     invokeLater(runnable, state, Conditions.alwaysFalse());
+  }
+
+  @ApiStatus.Internal
+  default void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Experimental
+  default void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void addLockAcquisitionListener(@NotNull LockAcquisitionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  default void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly) {
+    runnable.run();
   }
 }

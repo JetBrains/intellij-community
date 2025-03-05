@@ -70,7 +70,7 @@ class XPathUsageSearcher implements UsageSearcher {
     }
 
     @Override
-    public void generate(@NotNull final Processor<? super Usage> processor) {
+    public void generate(final @NotNull Processor<? super Usage> processor) {
         Runnable runnable = () -> {
             myIndicator.setIndeterminate(true);
             //noinspection DialogTitleCapitalization
@@ -174,7 +174,7 @@ class XPathUsageSearcher implements UsageSearcher {
                         myProcessor.process(new UsageInfo2UsageAdapter(new UsageInfo(psiFile)));
                     }
                 } else if (o instanceof String) {
-                    if (((String)o).length() > 0) {
+                    if (!((String)o).isEmpty()) {
                         matchFound();
                         myProcessor.process(new UsageInfo2UsageAdapter(new UsageInfo(psiFile)));
                     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel;
 
 import com.google.gson.GsonBuilder;
@@ -58,8 +58,7 @@ public class GradleDependencyReportTask extends DefaultTask {
     Files.write(outputFilePath, new GsonBuilder().create().toJson(graph).getBytes(StandardCharsets.UTF_8));
   }
 
-  @NotNull
-  private Collection<Configuration> getSelectedConfigurations() {
+  private @NotNull Collection<Configuration> getSelectedConfigurations() {
     if (configurations.isEmpty()) {
       return getProject().getConfigurations();
     }

@@ -14,6 +14,12 @@ internal object AddUnsafeVarianceAnnotationFixFactory :
     QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
     override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
         val typeReference = psiElement.parent as? KtTypeReference ?: return emptyList()
-        return listOf(AddAnnotationFix(typeReference, ClassId.topLevel(StandardNames.FqNames.unsafeVariance), Kind.Self))
+        return listOf(
+            AddAnnotationFix(
+                typeReference,
+                ClassId.topLevel(StandardNames.FqNames.unsafeVariance),
+                Kind.Self,
+            ).asIntention()
+        )
     }
 }

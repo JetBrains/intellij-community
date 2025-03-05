@@ -7,6 +7,7 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ThreeState
 import git4idea.*
 import git4idea.branch.GitBranchIncomingOutgoingManager
@@ -18,7 +19,9 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.tree.DefaultMutableTreeNode
 
 internal data class RemoteInfo(val remoteName: String, val repository: GitRepository?)
@@ -146,25 +149,72 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   override fun hashCode() = Objects.hash(userObject)
 }
 
-internal class NodeDescriptorsModel(private val rootNode: BranchNodeDescriptor.Root, project: Project) {
-  private val incomingOutgoingManager: GitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
+internal interface BranchesTreeModel {
+  val root: BranchNodeDescriptor.Root
+  val groupingConfig: Map<GroupingKey, Boolean>
+  val isLoading: Boolean
 
-  fun rebuildFrom(refs: RefsCollection, filter: (RefInfo) -> Boolean, groupingConfig: Map<GroupingKey, Boolean>) {
+  fun addListener(listener: Listener)
+  fun removeListener(listener: Listener)
+
+  interface Listener : EventListener {
+    fun onTreeChange() {}
+    fun onLoadingStateChange() {}
+  }
+}
+
+internal abstract class BranchesTreeModelBase : BranchesTreeModel {
+  final override val root: BranchNodeDescriptor.Root = BranchNodeDescriptor.Root()
+  private val listeners = EventDispatcher.create(BranchesTreeModel.Listener::class.java)
+
+  private val loadingCounter = AtomicInteger()
+  final override val isLoading: Boolean
+    get() = loadingCounter.get() > 0
+
+  protected fun setTree(nodes: List<BranchNodeDescriptor>) {
+    root.children = nodes
+    listeners.multicaster.onTreeChange()
+  }
+
+  protected fun startLoading() {
+    loadingCounter.incrementAndGet()
+    listeners.multicaster.onLoadingStateChange()
+  }
+
+  protected fun finishLoading() {
+    loadingCounter.decrementAndGet()
+    listeners.multicaster.onLoadingStateChange()
+  }
+
+  final override fun addListener(listener: BranchesTreeModel.Listener) {
+    listeners.addListener(listener)
+  }
+
+  final override fun removeListener(listener: BranchesTreeModel.Listener) {
+    listeners.removeListener(listener)
+  }
+}
+
+@VisibleForTesting
+internal object NodeDescriptorsModel {
+  fun buildTreeNodes(project: Project, refs: RefsCollection, filter: (RefInfo) -> Boolean, groupingConfig: Map<GroupingKey, Boolean>): List<BranchNodeDescriptor> {
     val groupByRepository = groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY]!!
     val groupByPrefix = groupingConfig[GroupingKey.GROUPING_BY_DIRECTORY]!!
 
+    val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
     val topLevelGroups = mutableListOf<BranchNodeDescriptor>()
     topLevelGroups += BranchNodeDescriptor.Head
     refs.forEach { refs, group ->
-      val children = groupByRepoAndPrefixIfApplicable(refs.asSequence().filter(filter), groupByRepository, groupByPrefix)
+      val children = groupByRepoAndPrefixIfApplicable(incomingOutgoingManager, refs.asSequence().filter(filter), groupByRepository, groupByPrefix)
       if (children.isNotEmpty()) {
         topLevelGroups += BranchNodeDescriptor.TopLevelGroup(group, children)
       }
     }
-    rootNode.children = topLevelGroups
+    return topLevelGroups
   }
 
   private fun groupByRepoAndPrefixIfApplicable(
+    incomingOutgoingManager: GitBranchIncomingOutgoingManager,
     refsInfo: Sequence<RefInfo>,
     groupByRepository: Boolean,
     groupByPrefix: Boolean,

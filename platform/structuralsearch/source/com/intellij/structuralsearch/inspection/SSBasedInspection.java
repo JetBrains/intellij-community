@@ -69,14 +69,13 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   private static final Key<Map<Configuration, Matcher>> COMPILED_PATTERNS = Key.create("SSR_COMPILED_PATTERNS");
   private final MultiMapEx<Configuration, Matcher> myCompiledPatterns = new MultiMapEx<>();
 
-  @NonNls public static final String SHORT_NAME = "SSBasedInspection";
+  public static final @NonNls String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final Set<String> myProblemsReported = new HashSet<>(1);
   private InspectionProfileImpl mySessionProfile;
 
-  @NotNull
-  public static SSBasedInspection getStructuralSearchInspection(@NotNull InspectionProfile profile) {
+  public static @NotNull SSBasedInspection getStructuralSearchInspection(@NotNull InspectionProfile profile) {
     return (SSBasedInspection)CustomInspectionActions.getInspection(profile, SHORT_NAME);
   }
 
@@ -122,15 +121,12 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return getGeneralGroupName();
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return SHORT_NAME;
   }
 
@@ -155,9 +151,8 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
     final PsiFile file = holder.getFile();
     final FileType fileType = file.getFileType();
@@ -228,8 +223,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return new StructuralQuickFix(project, matchResult, configuration.getReplaceOptions());
   }
 
-  @NotNull
-  private Configuration getMainConfiguration(@NotNull Configuration configuration) {
+  private @NotNull Configuration getMainConfiguration(@NotNull Configuration configuration) {
     if (configuration.getOrder() == 0) {
       return configuration;
     }
@@ -237,13 +231,11 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return myConfigurations.stream().filter(c -> c.getOrder() == 0 && uuid.equals(c.getUuid())).findFirst().orElse(configuration);
   }
 
-  @NotNull
-  public List<Configuration> getConfigurations() {
+  public @NotNull List<Configuration> getConfigurations() {
     return new SmartList<>(myConfigurations);
   }
 
-  @NotNull
-  public List<Configuration> getConfigurationsWithUuid(@NotNull String uuid) {
+  public @NotNull @Unmodifiable List<Configuration> getConfigurationsWithUuid(@NotNull String uuid) {
     return ContainerUtil.sorted(ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid())),
                                 Comparator.comparingInt(Configuration::getOrder));
   }
@@ -302,8 +294,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementInfo.getReplacement());
     }
 
@@ -321,8 +312,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       //noinspection DialogTitleCapitalization
       return SSRBundle.message("SSRInspection.family.name");
     }
@@ -449,7 +439,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     private final Map<Configuration, Matcher> myCompiledOptions;
 
-    private @NotNull final ProblemsHolder myHolder;
+    private final @NotNull ProblemsHolder myHolder;
     private final Set<? super SmartPsiElementPointer<?>> myDuplicates;
 
     SSBasedVisitor(Map<Configuration, Matcher> compiledOptions, @NotNull ProblemsHolder holder,

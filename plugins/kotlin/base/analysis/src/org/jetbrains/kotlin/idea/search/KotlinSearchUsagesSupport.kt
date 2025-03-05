@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
@@ -77,9 +76,6 @@ interface KotlinSearchUsagesSupport {
 
         fun PsiFile.scriptDefinitionExists(): Boolean =
             getInstance(project).scriptDefinitionExists(this)
-
-        fun KtFile.getDefaultImports(): List<ImportPath> =
-            getInstance(project).getDefaultImports(this)
 
         fun forEachKotlinOverride(
             ktClass: KtClass,

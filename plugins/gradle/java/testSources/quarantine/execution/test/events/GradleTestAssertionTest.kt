@@ -1534,7 +1534,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test assertion result of Junit 4 (IJ FileComparisonFailure)`(gradleVersion: GradleVersion) {
     val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-4") {
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleTestAssertionTest-file-comparison-junit-4")
       }
       withBuildFile(gradleVersion) {
@@ -1809,7 +1809,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
   fun `test assertion result of Junit 5 (IJ FileComparisonFailure)`(gradleVersion: GradleVersion) {
     assumeThatJunit5IsSupported(gradleVersion)
     val fixture = GradleTestFixtureBuilder.create("GradleTestAssertionTest-file-comparison-junit-5") {
-      withSettingsFile {
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleTestAssertionTest-file-comparison-junit-5")
       }
       withBuildFile(gradleVersion) {

@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 // EXPECT_VARIANT_IN_ORDER "public fun root.A.to3(): kotlin.Unit defined in p1 in file Nullable3.dependency.kt"
 // EXPECT_VARIANT_IN_ORDER "public fun root.A?.to3(): kotlin.Unit defined in p2 in file Nullable3.dependency1.kt"
 

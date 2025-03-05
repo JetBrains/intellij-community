@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.java.JavaBundle;
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler {
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     ExtractMethodHandler.selectAndPass(project, editor, file, elements-> {
         if (elements.length == 0) {
           String message = RefactoringBundle
@@ -278,7 +278,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
             if (!data.passAsParameter) {
               PsiElement scope = PsiUtil.getVariableCodeBlock(data.variable, null);
               if (PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, data.variable)
-                  ? scope != null && !HighlightControlFlowUtil.isEffectivelyFinal(data.variable, scope, null)
+                  ? scope != null && !ControlFlowUtil.isEffectivelyFinal(data.variable, scope)
                   : data.variable.hasModifierProperty(PsiModifier.FINAL)) {
                 conflicts.putValue(null, JavaBundle.message("introduce.functional.variable.accessibility.conflict", data.name));
               }
@@ -286,9 +286,8 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           }
         }
 
-        @NotNull
         @Override
-        public String getVisibility() {
+        public @NotNull String getVisibility() {
           return PsiModifier.PUBLIC;
         }
       };

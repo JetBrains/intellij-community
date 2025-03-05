@@ -2,33 +2,26 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.testing
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.util.Order
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.Consumer
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.gradleJava.configuration.getMppModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 
 @Order(Int.MIN_VALUE)
 open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
-    companion object {
-        @NonNls
-        private const val ENABLED_REGISTRY_KEY = "kotlin.gradle.testing.enabled"
-    }
 
-    private val LOG by lazy { Logger.getInstance(KotlinTestTasksResolver::class.java) }
+    companion object {
+        internal const val ENABLED_REGISTRY_KEY = "kotlin.gradle.testing.enabled"
+    }
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
         return setOf(KotlinMPPGradleModelBuilder::class.java, KotlinTarget::class.java, Unit::class.java)
@@ -82,51 +75,5 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
         replacementMap.values.forEach { ideModule.createChild(ProjectKeys.TASK, it) }
 
         return originalTaskData.mapTo(arrayListOf()) { replacementMap[it] ?: it }
-    }
-
-    override fun enhanceTaskProcessing(
-        project: Project?,
-        taskNames: MutableList<String>,
-        initScriptConsumer: Consumer<String>,
-        parameters: MutableMap<String, String>
-    ): Map<String, String> {
-        if (!Registry.`is`(ENABLED_REGISTRY_KEY)) {
-            return emptyMap()
-        }
-
-        val isRunAsTest = parameters[GradleProjectResolverExtension.IS_RUN_AS_TEST_KEY].toBoolean()
-        val isBuiltInTestEventsUsed = parameters[GradleProjectResolverExtension.IS_BUILT_IN_TEST_EVENTS_USED_KEY].toBoolean()
-
-        if (isRunAsTest && !isBuiltInTestEventsUsed) {
-            try {
-                val addTestListenerScript = javaClass
-                    .getResourceAsStream("/org/jetbrains/kotlin/idea/gradle/testing/addKotlinMppTestListener.groovy")
-                    .bufferedReader()
-                    .readText()
-                initScriptConsumer.consume(addTestListenerScript)
-            } catch (e: Exception) {
-                LOG.error(e)
-            }
-        }
-
-        val jvmParametersSetup = parameters[GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY]
-        enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer)
-        return emptyMap()
-    }
-
-    override fun enhanceTaskProcessing(taskNames: MutableList<String>, jvmAgentSetup: String?, initScriptConsumer: Consumer<String>) {
-        if (!Registry.`is`(ENABLED_REGISTRY_KEY))
-            return
-
-        try {
-            val testLoggerScript = javaClass
-                .getResourceAsStream("/org/jetbrains/kotlin/idea/gradle/testing/KotlinMppTestLogger.groovy")
-                .bufferedReader()
-                .readText()
-
-            initScriptConsumer.consume(testLoggerScript)
-        } catch (e: Exception) {
-            LOG.error(e)
-        }
     }
 }

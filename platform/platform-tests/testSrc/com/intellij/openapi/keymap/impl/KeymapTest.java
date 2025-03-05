@@ -863,6 +863,7 @@ public class KeymapTest extends LightPlatformTestCase {
     Keymap grandChild = child.deriveKeymap("GrandChild");
     Runnable task = () -> {
       for (int i = 0; i < 1000; i++) {
+        //noinspection UnresolvedPluginConfigReference
         assertEquals(Shortcut.EMPTY_ARRAY, grandChild.getShortcuts("none"));
         List<Shortcut> shortcuts = Arrays.asList(grandChild.getShortcuts(ACTION_1));
         assertTrue(shortcuts.size() >= 2 && shortcuts.size() <= 3);

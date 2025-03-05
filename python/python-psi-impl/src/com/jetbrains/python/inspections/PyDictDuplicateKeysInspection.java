@@ -45,11 +45,10 @@ import java.util.Map;
  */
 public final class PyDictDuplicateKeysInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -100,15 +99,13 @@ public final class PyDictDuplicateKeysInspection extends PyInspection {
       registerProblems(keyValueAndKeys);
     }
 
-    @Nullable
-    private Pair<PsiElement, String> getDictLiteralKey(@NotNull PyKeyValueExpression argument) {
+    private @Nullable Pair<PsiElement, String> getDictLiteralKey(@NotNull PyKeyValueExpression argument) {
       final PyExpression key = argument.getKey();
       final String keyValue = getKeyValue(key);
       return keyValue != null ? Pair.createNonNull(key, keyValue) : null;
     }
 
-    @Nullable
-    private String getKeyValue(@NotNull PsiElement node) {
+    private @Nullable String getKeyValue(@NotNull PsiElement node) {
       if (node instanceof PyStringLiteralExpression) {
         return wrapStringKey(((PyStringLiteralExpression)node).getStringValue());
       }
@@ -139,8 +136,7 @@ public final class PyDictDuplicateKeysInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private Pair<PsiElement, String> getDictCallKey(@Nullable PyExpression argument) {
+    private @Nullable Pair<PsiElement, String> getDictCallKey(@Nullable PyExpression argument) {
       if (argument instanceof PyParenthesizedExpression) {
         final PyExpression expression = PyPsiUtils.flattenParens(argument);
         if (expression instanceof PyTupleExpression) {
@@ -168,13 +164,11 @@ public final class PyDictDuplicateKeysInspection extends PyInspection {
       return callee != null && "dict".equals(callee.getText());
     }
 
-    @NotNull
-    private static String wrapStringKey(@NotNull String key) {
+    private static @NotNull String wrapStringKey(@NotNull String key) {
       return "'" + key + "'";
     }
 
-    @NotNull
-    private static String unwrapStringKey(@NotNull String key) {
+    private static @NotNull String unwrapStringKey(@NotNull String key) {
       return StringUtil.unquoteString(key, '\'');
     }
   }

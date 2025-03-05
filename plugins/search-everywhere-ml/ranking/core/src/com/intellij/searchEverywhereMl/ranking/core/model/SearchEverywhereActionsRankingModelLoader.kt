@@ -23,9 +23,9 @@ internal class SearchEverywhereActionsRankingModelLoader : SearchEverywhereMLRan
     }
   }
 
-  private fun getStandardModel(): SearchEverywhereMLRankingDecisionFunction {
+  private fun getStandardModel(): SearchEverywhereMlModel {
     val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, standardResourceDirectory))
-    return object : SearchEverywhereMLRankingDecisionFunction(metadata) {
+    return object : SearchEverywhereMlModel(metadata) {
       override fun predict(features: DoubleArray?): Double = PredictionModel.makePredict(features)
     }
   }

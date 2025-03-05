@@ -1,0 +1,30 @@
+LineBreakpoint created at stepIntoInlineLambdaWithParameterDestructuring1.kt:11
+Run Java
+Connected to the target VM
+stepIntoInlineLambdaWithParameterDestructuring1.kt:11
+stepIntoInlineLambdaWithParameterDestructuring1.kt:25
+Compile bytecode for a + b + c + d + e + f + g + h + i + j + k + l + m + n + o
+InlineStackFrame lambda 'inlineFoo' in 'main' (stepIntoInlineLambdaWithParameterDestructuring1.kt:25)
+    JavaValue[local] c: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:16)
+    JavaValue[local] d: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:17)
+    JavaValue[local] g: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:19)
+    JavaValue[local] n: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:24)
+    JavaValue[local] o: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:24)
+    JavaValue[local] a: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:15)
+    JavaValue[local] b: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:15)
+    JavaValue[local] e: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:17)
+    JavaValue[local] f: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:18)
+    JavaValue[local] h: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:20)
+    JavaValue[local] i: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:20)
+    JavaValue[local] j: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:21)
+    JavaValue[local] k: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:22)
+    JavaValue[local] l: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:23)
+    JavaValue[local] m: int = 1 (stepIntoInlineLambdaWithParameterDestructuring1.kt:23)
+InlineStackFrame inlineFoo (stepIntoInlineLambdaWithParameterDestructuring1.kt:11)
+    JavaValue[local] a: destructurableClasses.A = A(x=1, y=1) (stepIntoInlineLambdaWithParameterDestructuring1.kt:15)
+        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+        JavaValue[field] y: int = 1 (destructurableClasses.kt:4)
+KotlinStackFrame (stepIntoInlineLambdaWithParameterDestructuring1.kt:15)
+Disconnected from the target VM
+
+Process finished with exit code 0

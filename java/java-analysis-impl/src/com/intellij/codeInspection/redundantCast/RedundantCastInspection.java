@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInspection.*;
@@ -33,7 +33,7 @@ public final class RedundantCastInspection extends AbstractBaseJavaLocalInspecti
   private static final CallMatcher CLASS_CAST_MATCHER = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "cast")
     .parameterCount(1);
   
-  @NonNls private static final String SHORT_NAME = "RedundantCast";
+  private static final @NonNls String SHORT_NAME = "RedundantCast";
 
   public boolean IGNORE_SUSPICIOUS_METHOD_CALLS = true;
 
@@ -46,9 +46,8 @@ public final class RedundantCastInspection extends AbstractBaseJavaLocalInspecti
     return true;
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new RedundantCastUtil.RedundantCastVisitorBase() {
@@ -83,8 +82,7 @@ public final class RedundantCastInspection extends AbstractBaseJavaLocalInspecti
       checkbox("IGNORE_SUSPICIOUS_METHOD_CALLS", JavaAnalysisBundle.message("ignore.casts.in.suspicious.collections.method.calls")));
   }
 
-  @Nullable
-  private ProblemDescriptor createDescription(@NotNull PsiTypeCastExpression cast, @NotNull InspectionManager manager, boolean onTheFly) {
+  private @Nullable ProblemDescriptor createDescription(@NotNull PsiTypeCastExpression cast, @NotNull InspectionManager manager, boolean onTheFly) {
     PsiExpression operand = cast.getOperand();
     PsiTypeElement castType = cast.getCastType();
     if (operand == null || castType == null) return null;
@@ -113,8 +111,7 @@ public final class RedundantCastInspection extends AbstractBaseJavaLocalInspecti
 
   private static class AcceptSuggested extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.redundant.cast.remove.quickfix");
     }
 
@@ -127,21 +124,18 @@ public final class RedundantCastInspection extends AbstractBaseJavaLocalInspecti
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.verbose.or.redundant.code.constructs");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
   
   private static class ReplaceWithIdentityLambdaFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.redundant.cast.remove.quickfix");
     }
 

@@ -49,6 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -221,7 +222,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
     });
   }
 
-  private @NotNull List<LookupElement> completeJavadocReference(PsiElement position, PsiJavaReference ref) {
+  private @Unmodifiable @NotNull List<LookupElement> completeJavadocReference(PsiElement position, PsiJavaReference ref) {
     JavaCompletionProcessor processor = new JavaCompletionProcessor(position, TrueFilter.INSTANCE, JavaCompletionProcessor.Options.CHECK_NOTHING, Conditions.alwaysTrue());
     ref.processVariants(processor);
     return ContainerUtil.map(processor.getResults(), (completionResult) -> {
@@ -518,7 +519,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
     return JavadocManager.getInstance(position.getProject()).getTagInfos(parent);
   }
 
-  private static List<PsiNamedElement> getParametersToSuggest(PsiDocComment comment) {
+  private static @Unmodifiable List<PsiNamedElement> getParametersToSuggest(PsiDocComment comment) {
     List<PsiNamedElement> allParams = PsiDocParamRef.getAllParameters(comment);
     PsiDocTag[] tags = comment.getTags();
     return ContainerUtil.filter(allParams, param -> !MissingJavadocInspection.hasTagForParameter(tags, param));

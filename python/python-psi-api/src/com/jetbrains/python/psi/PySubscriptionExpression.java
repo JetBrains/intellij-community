@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstSubscriptionExpression;
@@ -12,26 +12,22 @@ public interface PySubscriptionExpression extends PyAstSubscriptionExpression, P
    * @return For {@code spam[x][y][n]} will return {@code spam} regardless number of its dimensions
    */
   @Override
-  @NotNull
-  default PyExpression getRootOperand() {
+  default @NotNull PyExpression getRootOperand() {
     return (PyExpression)PyAstSubscriptionExpression.super.getRootOperand();
   }
 
   @Override
-  @NotNull
-  default PyExpression getOperand() {
+  default @NotNull PyExpression getOperand() {
     return (PyExpression)PyAstSubscriptionExpression.super.getOperand();
   }
 
   @Override
-  @Nullable
-  default PyExpression getIndexExpression() {
+  default @Nullable PyExpression getIndexExpression() {
     return (PyExpression)PyAstSubscriptionExpression.super.getIndexExpression();
   }
 
   @Override
-  @Nullable
-  default PyExpression getQualifier() {
+  default @Nullable PyExpression getQualifier() {
     return (PyExpression)PyAstSubscriptionExpression.super.getQualifier();
   }
 }

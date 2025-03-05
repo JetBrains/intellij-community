@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.util.paths;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -47,8 +47,7 @@ public class RecursiveFilePathSet {
     return myMapping.getMappingFor(filePath.getPath()) != null;
   }
 
-  @NotNull
-  public Collection<FilePath> filePaths() {
+  public @NotNull Collection<FilePath> filePaths() {
     return myMapping.values();
   }
 }

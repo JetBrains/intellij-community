@@ -37,8 +37,8 @@ private class OsDataLogger(val coroutineScope: CoroutineScope) {
   }
 }
 
-internal class OsDataLoggerApplicationInitializedListener : ApplicationInitializedListener {
-  override suspend fun execute() {
+internal class OsDataLoggerApplicationInitializedListener : AppLifecycleListener {
+  override fun appStarted() {
     service<OsDataLogger>().reportLinuxDistro()
   }
 }

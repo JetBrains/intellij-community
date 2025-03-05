@@ -30,8 +30,7 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
-  private static PyTypingNewType getNewTypeForTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+  private static @Nullable PyTypingNewType getNewTypeForTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
     return StubAwareComputation.on(target)
       .withCustomStub(stub -> stub.getCustomStub(PyTypingNewTypeStub.class))
       .overStub(customStub -> getNewTypeFromStub(target, customStub, context))
@@ -39,34 +38,30 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
       .compute(context);
   }
 
-  @Nullable
-  private static PyTypingNewType getNewTypeFromStub(@NotNull PyTargetExpression target,
-                                                    @Nullable PyTypingNewTypeStub stub,
-                                                    @NotNull TypeEvalContext context) {
+  private static @Nullable PyTypingNewType getNewTypeFromStub(@NotNull PyTargetExpression target,
+                                                              @Nullable PyTypingNewTypeStub stub,
+                                                              @NotNull TypeEvalContext context) {
     if (stub == null) return null;
     final PyClassType type = getClassType(stub, context, target);
     return type != null ? new PyTypingNewType(type, stub.getName(), target) : null;
   }
 
-  @Nullable
-  private static PyTypingNewType getNewTypeFromStub(@NotNull PyCallExpression call,
-                                                    @Nullable PyTypingNewTypeStub stub,
-                                                    @NotNull TypeEvalContext context) {
+  private static @Nullable PyTypingNewType getNewTypeFromStub(@NotNull PyCallExpression call,
+                                                              @Nullable PyTypingNewTypeStub stub,
+                                                              @NotNull TypeEvalContext context) {
     if (stub == null) return null;
     final PyClassType type = getClassType(stub, context, call);
     return type != null ? new PyTypingNewType(type, stub.getName(), getDeclaration(call)) : null;
   }
 
-  @Nullable
-  private static PyTypingNewType getNewTypeFromAST(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+  private static @Nullable PyTypingNewType getNewTypeFromAST(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     if (!context.maySwitchToAST(call)) return null;
     return getNewTypeFromStub(call, PyTypingNewTypeStubImpl.Companion.create(call), context);
   }
 
-  @Nullable
-  private static PyClassType getClassType(@NotNull PyTypingNewTypeStub stub,
-                                          @NotNull TypeEvalContext context,
-                                          @NotNull PsiElement anchor) {
+  private static @Nullable PyClassType getClassType(@NotNull PyTypingNewTypeStub stub,
+                                                    @NotNull TypeEvalContext context,
+                                                    @NotNull PsiElement anchor) {
     final PyType type = Ref.deref(PyTypingTypeProvider.getStringBasedType(stub.getClassType(), anchor, context));
     final PyClassType result = PyUtil.as(type, PyClassType.class);
     if (result != null) {
@@ -82,8 +77,7 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
     return type instanceof PyTypingNewType ? Ref.create((PyTypingNewType)type) : null;
   }
 
-  @Nullable
-  private static PyTargetExpression getDeclaration(@NotNull PyCallExpression call) {
+  private static @Nullable PyTargetExpression getDeclaration(@NotNull PyCallExpression call) {
     final PsiElement parent = call.getParent();
     if (parent instanceof PyAssignmentStatement) {
       return PyUtil.as(((PyAssignmentStatement)parent).getLeftHandSideExpression(), PyTargetExpression.class);

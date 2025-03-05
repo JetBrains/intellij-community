@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lambdaToExplicit;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -53,17 +53,13 @@ public final class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJav
       myName = name;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return JavaBundle.message("inspection.explicit.argument.can.be.lambda.fix.name", myName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.explicit.argument.can.be.lambda.fix.family.name");
     }
 

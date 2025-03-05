@@ -8,7 +8,7 @@ import com.goide.psi.impl.GoPsiUtil;
 
 import java.util.Map;
 
-class GoPsiHelper {
+final class GoPsiHelper {
 
     private static final Map<String, Integer> ENV_FUNCTIONS = Map.of(
         "os.getenv", 0,

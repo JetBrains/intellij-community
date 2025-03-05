@@ -5,15 +5,12 @@ package org.jetbrains.kotlin.j2k
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.*
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -31,7 +28,7 @@ class InspectionLikeProcessingGroup(
     fun priority(processing: InspectionLikeProcessing): Int =
         processingsToPriorityMap.getValue(processing)
 
-    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: ConverterContext) {
         do {
             var modificationStamp: Long? = runReadAction { file.modificationStamp }
             val elementToActions = runReadAction {
@@ -60,12 +57,11 @@ class InspectionLikeProcessingGroup(
         } while (modificationStamp != runReadAction { file.modificationStamp } && elementToActions.isNotEmpty())
     }
 
-    context(KaSession)
     override fun computeApplier(
         file: KtFile,
         allFiles: List<KtFile>,
         rangeMarker: RangeMarker?,
-        converterContext: NewJ2kConverterContext
+        converterContext: ConverterContext
     ): PostProcessingApplier {
         val processingDataList = collectAvailableActions(file, converterContext, rangeMarker)
         return Applier(processingDataList, file.project)
@@ -92,7 +88,7 @@ class InspectionLikeProcessingGroup(
 
     private fun collectAvailableActions(
         file: KtFile,
-        context: NewJ2kConverterContext,
+        context: ConverterContext,
         rangeMarker: RangeMarker?
     ): List<ProcessingData> {
         val availableActions = ArrayList<ProcessingData>()
@@ -123,7 +119,7 @@ class InspectionLikeProcessingGroup(
     private fun rangeFilter(element: PsiElement, rangeMarker: RangeMarker?): RangeFilterResult {
         if (rangeMarker == null) return PROCESS
         if (!rangeMarker.isValid) return SKIP
-        val range = TextRange(rangeMarker.startOffset, rangeMarker.endOffset)
+        val range = rangeMarker.textRange
         val elementRange = element.textRange
         return when {
             range.contains(elementRange) -> PROCESS

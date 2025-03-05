@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.utils;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -11,7 +11,7 @@ import java.util.Collection;
 
 @ApiStatus.Internal
 public final class IntIntMultiMap {
-  private final static int[] EMPTY = new int[0];
+  private static final int[] EMPTY = new int[0];
   private final Int2ObjectMap<int[]> myKeyToArrayMap = new Int2ObjectOpenHashMap<>();
 
   public void putValue(int key, int value) {
@@ -60,13 +60,11 @@ public final class IntIntMultiMap {
     myKeyToArrayMap.put(key, newValues);
   }
 
-  @NotNull
-  public Collection<Integer> get(int key) {
+  public @NotNull Collection<Integer> get(int key) {
     final int[] asArray = getAsArray(key);
     return new AbstractList<>() {
-      @NotNull
       @Override
-      public Integer get(int index) {
+      public @NotNull Integer get(int index) {
         return asArray[index];
       }
 

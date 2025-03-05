@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,13 +16,11 @@ public interface CurrentEditorProvider {
    * This method is obsolete. Use the overload with a project. Default implementation throws an exception.  
    */
   @ApiStatus.Obsolete
-  @Nullable
-  default FileEditor getCurrentEditor() {
+  default @Nullable FileEditor getCurrentEditor() {
     throw new UnsupportedOperationException("This method is obsolete. Use the overload with a project");
   }
 
-  @Nullable
-  default FileEditor getCurrentEditor(@Nullable Project project) {
+  default @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
     return getCurrentEditor();
   }
 }

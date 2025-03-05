@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -201,7 +201,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
       if (list.hasModifierProperty(PsiModifier.STATIC) && !PsiUtil.isLocalOrAnonymousClass(targetClass)) {
-        for (final PsiReference reference : ReferencesSearch.search(member)) {
+        for (final PsiReference reference : ReferencesSearch.search(member).asIterable()) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression) {
             final PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
@@ -303,9 +303,12 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           inlineSuperCall(memberInfo, methodBySignature);
         }
       }
-      else if (member instanceof PsiClass) {
+      else if (member instanceof PsiClass aClass) {
         if (sourceClass.isInterface() && !targetClass.isInterface()) {
           PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
+          if (!aClass.isRecord() && !aClass.isInterface() && !aClass.isEnum()) {
+            PsiUtil.setModifierProperty(member, PsiModifier.STATIC, true);
+          }
         }
         if (Boolean.FALSE.equals(memberInfo.getOverrides())) {
           final PsiClass psiClass = (PsiClass)memberInfo.getMember();
@@ -430,10 +433,10 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   }
 
   private static void encodeRef(final PsiClass aClass,
-                                @Nullable final PsiElement resolved,
-                                @NotNull final Set<PsiMember> movedMembers,
-                                @NotNull final PsiElement toPut,
-                                @Nullable final PsiElement qualifier) {
+                                final @Nullable PsiElement resolved,
+                                final @NotNull Set<PsiMember> movedMembers,
+                                final @NotNull PsiElement toPut,
+                                final @Nullable PsiElement qualifier) {
 
     for (PsiMember movedMember : movedMembers) {
       if (movedMember.equals(resolved)) {

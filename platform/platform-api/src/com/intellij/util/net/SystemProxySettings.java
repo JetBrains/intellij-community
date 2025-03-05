@@ -1,14 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.openapi.util.SystemInfoRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 
-abstract class SystemProxySettings {
+@ApiStatus.Internal
+public abstract class SystemProxySettings {
   public abstract void openProxySettings() throws IOException;
   public abstract boolean isProxySettingsOpenSupported();
 

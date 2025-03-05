@@ -15,8 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
-import kotlin.coroutines.Continuation;
-import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
@@ -89,26 +87,13 @@ public abstract class Task implements TaskInfo, Progressive {
    */
   public void onSuccess() { }
 
-  /** @deprecated please override {@link #onThrowable(Throwable)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings({"DeprecatedIsStillUsed", "RedundantSuppression"})
-  public void onError(@NotNull Exception error) {
-    LOG.error(error);
-  }
-
   /**
    * This callback will be invoked on AWT dispatch thread.
    * <p>
    * Callback executed when {@link #run(ProgressIndicator)} throws an exception (except {@link ProcessCanceledException}).
    */
   public void onThrowable(@NotNull Throwable error) {
-    if (error instanceof Exception) {
-      onError((Exception)error);
-    }
-    else {
-      LOG.error(error);
-    }
+    LOG.error(error);
   }
 
   /**

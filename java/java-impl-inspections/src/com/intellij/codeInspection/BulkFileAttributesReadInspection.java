@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -12,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -69,8 +69,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
     return !ExceptionUtil.isHandled(ioExceptionType, anchor);
   }
 
-  @Nullable
-  private static PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
+  private static @Nullable PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
     PsiElement qualifier = call.getMethodExpression().getQualifier();
     if (qualifier instanceof PsiParenthesizedExpression) {
       qualifier = PsiUtil.skipParenthesizedExprDown((PsiExpression)qualifier);
@@ -159,8 +158,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
       super.visitMethodCallExpression(call);
       if (!FILE_ATTR_CALL_MATCHER.test(call)) return;
       PsiVariable variable = getFileVariable(call);
-      if (variable == null) return;
-      if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, myScope, null)) return;
+      if (variable == null || !ControlFlowUtil.isEffectivelyFinal(variable, myScope)) return;
       List<PsiMethodCallExpression> varCalls = myCalls.computeIfAbsent(variable, __ -> new SmartList<>());
       varCalls.add(call);
     }
@@ -303,8 +301,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
         return ControlFlowUtils.getOnlyStatementInBlock(codeBlock);
       }
 
-      @NotNull
-      private static List<PsiMethodCallExpression> findAttributeCalls(@NotNull PsiVariable fileVar, @NotNull PsiElement scope) {
+      private static @NotNull List<PsiMethodCallExpression> findAttributeCalls(@NotNull PsiVariable fileVar, @NotNull PsiElement scope) {
         Collection<PsiMethodCallExpression> calls = ReferencesSearch.search(fileVar, new LocalSearchScope(scope))
           .filtering(ref -> scope == findScope(ref.getElement()))
           .mapping(ref -> ObjectUtils.tryCast(ref, PsiReferenceExpression.class))
@@ -324,8 +321,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
         return new FileVariableModel(attributeCalls, psiVariable, scope);
       }
 
-      @Nullable
-      private static PsiElement findScope(@NotNull PsiElement element) {
+      private static @Nullable PsiElement findScope(@NotNull PsiElement element) {
         PsiElement scope = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLoopStatement.class);
         if (scope instanceof PsiLoopStatement) scope = ((PsiLoopStatement)scope).getBody();
         return scope;

@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="jsoup" type="repository">
-    <properties maven-id="org.jsoup:jsoup:1.18.1">
+    <properties maven-id="org.jsoup:jsoup:1.18.3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.18.1/jsoup-1.18.1.jar">
-          <sha256sum>3bb5b0ec02998abe45a51f37d7ce67c3068b4ccd4ab63c965929ec5074d64e91</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.18.3/jsoup-1.18.3.jar">
+          <sha256sum>5be1ccd3228ae5fd6eed1bd6d827bac2bc65b91c20e9957d16ea65f739f15302</sha256sum>
         </artifact>
       </verification>
     </properties>
@@ -11,13 +11,13 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/jsoup" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.18.1/jsoup-1.18.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.18.3/jsoup-1.18.3.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.18.1/jsoup-1.18.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.18.3/jsoup-1.18.3-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.18.1/jsoup-1.18.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.18.3/jsoup-1.18.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

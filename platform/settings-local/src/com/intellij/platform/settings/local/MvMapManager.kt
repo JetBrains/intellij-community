@@ -22,7 +22,7 @@ import kotlin.time.toDuration
 
 private fun nowAsDuration() = System.currentTimeMillis().toDuration(DurationUnit.MILLISECONDS)
 
-internal class MvStoreManager(readOnly: Boolean = false) {
+internal class MvStoreManager(private val readOnly: Boolean = false) {
   // we save only once every 2 minutes, and not earlier than 2 minutes after the start
   private var lastSaved = nowAsDuration()
   private val store = createOrResetMvStore(getDatabaseFile(), readOnly) { logger<MvMapManager>() }
@@ -30,6 +30,10 @@ internal class MvStoreManager(readOnly: Boolean = false) {
   fun openMap(name: String): MvMapManager = MvMapManager(openMap(store, name))
 
   suspend fun save() {
+    if (readOnly) { // Work around IJPL-173020: let's ignore attempts to save to a read-only store
+      return
+    }
+
     // Save upon exit.
     // This function will be executed under progress.
     // If saving is skipped here, `close` would be invoked on `close`, which will trigger `save`.
@@ -39,7 +43,6 @@ internal class MvStoreManager(readOnly: Boolean = false) {
       return
     }
 
-    // tryCommit - do not commit if store is locked (e.g., another commit for some reason is called or another write operation)
     withContext(Dispatchers.IO) {
       store.commit()
       lastSaved = nowAsDuration()

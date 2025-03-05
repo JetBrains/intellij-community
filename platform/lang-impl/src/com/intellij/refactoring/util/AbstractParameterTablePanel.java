@@ -23,6 +23,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
@@ -123,7 +124,7 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
 
   public void init(P[] parameterData) {
     myParameterData = parameterData;
-    myTableModel.setItems(Arrays.asList(parameterData));
+    myTableModel.setItems(new ArrayList<>(Arrays.asList(parameterData)));
     if (parameterData.length > 1) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }

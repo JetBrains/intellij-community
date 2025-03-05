@@ -31,7 +31,7 @@ class ShowEvaluateExpressionCommand(text: String, line: Int) : PlaybackCommandCo
       if (debugSessions.isEmpty()) throw IllegalStateException("Debug process was not started")
       if (debugSessions.size > 1) throw IllegalStateException("Currently running ${debugSessions.size} debug processes")
       val debugSession = debugSessions.first()
-      val editorsProvider = debugSession.getDebugProcess().getEditorsProvider()
+      val editorsProvider = debugSession.debugProcess.editorsProvider
       val dialog = XDebuggerEvaluationDialog(debugSession, editorsProvider, XExpressionImpl(options.expression, null, null),
                                              debugSession.currentPosition, false)
       dialog.show()

@@ -33,7 +33,7 @@ internal class InlineCompletionNestedEventInvocationTest : InlineCompletionTestC
         assertFalse("This event must not appear.", event is ForbiddenEvent)
         InlineCompletion.getHandlerOrNull(myFixture.editor)!!.invokeEvent(ForbiddenEvent())
         onSuccess()
-        return InlineCompletionSuggestionUpdateManager.UpdateResult.Same
+        return InlineCompletionSuggestionUpdateManager.UpdateResult.Changed(variant)
       }
     }
 

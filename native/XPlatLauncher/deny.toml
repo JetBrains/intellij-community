@@ -1,36 +1,37 @@
 [graph]
-targets = [ ]
+targets = []
 exclude = ["cargo-deny", "cargo-about"]
 
 [advisories]
 version = 2
+ignore = []
 
 [licenses]
 version = 2
 confidence-threshold = 0.95
-allow = [
-    "MIT",
-    "Apache-2.0",
-    "BSD-3-Clause", # reqwest -> encoding_rs
-    "ISC", # libloading, MIT / Apache 2.0 alike
-    "Unicode-DFS-2016" # serde -> [..] -> unicode-ident
+allow = ["MIT", "Apache-2.0"]
+exceptions = [
+    { allow = ["Unicode-DFS-2016"], crate = "unicode-ident" }, # 'serde' dependency
+    { allow = ["ISC"], crate = "libloading" },
 ]
 unused-allowed-license = "deny"
 
 # allows using our own unpublished packages
 [licenses.private]
 ignore = true
-registries = [ ]
+registries = []
 
 [bans]
 multiple-versions = "deny"
 wildcards = "deny"
 highlight = "all"
-allow = [ ]
-deny = [ ]
-skip = [ ]
+allow = []
+deny = []
+skip = []
 skip-tree = [
-    { name = "reqwest" }, # build-time dependency
+    { name = "windows-sys", version = "0.45.0" }, # 'jni' seems to stuck
+    { name = "curl" }, # build-time dependency
+    { name = "native-dialog" }, # false positives in macOS-specific subtree
 ]
 
 [sources]

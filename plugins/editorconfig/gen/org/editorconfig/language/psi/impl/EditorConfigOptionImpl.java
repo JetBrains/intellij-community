@@ -1,17 +1,14 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
-import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
-import org.editorconfig.language.psi.base.EditorConfigOptionBase;
 import org.editorconfig.language.psi.*;
-import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement;
-import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor;
+import org.editorconfig.language.psi.base.EditorConfigOptionBase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class EditorConfigOptionImpl extends EditorConfigOptionBase implements EditorConfigOption {
 
@@ -30,32 +27,27 @@ public class EditorConfigOptionImpl extends EditorConfigOptionBase implements Ed
   }
 
   @Override
-  @Nullable
-  public EditorConfigFlatOptionKey getFlatOptionKey() {
+  public @Nullable EditorConfigFlatOptionKey getFlatOptionKey() {
     return findChildByClass(EditorConfigFlatOptionKey.class);
   }
 
   @Override
-  @Nullable
-  public EditorConfigOptionValueIdentifier getOptionValueIdentifier() {
+  public @Nullable EditorConfigOptionValueIdentifier getOptionValueIdentifier() {
     return findChildByClass(EditorConfigOptionValueIdentifier.class);
   }
 
   @Override
-  @Nullable
-  public EditorConfigOptionValueList getOptionValueList() {
+  public @Nullable EditorConfigOptionValueList getOptionValueList() {
     return findChildByClass(EditorConfigOptionValueList.class);
   }
 
   @Override
-  @Nullable
-  public EditorConfigOptionValuePair getOptionValuePair() {
+  public @Nullable EditorConfigOptionValuePair getOptionValuePair() {
     return findChildByClass(EditorConfigOptionValuePair.class);
   }
 
   @Override
-  @Nullable
-  public EditorConfigQualifiedOptionKey getQualifiedOptionKey() {
+  public @Nullable EditorConfigQualifiedOptionKey getQualifiedOptionKey() {
     return findChildByClass(EditorConfigQualifiedOptionKey.class);
   }
 

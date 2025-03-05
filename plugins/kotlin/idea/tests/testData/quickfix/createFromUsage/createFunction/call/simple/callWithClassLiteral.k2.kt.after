@@ -3,6 +3,7 @@ import kotlin.reflect.KClass
 // "Create function 'checkProperty'" "true"
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// K2_AFTER_ERROR: Argument type mismatch: actual type is 'KClass<CapturedType(out String)>', but 'KClass<String>' was expected.
 internal object model {
     val layer = ""
 }

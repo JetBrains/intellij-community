@@ -15,7 +15,8 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -59,7 +60,7 @@ public class PyDocReference extends PyReferenceImpl {
               PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)pair.getFirst(), referencedName, pair.getFirst());
               final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, pair.getFirst(),
                                                                                   pair.getFirst());
-              if (resultList.size() > 0) {
+              if (!resultList.isEmpty()) {
                 List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
                 return ret.toArray(RatedResolveResult.EMPTY_ARRAY);
               }
@@ -72,7 +73,7 @@ public class PyDocReference extends PyReferenceImpl {
           final PsiFile topLevel = scopeOwner.getContainingFile();
           PyResolveUtil.scopeCrawlUp(processor, scopeOwner, referencedName, topLevel);
           final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, null, topLevel);
-          if (resultList.size() > 0) {
+          if (!resultList.isEmpty()) {
             final List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
             return ret.toArray(RatedResolveResult.EMPTY_ARRAY);
           }
@@ -83,8 +84,7 @@ public class PyDocReference extends PyReferenceImpl {
   }
 
   @Override
-  @NotNull
-  public Object @NotNull [] getVariants() {
+  public @NotNull Object @NotNull [] getVariants() {
     final Object[] results = super.getVariants();
 
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myElement.getProject());
@@ -111,8 +111,7 @@ public class PyDocReference extends PyReferenceImpl {
     return ArrayUtil.mergeArrayAndCollection(results, processor.getResultList(), Object[]::new);
   }
 
-  @Nullable
-  private static Condition<String> filterForPresentedNames(@NotNull Object[] variants) {
+  private static @Nullable Condition<String> filterForPresentedNames(@NotNull Object[] variants) {
     if (variants.length == 0) return null;
     final Set<String> seenNames = StreamEx.of(variants).select(LookupElement.class).map(LookupElement::getLookupString).toSet();
     return s -> !seenNames.contains(s);

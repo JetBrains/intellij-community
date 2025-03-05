@@ -27,14 +27,12 @@ public class JiraRestTask extends JiraTask {
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myJiraIssue.getKey();
   }
 
   @Override
-  @NotNull
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return myJiraIssue.getSummary();
   }
 
@@ -71,15 +69,13 @@ public class JiraRestTask extends JiraTask {
   }
 
   @Override
-  @Nullable
-  protected String getIconUrl() {
+  protected @Nullable String getIconUrl() {
     // iconUrl will be null in JIRA versions prior 5.x.x
     return myJiraIssue.getIssueType().getIconUrl();
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     return getTypeByName(myJiraIssue.getIssueType().getName());
   }
 
@@ -88,9 +84,8 @@ public class JiraRestTask extends JiraTask {
     return getStateById(Integer.parseInt(myJiraIssue.getStatus().getId()));
   }
 
-  @Nullable
   @Override
-  public Date getUpdated() {
+  public @Nullable Date getUpdated() {
     return myJiraIssue.getUpdated();
   }
 

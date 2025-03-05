@@ -2,10 +2,10 @@
 package org.jetbrains.idea.devkit.debugger
 
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContext
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.openapi.diagnostic.fileLogger
+import com.sun.jdi.IncompatibleThreadStateException
 import com.sun.jdi.ReferenceType
 
 internal fun findClassOrNull(evaluationContext: EvaluationContext, fqn: String): ReferenceType? {
@@ -16,4 +16,12 @@ internal fun findClassOrNull(evaluationContext: EvaluationContext, fqn: String):
   catch (_: EvaluateException) {
     null
   }
+}
+
+internal fun logIncorrectSuspendState(e: Exception): Boolean {
+  if (e !is EvaluateException) return false
+  val cause = e.cause ?: return false
+  if (cause !is IncompatibleThreadStateException) return false
+  fileLogger().info(e)
+  return true
 }

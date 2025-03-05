@@ -44,6 +44,7 @@ public final class HelpIdAwareLinkListener extends BrowserHyperlinkListener {
           case "intellij idea", "idea" -> "idea";
           case "goland" -> "go";
           case "appcode" -> "objc";
+          case "rustrover" -> "rust";
           case "pycharm" -> editionName != null && "edu".equals(StringUtil.toLowerCase(editionName)) ? "pycharm-edu" : "pycharm";
           default -> productName;
         };

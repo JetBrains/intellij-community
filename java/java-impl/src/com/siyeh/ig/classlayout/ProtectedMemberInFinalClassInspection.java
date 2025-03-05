@@ -132,6 +132,9 @@ public final class ProtectedMemberInFinalClassInspection extends BaseInspection 
       if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
+      if (containingClass.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return;
+      }
       if (!IncompleteModelUtil.isHierarchyResolved(containingClass)) {
         return;
       }

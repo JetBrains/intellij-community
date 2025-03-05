@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict
 
 import com.intellij.openapi.module.Module
@@ -9,8 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.willBeMoved
@@ -27,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 internal fun KtClass.getDirectSealedInheritors(): List<KtClassOrObject> {
     if (!isSealed()) return emptyList()
 
-    return DirectKotlinClassInheritorsSearch.search(this).filterIsInstance<KtClassOrObject>()
+    return DirectKotlinClassInheritorsSearch.search(this).asIterable().filterIsInstance<KtClassOrObject>()
 }
 
 /**
@@ -69,7 +68,7 @@ internal fun checkSealedClassesConflict(
     // First, we collect all the sealed class hierarchies that have been affected
     val allAffectedSealedSuperTypes = mutableSetOf<KtClass>()
     for (classToMove in classesToMove) {
-        val classModule = classToMove.module?.productionOrTestSourceModuleInfo?.toKaModule()
+        val classModule = classToMove.getKaModule(classToMove.project, useSiteModule = null)
         // If we stay in the same package AND the module is the same as before, sealed classes can be moved safely
         if (classModule == targetKaModule && targetPackage == classToMove.containingKtFile.packageFqName) continue
 

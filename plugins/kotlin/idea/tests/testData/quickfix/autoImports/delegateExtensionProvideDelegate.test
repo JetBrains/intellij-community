@@ -1,7 +1,6 @@
 // FILE: first.before.kt
 // "Import operator 'A.provideDelegate'" "true"
 // ERROR: Type 'A' has no method 'getValue(MyUI, KProperty<*>)' and thus it cannot serve as a delegate
-/* IGNORE_K2 */
 
 package bs
 
@@ -35,7 +34,6 @@ operator fun A.provideDelegate(
 // FILE: first.after.kt
 // "Import operator 'A.provideDelegate'" "true"
 // ERROR: Type 'A' has no method 'getValue(MyUI, KProperty<*>)' and thus it cannot serve as a delegate
-/* IGNORE_K2 */
 
 package bs
 

@@ -3,27 +3,26 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperTypeCallNameReferencePositionContext
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
-
 internal class FirSuperEntryContributor(
-    basicContext: FirBasicCompletionContext,
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinSuperTypeCallNameReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinSuperTypeCallNameReferencePositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     override fun complete(
         positionContext: KotlinSuperTypeCallNameReferencePositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) = getSuperClassesAvailableForSuperCall(positionContext.nameExpression).forEach { superType ->
         val tailText = superType.classId?.asString()?.let { "($it)" }
         LookupElementBuilder.create(SuperLookupObject(superType.name, superType.classId), superType.name.asString())

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.diff.impl.patch;
 
@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 public class PatchLine {
   public enum Type {CONTEXT, ADD, REMOVE}
 
-  @NotNull private final Type myType;
-  @NotNull private final String myText;
+  private final @NotNull Type myType;
+  private final @NotNull String myText;
   private boolean mySuppressNewLine;
 
   public PatchLine(@NotNull Type type, @NotNull String text) {
@@ -16,13 +16,11 @@ public class PatchLine {
     myText = text;
   }
 
-  @NotNull
-  public Type getType() {
+  public @NotNull Type getType() {
     return myType;
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myText;
   }
 

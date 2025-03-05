@@ -156,6 +156,7 @@ private fun tryLoadIcon(zipFile: IntelliJZipFile, light: Boolean): PluginLogoIco
   }
   catch (e: Throwable) {
     LOG.warn("Cannot load plugin icon (zipFile=$zipFile, pluginIconFileName=$pluginIconFileName)")
+    LOG.debug(e)
     return null
   }
 }
@@ -346,7 +347,8 @@ private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {
     throw e
   }
   catch (e: Throwable) {
-    LOG.warn("Cannot load plugin icon (file=$iconFile)", e)
+    LOG.warn("Cannot load plugin icon (file=$iconFile)")
+    LOG.debug(e)
   }
   return null
 }

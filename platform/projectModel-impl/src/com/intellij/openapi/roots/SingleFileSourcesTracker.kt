@@ -5,7 +5,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.ide.*
 
 /**
  * Inside IntelliJ platform, a source root is usually referred to as a source directory containing source code.

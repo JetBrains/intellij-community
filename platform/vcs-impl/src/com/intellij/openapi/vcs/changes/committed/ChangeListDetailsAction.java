@@ -80,9 +80,7 @@ public final class ChangeListDetailsAction extends AnAction implements DumbAware
       .showInBestPositionFor(DataManager.getInstance().getDataContext());
   }
 
-  @Nls
-  @NotNull
-  private static String getDetails(@NotNull Project project, @NotNull CommittedChangeList changeList) {
+  private static @Nls @NotNull String getDetails(@NotNull Project project, @NotNull CommittedChangeList changeList) {
     return join(packNullables(
       getNumber(changeList),
       getCommitterAndDate(changeList),
@@ -91,9 +89,7 @@ public final class ChangeListDetailsAction extends AnAction implements DumbAware
     ), BR);
   }
 
-  @Nls
-  @Nullable
-  private static String getNumber(@NotNull CommittedChangeList changeList) {
+  private static @Nls @Nullable String getNumber(@NotNull CommittedChangeList changeList) {
     return Optional.ofNullable(changeList.getVcs())
       .map(AbstractVcs::getCachingCommittedChangesProvider)
       .map(CachingCommittedChangesProvider::getChangelistTitle)
@@ -101,16 +97,12 @@ public final class ChangeListDetailsAction extends AnAction implements DumbAware
       .orElse(null);
   }
 
-  @Nls
-  @NotNull
-  private static String getCommitterAndDate(@NotNull CommittedChangeList changeList) {
+  private static @Nls @NotNull String getCommitterAndDate(@NotNull CommittedChangeList changeList) {
     @NonNls String committer = "<b>" + changeList.getCommitterName() + "</b>";
     return message("changelist.details.committed.format", committer, formatPrettyDateTime(changeList.getCommitDate()));
   }
 
-  @Nls
-  @Nullable
-  private static String getCustomDetails(@NotNull CommittedChangeList changeList) {
+  private static @Nls @Nullable String getCustomDetails(@NotNull CommittedChangeList changeList) {
     AbstractVcs vcs = changeList.getVcs();
 
     if (vcs != null && vcs.getCachingCommittedChangesProvider() != null) {
@@ -130,9 +122,7 @@ public final class ChangeListDetailsAction extends AnAction implements DumbAware
     return null;
   }
 
-  @Nls
-  @NotNull
-  private static String toString(@Nullable Object value) {
+  private static @Nls @NotNull String toString(@Nullable Object value) {
     String result = value != null ? value.toString() : ""; //NON-NLS
     return result.isEmpty() ? message("changes.none") : result;
   }

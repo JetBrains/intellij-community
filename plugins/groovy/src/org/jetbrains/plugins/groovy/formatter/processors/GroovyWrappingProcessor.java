@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Wrap;
@@ -161,8 +161,7 @@ public class GroovyWrappingProcessor {
     return getCommonWrap();
   }
 
-  @Nullable
-  private static IElementType getLeftSiblingType(ASTNode node) {
+  private static @Nullable IElementType getLeftSiblingType(ASTNode node) {
     ASTNode prev = getLeftSibling(node);
     return prev != null ? prev.getElementType() : null;
   }
@@ -204,8 +203,7 @@ public class GroovyWrappingProcessor {
     return Wrap.createWrap(WrapType.NONE, false);
   }
 
-  @Nullable
-  private Wrap createCommonWrap() {
+  private @Nullable Wrap createCommonWrap() {
     if (myParentType == GroovyStubElementTypes.EXTENDS_CLAUSE || myParentType == GroovyStubElementTypes.IMPLEMENTS_CLAUSE) {
       myUsedDefaultWrap = true;
       return Wrap.createWrap(mySettings.EXTENDS_LIST_WRAP, true);

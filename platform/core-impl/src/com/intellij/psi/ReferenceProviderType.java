@@ -33,6 +33,7 @@ public final class ReferenceProviderType {
     return new CompositePsiReferenceProvider(this);
   }
 
+  @Override
   public String toString() {
     return myId;
   }

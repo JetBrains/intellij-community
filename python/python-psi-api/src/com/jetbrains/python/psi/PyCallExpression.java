@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
@@ -27,8 +25,7 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
    * @return the expression representing the object being called (reference to a function).
    */
   @Override
-  @Nullable
-  default PyExpression getCallee() {
+  default @Nullable PyExpression getCallee() {
     return (PyExpression)PyAstCallExpression.super.getCallee();
   }
 
@@ -36,8 +33,7 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
    * @return the argument list used in the call.
    */
   @Override
-  @Nullable
-  default PyArgumentList getArgumentList() {
+  default @Nullable PyArgumentList getArgumentList() {
     return (PyArgumentList)PyAstCallExpression.super.getArgumentList();
   }
 
@@ -57,8 +53,7 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
    * @param argClass  argument expected type
    * @return the argument expression or null if has wrong type or does not exist
    */
-  @Nullable
-  default <T extends PsiElement> T getArgument(@NotNull FunctionParameter parameter, @NotNull Class<T> argClass) {
+  default @Nullable <T extends PsiElement> T getArgument(@NotNull FunctionParameter parameter, @NotNull Class<T> argClass) {
     final PyArgumentList list = getArgumentList();
     if (list == null) {
       return null;
@@ -72,9 +67,8 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
    * @param keyword argument keyword
    * @return the argument or null
    */
-  @Nullable
   @Override
-  default PyExpression getKeywordArgument(@NotNull String keyword) {
+  default @Nullable PyExpression getKeywordArgument(@NotNull String keyword) {
     return (PyExpression)PyAstCallExpression.super.getKeywordArgument(keyword);
   }
 
@@ -86,8 +80,7 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
    * @param resolveContext resolve context
    * @return the resolved callees or an empty list.
    */
-  @NotNull
-  default List<@NotNull PyCallable> multiResolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
+  default @NotNull List<@NotNull PyCallable> multiResolveCalleeFunction(@NotNull PyResolveContext resolveContext) {
     return ContainerUtil.mapNotNull(multiResolveCallee(resolveContext), PyCallableType::getCallable);
   }
 
@@ -111,16 +104,16 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
   List<@NotNull PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext);
 
   class PyArgumentsMapping {
-    @NotNull private final PyCallSiteExpression myCallSiteExpression;
-    @Nullable private final PyCallableType myCallableType;
-    @NotNull private final List<PyCallableParameter> myImplicitParameters;
-    @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
-    @NotNull private final List<PyCallableParameter> myUnmappedParameters;
-    @NotNull private final List<PyCallableParameter> myUnmappedContainerParameters;
-    @NotNull private final List<PyExpression> myUnmappedArguments;
-    @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicPositionalArguments;
-    @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicKeywordArguments;
-    @NotNull private final Map<PyExpression, PyCallableParameter> myMappedTupleParameters;
+    private final @NotNull PyCallSiteExpression myCallSiteExpression;
+    private final @Nullable PyCallableType myCallableType;
+    private final @NotNull List<PyCallableParameter> myImplicitParameters;
+    private final @NotNull Map<PyExpression, PyCallableParameter> myMappedParameters;
+    private final @NotNull List<PyCallableParameter> myUnmappedParameters;
+    private final @NotNull List<PyCallableParameter> myUnmappedContainerParameters;
+    private final @NotNull List<PyExpression> myUnmappedArguments;
+    private final @NotNull List<PyCallableParameter> myParametersMappedToVariadicPositionalArguments;
+    private final @NotNull List<PyCallableParameter> myParametersMappedToVariadicKeywordArguments;
+    private final @NotNull Map<PyExpression, PyCallableParameter> myMappedTupleParameters;
 
     public PyArgumentsMapping(@NotNull PyCallSiteExpression callSiteExpression,
                               @Nullable PyCallableType callableType,
@@ -144,8 +137,7 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
       myMappedTupleParameters = tupleMappedParameters;
     }
 
-    @NotNull
-    public static PyArgumentsMapping empty(@NotNull PyCallSiteExpression callSiteExpression) {
+    public static @NotNull PyArgumentsMapping empty(@NotNull PyCallSiteExpression callSiteExpression) {
       return new PyCallExpression.PyArgumentsMapping(callSiteExpression,
                                                      null,
                                                      Collections.emptyList(),
@@ -158,53 +150,43 @@ public interface PyCallExpression extends PyAstCallExpression, PyCallSiteExpress
                                                      Collections.emptyMap());
     }
 
-    @NotNull
-    public PyCallSiteExpression getCallSiteExpression() {
+    public @NotNull PyCallSiteExpression getCallSiteExpression() {
       return myCallSiteExpression;
     }
 
-    @Nullable
-    public PyCallableType getCallableType() {
+    public @Nullable PyCallableType getCallableType() {
       return myCallableType;
     }
 
-    @NotNull
-    public List<PyCallableParameter> getImplicitParameters() {
+    public @NotNull List<PyCallableParameter> getImplicitParameters() {
       return myImplicitParameters;
     }
 
-    @NotNull
-    public Map<PyExpression, PyCallableParameter> getMappedParameters() {
+    public @NotNull Map<PyExpression, PyCallableParameter> getMappedParameters() {
       return myMappedParameters;
     }
 
-    @NotNull
-    public List<PyCallableParameter> getUnmappedParameters() {
+    public @NotNull List<PyCallableParameter> getUnmappedParameters() {
       return myUnmappedParameters;
     }
 
-    @NotNull
-    public List<PyCallableParameter> getUnmappedContainerParameters() {
+    public @NotNull List<PyCallableParameter> getUnmappedContainerParameters() {
       return myUnmappedContainerParameters;
     }
 
-    @NotNull
-    public List<PyExpression> getUnmappedArguments() {
+    public @NotNull List<PyExpression> getUnmappedArguments() {
       return myUnmappedArguments;
     }
 
-    @NotNull
-    public List<PyCallableParameter> getParametersMappedToVariadicPositionalArguments() {
+    public @NotNull List<PyCallableParameter> getParametersMappedToVariadicPositionalArguments() {
       return myParametersMappedToVariadicPositionalArguments;
     }
 
-    @NotNull
-    public List<PyCallableParameter> getParametersMappedToVariadicKeywordArguments() {
+    public @NotNull List<PyCallableParameter> getParametersMappedToVariadicKeywordArguments() {
       return myParametersMappedToVariadicKeywordArguments;
     }
 
-    @NotNull
-    public Map<PyExpression, PyCallableParameter> getMappedTupleParameters() {
+    public @NotNull Map<PyExpression, PyCallableParameter> getMappedTupleParameters() {
       return myMappedTupleParameters;
     }
 

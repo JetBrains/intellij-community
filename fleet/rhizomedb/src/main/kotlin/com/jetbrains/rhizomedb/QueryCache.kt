@@ -2,7 +2,9 @@
 package com.jetbrains.rhizomedb
 
 import fleet.util.AtomicRef
-import it.unimi.dsi.fastutil.longs.LongArrayList
+import fleet.fastutil.longs.LongArrayList
+import fleet.fastutil.longs.toArray
+import fleet.util.computeShim
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentHashMapOf
@@ -31,7 +33,7 @@ class QueryCache private constructor(private val cache: AtomicRef<QueryCacheData
 
       result.patterns.forEach { newPattern ->
         if (oldPatterns == null || !oldPatterns.contains(newPattern)) {
-          patternToQueryPrime.compute(newPattern) { _, queries ->
+          patternToQueryPrime.computeShim(newPattern) { _, queries ->
             (queries ?: persistentHashSetOf()).add(query)
           }
         }
@@ -104,6 +106,6 @@ internal fun <T> DbContext<Q>.cachedQueryImpl(queryCache: QueryCache, query: Cac
     }) {
       with(query) { query() }
     }
-    CachedQueryResult(result, patterns.toLongArray())
+    CachedQueryResult(result, patterns.toArray())
   }
 }

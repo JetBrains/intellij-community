@@ -7,12 +7,11 @@ import org.junit.Test
 
 class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
   override fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable,"plugins", "local1")
+    return MavenIndicesTestFixture(dir, project, testRootDisposable,"plugins", "local1")
   }
 
   @Test
   fun testCompletion() = runBlocking {
-    needFixForMaven4()
     configureProjectPom(
       """
           <groupId>simpleMaven</groupId>

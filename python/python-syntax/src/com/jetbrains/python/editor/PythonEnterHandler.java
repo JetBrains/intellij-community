@@ -30,7 +30,8 @@ import com.jetbrains.python.ast.docstring.DocStringUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,8 +177,7 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     return Result.Continue;
   }
 
-  @Nullable
-  private static PsiElement findElementToParenthesise(@NotNull PsiElement nodeAtCaret) {
+  private static @Nullable PsiElement findElementToParenthesise(@NotNull PsiElement nodeAtCaret) {
     PsiElement wrappable = nodeAtCaret;
 
     while (true) {
@@ -208,8 +208,7 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
   }
 
-  @Nullable
-  private static TextRange getRangeForPsiElementArray(PsiElement[] items) {
+  private static @Nullable TextRange getRangeForPsiElementArray(PsiElement[] items) {
     if (!ArrayUtil.isEmpty(items)) {
       PsiElement first = ArrayUtil.getFirstElement(items);
       PsiElement last = ArrayUtil.getLastElement(items);
@@ -285,8 +284,7 @@ public final class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     EMPTY
   }
 
-  @NotNull
-  public static DocstringState canGenerateDocstring(@NotNull PsiElement element, int firstQuoteOffset, @NotNull Document document) {
+  public static @NotNull DocstringState canGenerateDocstring(@NotNull PsiElement element, int firstQuoteOffset, @NotNull Document document) {
     if (firstQuoteOffset < 0 || firstQuoteOffset > document.getTextLength() - 3) {
       return DocstringState.NONE;
     }

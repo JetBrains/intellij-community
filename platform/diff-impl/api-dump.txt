@@ -5,6 +5,7 @@ f:com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 - s:isOutsiderFile(com.intellij.openapi.vfs.VirtualFile):Z
 - s:isOutsiderFile(com.intellij.psi.PsiFile):Z
 - s:markFile(com.intellij.openapi.vfs.VirtualFile):V
+- s:markFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):V
 - s:markFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - s:markFileWithUrl(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 a:com.intellij.diff.DiffContentFactoryEx
@@ -216,6 +217,7 @@ c:com.intellij.diff.contents.FileDocumentContentImpl
 - onAssigned(Z):V
 c:com.intellij.diff.editor.ChainDiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFile
+- com.intellij.diff.editor.DiffVirtualFileWithTabName
 - <init>(com.intellij.diff.chains.DiffRequestChain,java.lang.String):V
 - createProcessor(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffRequestProcessor
 - f:getChain():com.intellij.diff.chains.DiffRequestChain
@@ -296,6 +298,10 @@ a:com.intellij.diff.editor.DiffVirtualFileBase
 f:com.intellij.diff.editor.DiffVirtualFileBase$Companion
 - f:turnOffReopeningWindow(com.intellij.openapi.vfs.VirtualFile):V
 - f:useDiffWindowDimensionKey(com.intellij.openapi.vfs.VirtualFile):V
+com.intellij.diff.editor.DiffVirtualFileWithProducers
+- a:collectDiffProducers(Z):com.intellij.openapi.ListSelection
+com.intellij.diff.editor.DiffVirtualFileWithTabName
+- a:getEditorTabName(com.intellij.openapi.project.Project,java.util.List):java.lang.String
 f:com.intellij.diff.editor.SimpleDiffEditorEscapeAction
 - com.intellij.openapi.project.DumbAwareAction
 - com.intellij.diff.editor.DiffEditorEscapeAction
@@ -346,6 +352,24 @@ a:com.intellij.diff.impl.CacheDiffRequestProcessor$Simple
 - p:<init>(com.intellij.openapi.project.Project,java.lang.String):V
 - p:getRequestName(com.intellij.diff.chains.DiffRequestProducer):java.lang.String
 - p:loadRequest(com.intellij.diff.chains.DiffRequestProducer,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
+f:com.intellij.diff.impl.DiffEditorTitleDetails
+- sf:Companion:com.intellij.diff.impl.DiffEditorTitleDetails$Companion
+- sf:EMPTY:com.intellij.diff.impl.DiffEditorTitleDetails
+- <init>(com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider,com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider):V
+- sf:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath,java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- sf:createFromPath(java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- sf:createFromTitle(java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- f:getCustomizer():com.intellij.diff.DiffEditorTitleCustomizer
+- f:getPathLabel():com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider
+- f:getRevisionLabel():com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider
+f:com.intellij.diff.impl.DiffEditorTitleDetails$Companion
+- f:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath,java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- f:createFromPath(java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+- f:createFromTitle(java.lang.String):com.intellij.diff.impl.DiffEditorTitleDetails
+com.intellij.diff.impl.DiffEditorTitleDetails$DetailsLabelProvider
+- a:createComponent():javax.swing.JComponent
+f:com.intellij.diff.impl.DiffEditorTitleDetailsKt
+- sf:getCustomizers(java.util.List):java.util.List
 com.intellij.diff.impl.DiffEditorViewer
 - a:addListener(com.intellij.diff.impl.DiffEditorViewerListener,com.intellij.openapi.Disposable):V
 - a:fireProcessorActivated():V
@@ -538,8 +562,16 @@ a:com.intellij.diff.lang.LangDiffIgnoredRangeProvider
 - getIgnoredRanges(com.intellij.openapi.project.Project,java.lang.CharSequence,com.intellij.diff.contents.DiffContent):java.util.List
 c:com.intellij.diff.requests.LoadingDiffRequest
 - com.intellij.diff.requests.MessageDiffRequest
-- <init>():V
-- <init>(java.lang.String):V
+c:com.intellij.diff.requests.OperationCanceledDiffRequest
+- com.intellij.diff.requests.MessageDiffRequest
+c:com.intellij.diff.requests.UnknownFileTypeDiffRequest
+- com.intellij.diff.requests.ComponentDiffRequest
+- <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
+- s:createComponent(java.lang.String,com.intellij.diff.DiffContext):javax.swing.JComponent
+- getComponent(com.intellij.diff.DiffContext):javax.swing.JComponent
+- getFileName():java.lang.String
+- getTitle():java.lang.String
 c:com.intellij.diff.tools.ErrorDiffTool
 - com.intellij.diff.FrameDiffTool
 - sf:INSTANCE:com.intellij.diff.tools.ErrorDiffTool
@@ -1072,7 +1104,7 @@ pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyInitialScrollHelpe
 - p:doScrollToChange():Z
 - p:doScrollToFirstChange():Z
 pc:com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx$MyPrevNextDifferenceIterable
-- com.intellij.diff.tools.util.PrevNextDifferenceIterable
+- com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
 - p:<init>(com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx):V
 - p:getChanges():java.util.List
 - p:getEditor():com.intellij.openapi.editor.ex.EditorEx
@@ -1217,6 +1249,21 @@ com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - a:canGoPrev():Z
 - a:goNext():V
 - a:goPrev():V
+a:com.intellij.diff.tools.util.PrevNextDifferenceIterableBase
+- com.intellij.diff.tools.util.PrevNextDifferenceIterable
+- <init>():V
+- canGoNext():Z
+- canGoPrev():Z
+- pa:getChanges():java.util.List
+- getCurrentLineRange():com.intellij.diff.util.LineRange
+- getCurrentLineRangeByLine(I):com.intellij.diff.util.LineRange
+- pa:getEditor():com.intellij.openapi.editor.ex.EditorEx
+- pa:getEndLine(java.lang.Object):I
+- pa:getStartLine(java.lang.Object):I
+- goNext():V
+- goPrev():V
+- p:scrollToChange(java.lang.Object):V
+- p:scrollToChangeUnderCommand(java.lang.Object):V
 c:com.intellij.diff.tools.util.SimpleDiffPanel
 - com.intellij.diff.tools.util.base.DiffPanelBase
 - <init>(javax.swing.JComponent,com.intellij.diff.DiffContext):V
@@ -1243,29 +1290,17 @@ com.intellij.diff.tools.util.SyncScrollSupport$SyncScrollable
 - a:getRange(com.intellij.diff.util.Side,I):com.intellij.diff.util.Range
 - a:isSyncScrollEnabled():Z
 - a:transfer(com.intellij.diff.util.Side,I):I
-c:com.intellij.diff.tools.util.SyncScrollSupport$ThreesideSyncScrollSupport
+f:com.intellij.diff.tools.util.SyncScrollSupport$ThreesideSyncScrollSupport
 - com.intellij.diff.tools.util.SyncScrollSupport$Support
 - <init>(java.util.List,com.intellij.diff.tools.util.SyncScrollSupport$SyncScrollable,com.intellij.diff.tools.util.SyncScrollSupport$SyncScrollable):V
-- p:doMakeVisible(I,I[],I[],Z,Z):V
-- enterDisableScrollSection():V
-- exitDisableScrollSection():V
-- p:getEditors():java.util.List
-- p:getScrollHelpers():java.util.List
 - getScrollable12():com.intellij.diff.tools.util.SyncScrollSupport$SyncScrollable
 - getScrollable23():com.intellij.diff.tools.util.SyncScrollSupport$SyncScrollable
-- isDuringSyncScroll():Z
 - makeVisible(com.intellij.diff.util.ThreeSide,I[],I[],Z):V
 - visibleAreaChanged(com.intellij.openapi.editor.event.VisibleAreaEvent):V
-c:com.intellij.diff.tools.util.SyncScrollSupport$TwosideSyncScrollSupport
+f:com.intellij.diff.tools.util.SyncScrollSupport$TwosideSyncScrollSupport
 - com.intellij.diff.tools.util.SyncScrollSupport$Support
 - <init>(java.util.List,com.intellij.diff.tools.util.SyncScrollSupport$SyncScrollable):V
-- p:doMakeVisible(I,I[],I[],Z,Z):V
-- enterDisableScrollSection():V
-- exitDisableScrollSection():V
-- p:getEditors():java.util.List
-- p:getScrollHelpers():java.util.List
 - getScrollable():com.intellij.diff.tools.util.SyncScrollSupport$SyncScrollable
-- isDuringSyncScroll():Z
 - makeVisible(com.intellij.diff.util.Side,I,I,I,I,Z):V
 - visibleAreaChanged(com.intellij.openapi.editor.event.VisibleAreaEvent):V
 c:com.intellij.diff.tools.util.ThreeDiffSplitter
@@ -1905,6 +1940,7 @@ f:com.intellij.diff.util.DiffUtil
 - s:addNotification(com.intellij.diff.util.DiffNotificationProvider,com.intellij.openapi.util.UserDataHolder):V
 - s:addTitleCustomizers(com.intellij.diff.merge.MergeRequest,java.util.List):com.intellij.diff.merge.MergeRequest
 - s:addTitleCustomizers(com.intellij.diff.requests.DiffRequest,java.util.List):com.intellij.diff.requests.DiffRequest
+- s:addTitleCustomizers(com.intellij.diff.requests.DiffRequest,com.intellij.diff.DiffEditorTitleCustomizer[]):com.intellij.diff.requests.DiffRequest
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,com.intellij.openapi.editor.Document,I,I):V
 - s:applyModification(com.intellij.openapi.editor.Document,I,I,java.util.List):V
 - s:applyModification(java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,java.util.List):java.lang.String
@@ -1935,7 +1971,6 @@ f:com.intellij.diff.util.DiffUtil
 - s:createTextTitles(com.intellij.diff.FrameDiffTool$DiffViewer,com.intellij.diff.requests.ContentDiffRequest,java.util.List):java.util.List
 - s:createTitle(java.lang.String):javax.swing.JComponent
 - s:createTitle(java.lang.String,com.intellij.diff.DiffEditorTitleCustomizer):javax.swing.JComponent
-- s:createTitle(java.lang.String,com.intellij.util.LineSeparator,java.nio.charset.Charset,java.lang.Boolean,Z,com.intellij.diff.DiffEditorTitleCustomizer):javax.swing.JComponent
 - s:createTooltipText(java.lang.String,java.lang.String):java.lang.String
 - s:createUserDataHolder(com.intellij.openapi.util.Key,java.lang.Object):com.intellij.openapi.util.UserDataHolderBase
 - s:disableBlitting(com.intellij.openapi.editor.ex.EditorEx):V
@@ -2128,6 +2163,25 @@ com.intellij.openapi.vcs.changes.DiffPreview
 f:com.intellij.openapi.vcs.changes.DiffPreview$Companion
 - f:closePreviewFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 - f:setPreviewVisible(com.intellij.openapi.vcs.changes.DiffPreview,Z):V
+a:com.intellij.openapi.vcs.changes.EditorTabDiffPreview
+- com.intellij.openapi.util.CheckedDisposable
+- com.intellij.openapi.vcs.changes.DiffPreview
+- <init>(com.intellij.openapi.project.Project):V
+- closePreview():V
+- pa:collectDiffProducers(Z):com.intellij.openapi.ListSelection
+- createEscapeHandler():com.intellij.openapi.actionSystem.AnAction
+- pa:createViewer():com.intellij.diff.impl.DiffEditorViewer
+- dispose():V
+- pa:getEditorTabName(com.intellij.diff.impl.DiffEditorViewer):java.lang.String
+- f:getPreviewFile():com.intellij.openapi.vfs.VirtualFile
+- f:getProject():com.intellij.openapi.project.Project
+- p:handleEscapeKey():V
+- a:hasContent():Z
+- isDisposed():Z
+- f:isPreviewOpen():Z
+- openPreview(Z):Z
+- performDiffAction():Z
+- updateDiffAction(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.vcs.ex.BlockI
 - a:getEnd():I
 - a:getStart():I

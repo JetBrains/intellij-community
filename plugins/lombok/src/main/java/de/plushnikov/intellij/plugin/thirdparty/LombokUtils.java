@@ -8,6 +8,7 @@ import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 /**
@@ -490,6 +491,8 @@ public final class LombokUtils {
     final String result;
 
     fieldName = accessorsInfo.removePrefix(fieldName);
+    if (fieldName == null) return "";
+
     if (accessorsInfo.isFluent()) {
       return fieldName;
     }
@@ -562,6 +565,8 @@ public final class LombokUtils {
     Collection<String> result = new HashSet<>();
 
     fieldName = accessorsInfo.removePrefix(fieldName);
+    if (fieldName == null) return Collections.emptyList();
+
     if (accessorsInfo.isFluent()) {
       result.add(StringUtil.decapitalize(fieldName));
       return result;

@@ -129,7 +129,7 @@ public final class DecHelper {
           Set<Statement> setSucc = stat.getNeighboursSet(EdgeType.DIRECT_ALL, EdgeDirection.FORWARD);
           setSucc.retainAll(setDest);
 
-          if (setSucc.size() > 0) {
+          if (!setSucc.isEmpty()) {
             return false;
           }
           else {

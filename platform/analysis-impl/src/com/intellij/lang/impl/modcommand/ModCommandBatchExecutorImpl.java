@@ -26,10 +26,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -139,8 +136,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     return executeInBatch(context, next);
   }
 
-  @Nls
-  protected String executeDelete(ModDeleteFile file) {
+  protected @Nls String executeDelete(ModDeleteFile file) {
     try {
       WriteAction.run(() -> file.file().delete(this));
       return null;
@@ -150,8 +146,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     }
   }
 
-  @Nls
-  protected String executeCreate(@NotNull Project project, @NotNull ModCreateFile create) {
+  protected @Nls String executeCreate(@NotNull Project project, @NotNull ModCreateFile create) {
     FutureVirtualFile file = create.file();
     VirtualFile parent = actualize(file.getParent());
     try {
@@ -234,7 +229,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     }
   }
 
-  protected @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
+  protected @Unmodifiable @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
     return List.of(new Fragment(0, upd.oldText().length(), upd.newText().length()));
   }
 
@@ -378,8 +373,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     throw new IllegalStateException("Value of type " + newValue.getClass() + " is not supported");
   }
 
-  @NotNull
-  private static HtmlChunk getValueChunk(Object value, LocMessage.PrefixSuffix prefixSuffix) {
+  private static @NotNull HtmlChunk getValueChunk(Object value, LocMessage.PrefixSuffix prefixSuffix) {
     HtmlChunk.Element input = tag("input").attr("type", "text").attr("value", String.valueOf(value))
       .attr("size", value.toString().length() + 1).attr("readonly", "true");
     return tag("table").child(tag("tr").children(

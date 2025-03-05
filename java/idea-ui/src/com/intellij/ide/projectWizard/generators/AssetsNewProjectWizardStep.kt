@@ -6,6 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.GeneratorEmptyDirectory
+import com.intellij.ide.starters.local.GeneratorFile
 import com.intellij.ide.starters.local.GeneratorResourceFile
 import com.intellij.ide.starters.local.GeneratorTemplateFile
 import com.intellij.ide.starters.local.generator.AssetsProcessor
@@ -48,11 +49,6 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   private val templateProperties = HashMap<String, Any>()
   private val filesToOpen = HashSet<String>()
 
-  @ApiStatus.Internal
-  internal fun getTemplateProperties(): Map<String, Any> {
-    return templateProperties
-  }
-
   fun addAssets(vararg assets: GeneratorAsset) =
     addAssets(assets.toList())
 
@@ -77,6 +73,22 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
   fun addResourceAsset(path: String, resource: URL, permissions: Set<PosixFilePermission>) {
     addAssets(GeneratorResourceFile(path, permissions, resource))
+  }
+
+  fun addFileAsset(path: String, content: String, vararg permissions: PosixFilePermission) {
+    addFileAsset(path, content, permissions.toSet())
+  }
+
+  fun addFileAsset(path: String, content: String, permissions: Set<PosixFilePermission>) {
+    addAssets(GeneratorFile(path, permissions, content))
+  }
+
+  fun addFileAsset(path: String, content: ByteArray, vararg permissions: PosixFilePermission) {
+    addFileAsset(path, content, permissions.toSet())
+  }
+
+  fun addFileAsset(path: String, content: ByteArray, permissions: Set<PosixFilePermission>) {
+    addAssets(GeneratorFile(path, permissions, content))
   }
 
   fun addEmptyDirectoryAsset(path: String, vararg permissions: PosixFilePermission) {

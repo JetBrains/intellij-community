@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.diagnostic.logger
@@ -81,7 +81,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
     val library = LibraryBridgeImpl(
       libraryTable = libraryTable,
-      project = project,
+      origin = LibraryOrigin.OfProject(project),
       initialId = libraryId,
       initialEntityStorage = entityStorageOnDiff,
       targetBuilder = this.diff

@@ -20,9 +20,8 @@ public class IJPerfParserDefinition implements ParserDefinition {
 
   public static final IFileElementType FILE = new IFileElementType(IJPerfLanguage.INSTANCE);
 
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new IJPerfLexerAdapter();
   }
 
@@ -36,21 +35,18 @@ public class IJPerfParserDefinition implements ParserDefinition {
     return FILE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return IJPerfTokenSets.COMMENTS;
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     return IJPerfElementTypes.Factory.createElement(node);
   }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
@@ -234,7 +234,7 @@ version '1.0-SNAPSHOT'
   fun createMainModule() {
     val module = AtomicReference<Module?>()
     runBlocking {
-      writeAction {
+      edtWriteAction {
         val f = createProjectSubFile("project" + ".iml")
         module.set(getInstance(myProject).newModule(f.getPath(), JavaModuleType.getModuleType().getName()))
         PsiTestUtil.addContentRoot(module.get()!!, f.getParent())

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -59,8 +59,7 @@ public final class RedundantLabeledSwitchRuleCodeBlockInspection extends Abstrac
     };
   }
 
-  @Nullable
-  private static PsiStatement getSingleStatement(@NotNull PsiCodeBlock block) {
+  private static @Nullable PsiStatement getSingleStatement(@NotNull PsiCodeBlock block) {
     PsiStatement firstStatement = PsiTreeUtil.getNextSiblingOfType(block.getLBrace(), PsiStatement.class);
     if (firstStatement != null && PsiTreeUtil.getNextSiblingOfType(firstStatement, PsiStatement.class) == null) {
       return firstStatement;
@@ -69,10 +68,8 @@ public final class RedundantLabeledSwitchRuleCodeBlockInspection extends Abstrac
   }
 
   private static class UnwrapCodeBlockFix extends PsiUpdateModCommandQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return message("inspection.labeled.switch.rule.redundant.code.fix.name");
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +28,8 @@ public final class MavenAnnotationProcessorTargetType extends ModuleBasedBuildTa
     return myIsTests;
   }
 
-  @NotNull
   @Override
-  public List<MavenAnnotationProcessorTarget> computeAllTargets(@NotNull JpsModel model) {
+  public @NotNull List<MavenAnnotationProcessorTarget> computeAllTargets(@NotNull JpsModel model) {
     List<MavenAnnotationProcessorTarget> targets = new ArrayList<>();
     for (JpsModule module : model.getProject().getModules()) {
       targets.add(new MavenAnnotationProcessorTarget(this, module));
@@ -38,18 +37,16 @@ public final class MavenAnnotationProcessorTargetType extends ModuleBasedBuildTa
     return targets;
   }
 
-  @NotNull
   @Override
-  public BuildTargetLoader<MavenAnnotationProcessorTarget> createLoader(@NotNull JpsModel model) {
+  public @NotNull BuildTargetLoader<MavenAnnotationProcessorTarget> createLoader(@NotNull JpsModel model) {
     final Map<String, JpsModule> modules = new HashMap<>();
     for (JpsModule module : model.getProject().getModules()) {
       modules.put(module.getName(), module);
     }
     return new BuildTargetLoader<MavenAnnotationProcessorTarget>() {
 
-      @Nullable
       @Override
-      public MavenAnnotationProcessorTarget createTarget(@NotNull String targetId) {
+      public @Nullable MavenAnnotationProcessorTarget createTarget(@NotNull String targetId) {
         JpsModule module = modules.get(targetId);
         return module == null ? null : new MavenAnnotationProcessorTarget(MavenAnnotationProcessorTargetType.this, module);
       }

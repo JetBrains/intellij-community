@@ -54,7 +54,6 @@ import java.awt.*
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.border.EmptyBorder
-import kotlin.concurrent.Volatile
 import kotlin.math.max
 
 class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : ListCellRenderer<LookupElement> {
@@ -374,7 +373,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
       val width = getStringWidth(candidate, metrics)
       if (width <= maxWidth) -1 else 1
     }
-    val i = max(0.0, (-insIndex - 2).toDouble()).toInt()
+    val i = max(0, -insIndex - 2)
 
     return text.substring(0, i) + ELLIPSIS
   }
@@ -426,8 +425,16 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     val prefix = if (item is EmptyLookupItem) "" else lookup.itemPattern(item)
     if (prefix.isNotEmpty()) {
-      val ranges = getMatchingFragments(prefix, name)
-      if (ranges != null) {
+      var ranges: List<TextRange>? = getMatchingFragments(prefix, name)
+      if (ranges == null) {
+        val startIndex = item.lookupString.indexOf(name)
+        if (startIndex != -1) {
+          ranges = getMatchingFragments(prefix, item.lookupString)
+            ?.map { TextRange((it.startOffset - startIndex).coerceIn(0, name.length), (it.endOffset - startIndex).coerceIn(0, name.length)) }
+            ?.filter { it.length != 0 }
+        }
+      }
+      if (ranges != null && ranges.isNotEmpty()) {
         val highlighted = SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR)
         SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted)
         renderItemNameDecoration(nameComponent, itemNameDecorations)
@@ -553,8 +560,8 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     }
     if (icon.iconWidth > emptyIcon.iconWidth || icon.iconHeight > emptyIcon.iconHeight) {
       emptyIcon = EmptyIcon.create(
-        max(icon.iconWidth.toDouble(), emptyIcon.iconWidth.toDouble()).toInt(),
-        max(icon.iconHeight.toDouble(), emptyIcon.iconHeight.toDouble()).toInt())
+        max(icon.iconWidth, emptyIcon.iconWidth),
+        max(icon.iconHeight, emptyIcon.iconHeight))
       setIconInsets(nameComponent)
     }
   }
@@ -765,7 +772,10 @@ private fun renderItemNameDecoration(
         TextAttributesEffectsBuilder.create().coverWith(EffectType.WAVE_UNDERSCORE, color).applyTo(newAttributes)
         iterator.textAttributes = SimpleTextAttributes.fromTextAttributes(newAttributes)
       }
-
+      if (decoration == LookupItemDecoration.GRAY) {
+        newAttributes.foregroundColor = UIUtil.getContextHelpForeground()
+        iterator.textAttributes = SimpleTextAttributes.fromTextAttributes(newAttributes)
+      }
       // must be the last
       if (decoration == LookupItemDecoration.HIGHLIGHT_MATCHED) {
         iterator.textAttributes = SimpleTextAttributes(iterator.textAttributes.style, MATCHED_FOREGROUND_COLOR)

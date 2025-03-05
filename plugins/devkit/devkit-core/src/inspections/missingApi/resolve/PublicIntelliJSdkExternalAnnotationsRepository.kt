@@ -16,7 +16,7 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
  * Default implementation of [IntelliJSdkExternalAnnotationsRepository] that delegates to [JarRepositoryManager]
  * for searching and downloading artifacts from the IntelliJ Artifacts Repositories.
  */
-class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Project) : IntelliJSdkExternalAnnotationsRepository {
+internal class PublicIntelliJSdkExternalAnnotationsRepository(private val project: Project) : IntelliJSdkExternalAnnotationsRepository {
 
   companion object {
     const val RELEASES_REPO_URL = "https://www.jetbrains.com/intellij-repository/releases/"

@@ -25,10 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -216,7 +213,7 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
   }
 
   @TestOnly
-  public static @NotNull List<Surrounder> getAllSurrounders() {
+  public static @Unmodifiable @NotNull List<Surrounder> getAllSurrounders() {
     return ContainerUtil.map(
       CustomFoldingProvider.getAllProviders(), provider -> new CustomFoldingRegionSurrounder(provider));
   }
@@ -309,7 +306,7 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
       PsiDocumentManager.getInstance(project).commitDocument(document);
       adjustLineIndent(project, psiFile, language, TextRange.from(endOffset + delta - endString.length(), endString.length()));
       adjustLineIndent(project, psiFile, language, TextRange.from(startOffset, startString.length()));
-      rangeToSelect = TextRange.create(rangeMarkerToSelect.getStartOffset(), rangeMarkerToSelect.getEndOffset());
+      rangeToSelect = rangeMarkerToSelect.getTextRange();
       rangeMarkerToSelect.dispose();
       updater.select(rangeToSelect);
     }

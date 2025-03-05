@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDecla
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
 import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
 import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -31,7 +32,7 @@ internal class IdeKotlinDeclarationProviderFactory(private val project: Project)
     override fun createDeclarationProvider(scope: GlobalSearchScope, contextualModule: KaModule?): KotlinDeclarationProvider {
         val mainProvider = IdeKotlinDeclarationProvider(project, scope, contextualModule)
 
-        if (contextualModule is KtSourceModuleByModuleInfoForOutsider) {
+        if (contextualModule is KaSourceModuleForOutsider) {
             val fakeKtFile = PsiManager.getInstance(contextualModule.project).findFile(contextualModule.fakeVirtualFile)
             if (fakeKtFile is KtFile) {
                 val providerForFake = KotlinFileBasedDeclarationProvider(fakeKtFile)
@@ -122,7 +123,7 @@ private class IdeKotlinDeclarationProvider(
     override val hasSpecificCallablePackageNamesComputation: Boolean get() = false
 
     override fun computePackageNames(): Set<String>? =
-        contextualModule?.let { IdeKotlinModulePackageNamesProvider.getInstance(project).computePackageNames(it) }
+        contextualModule?.let { KotlinModulePackageNamesProvider.getInstance(project).computePackageNames(it) }
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
         //TODO original LC has platformSourcesFirst()

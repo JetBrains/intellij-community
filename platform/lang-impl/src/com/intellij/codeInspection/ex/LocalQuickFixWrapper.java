@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -75,7 +75,7 @@ public final class LocalQuickFixWrapper extends QuickFixAction {
     if (myFix instanceof BatchQuickFix) {
       final List<PsiElement> collectedElementsToIgnore = new ArrayList<>();
       final Runnable refreshViews = () -> {
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        DaemonCodeAnalyzerEx.getInstanceEx(project).restart("LocalQuickFixWrapper.applyFix.refreshViews");
         for (CommonProblemDescriptor descriptor : descriptors) {
           ignore(ignoredElements, descriptor, getWorkingQuickFix(descriptor.getFixes()) != null, context);
         }
@@ -124,7 +124,7 @@ public final class LocalQuickFixWrapper extends QuickFixAction {
       }
     }
     if (restart) {
-      DaemonCodeAnalyzer.getInstance(project).restart();
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("LocalQuickFixWrapper.applyFix");
     }
     return result;
   }

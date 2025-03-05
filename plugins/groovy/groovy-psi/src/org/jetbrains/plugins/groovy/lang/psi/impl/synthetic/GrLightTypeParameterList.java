@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
@@ -51,8 +51,7 @@ public class GrLightTypeParameterList extends LightElement implements GrTypePara
   }
 
   @SuppressWarnings("unused")
-  @NotNull
-  public GrLightTypeParameterList addTypeParameter(@NotNull GrTypeParameter typeParameter) {
+  public @NotNull GrLightTypeParameterList addTypeParameter(@NotNull GrTypeParameter typeParameter) {
     myTypeParameters.add(typeParameter);
     return this;
   }

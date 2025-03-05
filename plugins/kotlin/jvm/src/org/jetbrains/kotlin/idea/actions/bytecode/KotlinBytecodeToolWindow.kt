@@ -126,7 +126,6 @@ class KotlinBytecodeToolWindow(
             }
 
             configuration.put(JVMConfigurationKeys.JVM_TARGET, JvmTarget.fromString(jvmTargets.selectedItem as String)!!)
-            configuration.put(JVMConfigurationKeys.IR, true)
 
             configuration.languageVersionSettings = ktFile.languageVersionSettings
 

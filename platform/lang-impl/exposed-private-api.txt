@@ -13,16 +13,11 @@ com/intellij/facet/frameworks/beans/ArtifactItem
 com/intellij/ide/actions/searcheverywhere/SearchEverywhereSpellingCorrector
 com/intellij/ide/plugins/ContainerDescriptor
 com/intellij/ide/plugins/IdeaPluginDescriptorImpl
-com/intellij/ide/todo/FileTree
-com/intellij/ide/todo/TodoNodeVisitor
-com/intellij/ide/todo/TodoTreeBuilderCoroutineHelper
-com/intellij/ide/todo/TodoView$State
 com/intellij/ide/util/gotoByName/SelectionPolicy
 com/intellij/internal/statistic/utils/PluginInfo
 com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
 com/intellij/openapi/client/ClientProjectSession
 com/intellij/openapi/components/impl/stores/IComponentStore
-com/intellij/openapi/editor/EditorMouseHoverPopupManager$Context
 com/intellij/openapi/editor/PopupBridge
 com/intellij/openapi/editor/markup/AnalyzerStatus
 com/intellij/openapi/editor/markup/UIController
@@ -32,6 +27,4 @@ com/intellij/packageDependencies/DependencyAnalysisResult
 com/intellij/platform/backend/navigation/impl/RawNavigationRequest
 com/intellij/psi/search/impl/VirtualFileEnumeration
 com/intellij/slicer/SliceManager$StoredSettingsBean
-com/intellij/util/indexing/IndexableFileSet
 com/intellij/util/indexing/dependencies/AppIndexingDependenciesToken
-com/intellij/util/indexing/projectFilter/ProjectIndexableFilesFilterHolder

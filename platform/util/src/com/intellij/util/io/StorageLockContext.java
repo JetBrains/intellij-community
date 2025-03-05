@@ -188,8 +188,7 @@ public final class StorageLockContext {
     return newFilePageCache;
   }
 
-  @NotNull
-  public PageContentLockingStrategy lockingStrategyWithGlobalLock() {
+  public @NotNull PageContentLockingStrategy lockingStrategyWithGlobalLock() {
     return defaultPageContentLockingStrategy;
   }
 

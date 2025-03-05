@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import org.jetbrains.annotations.Nullable;
@@ -10,8 +10,7 @@ public class ClosureParameterInfo {
 
   private final String myName;
 
-  @Nullable
-  private final String myType;
+  private final @Nullable String myType;
 
   public ClosureParameterInfo(@Nullable String type, String name) {
     myName = name;
@@ -22,8 +21,7 @@ public class ClosureParameterInfo {
     return myName;
   }
 
-  @Nullable
-  public String getType() {
+  public @Nullable String getType() {
     return myType;
   }
 }

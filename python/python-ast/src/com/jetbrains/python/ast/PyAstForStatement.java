@@ -31,14 +31,12 @@ import static com.jetbrains.python.ast.PyAstElementKt.findNotNullChildByClass;
  */
 @ApiStatus.Experimental
 public interface PyAstForStatement extends PyAstLoopStatement, PyAstStatementWithElse, PyAstNamedElementContainer {
-  @NotNull
-  default PyAstForPart getForPart() {
+  default @NotNull PyAstForPart getForPart() {
     return findNotNullChildByClass(this, PyAstForPart.class);
   }
 
   @Override
-  @NotNull
-  default List<PsiNamedElement> getNamedElements() {
+  default @NotNull List<PsiNamedElement> getNamedElements() {
     PyAstExpression tgt = getForPart().getTarget();
     final List<PyAstExpression> expressions = PyUtilCore.flattenedParensAndStars(tgt);
     final List<PsiNamedElement> results = new ArrayList<>();

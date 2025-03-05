@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAnd
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.SUPER_HAS_EQUALS
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.SUPER_HAS_HASHCODE
 import org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateEqualsAndHashcodeAction.Companion.SUPER_PARAM_NAME
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -228,7 +228,7 @@ object GenerateEqualsAndHashCodeUtils {
         }
 
         if (klass.hasActualModifier()) {
-            val expectClass = klass.expectedDeclarationIfAny() as? KtClassOrObject ?: return
+            val expectClass = klass.expectDeclarationIfAny() as? KtClassOrObject ?: return
             if (expectClass.declarations.any { declaration ->
                 declaration is KtNamedFunction &&
                         declaration.name == function.name &&

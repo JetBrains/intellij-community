@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.converters.values;
 
 import com.intellij.openapi.util.Comparing;
@@ -83,7 +83,7 @@ public class GenericDomValueConvertersRegistry {
     registerConverter(new NumberValueConverter<>(BigInteger.class, true), BigInteger.class);
   }
 
-  public void registerConverter(@NotNull Converter<?> provider, @NotNull final PsiType type) {
+  public void registerConverter(@NotNull Converter<?> provider, final @NotNull PsiType type) {
     registerConverter(provider, pair -> Comparing.equal(pair.getFirst(), type));
   }
 
@@ -91,20 +91,17 @@ public class GenericDomValueConvertersRegistry {
     myConditionConverters.put(condition, provider);
   }
 
-  @Nullable
-  public final Converter<?> getConverter(@NotNull GenericDomValue<?> domValue, @Nullable PsiType type) {
+  public final @Nullable Converter<?> getConverter(@NotNull GenericDomValue<?> domValue, @Nullable PsiType type) {
     final Pair<PsiType, GenericDomValue<?>> pair = Pair.create(type, domValue);
     final Converter<?> converter = getRegisteredConverter(pair);
     return converter != null?  converter : getCustomConverter(pair);
   }
 
-  @Nullable
-  protected Converter<?> getCustomConverter(Pair<PsiType, GenericDomValue<?>> pair) {
+  protected @Nullable Converter<?> getCustomConverter(Pair<PsiType, GenericDomValue<?>> pair) {
     return null;
   }
 
-    @Nullable
-  protected Converter<?> getRegisteredConverter(Pair<PsiType, GenericDomValue<?>> pair) {
+    protected @Nullable Converter<?> getRegisteredConverter(Pair<PsiType, GenericDomValue<?>> pair) {
     for (@NotNull Condition<Pair<PsiType, GenericDomValue<?>>> condition : myConditionConverters.keySet()) {
       if (condition.value(pair)) {
         return myConditionConverters.get(condition);

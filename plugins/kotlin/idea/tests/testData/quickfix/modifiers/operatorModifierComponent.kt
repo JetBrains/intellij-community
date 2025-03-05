@@ -1,5 +1,6 @@
 // "Add 'operator' modifier" "true"
 // ERROR: 'operator' modifier is required on 'component2' in 'A'
+// K2_AFTER_ERROR: 'operator' modifier is required on 'FirNamedFunctionSymbol /A.component2' in 'component2'.
 
 class A {
     fun component1(): Int = 0
@@ -10,6 +11,5 @@ fun foo() {
     val (<caret>zero, one) = A()
 }
 
-
-/* IGNORE_K2 */
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory$createAction$1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModifierFix

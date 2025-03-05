@@ -46,6 +46,7 @@ import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
@@ -84,6 +85,20 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     myProject = project;
     myModel = new MyModel(component);
     init(component);
+  }
+
+  InspectorTable(final @NotNull UiInspectorCustomComponentChildProvider provider, @Nullable Project project) {
+    super(true, 0.75f);
+    myProject = project;
+    myModel = new MyModel(provider);
+    init(null);
+  }
+
+  InspectorTable(final @NotNull Accessible accessible, @Nullable Project project) {
+    super(true, 0.75f);
+    myProject = project;
+    myModel = new MyModel(accessible);
+    init(null);
   }
 
   private void init(@Nullable Component component) {
@@ -219,6 +234,22 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
     MyModel(@NotNull Component c) {
       myComponent = c;
       myProperties.addAll(ComponentPropertiesCollector.collect(c));
+    }
+
+    MyModel(@NotNull Accessible a) {
+      myComponent = null;
+      myProperties.addAll(ComponentPropertiesCollector.collect(a));
+    }
+
+    MyModel(@NotNull UiInspectorCustomComponentChildProvider provider) {
+      myComponent = null;
+
+      Object propertiesHolder = provider.getObjectForProperties();
+      if (propertiesHolder != null) {
+        myProperties.addAll(ComponentPropertiesCollector.collect(propertiesHolder, provider.getPropertiesMethodList()));
+      }
+
+      myProperties.addAll(provider.getUiInspectorContext());
     }
 
     @Override
@@ -393,7 +424,9 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
       }
       else if (myProject != null) {
         if (myPreviewComponent == null) {
-          myPreviewComponent = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+          var builder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
+          builder.setUseOwnModalityStateForUpdates(true);
+          myPreviewComponent = builder.getConsole();
           JComponent consoleComponent = myPreviewComponent.getComponent();
           consoleComponent.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
         }

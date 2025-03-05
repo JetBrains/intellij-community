@@ -74,6 +74,10 @@ class DistributionComboBox(
     }
   }
 
+  fun hasLoadingItem(): Boolean {
+    return collectionModel.contains(Item.ListLoading)
+  }
+
   fun removeLoadingItem() {
     collectionModel.remove(Item.ListLoading)
   }

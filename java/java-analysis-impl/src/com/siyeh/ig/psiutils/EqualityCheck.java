@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.PsiConditionalExpression;
@@ -34,9 +34,8 @@ public final class EqualityCheck {
    * @return an {@link EqualityCheck} which represents an equality check performed on given expression; null if equality check
    * was not found in given expression.
    */
-  @Nullable
   @Contract("null -> null")
-  public static EqualityCheck from(PsiExpression expression) {
+  public static @Nullable EqualityCheck from(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiMethodCallExpression call) {
       if (MethodCallUtils.isEqualsCall(call)) {
@@ -72,13 +71,11 @@ public final class EqualityCheck {
     return null;
   }
 
-  @NotNull
-  public PsiExpression getLeft() {
+  public @NotNull PsiExpression getLeft() {
     return myLeft;
   }
 
-  @NotNull
-  public PsiExpression getRight() {
+  public @NotNull PsiExpression getRight() {
     return myRight;
   }
 

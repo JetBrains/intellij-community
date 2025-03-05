@@ -1,41 +1,44 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
-import com.intellij.platform.util.coroutines.childScope
-import com.intellij.xdebugger.impl.XDebuggerActiveSessionEntity
-import fleet.kernel.rete.asQuery
-import fleet.kernel.rete.get
-import fleet.kernel.rete.tokensFlow
+import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
+import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+import com.intellij.xdebugger.impl.frame.XValueMarkers
+import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
+import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
+import com.intellij.xdebugger.impl.rpc.XValueMarkerId
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.supervisorScope
 
 internal class FrontendXDebuggerSession(
   private val project: Project,
   private val cs: CoroutineScope,
-  sessionEntity: XDebuggerActiveSessionEntity,
+  sessionDto: XDebugSessionDto,
 ) {
-  private var evaluatorCoroutineScope: CoroutineScope? = null
+  private val localEditorsProvider = sessionDto.editorsProvider
+  private val sessionId = sessionDto.id
 
   val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
-    sessionEntity.asQuery()[XDebuggerActiveSessionEntity.EvaluatorId].tokensFlow()
-      .map { token -> token.value.takeIf { token.added } }
-      .map { evaluatorId ->
-        evaluatorCoroutineScope?.cancel()
-        if (evaluatorId != null) {
-          val newEvaluatorCoroutineScope = cs.childScope("FrontendXDebuggerEvaluator")
-          evaluatorCoroutineScope = newEvaluatorCoroutineScope
-          FrontendXDebuggerEvaluator(project, newEvaluatorCoroutineScope, evaluatorId)
+    channelFlow {
+      XDebugSessionApi.getInstance().currentEvaluator(sessionId).collectLatest { evaluatorDto ->
+        if (evaluatorDto == null) {
+          send(null)
+          return@collectLatest
         }
-        else {
-          evaluatorCoroutineScope = null
-          null
+        supervisorScope {
+          val evaluator = createFrontendXDebuggerEvaluator(project, this, evaluatorDto)
+          send(evaluator)
+          awaitCancellation()
         }
       }
-      .stateIn(cs, SharingStarted.Eagerly, null)
+    }.stateIn(cs, SharingStarted.Eagerly, null)
+
+  val editorsProvider: XDebuggerEditorsProvider = localEditorsProvider ?: FrontendXDebuggerEditorsProvider()
+
+  val valueMarkers: XValueMarkers<FrontendXValue, XValueMarkerId> = FrontendXValueMarkers(project)
 }

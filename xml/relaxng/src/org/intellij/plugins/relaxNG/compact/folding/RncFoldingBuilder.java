@@ -42,7 +42,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
     final ArrayList<FoldingDescriptor> regions = new ArrayList<>();
     process(node, document, regions);
 
-    return regions.size() > 0
+    return !regions.isEmpty()
            ? regions.toArray(FoldingDescriptor.EMPTY_ARRAY)
            : FoldingDescriptor.EMPTY_ARRAY;
   }

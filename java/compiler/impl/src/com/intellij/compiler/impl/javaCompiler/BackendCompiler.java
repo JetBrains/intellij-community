@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.openapi.compiler.CompilableFileTypesProvider;
@@ -55,8 +55,7 @@ public interface BackendCompiler {
    * Consider inheriting {@link org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions}, most of the
    * places expect it as an implementation.
    */
-  @NotNull
-  default CompilerOptions getOptions() {
+  default @NotNull CompilerOptions getOptions() {
     return EMPTY_OPTIONS;
   }
 }

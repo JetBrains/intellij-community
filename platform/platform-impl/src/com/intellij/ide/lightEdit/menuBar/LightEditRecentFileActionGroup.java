@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.RecentProjectListActionProvider;
@@ -19,6 +19,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,7 +56,7 @@ final class LightEditRecentFileActionGroup extends ActionGroup implements DumbAw
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private static @NotNull List<VirtualFile> getRecentFiles(@NotNull Project project) {
+  private static @Unmodifiable @NotNull List<VirtualFile> getRecentFiles(@NotNull Project project) {
     List<VirtualFile> historyFiles = EditorHistoryManager.getInstance(project).getFileList();
     LinkedHashSet<VirtualFile> result = new LinkedHashSet<>(historyFiles);
     Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()).forEach(result::remove);

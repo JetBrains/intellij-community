@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.GroovyRtJarPaths;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
@@ -29,12 +28,14 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GroovyBuilder extends ModuleLevelBuilder {
+public final class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(GroovyBuilder.class);
   static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
   private static final Key<Boolean> FILES_MARKED_DIRTY_FOR_NEXT_ROUND = Key.create("SRC_MARKED_DIRTY");
@@ -83,11 +84,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   @Override
   public void buildStarted(CompileContext context) {
     if (myForStubs) {
-      File stubRoot = getStubRoot(context);
-      if (stubRoot.exists() && !FileUtil.deleteWithRenaming(stubRoot)) {
+      Path stubRoot = getStubRoot(context);
+      if (Files.exists(stubRoot) && !FileUtil.deleteWithRenaming(stubRoot)) {
         context.processMessage(new CompilerMessage(
           myBuilderName, BuildMessage.Kind.ERROR,
-          GroovyJpsBundle.message("external.build.cannot.clean.path.0", stubRoot.getPath())
+          GroovyJpsBundle.message("external.build.cannot.clean.path.0", stubRoot.toString())
         ));
       }
     }
@@ -100,8 +101,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     STUB_TO_SRC.set(context, null);
   }
 
-  static File getStubRoot(CompileContext context) {
-    return new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), "groovyStubs");
+  static @NotNull Path getStubRoot(CompileContext context) {
+    return context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageDir().resolve("groovyStubs");
   }
 
   static @Nullable Map<ModuleBuildTarget, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
@@ -161,17 +162,16 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return 100;
   }
 
-  private static class RecompileStubSources implements ClassPostProcessor {
-
+  private static final class RecompileStubSources implements ClassPostProcessor {
     @Override
     public void process(CompileContext context, OutputFileObject out) {
       final Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
       if (stubToSrc != null) {
         for (String groovy : Iterators.filter(Iterators.map(out.getSourceFiles(), file -> stubToSrc.get(FileUtil.toSystemIndependentName(file.getPath()))), Iterators.notNullFilter())) {
           try {
-            final File groovyFile = new File(groovy);
+            Path groovyFile = Path.of(groovy);
             if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
-              FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
+              FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile.toFile());
               FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
             }
           }

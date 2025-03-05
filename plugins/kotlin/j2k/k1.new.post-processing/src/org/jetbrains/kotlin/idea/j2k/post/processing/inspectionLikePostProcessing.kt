@@ -3,6 +3,9 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommandWithContext
+import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElement
@@ -26,6 +29,27 @@ internal inline fun <reified E : PsiElement, I : SelfTargetingRangeIntention<E>>
     override fun apply(element: E) {
         intention.applyTo(element, null)
     }
+
+    override val writeActionNeeded = writeActionNeeded
+}
+
+internal inline fun <reified E : PsiElement, I : PsiBasedModCommandAction<E>> modCommandBasedProcessing(
+    modCommandAction: I,
+    writeActionNeeded: Boolean = true,
+    noinline additionalChecker: (E) -> Boolean = { true }
+) = object : InspectionLikeProcessingForElement<E>(E::class.java) {
+    override fun isApplicableTo(element: E, settings: ConverterSettings): Boolean =
+        additionalChecker(element) && modCommandAction.getPresentation(context(element)) != null
+
+    override fun apply(element: E) {
+        val context = context(element)
+        val perform = modCommandAction.perform(context)
+        val commandWithContext = ModCommandWithContext(context, perform)
+        commandWithContext.executeInBatch()
+    }
+
+    private fun context(element: E): ActionContext =
+        ActionContext(element.project, element.containingFile, element.textRange.startOffset, element.textRange, element)
 
     override val writeActionNeeded = writeActionNeeded
 }

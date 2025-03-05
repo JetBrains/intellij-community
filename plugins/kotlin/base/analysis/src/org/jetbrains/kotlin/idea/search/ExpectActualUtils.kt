@@ -17,26 +17,26 @@ import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 object ExpectActualUtils {
-    fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
-        ExpectActualSupport.getInstance(project).expectedDeclarationIfAny(this)
+    fun KtDeclaration.expectDeclarationIfAny(): KtDeclaration? =
+        ExpectActualSupport.getInstance(project).expectDeclarationIfAny(this)
 
-    fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration> =
-        ExpectActualSupport.getInstance(project).actualsForExpected(this, module)
+    fun KtDeclaration.actualsForExpect(module: Module? = null): Set<KtDeclaration> =
+        ExpectActualSupport.getInstance(project).actualsForExpect(this, module)
 
 
-    fun liftToExpected(declaration: KtDeclaration): KtDeclaration? {
+    fun liftToExpect(declaration: KtDeclaration): KtDeclaration? {
         if (declaration is KtParameter) {
             val function = declaration.ownerFunction as? KtCallableDeclaration ?: return null
             val index = function.valueParameters.indexOf(declaration)
-            return (liftToExpected(function) as? KtCallableDeclaration)?.valueParameters?.getOrNull(index)
+            return (liftToExpect(function) as? KtCallableDeclaration)?.valueParameters?.getOrNull(index)
         }
 
-        return if (declaration.isExpectDeclaration()) declaration else declaration.expectedDeclarationIfAny()
+        return if (declaration.isExpectDeclaration()) declaration else declaration.expectDeclarationIfAny()
     }
 
     fun withExpectedActuals(classOrObject: KtDeclaration): List<KtDeclaration> {
-        val expect = liftToExpected(classOrObject) ?: return listOf(classOrObject)
-        val actuals = expect.actualsForExpected()
+        val expect = liftToExpect(classOrObject) ?: return listOf(classOrObject)
+        val actuals = expect.actualsForExpect()
         return listOf(expect) + actuals
     }
 
@@ -44,7 +44,7 @@ object ExpectActualUtils {
         kotlinOptions: KotlinReferencesSearchOptions,
         unwrappedElement: PsiNamedElement
     ): PsiNamedElement = if (kotlinOptions.searchForExpectedUsages && unwrappedElement is KtDeclaration && unwrappedElement.hasActualModifier()) {
-        unwrappedElement.expectedDeclarationIfAny() as? PsiNamedElement
+        unwrappedElement.expectDeclarationIfAny() as? PsiNamedElement
     } else {
         null
     } ?: unwrappedElement

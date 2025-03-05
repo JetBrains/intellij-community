@@ -44,6 +44,21 @@ public final class UniqueNameBuilder<T> {
       if (node == null) myChildren.put(word, node = new Node(word, this));
       return node;
     }
+
+    @Override
+    public String toString() {
+      StringBuilder builder = new StringBuilder();
+      render(builder, 0);
+      return builder.toString();
+    }
+
+    private void render(StringBuilder builder, int depth) {
+      for (int i = 0; i < depth; i++) builder.append("  ");
+      builder.append(myText.isEmpty() ? "[Root]" : myText).append("\n");
+      for (Node child : myChildren.values()) {
+        child.render(builder, depth + 1);
+      }
+    }
   }
 
   private final Node myRootNode = new Node("", null);
@@ -104,12 +119,15 @@ public final class UniqueNameBuilder<T> {
     }
 
     boolean skipFirstSeparator = true;
-    for (Node c = firstNodeBeforeNodeWithBranches; c != myRootNode; c = c.myParentNode) {
+    for (Node c = firstNodeBeforeNodeWithBranches; c != myRootNode;) {
       if (c != fileNameNode && c != firstNodeBeforeNodeWithBranches && c.myParentNode.myChildren.size() == 1) {
         b.append(mySeparator);
-        b.append("\u2026");
+        b.append("…");
 
-        while (c.myParentNode != fileNameNode && c.myParentNode.myChildren.size() == 1) c = c.myParentNode;
+        do {
+          c = c.myParentNode;
+        }
+        while (c != fileNameNode && c.myParentNode.myChildren.size() == 1); // Don't print two or more ellipses in a row.
       }
       else {
         if (c.myText.startsWith(VFS_SEPARATOR)) {
@@ -120,6 +138,7 @@ public final class UniqueNameBuilder<T> {
         else {
           b.append(c.myText);
         }
+        c = c.myParentNode;
       }
     }
     return b.toString();

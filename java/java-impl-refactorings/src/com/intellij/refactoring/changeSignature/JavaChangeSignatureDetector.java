@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -19,14 +19,13 @@ import java.util.List;
 
 public final class JavaChangeSignatureDetector implements LanguageChangeSignatureDetector<DetectedJavaChangeInfo> {
 
-  @NotNull
   @Override
-  public DetectedJavaChangeInfo createInitialChangeInfo(final @NotNull PsiElement element) {
+  public @NotNull DetectedJavaChangeInfo createInitialChangeInfo(final @NotNull PsiElement element) {
     return DetectedJavaChangeInfo.createFromMethod(PsiTreeUtil.getParentOfType(element, PsiMethod.class), false);
   }
 
   @Override
-  public void performChange(final DetectedJavaChangeInfo changeInfo, Editor editor, @NotNull final String oldText) {
+  public void performChange(final DetectedJavaChangeInfo changeInfo, Editor editor, final @NotNull String oldText) {
     changeInfo.perform(oldText, editor, true);
   }
 
@@ -126,7 +125,7 @@ public final class JavaChangeSignatureDetector implements LanguageChangeSignatur
   }
 
   @Override
-  public DetectedJavaChangeInfo createNextChangeInfo(String signature, @NotNull final DetectedJavaChangeInfo currentInfo, boolean delegate) {
+  public DetectedJavaChangeInfo createNextChangeInfo(String signature, final @NotNull DetectedJavaChangeInfo currentInfo, boolean delegate) {
     final PsiElement currentInfoMethod = currentInfo.getMethod();
     final Project project = currentInfoMethod.getProject();
 

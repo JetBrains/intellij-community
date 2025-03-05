@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 
 public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
@@ -370,7 +370,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       if (!(userObject instanceof NamedConfigurable)) break;
       final String displayName = current.getDisplayName();
       if (StringUtil.isEmptyOrSpaces(displayName)) break;
-      if (path.length() > 0) {
+      if (!path.isEmpty()) {
         path.append('|');
       }
       path.append(displayName);

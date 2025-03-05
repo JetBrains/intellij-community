@@ -62,7 +62,7 @@ public class TitledSeparator extends JPanel implements ComboBox.SelectableItem {
     setLabelFor(labelFor);
     setOpaque(false);
     updateLabelFont();
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
 
   @Override

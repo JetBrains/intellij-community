@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -9,7 +9,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.internal.statistic.utils.hasStandardExceptionPrefix
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -23,6 +23,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.BitUtil
 import com.sun.jdi.*
+import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.eval4j.*
@@ -83,7 +84,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
     override fun evaluate(context: EvaluationContextImpl): Any? {
         if (codeFragment.text.isEmpty()) {
-            return context.debugProcess.virtualMachineProxy.mirrorOfVoid()
+            return context.suspendContext.virtualMachineProxy.mirrorOfVoid()
         }
 
         if (!context.debugProcess.isAttached) {
@@ -104,7 +105,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         try {
             val executionContext = ExecutionContext(context, frameProxy)
-            return evaluateSafe(executionContext, codeFragment)
+            return evaluateSafe(executionContext)
         } catch (e: CodeFragmentCodegenException) {
             evaluationException(e.reason)
         } catch (e: EvaluateException) {
@@ -112,7 +113,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         } catch (e: IndexNotReadyException) {
             evaluationException(KotlinDebuggerEvaluationBundle.message("error.dumb.mode"))
         } catch (e: ProcessCanceledException) {
-            evaluationException(e)
+            throw e
         } catch (e: Eval4JInterpretingException) {
             evaluationException(e.cause)
         } catch (e: Exception) {
@@ -128,7 +129,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         }
     }
 
-    private fun evaluateSafe(context: ExecutionContext, codeFragment: KtCodeFragment): Any? {
+    private fun evaluateSafe(context: ExecutionContext): Any? {
         val hasCast = hasCastOperator(codeFragment)
         val compiledData = try {
             getCompiledCodeFragment(context)
@@ -185,7 +186,8 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                         codeFragment.project,
                         errorType,
                         compiledData.compilerType,
-                        context.evaluationContext.origin
+                        context.evaluationContext.origin,
+                        extractStandardExceptionFromInvocation(cause),
                     )
                 }
 
@@ -197,6 +199,11 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             }
             throw e
         }
+    }
+
+    private fun extractStandardExceptionFromInvocation(cause: Throwable?): String? {
+        return (cause as? InvocationException)?.exception()?.type()?.name()
+            ?.takeIf { hasStandardExceptionPrefix(it) }
     }
 
     private fun checkCauseOfEvaluateException(cause: Throwable, hasCast: Boolean): StatisticsEvaluationResult {
@@ -261,13 +268,10 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 }
                 try {
                     evaluateWithEval4J(context, compiledData, classLoaderRef).also {
-                        LOG.error("Eval4J success, but compiling evaluator failed with: " + original.message, original)
+                        reportErrorWithAttachments(context, codeFragment, original, headerMessage = "Eval4J success, but compiling evaluator failed with: ")
                     }
                 } catch (e: Throwable) {
-                    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                        LOG.error("Eval4J also failed: " + e.message, e)
-                    }
-                    throw original
+                    throw original.also { it.addSuppressed(e) }
                 }
             }
         } else {
@@ -368,7 +372,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 }
 
                 override fun jdiMirrorOfString(str: String): StringReference {
-                    return DebuggerUtilsEx.mirrorOfString(str, context.vm, context.evaluationContext)
+                    return DebuggerUtilsEx.mirrorOfString(str, context.evaluationContext)
                 }
 
                 override fun jdiNewArray(arrayType: ArrayType, size: Int): ArrayReference {
@@ -484,8 +488,6 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             result.value
         }
     }
-
-    override fun getModifier() = null
 
     companion object {
         @get:TestOnly

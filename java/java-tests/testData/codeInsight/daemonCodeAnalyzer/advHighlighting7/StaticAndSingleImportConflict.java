@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import x.Base1.D;
-import static <error descr="'D' is already defined in a single-type import">x.Base2.D</error>;
+import static <error descr="'x.Base1.D' is already defined in a single-type import">x.Base2.D</error>;
 
 class UsageMixed {
   void use() {

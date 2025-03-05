@@ -6,6 +6,7 @@ module fleet.rpc.server {
   requires kotlinx.serialization.json;
   requires fleet.util.core;
   requires io.opentelemetry.api;
+  requires fleet.multiplatform.shims;
   requires io.opentelemetry.context;
   requires fleet.reporting.api;
   exports fleet.rpc.server;

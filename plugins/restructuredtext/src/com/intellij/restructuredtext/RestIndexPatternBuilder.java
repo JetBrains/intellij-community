@@ -10,21 +10,19 @@ import com.intellij.restructuredtext.lexer.RestFlexLexer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RestIndexPatternBuilder implements IndexPatternBuilder {
+final class RestIndexPatternBuilder implements IndexPatternBuilder {
   public static final TokenSet COMMENTS = TokenSet.create(RestTokenTypes.COMMENT);
 
-  @Nullable
   @Override
-  public Lexer getIndexingLexer(@NotNull PsiFile file) {
+  public @Nullable Lexer getIndexingLexer(@NotNull PsiFile file) {
     if (file instanceof RestFile) {
       return new RestFlexLexer();
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public TokenSet getCommentTokenSet(@NotNull PsiFile file) {
+  public @Nullable TokenSet getCommentTokenSet(@NotNull PsiFile file) {
     if (file instanceof RestFile) {
       return COMMENTS;
     }

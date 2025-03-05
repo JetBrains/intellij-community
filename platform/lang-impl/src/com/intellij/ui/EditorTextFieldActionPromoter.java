@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionPromoter;
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,8 +40,8 @@ public final class EditorTextFieldActionPromoter implements ActionPromoter {
   };
 
   @Override
-  public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
-    ArrayList<AnAction> result = new ArrayList<>(actions);
+  public @Unmodifiable List<AnAction> promote(@NotNull @Unmodifiable List<? extends AnAction> actions, @NotNull DataContext context) {
+    List<AnAction> result = new ArrayList<>(actions);
     result.sort(ACTIONS_COMPARATOR);
     return result;
   }

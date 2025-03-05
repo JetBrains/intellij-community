@@ -3,11 +3,14 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
+import org.jetbrains.intellij.build.dependencies.LinuxLibcImpl
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.FileVisitResult
@@ -18,6 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.GZIPInputStream
 
 class BundledRuntimeImpl(
@@ -39,6 +43,7 @@ class BundledRuntimeImpl(
     get() {
       val bundledRuntimePrefix = options.bundledRuntimePrefix
       return when {
+        LinuxLibcImpl.isLinuxMusl -> "jbrsdk-"
         // required as a runtime for debugger tests
         System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean() -> "jbrsdk-"
         bundledRuntimePrefix != null -> bundledRuntimePrefix
@@ -50,20 +55,31 @@ class BundledRuntimeImpl(
   override val build: String
     get() = System.getenv("JBR_DEV_SERVER_VERSION") ?: dependenciesProperties.property("runtimeBuild")
 
+  private val homeForCurrentOsAndArchMutex = Mutex()
+  private val homeForCurrentOsAndArchValue = AtomicReference<Path>(null)
+
   override suspend fun getHomeForCurrentOsAndArch(): Path {
-    val os = OsFamily.currentOs
-    val arch = JvmArchitecture.currentJvmArch
-    val path = extract(os = os, arch = arch)
-    val home = if (os == OsFamily.MACOS) path.resolve("jbr/Contents/Home") else path.resolve("jbr")
-    val releaseFile = home.resolve("release")
-    check(Files.exists(releaseFile)) {
-      "Unable to find release file $releaseFile after extracting JBR at $path"
+    val result = homeForCurrentOsAndArchValue.get()
+    if (result != null) return result
+    homeForCurrentOsAndArchMutex.withLock {
+      val result = homeForCurrentOsAndArchValue.get()
+      if (result != null) return result
+      val os = OsFamily.currentOs
+      val arch = JvmArchitecture.currentJvmArch
+      val path = extract(os = os, arch = arch)
+      val home = if (os == OsFamily.MACOS) path.resolve("jbr/Contents/Home") else path.resolve("jbr")
+      val releaseFile = home.resolve("release")
+      check(Files.exists(releaseFile)) {
+        "Unable to find release file $releaseFile after extracting JBR at $path"
+      }
+      homeForCurrentOsAndArchValue.set(home)
+      return home
     }
-    return home
   }
 
   override suspend fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    val targetDir = paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
+    val isMusl = os == OsFamily.LINUX && LinuxLibcImpl.isLinuxMusl
+    val targetDir = paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-${if (isMusl) "musl-" else ""}$arch")
     val jbrDir = targetDir.resolve("jbr")
 
     val archive = findArchive(prefix, os, arch)
@@ -110,7 +126,8 @@ class BundledRuntimeImpl(
     val version = if (forceVersionWithUnderscores) split[0].replace(".", "_") else split[0]
     val buildNumber = "b${split[1]}"
     val archSuffix = getArchSuffix(arch)
-    return "${prefix}${version}-${os.jbrArchiveSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"
+    val muslSuffix = if (LinuxLibcImpl.isLinuxMusl) "-musl" else ""
+    return "${prefix}${version}-${os.jbrArchiveSuffix}${muslSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"
   }
 
   private fun runtimeBuildPrefix(): String {

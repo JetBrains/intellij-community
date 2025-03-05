@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -267,7 +268,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
     }
   }
 
-  public @NotNull List<T> getCheckedItems() {
+  public @Unmodifiable @NotNull List<T> getCheckedItems() {
     return ContainerUtil.mapNotNull(myItemMap.entrySet(),
                                     entry -> entry.getValue().isSelected() ? entry.getKey() : null);
   }

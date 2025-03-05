@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
@@ -53,8 +53,8 @@ public class FillPermitsListFix extends PsiBasedModCommandAction<PsiIdentifier> 
                                                           @NotNull PsiClass psiClass,
                                                           @NotNull Set<PsiClass> permittedClasses) {
     Collection<String> missingInheritors = new SmartList<>();
-    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
-    for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass)) {
+    PsiJavaModule module = JavaPsiModuleUtil.findDescriptorByElement(psiClass);
+    for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass).asIterable()) {
       String errorTitle = SealedUtils.checkInheritor(psiJavaFile, module, inheritor);
       if (errorTitle != null) {
         return ModCommand.error(JavaBundle.message(errorTitle));

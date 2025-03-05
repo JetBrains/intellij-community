@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 

@@ -6,5 +6,5 @@
 // ERROR: Reference has a nullable type 'String?', use explicit '?.invoke()' to make a function-like call instead
 
 fun String?.foo(exec: (String.() -> Unit)) = exec<caret>()
-/* IGNORE_K2 */
+// IGNORE_K2
 // Note: this quick fix is incorrect: neither `exec?.invoke()`, nor `exec?.let { it() }` is the same as `this?.exec()`

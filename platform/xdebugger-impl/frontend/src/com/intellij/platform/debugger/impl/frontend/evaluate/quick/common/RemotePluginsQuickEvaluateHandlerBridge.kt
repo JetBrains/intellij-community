@@ -1,27 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.evaluate.quick.common
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
-import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.RemoteValueHintId
 import com.intellij.xdebugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
-import com.intellij.xdebugger.settings.XDebuggerSettingsManager
-import fleet.util.logging.logger
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.concurrency.asPromise
-import org.jetbrains.concurrency.resolvedPromise
 import java.awt.Point
 
 @ApiStatus.Internal

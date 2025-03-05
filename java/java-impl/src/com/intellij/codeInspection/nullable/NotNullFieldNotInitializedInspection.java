@@ -6,7 +6,6 @@ import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddVariableInitializerFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InitializeFinalFieldInConstructorFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -19,6 +18,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -56,7 +56,7 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
         NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(field);
         if (info == null || info.getNullability() != Nullability.NOT_NULL) return;
         
-        if (HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field) ||
+        if (ControlFlowUtil.isFieldInitializedAfterObjectConstruction(field) ||
             isWrittenIndirectly(field)) {
           return;
         }
@@ -124,7 +124,7 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
           if (target != null && !target.hasModifierProperty(PsiModifier.STATIC) &&
               target.getContainingClass() == constructor.getContainingClass() && !target.isConstructor()) {
             PsiCodeBlock targetBody = target.getBody();
-            if (targetBody != null && HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, targetBody)) {
+            if (targetBody != null && ControlFlowUtil.variableDefinitelyAssignedIn(field, targetBody)) {
               return true;
             }
           }
@@ -145,7 +145,7 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
     PsiMethod method = TestFrameworks.getInstance().findSetUpMethod(field.getContainingClass());
     if (method != null) {
       PsiCodeBlock body = method.getBody();
-      if (body != null && HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
+      if (body != null && ControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
         return true;
       }
     }

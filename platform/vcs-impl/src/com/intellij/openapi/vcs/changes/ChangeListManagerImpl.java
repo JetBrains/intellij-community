@@ -105,7 +105,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   private FileHolderComposite myComposite;
   private final ChangeListWorker myWorker;
 
-  @Nullable private List<LocalChangeListImpl> myDisabledWorkerState;
+  private @Nullable List<LocalChangeListImpl> myDisabledWorkerState;
 
   private boolean myInitialUpdate = true;
   private VcsException myUpdateException;
@@ -114,8 +114,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   private volatile @Nls String myFreezeName;
 
-  @NotNull private final Set<String> myListsToBeDeletedSilently = new HashSet<>();
-  @NotNull private final Set<String> myListsToBeDeleted = new HashSet<>();
+  private final @NotNull Set<String> myListsToBeDeletedSilently = new HashSet<>();
+  private final @NotNull Set<String> myListsToBeDeleted = new HashSet<>();
   private boolean myEmptyListDeletionScheduled;
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
@@ -169,29 +169,20 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       }
     }, this);
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-        @Override
-        public void projectClosing(@NotNull Project project) {
-          if (project == ChangeListManagerImpl.this.project) {
+    Disposer.register(this, myUpdateDisposable); // register defensively, in case "projectClosing" won't be called
+    busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        if (project == ChangeListManagerImpl.this.project) {
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
             //noinspection TestOnlyProblems
             waitEverythingDoneInTestMode();
-            Disposer.dispose(myUpdateDisposable);
           }
+          // Can't use Project disposable - it will be called after pending tasks are finished
+          Disposer.dispose(myUpdateDisposable);
         }
-      });
-    }
-    else {
-      busConnection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-        @Override
-        public void projectClosing(@NotNull Project project) {
-          if (project == ChangeListManagerImpl.this.project) {
-            // Can't use Project disposable - it will be called after pending tasks are finished
-            Disposer.dispose(myUpdateDisposable);
-          }
-        }
-      });
-    }
+      }
+    });
   }
 
   @Override
@@ -287,7 +278,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
    * @return true if the changelists have to be deleted, false if not.
    */
   private static boolean showRemoveEmptyChangeListsProposal(@NotNull Project project,
-                                                            @NotNull final VcsConfiguration config,
+                                                            final @NotNull VcsConfiguration config,
                                                             @NotNull Collection<? extends ChangeList> lists) {
     if (lists.isEmpty()) {
       return false;
@@ -336,7 +327,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   private void startUpdater() {
     myUpdater.initialized();
-    BackgroundTaskUtil.syncPublisher(project, LISTS_LOADED).processLoadedLists(getChangeLists());
+    project.getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(getChangeLists());
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(VCS_CONFIGURATION_CHANGED, () -> VcsDirtyScopeManager.getInstance(project).markEverythingDirty());
@@ -438,11 +429,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         r.run();
       }
     });
-  }
-
-  @Override
-  public void scheduleUpdate() {
-    scheduleUpdateImpl();
   }
 
   @ApiStatus.Internal
@@ -696,18 +682,15 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       myChangeListUpdater.finish();
     }
 
-    @NotNull
-    public FileHolderComposite getComposite() {
+    public @NotNull FileHolderComposite getComposite() {
       return myComposite;
     }
 
-    @NotNull
-    public ChangeListUpdater getChangeListUpdater() {
+    public @NotNull ChangeListUpdater getChangeListUpdater() {
       return myChangeListUpdater;
     }
 
-    @NotNull
-    public ChangeListWorker getUpdatedWorker() {
+    public @NotNull ChangeListWorker getUpdatedWorker() {
       return myChangeListUpdater.getUpdatedWorker();
     }
   }
@@ -772,16 +755,14 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  @NotNull
-  public List<LocalChangeList> getChangeLists() {
+  public @NotNull @Unmodifiable List<LocalChangeList> getChangeLists() {
     synchronized (myDataLock) {
       return myWorker.getChangeLists();
     }
   }
 
-  @NotNull
   @Override
-  public List<File> getAffectedPaths() {
+  public @NotNull List<File> getAffectedPaths() {
     List<FilePath> filePaths;
     synchronized (myDataLock) {
       filePaths = myWorker.getAffectedPaths();
@@ -790,8 +771,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  @NotNull
-  public List<VirtualFile> getAffectedFiles() {
+  public @NotNull List<VirtualFile> getAffectedFiles() {
     List<FilePath> filePaths;
     synchronized (myDataLock) {
       filePaths = myWorker.getAffectedPaths();
@@ -800,8 +780,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  @NotNull
-  public Collection<Change> getAllChanges() {
+  public @NotNull Collection<Change> getAllChanges() {
     synchronized (myDataLock) {
       return myWorker.getAllChanges();
     }
@@ -819,14 +798,12 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
    * @deprecated use {@link #getUnversionedFilesPaths}
    */
   @Deprecated
-  @NotNull
-  public List<VirtualFile> getUnversionedFiles() {
+  public @NotNull List<VirtualFile> getUnversionedFiles() {
     return mapNotNull(getUnversionedFilesPaths(), FilePath::getVirtualFile);
   }
 
-  @NotNull
   @Override
-  public List<FilePath> getUnversionedFilesPaths() {
+  public @NotNull List<FilePath> getUnversionedFilesPaths() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return new ArrayList<>(myComposite.getUnversionedFileHolder().getFiles());
@@ -834,9 +811,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     });
   }
 
-  @NotNull
   @Override
-  public List<VirtualFile> getModifiedWithoutEditing() {
+  public @NotNull List<VirtualFile> getModifiedWithoutEditing() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return myComposite.getModifiedWithoutEditingFileHolder().getFiles();
@@ -844,9 +820,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     });
   }
 
-  @NotNull
   @Override
-  public List<FilePath> getIgnoredFilePaths() {
+  public @NotNull List<FilePath> getIgnoredFilePaths() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return new ArrayList<>(myComposite.getIgnoredFileHolder().getFiles());
@@ -910,8 +885,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     });
   }
 
-  @Nullable
-  public Map<VirtualFile, String> getSwitchedRoots() {
+  public @Nullable Map<VirtualFile, String> getSwitchedRoots() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return myComposite.getRootSwitchFileHolder().getFilesMapCopy();
@@ -946,16 +920,14 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  @Nullable
-  public LocalChangeList findChangeList(final String name) {
+  public @Nullable LocalChangeList findChangeList(final String name) {
     synchronized (myDataLock) {
       return myWorker.getChangeListByName(name);
     }
   }
 
   @Override
-  @Nullable
-  public LocalChangeList getChangeList(@Nullable String id) {
+  public @Nullable LocalChangeList getChangeList(@Nullable String id) {
     synchronized (myDataLock) {
       return myWorker.getChangeListById(id);
     }
@@ -1014,12 +986,12 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public void setDefaultChangeList(@NotNull final LocalChangeList list) {
+  public void setDefaultChangeList(final @NotNull LocalChangeList list) {
     setDefaultChangeList(list, false);
   }
 
   @Override
-  public void setDefaultChangeList(@NotNull final LocalChangeList list, boolean automatic) {
+  public void setDefaultChangeList(final @NotNull LocalChangeList list, boolean automatic) {
     setDefaultChangeList(list.getName(), automatic);
   }
 
@@ -1035,7 +1007,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
+  public boolean editName(final @NotNull String fromName, final @NotNull String toName) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final boolean result = myModifier.editName(fromName, toName);
@@ -1073,7 +1045,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<@NotNull Change> changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull List<? extends @NotNull Change> changes) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);
@@ -1082,17 +1054,15 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     });
   }
 
-  @NotNull
   @Override
-  public LocalChangeList getDefaultChangeList() {
+  public @NotNull LocalChangeList getDefaultChangeList() {
     synchronized (myDataLock) {
       return myWorker.getDefaultList();
     }
   }
 
-  @NotNull
   @Override
-  public String getDefaultListName() {
+  public @NotNull String getDefaultListName() {
     synchronized (myDataLock) {
       return myWorker.getDefaultList().getName();
     }
@@ -1128,29 +1098,25 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  @Nullable
-  public Change getChange(@NotNull VirtualFile file) {
+  public @Nullable Change getChange(@NotNull VirtualFile file) {
     if (!file.isInLocalFileSystem()) return null;
     return getChange(VcsUtil.getFilePath(file));
   }
 
   @Override
-  @NotNull
-  public List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
+  public @NotNull List<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes) {
     synchronized (myDataLock) {
       return myWorker.getAffectedLists(changes);
     }
   }
 
-  @NotNull
   @Override
-  public List<LocalChangeList> getChangeLists(@NotNull Change change) {
+  public @NotNull List<LocalChangeList> getChangeLists(@NotNull Change change) {
     return getAffectedLists(Collections.singletonList(change));
   }
 
-  @NotNull
   @Override
-  public List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
+  public @NotNull List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
     if (!file.isInLocalFileSystem()) return Collections.emptyList();
     synchronized (myDataLock) {
       Change change = myWorker.getChangeForPath(VcsUtil.getFilePath(file));
@@ -1160,20 +1126,17 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  @Nullable
-  public LocalChangeList getChangeList(@NotNull Change change) {
+  public @Nullable LocalChangeList getChangeList(@NotNull Change change) {
     return ContainerUtil.getFirstItem(getChangeLists(change));
   }
 
   @Override
-  @Nullable
-  public LocalChangeList getChangeList(@NotNull VirtualFile file) {
+  public @Nullable LocalChangeList getChangeList(@NotNull VirtualFile file) {
     return ContainerUtil.getFirstItem(getChangeLists(file));
   }
 
   @Override
-  @Nullable
-  public Change getChange(final FilePath file) {
+  public @Nullable Change getChange(final FilePath file) {
     synchronized (myDataLock) {
       return myWorker.getChangeForPath(file);
     }
@@ -1195,21 +1158,18 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     });
   }
 
-  @NotNull
   @Override
-  public FileStatus getStatus(@NotNull FilePath path) {
+  public @NotNull FileStatus getStatus(@NotNull FilePath path) {
     return getStatus(path, path.getVirtualFile());
   }
 
   @Override
-  @NotNull
-  public FileStatus getStatus(@NotNull VirtualFile file) {
+  public @NotNull FileStatus getStatus(@NotNull VirtualFile file) {
     if (!file.isInLocalFileSystem()) return FileStatus.NOT_CHANGED;
     return getStatus(VcsUtil.getFilePath(file), file);
   }
 
-  @NotNull
-  private FileStatus getStatus(@NotNull FilePath path, @Nullable VirtualFile file) {
+  private @NotNull FileStatus getStatus(@NotNull FilePath path, @Nullable VirtualFile file) {
     VcsRoot vcsRoot = file != null ? ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(file)
                                    : ProjectLevelVcsManager.getInstance(project).getVcsRootObjectFor(path);
     if (vcsRoot == null) return FileStatus.NOT_CHANGED;
@@ -1233,15 +1193,13 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  @NotNull
-  public Collection<Change> getChangesIn(@NotNull VirtualFile dir) {
+  public @NotNull Collection<Change> getChangesIn(@NotNull VirtualFile dir) {
     if (!dir.isInLocalFileSystem()) return Collections.emptySet();
     return getChangesIn(VcsUtil.getFilePath(dir));
   }
 
-  @NotNull
   @Override
-  public ThreeState haveChangesUnder(@NotNull final VirtualFile vf) {
+  public @NotNull ThreeState haveChangesUnder(final @NotNull VirtualFile vf) {
     if (!vf.isValid() || !vf.isDirectory()) return ThreeState.NO;
     synchronized (myDataLock) {
       return myWorker.haveChangesUnder(vf);
@@ -1249,8 +1207,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  @NotNull
-  public Collection<Change> getChangesIn(@NotNull FilePath dirPath) {
+  public @NotNull Collection<Change> getChangesIn(@NotNull FilePath dirPath) {
     return getAllChanges().stream().filter(change -> isChangeUnder(dirPath, change)).collect(toSet());
   }
 
@@ -1262,7 +1219,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   }
 
   @Override
-  public void addUnversionedFiles(@Nullable final LocalChangeList list, @NotNull final List<? extends VirtualFile> files) {
+  public void addUnversionedFiles(final @Nullable LocalChangeList list, final @NotNull List<? extends VirtualFile> files) {
     ScheduleForAdditionAction.Manager.addUnversionedFilesToVcs(project, list, files);
   }
 
@@ -1361,9 +1318,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     }
   }
 
-  @NotNull
   @Override
-  public List<CommitExecutor> getRegisteredExecutors() {
+  public @NotNull List<CommitExecutor> getRegisteredExecutors() {
     return Collections.unmodifiableList(myRegisteredCommitExecutors);
   }
 
@@ -1429,9 +1385,8 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       return FileUtil.isAncestor(shelfPath, filePath.getPath(), false);
     }
 
-    @NotNull
     @Override
-    public Set<IgnoredFileDescriptor> getIgnoredFiles(@NotNull Project project) {
+    public @NotNull Set<IgnoredFileDescriptor> getIgnoredFiles(@NotNull Project project) {
       Set<IgnoredFileBean> ignored = new LinkedHashSet<>();
 
       String shelfPath = ShelveChangesManager.getShelfPath(project);
@@ -1442,16 +1397,14 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
       return ContainerUtil.unmodifiableOrEmptySet(ignored);
     }
 
-    @NotNull
     @Override
-    public String getIgnoredGroupDescription() {
+    public @NotNull String getIgnoredGroupDescription() {
       return VcsBundle.message("changes.text.default.ignored.files");
     }
   }
 
   @Override
-  @Nullable
-  public String getSwitchedBranch(@NotNull VirtualFile file) {
+  public @Nullable String getSwitchedBranch(@NotNull VirtualFile file) {
     if (!file.isInLocalFileSystem()) return null;
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
@@ -1620,7 +1573,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         if (vcs != null) {
           myRevisionsCache.changeRemoved(baseRevision.getPath(), vcs);
         }
-        BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
+        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
       });
     }
 
@@ -1630,12 +1583,11 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
         if (vcs != null) {
           myRevisionsCache.changeUpdated(was.getPath(), vcs);
         }
-        BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
+        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
       });
     }
 
-    @Nullable
-    private AbstractVcs getVcs(@NotNull BaseRevision baseRevision) {
+    private @Nullable AbstractVcs getVcs(@NotNull BaseRevision baseRevision) {
       AbstractVcs vcs = baseRevision.getVcs();
       if (vcs != null) return vcs;
       return myVcsManager.getVcsFor(baseRevision.getFilePath());

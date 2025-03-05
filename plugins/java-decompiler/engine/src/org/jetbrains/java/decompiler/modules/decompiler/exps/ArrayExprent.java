@@ -33,9 +33,8 @@ public class ArrayExprent extends Exprent {
     return new ArrayExprent(array.copy(), index.copy(), hardType, bytecode);
   }
 
-  @NotNull
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     VarType exprType = array.getExprType();
     if (exprType.equals(VarType.VARTYPE_NULL)) {
       return hardType.copy();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
@@ -11,8 +11,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.ui.StatusText;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,18 +33,15 @@ public class LoadingCommittedChangeListPanel implements Disposable {
     myChangesPanel.getChangesBrowser().shutdown();
   }
 
-  @NotNull
-  public JComponent getContent() {
+  public @NotNull JComponent getContent() {
     return myLoadingPanel;
   }
 
-  @NotNull
-  public JComponent getPreferredFocusedComponent() {
+  public @NotNull JComponent getPreferredFocusedComponent() {
     return myChangesPanel.getPreferredFocusedComponent();
   }
 
-  @NotNull
-  public ChangesBrowserBase getChangesBrowser() {
+  public @NotNull ChangesBrowserBase getChangesBrowser() {
     return myChangesPanel.getChangesBrowser();
   }
 
@@ -96,8 +91,8 @@ public class LoadingCommittedChangeListPanel implements Disposable {
   }
 
   public static class ChangelistData {
-    @NotNull public final CommittedChangeList changeList;
-    @Nullable public final FilePath toSelect;
+    public final @NotNull CommittedChangeList changeList;
+    public final @Nullable FilePath toSelect;
 
     public ChangelistData(@NotNull CommittedChangeList changeList, @Nullable FilePath toSelect) {
       this.changeList = changeList;

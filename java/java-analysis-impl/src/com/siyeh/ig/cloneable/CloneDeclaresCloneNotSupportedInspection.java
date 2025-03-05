@@ -42,14 +42,12 @@ public final class CloneDeclaresCloneNotSupportedInspection extends BaseInspecti
   @SuppressWarnings("PublicField") public boolean onlyWarnOnProtectedClone = true;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CloneDoesntDeclareCloneNotSupportedException";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("clone.doesnt.declare.clonenotsupportedexception.problem.descriptor");
   }
 
@@ -77,8 +75,7 @@ public final class CloneDeclaresCloneNotSupportedInspection extends BaseInspecti
   private static class CloneDeclaresCloneNotSupportedInspectionFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("clone.doesnt.declare.clonenotsupportedexception.declare.quickfix");
     }
 

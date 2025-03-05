@@ -1,6 +1,9 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.impl.backend"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint name="pushSupport"
@@ -51,16 +54,16 @@
     </group>
 
     <group id="Dvcs.Log.ContextMenu">
-      <reference id="Vcs.CherryPick"/>
+      <reference ref="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
     </group>
     <group id="Dvcs.FileHistory.ContextMenu">
-      <reference id="Vcs.CherryPick"/>
+      <reference ref="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
     </group>
 
     <group id="Dvcs.Log.Toolbar">
-      <reference id="Vcs.CherryPick"/>
+      <reference ref="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.Log.Toolbar"/>
     </group>
 
@@ -81,6 +84,7 @@
 
   <projectListeners>
     <listener class="com.intellij.dvcs.shelf.ShelfViewUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.dvcs.repo.rhizome.RepositoryCountUpdater" topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener" activeInHeadlessMode="false"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -98,6 +102,7 @@
 
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.dvcs.repo.rhizome.RepositoryNodeToEntityConverter"/>
   </extensions>
 </idea-plugin>
 

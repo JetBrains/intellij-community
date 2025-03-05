@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.findUsages
 
@@ -58,11 +58,11 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun searchOverriders(
         element: PsiElement,
         searchScope: SearchScope,
-    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope).searchOverriders().asSequence()
+    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope).searchOverriders().asIterable().asSequence()
 
     override fun searchInheritors(
         element: PsiElement,
         searchScope: SearchScope,
         searchDeeply: Boolean,
-    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope, searchDeeply).searchInheritors().asSequence()
+    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope, searchDeeply).searchInheritors().asIterable().asSequence()
 }

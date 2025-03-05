@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.google.common.util.concurrent.FutureCallback;
@@ -95,8 +95,7 @@ public final class VcsLogUiUtil {
     return scrollPane;
   }
 
-  @NotNull
-  public static JComponent installScrollingAndProgress(@NotNull VcsLogGraphTable table, @NotNull Disposable disposableParent) {
+  public static @NotNull JComponent installScrollingAndProgress(@NotNull VcsLogGraphTable table, @NotNull Disposable disposableParent) {
     JScrollPane scrollPane = setupScrolledGraph(table, SideBorder.NONE);
     JComponent tableWithProgress = installProgress(scrollPane, table.getLogData(), table.getId(), disposableParent);
     ScrollableContentBorder.setup(scrollPane, Side.TOP, tableWithProgress);

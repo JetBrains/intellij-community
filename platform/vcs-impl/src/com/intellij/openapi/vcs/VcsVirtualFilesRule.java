@@ -21,9 +21,8 @@ import org.jetbrains.annotations.Nullable;
 public final class VcsVirtualFilesRule implements GetDataRule {
   private static final Logger LOG = Logger.getInstance(VcsVirtualFilesRule.class);
 
-  @Nullable
   @Override
-  public Object getData(@NotNull DataProvider dataProvider) {
+  public @Nullable Object getData(@NotNull DataProvider dataProvider) {
     VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
     if (files != null) {
       return JBIterable.of(files);

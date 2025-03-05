@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
@@ -19,10 +19,9 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 final class GuavaConversionUtil {
-  private final static Logger LOG = Logger.getInstance(GuavaConversionUtil.class);
+  private static final Logger LOG = Logger.getInstance(GuavaConversionUtil.class);
 
-  @Nullable
-  public static PsiType getFunctionReturnType(PsiExpression functionExpression) {
+  public static @Nullable PsiType getFunctionReturnType(PsiExpression functionExpression) {
     if (functionExpression instanceof PsiFunctionalExpression) {
       return LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)functionExpression);
     }
@@ -48,8 +47,7 @@ final class GuavaConversionUtil {
     }
   }
 
-  @NotNull
-  public static PsiType addTypeParameters(@NotNull String baseClassQualifiedName, @Nullable PsiType type, @NotNull PsiElement context) {
+  public static @NotNull PsiType addTypeParameters(@NotNull String baseClassQualifiedName, @Nullable PsiType type, @NotNull PsiElement context) {
     String parameterText = "";
     if (type != null) {
       final String canonicalText = type.getCanonicalText(false);

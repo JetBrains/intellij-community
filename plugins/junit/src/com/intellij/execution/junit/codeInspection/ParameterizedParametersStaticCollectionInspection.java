@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -80,22 +80,19 @@ public final class ParameterizedParametersStaticCollectionInspection extends Bas
       }
 
       @Override
-      @NotNull
-      public String getName() {
+      public @NotNull String getName() {
         return JUnitBundle.message("fix.data.provider.signature.fix.name", infos[0]);
       }
 
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return JUnitBundle.message("fix.data.provider.signature.family.name");
       }
     };
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     if (infos.length == 0) {
       return JUnitBundle.message("fix.data.provider.multiple.methods.problem");
     }

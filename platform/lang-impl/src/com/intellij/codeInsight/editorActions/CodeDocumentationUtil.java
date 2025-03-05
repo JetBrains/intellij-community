@@ -30,7 +30,7 @@ public final class CodeDocumentationUtil {
       return " " + lineData + " ";
     }
     else {
-      if (lineData.length() == 0) {
+      if (lineData.isEmpty()) {
         return commenter.getDocumentationCommentLinePrefix() + " ";
       }
       else {

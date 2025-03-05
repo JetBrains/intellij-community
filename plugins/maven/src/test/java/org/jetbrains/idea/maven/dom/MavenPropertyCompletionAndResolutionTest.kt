@@ -1150,8 +1150,6 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testCompletingAfterOpenBraceInOpenTag() = runBlocking {
-    if (ignore()) return@runBlocking
-
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

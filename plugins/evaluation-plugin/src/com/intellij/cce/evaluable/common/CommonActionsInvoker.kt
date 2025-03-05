@@ -36,6 +36,7 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
 
   override fun moveCaret(offset: Int) = onEdt {
     val editor = getEditorSafe(project)
+    editor.selectionModel.removeSelection()
     editor.caretModel.moveToOffset(offset)
     editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
   }
@@ -51,7 +52,7 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
       LOG.warn("Psi identifier wasn't found")
       return@runWriteCommandAction
     }
-    for (ref in ReferencesSearch.search(psiElement)) {
+    for (ref in ReferencesSearch.search(psiElement).asIterable()) {
       if (!isThisReference(ref.canonicalText) ) {
         ref.handleElementRename(text)
       }
@@ -105,7 +106,10 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
   override fun openFile(file: String): String = readActionInSmartMode(project) {
     LOG.info("Open file: $file")
     val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(fullPath(file)))
-    val descriptor = OpenFileDescriptor(project, virtualFile!!)
+    if (virtualFile == null) {
+      throw NullPointerException("Virtual file not found for path: ${fullPath(file)}")
+    }
+    val descriptor = OpenFileDescriptor(project, virtualFile)
     spaceStrippingEnabled = TrailingSpacesStripper.isEnabled(virtualFile)
     TrailingSpacesStripper.setEnabled(virtualFile, false)
     val fileEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true)

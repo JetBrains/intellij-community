@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.library;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -50,5 +50,5 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
 
   @NotNull List<Path> getPaths(@NotNull JpsOrderRootType rootType);
 
-  List<String> getRootUrls(final JpsOrderRootType rootType);
+  List<String> getRootUrls(@NotNull JpsOrderRootType rootType);
 }

@@ -43,6 +43,7 @@ public enum JavaFeature {
   METHOD_REFERENCES(LanguageLevel.JDK_1_8, "feature.method.references"),
   LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
   TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
+  REPEATING_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.repeating.annotations"),
   RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
   INTERSECTION_CASTS(LanguageLevel.JDK_1_8, "feature.intersections.in.casts"),
   STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
@@ -117,13 +118,22 @@ public enum JavaFeature {
   IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES(LanguageLevel.JDK_23_PREVIEW, "feature.implicit.import.in.implicit.classes"),
   PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
 
+  //see together with PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS and TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
   MODULE_IMPORT_DECLARATIONS(LanguageLevel.JDK_23_PREVIEW, "feature.module.import.declarations"),
+
+  /**
+   * Usually, this type of comments is shown as Javadoc despite language level.
+   * This option can be used only to adjust behavior for cases with conflicts between different types of comments (markdown and old-style)
+   */
+  MARKDOWN_COMMENT(LanguageLevel.JDK_23, "feature.markdown.comment"),
+  PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS(LanguageLevel.JDK_24_PREVIEW, "feature.package.import.shadow.module.import"),
+  TRANSITIVE_DEPENDENCY_ON_JAVA_BASE(LanguageLevel.JDK_24_PREVIEW, "feature.package.transitive.dependency.on.java.base"),
+  VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;
 
   private final @NotNull LanguageLevel myLevel;
   
-  @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) 
-  private final @NotNull String myKey;
+  private final @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) @NotNull String myKey;
   private final boolean myCanBeCustomized;
   private final Set<LanguageLevel> myObsoletePreviewLevels;
 
@@ -196,9 +206,8 @@ public enum JavaFeature {
   }
 
   // Should correspond to jdk.internal.javac.PreviewFeature.Feature enum
-  @Nullable
   @Contract(pure = true)
-  public static JavaFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
+  public static @Nullable JavaFeature convertFromPreviewFeatureName(@NotNull @NonNls String feature) {
     switch (feature) {
       case "PATTERN_MATCHING_IN_INSTANCEOF":
         return PATTERNS;

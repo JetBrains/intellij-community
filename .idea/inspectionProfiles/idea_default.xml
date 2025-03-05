@@ -4,8 +4,11 @@
     <inspection_tool class="03c8b094-627d-3aaa-8d8b-4a66542826cd" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Production" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="1875d427-35dc-3dd6-b83b-18a2a5f23be5" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="2b82dee6-0e1c-36ce-846f-749c578bd315" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="19b1f229-5172-3fef-9e68-ab45f499fec9" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="807b1a20-1c6f-3175-b372-e193a137c304" enabled="true" level="TYPO" enabled_by_default="true" editorAttributes="TYPO" />
+    <inspection_tool class="722cb6a3-860d-3bb9-bfa3-d5ef834939d5" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="81c39993-de39-3a30-9c64-ab89d04bb566" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="false" editorAttributes="INFO_ATTRIBUTES">
       <scope name="Production" level="TEXT ATTRIBUTES" enabled="true" editorAttributes="INFO_ATTRIBUTES" />
     </inspection_tool>
@@ -284,6 +287,7 @@
     <inspection_tool class="ExceptionCaughtLocallyJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ExceptionNameDoesntEndWithException" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ExtendsTagPositionInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ExtensionRegisteredAsServiceOrComponent" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="FallthroughInSwitchStatementJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="FieldAccessedSynchronizedAndUnsynchronized" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="countGettersAndSetters" value="false" />
@@ -551,7 +555,7 @@
       <option name="warnOnMissingJavadoc" value="true" />
     </inspection_tool>
     <inspection_tool class="MissingOverrideAnnotation" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="ignoreObjectMethods" value="true" />
+      <option name="ignoreObjectMethods" value="false" />
       <option name="ignoreAnonymousClassMethods" value="false" />
     </inspection_tool>
     <inspection_tool class="MisspelledCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -1125,6 +1129,21 @@
         <constraint name="file" nameOfExprType="java.io.File" within="" contains="" />
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="Consider using optimized DebuggerUtils.findMethod" uuid="ae254482-bdcc-3cf5-bbc8-3c620a599488" text="$Instance$.methodsByName($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Consider using optimized DebuggerUtils.findMethod" uuid="ae254482-bdcc-3cf5-bbc8-3c620a599488" text="$Instance$.methodsByName($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Consider using optimized DebuggerUtils.findMethod" uuid="ae254482-bdcc-3cf5-bbc8-3c620a599488" text="$Instance$.methodsByName($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType!" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="DataContext.getData(String)" description="DataContext.getData(DataKey) with a dedicated DataKey constant shall be used instead" problemDescriptor="DataContext.getData(DataKey) shall be used instead" text="$Var2$.getData($Var3$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" target="true" within="" contains="" />
         <constraint name="Var2" nameOfExprType="DataContext" within="" contains="" />
@@ -1223,6 +1242,71 @@
       <replaceConfiguration name="Disposable instance by lambda" description="It's not safe to instantiate Disposable via lambda because lambdas does not guarantee their identity." text="Disposable { }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Disposer.newDisposable()">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Do not call jdi invokeMethod directly" uuid="dc4988c0-f98d-38af-8fc4-310d96dbdf1d" problemDescriptor="Do not call jdi invokeMethod directly - use DebugProcess.invokeMethod instead" text="$Instance$.invokeMethod($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ObjectReference" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not call jdi invokeMethod directly" uuid="dc4988c0-f98d-38af-8fc4-310d96dbdf1d" text="$Instance$.invokeMethod($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ObjectReference" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not call jdi invokeMethod directly" uuid="dc4988c0-f98d-38af-8fc4-310d96dbdf1d" text="$Instance$.invokeMethod($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ClassType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not call jdi invokeMethod directly" uuid="dc4988c0-f98d-38af-8fc4-310d96dbdf1d" text="$Instance$.invokeMethod($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ClassType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not call jdi invokeMethod directly" uuid="dc4988c0-f98d-38af-8fc4-310d96dbdf1d" text="$Instance$.invokeMethod($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.InterfaceType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not call jdi invokeMethod directly" uuid="dc4988c0-f98d-38af-8fc4-310d96dbdf1d" text="$Instance$.invokeMethod($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.InterfaceType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not call jdi newInstance directly" uuid="722cb6a3-860d-3bb9-bfa3-d5ef834939d5" problemDescriptor="Do not call jdi newInstance directly - use DebugProcess.newInstance instead" text="$Instance$.newInstance($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ClassType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not call jdi newInstance directly" uuid="722cb6a3-860d-3bb9-bfa3-d5ef834939d5" text="$Instance$.newInstance($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ClassType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not use jdi mirrorOf directly" problemDescriptor="Do not use jdi mirrorOf directly - use DebuggerUtilsEx.mirrorOfString instead" text="$Instance$.mirrorOf($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.VirtualMachine" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" nameOfExprType="java\.lang\.String" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not use jdi mirrorOf directly" text="$Instance$.mirrorOf($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.VirtualMachine" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" nameOfExprType="kotlin\.String" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not use jdi mirrorOf directly" text="$Instance$.mirrorOf($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.VirtualMachine" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" nameOfExprType="java\.lang\.String" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not use jdi newInstance directly" uuid="19b1f229-5172-3fef-9e68-ab45f499fec9" problemDescriptor="Do not use jdi newInstance directly - use DebuggerUtilsEx.mirrorOfArray instead" text="$Instance$.newInstance($Parameter$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ArrayType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Do not use jdi newInstance directly" uuid="19b1f229-5172-3fef-9e68-ab45f499fec9" text="$Instance$.newInstance($Parameter$)" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ArrayType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Do not use maps with primitive value" description="It's very easy to forget to set the default return value&#10;Use the map that guarantee the default map like Int2IntWithDefaultMap&#10;See IDEA-338250 as issue example" suppressId="NoMapsWithPrimitiveValue" text="Int2IntMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
@@ -1751,6 +1835,22 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="foo" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Rpc functions must be suspend" text="interface $Class$: RemoteApi&lt;Unit&gt; {&#10;  suspend fun $Method$ ($Parameter$ : $ParameterType$)&#10;&#10;  fun $Method2$($Parameter2$ : $ParameterType2$)&#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Class" within="" contains="" />
+        <constraint name="Method" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="ParameterType" within="" contains="" />
+        <constraint name="Method2" target="true" within="" contains="" />
+        <constraint name="Parameter2" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="ParameterType2" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Rpc interfaces should be marked with @Rpc" text="@$Annotation$ &#10;interface $Name$: $Interface$ { &#10;  &#10;}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Annotation" regexp="Rpc" minCount="0" maxCount="0" within="" contains="" />
+        <constraint name="Name" target="true" within="" contains="" />
+        <constraint name="Interface" regexp="RemoteApi&lt;Unit&gt;" withinHierarchy="true" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="searchable configurable should not contain JComponent fields" text="class $Class$ implements SearchableConfigurable{ &#10;  @Modifier(&quot;Instance&quot;) $FieldType$ $FieldName$ = $Init$;&#10;  public void disposeUIResources(){}&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="Class" target="true" within="" contains="" />
         <constraint name="FieldType" regexp="javax.swing.JComponent" withinHierarchy="true" formalTypeWithinHierarchy="true" within="" contains="" />
@@ -2010,6 +2110,22 @@
       <replaceConfiguration name="TextRange can be simplified" text="TextRange.create($t$)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$t$.getTextRange()">
         <constraint name="__context__" within="" contains="" />
         <constraint name="t" nameOfExprType="com\.intellij\.openapi\.editor" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="TextRange can be simplified" description="RangeMarker.getTextRange is atomic and never return invalid TextRange" text="new com.intellij.openapi.util.TextRange($t$.getStartOffset(), $t$.getEndOffset())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$t$.getTextRange()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="t" nameOfExprType="RangeMarker" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="TextRange can be simplified" text="com.intellij.openapi.util.TextRange.create($t$.getStartOffset(), $t$.getEndOffset())" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$t$.getTextRange()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="t" nameOfExprType="RangeMarker" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="TextRange can be simplified" text="TextRange.create($t$.startOffset, $t$.endOffset)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$t$.textRange">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="t" nameOfExprType="RangeMarker" exprTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="TextRange can be simplified" text="TextRange($t$.startOffset, $t$.endOffset)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$t$.textRange">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="t" nameOfExprType="RangeMarker" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
       <searchConfiguration name="Timer creates/leaks threads" description="java.util.Timer eagerly creates a Thread on its start, which is too expensive. Please use ApplicationExecutionUtil.getScheduledExecutorService() instead  &#10;&#10;" text="new java.util.Timer($p$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
@@ -2454,6 +2570,12 @@
         <constraint name="expr" within="" contains="" />
         <constraint name="findAll" regexp="findAll" within="" contains="" _kotlinMatchCallSemantics="enabled" />
       </replaceConfiguration>
+      <searchConfiguration name="Use nio.Path instead of io.File" description="As part of the migration to com.intellij.platform.eel.EelApi, it is necessary to use nio.Path instead of io.File. This is required to route file operations via com.intellij.platform.core.nio.fs.MultiRoutingFileSystem. Moreover, the NIO API is more modern and offers better error handling and improved portability, making it the recommended choice for file system interactions." suppressId="IO_FILE_USAGE" text="java.io.File" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use nio.Path instead of io.File" suppressId="IO_FILE_USAGE" text="java.io.File" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="use NotificationGroup.toolWindowGroup().createNotification().notify() instead" text="$Instance$.notifyByBalloon($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA">
         <constraint name="Instance" nameOfExprType="com.intellij.openapi.wm.ToolWindowManager" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
@@ -2471,6 +2593,21 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="Instance" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Use optimized DebuggerUtils.findField" uuid="68d2bd70-db55-358d-84c9-06dc2fb3d82e" text="$Instance$.fieldByName($Parameter$)" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.debugger.engine.DebuggerUtils.findField($Instance$, $Parameter$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use optimized DebuggerUtils.findField" uuid="68d2bd70-db55-358d-84c9-06dc2fb3d82e" text="$Instance$.fieldByName($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.debugger.engine.DebuggerUtils.findField($Instance$, $Parameter$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Use optimized DebuggerUtils.findField" uuid="68d2bd70-db55-358d-84c9-06dc2fb3d82e" text="$Instance$.fieldByName($Parameter$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.debugger.engine.DebuggerUtils.findField($Instance$, $Parameter$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="com\.sun\.jdi\.ReferenceType!" exprTypeWithinHierarchy="true" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="Use RecursionManager?" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" regexp="Collection" withinHierarchy="true" target="true" within="" contains="" />
@@ -2615,7 +2752,7 @@
     <inspection_tool class="UnnecessaryLabelOnContinueStatement" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnnecessaryLabelOnContinueStatementJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnnecessaryLocalVariable" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="m_ignoreImmediatelyReturnedVariables" value="false" />
+      <option name="m_ignoreImmediatelyReturnedVariables" value="true" />
       <option name="m_ignoreAnnotatedVariables" value="true" />
     </inspection_tool>
     <inspection_tool class="UnnecessaryLocalVariableJS" enabled="false" level="WARNING" enabled_by_default="false">
@@ -2664,6 +2801,7 @@
       <scope name="EntityStorage" level="WARNING" enabled="true" />
     </inspection_tool>
     <inspection_tool class="be0e4d0f-a75b-39d7-8c95-5c554e8fcb40" enabled="true" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="dc4988c0-f98d-38af-8fc4-310d96dbdf1d" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
     <inspection_tool class="osmorcClassInDefaultPackage" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="osmorcNonOsgiMavenDependency" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="osmorcUnknownManifestPackage" enabled="false" level="ERROR" enabled_by_default="false" />

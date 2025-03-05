@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
@@ -21,8 +21,7 @@ import java.util.Set;
 public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalAnnotationsManager {
   public ModCommandAwareExternalAnnotationsManager(PsiManager psiManager) { super(psiManager); }
 
-  @Nullable
-  protected List<XmlFile> findExternalAnnotationsXmlFiles(@NotNull PsiModifierListOwner listOwner) {
+  protected @Nullable List<XmlFile> findExternalAnnotationsXmlFiles(@NotNull PsiModifierListOwner listOwner) {
     List<PsiFile> psiFiles = findExternalAnnotationsFiles(listOwner);
     if (psiFiles == null) {
       return null;
@@ -160,9 +159,8 @@ public class ModCommandAwareExternalAnnotationsManager extends ReadableExternalA
     }
   }
 
-  @NonNls
   @VisibleForTesting
-  public static @NotNull String createAnnotationTag(@NotNull String annotationFQName, PsiNameValuePair @Nullable [] values) {
+  public static @NonNls @NotNull String createAnnotationTag(@NotNull String annotationFQName, PsiNameValuePair @Nullable [] values) {
     @NonNls String text;
     if (values != null && values.length != 0) {
       text = "  <annotation name='" + annotationFQName + "'>\n";

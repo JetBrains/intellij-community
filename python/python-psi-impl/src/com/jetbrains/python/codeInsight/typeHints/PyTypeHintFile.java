@@ -14,9 +14,8 @@ public class PyTypeHintFile extends PyFileImpl implements PyExpressionCodeFragme
     super(viewProvider, PyTypeHintDialect.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return PyTypeHintFileType.INSTANCE;
   }
 

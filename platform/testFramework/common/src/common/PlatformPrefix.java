@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ public final class PlatformPrefix {
     "AndroidStudio", "Idea",
     /* Android Studio: Our classpath may match other platform prefixes but
        we prefer AndroidStudio and fall back to Idea without adt-branding.
-    "Rider", "GoLand", "CLion", "MobileIDE", "FleetBackend",
+    "Rider", "GoLand", "CLion", "FleetBackend",
     null,
     "AppCode", "SwiftTests",
     "Python", "DataSpell", "PyCharmCore",
@@ -58,6 +59,8 @@ public final class PlatformPrefix {
       if (resource != null) {
         if (candidate != null) {
           setPlatformPrefix(candidate);
+          var logger = Logger.getInstance(PlatformPrefix.class);
+          logger.info(String.format("Platform prefix (IDE that is emulated by this test): %s. File %s", candidate, resource));
         }
         break;
       }

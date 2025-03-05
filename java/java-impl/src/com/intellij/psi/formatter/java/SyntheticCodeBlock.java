@@ -82,6 +82,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     return JavaSpacePropertyProcessor.getSpacing(child2, mySettings, myJavaSettings);
   }
 
+  @Override
   public String toString() {
     ASTNode treeNode = null;
     Block child = mySubBlocks.get(0);

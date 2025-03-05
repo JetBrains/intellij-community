@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.platform.wasm.isWasmJs
 import org.jetbrains.kotlin.platform.wasm.isWasmWasi
 
+@K1ModeProjectStructureApi
 val BinaryModuleInfo.binariesScope: GlobalSearchScope
     get() {
         val contentScope = contentScope
@@ -36,8 +38,10 @@ val BinaryModuleInfo.binariesScope: GlobalSearchScope
         return KotlinSourceFilterScope.libraryClasses(contentScope, project)
     }
 
+@OptIn(K1ModeProjectStructureApi::class)
 internal val LOG = Logger.getInstance(IdeaModuleInfo::class.java)
 
+@K1ModeProjectStructureApi
 internal fun TargetPlatform.canDependOn(other: IdeaModuleInfo, isHmppEnabled: Boolean): Boolean {
     if (isHmppEnabled) {
         // HACK: allow depending on stdlib even if platforms do not match
@@ -60,8 +64,10 @@ internal fun TargetPlatform.canDependOn(other: IdeaModuleInfo, isHmppEnabled: Bo
     }
 }
 
+@K1ModeProjectStructureApi
 fun IdeaModuleInfo.isLibraryClasses() = this is SdkInfo || this is LibraryInfo
 
+@K1ModeProjectStructureApi
 fun IdeaModuleInfo.projectSourceModules(): List<ModuleSourceInfo> {
     return when (this) {
         is ModuleSourceInfo -> listOf(this)
@@ -72,6 +78,7 @@ fun IdeaModuleInfo.projectSourceModules(): List<ModuleSourceInfo> {
 
 @get:ApiStatus.Internal
 @Deprecated("Use org.jetbrains.kotlin.idea.base.projectStructure.kotlinSourceRootType' instead.")
+@K1ModeProjectStructureApi
 val ModuleSourceInfo.sourceType: SourceType
     get() = when (kotlinSourceRootType) {
         SourceKotlinRootType -> SourceType.PRODUCTION

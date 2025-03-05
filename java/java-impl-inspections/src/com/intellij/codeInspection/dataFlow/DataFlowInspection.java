@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix.Variant;
 import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.codeInspection.options.OptPane;
@@ -43,15 +44,13 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
     return WrapWithMutableCollectionFix.createFix(violation);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
+  protected @Nullable LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
     return new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS, anchor, problemType);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix createUnwrapSwitchLabelFix() {
+  protected @Nullable LocalQuickFix createUnwrapSwitchLabelFix() {
     return new UnwrapSwitchLabelFix();
   }
 
@@ -140,9 +139,14 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix());
       }
-      else if (!alwaysNull && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
+      else if (!alwaysNull && !SideEffectChecker.mayHaveSideEffects(qualifier)) {
         String suffix = " != null";
-        if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, qualifier) && CodeBlockSurrounder.canSurround(expression)) {
+
+        Variant testFrameworkFixVariant = AddAssertNonNullFromTestFrameworksFix.isAvailable(expression);
+        if (testFrameworkFixVariant != null) {
+          fixes.add(new AddAssertNonNullFromTestFrameworksFix(qualifier, testFrameworkFixVariant));
+        }
+        else if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, qualifier) && CodeBlockSurrounder.canSurround(expression)) {
           String replacement = ParenthesesUtils.getText(qualifier, ParenthesesUtils.EQUALITY_PRECEDENCE) + suffix;
           fixes.add(new AddAssertStatementFix(replacement));
         }
@@ -176,7 +180,9 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiElement anchor, boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier,
+                                                                              PsiElement anchor,
+                                                                              boolean onTheFly) {
     List<LocalQuickFix> result = new SmartList<>();
     if (TypeConversionUtil.isBooleanType(qualifier.getType())) {
       result.add(new ReplaceWithBooleanEqualsFix(qualifier));

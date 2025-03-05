@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.platform.eel.EelApiBase
+import com.intellij.platform.eel.EelApi
 
 /**
  * [architecture] is the remote architecture of the built binary. Intended to be used for debugging purposes.
@@ -10,6 +10,6 @@ import com.intellij.platform.eel.EelApiBase
  */
 interface IjentProcessInfo {
   val architecture: String
-  val remotePid: EelApiBase.Pid
+  val remotePid: EelApi.Pid
   val version: String
 }

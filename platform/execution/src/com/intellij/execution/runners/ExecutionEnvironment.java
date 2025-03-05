@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -29,26 +29,25 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
-  @NotNull private final RunProfile myRunProfile;
-  @NotNull private final Executor myExecutor;
+  private final @NotNull RunProfile myRunProfile;
+  private final @NotNull Executor myExecutor;
 
-  @NotNull private final ExecutionTarget myTarget;
+  private final @NotNull ExecutionTarget myTarget;
   private TargetEnvironmentRequest myTargetEnvironmentRequest;
   private volatile TargetEnvironment myPrepareRemoteEnvironment;
 
-  @Nullable private RunnerSettings myRunnerSettings;
-  @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
-  @Nullable private final RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
-  @Nullable private RunContentDescriptor myContentToReuse;
+  private @Nullable RunnerSettings myRunnerSettings;
+  private @Nullable ConfigurationPerRunnerSettings myConfigurationSettings;
+  private final @Nullable RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
+  private @Nullable RunContentDescriptor myContentToReuse;
   private final ProgramRunner<?> myRunner;
   private long myExecutionId = 0;
-  @Nullable private DataContext myDataContext;
-  @Nullable private String myModulePath;
+  private @Nullable DataContext myDataContext;
+  private @Nullable String myModulePath;
 
-  @Nullable
-  private ProgramRunner.Callback callback;
+  private @Nullable ProgramRunner.Callback callback;
   private boolean isHeadless = false;
 
   /**
@@ -114,8 +113,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     return myTargetEnvironmentRequest = createTargetEnvironmentRequest();
   }
 
-  @NotNull
-  private TargetEnvironmentRequest createTargetEnvironmentRequest() {
+  private @NotNull TargetEnvironmentRequest createTargetEnvironmentRequest() {
     return TargetEnvironmentConfigurations.createEnvironmentRequest(myRunProfile, myProject);
   }
 
@@ -161,8 +159,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     this.callback = callback;
   }
 
-  @Nullable
-  public ProgramRunner.Callback getCallback() {
+  public @Nullable ProgramRunner.Callback getCallback() {
     return callback;
   }
 
@@ -171,28 +168,23 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     myContentToReuse = null;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public ExecutionTarget getExecutionTarget() {
+  public @NotNull ExecutionTarget getExecutionTarget() {
     return myTarget;
   }
 
-  @NotNull
-  public RunProfile getRunProfile() {
+  public @NotNull RunProfile getRunProfile() {
     return myRunProfile;
   }
 
-  @Nullable
-  public RunnerAndConfigurationSettings getRunnerAndConfigurationSettings() {
+  public @Nullable RunnerAndConfigurationSettings getRunnerAndConfigurationSettings() {
     return myRunnerAndConfigurationSettings;
   }
 
-  @Nullable
-  public RunContentDescriptor getContentToReuse() {
+  public @Nullable RunContentDescriptor getContentToReuse() {
     return myContentToReuse;
   }
 
@@ -204,23 +196,19 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     }
   }
 
-  @NotNull
-  public ProgramRunner<?> getRunner() {
+  public @NotNull ProgramRunner<?> getRunner() {
     return myRunner;
   }
 
-  @Nullable
-  public RunnerSettings getRunnerSettings() {
+  public @Nullable RunnerSettings getRunnerSettings() {
     return myRunnerSettings;
   }
 
-  @Nullable
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
+  public @Nullable ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myConfigurationSettings;
   }
 
-  @Nullable
-  public RunProfileState getState() throws ExecutionException {
+  public @Nullable RunProfileState getState() throws ExecutionException {
     return myRunProfile.getState(myExecutor, this);
   }
 
@@ -244,8 +232,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     return myExecutionId;
   }
 
-  @NotNull
-  public Executor getExecutor() {
+  public @NotNull Executor getExecutor() {
     return myExecutor;
   }
 
@@ -284,8 +271,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     });
   }
 
-  @Nullable
-  public DataContext getDataContext() {
+  public @Nullable DataContext getDataContext() {
     return myDataContext;
   }
 
@@ -294,8 +280,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     this.myModulePath = modulePath;
   }
 
-  @Nullable
-  public String getModulePath() {
+  public @Nullable String getModulePath() {
     return myModulePath;
   }
 

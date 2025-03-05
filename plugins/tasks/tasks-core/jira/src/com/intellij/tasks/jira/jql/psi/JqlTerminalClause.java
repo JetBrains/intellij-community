@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql.psi;
 
 import com.intellij.psi.tree.IElementType;
@@ -36,7 +37,7 @@ public interface JqlTerminalClause extends JqlClause {
       myListOperator = listOperator;
     }
 
-    private final static IdentityHashMap<IElementType, Type> MAP = new IdentityHashMap<>();
+    private static final IdentityHashMap<IElementType, Type> MAP = new IdentityHashMap<>();
 
     static {
       MAP.put(JqlTokenTypes.EQ, EQ);
@@ -49,8 +50,7 @@ public interface JqlTerminalClause extends JqlClause {
       MAP.put(JqlTokenTypes.NOT_CONTAINS, NOT_CONTAINS);
     }
 
-    @Nullable
-    public static Type fromTokenType(IElementType type) {
+    public static @Nullable Type fromTokenType(IElementType type) {
       return MAP.get(type);
     }
 

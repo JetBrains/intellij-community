@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -32,9 +32,8 @@ public final class MavenResourcesTargetType extends ModuleBasedBuildTargetType<M
     return myIsTests;
   }
 
-  @NotNull
   @Override
-  public List<MavenResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
+  public @NotNull List<MavenResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
     final List<MavenResourcesTarget> targets = new ArrayList<>();
     final JpsMavenExtensionService service = JpsMavenExtensionService.getInstance();
     for (JpsModule module : model.getProject().getModules()) {
@@ -45,17 +44,15 @@ public final class MavenResourcesTargetType extends ModuleBasedBuildTargetType<M
     return targets;
   }
 
-  @NotNull
   @Override
-  public BuildTargetLoader<MavenResourcesTarget> createLoader(@NotNull JpsModel model) {
+  public @NotNull BuildTargetLoader<MavenResourcesTarget> createLoader(@NotNull JpsModel model) {
     final Map<String, JpsModule> modules = new HashMap<>();
     for (JpsModule module : model.getProject().getModules()) {
       modules.put(module.getName(), module);
     }
     return new BuildTargetLoader<MavenResourcesTarget>() {
-      @Nullable
       @Override
-      public MavenResourcesTarget createTarget(@NotNull String targetId) {
+      public @Nullable MavenResourcesTarget createTarget(@NotNull String targetId) {
         final JpsModule module = modules.get(targetId);
         return module != null ? new MavenResourcesTarget(MavenResourcesTargetType.this, module) : null;
       }

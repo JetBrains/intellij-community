@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Disposer;
@@ -35,8 +35,7 @@ public class SettingsEditorGroup<T> extends SettingsEditor<T> {
   public void applyEditorTo(@NotNull T t) throws ConfigurationException {}
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     throw new UnsupportedOperationException("This method should never be called!");
   }
 }

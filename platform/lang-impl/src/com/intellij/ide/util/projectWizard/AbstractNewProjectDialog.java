@@ -116,13 +116,11 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
    * @deprecated use {@link #createNewProjectStep()}
    */
   @Deprecated
-  @Nullable
-  protected DefaultActionGroup createRootStep() {
+  protected @Nullable DefaultActionGroup createRootStep() {
     return null;
   }
 
-  @NotNull
-  protected AbstractNewProjectStep<?> createNewProjectStep() {
+  protected @NotNull AbstractNewProjectStep<?> createNewProjectStep() {
     var step = createRootStep();
     if (step instanceof AbstractNewProjectStep<?> abstractNewProjectStep) {
       return abstractNewProjectStep;

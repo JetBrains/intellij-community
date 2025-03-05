@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -14,10 +13,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackage
-import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
@@ -28,6 +27,7 @@ import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,9 +42,8 @@ import kotlin.io.path.pathString
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
-private const val POETRY_PATH_SETTING: String = "PyCharm.Poetry.Path"
 private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("pyproject.toml", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
-private val poetryNotFoundException: PyExecutionException = PyExecutionException(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"), "poetry", emptyList(), ProcessOutput())
+private val poetryNotFoundException: Throwable = Throwable(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"))
 
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): Result<String> {
@@ -52,16 +51,6 @@ suspend fun runPoetry(projectPath: Path?, vararg args: String): Result<String> {
   return runExecutable(executable, projectPath, *args)
 }
 
-
-/**
- * Tells if the SDK was added as poetry.
- * The user-set persisted a path to the poetry executable.
- */
-var PropertiesComponent.poetryPath: @SystemDependent String?
-  get() = getValue(POETRY_PATH_SETTING)
-  set(value) {
-    setValue(POETRY_PATH_SETTING, value)
-  }
 
 /**
  * Detects the poetry executable in `$PATH`.
@@ -187,15 +176,6 @@ suspend fun poetryInstallPackage(sdk: Sdk, pkg: String, extraArgs: List<String>)
  */
 @Internal
 suspend fun poetryUninstallPackage(sdk: Sdk, pkg: String): Result<String> = runPoetryWithSdk(sdk, "remove", pkg)
-
-@Internal
-suspend fun poetryShowPackages(sdk: Sdk): Result<List<PythonPackage>> {
-  val output = runPoetryWithSdk(sdk, "show").getOrElse {
-    return Result.failure(it)
-  }
-
-  return parsePoetryShow(output).let { Result.success(it) }
-}
 
 @Internal
 fun parsePoetryShow(input: String): List<PythonPackage> {

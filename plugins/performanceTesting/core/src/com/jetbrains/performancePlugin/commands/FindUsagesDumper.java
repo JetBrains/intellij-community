@@ -15,11 +15,11 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths;
 import com.jetbrains.performancePlugin.utils.DataDumper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -36,17 +36,15 @@ public final class FindUsagesDumper {
     }
   }
 
-  public static void dumpFoundUsagesToFile(@NotNull List<FoundUsage> foundUsages,
+  public static void dumpFoundUsagesToFile(@NotNull @Unmodifiable List<FoundUsage> foundUsages,
                                            @NotNull Path jsonPath) {
     LOG.info("Found usages will be dumped to " + jsonPath);
-    Collections.sort(foundUsages);
 
-    FoundUsagesReport foundUsagesReport = new FoundUsagesReport(foundUsages.size(), foundUsages);
+    FoundUsagesReport foundUsagesReport = new FoundUsagesReport(foundUsages.size(), ContainerUtil.sorted(foundUsages));
     DataDumper.dump(foundUsagesReport, jsonPath);
   }
 
-  @NotNull
-  public static FoundUsage convertToFoundUsage(@NotNull Project project, @NotNull Usage usage) {
+  public static @NotNull FoundUsage convertToFoundUsage(@NotNull Project project, @NotNull Usage usage) {
     PortableFilePath portableFilePath = null;
     Integer line = null;
     if (usage instanceof UsageInfo2UsageAdapter adapter) {
@@ -60,8 +58,7 @@ public final class FindUsagesDumper {
     return new FoundUsage(text, portableFilePath, line);
   }
 
-  @Nullable
-  public static Path getFoundUsagesJsonPath() {
+  public static @Nullable Path getFoundUsagesJsonPath() {
     String property = System.getProperty(DUMP_FOUND_USAGES_DESTINATION_FILE);
     if (property != null) {
       return Paths.get(property);
@@ -69,8 +66,7 @@ public final class FindUsagesDumper {
     return null;
   }
 
-  @NotNull
-  public static FoundUsagesReport parseFoundUsagesReportFromFile(@NotNull Path reportPath) throws IOException {
+  public static @NotNull FoundUsagesReport parseFoundUsagesReportFromFile(@NotNull Path reportPath) throws IOException {
     return DataDumper.objectMapper.readValue(reportPath.toFile(), FoundUsagesReport.class);
   }
 

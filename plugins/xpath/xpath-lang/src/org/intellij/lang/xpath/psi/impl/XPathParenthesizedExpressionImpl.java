@@ -30,15 +30,13 @@ public class XPathParenthesizedExpressionImpl extends XPathElementImpl implement
     }
 
     @Override
-    @NotNull
-    public XPathType getType() {
+    public @NotNull XPathType getType() {
         final XPathExpression expression = getExpression();
         return expression != null ? expression.getType() : XPathType.UNKNOWN;
     }
 
     @Override
-    @Nullable
-    public XPathExpression getExpression() {
+    public @Nullable XPathExpression getExpression() {
         final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }

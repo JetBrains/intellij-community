@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.configuration.kpm
 
+import com.intellij.externalSystem.JavaModuleData
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
@@ -12,11 +14,13 @@ import com.intellij.util.PathUtilRt
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.kpm.IdeaKpmFragment
 import org.jetbrains.kotlin.gradle.idea.kpm.name
+import org.jetbrains.kotlin.idea.base.externalSystem.find
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.util.*
 import java.util.stream.Collectors
 
@@ -68,14 +72,22 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
                     }
 
                     it.ideModuleGroup = initializerContext.moduleGroup
-                    it.sdkName = initializerContext.jdkName
                 }
 
+                val fragmentSdkData = existingSourceSetDataNode?.find(ModuleSdkData.KEY)?.data
+                    ?: ModuleSdkData(initializerContext.jdkName)
+
+                val fragmentJavaData = existingSourceSetDataNode?.find(JavaModuleData.KEY)?.data
+                    ?: JavaModuleData(GradleConstants.SYSTEM_ID, null, null, emptyList())
+
                 if (existingSourceSetDataNode == null) {
-                    val fragmentDataNode = mainModuleNode.createChild(GradleSourceSetData.KEY, fragmentData)
+                    val fragmentDataNode = mainModuleNode.createChild(GradleSourceSetData.KEY, fragmentData).also {
+                        it.createChild(ModuleSdkData.KEY, fragmentSdkData)
+                        it.createChild(JavaModuleData.KEY, fragmentJavaData)
+                    }
                     sourceSetMap[fragmentModuleId] = com.intellij.openapi.util.Pair(
                         fragmentDataNode,
-                        createExternalSourceSet(fragment, fragmentData)
+                        createExternalSourceSet(fragment, fragmentJavaData)
                     )
                 }
             }
@@ -84,11 +96,11 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
 
     private fun createExternalSourceSet(
         fragment: IdeaKpmFragment,
-        gradleSourceSetData: GradleSourceSetData,
+        fragmentJavaData: JavaModuleData,
     ): ExternalSourceSet {
         return DefaultExternalSourceSet().also { sourceSet ->
             sourceSet.name = fragment.name
-            sourceSet.targetCompatibility = gradleSourceSetData.targetCompatibility
+            sourceSet.targetCompatibility = fragmentJavaData.targetBytecodeVersion
             //TODO compute it properly (if required)
             sourceSet.dependencies = emptyList<ExternalDependency>()
 

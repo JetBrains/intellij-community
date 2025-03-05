@@ -186,10 +186,10 @@ public final class PySyntheticCallHelper {
   }
 
   private static class SyntheticCallArgumentsMapping {
-    @Nullable private final PyCallableType myReceiverType;
-    @NotNull private final List<PyCallableParameter> myImplicitParameters;
-    @NotNull private final List<PyType> myUnmappedArguments;
-    @NotNull private final Map<Ref<PyType>, PyCallableParameter> myMappedParameters;
+    private final @Nullable PyCallableType myReceiverType;
+    private final @NotNull List<PyCallableParameter> myImplicitParameters;
+    private final @NotNull List<PyType> myUnmappedArguments;
+    private final @NotNull Map<Ref<PyType>, PyCallableParameter> myMappedParameters;
 
     SyntheticCallArgumentsMapping(@Nullable PyCallableType receiverType,
                                   @NotNull List<PyCallableParameter> implicitParameters,
@@ -217,8 +217,7 @@ public final class PySyntheticCallHelper {
       return myReceiverType;
     }
 
-    @NotNull
-    public static SyntheticCallArgumentsMapping empty(@NotNull PyCallableType receiverType) {
+    public static @NotNull SyntheticCallArgumentsMapping empty(@NotNull PyCallableType receiverType) {
       return new SyntheticCallArgumentsMapping(receiverType, Collections.emptyList(), Collections.emptyMap(), Collections.emptyList());
     }
   }

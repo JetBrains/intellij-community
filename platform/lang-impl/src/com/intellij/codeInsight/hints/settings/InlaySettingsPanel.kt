@@ -380,7 +380,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
     apply(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
     DeclarativeInlayHintsPassFactory.resetModificationStamp()
-    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
+    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "InlaySettingsPanel.apply()")
   }
 
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {

@@ -26,8 +26,29 @@ f:com.intellij.platform.ide.progress.TasksKt
 - sf:runWithModalProgressBlocking(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2):java.lang.Object
 - sf:runWithModalProgressBlocking(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):java.lang.Object
 - bs:runWithModalProgressBlocking$default(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
+- sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,com.intellij.platform.ide.progress.suspender.TaskSuspender,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.ide.progress.suspender.TaskSuspender,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withModalProgress(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withModalProgress(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.platform.ide.progress.suspender.TaskSuspender
+- sf:Companion:com.intellij.platform.ide.progress.suspender.TaskSuspender$Companion
+- a:isPaused():Z
+- a:pause(java.lang.String):V
+- bs:pause$default(com.intellij.platform.ide.progress.suspender.TaskSuspender,java.lang.String,I,java.lang.Object):V
+- a:resume():V
+- s:suspendable(java.lang.String):com.intellij.platform.ide.progress.suspender.TaskSuspender
+f:com.intellij.platform.ide.progress.suspender.TaskSuspender$Companion
+- f:suspendable(java.lang.String):com.intellij.platform.ide.progress.suspender.TaskSuspender
+f:com.intellij.platform.ide.progress.suspender.TaskSuspenderKt
+- sf:asContextElement(com.intellij.platform.ide.progress.suspender.TaskSuspender):kotlin.coroutines.CoroutineContext
+a:com.intellij.platform.ide.progress.suspender.TaskSuspenderState
+f:com.intellij.platform.ide.progress.suspender.TaskSuspenderState$Active
+- com.intellij.platform.ide.progress.suspender.TaskSuspenderState
+- sf:INSTANCE:com.intellij.platform.ide.progress.suspender.TaskSuspenderState$Active
+f:com.intellij.platform.ide.progress.suspender.TaskSuspenderState$Paused
+- com.intellij.platform.ide.progress.suspender.TaskSuspenderState
+- <init>(java.lang.String):V
+- f:getSuspendedReason():java.lang.String

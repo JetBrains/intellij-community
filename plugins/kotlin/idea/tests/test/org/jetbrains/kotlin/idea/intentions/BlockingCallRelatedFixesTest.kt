@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection
+import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
@@ -333,6 +335,9 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun `test consider unknown contexts blocking intention`() {
+        val old = InspectionProfileImpl.INIT_INSPECTIONS
+        InspectionProfileImpl.INIT_INSPECTIONS = true
+        Disposer.register(testRootDisposable) { InspectionProfileImpl.INIT_INSPECTIONS = old }
         myFixture.allowTreeAccessForAllFiles()
         myFixture.configureByText(
             "UnknownContext.kt",

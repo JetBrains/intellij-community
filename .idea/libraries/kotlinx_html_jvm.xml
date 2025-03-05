@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-html-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-html-jvm:0.11.0">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-html-jvm:0.12.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.11.0/kotlinx-html-jvm-0.11.0.jar">
-          <sha256sum>e276fd903e32532ff63744713a3d1025e7a50f0f78ac46fbe5910e1596fd1c3d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.12.0/kotlinx-html-jvm-0.12.0.jar">
+          <sha256sum>f854126f39acbd963fd54e0cd226000a151a76f7225ee28185d52f44e262befb</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.11.0/kotlinx-html-jvm-0.11.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.12.0/kotlinx-html-jvm-0.12.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.11.0/kotlinx-html-jvm-0.11.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-html-jvm/0.12.0/kotlinx-html-jvm-0.12.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

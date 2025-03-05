@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.comparison.iterables.DiffIterable;
@@ -15,12 +15,12 @@ import java.util.function.IntUnaryOperator;
 
 public final class LineNumberConvertor {
   // Master -> Slave
-  @NotNull private final TreeMap<Integer, Data> myFragments;
+  private final @NotNull TreeMap<Integer, Data> myFragments;
 
   // Slave -> Master
-  @NotNull private final TreeMap<Integer, Data> myInvertedFragments;
+  private final @NotNull TreeMap<Integer, Data> myInvertedFragments;
 
-  @NotNull private final Corrector myCorrector = new Corrector();
+  private final @NotNull Corrector myCorrector = new Corrector();
 
   private LineNumberConvertor(@NotNull TreeMap<Integer, Data> fragments,
                               @NotNull TreeMap<Integer, Data> invertedFragments) {
@@ -48,8 +48,7 @@ public final class LineNumberConvertor {
   // Impl
   //
 
-  @NotNull
-  public IntUnaryOperator createConvertor() {
+  public @NotNull IntUnaryOperator createConvertor() {
     return this::convert;
   }
 
@@ -99,8 +98,8 @@ public final class LineNumberConvertor {
   }
 
   public static class Builder {
-    @NotNull private final TreeMap<Integer, Data> myFragments = new TreeMap<>();
-    @NotNull private final TreeMap<Integer, Data> myInvertedFragments = new TreeMap<>();
+    private final @NotNull TreeMap<Integer, Data> myFragments = new TreeMap<>();
+    private final @NotNull TreeMap<Integer, Data> myInvertedFragments = new TreeMap<>();
 
     public void put(int masterStart, int slaveStart, int length) {
       put(masterStart, slaveStart, length, length);
@@ -111,14 +110,12 @@ public final class LineNumberConvertor {
       myInvertedFragments.put(slaveStart, new Data(slaveLength, masterStart, masterLength));
     }
 
-    @NotNull
-    public LineNumberConvertor build() {
+    public @NotNull LineNumberConvertor build() {
       return new LineNumberConvertor(myFragments, myInvertedFragments);
     }
   }
 
-  @NotNull
-  public static LineNumberConvertor fromIterable(@NotNull DiffIterable iterable) {
+  public static @NotNull LineNumberConvertor fromIterable(@NotNull DiffIterable iterable) {
     LineNumberConvertor.Builder builder = new LineNumberConvertor.Builder();
     for (Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
       Range range = pair.first;

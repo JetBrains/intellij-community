@@ -28,11 +28,11 @@ enum class LabelPosition {
 @JvmDefaultWithCompatibility
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
-  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
-  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
@@ -80,7 +80,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
   fun bold(): Cell<T>
 
   /**
-   * Adds comment under the cell aligned by left edge with appropriate color and font size (macOS and Linux use smaller font).
+   * Adds comment under the cell aligned by left edge with the appropriate color and font size.
    * * [comment] can contain HTML tags except `<html>`, which is added automatically
    * * `\n` does not work as new line in html, use `<br>` instead
    * * Links with href to http/https are automatically marked with additional arrow icon
@@ -137,10 +137,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, prop: MutableProperty<V>): Cell<T>
 
-  @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun <V> bind(componentGet: (T) -> V, componentSet: (T, V) -> Unit, binding: PropertyBinding<V>): Cell<T>
-
   /**
    * Registers custom validation requestor for current [component].
    * @param validationRequestor gets callback (component validator) that should be subscribed on custom event.
@@ -158,10 +154,6 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * It allows showing validation waring/error on custom [component] event (e.g., on text change).
    */
   fun validationRequestor(validationRequestor: DialogValidationRequestor.WithParameter<T>): Cell<T>
-
-  @Deprecated("Use identical temporary validationInfo method, validation method is reserved for new API", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun validation(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): Cell<T>
 
   /**
    * Registers custom component data [validation].

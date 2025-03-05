@@ -78,7 +78,7 @@ class d {
 class e {
     String foo () {
         MyList myList = new MyList();
-        <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">return myList.get(0);</error>
+        return myList.<error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">get</error>(0);
     }
 
     static class MyList<<warning descr="Type parameter 'T' is never used">T</warning>> extends ArrayList<String>{
@@ -130,7 +130,7 @@ class A111<T> {
 
   String g(A111 a) {
     //noinspection unchecked
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">return a.f("");</error>
+    return a.<error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">f</error>("");
   }
 }
 
@@ -152,7 +152,7 @@ class Test1<X> {
   X x;
   java.util.ArrayList<Number> foo = new java.util.ArrayList<Number>();
   public static Number foo() {
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Number'">return new Test1().foo.get(0);</error>
+    return new Test1().foo.<error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Number'">get</error>(0);
   }
 }
 //end of IDEADEV-26163

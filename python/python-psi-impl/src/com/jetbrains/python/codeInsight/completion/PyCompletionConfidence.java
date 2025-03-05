@@ -34,9 +34,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyCompletionConfidence extends CompletionConfidence {
 
-  @NotNull
   @Override
-  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     final ASTNode node = contextElement.getNode();
     if (node != null) {
       final IElementType elementType = node.getElementType();

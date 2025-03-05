@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -23,9 +23,9 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 public class ImportedToGeneralTestEventsConverter extends OutputToGeneralTestEventsConverter {
 
-  @NotNull private final TestConsoleProperties myConsoleProperties;
-  @NotNull private final File myFile;
-  @NotNull private final ProcessHandler myHandler;
+  private final @NotNull TestConsoleProperties myConsoleProperties;
+  private final @NotNull File myFile;
+  private final @NotNull ProcessHandler myHandler;
 
   public ImportedToGeneralTestEventsConverter(@NotNull String testFrameworkName,
                                               @NotNull TestConsoleProperties consoleProperties,

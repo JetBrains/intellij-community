@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.module.Module
@@ -15,20 +15,24 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonHelpersLocator
+import com.jetbrains.python.execution.PyExecutionFailure
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.emit
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 @Internal
-abstract class CustomNewEnvironmentCreator(private val name: String, model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
-  protected lateinit var basePythonComboBox: PythonInterpreterComboBox
+internal abstract class CustomNewEnvironmentCreator(private val name: String, model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
+  internal lateinit var basePythonComboBox: PythonInterpreterComboBox
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
         basePythonComboBox = pythonInterpreterComboBox(model.state.baseInterpreter,
@@ -43,7 +47,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                          validationRequestor,
                          message("sdk.create.custom.venv.executable.path", name),
                          message("sdk.create.custom.venv.missing.text", name),
-                         createInstallFix()).component
+                         createInstallFix(errorSink)).component
     }
   }
 
@@ -51,7 +55,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
     basePythonComboBox.setItems(model.baseInterpreters)
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Sdk, PyError> {
     savePathToExecutableToProperties(null)
 
     // todo think about better error handling
@@ -68,13 +72,13 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                              model.myProjectPathFlows.projectPathWithDefault.first().toString(),
                              homePath,
                              false)
-      .getOrElse { return Result.failure(it) }
-    addSdk(newSdk)
+      .getOrElse { return com.jetbrains.python.Result.failure(if (it is PyExecutionFailure) PyError.ExecException(it) else PyError.Message(it.localizedMessage)) }
+    newSdk.persist()
 
     module?.excludeInnerVirtualEnv(newSdk)
     model.addInterpreter(newSdk)
 
-    return Result.success(newSdk)
+    return com.jetbrains.python.Result.success(newSdk)
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo =
@@ -96,10 +100,10 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
    * 5. Reruns `detectExecutable`
    */
   @RequiresEdt
-  private fun createInstallFix(): ActionLink {
+  private fun createInstallFix(errorSink: ErrorSink): ActionLink {
     return ActionLink(message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       PythonSdkFlavor.clearExecutablesCache()
-      installExecutable()
+      installExecutable(errorSink)
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
         detectExecutable()
       }
@@ -114,13 +118,16 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
    * 2. Install the executable (specified by `name`) using either a custom installation script or via pip.
    */
   @RequiresEdt
-  private fun installExecutable() {
+  private fun installExecutable(errorSink: ErrorSink) {
     val pythonExecutable = model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString()
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       if (installationScript != null) {
-        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name).getOrNull()
-        if (executablePath != null) {
-          savePathToExecutableToProperties(executablePath)
+        val versionArgs: List<String> = installationVersion?.let { listOf("-v", it)  } ?: emptyList()
+        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name, *versionArgs.toTypedArray())
+        executablePath.onSuccess {
+        savePathToExecutableToProperties(it)
+      }.onFailure {
+        errorSink.emit(it.localizedMessage)
         }
       }
     }
@@ -129,6 +136,8 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
   internal abstract val interpreterType: InterpreterType
 
   internal abstract val executable: ObservableMutableProperty<String>
+
+  internal abstract val installationVersion: String?
 
   /**
    * The `installationScript` specifies a custom script for installing an executable in the Python environment.

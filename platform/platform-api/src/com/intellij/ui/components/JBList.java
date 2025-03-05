@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
@@ -269,7 +269,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
       if (text != null) selected.add(text);
     }
 
-    if (selected.size() > 0) {
+    if (!selected.isEmpty()) {
       String text = StringUtil.join(selected, "\n");
       CopyPasteManager.getInstance().setContents(new StringSelection(text));
     }

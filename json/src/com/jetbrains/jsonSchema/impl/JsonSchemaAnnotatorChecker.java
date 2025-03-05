@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -334,7 +334,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
       }
     }
     if (correct.size() == 1) return correct.get(0);
-    if (correct.size() > 0) {
+    if (!correct.isEmpty()) {
       final JsonSchemaType type = JsonSchemaType.getType(value);
       if (type != null) {
         // also check maybe some currently not checked properties like format are different with schemes
@@ -458,7 +458,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
     for (Map.Entry<PsiElement, Collection<JsonValidationError>> entry : allErrors.entrySet()) {
       Collection<JsonValidationError> value = entry.getValue();
-      if (value.size() == 0) continue;
+      if (value.isEmpty()) continue;
       if (value.size() == 1) {
         error(entry.getKey(), value.iterator().next());
         continue;

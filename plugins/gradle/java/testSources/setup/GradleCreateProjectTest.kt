@@ -7,13 +7,14 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -141,6 +142,28 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           assertBuildFiles(projectInfo)
         }
     }
+  }
+
+  @Test
+  @RegistryKey("gradle.daemon.jvm.criteria.new.project", "true")
+  fun `test project generation with Gradle daemon JVM criteria`() = runBlocking {
+    val projectInfo = projectInfo("project") {
+      withJavaBuildFile()
+      withSettingsFile {
+        withFoojayPlugin()
+        setProjectName("project")
+        include("module")
+      }
+      moduleInfo("project.module", "module") {
+        withJavaBuildFile()
+      }
+    }
+    createProjectByWizard(projectInfo)
+      .useProjectAsync { project ->
+        assertProjectState(project, projectInfo)
+        assertBuildFiles(projectInfo)
+        assertDaemonJvmProperties(project)
+      }
   }
 
   @Test

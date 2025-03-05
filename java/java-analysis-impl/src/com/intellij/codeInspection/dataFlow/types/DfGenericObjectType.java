@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
@@ -40,21 +40,18 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     myLocal = local;
   }
 
-  @NotNull
   @Override
-  public DfaNullability getNullability() {
+  public @NotNull DfaNullability getNullability() {
     return myNullability;
   }
 
-  @NotNull
   @Override
-  public TypeConstraint getConstraint() {
+  public @NotNull TypeConstraint getConstraint() {
     return myConstraint;
   }
 
-  @NotNull
   @Override
-  public Mutability getMutability() {
+  public @NotNull Mutability getMutability() {
     return myMutability;
   }
 
@@ -63,15 +60,13 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     return myLocal;
   }
 
-  @Nullable
   @Override
-  public SpecialField getSpecialField() {
+  public @Nullable SpecialField getSpecialField() {
     return mySpecialField;
   }
 
-  @NotNull
   @Override
-  public DfType getSpecialFieldType() {
+  public @NotNull DfType getSpecialFieldType() {
     return mySpecialFieldType;
   }
 
@@ -86,9 +81,8 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     return myNullability == DfaNullability.NOT_NULL ? result.join(DfTypes.NULL) : result.meet(DfTypes.NOT_NULL_OBJECT);
   }
 
-  @NotNull
   @Override
-  public Set<Object> getNotValues() {
+  public @NotNull Set<Object> getNotValues() {
     if (myNullability == DfaNullability.NOT_NULL) {
       Set<Object> values = new HashSet<>(myNotValues);
       values.add(null);
@@ -101,40 +95,35 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     return super.getNotValues();
   }
 
-  @NotNull
   @Override
-  public DfReferenceType dropTypeConstraint() {
+  public @NotNull DfReferenceType dropTypeConstraint() {
     return myConstraint == TypeConstraints.TOP ? this :
            new DfGenericObjectType(myNotValues, TypeConstraints.TOP, myNullability, myMutability, mySpecialField, mySpecialFieldType,
                                    myLocal);
   }
 
-  @NotNull
   @Override
-  public DfReferenceType dropMutability() {
+  public @NotNull DfReferenceType dropMutability() {
     return myMutability == Mutability.UNKNOWN ? this :
            new DfGenericObjectType(myNotValues, myConstraint, myNullability, Mutability.UNKNOWN, mySpecialField, mySpecialFieldType,
                                    myLocal);
   }
 
-  @NotNull
   @Override
-  public DfReferenceType dropLocality() {
+  public @NotNull DfReferenceType dropLocality() {
     return myLocal ? new DfGenericObjectType(myNotValues, myConstraint, myNullability, myMutability, mySpecialField, mySpecialFieldType,
                                              false) : this;
   }
 
-  @NotNull
   @Override
-  public DfReferenceType dropNullability() {
+  public @NotNull DfReferenceType dropNullability() {
     return myNullability == DfaNullability.UNKNOWN ? this :
            new DfGenericObjectType(myNotValues, myConstraint, DfaNullability.UNKNOWN, myMutability, mySpecialField, mySpecialFieldType,
                                    myLocal);
   }
 
-  @NotNull
   @Override
-  public DfReferenceType dropSpecialField() {
+  public @NotNull DfReferenceType dropSpecialField() {
     return mySpecialField == null ? this :
            new DfGenericObjectType(myNotValues, myConstraint, myNullability, myMutability, null, BOTTOM, myLocal);
   }
@@ -189,9 +178,8 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     return true;
   }
 
-  @NotNull
   @Override
-  public DfType join(@NotNull DfType other) {
+  public @NotNull DfType join(@NotNull DfType other) {
     if (isSuperType(other)) return this;
     if (other.isSuperType(this)) return other;
     if (!(other instanceof DfReferenceType type)) return TOP;
@@ -294,9 +282,8 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     return null;
   }
 
-  @NotNull
   @Override
-  public DfType meet(@NotNull DfType other) {
+  public @NotNull DfType meet(@NotNull DfType other) {
     if (other instanceof DfConstantType || other instanceof DfEphemeralReferenceType) {
       return other.meet(this);
     }

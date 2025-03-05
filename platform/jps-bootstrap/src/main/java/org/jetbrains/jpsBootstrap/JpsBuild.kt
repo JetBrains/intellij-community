@@ -4,7 +4,6 @@ package org.jetbrains.jpsBootstrap
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtilRt
 import jetbrains.buildServer.messages.serviceMessages.PublishArtifacts
-import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.error
@@ -18,7 +17,6 @@ import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
 import org.jetbrains.jps.cmdline.LogSetup
 import org.jetbrains.jps.incremental.MessageHandler
-import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -43,9 +41,6 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
     System.setProperty("aether.connector.resumeDownloads", "false")
     System.setProperty("jps.kotlin.home", kotlincHome.toString())
 
-    // Set IDEA home path to something or JPS can't instantiate ClasspathBoostrap.java for Groovy JPS
-    // which calls PathManager.getLibPath() (it should not)
-    System.setProperty(PathManager.PROPERTY_HOME_PATH, communityRoot.communityRoot.toString())
     System.setProperty("kotlin.incremental.compilation", "true")
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
     if (JpsBootstrapMain.Companion.underTeamCity && System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION) == null) {
@@ -53,8 +48,6 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
       val cpuCount = JpsBootstrapUtil.getTeamCityConfigPropertyOrThrow("teamcity.agent.hardware.cpuCount").toInt()
       System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Integer.toString(cpuCount + 1))
     }
-    System.setProperty(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true")
-    System.setProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "true")
     myJpsLogDir = jpsBootstrapWorkDir.resolve("log")
     setupJpsLogging()

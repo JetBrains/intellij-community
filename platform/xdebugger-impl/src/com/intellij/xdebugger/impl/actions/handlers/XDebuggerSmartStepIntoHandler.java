@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -164,9 +165,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
         return aValue.getIcon();
       }
 
-      @NotNull
       @Override
-      public String getTextFor(V value) {
+      public @NotNull String getTextFor(V value) {
         return value.getText();
       }
 
@@ -236,19 +236,22 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     // for the remote development scenario we have to add a fake invisible highlighter on the whole document with extra payload
     // that will be restored on the client and used to alternate actions availability
     // see com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt.addActionAvailabilityHint
-    ((MarkupModelEx)editor.getMarkupModel()).addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0, editor.getDocument().getTextLength(),
-                                                                                    HighlighterLayer.LAST, HighlighterTargetArea.EXACT_RANGE, false, h -> {
-      // this hints should be added in this lambda in order to be serialized by RD markup machinery
-      EditorActionAvailabilityHintKt.addActionAvailabilityHint(h,
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
-                                                               new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
-      data.myActionHintSyntheticHighlighter = h;
-    });
+    RangeHighlighterEx highlighter =
+      ((MarkupModelEx)editor.getMarkupModel()).addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0,
+                                                                                      editor.getDocument().getTextLength(),
+                                                                                      HighlighterLayer.LAST,
+                                                                                      HighlighterTargetArea.EXACT_RANGE, false, h -> {
+          // this hints should be added in this lambda in order to be serialized by RD markup machinery
+          EditorActionAvailabilityHintKt.addActionAvailabilityHint(h,
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
+        });
+    data.myActionHintSyntheticHighlighter = highlighter;
 
     session.updateExecutionPosition();
     if (AppMode.isRemoteDevHost()) {
@@ -423,8 +426,8 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
 
     class VariantInfo {
-      @NotNull final V myVariant;
-      @NotNull final Point myStartPoint;
+      final @NotNull V myVariant;
+      final @NotNull Point myStartPoint;
 
       VariantInfo(@NotNull V variant) {
         myVariant = variant;
@@ -433,7 +436,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static abstract class SmartStepEditorActionHandler extends EditorActionHandler {
+  abstract static class SmartStepEditorActionHandler extends EditorActionHandler {
     protected final EditorActionHandler myOriginalHandler;
 
     SmartStepEditorActionHandler(EditorActionHandler originalHandler) {

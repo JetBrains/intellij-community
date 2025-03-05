@@ -31,8 +31,7 @@ internal class ShowDiffInEditorTooltipInstaller : DiffRequestProcessorEditorCust
 private class ShowDiffInEditorTabTooltipHolder(
   disposable: Disposable,
   private val toolbarToShowTooltip: ActionToolbar,
-)
-  : AdvancedSettingsChangeListener, Disposable {
+) : AdvancedSettingsChangeListener, Disposable {
 
   companion object {
     const val TOOLTIP_ID = "show.diff.in.editor"

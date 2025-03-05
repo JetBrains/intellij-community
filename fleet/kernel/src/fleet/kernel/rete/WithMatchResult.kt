@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CopyableThrowable
-import kotlin.coroutines.cancellation.CancellationException
 
 sealed class WithMatchResult<out T> {
   data class Success<T>(val value: T) : WithMatchResult<T>()
@@ -38,7 +38,11 @@ class CancellationReason(val reason: String, val match: Match<*>?)
 class UnsatisfiedMatchException(val reason: CancellationReason)
   : CancellationException(reason.reason),
     CopyableThrowable<UnsatisfiedMatchException> {
+
+  override var cause: Throwable? = super.cause
+    private set
+
   override fun createCopy(): UnsatisfiedMatchException {
-    return UnsatisfiedMatchException(reason).also { it.initCause(this) }
+    return UnsatisfiedMatchException(reason).also { it.cause = this }
   }
 }

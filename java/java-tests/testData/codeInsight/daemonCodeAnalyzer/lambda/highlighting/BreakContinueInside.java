@@ -24,8 +24,8 @@ class Test {
             }
         }
     };
-    I i4 = ()-> { <error descr="Continue outside of loop">continue;</error> };
-    I i5 = ()-> { <error descr="Break outside switch or loop">break;</error> };
+    I i4 = ()-> { <error descr="'continue' statement outside of loop">continue;</error> };
+    I i5 = ()-> { <error descr="'break' outside of switch or loop">break;</error> };
 
     {
          l:

@@ -18,13 +18,13 @@ final class WolfPassFactory implements TextEditorHighlightingPassFactory, TextEd
   }
 
   @Override
-  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    Project project = file.getProject();
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    Project project = psiFile.getProject();
     long psiModificationCount = PsiManager.getInstance(project).getModificationTracker().getModificationCount();
     if (psiModificationCount == myPsiModificationCount) {
       return null; //optimization
     }
-    return new WolfHighlightingPass(project, editor.getDocument(), file){
+    return new WolfHighlightingPass(project, editor.getDocument(), psiFile){
       @Override
       protected void applyInformationWithProgress() {
         super.applyInformationWithProgress();

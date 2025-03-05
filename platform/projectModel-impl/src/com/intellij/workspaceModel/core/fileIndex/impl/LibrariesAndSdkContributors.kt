@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.Disposable
@@ -94,8 +94,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     }
 
     val pointer = GlobalLibraryPointer(library)
-    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null, ""))
-    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null, ""))
+    registerLibraryRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null))
+    registerLibraryRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null))
     (library as? LibraryEx)?.excludedRoots?.forEach {
       if (RootFileValidityChecker.ensureValid(it, library, null)) {
         fileSets.putValue(it, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.EXTERNAL, pointer))
@@ -118,8 +118,8 @@ internal class LibrariesAndSdkContributors(private val project: Project,
     }
 
     val pointer = SdkPointer(sdk)
-    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null, ""))
-    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null, ""))
+    registerSdkRoots(OrderRootType.CLASSES, WorkspaceFileKind.EXTERNAL, pointer, LibraryRootFileSetData(null))
+    registerSdkRoots(OrderRootType.SOURCES, WorkspaceFileKind.EXTERNAL_SOURCE, pointer, LibrarySourceRootFileSetData(null))
   }
 
   private fun unregisterSdkRoots(sdk: Sdk) {

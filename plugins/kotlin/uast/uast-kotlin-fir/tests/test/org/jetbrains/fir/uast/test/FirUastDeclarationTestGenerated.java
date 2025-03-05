@@ -35,6 +35,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/annotationOnElvis.kt");
     }
 
+    @TestMetadata("annotationOnLocal.kt")
+    public void testAnnotationOnLocal() throws Exception {
+        runTest("testData/declaration/annotationOnLocal.kt");
+    }
+
     @TestMetadata("build.gradle.kts")
     public void testBuild_gradle() throws Exception {
         runTest("testData/declaration/build.gradle.kts");
@@ -128,6 +133,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     @TestMetadata("interfaceCompanionObject.kt")
     public void testInterfaceCompanionObject() throws Exception {
         runTest("testData/declaration/interfaceCompanionObject.kt");
+    }
+
+    @TestMetadata("jvmOverloads.kt")
+    public void testJvmOverloads() throws Exception {
+        runTest("testData/declaration/jvmOverloads.kt");
     }
 
     @TestMetadata("labeledExpression.kt")

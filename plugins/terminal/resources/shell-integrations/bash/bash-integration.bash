@@ -95,4 +95,7 @@ JETBRAINS_INTELLIJ_BASH_DIR="$(dirname "${BASH_SOURCE[0]}")"
 if [ -r "${JETBRAINS_INTELLIJ_BASH_DIR}/command-block-support.bash" ]; then
   source "${JETBRAINS_INTELLIJ_BASH_DIR}/command-block-support.bash"
 fi
+if [ -r "${JETBRAINS_INTELLIJ_BASH_DIR}/command-block-support-reworked.bash" ]; then
+  source "${JETBRAINS_INTELLIJ_BASH_DIR}/command-block-support-reworked.bash"
+fi
 unset JETBRAINS_INTELLIJ_BASH_DIR

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
@@ -16,16 +16,16 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public final class TestDataGuessByTestDiscoveryUtil {
-  @NonNls public static final String COMMUNITY_PREFIX = "/community";
+  public static final @NonNls String COMMUNITY_PREFIX = "/community";
 
-  @NotNull
-  static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod method) {
+  static @NotNull List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiMethod method) {
     if (!isEnabled()) return Collections.emptyList();
     PsiClass testClass = ReadAction.compute(() -> method.getContainingClass());
     if (testClass == null) return Collections.emptyList();
@@ -39,8 +39,7 @@ public final class TestDataGuessByTestDiscoveryUtil {
     return consumer.getTestData();
   }
 
-  @NotNull
-  static List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiClass parametrizedTestClass) {
+  static @NotNull List<TestDataFile> collectTestDataByExistingFiles(@NotNull PsiClass parametrizedTestClass) {
     if (!isEnabled()) return Collections.emptyList();
     String testClassQualifiedName = ReadAction.compute(() -> parametrizedTestClass.getQualifiedName());
     if (testClassQualifiedName == null) return Collections.emptyList();
@@ -76,6 +75,7 @@ public final class TestDataGuessByTestDiscoveryUtil {
     }
 
     @NotNull
+    @Unmodifiable
     List<TestDataFile> getTestData() {
       return ContainerUtil.mapNotNull(myTestData, f -> new TestDataFile.LazyResolved(f));
     }

@@ -13,7 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase.*
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy.*
 import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring;
 
@@ -208,8 +208,7 @@ public final class GroovyNameSuggestionUtil {
     possibleNames.add(validator.validateName(candidateName, true));
   }
 
-  @NotNull
-  private static String cleanTypeName(@NotNull String typeName) {
+  private static @NotNull String cleanTypeName(@NotNull String typeName) {
     if (typeName.contains(".")) {
       typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
     }
@@ -248,8 +247,7 @@ public final class GroovyNameSuggestionUtil {
     return StringUtil.toUpperCase(str.substring(0, 1)) + str.substring(1);
   }
 
-  @Nullable
-  private static PsiType getCollectionComponentType(PsiType type, Project project) {
+  private static @Nullable PsiType getCollectionComponentType(PsiType type, Project project) {
     if (!(type instanceof PsiClassType classType)) return null;
     PsiClassType.ClassResolveResult result = classType.resolveGenerics();
     PsiClass clazz = result.getElement();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.lang.java.beans.PropertyKind;
@@ -438,7 +438,7 @@ public final class ResolveUtil {
    * Candidates can have multiple toString() methods (e.g. from Object and from some inheritor) and we want to show only one.
    */
   public static GroovyResolveResult[] filterSameSignatureCandidates(Collection<? extends GroovyResolveResult> candidates) {
-    if (candidates.size() == 0) return GroovyResolveResult.EMPTY_ARRAY;
+    if (candidates.isEmpty()) return GroovyResolveResult.EMPTY_ARRAY;
     if (candidates.size() == 1) return candidates.toArray(GroovyResolveResult.EMPTY_ARRAY);
 
     final List<GroovyResolveResult> result = new ArrayList<>();
@@ -791,7 +791,7 @@ public final class ResolveUtil {
         return true;
       });
 
-      return duplicates.size() > 0 ? duplicates.get(0) : null;
+      return !duplicates.isEmpty() ? duplicates.get(0) : null;
     }
     else {
       PsiNamedElement duplicate = treeWalkUpAndGetElement(variable, new DuplicateVariableProcessor(variable));

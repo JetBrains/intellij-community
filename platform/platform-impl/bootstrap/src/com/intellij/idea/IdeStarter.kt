@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNeeded
+import com.intellij.diagnostic.EdtLockLoadMonitorService
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.migrateRegistryToAdvSettings
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -101,9 +103,13 @@ open class IdeStarter : ModernApplicationStarter() {
       // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)
       PerformanceWatcher.getInstance().startEdtSampling()
 
+      if (!Registry.`is`("ide.enable.edt.lock.load.monitor")) {
+        app.serviceAsync<EdtLockLoadMonitorService>().initialize()
+      }
+
       launch { reportPluginErrors() }
 
-      LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
+      LoadingState.setCurrentStateIfAtLeast(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
       runCatching {
         lifecyclePublisher.appStarted()
       }.getOrLogException(thisLogger())
@@ -272,7 +278,7 @@ private fun CoroutineScope.postOpenUiTasks() {
   }
 
   launch {
-    startSystemHealthMonitor()
+    SystemHealthMonitor.start()
   }
 
   launch {

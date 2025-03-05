@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.diff.tools.util.text.LineOffsets;
@@ -22,16 +22,15 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
 public final class PlainSimplePatchApplier {
   private static final Logger LOG = getInstance(PlainSimplePatchApplier.class);
 
-  @NotNull private final List<? extends PatchHunk> myHunks;
-  @NotNull private final CharSequence myText;
-  @NotNull private final LineOffsets myLineOffsets;
+  private final @NotNull List<? extends PatchHunk> myHunks;
+  private final @NotNull CharSequence myText;
+  private final @NotNull LineOffsets myLineOffsets;
 
   private final StringBuilder sb = new StringBuilder();
   private int baseLine = 0;
   private int patchedLine = 0;
 
-  @Nullable
-  public static String apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
+  public static @Nullable String apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
     return new PlainSimplePatchApplier(text, hunks).execute();
   }
 
@@ -41,8 +40,7 @@ public final class PlainSimplePatchApplier {
     myLineOffsets = LineOffsetsUtil.create(text);
   }
 
-  @Nullable
-  private String execute() {
+  private @Nullable String execute() {
     if (myHunks.isEmpty()) return myText.toString();
 
     try {
@@ -73,7 +71,7 @@ public final class PlainSimplePatchApplier {
 
     if (lastBaseLine != null) {
       boolean lastLineAlreadyApplied =
-        !lastBaseLine.isSuppressNewLine() && baseLine + 1 == myLineOffsets.getLineCount() && getLineContent(baseLine).length() == 0 ||
+        !lastBaseLine.isSuppressNewLine() && baseLine + 1 == myLineOffsets.getLineCount() && getLineContent(baseLine).isEmpty() ||
         lastBaseLine.isSuppressNewLine() && baseLine == myLineOffsets.getLineCount();
       if (lastLineAlreadyApplied) {
         boolean isNoNewlinePatched = lastPatchedLine != null ? lastPatchedLine.isSuppressNewLine() : lastBaseLine.isSuppressNewLine();
@@ -86,7 +84,7 @@ public final class PlainSimplePatchApplier {
     }
 
     // insertion into empty file - use "No newline at end of file" flag from patch
-    if (baseLine == 0 && myText.length() == 0) {
+    if (baseLine == 0 && myText.isEmpty()) {
       boolean isNoNewlinePatched = lastPatchedLine != null && lastPatchedLine.isSuppressNewLine();
       if (!isNoNewlinePatched) {
         if (patchedLine > 0) sb.append('\n');
@@ -166,8 +164,7 @@ public final class PlainSimplePatchApplier {
     patchedLine++;
   }
 
-  @NotNull
-  private CharSequence getLineContent(int line) {
+  private @NotNull CharSequence getLineContent(int line) {
     return myText.subSequence(myLineOffsets.getLineStart(line), myLineOffsets.getLineEnd(line));
   }
 

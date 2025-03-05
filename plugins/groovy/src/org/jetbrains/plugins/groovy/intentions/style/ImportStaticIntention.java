@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style;
 
 import com.intellij.openapi.editor.Editor;
@@ -46,7 +32,7 @@ public final class ImportStaticIntention extends Intention {
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<>("TEMP_REFERENT_USER_DATA");
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, final Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, final @NotNull Project project, final Editor editor) throws IncorrectOperationException {
     final PsiElement resolved = resolve(element);
     if (!(resolved instanceof PsiMember)) return;
 
@@ -122,7 +108,7 @@ public final class ImportStaticIntention extends Intention {
 
   private static boolean shortenUsages(PsiElement resolved, PsiFile containingFile) {
     boolean isAnythingShortened = false;
-    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile))) {
+    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile)).asIterable()) {
       final PsiElement refElement = reference.getElement();
       if (refElement instanceof GrQualifiedReference<?>) {
         boolean shortened = GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)refElement);
@@ -137,9 +123,8 @@ public final class ImportStaticIntention extends Intention {
     return super.isStopElement(element) || element instanceof GrReferenceExpression;
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
@@ -153,16 +138,14 @@ public final class ImportStaticIntention extends Intention {
     };
   }
 
-  @Nullable
-  private static PsiElement resolve(PsiElement element) {
+  private static @Nullable PsiElement resolve(PsiElement element) {
     GrReferenceExpression ref = findRef(element);
 
     if (ref == null || ref.getQualifier() == null) return null;
     return ref.resolve();
   }
 
-  @Nullable
-  private static GrReferenceExpression findRef(PsiElement element) {
+  private static @Nullable GrReferenceExpression findRef(PsiElement element) {
     if ((element instanceof GrReferenceExpression)) {
       return (GrReferenceExpression)element;
 

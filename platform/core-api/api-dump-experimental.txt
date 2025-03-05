@@ -36,7 +36,7 @@ com.intellij.lexer.RestartableLexer
 - a:getType(I):com.intellij.psi.tree.IElementType
 - a:initialTokenIndex():I
 *:com.intellij.lexer.TokenList
-- asLexer():com.intellij.lexer.Lexer
+- a:asLexer():com.intellij.lexer.Lexer
 - backWhile(I,com.intellij.psi.tree.TokenSet):I
 - backWithBraceMatching(I,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):I
 - forwardWhile(I,com.intellij.psi.tree.TokenSet):I
@@ -50,17 +50,6 @@ com.intellij.lexer.RestartableLexer
 - hasType(I,com.intellij.psi.tree.IElementType):Z
 - hasType(I,com.intellij.psi.tree.TokenSet):Z
 - hasType(I,com.intellij.psi.tree.IElementType[]):Z
-*c:com.intellij.lexer.TokenList$WrappingLexer
-- com.intellij.lexer.LexerBase
-- advance():V
-- getBufferEnd():I
-- getBufferSequence():java.lang.CharSequence
-- getState():I
-- getTokenEnd():I
-- getTokenStart():I
-- getTokenType():com.intellij.psi.tree.IElementType
-- getTokens():com.intellij.lexer.TokenList
-- start(java.lang.CharSequence,I,I,I):V
 *:com.intellij.model.ModelBranch
 - com.intellij.openapi.util.UserDataHolder
 - s:getFileBranch(com.intellij.openapi.vfs.VirtualFile):com.intellij.model.ModelBranch
@@ -194,15 +183,13 @@ com.intellij.openapi.application.Application
 - *:isWriteThread():Z
 - *:runWriteIntentReadAction(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 f:com.intellij.openapi.application.CoroutinesKt
+- *sf:getUI(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - *sf:isBackgroundWriteAction(kotlin.coroutines.CoroutineContext):Z
 - *sf:writeAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeIntentReadAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.application.ReadAction
 - com.intellij.openapi.application.BaseActionRunnable
 - *s:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-com.intellij.openapi.application.ThreadingSupport
-- *a:runWriteActionWithCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
-- *a:runWriteActionWithNonCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
 *a:com.intellij.openapi.application.WriteIntentReadAction
 - <init>():V
 - *s:compute(com.intellij.openapi.util.Computable):java.lang.Object
@@ -233,6 +220,7 @@ f:com.intellij.openapi.editor.markup.AttributesFlyweight
 - *:withAdditionalEffects(java.util.Map):com.intellij.openapi.editor.markup.AttributesFlyweight
 e:com.intellij.openapi.editor.markup.EffectType
 - java.lang.Enum
+- *sf:FADED:com.intellij.openapi.editor.markup.EffectType
 - *sf:SLIGHTLY_WIDER_BOX:com.intellij.openapi.editor.markup.EffectType
 c:com.intellij.openapi.editor.markup.TextAttributes
 - java.lang.Cloneable
@@ -259,6 +247,7 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
 *f:com.intellij.openapi.progress.SuspenderKt
+- sf:asContextElement(com.intellij.openapi.progress.CoroutineSuspender):kotlin.coroutines.CoroutineContext$Element
 - sf:coroutineSuspender(Z):com.intellij.openapi.progress.CoroutineSuspender
 - bs:coroutineSuspender$default(Z,I,java.lang.Object):com.intellij.openapi.progress.CoroutineSuspender
 a:com.intellij.openapi.progress.Task
@@ -384,15 +373,61 @@ com.intellij.psi.PsiElement
 - getPresentationName():java.lang.String
 *:com.intellij.psi.PsiReferencesWrapper
 - a:getReferences():java.util.List
-com.intellij.psi.SmartPsiElementPointer
-- com.intellij.model.Pointer
-- *:dereference():com.intellij.psi.PsiElement
+com.intellij.psi.StubBasedPsiElement
+- com.intellij.psi.PsiElement
+- *:getIElementType():com.intellij.psi.tree.IElementType
 com.intellij.psi.SyntheticElement
 - *:findSameElementInCopy(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 f:com.intellij.psi.search.PsiSearchScopeUtil
 - *s:restrictScopeToFileLanguage(com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope,com.intellij.lang.LanguageMatcher):com.intellij.psi.search.SearchScope
 com.intellij.psi.stubs.BinaryFileStubBuilder
 - *:getFileFilter():com.intellij.openapi.vfs.VirtualFileFilter
+*:com.intellij.psi.stubs.LanguageStubDefinition
+- a:getBuilder():com.intellij.psi.StubBuilder
+- a:getStubVersion():I
+- shouldBuildStubFor(com.intellij.openapi.vfs.VirtualFile):Z
+*:com.intellij.psi.stubs.LanguageStubDescriptor
+- a:getFileElementSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+- a:getFileElementType():com.intellij.psi.tree.IFileElementType
+- a:getLanguage():com.intellij.lang.Language
+- a:getStubDefinition():com.intellij.psi.stubs.LanguageStubDefinition
+*:com.intellij.psi.stubs.LightLanguageStubDefinition
+- com.intellij.psi.stubs.LanguageStubDefinition
+- a:parseContentsLight(com.intellij.lang.ASTNode):com.intellij.util.diff.FlyweightCapableTreeStructure
+*:com.intellij.psi.stubs.LightStubElementFactory
+- com.intellij.psi.stubs.StubElementFactory
+- a:createStub(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
+- shouldCreateStub(com.intellij.lang.LighterAST,com.intellij.lang.LighterASTNode,com.intellij.psi.stubs.StubElement):Z
+com.intellij.psi.stubs.PsiFileStub
+- com.intellij.openapi.util.UserDataHolder
+- com.intellij.psi.stubs.StubElement
+- *:getFileElementType():com.intellij.psi.tree.IElementType
+com.intellij.psi.stubs.Stub
+- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+a:com.intellij.psi.stubs.StubBase
+- com.intellij.psi.stubs.ObjectStubBase
+- com.intellij.psi.stubs.StubElement
+- *p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
+- *f:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
+- *:getElementType():com.intellij.psi.tree.IElementType
+- *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+com.intellij.psi.stubs.StubElement
+- com.intellij.psi.stubs.Stub
+- *:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
+- *a:getElementType():com.intellij.psi.tree.IElementType
+*:com.intellij.psi.stubs.StubElementFactory
+- a:createPsi(com.intellij.psi.stubs.StubElement):com.intellij.psi.PsiElement
+- a:createStub(com.intellij.psi.PsiElement,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
+- shouldCreateStub(com.intellij.lang.ASTNode):Z
+*:com.intellij.psi.stubs.StubElementRegistryService
+- *sf:Companion:com.intellij.psi.stubs.StubElementRegistryService$Companion
+- s:getInstance():com.intellij.psi.stubs.StubElementRegistryService
+- a:getLightStubFactory(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.LightStubElementFactory
+- a:getStubDescriptor(com.intellij.lang.Language):com.intellij.psi.stubs.LanguageStubDescriptor
+- a:getStubFactory(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElementFactory
+- a:getStubSerializer(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.ObjectStubSerializer
+*f:com.intellij.psi.stubs.StubElementRegistryService$Companion
+- f:getInstance():com.intellij.psi.stubs.StubElementRegistryService
 com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 - com.intellij.psi.FileViewProvider
 - *:getContentElementType(com.intellij.lang.Language):com.intellij.psi.tree.IElementType
@@ -407,6 +442,7 @@ f:com.intellij.util.CoroutinesKt
 - *bs:awaitCancellationAndInvoke$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 f:com.intellij.util.ExecutorsQuery
 - com.intellij.util.AbstractQuery
+- *:interceptWith(com.intellij.util.QueryExecutionInterceptor):com.intellij.util.Query
 - *:wrap(com.intellij.util.QueryWrapper):com.intellij.util.Query
 *a:com.intellij.util.PerformanceAssertions
 - *sf:Companion:com.intellij.util.PerformanceAssertions$Companion
@@ -419,9 +455,12 @@ com.intellij.util.Query
 - java.lang.Iterable
 - *:filtering(java.util.function.Predicate):com.intellij.util.Query
 - *:flatMapping(java.util.function.Function):com.intellij.util.Query
+- *:interceptWith(com.intellij.util.QueryExecutionInterceptor):com.intellij.util.Query
 - *:mapping(java.util.function.Function):com.intellij.util.Query
 - *:transforming(java.util.function.Function):com.intellij.util.Query
 - *:wrap(com.intellij.util.QueryWrapper):com.intellij.util.Query
+*:com.intellij.util.QueryExecutionInterceptor
+- a:intercept(kotlin.jvm.functions.Function0):Z
 com.intellij.util.QueryExecutor
 - *:wrap(com.intellij.util.QueryWrapper):com.intellij.util.QueryExecutor
 *:com.intellij.util.QueryWrapper

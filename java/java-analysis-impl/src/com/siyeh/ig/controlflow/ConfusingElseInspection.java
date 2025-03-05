@@ -41,14 +41,12 @@ public final class ConfusingElseInspection extends BaseInspection implements Cle
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ConfusingElseBranch";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("redundant.else.problem.descriptor");
   }
 
@@ -64,16 +62,14 @@ public final class ConfusingElseInspection extends BaseInspection implements Cle
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new RemoveRedundantElseFix();
   }
 
   private static class RemoveRedundantElseFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("redundant.else.unwrap.quickfix");
     }
 
@@ -161,8 +157,7 @@ public final class ConfusingElseInspection extends BaseInspection implements Cle
       return !(parent instanceof PsiCodeBlock);
     }
 
-    @Nullable
-    private static PsiStatement getNextStatement(PsiIfStatement statement) {
+    private static @Nullable PsiStatement getNextStatement(PsiIfStatement statement) {
       while (true) {
         final PsiElement parent = statement.getParent();
         if (parent instanceof PsiIfStatement parentIfStatement) {

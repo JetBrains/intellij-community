@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +25,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorC
  * is 'fixed', otherwise appropriate errors are escalated.
  */
 public class NotClosedProperlyRecoverer implements VFSRecoverer {
-  private final static Logger LOG = Logger.getInstance(NotClosedProperlyRecoverer.class);
+  private static final Logger LOG = Logger.getInstance(NotClosedProperlyRecoverer.class);
 
   private static final int MAX_ERRORS_TO_REPORT = SystemProperties.getIntProperty("NotClosedProperlyRecoverer.MAX_ERRORS_TO_REPORT", 64);
 

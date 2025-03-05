@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow.java.inst;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.IndexOutOfBoundsProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -15,7 +16,6 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,12 +25,12 @@ import java.util.List;
 public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   private final @Nullable DfaControlTransferValue myOutOfBoundsTransfer;
   private final @NotNull IndexOutOfBoundsProblem myProblem;
-  private final @Nullable DfaVariableValue myStaticValue;
+  private final @Nullable VariableDescriptor myStaticValue;
 
   public ArrayAccessInstruction(@Nullable DfaAnchor anchor,
                                 @NotNull IndexOutOfBoundsProblem indexProblem,
                                 @Nullable DfaControlTransferValue outOfBoundsTransfer,
-                                @Nullable DfaVariableValue staticValue) {
+                                @Nullable VariableDescriptor staticValue) {
     super(anchor);
     myOutOfBoundsTransfer = outOfBoundsTransfer;
     myProblem = indexProblem;
@@ -40,8 +40,7 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     DfaControlTransferValue newTransfer = myOutOfBoundsTransfer == null ? null : myOutOfBoundsTransfer.bindToFactory(factory);
-    DfaVariableValue newStaticValue = myStaticValue == null ? null : myStaticValue.bindToFactory(factory);
-    return new ArrayAccessInstruction(getDfaAnchor(), myProblem, newTransfer, newStaticValue);
+    return new ArrayAccessInstruction(getDfaAnchor(), myProblem, newTransfer, myStaticValue);
   }
 
   @Override
@@ -78,8 +77,9 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
-    return ContainerUtil.createMaybeSingletonList(myStaticValue);
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
+    return myStaticValue == null ? List.of(SpecialField.ARRAY_LENGTH) :
+           List.of(myStaticValue, SpecialField.ARRAY_LENGTH);
   }
 
   @Override

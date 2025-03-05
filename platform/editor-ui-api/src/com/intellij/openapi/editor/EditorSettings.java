@@ -222,6 +222,28 @@ public interface EditorSettings {
   boolean areStickyLinesShown();
   int getStickyLinesLimit();
 
+  /**
+   * Returns the width of single-width characters
+   *
+   * @see #setCharacterGridWidthMultiplier(Float)
+   * @return the width of single-width characters or {@code null} if cell grid alignment is disabled
+   */
+  @ApiStatus.Internal
+  @Nullable Float getCharacterGridWidthMultiplier();
+
+  /**
+   * Sets the width of single-width characters
+   * <p>
+   *   Settings this to a non-null value enables a special mode in which the editor tries to align all
+   *   characters to a grid of cells with their width determined by multiplying this value
+   *   by {@link com.intellij.openapi.editor.impl.view.EditorView#getMaxCharWidth() EditorView.getMaxCharWidth}.
+   *   Double-width characters take two cells each.
+   * </p>
+   * @param value the width of single-width characters or {@code null} to disable cell grid alignment
+   */
+  @ApiStatus.Internal
+  void setCharacterGridWidthMultiplier(@Nullable Float value);
+
   enum LineNumerationType {
     ABSOLUTE,
     RELATIVE,

@@ -1,6 +1,8 @@
 class Test {
     inner class <caret>InnerClass {
-        fun fun1() {}
+        fun fun1() {
+            println(test)
+        }
     }
 
     val test = InnerClass()

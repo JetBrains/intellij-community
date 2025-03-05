@@ -122,6 +122,7 @@ abstract class AlignedDiffModelBase(
 
   override fun needAlignChanges(): Boolean {
     val forcedValue: Boolean? = diffRequest.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF)
+                                ?: diffContext.getUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF)
     if (forcedValue != null) return forcedValue
 
     return textSettings.isEnableAligningChangesMode

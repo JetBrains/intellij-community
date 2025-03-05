@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.config;
 
 import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration;
@@ -25,13 +25,11 @@ public class EventLogExternalSendSettings {
     return !myConfigurations.isEmpty();
   }
 
-  @Nullable
-  public EventLogSendConfiguration getConfiguration(@NotNull EventLogBuildType type) {
+  public @Nullable EventLogSendConfiguration getConfiguration(@NotNull EventLogBuildType type) {
     return myConfigurations.get(type);
   }
 
-  @Nullable
-  public String getEndpoint(@NotNull String name) {
+  public @Nullable String getEndpoint(@NotNull String name) {
     return myEndpoints.get(name);
   }
 

@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.platform.workspace.storage.EntityStorage
-import org.jetbrains.annotations.ApiStatus
 
 @Suppress("unused")
 public object WorkspaceModelDumper {

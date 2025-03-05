@@ -2,9 +2,7 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.actions.DatasetContext
-import com.intellij.cce.actions.EvaluationDataset
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
-import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.interpreter.InterpretFilter
 import com.intellij.cce.interpreter.InterpretationHandlerImpl
 import com.intellij.cce.util.ExceptionsUtil
@@ -23,8 +21,7 @@ import kotlin.system.measureTimeMillis
 
 class ActionsInterpretationHandler(
   private val config: Config,
-  private val datasetContext: DatasetContext,
-  private val featureInvoker: FeatureInvoker,
+  private val datasetContext: DatasetContext
 ) {
 
   companion object {
@@ -36,10 +33,10 @@ class ActionsInterpretationHandler(
     logsSaverIf(config.interpret.saveFusLogs) { workspace.fusLogsSaver }
   ).asCompositeLogsSaver()
 
-  fun invoke(dataset: EvaluationDataset, workspace: EvaluationWorkspace, indicator: Progress) {
+  fun invoke(environment: EvaluationEnvironment, workspace: EvaluationWorkspace, indicator: Progress) {
     var sessionsCount: Int
     val computingTime = measureTimeMillis {
-      sessionsCount = dataset.sessionCount(datasetContext)
+      sessionsCount = environment.sessionCount(datasetContext)
     }
     LOG.info("Computing of sessions count took $computingTime ms")
     val interpretationConfig = config.interpret
@@ -56,7 +53,7 @@ class ActionsInterpretationHandler(
       println("During actions interpretation will be skipped about $skippedSessions sessions")
     }
     var fileCount = 0
-    for (chunk in dataset.chunks(datasetContext)) {
+    for (chunk in environment.chunks(datasetContext)) {
       if (config.interpret.filesLimit?.let { it <= fileCount } == true) {
         break
       }
@@ -64,7 +61,7 @@ class ActionsInterpretationHandler(
       workspace.fullLineLogsStorage.enableLogging(chunk.name)
       try {
         val sessions = logsSaver.invokeRememberingLogs {
-          chunk.evaluate(featureInvoker, handler, filter, interpretationConfig.order) { session ->
+          chunk.evaluate(handler, filter, interpretationConfig.order) { session ->
             featuresStorage.saveSession(session, chunk.name)
           }
         }
@@ -80,7 +77,9 @@ class ActionsInterpretationHandler(
           fileCount += 1
         }
         else {
-          LOG.warn("No sessions collected from file: ${chunk.name}")
+          if (chunk.sessionsExist) {
+            LOG.warn("No sessions collected from file: ${chunk.name}")
+          }
         }
       }
       catch (e: Throwable) {

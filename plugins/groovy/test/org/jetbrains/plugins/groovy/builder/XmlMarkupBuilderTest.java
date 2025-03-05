@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.builder;
 
 import com.intellij.psi.PsiElement;
@@ -43,9 +43,9 @@ public class XmlMarkupBuilderTest extends LightGroovyTestCase {
                               "\nclass A {\n    void foo() {}\n\n    void testSomething() {\n        def xml = new groovy.xml.MarkupBuilder()\n        xml.records() {\n            foo<caret>()\n        }\n    }\n}\n");
 
     PsiElement method = myFixture.getElementAtCaret();
-    assert method instanceof GrMethodImpl;
-    assert method.isPhysical();
-    assert ((GrMethodImpl)method).getContainingClass().getName().equals("A");
+    assertInstanceOf(method, GrMethodImpl.class);
+    assertTrue(method.isPhysical());
+    assertEquals("A", ((GrMethodImpl)method).getContainingClass().getName());
   }
 
   public void testResolveToMethod2() {
@@ -62,9 +62,9 @@ public class XmlMarkupBuilderTest extends LightGroovyTestCase {
                                 """);
 
     PsiElement method = myFixture.getElementAtCaret();
-    assert method instanceof ClsMethodImpl;
-    assert method.isPhysical();
-    assert ((ClsMethodImpl)method).getContainingClass().getName().equals("MarkupBuilder");
+    assertInstanceOf(method, ClsMethodImpl.class);
+    assertTrue(method.isPhysical());
+    assertEquals("MarkupBuilder", ((ClsMethodImpl)method).getContainingClass().getName());
   }
 
   public void testResolveToDynamicMethod() {
@@ -76,7 +76,7 @@ public class XmlMarkupBuilderTest extends LightGroovyTestCase {
       """);
 
     PsiElement method = myFixture.getElementAtCaret();
-    assert method instanceof GrLightMethodBuilder;
-    assert ((GrLightMethodBuilder)method).getReturnType().getCanonicalText().equals("java.lang.String");
+    assertInstanceOf(method, GrLightMethodBuilder.class);
+    assertEquals("java.lang.String", ((GrLightMethodBuilder)method).getReturnType().getCanonicalText());
   }
 }

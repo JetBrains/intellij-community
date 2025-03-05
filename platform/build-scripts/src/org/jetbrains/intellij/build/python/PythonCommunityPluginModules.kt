@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
 import kotlinx.collections.immutable.PersistentList
@@ -15,7 +15,14 @@ object PythonCommunityPluginModules {
     "intellij.python.community.communityOnly",
     "intellij.python.community.core.impl",
     "intellij.python.community.impl",
+    "intellij.python.community.impl.poetry",
+    "intellij.python.community.impl.installer",
     "intellij.python.community.impl.huggingFace",
+    "intellij.python.community.impl.venv",
+    "intellij.python.community.services.systemPython",
+    "intellij.python.community.services.shared",
+    "intellij.python.community.services.internal.impl",
+    "intellij.python.community.execService",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
     "intellij.python.community.plugin.minor",
@@ -30,12 +37,13 @@ object PythonCommunityPluginModules {
     "intellij.python.pydev",
     "intellij.python.sdk",
     "intellij.python.terminal",
+    "intellij.python.ml.features",
   )
 
   /**
    * List of modules used in both Python plugin and Python Frontend plugin
    */
-  @JvmStatic
+  @JvmField
   val PYTHON_COMMON_MODULES: PersistentList<String> = persistentListOf(
     "intellij.python.parser",
     "intellij.python.ast",
@@ -57,9 +65,7 @@ object PythonCommunityPluginModules {
   }
 
   fun pythonPlugin(mainModuleName: String, name: String, modules: List<String>, body: (PluginLayout.PluginLayoutSpec) -> Unit): PluginLayout {
-    return PluginLayout.plugin(mainModuleName, auto = true) { spec ->
-      spec.directoryName = name
-      spec.mainJarName = "$name.jar"
+    return PluginLayout.pluginAutoWithCustomDirName(mainModuleName, name) { spec ->
       spec.withModules(modules)
       if (mainModuleName == "intellij.python.community.plugin") {
         spec.withGeneratedResources { targetDir, context ->

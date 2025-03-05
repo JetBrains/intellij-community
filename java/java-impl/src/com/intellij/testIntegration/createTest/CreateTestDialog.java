@@ -52,8 +52,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.testIntegration.createTest.CreateTestUtils.selectTargetDirectory;
 
@@ -449,7 +449,7 @@ public class CreateTestDialog extends DialogWrapper {
 
   public @Nullable String getSuperClassName() {
     String result = mySuperClassField.getText().trim();
-    if (result.length() == 0) return null;
+    if (result.isEmpty()) return null;
     return result;
   }
 

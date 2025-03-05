@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -25,10 +25,13 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
@@ -43,7 +46,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
   private static final String ARCHETYPES_MAP_FILE = "archetypes-map.dat";
 
   private final MavenIndexerWrapper myNexusIndexer;
-  private final File myDir;
+  private final Path myDir;
   /**
    * @deprecated not used
    */
@@ -95,7 +98,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
           doOpen();
         }
         catch (Exception e2) {
-          throw new MavenIndexException("Cannot open index " + myDir.getPath(), e2);
+          throw new MavenIndexException("Cannot open index " + myDir, e2);
         }
         markAsBroken();
       }
@@ -113,15 +116,15 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
   private void doOpen() throws Exception {
     MavenLog.LOG.debug("open index " + this);
     ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-      File dataDir;
+      Path dataDir;
       synchronized (this) {
         if (myDataDirName == null) {
           dataDir = createNewDataDir();
-          myDataDirName = dataDir.getName();
+          myDataDirName = dataDir.toString();
         }
         else {
-          dataDir = new File(myDir, myDataDirName);
-          dataDir.mkdirs();
+          dataDir = myDir.resolve(myDataDirName);
+          Files.createDirectories(dataDir);
         }
 
         if (myData != null) {
@@ -134,22 +137,23 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     });
   }
 
-  private void cleanupBrokenData() {
+  private static List<Path> listDir(Path dir) throws IOException {
+    try (Stream<Path> s = Files.list(dir)) {
+      return s.toList();
+    }
+  }
+
+  private void cleanupBrokenData() throws IOException {
     close(true);
 
     //noinspection TestOnlyProblems
-    final File currentDataDir = getCurrentDataDir();
-    final File currentDataContextDir = getCurrentDataContextDir();
-    final File[] files = currentDataDir.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        if (!FileUtil.filesEqual(file, currentDataContextDir)) {
-          FileUtil.delete(file);
-        }
+    final Path currentDataDir = getCurrentDataDir();
+    final Path currentDataContextDir = getCurrentDataContextDir();
+    var files = listDir(currentDataDir);
+    for (Path file : files) {
+      if (!file.equals(currentDataContextDir)) {
+        FileUtil.delete(file);
       }
-    }
-    else {
-      FileUtil.delete(currentDataDir);
     }
   }
 
@@ -179,8 +183,8 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
   }
 
   @Override
-  public File getRepositoryFile() {
-    return myKind == RepositoryKind.LOCAL ? new File(myRepositoryPathOrUrl) : null;
+  public Path getRepositoryFile() {
+    return myKind == RepositoryKind.LOCAL ? Path.of(myRepositoryPathOrUrl) : null;
   }
 
   @Override
@@ -216,9 +220,9 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
       indexUpdateLock.lock();
 
       MavenLog.LOG.debug("start update index " + this);
-      final File newDataDir = createNewDataDir();
-      final File newDataContextDir = getDataContextDir(newDataDir);
-      final File currentDataContextDir = getCurrentDataContextDir();
+      final Path newDataDir = createNewDataDir();
+      final Path newDataContextDir = getDataContextDir(newDataDir);
+      final Path currentDataContextDir = getCurrentDataContextDir();
 
       boolean reuseExistingContext = fullUpdate ?
                                      myKind != RepositoryKind.LOCAL && hasValidContext(currentDataContextDir) :
@@ -228,7 +232,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
 
       if (reuseExistingContext) {
         try {
-          FileUtil.copyDir(currentDataContextDir, newDataContextDir);
+          Files.copy(currentDataContextDir, newDataContextDir);
         }
         catch (IOException e) {
           throw new MavenIndexException(e);
@@ -281,8 +285,8 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     return myRepositoryPathOrUrl != null && myRepositoryPathOrUrl.contains("repo.maven.apache.org");
   }
 
-  private boolean hasValidContext(@NotNull File contextDir) {
-    return contextDir.isDirectory() && myNexusIndexer.indexExists(contextDir);
+  private boolean hasValidContext(@NotNull Path contextDir) {
+    return Files.isDirectory(contextDir) && myNexusIndexer.indexExists(contextDir);
   }
 
   private void handleUpdateException(Exception e) {
@@ -299,12 +303,12 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     myFailureMessage = failureMessage;
   }
 
-  private MavenIndexId getMavenIndexId(File contextDir, String suffix) throws MavenServerIndexerException {
-    String indexId = myDir.getName() + "-" + suffix;
-    File repositoryFile = getRepositoryFile();
+  private MavenIndexId getMavenIndexId(Path contextDir, String suffix) throws MavenServerIndexerException {
+    String indexId = myDir.toString() + "-" + suffix;
+    Path repositoryFile = getRepositoryFile();
     return new MavenIndexId(
-      indexId, getRepositoryId(), repositoryFile == null ? null : repositoryFile.getAbsolutePath(),
-      getRepositoryUrl(), contextDir.getAbsolutePath()
+      indexId, getRepositoryId(), repositoryFile == null ? null : repositoryFile.toAbsolutePath().toString(),
+      getRepositoryUrl(), contextDir.toAbsolutePath().toString()
     );
   }
 
@@ -315,7 +319,8 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     myNexusIndexer.updateIndex(indexId, progress, multithreaded);
   }
 
-  private void updateIndexData(MavenProgressIndicator progress, File newDataDir, boolean fullUpdate) throws MavenIndexException {
+  private void updateIndexData(MavenProgressIndicator progress, Path newDataDir, boolean fullUpdate) throws MavenIndexException,
+                                                                                                            IOException {
     IndexData newData = new IndexData(newDataDir);
     try {
       doUpdateIndexData(newData, progress);
@@ -323,7 +328,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     }
     catch (Throwable e) {
       newData.close(true);
-      FileUtil.delete(newDataDir);
+      Files.delete(newDataDir);
 
       if (e instanceof MavenServerIndexerException) throw new MavenIndexException(e);
       if (e instanceof IOException) throw new MavenIndexException(e);
@@ -339,14 +344,14 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
         myData.close(true);
       }
       myData = newData;
-      myDataDirName = newDataDir.getName();
+      myDataDirName = newDataDir.toString();
 
       if (fullUpdate) {
         myUpdateTimestamp = System.currentTimeMillis();
       }
 
-      for (File each : FileUtil.notNullize(myDir.listFiles())) {
-        if (each.getName().startsWith(DATA_DIR_PREFIX) && !each.getName().equals(myDataDirName)) {
+      for (Path each : listDir(myDir)) {
+        if (each.toString().startsWith(DATA_DIR_PREFIX) && !each.toString().equals(myDataDirName)) {
           FileUtil.delete(each);
         }
       }
@@ -414,22 +419,21 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     }
   }
 
-  public File getDir() {
+  public Path getDir() {
     return myDir;
   }
 
   @TestOnly
-  private synchronized File getCurrentDataDir() {
-    return new File(myDir, myDataDirName);
+  private synchronized Path getCurrentDataDir() {
+    return myDir.resolve(myDataDirName);
   }
 
-  private File getCurrentDataContextDir() {
+  private Path getCurrentDataContextDir() {
     //noinspection TestOnlyProblems
-    return new File(getCurrentDataDir(), "context");
+    return getCurrentDataDir().resolve("context");
   }
 
-  @NotNull
-  private File createNewDataDir() {
+  private @NotNull Path createNewDataDir() {
     return MavenIndices.createNewDir(myDir, DATA_DIR_PREFIX, 100);
   }
 
@@ -439,9 +443,8 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
    * @return list of artifact responses; indexed id is not null if artifact added; indexed id is null if retry is needed
    */
   @Override
-  @NotNull
-  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<? extends File> artifactFiles) {
-    var failedResponses = ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
+  public @NotNull List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<? extends Path> artifactFiles) {
+    var failedResponses = ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file.toFile(), null));
     return doIndexAndRecoveryTask(() -> {
       boolean locked = indexUpdateLock.tryLock();
       if (!locked) return failedResponses;
@@ -593,7 +596,12 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
       catch (Exception e1) {
         MavenLog.LOG.warn(e1);
 
-        cleanupBrokenData();
+        try {
+          cleanupBrokenData();
+        }
+        catch (IOException e) {
+          MavenLog.LOG.warn(e);
+        }
         try {
           open();
         }
@@ -616,8 +624,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     isBroken = true;
   }
 
-  @NotNull
-  private Collection<String> getGroupIdsRaw() throws IOException {
+  private @NotNull Collection<String> getGroupIdsRaw() throws IOException {
     CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
     myData.groupToArtifactMap.processKeysWithExistingMapping(processor);
     return processor.getResults();
@@ -642,8 +649,8 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     }
   }
 
-  private static File getDataContextDir(File dataDir) {
-    return new File(dataDir, "context");
+  private static Path getDataContextDir(Path dataDir) {
+    return dataDir.resolve("context");
   }
 
   private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
@@ -693,13 +700,13 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
 
     final MavenIndexId mavenIndexId;
 
-    IndexData(File dir) throws MavenIndexException {
+    IndexData(Path dir) throws MavenIndexException {
       try {
-        groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
-        groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));
-        archetypeIdToDescriptionMap = createPersistentMap(new File(dir, ARCHETYPES_MAP_FILE));
+        groupToArtifactMap = createPersistentMap(dir.resolve(ARTIFACT_IDS_MAP_FILE));
+        groupWithArtifactToVersionMap = createPersistentMap(dir.resolve(VERSIONS_MAP_FILE));
+        archetypeIdToDescriptionMap = createPersistentMap(dir.resolve(ARCHETYPES_MAP_FILE));
 
-        mavenIndexId = getMavenIndexId(getDataContextDir(dir), dir.getName());
+        mavenIndexId = getMavenIndexId(getDataContextDir(dir), dir.toString());
       }
       catch (IOException | MavenServerIndexerException e) {
         close(true);
@@ -707,8 +714,8 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
       }
     }
 
-    private static PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
-      return new PersistentHashMap<>(f.toPath(), EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
+    private static PersistentHashMap<String, Set<String>> createPersistentMap(final Path f) throws IOException {
+      return new PersistentHashMap<>(f, EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
     }
 
     void close(boolean releaseIndexContext) throws MavenIndexException {
@@ -746,7 +753,7 @@ public final class MavenIndexImpl implements MavenIndex, MavenSearchIndex {
     }
 
     @NotNull
-    List<AddArtifactResponse> addArtifacts(Collection<? extends File> artifactFiles) {
+    List<AddArtifactResponse> addArtifacts(Collection<? extends Path> artifactFiles) {
       return myNexusIndexer.addArtifacts(mavenIndexId, artifactFiles);
     }
 

@@ -140,7 +140,7 @@ public interface HighlightInfoType {
 
     @Override
     public String toString() {
-      return "HighlightInfoTypeImpl[severity=" + mySeverity + ", key=" + attributeKey + "]";
+      return "HighlightInfoTypeImpl[severity=" + mySeverity.getName() + ", key=" + attributeKey + "]";
     }
 
     public void writeExternal(Element element) {

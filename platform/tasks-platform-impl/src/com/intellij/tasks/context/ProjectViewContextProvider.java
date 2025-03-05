@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.context;
 
@@ -17,15 +17,13 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 final class ProjectViewContextProvider extends WorkingContextProvider {
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "projectView";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return TaskBundle.message("project.view.state");
   }
 

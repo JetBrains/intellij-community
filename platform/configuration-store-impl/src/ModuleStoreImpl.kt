@@ -30,6 +30,10 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
   override val storageManager: StateStorageManagerImpl =
     ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
+  @Volatile
+  final override var isStoreInitialized: Boolean = false
+    private set
+
   override fun createSaveSessionProducerManager(): SaveSessionProducerManager =
     SaveSessionProducerManager(storageManager.isUseVfsForWrite, collectVfsEvents = true)
 
@@ -76,7 +80,12 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
     setPath(path = path, virtualFile = null, isNew = false)
   }
 
-  override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
+  final override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
+    doSetPath(path, virtualFile, isNew)
+    isStoreInitialized = true
+  }
+
+  protected open fun doSetPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
     val isMacroAdded = storageManager.setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
     // if file not null - update storage
     storageManager.getOrCreateStorage(
@@ -206,8 +215,8 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
 private class TestModuleStore(module: Module) : ModuleStoreImpl(module) {
   private var moduleComponentLoadPolicy: StateLoadPolicy? = null
 
-  override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
-    super.setPath(path, virtualFile, isNew)
+  override fun doSetPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
+    super.doSetPath(path, virtualFile, isNew)
     if (!isNew && Files.exists(path)) {
       moduleComponentLoadPolicy = StateLoadPolicy.LOAD
     }

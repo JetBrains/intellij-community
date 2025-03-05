@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.openapi.ui.ValidationInfo;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -21,17 +23,16 @@ public final class CloneDvcsValidationUtils {
 
   static {
     // TODO make real URL pattern
-    @NonNls final String ch = "[\\p{ASCII}&&[\\p{Graph}]&&[^@:/]]";
-    @NonNls final String ch2 = "[\\p{ASCII}&&[\\p{Graph}]&&[^/]]";
-    @NonNls final String host = ch + "+(?:\\." + ch + "+)*";
-    @NonNls final String path = "/?" + ch2 + "+(?:/" + ch2 + "+)*/?";
-    @NonNls final String all = "(?:" + ch + "+@)?" + host + ":" + path;
+    final @NonNls String ch = "[\\p{ASCII}&&[\\p{Graph}]&&[^@:/]]";
+    final @NonNls String ch2 = "[\\p{ASCII}&&[\\p{Graph}]&&[^/]]";
+    final @NonNls String host = ch + "+(?:\\." + ch + "+)*";
+    final @NonNls String path = "/?" + ch2 + "+(?:/" + ch2 + "+)*/?";
+    final @NonNls String all = "(?:" + ch + "+@)?" + host + ":" + path;
     SSH_URL_PATTERN = Pattern.compile(all);
   }
 
 
-  @Nullable
-  public static ValidationInfo createDestination(@NotNull String path) {
+  public static @Nullable ValidationInfo createDestination(@NotNull String path) {
     try {
       Path directoryPath = Paths.get(path);
       if (!directoryPath.toFile().exists()) {
@@ -55,9 +56,8 @@ public final class CloneDvcsValidationUtils {
    *
    * @return null if destination directory is OK.
    */
-  @Nullable
-  public static ValidationInfo checkDirectory(@NotNull String directoryPath, @NotNull JComponent component) {
-    if (directoryPath.length() == 0) {
+  public static @Nullable ValidationInfo checkDirectory(@NotNull String directoryPath, @NotNull JComponent component) {
+    if (directoryPath.isEmpty()) {
       return new ValidationInfo("");
     }
 
@@ -97,9 +97,8 @@ public final class CloneDvcsValidationUtils {
    *
    * @return null if repository URL is OK.
    */
-  @Nullable
-  public static ValidationInfo checkRepositoryURL(JComponent component, String repository) {
-    if (repository.length() == 0) {
+  public static @Nullable ValidationInfo checkRepositoryURL(JComponent component, String repository) {
+    if (repository.isEmpty()) {
       return new ValidationInfo(DvcsBundle.message("clone.repository.url.error.empty"), component);
     }
 
@@ -144,8 +143,7 @@ public final class CloneDvcsValidationUtils {
     return false;
   }
 
-  @NotNull
-  static String sanitizeCloneUrl(@NotNull String urlText) {
+  static @NotNull String sanitizeCloneUrl(@NotNull String urlText) {
     return removePrefix(removePrefix(urlText.trim(), "git clone"), "hg clone").trim(); //NON-NLS
   }
 }

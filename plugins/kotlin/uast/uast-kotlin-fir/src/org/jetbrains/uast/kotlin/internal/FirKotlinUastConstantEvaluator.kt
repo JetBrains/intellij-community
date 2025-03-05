@@ -2,6 +2,7 @@
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiVariable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
@@ -54,7 +55,14 @@ internal object FirKotlinUastConstantEvaluator {
         // However, for some cases, we can still evaluate if operands are const-like,
         // e.g., local final variable with constant initializer, enum constant, etc.
         return when (uExpression) {
-            is UReferenceExpression -> uExpression.resolve() as? PsiEnumConstant
+            is UReferenceExpression -> {
+                val ref = uExpression.resolve()
+                when (ref) {
+                    is PsiEnumConstant -> ref
+                    is PsiVariable -> ref.computeConstantValue()
+                    else -> null
+                }
+            }
             is UUnaryExpression -> evaluateConstLike(uExpression)
             is UPolyadicExpression -> evaluateConstLike(uExpression)
             else -> null

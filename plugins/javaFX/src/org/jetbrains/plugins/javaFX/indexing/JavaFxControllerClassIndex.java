@@ -27,32 +27,28 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider;
 import java.io.StringReader;
 import java.util.*;
 
-public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
-  @NonNls public static final ID<String, Void> NAME = ID.create("JavaFxControllerClassIndex");
+public final class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
+  public static final @NonNls ID<String, Void> NAME = ID.create("JavaFxControllerClassIndex");
   private static final MyInputFilter myInputFilter = new MyInputFilter();
   private static final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   @Override
-  @NotNull
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
   @Override
-  @NotNull
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
@@ -68,8 +64,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
 
   private static final class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @Override
-    @NotNull
-    public Map<String, Void> map(@NotNull final FileContent inputData) {
+    public @NotNull Map<String, Void> map(final @NotNull FileContent inputData) {
       final String className = getControllerClassName(inputData.getContentAsText().toString());
       if (className != null) {
         return Collections.singletonMap(className, null);
@@ -77,8 +72,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
       return Collections.emptyMap();
     }
 
-    @Nullable
-    private static String getControllerClassName(String content) {
+    private static @Nullable String getControllerClassName(String content) {
       if (!content.contains(JavaFxNamespaceDataProvider.JAVAFX_NAMESPACE)) {
         return null;
       }
@@ -114,7 +108,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
       super(XmlFileType.INSTANCE);
     }
     @Override
-    public boolean acceptInput(@NotNull final VirtualFile file) {
+    public boolean acceptInput(final @NotNull VirtualFile file) {
       return JavaFxFileTypeFactory.isFxml(file);
     }
   }
@@ -139,9 +133,9 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   }
 
   private static <T> List<T> findFxmlWithController(final Project project,
-                                                     @NotNull final String className,
-                                                     final Function<VirtualFile, T> f,
-                                                     final GlobalSearchScope scope) {
+                                                    final @NotNull String className,
+                                                    final Function<VirtualFile, T> f,
+                                                    final GlobalSearchScope scope) {
     return findFxmls(NAME, project, className, f, scope);
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.io.JsonObjectBuilder
+import java.util.Locale
 
 internal inline fun processConfigurationTypes(processor: (configurationType: ConfigurationType, propertyName: CharSequence, factories: Array<ConfigurationFactory>) -> Unit) {
   for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
@@ -260,7 +261,7 @@ private fun idToPropertyName(string: String, configurationType: ConfigurationTyp
         break
       }
       else {
-        builder.append(result[i].toUpperCase())
+        builder.append(result[i].uppercaseChar())
         i++
         continue
       }
@@ -285,7 +286,7 @@ private fun idToPropertyName(string: String, configurationType: ConfigurationTyp
           builder = StringBuilder()
           builder.append(result, 0, i)
         }
-        builder.append(ch.toLowerCase())
+        builder.append(ch.lowercaseChar())
       }
       else {
         isAllUpperCased = false
@@ -304,12 +305,12 @@ private fun idToPropertyName(string: String, configurationType: ConfigurationTyp
 
   if (isAllUpperCased) {
     if (builder == null) {
-      return result.toLowerCase()
+      return result.lowercase(Locale.getDefault())
     }
     else {
       @Suppress("NAME_SHADOWING")
       for (i in builder.indices) {
-        builder.setCharAt(i, builder.get(i).toLowerCase())
+        builder.setCharAt(i, builder.get(i).lowercaseChar())
       }
       return builder
     }
@@ -320,7 +321,7 @@ private fun idToPropertyName(string: String, configurationType: ConfigurationTyp
 }
 
 private fun generateTypeDefinitionId(propertyName: CharSequence): String {
-  return "${propertyName[0].toUpperCase()}${propertyName.substring(1)}Type"
+  return "${propertyName[0].uppercaseChar()}${propertyName.substring(1)}Type"
 }
 
 private fun getTypeDescription(type: ConfigurationType, typePropertyName: CharSequence): String? {

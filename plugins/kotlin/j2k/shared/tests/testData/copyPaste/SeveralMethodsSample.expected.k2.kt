@@ -8,7 +8,7 @@ class A {
             val bindingContext: BindingContext =
                 AnalyzerFacadeWithCache.analyzeFileWithCache(element.getContainingJetFile()).getBindingContext()
 
-            val declarationDescriptor: DeclarationDescriptor? =
+            val declarationDescriptor: DeclarationDescriptor =
                 bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, element)
             if (declarationDescriptor is CallableMemberDescriptor) {
                 val containingDescriptor: DeclarationDescriptor? = declarationDescriptor.getContainingDeclaration()
@@ -25,7 +25,7 @@ class A {
         assert(
             element is PsiMethod
         ) { "Method accepts only kotlin functions/properties and java methods, but '" + element.getText() + "' was found" }
-        return JetRefactoringUtil.formatPsiMethod(element as PsiMethod, true, false)
+        return JetRefactoringUtil.formatPsiMethod(element as PsiMethod?, true, false)
     }
 
     protected override fun getDimensionServiceKey(): String {

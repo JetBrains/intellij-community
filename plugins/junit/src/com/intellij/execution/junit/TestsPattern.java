@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -36,9 +36,8 @@ public class TestsPattern extends TestPackage {
     return TestClassFilter.create(getSourceScope(), getConfiguration().getConfigurationModule().getModule(), data.getPatternPresentation());
   }
 
-  @NotNull
   @Override
-  protected String getPackageName(JUnitConfiguration.Data data) {
+  protected @NotNull String getPackageName(JUnitConfiguration.Data data) {
     return "";
   }
 
@@ -53,16 +52,16 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected void searchTests5(Module module, Set<Location<?>> classes) {
+  protected void searchTests5(Module module, Set<? super Location<?>> classes) {
     searchTests(module, null, classes, true);
   }
 
   @Override
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes) {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super Location<?>> classes) {
     searchTests(module, classFilter, classes, false);
   }
 
-  private void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes, boolean junit5) {
+  private void searchTests(Module module, TestClassFilter classFilter, Set<? super Location<?>> classes, boolean junit5) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
@@ -108,7 +107,7 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  protected String getFilters(Set<Location<?>> foundClasses, String packageName) {
+  protected String getFilters(Set<? extends Location<?>> foundClasses, String packageName) {
     return foundClasses.isEmpty() ? getConfiguration().getPersistentData().getPatternPresentation() : "";
   }
 
@@ -128,9 +127,8 @@ public class TestsPattern extends TestPackage {
     return null;
   }
 
-  @Nullable
   @Override
-  public RefactoringElementListener getListener(PsiElement element) {
+  public @Nullable RefactoringElementListener getListener(PsiElement element) {
     final RefactoringElementListenerComposite composite = new RefactoringElementListenerComposite();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final Set<String> patterns = data.getPatterns();

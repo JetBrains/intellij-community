@@ -32,7 +32,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
@@ -78,7 +77,6 @@ import javax.swing.plaf.TabbedPaneUI
 import javax.swing.text.View
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.ParagraphView
-import kotlin.collections.set
 import kotlin.coroutines.coroutineContext
 
 @Internal
@@ -173,7 +171,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   companion object {
     @JvmStatic
-    fun isMultiTabs(): Boolean = Registry.`is`("plugins.show.multi.tabs", true)
+    @Deprecated("Always true")
+    fun isMultiTabs(): Boolean = true
 
     @JvmStatic
     fun createDescriptionComponent(imageViewHandler: Consumer<in View>?): JEditorPane {
@@ -1402,9 +1401,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         val bundled = plugin!!.isBundled
         val isEssential = ApplicationInfo.getInstance().isEssentialPlugin(
           plugin!!.pluginId)
-        gearButton!!.isVisible = !uninstalled && !bundled
+        gearButton!!.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode != true
         myEnableDisableButton!!.isVisible = bundled
-        myEnableDisableButton!!.isEnabled = !isEssential
+        myEnableDisableButton!!.isEnabled = !isEssential && showComponent?.isNotFreeInFreeMode != true
       }
       else {
         gearButton!!.isVisible = !uninstalled
@@ -1428,9 +1427,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updateErrors() {
-    val errors = pluginModel.getErrors(descriptorForActions!!)
-    updateIcon(errors)
-    errorComponent!!.setErrors(errors) { this.handleErrors() }
+    if (showComponent?.isNotFreeInFreeMode != true) {
+      val errors = pluginModel.getErrors(descriptorForActions!!)
+      updateIcon(errors)
+      errorComponent!!.setErrors(errors) { this.handleErrors() }
+    }
   }
 
   private fun handleErrors() {

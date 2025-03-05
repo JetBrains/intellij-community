@@ -150,6 +150,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/LambdaReturnType.kt");
     }
 
+    @TestMetadata("LocalClass.kt")
+    public void testLocalClass() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/LocalClass.kt");
+    }
+
     @TestMetadata("LocalVariable.kt")
     public void testLocalVariable() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/LocalVariable.kt");
@@ -203,6 +208,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
     @TestMetadata("SAMConstructor.kt")
     public void testSAMConstructor() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/SAMConstructor.kt");
+    }
+
+    @TestMetadata("SuspendFunctionalType.kt")
+    public void testSuspendFunctionalType() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/SuspendFunctionalType.kt");
     }
 
     @TestMetadata("TypeInCompanion.kt")

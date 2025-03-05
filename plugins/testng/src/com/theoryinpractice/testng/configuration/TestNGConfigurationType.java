@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
@@ -28,15 +28,13 @@ public final class TestNGConfigurationType extends SimpleConfigurationType
     return true;
   }
 
-  @NotNull
   @Override
-  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+  public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
     return new TestNGConfiguration(project, this);
   }
 
-  @NotNull
   @Override
-  public String getTag() {
+  public @NotNull String getTag() {
     return "testNg";
   }
 
@@ -45,8 +43,7 @@ public final class TestNGConfigurationType extends SimpleConfigurationType
     return "reference.dialogs.rundebug.TestNG";
   }
 
-  @NotNull
-  public static TestNGConfigurationType getInstance() {
+  public static @NotNull TestNGConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(TestNGConfigurationType.class);
   }
 

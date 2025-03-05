@@ -7,6 +7,13 @@
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
 - a:createNodeHoverIcon(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.HoverIcon
 - handleDoubleClick(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
+*:com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider
+- *sf:Companion:com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider$Companion
+- a:getTitle(com.intellij.openapi.project.Project,java.util.Collection,kotlin.coroutines.Continuation):java.lang.Object
+- s:suggestTitle(com.intellij.openapi.project.Project,java.util.Collection):java.lang.String
+*f:com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:suggestTitle(com.intellij.openapi.project.Project,java.util.Collection):java.lang.String
 c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 - *:build(Z):javax.swing.tree.DefaultTreeModel

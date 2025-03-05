@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.intellij.debugger.engine.DebuggerUtils
@@ -38,12 +38,12 @@ class CoroutineScopeExtractor(
         fun create(evaluationContext: EvaluationContext): CoroutineScopeExtractor {
             try {
                 val jobType = evaluationContext.findClass("kotlinx.coroutines.Job")
-                val jobKeyField = jobType?.fieldByName("Key")
-                val jobKey: Value?
-                if (jobType != null && jobKeyField != null) {
-                    jobKey = jobType.getValue(jobKeyField)
-                } else {
-                    jobKey = null
+                var jobKey: Value? = null
+                if (jobType != null) {
+                    val jobKeyField = DebuggerUtils.findField(jobType, "Key")
+                    if (jobKeyField != null) {
+                        jobKey = jobType.getValue(jobKeyField)
+                    }
                 }
 
                 val continuationType = evaluationContext.findClass("kotlin.coroutines.Continuation")
@@ -64,6 +64,7 @@ class CoroutineScopeExtractor(
     private fun ObjectReference.getCoroutineScopeByJobKey(evaluationContext: EvaluationContext): ObjectReference? {
         val jobKey = jobKey ?: return null
         val getMethod = getMethod ?: return null
+        if (!DebuggerUtils.instanceOf(type(), "kotlin.coroutines.CoroutineContext")) return null
         val coroutineScope = evaluationContext.debugProcess.invokeMethod(
             evaluationContext,
             this,
@@ -75,6 +76,7 @@ class CoroutineScopeExtractor(
 
     private fun ObjectReference.getCoroutineContext(evaluationContext: EvaluationContext): ObjectReference? {
         val getContextMethod = getContextMethod ?: return null
+        if (!DebuggerUtils.instanceOf(type(), "kotlin.coroutines.Continuation")) return null
         val coroutineContext = evaluationContext.debugProcess.invokeMethod(
             evaluationContext,
             this,

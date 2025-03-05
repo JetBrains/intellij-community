@@ -12,4 +12,4 @@ public class InterfaceWithDelegatedWithImpl(f: InterfaceWithImpl) : InterfaceWit
 fun test(twdwi: InterfaceWithDelegatedWithImpl) = twdwi.foo()
 
 
-// DISABLE-ERRORS
+// DISABLE_ERRORS

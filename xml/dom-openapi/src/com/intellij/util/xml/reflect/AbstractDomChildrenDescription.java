@@ -26,12 +26,14 @@ import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.ElementPresentationTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Type;
 import java.util.List;
 
 public interface AbstractDomChildrenDescription extends AnnotatedElement, PomTarget {
   @NotNull
+  @Unmodifiable
   List<? extends DomElement> getValues(@NotNull DomElement parent);
 
   @NotNull

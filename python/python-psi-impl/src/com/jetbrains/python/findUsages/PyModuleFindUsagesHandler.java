@@ -34,7 +34,7 @@ import java.util.List;
  * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
  */
 public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
-  final PsiFileSystemItem myElement;
+  protected final PsiFileSystemItem myElement;
 
   protected PyModuleFindUsagesHandler(@NotNull PsiFileSystemItem file) {
     super(file);
@@ -47,9 +47,8 @@ public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
     return new PsiElement[] {myElement};
   }
 
-  @NotNull
   @Override
-  public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
+  public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     if (target instanceof PyImportedModule) {
       target = ((PyImportedModule) target).resolve();
     }

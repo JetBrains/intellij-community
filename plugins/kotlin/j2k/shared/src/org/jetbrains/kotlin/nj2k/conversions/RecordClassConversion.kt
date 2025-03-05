@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 import com.intellij.psi.*
 import com.intellij.psi.util.JavaPsiRecordUtil.*
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_RECORD_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKLightMethodData
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.nj2k.types.determineType
  *
  * See [JEP 395](https://openjdk.org/jeps/395) and [Records documentation](https://docs.oracle.com/en/java/javase/16/language/records.html)
  */
-class RecordClassConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class RecordClassConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKRecordClass) element.convert()

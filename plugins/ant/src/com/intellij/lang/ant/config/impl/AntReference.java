@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.execution.CantRunException;
@@ -16,9 +16,9 @@ import java.util.Objects;
 
 public abstract class AntReference {
   private static final Logger LOG = Logger.getInstance(AntReference.class);
-  @NonNls private static final String PROJECT_DEFAULT_ATTR = "projectDefault";
-  @NonNls private static final String NAME_ATTR = "name";
-  @NonNls private static final String BUNDLED_ANT_ATTR = "bundledAnt";
+  private static final @NonNls String PROJECT_DEFAULT_ATTR = "projectDefault";
+  private static final @NonNls String NAME_ATTR = "name";
+  private static final @NonNls String BUNDLED_ANT_ATTR = "bundledAnt";
 
   public static final Externalizer<AntReference> EXTERNALIZER = new Externalizer<>() {
     @Override
@@ -49,6 +49,7 @@ public abstract class AntReference {
 
   protected abstract void writeExternal(Element dataElement);
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -74,11 +75,13 @@ public abstract class AntReference {
       throw new UnsupportedOperationException("Should not call");
     }
 
+    @Override
     @SuppressWarnings({"HardCodedStringLiteral"})
     public String toString() {
       return "PROJECT_DEFAULT";
     }
 
+    @Override
     public boolean equals(Object obj) {
       return obj == this;
     }
@@ -90,6 +93,7 @@ public abstract class AntReference {
       dataElement.setAttribute(BUNDLED_ANT_ATTR, Boolean.TRUE.toString());
     }
 
+    @Override
     public boolean equals(Object obj) {
       return obj == this;
     }
@@ -116,18 +120,19 @@ public abstract class AntReference {
 
   public abstract AntReference bind(GlobalAntConfiguration antConfiguration);
 
+  @Override
   public int hashCode() {
     return getName().hashCode();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj == PROJECT_DEFAULT) return this == PROJECT_DEFAULT;
     if (obj == BUNDLED_ANT) return this == BUNDLED_ANT;
     return obj instanceof AntReference && Objects.equals(getName(), ((AntReference)obj).getName());
   }
 
-  @Nullable
-  public static AntInstallation findAnt(AbstractProperty<? extends AntReference> property, AbstractProperty.AbstractPropertyContainer container) {
+  public static @Nullable AntInstallation findAnt(AbstractProperty<? extends AntReference> property, AbstractProperty.AbstractPropertyContainer container) {
     GlobalAntConfiguration antConfiguration = GlobalAntConfiguration.INSTANCE.get(container);
     LOG.assertTrue(antConfiguration != null);
     AntReference antReference = property.get(container);
@@ -151,8 +156,7 @@ public abstract class AntReference {
     return antInstallation;
   }
 
-  @Nullable
-  public static AntInstallation findAntOrBundled(AbstractProperty.AbstractPropertyContainer container) {
+  public static @Nullable AntInstallation findAntOrBundled(AbstractProperty.AbstractPropertyContainer container) {
     GlobalAntConfiguration antConfiguration = GlobalAntConfiguration.INSTANCE.get(container);
     if (container.hasProperty(AntBuildFileImpl.ANT_REFERENCE)) return findAnt(AntBuildFileImpl.ANT_REFERENCE, container);
     return antConfiguration.getBundledAnt();

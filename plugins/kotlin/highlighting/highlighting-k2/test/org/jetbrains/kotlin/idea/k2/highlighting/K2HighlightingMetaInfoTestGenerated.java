@@ -140,6 +140,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("JavaClassWithStaticStarImport.kt")
+        public void testJavaClassWithStaticStarImport() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaClassWithStaticStarImport.kt");
+        }
+
         @TestMetadata("javaFields.kt")
         public void testJavaFields() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaFields.kt");
@@ -175,6 +180,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
         }
 
+        @TestMetadata("KotlinOperatorFunctionInjection.kt")
+        public void testKotlinOperatorFunctionInjection() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinOperatorFunctionInjection.kt");
+        }
+
         @TestMetadata("KotlinSimpleInjection.kt")
         public void testKotlinSimpleInjection() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinSimpleInjection.kt");
@@ -183,6 +193,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("KotlinVarargsParametersInjection.kt")
         public void testKotlinVarargsParametersInjection() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinVarargsParametersInjection.kt");
+        }
+
+        @TestMetadata("LibraryVarargParameterWithFunctionalType.kt")
+        public void testLibraryVarargParameterWithFunctionalType() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/LibraryVarargParameterWithFunctionalType.kt");
         }
 
         @TestMetadata("NonExistingKotlinMethodFromJava.kt")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.FileSelectInContext;
@@ -43,18 +43,20 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 public abstract class ChangesListView extends ChangesTree implements DnDAware {
   private static final Logger LOG = Logger.getInstance(ChangesListView.class);
 
-  @NonNls public static final String HELP_ID = "ideaInterface.changes";
-  @NonNls public static final DataKey<ChangesListView> DATA_KEY
+  public static final @NonNls String HELP_ID = "ideaInterface.changes";
+  public static final @NonNls DataKey<ChangesListView> DATA_KEY
     = DataKey.create("ChangeListView");
-  @NonNls public static final DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY
+  public static final @NonNls DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY
     = DataKey.create("ChangeListView.UnversionedFiles");
-  @NonNls public static final DataKey<Iterable<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY
+  public static final @NonNls DataKey<Iterable<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY
     = DataKey.create("ChangeListView.ExactlySelectedFiles");
-  @NonNls public static final DataKey<Iterable<FilePath>> IGNORED_FILE_PATHS_DATA_KEY
+  public static final @NonNls DataKey<Iterable<FilePath>> IGNORED_FILE_PATHS_DATA_KEY
     = DataKey.create("ChangeListView.IgnoredFiles");
-  @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY
+  public static final @NonNls DataKey<Iterable<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY
+    = DataKey.create("ChangeListView.ModifiedWithoutEditing");
+  public static final @NonNls DataKey<List<FilePath>> MISSING_FILES_DATA_KEY
     = DataKey.create("ChangeListView.MissingFiles");
-  @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES
+  public static final @NonNls DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES
     = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
   private boolean myBusy = false;
@@ -140,7 +142,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
              : null);
     sink.set(UNVERSIONED_FILE_PATHS_DATA_KEY, getSelectedUnversionedFiles());
     sink.set(IGNORED_FILE_PATHS_DATA_KEY, getSelectedIgnoredFiles());
-    sink.set(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing().toList());
+    sink.set(MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing());
     sink.set(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges().toList());
     sink.set(MISSING_FILES_DATA_KEY, getSelectedLocallyDeletedChanges()
       .map(LocallyDeletedChange::getPath)
@@ -175,33 +177,28 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     });
   }
 
-  @NotNull
-  public JBIterable<FilePath> getUnversionedFiles() {
+  public @NotNull JBIterable<FilePath> getUnversionedFiles() {
     return VcsTreeModelData.allUnderTag(this, UNVERSIONED_FILES_TAG)
       .iterateUserObjects(FilePath.class);
   }
 
-  @NotNull
-  public JBIterable<FilePath> getSelectedUnversionedFiles() {
+  public @NotNull JBIterable<FilePath> getSelectedUnversionedFiles() {
     return VcsTreeModelData.selectedUnderTag(this, UNVERSIONED_FILES_TAG)
       .iterateUserObjects(FilePath.class);
   }
 
-  @NotNull
-  private JBIterable<FilePath> getSelectedIgnoredFiles() {
+  private @NotNull JBIterable<FilePath> getSelectedIgnoredFiles() {
     return VcsTreeModelData.selectedUnderTag(this, IGNORED_FILES_TAG)
       .iterateUserObjects(FilePath.class);
   }
 
-  @NotNull
-  private JBIterable<VirtualFile> getSelectedModifiedWithoutEditing() {
+  private @NotNull JBIterable<VirtualFile> getSelectedModifiedWithoutEditing() {
     return VcsTreeModelData.selectedUnderTag(this, MODIFIED_WITHOUT_EDITING_TAG)
       .iterateUserObjects(VirtualFile.class)
       .filter(VirtualFile::isValid);
   }
 
-  @NotNull
-  public JBIterable<Change> getSelectedChanges() {
+  public @NotNull JBIterable<Change> getSelectedChanges() {
     JBIterable<Change> changes = VcsTreeModelData.selected(this)
       .iterateUserObjects(Change.class);
     JBIterable<Change> hijackedChanges = getSelectedModifiedWithoutEditing()
@@ -211,8 +208,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     return changes.append(hijackedChanges);
   }
 
-  @Nullable
-  public static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @Nullable Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
     VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
     if (before != null) {
       ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
@@ -221,14 +217,12 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     return null;
   }
 
-  @NotNull
-  private JBIterable<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
+  private @NotNull JBIterable<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
     return VcsTreeModelData.selectedUnderTag(this, LOCALLY_DELETED_NODE_TAG)
       .iterateUserObjects(LocallyDeletedChange.class);
   }
 
-  @Nullable
-  public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
+  public @Nullable List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
     ChangesBrowserNode<?> node = findNodeInTree(change);
     if (node == null) return null;
 
@@ -247,8 +241,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
       .toList();
   }
 
-  @Nullable
-  public List<Change> getAllChangesFromSameAmendNode(@NotNull Change change) {
+  public @Nullable List<Change> getAllChangesFromSameAmendNode(@NotNull Change change) {
     ChangesBrowserNode<?> node = findNodeInTree(change);
     if (node == null) return null;
 
@@ -260,9 +253,8 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
       .toList();
   }
 
-  @Nullable
-  private static ChangesBrowserNode<?> findParentOfType(@NotNull ChangesBrowserNode<?> node,
-                                                        @NotNull Class<? extends ChangesBrowserNode<?>> clazz) {
+  private static @Nullable ChangesBrowserNode<?> findParentOfType(@NotNull ChangesBrowserNode<?> node,
+                                                                  @NotNull Class<? extends ChangesBrowserNode<?>> clazz) {
     ChangesBrowserNode<?> parent = node.getParent();
     while (parent != null) {
       if (clazz.isInstance(parent)) {
@@ -273,13 +265,11 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     return null;
   }
 
-  @NotNull
-  public JBIterable<ChangesBrowserChangeNode> getChangesNodes() {
+  public @NotNull JBIterable<ChangesBrowserChangeNode> getChangesNodes() {
     return VcsTreeModelData.all(this).iterateNodes().filter(ChangesBrowserChangeNode.class);
   }
 
-  @NotNull
-  public JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
+  public @NotNull JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
     return VcsTreeModelData.selected(this).iterateNodes();
   }
 
@@ -289,8 +279,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 
@@ -309,13 +298,11 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     TreeUtil.dropSelectionButUnderPoint(this, point);
   }
 
-  @Nullable
-  public ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject) {
+  public @Nullable ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject) {
     return findNodeInTree(userObject, null);
   }
 
-  @Nullable
-  public ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject, @Nullable Object tag) {
+  public @Nullable ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject, @Nullable Object tag) {
     if (userObject instanceof LocalChangeList) {
       return getRoot().iterateNodeChildren()
         .find(node -> userObject.equals(node.getUserObject()));
@@ -334,13 +321,11 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
     }
   }
 
-  @Nullable
-  public TreePath findNodePathInTree(@Nullable Object userObject) {
+  public @Nullable TreePath findNodePathInTree(@Nullable Object userObject) {
     return findNodePathInTree(userObject, null);
   }
 
-  @Nullable
-  public TreePath findNodePathInTree(@Nullable Object userObject, @Nullable Object tag) {
+  public @Nullable TreePath findNodePathInTree(@Nullable Object userObject, @Nullable Object tag) {
     DefaultMutableTreeNode node = findNodeInTree(userObject, tag);
     return node != null ? TreeUtil.getPathFromRoot(node) : null;
   }

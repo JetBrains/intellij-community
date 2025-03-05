@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.rename;
 
@@ -138,8 +138,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     return true;
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String renameabilityStatus(@NotNull Project project, @NotNull PsiElement element) {
+  private static @Nullable @NlsContexts.DialogMessage String renameabilityStatus(@NotNull Project project, @NotNull PsiElement element) {
     boolean hasRenameProcessor = !(RenamePsiElementProcessorBase.forPsiElement(element) instanceof RenamePsiElementProcessorBase.DefaultRenamePsiElementProcessor);
     boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
 
@@ -245,8 +244,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     return false;
   }
 
-  @Nullable
-  public static PsiElement getElement(@NotNull DataContext dataContext) {
+  public static @Nullable PsiElement getElement(@NotNull DataContext dataContext) {
     PsiElement[] elementArray = CommonRefactoringUtil.getPsiElementArray(dataContext);
 
     if (elementArray.length != 1) {

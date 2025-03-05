@@ -8,6 +8,7 @@ import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
 import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.clearAllAndMoveCursorToTopLeftCorner
@@ -270,7 +271,8 @@ internal class ShellCommandManager(
   }
 }
 
-internal interface ShellCommandListener : EventListener {
+@ApiStatus.Internal
+interface ShellCommandListener : EventListener {
   fun initialized() {}
 
   /**
@@ -298,8 +300,10 @@ internal interface ShellCommandListener : EventListener {
   fun clearInvoked() {}
 }
 
-internal data class CommandFinishedEvent(val command: String, val exitCode: Int, val duration: Duration)
+@ApiStatus.Internal
+data class CommandFinishedEvent(val command: String, val exitCode: Int, val duration: Duration)
 
-internal data class GeneratorFinishedEvent(val requestId: Int, val output: String, val exitCode: Int)
+@ApiStatus.Internal
+data class GeneratorFinishedEvent(val requestId: Int, val output: String, val exitCode: Int)
 
 private data class StartedCommand(val command: String, val currentDirectory: String, val commandStarted: TimeMark)

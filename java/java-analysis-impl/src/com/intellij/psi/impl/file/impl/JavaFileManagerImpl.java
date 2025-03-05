@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
@@ -76,6 +78,18 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     ContainerUtil.quickSort(result, (o1, o2) -> scope.compare(o2.getSecond(), o1.getSecond()));
 
     return result.stream().map(p -> p.getFirst()).toArray(PsiClass[]::new);
+  }
+
+  @Override
+  public boolean hasClass(@NotNull String qName, @NotNull GlobalSearchScope scope, @NotNull Predicate<PsiClass> filter) {
+    List<Pair<PsiClass, VirtualFile>> pairs = doFindClasses(qName, scope);
+    if (filter == Predicates.<PsiClass>alwaysTrue()) return !pairs.isEmpty();
+    for (Pair<PsiClass, VirtualFile> pair : pairs) {
+      if (filter.test(pair.getFirst())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private @NotNull List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {

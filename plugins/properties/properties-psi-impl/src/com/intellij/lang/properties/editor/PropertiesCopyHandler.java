@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,14 +40,14 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
 public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
-  private final static Logger LOG = Logger.getInstance(PropertiesCopyHandler.class);
+  private static final Logger LOG = Logger.getInstance(PropertiesCopyHandler.class);
 
   @Override
   public boolean canCopy(PsiElement[] elements, boolean fromUpdate) {
@@ -91,7 +91,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   }
 
   private void copyPropertyToAnotherBundle(@NotNull Collection<? extends IProperty> properties,
-                                           @NotNull final String newName,
+                                           final @NotNull String newName,
                                            @NotNull ResourceBundle targetResourceBundle) {
     final Map<IProperty, PropertiesFile> propertiesFileMapping = new HashMap<>();
     for (IProperty property : properties) {
@@ -133,8 +133,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
                                      @NotNull ResourceBundle sourceResourceBundle,
                                      @NotNull Project project) { }
 
-  @Nullable
-  private static PropertiesFile findWithMatchedSuffix(@NotNull PropertiesFile searchFile, @NotNull ResourceBundle resourceBundle) {
+  private static @Nullable PropertiesFile findWithMatchedSuffix(@NotNull PropertiesFile searchFile, @NotNull ResourceBundle resourceBundle) {
     final String targetSuffix = getPropertiesFileSuffix(searchFile, searchFile.getResourceBundle().getBaseName());
 
     final String baseName = resourceBundle.getBaseName();
@@ -146,18 +145,17 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     return null;
   }
 
-  @NotNull
-  private static String getPropertiesFileSuffix(PropertiesFile searchFile, String baseName) {
+  private static @NotNull String getPropertiesFileSuffix(PropertiesFile searchFile, String baseName) {
     String suffix = FileUtilRt.getNameWithoutExtension(searchFile.getContainingFile().getName());
     suffix = StringUtil.trimStart(suffix, baseName);
     return suffix;
   }
 
   private static class PropertiesCopyDialog extends DialogWrapper {
-    @NotNull private final List<? extends IProperty> myProperties;
-    @NotNull private ResourceBundle myCurrentResourceBundle;
+    private final @NotNull List<? extends IProperty> myProperties;
+    private @NotNull ResourceBundle myCurrentResourceBundle;
     private String myCurrentPropertyName;
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
     private JBTextField myPropertyNameTextField;
 
     protected PropertiesCopyDialog(@NotNull List<? extends IProperty> properties,
@@ -172,9 +170,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       initValidation();
     }
 
-    @Nullable
     @Override
-    protected ValidationInfo doValidate() {
+    protected @Nullable ValidationInfo doValidate() {
       if (StringUtil.isEmpty(myCurrentPropertyName)) {
         return new ValidationInfo(PropertiesBundle.message("copy.property.name.must.be.not.empty.error"));
       }
@@ -187,14 +184,12 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       return myCurrentPropertyName;
     }
 
-    @NotNull
-    public ResourceBundle getCurrentResourceBundle() {
+    public @NotNull ResourceBundle getCurrentResourceBundle() {
       return myCurrentResourceBundle;
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       JLabel informationalLabel = new JLabel();
       informationalLabel.setText(PropertiesBundle.message("copy.property.0.label", ContainerUtil.getFirstItem(myProperties).getName()));
       informationalLabel.setFont(informationalLabel.getFont().deriveFont(Font.BOLD));
@@ -258,9 +253,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
         .getPanel();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myPropertyNameTextField;
     }
   }
@@ -277,15 +271,13 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       return myResourceBundle;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myResourceBundle.getBaseName();
     }
 
-    @Nullable
     @Override
-    public PsiFileSystemItem getParent() {
+    public @Nullable PsiFileSystemItem getParent() {
       VirtualFile dir = myResourceBundle.getBaseDirectory();
       return dir == null ? null : PsiManager.getInstance(getProject()).findDirectory(dir);
     }
@@ -305,9 +297,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       return true;
     }
 
-    @Nullable
     @Override
-    public Icon getIcon(int flags) {
+    public @Nullable Icon getIcon(int flags) {
       return AllIcons.Nodes.ResourceBundle;
     }
 

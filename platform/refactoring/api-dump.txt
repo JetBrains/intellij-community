@@ -205,7 +205,6 @@ a:com.intellij.refactoring.BaseRefactoringProcessor
 - p:getTransaction():com.intellij.refactoring.listeners.impl.RefactoringTransaction
 - p:getUndoConfirmationPolicy():com.intellij.openapi.command.UndoConfirmationPolicy
 - p:isGlobalUndoAction():Z
-- p:isPreviewUsages():Z
 - p:isPreviewUsages(com.intellij.usageView.UsageInfo[]):Z
 - p:isToBeChanged(com.intellij.usageView.UsageInfo):Z
 - p:performPsiSpoilingRefactoring():V

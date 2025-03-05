@@ -96,9 +96,8 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
     configuration.setInterpreterOptions(myInterpreterOptions.getText());
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     return myPanel;
   }
 

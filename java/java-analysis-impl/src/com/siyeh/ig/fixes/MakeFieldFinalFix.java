@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -19,8 +19,7 @@ public final class MakeFieldFinalFix extends PsiUpdateModCommandQuickFix {
     this.fieldName = fieldName;
   }
 
-  @Nullable
-  public static LocalQuickFix buildFix(PsiField field) {
+  public static @Nullable LocalQuickFix buildFix(PsiField field) {
     if (!FinalUtils.canBeFinal(field)) {
       return null;
     }
@@ -28,21 +27,18 @@ public final class MakeFieldFinalFix extends PsiUpdateModCommandQuickFix {
     return new MakeFieldFinalFix(name);
   }
 
-  @NotNull
-  public static LocalQuickFix buildFixUnconditional(PsiField field) {
+  public static @NotNull LocalQuickFix buildFixUnconditional(PsiField field) {
     return new MakeFieldFinalFix(field.getName());
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return InspectionGadgetsBundle.message("make.field.final.quickfix",
                                            fieldName);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("make.field.final.fix.family.name");
   }
 

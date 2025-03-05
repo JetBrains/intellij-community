@@ -45,7 +45,7 @@ public final class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElemen
   public static PyFunction findDeepestSuperMethod(PyFunction function) {
     TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), null);
     List<PsiElement> superMethods = new ArrayList<>(search(function, true, context).findAll());
-    while (superMethods.size() > 0) {
+    while (!superMethods.isEmpty()) {
       function = getBaseMethod(superMethods, function.getContainingClass());
       superMethods = new ArrayList<>(search(function, true, context).findAll());
     }
@@ -57,14 +57,13 @@ public final class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElemen
     private final boolean myDeepSearch;
     private final TypeEvalContext myContext;
 
-    public SearchParameters(final PyFunction derivedMethod, boolean deepSearch, @Nullable final TypeEvalContext context) {
+    public SearchParameters(final PyFunction derivedMethod, boolean deepSearch, final @Nullable TypeEvalContext context) {
       myDerivedMethod = derivedMethod;
       myDeepSearch = deepSearch;
       myContext = context;
     }
 
-    @Nullable
-    public TypeEvalContext getContext() {
+    public @Nullable TypeEvalContext getContext() {
       return myContext;
     }
 
@@ -81,12 +80,12 @@ public final class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElemen
     super("Pythonid");
   }
 
-  public static Query<PsiElement> search(final PyFunction derivedMethod, @Nullable final TypeEvalContext context) {
+  public static Query<PsiElement> search(final PyFunction derivedMethod, final @Nullable TypeEvalContext context) {
     final SearchParameters parameters = new SearchParameters(derivedMethod, false, context);
     return INSTANCE.createUniqueResultsQuery(parameters);
   }
 
-  public static Query<PsiElement> search(final PyFunction derivedMethod, final boolean deepSearch, @Nullable final TypeEvalContext context) {
+  public static Query<PsiElement> search(final PyFunction derivedMethod, final boolean deepSearch, final @Nullable TypeEvalContext context) {
     final SearchParameters parameters = new SearchParameters(derivedMethod, deepSearch, context);
     return INSTANCE.createUniqueResultsQuery(parameters);
   }

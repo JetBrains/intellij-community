@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildView;
@@ -330,9 +330,9 @@ class ForkedDebuggerThread extends Thread {
   }
 
   private class MyForkedProcessListener extends ProcessAdapter {
-    @NotNull private final RunContentDescriptor myDescriptor;
-    @NotNull private final String myProcessName;
-    @Nullable private RangeHighlighter myHyperlink;
+    private final @NotNull RunContentDescriptor myDescriptor;
+    private final @NotNull String myProcessName;
+    private @Nullable RangeHighlighter myHyperlink;
 
     MyForkedProcessListener(@NotNull RunContentDescriptor descriptor, @NotNull String processName) {
       myDescriptor = descriptor;
@@ -401,8 +401,7 @@ class ForkedDebuggerThread extends Thread {
       }
     }
 
-    @Nullable
-    private ConsoleViewImpl getMainConsoleView() {
+    private @Nullable ConsoleViewImpl getMainConsoleView() {
       ExecutionConsole executionConsole = myMainRunContentDescriptor.getExecutionConsole();
       if (executionConsole instanceof ConsoleViewImpl) {
         return (ConsoleViewImpl)executionConsole;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
@@ -14,8 +14,7 @@ import org.jetbrains.annotations.NotNull;
 public final class VariableNotUsedInsideIfInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final boolean isIf = ((Boolean)infos[0]).booleanValue();
     if (isIf) {
       return InspectionGadgetsBundle.message("variable.not.used.inside.if.problem.descriptor");

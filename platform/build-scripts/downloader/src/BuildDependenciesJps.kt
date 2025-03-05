@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getCompon
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getLibraryElement
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getSingleChildElement
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.tryGetSingleChildElement
+import org.w3c.dom.Element
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,18 +42,12 @@ object BuildDependenciesJps {
     return modulePath
   }
 
-  @JvmStatic
-  fun getModuleLibraryRoots(
-    iml: Path,
-    libraryName: String,
+  private fun getLibraryRoots(
+    library: Element,
     mavenRepositoryUrl: String,
     communityRoot: BuildDependenciesCommunityRoot,
     credentialsProvider: (() -> Credentials)?
-  ): List<Path> = try {
-    val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
-
-    val library = root.getLibraryElement(libraryName, iml)
-
+  ): List<Path> {
     val properties = library.getSingleChildElement("properties")
     val mavenId = properties.getAttribute("maven-id")
 
@@ -65,12 +60,13 @@ object BuildDependenciesJps {
     } ?: emptyMap()
 
     val classes = library.getSingleChildElement("CLASSES")
-    val roots = classes.getChildElements("root")
+    return classes.getChildElements("root")
       .mapNotNull { it.getAttribute("url") }
-      .map { it
-        .removePrefix("jar:/")
-        .replace("\$MAVEN_REPOSITORY\$", "")
-        .trim('!', '/')
+      .map {
+        it
+          .removePrefix("jar:/")
+          .replace("\$MAVEN_REPOSITORY\$", "")
+          .trim('!', '/')
       }
       .map { relativePath ->
         val fileUrl = "file://\$MAVEN_REPOSITORY\$/${relativePath}"
@@ -100,6 +96,20 @@ object BuildDependenciesJps {
         }
         file
       }
+  }
+
+  @JvmStatic
+  fun getModuleLibraryRoots(
+    iml: Path,
+    libraryName: String,
+    mavenRepositoryUrl: String,
+    communityRoot: BuildDependenciesCommunityRoot,
+    credentialsProvider: (() -> Credentials)?
+  ): List<Path> = try {
+    val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
+
+    val library = root.getLibraryElement(libraryName, iml)
+    val roots = getLibraryRoots(library, mavenRepositoryUrl, communityRoot, credentialsProvider)
 
     if (roots.isEmpty()) {
       error("No library roots for library '$libraryName' in the following iml file at '$iml':\n${Files.readString(iml)}")
@@ -134,6 +144,28 @@ object BuildDependenciesJps {
     }
 
     return roots.single()
+  }
+
+  fun getProjectLibraryRoots(
+    libraryXml: Path,
+    libraryName: String,
+    mavenRepositoryUrl: String,
+    communityRoot: BuildDependenciesCommunityRoot,
+    credentialsProvider: (() -> Credentials)?
+  ): List<Path> = try {
+    val document = BuildDependenciesUtil.createDocumentBuilder().parse(libraryXml.toFile())
+
+    val library = document.documentElement.getSingleChildElement("library")
+    val roots = getLibraryRoots(library, mavenRepositoryUrl, communityRoot, credentialsProvider)
+
+    if (roots.isEmpty()) {
+      error("No library roots for library '$libraryName' in the following iml file at '$libraryXml':\n${Files.readString(libraryXml)}")
+    }
+
+    roots
+  }
+  catch (t: Throwable) {
+    throw IllegalStateException("Unable to find module library '$libraryName' in '$libraryXml'", t)
   }
 
   fun getLocalArtifactRepositoryRoot(): Path {

@@ -24,7 +24,6 @@ enum class BundleType {
      * Returns [UNDEFINED] if passed file doesn't exist, or it is not directory
      * or if it doesn't fit to textmate or sublime package.
      */
-    @JvmStatic
     fun detectBundleType(directory: Path?): BundleType {
       if (directory != null && directory.isDirectory()) {
         if ("tmBundle".equals(directory.extension, ignoreCase = true)) {

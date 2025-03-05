@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -16,21 +16,22 @@ import java.util.Map;
 public final class JpsSerializationManagerImpl extends JpsSerializationManager {
   @Override
   public @NotNull JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPathString, boolean loadUnloadedModules) throws IOException {
-    Path optionsPath = optionsPathString != null ? Paths.get(optionsPathString).normalize() : null;
+    Path optionsPath = optionsPathString == null ? null : Path.of(optionsPathString).normalize();
     Path externalConfigurationDirectory = JpsProjectConfigurationLoading.getExternalConfigurationDirectoryFromSystemProperty();
-    return loadModel(Paths.get(projectPath), externalConfigurationDirectory, optionsPath, loadUnloadedModules);
+    return loadModel(Path.of(projectPath), externalConfigurationDirectory, optionsPath, loadUnloadedModules);
   }
 
   @Override
-  @NotNull
-  public JpsModel loadModel(@NotNull Path projectPath, @Nullable Path externalConfigurationDirectory, @Nullable Path optionsPath,
-                            boolean loadUnloadedModules) throws IOException {
+  public @NotNull JpsModel loadModel(@NotNull Path projectPath,
+                                     @Nullable Path externalConfigurationDirectory,
+                                     @Nullable Path optionsPath,
+                                     boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
       String projectCachePath = System.getProperty("jps.workspace.storage.project.cache.path");
-      Path workspaceStorageCachePath = projectCachePath != null ? Paths.get(projectCachePath) : null;
+      Path workspaceStorageCachePath = projectCachePath == null ? null : Path.of(projectCachePath);
       String globalCachePath = System.getProperty("jps.workspace.storage.global.cache.path");
-      Path globalWorkspaceStoragePath = globalCachePath != null ? Paths.get(globalCachePath) : null;
+      Path globalWorkspaceStoragePath = globalCachePath == null ? null : Path.of(globalCachePath);
       return serializationViaWorkspaceModel.loadModel(projectPath, workspaceStorageCachePath, externalConfigurationDirectory, optionsPath,
                                                       globalWorkspaceStoragePath, loadUnloadedModules);
     }
@@ -59,11 +60,10 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
   }
 
   @Override
-  @NotNull
-  public JpsProject loadProject(@NotNull Path projectPath,
-                                @Nullable Path externalConfigurationDirectory,
-                                @NotNull Map<String, String> pathVariables,
-                                boolean loadUnloadedModules) throws IOException {
+  public @NotNull JpsProject loadProject(@NotNull Path projectPath,
+                                         @Nullable Path externalConfigurationDirectory,
+                                         @NotNull Map<String, String> pathVariables,
+                                         boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
       return serializationViaWorkspaceModel.loadProject(projectPath, externalConfigurationDirectory, pathVariables, loadUnloadedModules);

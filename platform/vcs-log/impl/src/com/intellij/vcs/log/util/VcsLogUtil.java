@@ -29,10 +29,7 @@ import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -247,7 +244,7 @@ public final class VcsLogUtil {
   }
 
   public static @Nullable VirtualFile getActualRoot(@NotNull Project project,
-                                                    @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                                                    @NotNull @Unmodifiable Map<VirtualFile, VcsLogProvider> providers,
                                                     @NotNull FilePath path) {
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(providers.keySet(), Comparator.comparing(VirtualFile::getPath).reversed());
     VirtualFile root = ContainerUtil.find(sortedRoots, r -> FileUtil.isAncestor(VfsUtilCore.virtualToIoFile(r), path.getIOFile(), false));
@@ -269,7 +266,7 @@ public final class VcsLogUtil {
     return null;
   }
 
-  public static @Nullable Collection<FilePath> getAffectedPaths(@NotNull VirtualFile root, @NotNull AnActionEvent e) {
+  public static @Unmodifiable @Nullable Collection<FilePath> getAffectedPaths(@NotNull VirtualFile root, @NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
       if (properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
@@ -340,7 +337,7 @@ public final class VcsLogUtil {
     return getVcsDisplayName(vcs);
   }
 
-  public static @Nls @NotNull String getVcsDisplayName(@NotNull Set<AbstractVcs> vcs) {
+  public static @Nls @NotNull String getVcsDisplayName(@NotNull @Unmodifiable Set<AbstractVcs> vcs) {
     if (vcs.size() != 1) return VcsLogBundle.message("vcs");
     return Objects.requireNonNull(getFirstItem(vcs)).getDisplayName();
   }
@@ -349,7 +346,7 @@ public final class VcsLogUtil {
     return getVcsDisplayName(project, logManager.getDataManager().getLogProviders().values());
   }
 
-  public static boolean isProjectLog(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+  public static boolean isProjectLog(@NotNull Project project, @NotNull @Unmodifiable Map<VirtualFile, VcsLogProvider> providers) {
     Set<VirtualFile> projectRoots = Arrays.stream(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots())
       .map(VcsRoot::getPath)
       .collect(Collectors.toSet());

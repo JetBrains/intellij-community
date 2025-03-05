@@ -14,6 +14,7 @@ import com.intellij.util.text.NameUtilCore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -88,19 +89,18 @@ public final class TestFinderHelper {
     return getSortedElements(elementsWithWeights, weightsAscending, null);
   }
 
-  public static List<PsiElement> getSortedElements(final List<? extends Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
+  public static List<PsiElement> getSortedElements(final @Unmodifiable List<? extends Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
                                                    final boolean weightsAscending,
                                                    final @Nullable Comparator<? super PsiElement> sameNameComparator) {
-    elementsWithWeights.sort((o1, o2) -> {
+    List<? extends Pair<? extends PsiNamedElement, Integer>> sorted = ContainerUtil.sorted(elementsWithWeights, (o1, o2) -> {
       int result = weightsAscending ? o1.second.compareTo(o2.second) : o2.second.compareTo(o1.second);
       if (result == 0) result = Comparing.compare(o1.first.getName(), o2.first.getName());
       if (result == 0 && sameNameComparator != null) result = sameNameComparator.compare(o1.first, o2.first);
 
       return result;
     });
-
     final List<PsiElement> result = new ArrayList<>(elementsWithWeights.size());
-    for (Pair<? extends PsiNamedElement, Integer> each : elementsWithWeights) {
+    for (Pair<? extends PsiNamedElement, Integer> each : sorted) {
       result.add(each.first);
     }
 

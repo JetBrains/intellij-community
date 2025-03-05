@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.psi.PsiClass;
@@ -108,8 +108,7 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     return modifierMap.getOrDefault(modifierList, List.of());
   }
 
-  @NotNull
-  private TransformationResult getTransformationResult() {
+  private @NotNull TransformationResult getTransformationResult() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       TransformationUtilKt.transformDefinition(myDefinition), myDependencies
     ));

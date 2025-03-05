@@ -25,19 +25,17 @@ object CompilerPluginRegistrarUtils {
     }
 
     fun readRegistrarContent(compilerPluginJar: Path): String? =
-        RegistrarFile.entries.firstNotNullOfOrNull { registrarFile ->
-            readRegistrarContent(compilerPluginJar, registrarFile)
-        }
+        readFirstExistingFileContentFromJar(compilerPluginJar, RegistrarFile.entries.map { it.location })
 
     fun readRegistrarContent(compilerPluginJar: Path, registrarFile: RegistrarFile): String? =
-        readFileContentFromJar(compilerPluginJar, registrarFile.location)
+        readFirstExistingFileContentFromJar(compilerPluginJar, listOf(registrarFile.location))
 }
 
-private fun readFileContentFromJar(jarFile: Path, pathInJar: String): String? {
+private fun readFirstExistingFileContentFromJar(jarFile: Path, pathsInJar: List<String>): String? {
     if (jarFile.notExists() || jarFile.extension != "jar") return null
 
     ZipFile(jarFile.toFile()).use { zipFile ->
-        val entry = zipFile.getEntry(pathInJar) ?: return null
+        val entry = pathsInJar.firstNotNullOfOrNull { pathInJar -> zipFile.getEntry(pathInJar) } ?: return null
 
         return zipFile.getInputStream(entry).bufferedReader().use { it.readText() }
     }

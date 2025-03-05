@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
@@ -18,14 +18,11 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Function
-import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.dsl.collectHighlightingDslMarkers
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.AbstractKotlinLineMarkerProvider
@@ -223,7 +220,7 @@ object ClassInheritorsTooltip : Function<PsiElement, String> {
 private fun findFunctionalExpressions(ktClass: KtClass): List<PsiElement> {
     val lightClass = ktClass.toLightClass()
     if (lightClass != null && LambdaUtil.isFunctionalClass(lightClass)) {
-        return FunctionalExpressionSearch.search(lightClass, ktClass.useScope).asSequence().take(5).toList()
+        return FunctionalExpressionSearch.search(lightClass, ktClass.useScope).asIterable().asSequence().take(5).toList()
     }
     return emptyList()
 }

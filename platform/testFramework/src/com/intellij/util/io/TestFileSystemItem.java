@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,7 +19,7 @@ public final class TestFileSystemItem {
   private final boolean myDirectory;
   private final boolean myArchive;
   private final String myName;
-  @Nullable private final String myContent;
+  private final @Nullable String myContent;
   private final Map<String, TestFileSystemItem> myChildren = new HashMap<>();
 
   TestFileSystemItem(String name, boolean archive, boolean directory, @Nullable String content) {

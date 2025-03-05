@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Caret;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class CompletionInitializationContextImpl extends CompletionInitializationContext {
   private final OffsetsInFile myHostOffsets;
 
-  CompletionInitializationContextImpl(Editor editor,
+  public CompletionInitializationContextImpl(Editor editor,
                                       @NotNull Caret caret,
                                       PsiFile file,
                                       CompletionType completionType, int invocationCount) {

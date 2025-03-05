@@ -15,8 +15,8 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelExecApi.Arguments.executeProcessBuilder
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -121,8 +121,10 @@ fun runProcessBlocking(
 
   val exePath = FileUtil.toSystemIndependentName(args.removeFirst())
 
-  val pty = ptyOptions?.run {
-    EelExecApi.Pty(initialColumns, initialRows, !consoleMode)
+  val ptyOrStdErrSettings = when {
+    ptyOptions != null -> with(ptyOptions) { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) }
+    processBuilder.redirectErrorStream() -> EelExecApi.RedirectStdErr
+    else -> null
   }
 
   val workingDirectory = processBuilder.directory()?.toPath()?.let { windowsWorkingDirectory ->
@@ -134,17 +136,17 @@ fun runProcessBlocking(
   }
 
   val scope = @OptIn(DelicateCoroutinesApi::class) (wslIjentManager.processAdapterScope)
-  when (val processResult = ijentApi.exec.execute(executeProcessBuilder(exePath)
-    .args(args)
-    .env(explicitEnvironmentVariables)
-    .pty(pty)
-    .workingDirectory(workingDirectory)
+  when (val processResult = ijentApi.exec.execute(EelExecApi.ExecuteProcessOptions.Builder(exePath)
+                                                    .args(args)
+                                                    .env(explicitEnvironmentVariables)
+                                                    .ptyOrStdErrSettings(ptyOrStdErrSettings)
+                                                    .workingDirectory(workingDirectory?.let { EelPath.parse(it, ijentApi.descriptor) })
+                                                    .build()
   )) {
     is EelResult.Ok ->
       (processResult.value as IjentChildProcess).toProcess(
         coroutineScope = scope,
-        isPty = pty != null,
-        redirectStderr = processBuilder.redirectErrorStream(),
+        isPty = ptyOrStdErrSettings != null,
       )
     is EelResult.Error -> throw IOException(processResult.error.message)
   }
@@ -153,11 +155,10 @@ fun runProcessBlocking(
 private fun IjentChildProcess.toProcess(
   coroutineScope: CoroutineScope,
   isPty: Boolean,
-  redirectStderr: Boolean,
 ): Process =
   if (isPty)
     IjentChildPtyProcessAdapter(coroutineScope, this)
   else
-    IjentChildProcessAdapter(coroutineScope, this, redirectStderr)
+    IjentChildProcessAdapter(coroutineScope, this)
 
 private val LOG by lazy { Logger.getInstance("com.intellij.execution.wsl.WslIjentUtil") }

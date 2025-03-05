@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBOptionButton;
 import kotlin.Unit;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public final class Touchbar {
     setActions(component, action == null ? null : new DefaultActionGroup(action));
   }
 
-  public static void setActions(@NotNull JComponent component, @NotNull String actionId) {
+  public static void setActions(@NotNull JComponent component, @Language("devkit-action-id") @NotNull String actionId) {
     setActions(component, ActionManager.getInstance().getAction(actionId));
   }
 

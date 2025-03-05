@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
@@ -68,8 +68,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class CoverageView extends BorderLayoutPanel implements UiDataProvider, Disposable {
-  @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
-  @NonNls static final String HELP_ID = "reference.toolWindows.Coverage";
+  private static final @NonNls String ACTION_DRILL_DOWN = "DrillDown";
+  static final @NonNls String HELP_ID = "reference.toolWindows.Coverage";
   private static final Icon FILTER_ICON = AllIcons.General.Filter;
 
   private final CoverageTableModel myModel;

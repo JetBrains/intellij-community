@@ -4,4 +4,4 @@ package git4idea.ui.branch.dashboard
 import com.intellij.openapi.actionSystem.DataKey
 
 internal val GIT_BRANCHES_TREE_SELECTION = DataKey.create<BranchesTreeSelection>("GitBranchesTreeSelection")
-internal val BRANCHES_UI_CONTROLLER = DataKey.create<BranchesDashboardController>("GitBranchesUiControllerKey")
+internal val BRANCHES_UI_CONTROLLER = DataKey.create<BranchesDashboardTreeController>("GitBranchesUiControllerKey")

@@ -9,17 +9,17 @@ class MethodParamCount {
     Method m2 = cls.getMethod("bar", int.class, String.class);
     Method m3 = cls.getMethod("bar", int.class, String.class, String.class);
 
-    m1.invoke<warning descr="2 arguments are expected">(obj, 42, "abc")</warning>;
+    m1.invoke(obj, <warning descr="Reflectively called method requires one argument">42, "abc"</warning>);
     m2.invoke(obj, 42, "abc");
-    m3.invoke<warning descr="4 arguments are expected">(obj, 42, "abc")</warning>;
+    m3.invoke(obj, <warning descr="Reflectively called method requires 3 arguments">42, "abc"</warning>);
 
     m1.invoke(obj, <warning descr="Single-item array is expected">new Object[]{42, "abc"}</warning>);
     m2.invoke(obj, new Object[]{42, "abc"});
     m3.invoke(obj, <warning descr="3 array items are expected">new Object[]{42, "abc"}</warning>);
 
-    m1.invoke<warning descr="2 arguments are expected">(obj)</warning>;
-    m2.invoke<warning descr="3 arguments are expected">(obj)</warning>;
-    m3.invoke<warning descr="4 arguments are expected">(obj)</warning>;
+    m1.invoke<warning descr="Reflectively called method requires one argument">(obj)</warning>;
+    m2.invoke<warning descr="Reflectively called method requires 2 arguments">(obj)</warning>;
+    m3.invoke<warning descr="Reflectively called method requires 3 arguments">(obj)</warning>;
 
     cls.getMethod("str", String.class).invoke(null, new String[] {"abc"});
   }
@@ -32,17 +32,17 @@ class MethodParamCount {
     Method m2 = cls.getMethod("bar", new Class[]{int.class, String.class});
     Method m3 = cls.getMethod("bar", new Class[]{int.class, String.class, String.class});
 
-    m1.invoke<warning descr="2 arguments are expected">(obj, 42, "abc")</warning>;
+    m1.invoke(obj, <warning descr="Reflectively called method requires one argument">42, "abc"</warning>);
     m2.invoke(obj, 42, "abc");
-    m3.invoke<warning descr="4 arguments are expected">(obj, 42, "abc")</warning>;
+    m3.invoke(obj, <warning descr="Reflectively called method requires 3 arguments">42, "abc"</warning>);
 
     m1.invoke(obj, <warning descr="Single-item array is expected">new Object[]{42, "abc"}</warning>);
     m2.invoke(obj, new Object[]{42, "abc"});
     m3.invoke(obj, <warning descr="3 array items are expected">new Object[]{42, "abc"}</warning>);
 
-    m1.invoke<warning descr="2 arguments are expected">(obj)</warning>;
-    m2.invoke<warning descr="3 arguments are expected">(obj)</warning>;
-    m3.invoke<warning descr="4 arguments are expected">(obj)</warning>;
+    m1.invoke<warning descr="Reflectively called method requires one argument">(obj)</warning>;
+    m2.invoke<warning descr="Reflectively called method requires 2 arguments">(obj)</warning>;
+    m3.invoke<warning descr="Reflectively called method requires 3 arguments">(obj)</warning>;
 
     cls.getMethod("str", new Class[]{String.class}).invoke(null, new String[] {"abc"});
   }
@@ -58,12 +58,12 @@ class MethodParamCount {
     Method m4 = cls.getMethod("m4", int.class, short.class, long.class, float.class);
     Method m5 = cls.getMethod("m5", int.class, short.class, long.class, float.class, double.class);
 
-    m0.invoke<warning descr="One argument is expected">(0, 0)</warning>;
-    m1.invoke<warning descr="2 arguments are expected">("abc")</warning>;
-    m2.invoke<warning descr="3 arguments are expected">(0, "abc")</warning>;
-    m3.invoke<warning descr="4 arguments are expected">(0, 0, "abc")</warning>;
-    m4.invoke<warning descr="5 arguments are expected">(0, 0, 0, "abc")</warning>;
-    m5.invoke<warning descr="6 arguments are expected">(0, 0, 0, 0, "abc")</warning>;
+    m0.invoke(0, <warning descr="Reflectively called method requires no arguments">0</warning>);
+    m1.invoke<warning descr="Reflectively called method requires one argument">("abc")</warning>;
+    m2.invoke(0, <warning descr="Reflectively called method requires 2 arguments">"abc"</warning>);
+    m3.invoke(0, <warning descr="Reflectively called method requires 3 arguments">0, "abc"</warning>);
+    m4.invoke(0, <warning descr="Reflectively called method requires 4 arguments">0, 0, "abc"</warning>);
+    m5.invoke(0, <warning descr="Reflectively called method requires 5 arguments">0, 0, 0, "abc"</warning>);
 
     Method m = cls.getMethod("m0", new Class[0]);
     m.invoke(obj, new Object[0]);

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.util.lang.JavaVersion
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Test
@@ -14,6 +14,10 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     importProject("")
     assertSyncViewTree {
       when {
+        // The build environment is unsupported for Gradle older than 1.0.
+        // See org.gradle.tooling.model.build.BuildEnvironment documentation.
+        GradleVersionUtil.isGradleOlderThan(currentGradleVersion, "1.0") ->
+          assertNode("failed")
         !GradleJvmSupportMatrix.isGradleSupportedByIdea(currentGradleVersion) ->
           assertNode("failed") {
             assertNode("Unsupported Gradle Version")
@@ -26,10 +30,6 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
           assertNode("finished")
       }
     }
-  }
-
-  override fun assumeTestJavaRuntime(javaRuntimeVersion: JavaVersion) {
-    // run on all Java Runtime
   }
 
   companion object {

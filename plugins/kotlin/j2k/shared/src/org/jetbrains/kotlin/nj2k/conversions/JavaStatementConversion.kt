@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
@@ -20,7 +21,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  *   `if (param == null) throw new IllegalArgumentException("error message")` to a more idiomatic Kotlin
  *   `requireNotNull` call (disabled in basic mode)
  */
-class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class JavaStatementConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKStatement) return recurse(element)

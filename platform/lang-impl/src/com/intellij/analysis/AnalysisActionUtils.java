@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.analysis;
 
 import com.intellij.codeInspection.ui.InspectionResultsView;
@@ -36,14 +35,28 @@ public final class AnalysisActionUtils {
     return null;
   }
 
-  public static @Nullable AnalysisScope getInspectionScope(@NotNull DataContext dataContext, @NotNull Project project, Boolean acceptNonProjectDirectories) {
+  public static @Nullable AnalysisScope getInspectionScope(@NotNull DataContext dataContext,
+                                                           @NotNull Project project,
+                                                           boolean acceptNonProjectDirectories) {
     AnalysisScope scope = getFileScopeFromInspectionView(dataContext);
     if (scope != null) return scope;
     scope = getInspectionScopeImpl(dataContext, project, acceptNonProjectDirectories);
     return scope.getScopeType() != AnalysisScope.INVALID ? scope : null;
   }
 
-  private static @NotNull AnalysisScope getInspectionScopeImpl(@NotNull DataContext dataContext, @NotNull Project project, Boolean acceptNonProjectDirectories) {
+  /**
+   * @deprecated Use {@link #getInspectionScope(DataContext, Project, boolean)} instead.
+   */
+  @Deprecated
+  public static @Nullable AnalysisScope getInspectionScope(@NotNull DataContext dataContext,
+                                                           @NotNull Project project,
+                                                           Boolean acceptNonProjectDirectories) {
+    return getInspectionScope(dataContext, project, acceptNonProjectDirectories == Boolean.TRUE);
+  }
+
+  private static @NotNull AnalysisScope getInspectionScopeImpl(@NotNull DataContext dataContext,
+                                                               @NotNull Project project,
+                                                               boolean acceptNonProjectDirectories) {
     // possible scopes: file, directory, package, project, module.
     Project projectContext = PlatformCoreDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
@@ -55,22 +68,24 @@ public final class AnalysisActionUtils {
       return analysisScope;
     }
 
+    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
-    if (psiFile != null && psiFile.getManager().isInProject(psiFile)) {
-      VirtualFile file = psiFile.getVirtualFile();
-      if (file != null && file.isValid() && file.getFileType() instanceof ArchiveFileType && acceptNonProjectDirectories) {
-        VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-        if (jarRoot != null) {
-          PsiDirectory psiDirectory = psiFile.getManager().findDirectory(jarRoot);
-          if (psiDirectory != null) {
-            return new AnalysisScope(psiDirectory);
+    if (psiFile != null && psiFile.getManager().isInProject(psiFile) && (virtualFiles == null || virtualFiles.length == 1)) {
+      if (acceptNonProjectDirectories) {
+        VirtualFile file = psiFile.getVirtualFile();
+        if (file != null && file.isValid() && file.getFileType() instanceof ArchiveFileType) {
+          VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(file);
+          if (jarRoot != null) {
+            PsiDirectory psiDirectory = psiFile.getManager().findDirectory(jarRoot);
+            if (psiDirectory != null) {
+              return new AnalysisScope(psiDirectory);
+            }
           }
         }
       }
       return new AnalysisScope(psiFile);
     }
 
-    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (virtualFiles != null) {
       // analyze on selection
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();

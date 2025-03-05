@@ -48,7 +48,7 @@ public interface WorkspaceModelInternal: WorkspaceModel {
    * This operation requires write lock.
    * The snapshot replacement is performed using positive lock. If the project model was updated since [getBuilderSnapshot], snapshot
    *   won't be applied and this method will return false. In this case client should get a newer version of snapshot builder, apply changes
-   *   and try to call [replaceProjectModel].
+   *   and try to call [replaceWorkspaceModel].
    *   Keep in mind that you may not need to start the full builder update process (e.g. gradle sync) and the newer version of the builder
    *   can be updated using [MutableEntityStorage.applyChangesFrom] or [MutableEntityStorage.replaceBySource], but you have to be
    *   sure that the changes will be applied to the new builder correctly.
@@ -72,7 +72,10 @@ public interface WorkspaceModelInternal: WorkspaceModel {
    *
    * @see [WorkspaceModel.getBuilderSnapshot]
    */
-  public fun replaceProjectModel(replacement: StorageReplacement): Boolean
+  public fun replaceWorkspaceModel(description: @NonNls String, replacement: StorageReplacement): Boolean
+
+  @Deprecated("Use replaceWorkspaceModel instead", ReplaceWith("replaceWorkspaceModel(replacement)"))
+  public fun replaceProjectModel(replacement: StorageReplacement): Boolean = replaceWorkspaceModel("WSM update", replacement)
 
   @ApiStatus.Experimental
   public suspend fun <T> flowOfQuery(query: StorageQuery<T>): Flow<T>

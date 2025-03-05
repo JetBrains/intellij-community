@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.application.WriteAction;
@@ -69,14 +69,12 @@ public final class ArtifactsStructureConfigurableContextImpl implements Artifact
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  public ArtifactModel getArtifactModel() {
+  public @NotNull ArtifactModel getArtifactModel() {
     if (myModifiableModel != null) {
       return myModifiableModel;
     }
@@ -84,8 +82,7 @@ public final class ArtifactsStructureConfigurableContextImpl implements Artifact
   }
 
   @Override
-  @NotNull
-  public Artifact getOriginalArtifact(@NotNull Artifact artifact) {
+  public @NotNull Artifact getOriginalArtifact(@NotNull Artifact artifact) {
     if (myModifiableModel != null) {
       return myModifiableModel.getOriginalArtifact(artifact);
     }
@@ -124,7 +121,7 @@ public final class ArtifactsStructureConfigurableContextImpl implements Artifact
   }
 
   @Override
-  public void editLayout(@NotNull final Artifact artifact, final Runnable action) {
+  public void editLayout(final @NotNull Artifact artifact, final Runnable action) {
     final Artifact originalArtifact = getOriginalArtifact(artifact);
     WriteAction.run(() -> {
       final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(originalArtifact);
@@ -136,8 +133,7 @@ public final class ArtifactsStructureConfigurableContextImpl implements Artifact
     myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(originalArtifact));
   }
 
-  @Nullable
-  public ArtifactEditorImpl getArtifactEditor(Artifact artifact) {
+  public @Nullable ArtifactEditorImpl getArtifactEditor(Artifact artifact) {
     return myArtifactEditors.get(getOriginalArtifact(artifact));
   }
 
@@ -153,14 +149,12 @@ public final class ArtifactsStructureConfigurableContextImpl implements Artifact
     return artifactEditor;
   }
 
-  @Nullable
-  public ModifiableArtifactModel getActualModifiableModel() {
+  public @Nullable ModifiableArtifactModel getActualModifiableModel() {
     return myModifiableModel;
   }
 
   @Override
-  @NotNull
-  public ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
+  public @NotNull ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
     if (myModifiableModel == null) {
       myModifiableModel = ArtifactManager.getInstance(myProject).createModifiableModel();
       myModifiableModel.addListener(myModifiableModelListener);
@@ -174,14 +168,12 @@ public final class ArtifactsStructureConfigurableContextImpl implements Artifact
   }
 
   @Override
-  @NotNull
-  public ModulesProvider getModulesProvider() {
+  public @NotNull ModulesProvider getModulesProvider() {
     return myContext.getModulesConfigurator();
   }
 
   @Override
-  @NotNull
-  public FacetsProvider getFacetsProvider() {
+  public @NotNull FacetsProvider getFacetsProvider() {
     return myContext.getModulesConfigurator().getFacetsConfigurator();
   }
 
@@ -191,9 +183,8 @@ public final class ArtifactsStructureConfigurableContextImpl implements Artifact
     return library != null ? myContext.getLibraryModel(library) : myContext.getLibrary(libraryName, level);
   }
 
-  @NotNull
   @Override
-  public ManifestFileProvider getManifestFileProvider() {
+  public @NotNull ManifestFileProvider getManifestFileProvider() {
     return myManifestFileProvider;
   }
 
@@ -237,8 +228,7 @@ public final class ArtifactsStructureConfigurableContextImpl implements Artifact
   }
 
   @Override
-  @NotNull
-  public ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact) {
+  public @NotNull ArtifactProjectStructureElement getOrCreateArtifactElement(@NotNull Artifact artifact) {
     ArtifactProjectStructureElement element = myArtifactElements.get(getOriginalArtifact(artifact));
     if (element == null) {
       element = new ArtifactProjectStructureElement(myContext, this, artifact);

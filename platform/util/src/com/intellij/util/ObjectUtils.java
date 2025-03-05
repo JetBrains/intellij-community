@@ -3,10 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Comparator;
 import java.util.List;
@@ -144,6 +141,7 @@ public final class ObjectUtils {
   /**
    * @deprecated Use {@code if (obj != null) ...} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super T> consumer) {
     if (obj != null) {
@@ -171,6 +169,7 @@ public final class ObjectUtils {
   /**
    * @deprecated Use Kotlin takeIf
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @Nullable <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
     return obj == defaultValue ? null : obj;

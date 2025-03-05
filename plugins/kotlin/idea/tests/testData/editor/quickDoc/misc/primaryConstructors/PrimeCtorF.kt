@@ -1,0 +1,2 @@
+class PrimeCtorF public constructor<caret>()
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">constructor</span> <span style="color:#000000;">PrimeCtorF</span>()</pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.ClassKotlin"/>&nbsp;<a href="psi_element://PrimeCtorF"><code><span style="color:#000000;">PrimeCtorF</span></code></a><br/></div>

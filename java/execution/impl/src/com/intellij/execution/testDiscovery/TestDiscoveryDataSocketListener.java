@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.process.ProcessAdapter;
@@ -21,8 +21,7 @@ import java.net.Socket;
 public class TestDiscoveryDataSocketListener {
   private static final Logger LOG = Logger.getInstance(TestDiscoveryDataSocketListener.class);
 
-  @Nullable
-  private final String myModuleName;
+  private final @Nullable String myModuleName;
   private final byte myFrameworkId;
   private volatile boolean myClosed;
   private volatile boolean myFinished;

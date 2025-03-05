@@ -1,15 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log
 
+import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.CommitId
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -161,7 +166,6 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   private fun checkCommitsEditingAvailability(commitEditingData: T): @Nls String? {
     return checkIsHeadBranch(commitEditingData)
-           ?: checkNotInitialCommit(commitEditingData)
            ?: checkNotMergeCommit(commitEditingData)
            ?: checkCommitsCanBeEdited(commitEditingData)
            ?: checkNotRebaseDuringRebase(commitEditingData)
@@ -175,14 +179,14 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     return null
   }
 
-  private fun checkNotInitialCommit(commitEditingData: T): @Nls String? {
+  private fun checkNotInitialCommit(commitEditingData: T): Boolean {
     val commitList = commitEditingData.selection.cachedMetadata
     commitList.forEach { commit ->
-      if (commit !is LoadingDetails && commit.parents.size == 0) {
-        return GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
+      if (commit !is LoadingDetails && commit.parents.isEmpty()) {
+        return false
       }
     }
-    return null
+    return true
   }
 
   protected open fun checkNotMergeCommit(commitEditingData: T): @Nls String? {
@@ -246,6 +250,17 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       )
       return
     }
+
+    if (!checkNotInitialCommit(commitEditingRequirements)) {
+      val ans = MessageDialogBuilder.Companion.yesNo(GitBundle.message("rebase.log.commit.editing.action.initial.commit.dialog.title"),
+                                                     GitBundle.message("rebase.log.commit.editing.action.initial.commit.dialog.text"))
+        .yesText(CommonBundle.getContinueButtonText())
+        .noText(CommonBundle.getCancelButtonText())
+        .icon(Messages.getWarningIcon())
+        .ask(commitEditingRequirements.project)
+      if (!ans) return
+    }
+
     actionPerformedAfterChecks(commitEditingRequirements)
   }
 

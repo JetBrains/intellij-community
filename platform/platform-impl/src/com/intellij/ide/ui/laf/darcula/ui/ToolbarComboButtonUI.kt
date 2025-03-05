@@ -133,6 +133,10 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
 
     val insets = c.getInsets()
     val margin = c.margin
+    val heightSupplier = combo.preferredHeightSupplier
+    if (heightSupplier != null) {
+      result.height = result.height.coerceAtLeast(heightSupplier() - margin.top - margin.bottom)
+    }
     result.height += insets.top + insets.bottom + margin.top + margin.bottom
     result.width += insets.left + insets.right + margin.left + margin.right
 

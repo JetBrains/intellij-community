@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.reporter
 
-import com.intellij.diagnostic.IdeaReportingEvent
-import com.intellij.diagnostic.ReportMessages
+import com.intellij.diagnostic.ITNReporter
 import com.intellij.ide.DataManager
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -30,9 +30,9 @@ private const val ENABLED_VALUE = "enabled"
 private const val KOTLIN_K2_MESSAGE = "This report is from the K2 Kotlin plugin."
 
 /**
- * We need to wrap ITNReporter for force showing of errors from Kotlin plugin even from a released version of IDEA.
+ * We need to wrap `ITNReporter` for force showing of errors from Kotlin plugin even from a released version of IDEA.
  */
-class KotlinReportSubmitter : ITNReporterCompat() {
+class KotlinReportSubmitter : ITNReporter() {
     private val isIdeaAndKotlinRelease: Boolean by lazy {
         // Disabled in a released version of IDEA and Android Studio
         // Enabled in EAPs, Canary and Beta
@@ -63,10 +63,10 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         return true
     }
 
-    override fun submitCompat(
+    override fun submit(
         events: Array<IdeaLoggingEvent>,
         additionalInfo: String?,
-        parentComponent: Component?,
+        parentComponent: Component,
         consumer: Consumer<in SubmittedReportInfo>
     ): Boolean {
         val effectiveEvents = when {
@@ -76,31 +76,23 @@ class KotlinReportSubmitter : ITNReporterCompat() {
 
         val project: Project? = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
         if (KotlinIdePlugin.hasPatchedVersion) {
-            ReportMessages.GROUP
-                .createNotification(KotlinBasePluginBundle.message("reporter.text.can.t.report.exception.from.patched.plugin"), NotificationType.INFORMATION)
+            Notification("Error Report", KotlinBasePluginBundle.message("reporter.text.can.t.report.exception.from.patched.plugin"), NotificationType.INFORMATION)
                 .setImportant(false)
                 .notify(project)
             return true
         }
 
-        return super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
+        return super.submit(effectiveEvents, additionalInfo, parentComponent, consumer)
     }
 
     private fun markEventForK2(event: IdeaLoggingEvent): IdeaLoggingEvent {
-        fun patchMessage(message: String): String {
-            return if (message.isBlank()) KOTLIN_K2_MESSAGE else "$message\n$KOTLIN_K2_MESSAGE"
+        return if (event.javaClass == IdeaLoggingEvent::class.java) {
+            val k2message = if (event.message.isNullOrBlank()) KOTLIN_K2_MESSAGE else "${event.message}\n${KOTLIN_K2_MESSAGE}"
+            IdeaLoggingEvent(k2message, event.throwable, event.attachments, event.plugin, event.data)
+        } else {
+            // leave foreign events (Android Studio, etc.) intact
+            event
         }
-
-        if (event is IdeaReportingEvent) {
-            return IdeaReportingEvent(event.data, patchMessage(event.message ?: ""), event.throwableText, event.plugin)
-        }
-
-        if (event.javaClass == IdeaLoggingEvent::class.java) {
-            return IdeaLoggingEvent(patchMessage(event.message ?: ""), event.throwable, event.data)
-        }
-
-        // Leave foreign event as is (Android Studio, etc.)
-        return event
     }
 
     fun showDialog(parent: Component?, @Nls message: String, @Nls title: String, options: Array<String>, defaultOptionIndex: Int, icon: Icon?): Int {

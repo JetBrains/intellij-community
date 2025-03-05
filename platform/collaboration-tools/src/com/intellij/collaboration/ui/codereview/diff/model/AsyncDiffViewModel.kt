@@ -4,9 +4,11 @@ package com.intellij.collaboration.ui.codereview.diff.model
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.diff.requests.DiffRequest
 import kotlinx.coroutines.flow.StateFlow
-import org.jetbrains.annotations.ApiStatus.Internal
 
-@Internal
+/**
+ * A viewmodel for a diff between two changes
+ * Implementations should provide an equals/hashCode implementation
+ */
 interface AsyncDiffViewModel {
   val request: StateFlow<ComputedResult<DiffRequest>?>
 

@@ -6,18 +6,21 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import kotlinx.coroutines.supervisorScope
+import org.jetbrains.annotations.CheckReturnValue
 
 /**
- * Install [packages] to [sdk]
+ * Install [packages] to [sdk].
+ * Returns error if packages couldn't be installed due to execution error
  */
-suspend fun installPackages(project: Project, sdk: Sdk, vararg packages: String): Result<Boolean> {
+@CheckReturnValue
+suspend fun installPackages(project: Project, sdk: Sdk, vararg packages: String): Result<Unit> {
   val packageManager = PythonPackageManager.forSdk(project, sdk)
   return supervisorScope { // Not install other packages if one failed
     for (packageName in packages) {
       val packageSpecification = PythonSimplePackageSpecification(packageName, null, null)
       packageManager.installPackage(packageSpecification, emptyList<String>()).onFailure { return@supervisorScope Result.failure(it) }
     }
-    return@supervisorScope Result.success(true)
+    return@supervisorScope Result.success(Unit)
   }
 }
 

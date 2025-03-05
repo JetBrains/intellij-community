@@ -7,6 +7,10 @@
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
 // ERROR: Unresolved reference: TODO
+// K2_AFTER_ERROR: Conflicting overloads:<br>fun bar(): Unit
+// K2_AFTER_ERROR: Conflicting overloads:<br>fun bar(): Unit
+// K2_AFTER_ERROR: Conflicting overloads:<br>fun foo(): Unit
+// K2_AFTER_ERROR: Conflicting overloads:<br>fun foo(): Unit
 interface A {
     fun foo() {}
     fun bar() {}

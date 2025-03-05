@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -32,7 +32,7 @@ import java.util.*;
 
 public final class AntBuildFileImpl implements AntBuildFileBase {
   private static final Logger LOG = Logger.getInstance(AntBuildFileImpl.class);
-  @NonNls private static final String ANT_LIB = "/.ant/lib";
+  private static final @NonNls String ANT_LIB = "/.ant/lib";
   private volatile Map<String, String> myCachedExternalProperties;
   private final Object myOptionsLock = new Object();
 
@@ -128,14 +128,12 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
     }
 
     @Override
-    @Nullable
-    public AntInstallation getDefault(AbstractProperty.AbstractPropertyContainer container) {
+    public @Nullable AntInstallation getDefault(AbstractProperty.AbstractPropertyContainer container) {
       return get(container);
     }
 
     @Override
-    @Nullable
-    public AntInstallation get(AbstractProperty.AbstractPropertyContainer container) {
+    public @Nullable AntInstallation get(AbstractProperty.AbstractPropertyContainer container) {
       return AntReference.findAnt(ANT_REFERENCE, container);
     }
 
@@ -146,8 +144,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   };
 
   private final VirtualFile myVFile;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final AntConfigurationBase myAntConfiguration;
   private final ExternalizablePropertyContainer myWorkspaceOptions;
   private final ExternalizablePropertyContainer myProjectOptions;
@@ -206,8 +203,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public @NlsSafe String getName() {
+  public @Nullable @NlsSafe String getName() {
     final VirtualFile vFile = getVirtualFile();
     return vFile != null ? vFile.getName() : null;
   }
@@ -219,8 +215,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public AntBuildModelBase getModelIfRegistered() {
+  public @Nullable AntBuildModelBase getModelIfRegistered() {
     return myAntConfiguration.getModelIfRegistered(this);
   }
 
@@ -240,8 +235,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public XmlFile getAntFile() {
+  public @Nullable XmlFile getAntFile() {
     final PsiFile psiFile = myVFile.isValid()? PsiManager.getInstance(getProject()).findFile(myVFile) : null;
     return (psiFile instanceof XmlFile xmlFile) && AntDomFileDescription.isAntFile(xmlFile)? xmlFile : null;
   }
@@ -252,8 +246,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return myVFile;
   }
 
@@ -263,8 +256,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @Nullable
-  public @NlsSafe String getPresentableUrl() {
+  public @Nullable @NlsSafe String getPresentableUrl() {
     final VirtualFile file = getVirtualFile();
     return (file == null) ? null : file.getPresentableUrl();
   }
@@ -413,8 +405,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  @NotNull
-  public Map<String, String> getExternalProperties() {
+  public @NotNull Map<String, String> getExternalProperties() {
     Map<String, String> result = myCachedExternalProperties;
     if (result == null) {
       synchronized (myOptionsLock) {
@@ -448,8 +439,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
     ANT_REFERENCE.set(getAllOptions(), ANT_REFERENCE.get(getAllOptions()).bind(GlobalAntConfiguration.getInstance()));
   }
 
-  @Nullable
-  private TargetFilter findFilter(final String targetName) {
+  private @Nullable TargetFilter findFilter(final String targetName) {
     final List<TargetFilter> filters;
     synchronized (myOptionsLock) {
       filters = TARGET_FILTERS.get(myAllOptions);
@@ -462,8 +452,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
     return null;
   }
 
-  @NotNull
-  public ClassLoader getClassLoader() {
+  public @NotNull ClassLoader getClassLoader() {
     return myClassloaderHolder.getClassloader();
   }
 }

@@ -7,8 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.jetbrains.python.PythonPluginDisposable
-import com.jetbrains.python.console.PydevConsoleRunnerImpl
-import com.jetbrains.python.console.PythonConsoleRunnerFactory
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 

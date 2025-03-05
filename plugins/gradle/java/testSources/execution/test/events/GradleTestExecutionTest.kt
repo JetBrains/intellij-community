@@ -9,8 +9,7 @@ import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
@@ -612,11 +611,10 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test test task execution with additional gradle listeners`(gradleVersion: GradleVersion) {
-    val extension = object : GradleOperationHelperExtension {
-      override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
+    val extension = object : GradleExecutionHelperExtension {
       override fun prepareForExecution(id: ExternalSystemTaskId,
                                        operation: LongRunningOperation,
-                                       gradleExecutionSettings: GradleExecutionSettings,
+                                       settings: GradleExecutionSettings,
                                        buildEnvironment: BuildEnvironment?) {
         operation.addProgressListener(ProgressListener {})
       }
@@ -630,7 +628,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
       Disposer.newDisposable().use { testDisposable ->
-        GradleOperationHelperExtension.EP_NAME.point.registerExtension(extension, testDisposable)
+        GradleExecutionHelperExtension.EP_NAME.point.registerExtension(extension, testDisposable)
         executeTasks(":test", isRunAsTest = true)
       }
       assertTestViewTree {

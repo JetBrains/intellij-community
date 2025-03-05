@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.Nullability;
@@ -14,7 +14,6 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.lang.ir.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
@@ -27,7 +26,6 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -36,6 +34,7 @@ import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -189,22 +188,19 @@ public final class SuspiciousInvocationHandlerImplementationInspection extends A
     }
 
     @Override
-    protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                                @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                                @NotNull ControlFlow flow) {
+    protected @Unmodifiable @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                                              @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                                              @NotNull ControlFlow flow) {
       if (psiBlock != myBody) {
         return super.createInitialInstructionStates(psiBlock, memStates, flow);
       }
       List<DfaInstructionState> result = new ArrayList<>();
       Instruction instruction = flow.getInstruction(0);
-      for (Instruction inst : flow.getInstructions()) {
-        if (inst instanceof FinishElementInstruction) {
-          Set<DfaVariableValue> flush = ((FinishElementInstruction)inst).getVarsToFlush();
-          flush.remove(myDfaMethodDeclaringClass);
-          flush.remove(myDfaMethodName);
-          flush.remove(myDfaMethodName.getQualifier());
-        }
-      }
+      DfaVariableValue qualifier = myDfaMethodName.getQualifier();
+      flow.keepVariables(desc ->
+        desc.equals(myDfaMethodDeclaringClass.getDescriptor()) ||
+        desc.equals(myDfaMethodName.getDescriptor()) ||
+        (qualifier != null && desc.equals(qualifier.getDescriptor())));
       for (DfaMemoryState state : memStates) {
         state.applyCondition(myDfaMethodDeclaringClass.eq(DfTypes.constant(myObjectType, myClassType)));
         for (String methodName : Arrays.asList("hashCode", "equals", "toString")) {

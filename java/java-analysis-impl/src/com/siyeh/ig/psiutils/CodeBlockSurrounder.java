@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -870,13 +870,12 @@ public abstract class CodeBlockSurrounder {
       return splitReturn(statement, polyadicExpression, lOperands, rOperands, project, factory);
     }
 
-    @NotNull
-    private static PsiStatement splitIf(@NotNull PsiIfStatement outerIf,
-                                        @NotNull PsiPolyadicExpression andChain,
-                                        @NotNull PsiExpression lOperands,
-                                        @NotNull PsiExpression rOperands,
-                                        @NotNull Project project,
-                                        @NotNull PsiElementFactory factory) {
+    private static @NotNull PsiStatement splitIf(@NotNull PsiIfStatement outerIf,
+                                                 @NotNull PsiPolyadicExpression andChain,
+                                                 @NotNull PsiExpression lOperands,
+                                                 @NotNull PsiExpression rOperands,
+                                                 @NotNull Project project,
+                                                 @NotNull PsiElementFactory factory) {
       PsiBlockStatement newThenBranch = (PsiBlockStatement)factory.createStatementFromText("{if(true);}", outerIf);
       PsiStatement thenBranch = Objects.requireNonNull(outerIf.getThenBranch());
       Objects.requireNonNull(((PsiIfStatement)newThenBranch.getCodeBlock().getStatements()[0]).getThenBranch()).replace(thenBranch);
@@ -894,13 +893,12 @@ public abstract class CodeBlockSurrounder {
       return innerIf;
     }
 
-    @NotNull
-    private PsiStatement splitReturn(@NotNull PsiStatement returnOrYieldStatement,
-                                            @NotNull PsiPolyadicExpression condition,
-                                            @NotNull PsiExpression lOperands,
-                                            @NotNull PsiExpression rOperands,
-                                            @NotNull Project project,
-                                            @NotNull PsiElementFactory factory) {
+    private @NotNull PsiStatement splitReturn(@NotNull PsiStatement returnOrYieldStatement,
+                                              @NotNull PsiPolyadicExpression condition,
+                                              @NotNull PsiExpression lOperands,
+                                              @NotNull PsiExpression rOperands,
+                                              @NotNull Project project,
+                                              @NotNull PsiElementFactory factory) {
       CommentTracker ct = new CommentTracker();
       boolean orChain = condition.getOperationTokenType().equals(JavaTokenType.OROR);
       String keyword = returnOrYieldStatement.getFirstChild().getText();
@@ -957,8 +955,7 @@ public abstract class CodeBlockSurrounder {
     }
   }
 
-  @Nullable
-  private static PsiStatement collapseIf(PsiIfStatement ifStatement, String... operators) {
+  private static @Nullable PsiStatement collapseIf(PsiIfStatement ifStatement, String... operators) {
     IfConditionalModel model = IfConditionalModel.from(ifStatement, false);
     if (model == null) return null;
     ConditionalExpressionGenerator generator = ConditionalExpressionGenerator.from(model);

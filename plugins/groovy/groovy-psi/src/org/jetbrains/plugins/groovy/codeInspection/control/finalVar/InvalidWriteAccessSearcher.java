@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import org.jetbrains.annotations.NotNull;
@@ -20,10 +20,9 @@ import java.util.stream.Collectors;
  * @author Max Medvedev
  */
 public final class InvalidWriteAccessSearcher {
-  @Nullable
-  public static List<ReadWriteVariableInstruction> findInvalidWriteAccess(@NotNull GroovyControlFlow flow,
-                                                                          @NotNull Set<? extends GrVariable> variables,
-                                                                          @NotNull Set<? extends GrVariable> alreadyInitialized) {
+  public static @Nullable List<ReadWriteVariableInstruction> findInvalidWriteAccess(@NotNull GroovyControlFlow flow,
+                                                                                    @NotNull Set<? extends GrVariable> variables,
+                                                                                    @NotNull Set<? extends GrVariable> alreadyInitialized) {
     DFAEngine<MyData> engine = new DFAEngine<>(flow.getFlow(), new MyDFAInstance(), new MySemilattice());
     final List<@Nullable MyData> dfaResult = engine.performDFAWithTimeout();
     if (dfaResult == null) return null;
@@ -76,9 +75,8 @@ public final class InvalidWriteAccessSearcher {
   }
 
   private static class MySemilattice implements Semilattice<MyData> {
-    @NotNull
     @Override
-    public MyData join(@NotNull List<? extends MyData> ins) {
+    public @NotNull MyData join(@NotNull List<? extends MyData> ins) {
       return new MyData(ins);
     }
   }

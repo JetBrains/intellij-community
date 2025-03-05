@@ -66,7 +66,7 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/textmate/tests/org/jetbrains/plugins/textmate" + getTestPath();
+    return "/plugins/textmate/testData" + getTestPath();
   }
 
   @Override

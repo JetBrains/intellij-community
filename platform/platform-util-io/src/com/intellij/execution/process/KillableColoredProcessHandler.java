@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -18,16 +18,15 @@ import java.util.Set;
  */
 public class KillableColoredProcessHandler extends ColoredProcessHandler implements KillableProcess {
   public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    this(commandLine, false);
+    super(commandLine);
+    setShouldKillProcessSoftly(true);
   }
 
-  /**
-   * @deprecated please use {@link KillableColoredProcessHandler#KillableColoredProcessHandler(GeneralCommandLine commandLine)}
-   */
+  /** @deprecated the mediator is retired; use {@link #KillableColoredProcessHandler(GeneralCommandLine)} instead */
   @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
   public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
-    super(KillableProcessHandler.mediate(commandLine, withMediator, false));
-    setShouldKillProcessSoftly(true);
+    this(commandLine);
   }
 
   protected KillableColoredProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
@@ -53,10 +52,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public KillableColoredProcessHandler(@NotNull Process process,
-                                       /*@NotNull*/ String commandLine,
-                                       @NotNull Charset charset,
-                                       @Nullable Set<File> filesToDelete) {
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset, filesToDelete);
     setShouldKillProcessSoftly(true);
   }

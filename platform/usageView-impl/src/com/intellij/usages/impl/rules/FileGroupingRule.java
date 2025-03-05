@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -36,9 +36,8 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     myProject = project;
   }
 
-  @Nullable
   @Override
-  public UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  public @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     VirtualFile virtualFile;
     if (usage instanceof UsageInFile && (virtualFile = ((UsageInFile)usage).getFile()) != null) {
       return new FileUsageGroup(myProject, virtualFile);
@@ -86,6 +85,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       }
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof FileUsageGroup fileUsageGroup)) return false;
@@ -93,6 +93,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       return myFile.equals(fileUsageGroup.myFile);
     }
 
+    @Override
     public int hashCode() {
       return myFile.hashCode();
     }
@@ -103,8 +104,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return myPresentableName;
     }
 
@@ -143,9 +143,8 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
       return 0;
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         return myFile;
       }
@@ -163,14 +162,12 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     }
 
     @ApiStatus.Internal
-    @Nullable
-    public PsiFile getPsiFile() {
+    public @Nullable PsiFile getPsiFile() {
       return myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
     }
 
     @Override
-    @NotNull
-    public String getPresentableName() {
+    public @NotNull String getPresentableName() {
       return myPresentableName;
     }
   }

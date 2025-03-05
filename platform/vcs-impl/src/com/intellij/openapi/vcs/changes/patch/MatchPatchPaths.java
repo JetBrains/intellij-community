@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ReadAction;
@@ -18,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -152,7 +153,7 @@ public final class MatchPatchPaths {
   }
 
   private void findCandidates(@NotNull List<? extends FilePatch> list,
-                              @NotNull final PatchBaseDirectoryDetector directoryDetector,
+                              final @NotNull PatchBaseDirectoryDetector directoryDetector,
                               @NotNull List<? super PatchAndVariants> candidates, @NotNull List<? super FilePatch> newOrWithoutMatches) {
     for (final FilePatch patch : list) {
       final String fileName = patch.getBeforeFileName();
@@ -178,14 +179,14 @@ public final class MatchPatchPaths {
           newOrWithoutMatches.add(patch); // just to be sure
         }
         else {
-          candidates.add(new PatchAndVariants(variants));
+          candidates.add(new PatchAndVariants(new ArrayList<>(variants)));
         }
       }
     }
   }
 
-  private Collection<VirtualFile> findFilesFromIndex(@NotNull final PatchBaseDirectoryDetector directoryDetector,
-                                                     @NotNull final String fileName) {
+  private @Unmodifiable Collection<VirtualFile> findFilesFromIndex(final @NotNull PatchBaseDirectoryDetector directoryDetector,
+                                                                   final @NotNull String fileName) {
     Collection<VirtualFile> files = ReadAction.compute(() -> directoryDetector.findFiles(fileName));
     final File shelfResourcesDirectory = ShelveChangesManager.getInstance(myProject).getShelfResourcesDirectory();
     return ContainerUtil.filter(files, file -> !FileUtil.isAncestor(shelfResourcesDirectory, VfsUtilCore.virtualToIoFile(file), false));
@@ -218,14 +219,13 @@ public final class MatchPatchPaths {
   }
 
   private final class PatchAndVariants {
-    @NotNull private final List<AbstractFilePatchInProgress<?>> myVariants;
+    private final @NotNull List<AbstractFilePatchInProgress<?>> myVariants;
 
     private PatchAndVariants(@NotNull List<AbstractFilePatchInProgress<?>> variants) {
       myVariants = variants;
     }
 
-    @NotNull
-    public List<AbstractFilePatchInProgress<?>> getVariants() {
+    public @NotNull List<AbstractFilePatchInProgress<?>> getVariants() {
       return myVariants;
     }
 
@@ -254,8 +254,7 @@ public final class MatchPatchPaths {
       }
     }
 
-    @Nullable
-    private AbstractFilePatchInProgress findBestByBaseDir() {
+    private @Nullable AbstractFilePatchInProgress findBestByBaseDir() {
       for (AbstractFilePatchInProgress variant : myVariants) {
         if (variantMatchedToProjectDir(variant)) {
           return variant;
@@ -264,8 +263,7 @@ public final class MatchPatchPaths {
       return null;
     }
 
-    @Nullable
-    private AbstractFilePatchInProgress findBestByText() {
+    private @Nullable AbstractFilePatchInProgress findBestByText() {
       AbstractFilePatchInProgress best = null;
       int bestLines = Integer.MIN_VALUE;
       boolean bestIsUnique = true;
@@ -299,8 +297,7 @@ public final class MatchPatchPaths {
       return best;
     }
 
-    @Nullable
-    private AbstractFilePatchInProgress findBestByStrip() {
+    private @Nullable AbstractFilePatchInProgress findBestByStrip() {
       AbstractFilePatchInProgress best = null;
       int bestStrip = Integer.MAX_VALUE;
 
@@ -343,8 +340,7 @@ public final class MatchPatchPaths {
            base != null && base.equals(variant.getBase());
   }
 
-  @Nullable
-  private static FileBaseMatch compareNames(final String beforeName, final VirtualFile file) {
+  private static @Nullable FileBaseMatch compareNames(final String beforeName, final VirtualFile file) {
     if (beforeName == null) {
       return null;
     }
@@ -356,8 +352,7 @@ public final class MatchPatchPaths {
     return relativePath == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : relativePath.replace('\\', '/').split("/");
   }
 
-  @Nullable
-  private static FileBaseMatch compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
+  private static @Nullable FileBaseMatch compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
     while (parent != null && idx >= 0 && parent.getName().equals(parts[idx])) {
       parent = parent.getParent();
       --idx;
@@ -398,7 +393,7 @@ public final class MatchPatchPaths {
   }
 
   private static final class FileBaseMatch {
-    @NotNull public final VirtualFile file;
+    public final @NotNull VirtualFile file;
     public final int score;
 
     FileBaseMatch(@NotNull VirtualFile file, int score) {

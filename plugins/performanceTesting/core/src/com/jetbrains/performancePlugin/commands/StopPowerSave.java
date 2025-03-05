@@ -20,9 +20,8 @@ public class StopPowerSave extends AbstractCommand implements Disposable {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     final MessageBusConnection busConnection = context.getProject().getMessageBus().connect();
     busConnection.subscribe(PowerSaveMode.TOPIC, () -> actionCallback.setDone());

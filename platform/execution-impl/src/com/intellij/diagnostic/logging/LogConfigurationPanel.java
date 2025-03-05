@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -113,10 +113,10 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
                myFilesTable.getSelectedObject() != null).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
-    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+    var descriptor = FileSaverDescriptorFactory.createSingleFileNoJarsDescriptor()
       .withTitle(ExecutionBundle.message("choose.file.to.save.console.output"))
       .withDescription(ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"));
-    myOutputFile.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myOutputFile.addFileSaverDialog(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myRedirectOutputCb.addActionListener(e -> myOutputFile.setEnabled(myRedirectOutputCb.isSelected()));
   }
 

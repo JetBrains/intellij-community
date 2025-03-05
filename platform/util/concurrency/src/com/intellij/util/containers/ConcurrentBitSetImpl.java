@@ -275,8 +275,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     return array.clone();
   }
 
-  @NotNull
-  public static ConcurrentBitSet readFrom(@NotNull File file) throws IOException {
+  public static @NotNull ConcurrentBitSet readFrom(@NotNull File file) throws IOException {
     if (!file.exists()) {
       return ConcurrentBitSet.create();
     }

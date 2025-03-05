@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
- import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
@@ -45,7 +46,7 @@ class JpsGlobalEntitiesLoaderTest {
       Assert.assertEquals(librariesNames.size, libraryBridges.size)
       UsefulTestCase.assertSameElements(librariesNames, libraryBridges.map { it.name })
 
-      val workspaceModel = GlobalWorkspaceModel.getInstance()
+      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
       val libraryEntities = workspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList()
       Assert.assertEquals(librariesNames.size, libraryEntities.size)
       UsefulTestCase.assertSameElements(librariesNames, libraryEntities.map { it.name })
@@ -65,13 +66,14 @@ class JpsGlobalEntitiesLoaderTest {
     copyAndLoadGlobalEntities(originalFile = "sdk/loading", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable) { _, _ ->
       data class SdkTestInfo(val name: String, val version: String, val type: String)
+
       val sdkInfos = listOf(SdkTestInfo("corretto-20", "Amazon Corretto version 20.0.2", "JavaSDK"),
                             SdkTestInfo("jbr-17", "java version \"17.0.7\"", "JavaSDK"))
       val sdkBridges = ProjectJdkTable.getInstance().allJdks
       Assert.assertEquals(sdkInfos.size, sdkBridges.size)
-      UsefulTestCase.assertSameElements(sdkInfos, sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name)  })
+      UsefulTestCase.assertSameElements(sdkInfos, sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name) })
 
-      val workspaceModel = GlobalWorkspaceModel.getInstance()
+      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
       val sdkEntities = workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
       Assert.assertEquals(sdkInfos.size, sdkEntities.size)
       UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })

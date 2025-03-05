@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -185,8 +185,7 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract VcsRoot @NotNull [] getAllVcsRoots();
 
-  @Nls
-  public abstract String getConsolidatedVcsName();
+  public abstract @Nls String getConsolidatedVcsName();
 
   /**
    * @deprecated Use just {@link #setDirectoryMappings(List)}.

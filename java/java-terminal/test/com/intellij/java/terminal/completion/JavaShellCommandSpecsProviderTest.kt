@@ -3,6 +3,7 @@ package com.intellij.java.terminal.completion
 
 import com.intellij.execution.vmOptions.*
 import com.intellij.java.terminal.JavaShellCommandContext
+import com.intellij.java.terminal.JavaShellCommandUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
@@ -55,19 +56,89 @@ class JavaShellCommandSpecsProviderTest : BasePlatformTestCase() {
     UsefulTestCase.assertDoesntContain(fixture.getCompletionNames(), listOf("--add-experimental-exports", "--add-diagnostic-exports", "-XXadvanced"))
   }
 
+  @Test
+  fun `classpath suggestion generator with single quote`() = runBlocking {
+    val fixture = createFixture()
+    val completion =  fixture.getCompletions("java -cp '")
+    assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
+    assertTrue(completion.all { it.prefixReplacementIndex == 1})
+  }
+
+  @Test
+  fun `classpath suggestion generator single quote and after separator`() = runBlocking {
+    val separator = JavaShellCommandUtils.getClassPathSeparator()
+    val fixture = createFixture()
+    val argument = "'file1.jar$separator"
+    val completion =  fixture.getCompletions("java -cp $argument")
+    assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
+    assertTrue(completion.all { it.prefixReplacementIndex == argument.length })
+  }
+
+  @Test
+  fun `classpath suggestion generator with double quote`() = runBlocking {
+    val fixture = createFixture()
+    val completion =  fixture.getCompletions("java -cp \"")
+    assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
+    assertTrue(completion.all { it.prefixReplacementIndex == 1})
+  }
+
+  @Test
+  fun `classpath suggestion generator with double quote and after separator`() = runBlocking {
+    val separator = JavaShellCommandUtils.getClassPathSeparator()
+    val fixture = createFixture()
+    val argument = "\"file1.jar$separator"
+    val completion =  fixture.getCompletions("java -cp $argument")
+    assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
+    assertTrue(completion.all { it.prefixReplacementIndex == argument.length })
+  }
+
+
+  @Test
+  fun `classpath suggestion generator simple`() = runBlocking {
+    val fixture = createFixture()
+    val completion =  fixture.getCompletions("java -cp ")
+    assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
+    assertTrue(completion.all { it.prefixReplacementIndex == 0})
+  }
+
+  @Test
+  fun `classpath suggestion generator after separator`() = runBlocking {
+    val separator = JavaShellCommandUtils.getClassPathSeparator()
+    val fixture = createFixture()
+    val argument = "file1.jar$separator"
+    val completion =  fixture.getCompletions("java -cp $argument")
+    assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
+    assertTrue(completion.all { it.prefixReplacementIndex == argument.length})
+  }
+
+  @Test
+  fun `classpath suggestion generator after double separator`() = runBlocking {
+    val separator = JavaShellCommandUtils.getClassPathSeparator()
+    val fixture = createFixture()
+    val argument = "file1.jar$separator$separator"
+    val completion =  fixture.getCompletions("java -cp $argument")
+    assertSameElements(completion.map { it.name  }, listOf("file1.jar", "file2.jar", "dir1/"))
+    assertTrue(completion.all { it.prefixReplacementIndex == argument.length})
+  }
+
   private fun createFixture(javaVersion: Int = 11): ShellCompletionTestFixture {
     ApplicationManager.getApplication().replaceService(VMOptionsService::class.java, MockVMOptionsService(), testRootDisposable)
     val fixture = ShellCompletionTestFixture.builder(project).mockShellCommandResults { command ->
       if (command == JavaShellCommandContext.JAVA_SHOW_SETTINGS_PROPERTIES_VERSION_COMMAND) {
         return@mockShellCommandResults ShellCommandResult.create("java.home = /jre/home\njava.version = ${javaVersion}", exitCode = 0)
       }
+
+      if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
+        return@mockShellCommandResults ShellCommandResult.create("file1.jar\nfile2.jar\ndir1/", exitCode = 0)
+      }
+
       return@mockShellCommandResults ShellCommandResult.create("", exitCode = 1)
     }.build()
     return fixture
   }
 
-  private suspend fun ShellCompletionTestFixture.getCompletionNames(): List<String> {
-    val actual: List<ShellCompletionSuggestion> = getCompletions("java ")
+  private suspend fun ShellCompletionTestFixture.getCompletionNames(command: String = "java "): List<String> {
+    val actual: List<ShellCompletionSuggestion> = getCompletions(command)
     return actual.map { it.name }
   }
 

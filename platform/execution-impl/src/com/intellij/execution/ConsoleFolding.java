@@ -23,7 +23,7 @@ public abstract class ConsoleFolding {
    * @return {@code true} if line should be folded, {@code false} if not
    */
   public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
-    return shouldFoldLine(line);
+    return false;
   }
 
   /**
@@ -35,12 +35,20 @@ public abstract class ConsoleFolding {
   }
 
   /**
+   * This value affects how nested foldings behave.
+   * E.g., a border of higher priority folding splits lower priority folding into two foldings.
+   */
+  public int getNestingPriority() {
+    return 0;
+  }
+
+  /**
    * @param project current project
    * @param lines   lines to be folded
    * @return placeholder for lines or {@code null} if these lines should not be folded
    */
-  public @Nullable String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
-    return getPlaceholderText(lines);
+  public @Nullable String getPlaceholderText(@NotNull Project project, @NotNull List<@NotNull String> lines) {
+    return null;
   }
 
   /**
@@ -51,20 +59,4 @@ public abstract class ConsoleFolding {
   public boolean isEnabledForConsole(@NotNull ConsoleView consoleView) {
     return true;
   }
-
-  /**
-   * @param line to check if should be folded
-   * @return {@code true} if line should be folded, {@code false} if not
-   * @deprecated since 2018.1. Use {@link #shouldFoldLine(Project, String)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public boolean shouldFoldLine(@SuppressWarnings("unused") @NotNull String line) { return false; }
-
-  /**
-   * @param lines to fold
-   * @return placeholder for lines
-   * @deprecated since 2018.1. Use {@link #getPlaceholderText(Project, List)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable String getPlaceholderText(@SuppressWarnings("unused") @NotNull List<String> lines) { return null; }
 }

@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.shouldHaveSplitterDiffPreview
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.shouldHaveSplitterDiffPreview
 import com.intellij.ui.*
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor

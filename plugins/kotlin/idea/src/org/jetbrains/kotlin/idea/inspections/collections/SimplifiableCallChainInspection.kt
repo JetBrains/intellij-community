@@ -7,6 +7,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AssociateFunction
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceAssociateFunctionFix
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceAssociateFunctionInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.ASSOCIATE
@@ -28,9 +31,6 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConver
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
-import org.jetbrains.kotlin.idea.inspections.AssociateFunction
-import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
-import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionInspection
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.lexer.KtTokens

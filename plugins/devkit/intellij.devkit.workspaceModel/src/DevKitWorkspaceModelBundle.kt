@@ -11,9 +11,9 @@ private const val BUNDLE_FQN = "messages.DevKitWorkspaceModelBundle"
 
 object DevKitWorkspaceModelBundle {
   private val BUNDLE = DynamicBundle(DevKitWorkspaceModelBundle::class.java, BUNDLE_FQN)
-
-
-  fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE_FQN) key: String, vararg params: Any): @Nls String {
+  
+  @Nls
+  fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE_FQN) key: String, vararg params: Any): String {
     return BUNDLE.getMessage(key, *params)
   }
 }

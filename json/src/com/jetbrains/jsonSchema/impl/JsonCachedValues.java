@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -22,6 +22,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.CachedValueBase;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,11 +36,13 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class JsonCachedValues {
   private static final Key<CachedValue<JsonSchemaObject>> JSON_OBJECT_CACHE_KEY = Key.create("JsonSchemaObjectCache");
 
@@ -56,7 +59,7 @@ public final class JsonCachedValues {
     }
   }
 
-  static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
+  public static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
   private static final Key<CachedValue<String>> SCHEMA_URL_KEY = Key.create(URL_CACHE_KEY);
 
   public static @Nullable String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
@@ -115,8 +118,10 @@ public final class JsonCachedValues {
     return null;
   }
 
-  static final String ID_CACHE_KEY = "JsonSchemaIdCache";
-  static final String OBSOLETE_ID_CACHE_KEY = "JsonSchemaObsoleteIdCache";
+  @ApiStatus.Internal
+  public static final String ID_CACHE_KEY = "JsonSchemaIdCache";
+  @ApiStatus.Internal
+  public static final String OBSOLETE_ID_CACHE_KEY = "JsonSchemaObsoleteIdCache";
   private static final Key<CachedValue<String>> SCHEMA_ID_CACHE_KEY = Key.create(ID_CACHE_KEY);
 
   public static @Nullable String getSchemaId(final @NotNull VirtualFile schemaFile,
@@ -276,11 +281,14 @@ public final class JsonCachedValues {
     return value == JsonSchemaObjectReadingUtils.NULL_OBJ ? null : value;
   }
 
+  @SuppressWarnings("unchecked")
   public static boolean hasComputedSchemaObjectForFile(@NotNull PsiFile file) {
-    CachedValue<JsonSchemaObject> data = CompletionUtil.getOriginalOrSelf(file).getUserData(OBJECT_FOR_FILE_KEY);
+    CachedValueBase<JsonSchemaObject> data = (CachedValueBase<JsonSchemaObject>)CompletionUtil.getOriginalOrSelf(file).getUserData(OBJECT_FOR_FILE_KEY);
     if (data == null) return false;
+
     Getter<JsonSchemaObject> cachedValueGetter = data.getUpToDateOrNull();
     if (cachedValueGetter == null) return false;
+
     JsonSchemaObject upToDateCachedValueOrNull = cachedValueGetter.get();
     return upToDateCachedValueOrNull != null && upToDateCachedValueOrNull != JsonSchemaObjectReadingUtils.NULL_OBJ;
   }

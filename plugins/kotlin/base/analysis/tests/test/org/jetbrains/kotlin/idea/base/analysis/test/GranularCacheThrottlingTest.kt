@@ -9,10 +9,12 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.test.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
 
+@OptIn(K1ModeProjectStructureApi::class)
 class GranularCacheThrottlingTest : AbstractModuleInfoCacheTest() {
     fun testRepetitiveInvalidationsAreThrottled() {
         val (library1, library2) = setUpProjectWithLibraries()

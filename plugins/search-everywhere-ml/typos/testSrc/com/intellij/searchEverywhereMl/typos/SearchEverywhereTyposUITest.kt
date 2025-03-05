@@ -7,6 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Processor
@@ -20,6 +21,8 @@ class SearchEverywhereTyposUITest : LightPlatformTestCase() {
                                                 listOf(MockSearchEverywhereContributor("Show Color Picker")),
                                                 { _ -> null},
                                                 MockSpellingCorrector())
+    // normally SearchEverywhereUI is registered against the baloon as parent disposable in SearchEverywhereManager
+    Disposer.register(testRootDisposable, searchEverywhereUI)
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern ("colop"))
     assert(elements.size == 2)
     val seContext = IdeUiService.getInstance().createUiDataContext(searchEverywhereUI)

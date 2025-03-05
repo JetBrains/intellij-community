@@ -15,22 +15,15 @@
  */
 package com.jetbrains.python.validation;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyFStringFragment;
-import com.jetbrains.python.psi.PyFStringFragmentFormatPart;
 import com.jetbrains.python.psi.PyFormattedStringElement;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author Mikhail Golubev

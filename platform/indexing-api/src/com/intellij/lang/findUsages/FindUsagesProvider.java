@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.findUsages;
 
 import com.intellij.lang.cacheBuilder.WordsScanner;
@@ -23,8 +23,7 @@ public interface FindUsagesProvider {
    *
    * @return the word scanner implementation, or null if {@link com.intellij.lang.cacheBuilder.SimpleWordsScanner} is OK.
    */
-  @Nullable
-  default WordsScanner getWordsScanner() {
+  default @Nullable WordsScanner getWordsScanner() {
     return null;
   }
 

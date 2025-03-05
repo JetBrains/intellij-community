@@ -6,7 +6,6 @@ import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.merge.*
-import com.intellij.diff.merge.MergeCallback.Listener
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState

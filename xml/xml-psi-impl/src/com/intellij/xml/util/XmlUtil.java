@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -55,6 +55,7 @@ import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.net.URL;
@@ -211,7 +212,7 @@ public final class XmlUtil {
     return findXmlFile(base, location);
   }
 
-  public static @NotNull Collection<XmlFile> findNSFilesByURI(@NotNull String namespace, @NotNull Project project, @Nullable Module module) {
+  public static @Unmodifiable @NotNull Collection<XmlFile> findNSFilesByURI(@NotNull String namespace, @NotNull Project project, @Nullable Module module) {
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -316,34 +317,7 @@ public final class XmlUtil {
   }
 
   public static char getCharFromEntityRef(@NonNls @NotNull String text) {
-    try {
-      if (text.charAt(1) != '#') {
-        text = text.substring(1, text.length() - 1);
-        char c = XmlTagUtil.getCharacterByEntityName(text);
-        if (c == 0) {
-          LOG.error("Unknown entity: " + text);
-        }
-        return c == 0 ? ' ' : c;
-      }
-      text = text.substring(2, text.length() - 1);
-    }
-    catch (StringIndexOutOfBoundsException e) {
-      LOG.error("Cannot parse ref: '" + text + "'", e);
-    }
-    try {
-      int code;
-      if (StringUtil.startsWithChar(text, 'x')) {
-        text = text.substring(1);
-        code = Integer.parseInt(text, 16);
-      }
-      else {
-        code = Integer.parseInt(text);
-      }
-      return (char)code;
-    }
-    catch (NumberFormatException e) {
-      return 0;
-    }
+    return BasicXmlUtil.getCharFromEntityRef(text);
   }
 
   public static boolean attributeFromTemplateFramework(final @NonNls String name, final XmlTag tag) {
@@ -508,11 +482,7 @@ public final class XmlUtil {
   }
 
   public static CharSequence getLocalName(final CharSequence tagName) {
-    int pos = StringUtil.indexOf(tagName, ':');
-    if (pos == -1) {
-      return tagName;
-    }
-    return tagName.subSequence(pos + 1, tagName.length());
+    return BasicXmlUtil.getLocalName(tagName);
   }
 
   public static boolean isStubBuilding() {

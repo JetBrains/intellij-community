@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -86,15 +86,13 @@ public final class DslActivationStatus implements PersistentStateComponent<DslAc
 
   private final Map<VirtualFile, Entry> myStatus = new HashMap<>();
 
-  @Nullable
-  public Entry getGdslFileInfo(@NotNull VirtualFile file) {
+  public @Nullable Entry getGdslFileInfo(@NotNull VirtualFile file) {
     synchronized (myStatus) {
       return myStatus.get(file);
     }
   }
 
-  @NotNull
-  public Entry getGdslFileInfoOrCreate(@NotNull VirtualFile file) {
+  public @NotNull Entry getGdslFileInfoOrCreate(@NotNull VirtualFile file) {
     Entry entry;
     synchronized (myStatus) {
       entry = myStatus.get(file);
@@ -106,9 +104,8 @@ public final class DslActivationStatus implements PersistentStateComponent<DslAc
     return entry;
   }
 
-  @Nullable
   @Override
-  public State getState() {
+  public @Nullable State getState() {
     synchronized (myStatus) {
       // remove default entries
       myStatus.entrySet().removeIf(entry -> entry.getValue().status == Status.ACTIVE && entry.getValue().error == null);

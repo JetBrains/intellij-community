@@ -6,6 +6,8 @@
                 extensions="ipynb"
                 implementationClass="com.intellij.notebooks.jupyter.core.jupyter.JupyterFileType"
                 fieldName="INSTANCE"/>
+      <lang.substitutor language="Jupyter"
+                        implementationClass="com.intellij.notebooks.jupyter.core.jupyter.JupyterTemplateLanguageSubstitutor"/>
     </extensions>
 
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -308,7 +308,7 @@ public class IterationStateTest extends AbstractEditorTest {
 
   private void verifySplitting0(boolean checkForegroundColor, boolean backward, StateSegment... expectedSegments) {
     EditorEx editor = (EditorEx)getEditor();
-    CaretData caretData = CaretData.createCaretData(editor);
+    CaretData caretData = CaretData.createCaretData(editor.getDocument(), editor.getCaretModel());
     IterationState iterationState = new IterationState(
       editor,
       backward ? editor.getDocument().getTextLength() : 0,

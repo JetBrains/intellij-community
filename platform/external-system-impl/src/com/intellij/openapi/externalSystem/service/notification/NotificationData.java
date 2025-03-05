@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
@@ -23,17 +26,17 @@ import java.util.Map;
  */
 public class NotificationData implements Disposable {
 
-  @NotNull private @NotificationTitle String myTitle;
-  @NotNull private @NotificationContent String myMessage;
-  @NotNull private NotificationCategory myNotificationCategory;
-  @NotNull private final NotificationSource myNotificationSource;
-  @NotNull private final NotificationListener myListener;
-  @Nullable private String myFilePath;
-  @Nullable private Navigatable navigatable;
+  private @NotNull @NotificationTitle String myTitle;
+  private @NotNull @NotificationContent String myMessage;
+  private @NotNull NotificationCategory myNotificationCategory;
+  private final @NotNull NotificationSource myNotificationSource;
+  private final @NotNull NotificationListener myListener;
+  private @Nullable String myFilePath;
+  private @Nullable Navigatable navigatable;
   private int myLine;
   private int myColumn;
   private boolean myBalloonNotification;
-  @Nullable private NotificationGroup myBalloonGroup;
+  private @Nullable NotificationGroup myBalloonGroup;
   private boolean myIsSuggestion;
 
   private final Map<String, NotificationListener> myListenerMap;
@@ -75,8 +78,7 @@ public class NotificationData implements Disposable {
     myBalloonNotification = balloonNotification;
   }
 
-  @NotNull
-  public @NotificationTitle String getTitle() {
+  public @NotNull @NotificationTitle String getTitle() {
     return myTitle;
   }
 
@@ -84,8 +86,7 @@ public class NotificationData implements Disposable {
     myTitle = title;
   }
 
-  @NotNull
-  public @NotificationContent String getMessage() {
+  public @NotNull @NotificationContent String getMessage() {
     return myMessage;
   }
 
@@ -93,8 +94,7 @@ public class NotificationData implements Disposable {
     myMessage = message;
   }
 
-  @NotNull
-  public NotificationCategory getNotificationCategory() {
+  public @NotNull NotificationCategory getNotificationCategory() {
     return myNotificationCategory;
   }
 
@@ -102,18 +102,15 @@ public class NotificationData implements Disposable {
     myNotificationCategory = notificationCategory;
   }
 
-  @NotNull
-  public NotificationSource getNotificationSource() {
+  public @NotNull NotificationSource getNotificationSource() {
     return myNotificationSource;
   }
 
-  @NotNull
-  public NotificationListener getListener() {
+  public @NotNull NotificationListener getListener() {
     return myListener;
   }
 
-  @Nullable
-  public String getFilePath() {
+  public @Nullable String getFilePath() {
     return myFilePath;
   }
 
@@ -121,8 +118,7 @@ public class NotificationData implements Disposable {
     myFilePath = filePath;
   }
 
-  @NotNull
-  public Integer getLine() {
+  public @NotNull Integer getLine() {
     return myLine;
   }
 
@@ -158,8 +154,7 @@ public class NotificationData implements Disposable {
     return new ArrayList<>(myListenerMap.keySet());
   }
 
-  @Nullable
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     if (navigatable == null || navigatable == NonNavigatable.INSTANCE) {
       for (String id : myListenerMap.keySet()) {
         if (id.startsWith("openFile:")) {
@@ -185,8 +180,7 @@ public class NotificationData implements Disposable {
     this.navigatable = navigatable;
   }
 
-  @Nullable
-  public NotificationGroup getBalloonGroup() {
+  public @Nullable NotificationGroup getBalloonGroup() {
     return myBalloonGroup;
   }
 

@@ -94,8 +94,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     final PsiAnnotation psiAnnotation = elementFactory.createAnnotationFromText('@' + qualifiedName, null);
     myAnnotations.put(qualifiedName, psiAnnotation);
@@ -128,6 +127,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     return myParent;
   }
 
+  @Override
   public String toString() {
     return "LombokLightModifierList";
   }

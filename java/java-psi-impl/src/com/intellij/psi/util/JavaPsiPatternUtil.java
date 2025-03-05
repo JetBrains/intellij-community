@@ -220,6 +220,13 @@ public final class JavaPsiPatternUtil {
     return false;
   }
 
+  /**
+   * @param context context PSI element (to check language level and resolve boxed type if necessary)
+   * @param type selector type
+   * @param patternType pattern type
+   * @return true if the supplied pattern type is unconditionally exact, that is cast from type to patternType 
+   * always succeeds without data loss
+   */
   public static boolean isUnconditionallyExactForType(@NotNull PsiElement context, @NotNull PsiType type, PsiType patternType) {
     type = TypeConversionUtil.erasure(type);
     if ((type instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
@@ -249,8 +256,7 @@ public final class JavaPsiPatternUtil {
    * @param patternType the pattern type to compare with
    * @return the promoted type, or the original type if no promotion is necessary
    */
-  @NotNull
-  public static PsiType getExactlyPromotedType(@NotNull PsiElement context, @NotNull PsiType type, @NotNull PsiType patternType) {
+  public static @NotNull PsiType getExactlyPromotedType(@NotNull PsiElement context, @NotNull PsiType type, @NotNull PsiType patternType) {
     if (type.equals(patternType)) return type;
     if ((type.equals(PsiTypes.byteType()) ||
          type.equals(PsiTypes.shortType())) &&
@@ -591,6 +597,56 @@ public final class JavaPsiPatternUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * @param selectorType pattern selector type
+   * @return list of basic types that contain no intersections or type parameters
+   */
+  public static List<PsiType> deconstructSelectorType(@NotNull PsiType selectorType) {
+    List<PsiType> selectorTypes = new ArrayList<>();
+    PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    //T is an intersection type T1& ... &Tn and P covers Ti, for one of the types Ti (1≤i≤n)
+    if (resolvedClass instanceof PsiTypeParameter) {
+      PsiClassType[] types = resolvedClass.getExtendsListTypes();
+      Arrays.stream(types)
+        .filter(t -> t != null)
+        .forEach(t -> selectorTypes.add(t));
+    }
+    if (selectorType instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)selectorType).getConjuncts()) {
+        selectorTypes.addAll(deconstructSelectorType(conjunct));
+      }
+    }
+    if (selectorTypes.isEmpty()) {
+      selectorTypes.add(selectorType);
+    }
+    return selectorTypes;
+  }
+
+  /**
+   * 
+   * @param context context element
+   * @param whoType type that should cover the overWhom type
+   * @param overWhom type that needs to be covered
+   * @return true if whoType overs overWhom type
+   */
+  public static boolean covers(@NotNull PsiElement context, @NotNull PsiType whoType, @NotNull PsiType overWhom) {
+    List<PsiType> whoTypes = deconstructSelectorType(whoType);
+    List<PsiType> overWhomTypes = deconstructSelectorType(overWhom);
+    for (PsiType currentWhoType : whoTypes) {
+      if (!ContainerUtil.exists(overWhomTypes, currentOverWhomType -> {
+        boolean unconditionallyExactForType =
+          isUnconditionallyExactForType(context, currentOverWhomType, currentWhoType);
+        if (unconditionallyExactForType) return true;
+        PsiPrimitiveType unboxedOverWhomType = PsiPrimitiveType.getUnboxedType(currentOverWhomType);
+        if (unboxedOverWhomType == null) return false;
+        return isUnconditionallyExactForType(context, unboxedOverWhomType, currentWhoType);
+      })) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static class PatternVariableWrapper {

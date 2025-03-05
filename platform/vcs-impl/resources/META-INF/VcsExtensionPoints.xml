@@ -9,6 +9,9 @@
     <extensionPoint name="vcsRootChecker"
                     interface="com.intellij.openapi.vcs.VcsRootChecker"
                     dynamic="true"/>
+    <extensionPoint name="vcsRootErrorFilter"
+                    interface="com.intellij.openapi.vcs.VcsRootErrorFilter"
+                    dynamic="true"/>
     <extensionPoint name="vcsIgnoreChecker"
                     interface="com.intellij.openapi.vcs.VcsIgnoreChecker"
                     dynamic="true"/>
@@ -163,6 +166,10 @@
                     dynamic="true"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileContentProvider" area="IDEA_PROJECT"/>
 
+    <extensionPoint name="vcsSharedChecker"
+                    dynamic="true"
+                    interface="com.intellij.openapi.vcs.VcsSharedChecker" area="IDEA_PROJECT"/>
+
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
@@ -234,12 +241,22 @@
                     area="IDEA_PROJECT"
                     dynamic="false"/>
 
-    <extensionPoint name="vcs.shelve.name"
-                    interface="com.intellij.vcs.ShelveTitleProvider"
-                    dynamic="true"/>
-
     <extensionPoint name="vcs.codeVisionLanguageContext" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.VcsCodeVisionLanguageContext"/>
     </extensionPoint>
+
+    <extensionPoint name="vcs.defaultCommitMessagePolicy" interface="com.intellij.vcs.commit.DefaultCommitMessagePolicy" dynamic="true"/>
+
+    <extensionPoint name="vcs.shelveSilentlyTitleProvider"
+                    interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyTitleProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.shelveSilentlyGotItTooltipProvider"
+                    interface="com.intellij.openapi.vcs.changes.shelf.ShelveSilentlyGotItTooltipProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.diffRevisionMetadataProvider"
+                    interface="com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -29,7 +29,7 @@ internal class IntroduceWhenSubjectInspection :
     override fun createQuickFix(
         element: KtWhenExpression,
         context: String,
-    ) = object : KotlinModCommandQuickFix<KtWhenExpression>() {
+    ): KotlinModCommandQuickFix<KtWhenExpression> = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
         override fun applyFix(
             project: Project,
@@ -65,7 +65,7 @@ internal class IntroduceWhenSubjectInspection :
     override fun getApplicableRanges(element: KtWhenExpression): List<TextRange> =
         ApplicabilityRanges.whenKeyword(element)
 
-    context(KaSession) override fun prepareContext(element: KtWhenExpression): String? =
+    override fun KaSession.prepareContext(element: KtWhenExpression): String? =
         element.getSubjectToIntroduce()?.text
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true

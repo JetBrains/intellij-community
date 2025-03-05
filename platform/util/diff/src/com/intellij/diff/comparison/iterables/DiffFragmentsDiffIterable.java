@@ -8,16 +8,15 @@ import java.util.Collection;
 import java.util.Iterator;
 
 class DiffFragmentsDiffIterable extends ChangeDiffIterableBase {
-  @NotNull private final Collection<? extends DiffFragment> myFragments;
+  private final @NotNull Collection<? extends DiffFragment> myFragments;
 
   DiffFragmentsDiffIterable(@NotNull Collection<? extends DiffFragment> ranges, int length1, int length2) {
     super(length1, length2);
     myFragments = ranges;
   }
 
-  @NotNull
   @Override
-  protected ChangeIterable createChangeIterable() {
+  protected @NotNull ChangeIterable createChangeIterable() {
     return new FragmentsChangeIterable(myFragments);
   }
 

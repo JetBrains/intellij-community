@@ -40,7 +40,7 @@ private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener 
     val path = PathManager.getOriginalConfigDir()
     if (processPerProjectSupport().isEnabled()) {
       LOG.info("P3 mode is enabled, configuration files with be synchronized with $path.")
-      SharedConfigFolderUtil.installFsWatcher(path, useVfsWatcher())
+      SharedConfigFolderUtil.installFsWatcher(path)
       ApplicationManager.getApplication().messageBus.connect().subscribe(DynamicPluginListener.TOPIC, serviceAsync<P3DynamicPluginSynchronizer>())
       coroutineScope {
         setupSyncEarlyAccessRegistry(path, this)
@@ -94,4 +94,3 @@ private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener 
 }
 
 private val LOG = logger<ProcessPerProjectSharedConfigFolderApplicationInitializedListener>()
-private fun useVfsWatcher() = false

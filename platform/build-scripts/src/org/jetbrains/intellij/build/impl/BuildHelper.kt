@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import io.opentelemetry.api.trace.SpanBuilder
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -23,7 +24,7 @@ fun CoroutineScope.createSkippableJob(
   context: BuildContext,
   task: suspend () -> Unit,
 ): Job {
-  return launch {
+  return launch(CoroutineName("$stepId build step")) {
     context.executeStep(spanBuilder, stepId) {
       task()
     }

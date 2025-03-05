@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.stubs
 
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub
-import java.util.Optional
 
 interface PyTypedDictStub : CustomTargetExpressionStub {
 
@@ -24,4 +23,4 @@ interface PyTypedDictStub : CustomTargetExpressionStub {
 }
 
 
-data class PyTypedDictFieldStub(val name: String, val type: Optional<String>, val isReadOnly: Boolean)
+data class PyTypedDictFieldStub(val name: String, val type: String?, val isReadOnly: Boolean)

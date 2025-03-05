@@ -3,6 +3,7 @@
     <id>com.intellij.classic.ui</id>
     <vendor>JetBrains</vendor>
 
+    <depends>com.intellij.platform.experimental.monolith</depends>
     <incompatible-with>com.intellij.cwm.guest</incompatible-with>
     <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
     <incompatible-with>com.intellij.gateway</incompatible-with>

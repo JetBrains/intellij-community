@@ -97,7 +97,7 @@ public final class TestUtils {
       return false;
     }
     final String methodName = method.getName();
-    @NonNls final String test = "test";
+    final @NonNls String test = "test";
     if (!methodName.startsWith(test) ||
         !method.hasModifierProperty(PsiModifier.PUBLIC) && !method.getParameterList().isEmpty()) {
       return false;
@@ -234,7 +234,7 @@ public final class TestUtils {
     final PsiAnnotationParameterList parameterList = testAnnotation.getParameterList();
     final PsiNameValuePair[] nameValuePairs = parameterList.getAttributes();
     for (PsiNameValuePair nameValuePair : nameValuePairs) {
-      @NonNls final String parameterName = nameValuePair.getName();
+      final @NonNls String parameterName = nameValuePair.getName();
       if (expectedParameterName.equals(parameterName)) {
         return true;
       }

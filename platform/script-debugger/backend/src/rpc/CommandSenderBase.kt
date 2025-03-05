@@ -28,7 +28,8 @@ class RequestPromise<SUCCESS_RESPONSE, RESULT : Any?>(private val methodName: St
         else -> resultReader.readResult(methodName, response)
       }
 
-      UnsafeSetResult.setResult(this, r)
+      @Suppress("UNCHECKED_CAST")
+      setResult(r as RESULT?)
     }
   }
 

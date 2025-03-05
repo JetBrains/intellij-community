@@ -32,7 +32,7 @@ class DownloadJdkAction: AnAction() {
           sdk = setupInstallableSdk(task)
           downloadSdk(sdk)
         }
-        project.service<ConfigureJdkService>().setProjectJdkIfNull(sdk)
+        project.service<ConfigureJdkService>().setProjectJdkIfNull(sdk, true)
       }
     } else {
       log.warn("No download extension found to download a JDK")

@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -18,6 +17,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
@@ -98,8 +98,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  @NotNull
-  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+  public @NotNull Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
@@ -123,9 +122,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     return myWorkspaceFileIndex.getPackageName(dir);
   }
 
-  @NotNull
   @Override
-  public List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
+  public @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
     if (myProject.isDefault()) return Collections.emptyList();
     WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, false);
@@ -135,21 +133,21 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  @NotNull
-  public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+  public @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module) {
     checkAvailability();
     return getRootIndex().getDependentUnloadedModules(module);
   }
 
   private void checkAvailability() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertReadAccess();
     if (myDisposed) {
       ProgressManager.checkCanceled();
       LOG.error("Directory index is already disposed for " + myProject);
     }
   }
 
-  void reset() {
+  @ApiStatus.Internal
+  public void reset() {
     myRootIndex = null;
   }
 }

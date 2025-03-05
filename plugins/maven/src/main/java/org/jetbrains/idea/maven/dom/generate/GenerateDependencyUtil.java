@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.generate;
 
 import com.intellij.codeInsight.generation.ClassMember;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -30,8 +31,7 @@ public final class GenerateDependencyUtil {
   private GenerateDependencyUtil() {
   }
 
-  @NotNull
-  public static List<MavenDomDependency> chooseDependencies(Collection<? extends MavenDomDependency> candidates, final Project project) {
+  public static @NotNull List<MavenDomDependency> chooseDependencies(Collection<? extends MavenDomDependency> candidates, final Project project) {
     List<MavenDomDependency> dependencies = new ArrayList<>();
 
     MavenDomProjectModelMember[] memberCandidates =
@@ -53,7 +53,7 @@ public final class GenerateDependencyUtil {
     chooser.setCopyJavadocVisible(false);
     chooser.show();
 
-    if (chooser.getExitCode() == MemberChooser.OK_EXIT_CODE) {
+    if (chooser.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       final MavenDomProjectModelMember[] members = chooser.getSelectedElements(new MavenDomProjectModelMember[0]);
       if (members != null) {
         dependencies.addAll(ContainerUtil.mapNotNull(members, mavenDomProjectModelMember -> mavenDomProjectModelMember.getDependency()));
@@ -71,9 +71,8 @@ public final class GenerateDependencyUtil {
       myDependency = dependency;
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       StringBuffer sb = new StringBuffer();
 
       append(sb, myDependency.getGroupId().getStringValue());
@@ -85,7 +84,7 @@ public final class GenerateDependencyUtil {
 
     private static void append(StringBuffer sb, String str) {
       if (!StringUtil.isEmptyOrSpaces(str)) {
-        if (sb.length() > 0) sb.append(": ");
+        if (!sb.isEmpty()) sb.append(": ");
         sb.append(str);
       }
     }
@@ -98,8 +97,7 @@ public final class GenerateDependencyUtil {
                                                                  getProjectName(dependency));
     }
 
-    @Nullable
-    private static String getProjectName(@Nullable MavenDomDependency dependency) {
+    private static @Nullable String getProjectName(@Nullable MavenDomDependency dependency) {
       if (dependency != null) {
         MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
         if (model != null) {
@@ -116,7 +114,7 @@ public final class GenerateDependencyUtil {
 
     private static class MavenDomProjectModelFileMemberChooserObjectBase extends PsiElementMemberChooserObject {
 
-      MavenDomProjectModelFileMemberChooserObjectBase(@NotNull final PsiFile psiFile, @Nullable @NlsSafe String projectName) {
+      MavenDomProjectModelFileMemberChooserObjectBase(final @NotNull PsiFile psiFile, @Nullable @NlsSafe String projectName) {
         super(psiFile, StringUtil.isEmptyOrSpaces(projectName) ? psiFile.getName() : projectName, MavenIcons.MavenProject);
       }
     }

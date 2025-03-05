@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 class NamelessFilter<T extends PyElement & PsiNamedElement> extends NotNullPredicate<T> {
 
   @Override
-  public boolean applyNotNull(@NotNull final T input) {
+  public boolean applyNotNull(final @NotNull T input) {
     return input.getName() != null;
   }
 }

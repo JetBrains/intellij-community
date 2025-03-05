@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
-import com.intellij.java.compiler.charts.CompilationChartsProjectActivity.Companion.COMPILATION_CHARTS_MAGNIFICATION_KEY
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBViewport
 import com.intellij.ui.components.ZoomingDelegate
@@ -12,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 
 class CompilationChartsViewport(private val scrollType: AutoScrollingType) : JBViewport() {
-  override fun createZooming(): ZoomingDelegate = if (Registry.`is`(COMPILATION_CHARTS_MAGNIFICATION_KEY))
+  override fun createZooming(): ZoomingDelegate = if (Registry.`is`(Constants.COMPILATION_CHARTS_MAGNIFICATION_KEY))
     CompilationChartsZoomingDelegate(view as JComponent, this, scrollType)
   else
     CompilationChartsNonZoomingDelegate(view as JComponent, this)

@@ -262,10 +262,11 @@ class KotlinUFunctionCallExpression(
         val ktNameReferenceExpression = callee as? KtNameReferenceExpression ?: return null
         val callableDeclaration = baseResolveProviderService.resolveToDeclaration(ktNameReferenceExpression) ?: return null
 
+        val isStatic = (callableDeclaration as? PsiMethod)?.hasModifier(JvmModifier.STATIC) == true
+
         val variable = when (callableDeclaration) {
             is PsiVariable -> callableDeclaration
             is PsiMethod -> {
-                val isStatic = callableDeclaration.hasModifier(JvmModifier.STATIC)
                 callableDeclaration.containingClass?.let { containingClass ->
                     PropertyUtilBase.getPropertyName(callableDeclaration.name)?.let { propertyName ->
                         PropertyUtilBase.findPropertyField(containingClass, propertyName, isStatic)
@@ -274,16 +275,134 @@ class KotlinUFunctionCallExpression(
             }
 
             else -> null
-        } ?: return null
-
-        // an implicit receiver for variables calls (KT-25524)
-        return object : KotlinAbstractUExpression(this), UReferenceExpression {
-            override val sourcePsi: KtNameReferenceExpression get() = ktNameReferenceExpression
-
-            override val resolvedName: String? get() = variable.name
-
-            override fun resolve(): PsiElement = variable
         }
+
+        if (variable != null) {
+            // an implicit receiver for variables calls (KT-25524)
+            return object : KotlinAbstractUExpression(this), UReferenceExpression {
+                override val sourcePsi: KtNameReferenceExpression get() = ktNameReferenceExpression
+
+                override val resolvedName: String? get() = variable.name
+
+                override fun resolve(): PsiElement = variable
+            }
+        }
+
+        // Bail out for non-instance functions
+        if (isStatic || callableDeclaration !is PsiMethod) return null
+
+        val containingUMethod = getContainingUMethod()
+        val extensionReceiver = containingUMethod?.uastParameters?.firstOrNull() as? KotlinReceiverUParameter
+        // Extension receiver of the containing method
+        if (extensionReceiver != null && extensionReceiver.javaPsi.type == receiverType) {
+            // Implicit $this$extension
+            return KotlinUImplicitExtensionReceiver(extensionReceiver, receiverType, this)
+        }
+
+        val implicitReceiver =
+            if (baseResolveProviderService.isResolvedToExtension(sourcePsi)) {
+                // Extension receiver of PsiParameter
+                callableDeclaration.parameterList.parameters.firstOrNull()
+            } else {
+                callableDeclaration.containingClass
+            }
+                ?: return null
+
+        // Lambda receiver
+        var enclosingLambda = this.getParentOfType<ULambdaExpression>()
+        while (enclosingLambda != null) {
+            val lambdaReceiver = enclosingLambda.parameters.firstOrNull()
+            val lambdaReceiverType = lambdaReceiver?.type as? PsiClassReferenceType
+            val receiverTypeMatched = if (implicitReceiver is PsiParameter) {
+                // implicit receiver is an extension receiver, e.g., $this$bar
+                lambdaReceiverType == implicitReceiver.type ||
+                        lambdaReceiverType?.superTypes?.contains(lambdaReceiverType) == true
+            } else {
+                lambdaReceiverType?.resolve() == implicitReceiver ||
+                        lambdaReceiverType?.superTypes?.any { superType ->
+                            (superType as? PsiClassReferenceType)?.resolve() == implicitReceiver
+                        } == true
+            }
+            if (receiverTypeMatched) {
+                // Implicit <this>
+                return KotlinUImplicitLambdaReceiver(lambdaReceiver, receiverType, this)
+            }
+            enclosingLambda = enclosingLambda.getParentOfType<ULambdaExpression>()
+        }
+
+        val containingUClass = getContainingUClass()
+        if (implicitReceiver is PsiClass && implicitReceiver == containingUClass?.javaPsi) {
+            // Implicit `this`
+            return KotlinUImplicitThis(implicitReceiver, receiverType, this)
+        }
+
+        return null
+    }
+
+    private class KotlinUImplicitThis(
+        val implicitReceiver: PsiClass,
+        val receiverType: PsiType?,
+        uasParent: UElement,
+    ) : KotlinAbstractUExpression(uasParent), UThisExpression {
+        override val label: String?
+            get() = null
+
+        override val labelIdentifier: UIdentifier?
+            get() = null
+
+        override fun getExpressionType() = receiverType
+
+        override fun resolve(): PsiElement? = implicitReceiver
+
+        override val sourcePsi: PsiElement?
+            get() = null
+
+        override val javaPsi: PsiElement?
+            get() = implicitReceiver
+    }
+
+    private class KotlinUImplicitExtensionReceiver(
+        val extensionReceiver: KotlinReceiverUParameter,
+        val receiverType: PsiType?,
+        uasParent: UElement,
+    ) : KotlinAbstractUExpression(uasParent), UThisExpression {
+        override val label: String?
+            get() = null
+
+        override val labelIdentifier: UIdentifier?
+            get() = null
+
+        override fun getExpressionType() = receiverType
+
+        override fun resolve(): PsiElement? = extensionReceiver.javaPsi
+
+        override val sourcePsi: PsiElement?
+            get() = null
+
+        override val javaPsi: PsiElement?
+            get() = extensionReceiver.javaPsi
+    }
+
+    private class KotlinUImplicitLambdaReceiver(
+        val lambdaReceiver: UParameter?,
+        val receiverType: PsiType?,
+        uasParent: UElement,
+    ) : KotlinAbstractUExpression(uasParent), UThisExpression {
+        override val label: String?
+            get() = null
+
+        override val labelIdentifier: UIdentifier?
+            get() = null
+
+        override fun getExpressionType() = receiverType
+
+        override fun resolve(): PsiElement? = lambdaReceiver?.javaPsi
+
+        override val sourcePsi: PsiElement?
+            get() = null
+
+        override val javaPsi: PsiElement?
+            get() = lambdaReceiver?.javaPsi
     }
 
     private fun getMultiResolved(): Iterable<TypedResolveResult<PsiMethod>> {
@@ -333,6 +452,14 @@ class KotlinUFunctionCallExpression(
             // canMethodNameBeOneOf can return false-positive results, additional resolve is needed
             val methodName = methodName ?: return false
             return methodName in names
+        }
+
+        return false
+    }
+
+    override fun isClassConstructorNameOneOf(names: Collection<String>): Boolean {
+        if (methodNameCanBeOneOf(sourcePsi, names)) {
+            return super.isClassConstructorNameOneOf(names)
         }
 
         return false

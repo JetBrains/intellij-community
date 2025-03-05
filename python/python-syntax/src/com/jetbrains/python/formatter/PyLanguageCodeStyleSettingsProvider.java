@@ -18,9 +18,8 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.ge
 
 
 public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return PythonLanguage.getInstance();
   }
 
@@ -103,6 +102,17 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                    "METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",
                                    "METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
+
+      consumer.showCustomOption(PyCodeStyleSettings.class,
+                                "USE_TRAILING_COMMA_IN_ARGUMENTS_LIST",
+                                PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
+                                ApplicationBundle.message("wrapping.method.arguments"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class,
+                                "USE_TRAILING_COMMA_IN_PARAMETER_LIST",
+                                PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
+                                ApplicationBundle.message("wrapping.method.parameters"));
+
       consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON",
                                 PySyntaxBundle.message("formatter.single.clause.statements"),
                                 PySyntaxBundle.message("formatter.force.new.line.after.colon"));
@@ -111,6 +121,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                 PySyntaxBundle.message("formatter.force.new.line.after.colon"));
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_COLLECTIONS_AND_COMPREHENSIONS",
                                 PySyntaxBundle.message("formatter.align.when.multiline"),
+                                PySyntaxBundle.message("formatter.collections.and.comprehensions"));
+      consumer.showCustomOption(PyCodeStyleSettings.class,
+                                "USE_TRAILING_COMMA_IN_COLLECTIONS",
+                                PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
                                 PySyntaxBundle.message("formatter.collections.and.comprehensions"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_WRAPPING",
@@ -128,8 +142,32 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                 PySyntaxBundle.message("formatter.from.import.statements.force.parentheses.if.multiline"),
                                 PySyntaxBundle.message("formatter.from.import.statements"));
       consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE",
-                                PySyntaxBundle.message("formatter.from.import.statements.force.comma.if.multline"),
+                                PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
                                 PySyntaxBundle.message("formatter.from.import.statements"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_WRAPPING",
+                                PySyntaxBundle.message("formatter.list.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_NEW_LINE_AFTER_LEFT_BRACKET",
+                                ApplicationBundle.message("wrapping.new.line.after.lbracket"), PySyntaxBundle.message("formatter.list.literals"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_NEW_LINE_BEFORE_RIGHT_BRACKET",
+                                ApplicationBundle.message("wrapping.rbracket.on.new.line"), PySyntaxBundle.message("formatter.list.literals"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SET_WRAPPING",
+                                PySyntaxBundle.message("formatter.set.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SET_NEW_LINE_AFTER_LEFT_BRACE",
+                                ApplicationBundle.message("wrapping.new.line.after.lbrace"), PySyntaxBundle.message("formatter.set.literals"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SET_NEW_LINE_BEFORE_RIGHT_BRACE",
+                                ApplicationBundle.message("wrapping.rbrace.on.new.line"), PySyntaxBundle.message("formatter.set.literals"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class, "TUPLE_WRAPPING",
+                                PySyntaxBundle.message("formatter.parenthesized.tuples"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"), PySyntaxBundle.message(
+          "formatter.parenthesized.tuples"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"), PySyntaxBundle.message(
+          "formatter.parenthesized.tuples"));
+
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING",
                                 PySyntaxBundle.message("formatter.dictionary.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
@@ -163,15 +201,13 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
     commonSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
   }
 
-  @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new PyCodeStyleSettings(settings);
   }
 
-  @NotNull
   @Override
-  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings, @NotNull CodeStyleSettings modelSettings) {
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings,
                                              PySyntaxBundle.message("configurable.PyLanguageCodeStyleSettingsProvider.display.name")) {
       @Override
@@ -225,6 +261,14 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
     )
     attrs = [e.attr for e in
         items]
+    
+    num_dict = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+    
+    colors = ['red', 'green', 'blue', 'black', 'white', 'gray']
+    
+    star_names = {"Sirius", "Betelgeuse", "Polaris", "Vega", "Arcturus", "Aldebaran"}
+    
+    planets = ("Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune")
 
     ingredients = [
         'green',

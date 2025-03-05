@@ -10,8 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Computable.PredefinedValueComputable
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -82,14 +80,14 @@ internal fun tryReadOrCancel(indicator: ProgressIndicator, runnable: Runnable) {
 
 internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
   private val batchList = ArrayList<CompletionResult>()
-  private val queue = LinkedBlockingQueue<Computable<Boolean>>()
+  private val queue = LinkedBlockingQueue<() -> Boolean>()
 
   private val coroutineScope = ((project ?: ApplicationManagerEx.getApplicationEx()) as ComponentManagerEx).getCoroutineScope()
 
   override fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*> {
     val startSemaphore = Semaphore()
     startSemaphore.down()
-      val task = {
+    val task = {
       ProgressManager.getInstance().runProcess(
         {
           try {
@@ -97,11 +95,21 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
             ProgressManager.checkCanceled()
             runnable.run()
           }
-          catch (ignored: ProcessCanceledException) {
+          catch (_: ProcessCanceledException) {
           }
         }, progressIndicator)
     }
-    val future = coroutineScope.async(Dispatchers.IO + ClientId.coroutineContext()) { task() }
+    val future = coroutineScope.async(Dispatchers.IO + ClientId.coroutineContext()) {
+      try {
+        task()
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logger<AsyncCompletion>().error(e)
+      }
+    }
     startSemaphore.waitFor()
     return future
   }
@@ -112,7 +120,7 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
         try {
           while (true) {
             val next = queue.poll(30, TimeUnit.MILLISECONDS)
-            if (next != null && !next.compute()) {
+            if (next != null && !next()) {
               tryReadOrCancel(indicator) { indicator.addDelayedMiddleMatches() }
               return
             }
@@ -128,12 +136,15 @@ internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {
     val future = startThread(ProgressWrapper.wrap(indicator), WeighItems())
     return object : WeighingDelegate {
       override fun waitFor() {
-        queue.offer(PredefinedValueComputable(false))
+        queue.offer { false }
         try {
           @Suppress("SSBasedInspection")
           runBlocking {
             future.await()
           }
+        }
+        catch (e: CancellationException) {
+          throw e
         }
         catch (e: Exception) {
           logger<AsyncCompletion>().error(e)

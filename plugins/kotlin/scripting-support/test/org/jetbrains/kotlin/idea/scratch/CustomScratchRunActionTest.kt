@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.testFramework.fixtures.BasePlatformTestCase.assertEquals
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.run.createLibraryWithLongPaths

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -6,7 +6,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
@@ -29,7 +28,7 @@ import static com.intellij.psi.impl.source.BasicElementTypes.*;
 @ApiStatus.Experimental
 public class BasicDeclarationParser {
   public enum BaseContext {
-    FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
+    FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE, JSHELL
   }
 
   private static final TokenSet BEFORE_LBRACE_ELEMENTS_SET = TokenSet.create(
@@ -40,7 +39,8 @@ public class BasicDeclarationParser {
     JavaTokenType.RPARENTH, JavaTokenType.LBRACE, JavaTokenType.ARROW);
   private static final TokenSet METHOD_PARAM_LIST_STOPPERS = TokenSet.create(
     JavaTokenType.RPARENTH, JavaTokenType.LBRACE, JavaTokenType.ARROW, JavaTokenType.SEMICOLON);
-  private final TokenSet TYPE_START;
+  private static final TokenSet TYPE_START = TokenSet.orSet(
+    BASIC_PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT, JavaTokenType.VAR_KEYWORD));
   private final TokenSet RESOURCE_EXPRESSIONS;
 
   private static final String WHITESPACES = "\n\r \t";
@@ -48,20 +48,16 @@ public class BasicDeclarationParser {
 
   private final BasicJavaParser myParser;
   private final AbstractBasicJavaElementTypeFactory.JavaElementTypeContainer myJavaElementTypeContainer;
-  private final WhiteSpaceAndCommentSetHolder myWhiteSpaceAndCommentSetHolder = WhiteSpaceAndCommentSetHolder.INSTANCE;
 
-  public BasicDeclarationParser(@NotNull final BasicJavaParser javaParser) {
+  public BasicDeclarationParser(@NotNull BasicJavaParser javaParser) {
     myParser = javaParser;
     myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
-    TYPE_START = TokenSet.orSet(
-      BASIC_PRIMITIVE_TYPE_BIT_SET,
-      TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT, JavaTokenType.VAR_KEYWORD));
     RESOURCE_EXPRESSIONS = TokenSet.create(
       myJavaElementTypeContainer.REFERENCE_EXPRESSION, myJavaElementTypeContainer.THIS_EXPRESSION,
       myJavaElementTypeContainer.METHOD_CALL_EXPRESSION, myJavaElementTypeContainer.NEW_EXPRESSION);
   }
 
-  public void parseClassBodyWithBraces(final PsiBuilder builder, final boolean isAnnotation, final boolean isEnum) {
+  public void parseClassBodyWithBraces(PsiBuilder builder, boolean isAnnotation, boolean isEnum) {
     assert builder.getTokenType() == JavaTokenType.LBRACE : builder.getTokenType();
     builder.advanceLexer();
 
@@ -74,15 +70,17 @@ public class BasicDeclarationParser {
     expectOrError(builder, JavaTokenType.RBRACE, "expected.rbrace");
   }
 
-  @Nullable
-  private PsiBuilder.Marker parseClassFromKeyword(PsiBuilder builder,
-                                                  PsiBuilder.Marker declaration,
-                                                  boolean isAnnotation,
-                                                  BaseContext context) {
+  private @Nullable PsiBuilder.Marker parseClassFromKeyword(PsiBuilder builder,
+                                                            PsiBuilder.Marker declaration,
+                                                            boolean isAnnotation,
+                                                            BaseContext context) {
     IElementType keywordTokenType = builder.getTokenType();
     final boolean isRecord = isRecordToken(builder, keywordTokenType);
     if (isRecord) {
+      builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
       if (builder.lookAhead(1) != JavaTokenType.IDENTIFIER) {
+        builder.advanceLexer();
+        error(builder, JavaPsiBundle.message("expected.identifier"));
         declaration.drop();
         return null;
       }
@@ -96,7 +94,6 @@ public class BasicDeclarationParser {
         declaration.drop();
         return null;
       }
-      builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
       keywordTokenType = JavaTokenType.RECORD_KEYWORD;
     }
     assert BASIC_CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
@@ -139,11 +136,11 @@ public class BasicDeclarationParser {
       parseClassBodyWithBraces(builder, isAnnotation, isEnum);
     }
 
-    done(declaration, myJavaElementTypeContainer.CLASS, myWhiteSpaceAndCommentSetHolder);
+    done(declaration, myJavaElementTypeContainer.CLASS, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return declaration;
   }
 
-  private void parseEnumConstants(final PsiBuilder builder) {
+  private void parseEnumConstants(PsiBuilder builder) {
     boolean first = true;
     while (builder.getTokenType() != null) {
       if (expect(builder, JavaTokenType.SEMICOLON)) {
@@ -182,8 +179,7 @@ public class BasicDeclarationParser {
     }
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseEnumConstant(final PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseEnumConstant(PsiBuilder builder) {
     final PsiBuilder.Marker constant = builder.mark();
 
     parseModifierList(builder);
@@ -199,10 +195,10 @@ public class BasicDeclarationParser {
       if (builder.getTokenType() == JavaTokenType.LBRACE) {
         final PsiBuilder.Marker constantInit = builder.mark();
         parseClassBodyWithBraces(builder, false, false);
-        done(constantInit, myJavaElementTypeContainer.ENUM_CONSTANT_INITIALIZER, myWhiteSpaceAndCommentSetHolder);
+        done(constantInit, myJavaElementTypeContainer.ENUM_CONSTANT_INITIALIZER, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       }
 
-      done(constant, myJavaElementTypeContainer.ENUM_CONSTANT, myWhiteSpaceAndCommentSetHolder);
+      done(constant, myJavaElementTypeContainer.ENUM_CONSTANT, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return constant;
     }
     else {
@@ -211,7 +207,7 @@ public class BasicDeclarationParser {
     }
   }
 
-  public void parseClassBodyDeclarations(final PsiBuilder builder, final boolean isAnnotation) {
+  public void parseClassBodyDeclarations(PsiBuilder builder, boolean isAnnotation) {
     final BaseContext context = isAnnotation ? BaseContext.ANNOTATION_INTERFACE : BaseContext.CLASS;
 
     PsiBuilder.Marker invalidElements = null;
@@ -253,8 +249,7 @@ public class BasicDeclarationParser {
     }
   }
 
-  @Nullable
-  public PsiBuilder.Marker parse(final @NotNull PsiBuilder builder, final BaseContext context) {
+  public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder, BaseContext context) {
     IElementType tokenType = builder.getTokenType();
     if (tokenType == null) return null;
 
@@ -317,7 +312,7 @@ public class BasicDeclarationParser {
         error.errorBefore(JavaPsiBundle.message("unexpected.token"), codeBlock);
       }
 
-      done(declaration, myJavaElementTypeContainer.CLASS_INITIALIZER, myWhiteSpaceAndCommentSetHolder);
+      done(declaration, myJavaElementTypeContainer.CLASS_INITIALIZER, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return declaration;
     }
 
@@ -327,20 +322,21 @@ public class BasicDeclarationParser {
       PsiBuilder.Marker pos = builder.mark();
 
       int flags = BasicReferenceParser.EAT_LAST_DOT | BasicReferenceParser.WILDCARD;
-      if (context == BaseContext.CODE_BLOCK) flags |= BasicReferenceParser.VAR_TYPE;
+      if (context == BaseContext.CODE_BLOCK ||  context == BaseContext.JSHELL) flags |= BasicReferenceParser.VAR_TYPE;
       type = myParser.getReferenceParser().parseTypeInfo(builder, flags);
 
       if (type == null) {
         pos.rollbackTo();
       }
-      else if (builder.getTokenType() == JavaTokenType.LPARENTH || builder.getTokenType() == JavaTokenType.LBRACE) {  // constructor
+      else if (builder.getTokenType() == JavaTokenType.LPARENTH ||
+               builder.getTokenType() == JavaTokenType.LBRACE ||
+               builder.getTokenType() == JavaTokenType.THROWS_KEYWORD) {  // constructor
         if (context == BaseContext.CODE_BLOCK) {
           declaration.rollbackTo();
           return null;
         }
 
         pos.rollbackTo();
-
         if (typeParams == null) {
           emptyElement(builder, myJavaElementTypeContainer.TYPE_PARAMETER_LIST);
         }
@@ -357,6 +353,11 @@ public class BasicDeclarationParser {
         }
         else if (builder.getTokenType() == JavaTokenType.LBRACE) { // compact constructor
           emptyElement(builder, myJavaElementTypeContainer.THROWS_LIST);
+          return parseMethodBody(builder, declaration, false);
+        }
+        else if (builder.getTokenType() == JavaTokenType.THROWS_KEYWORD) {
+          myParser.getReferenceParser()
+            .parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, myJavaElementTypeContainer.THROWS_LIST, JavaTokenType.COMMA);
           return parseMethodBody(builder, declaration, false);
         }
         else {
@@ -394,7 +395,8 @@ public class BasicDeclarationParser {
     }
 
     if (builder.getTokenType() == JavaTokenType.LPARENTH) {
-      if (context == BaseContext.CLASS || context == BaseContext.ANNOTATION_INTERFACE || context == BaseContext.FILE) {  // method
+      if (context == BaseContext.CLASS || context == BaseContext.ANNOTATION_INTERFACE || context == BaseContext.FILE
+          || context == BaseContext.JSHELL) {  // method
         if (typeParams == null) {
           emptyElement(type.marker, myJavaElementTypeContainer.TYPE_PARAMETER_LIST);
         }
@@ -409,10 +411,15 @@ public class BasicDeclarationParser {
   }
 
   static boolean isRecordToken(PsiBuilder builder, IElementType tokenType) {
-    if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) &&
-        builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
-      LanguageLevel level = getLanguageLevel(builder);
-      return JavaFeature.RECORDS.isSufficient(level);
+    if (tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText())) {
+      IElementType nextToken = builder.lookAhead(1);
+      if (nextToken == JavaTokenType.IDENTIFIER || 
+          // The following tokens cannot be part of a valid record declaration, 
+          // but we assume it to be a malformed record, rather than a malformed type.
+          BASIC_MODIFIER_BIT_SET.contains(nextToken) || BASIC_CLASS_KEYWORD_BIT_SET.contains(nextToken) || TYPE_START.contains(nextToken) ||
+          nextToken == JavaTokenType.AT || nextToken == JavaTokenType.LBRACE || nextToken == JavaTokenType.RBRACE) {
+        return JavaFeature.RECORDS.isSufficient(getLanguageLevel(builder));
+      }
     }
     return false;
   }
@@ -421,6 +428,12 @@ public class BasicDeclarationParser {
     return JavaFeature.SEALED_CLASSES.isSufficient(getLanguageLevel(builder)) &&
            tokenType == JavaTokenType.IDENTIFIER &&
            PsiKeyword.SEALED.equals(builder.getTokenText());
+  }
+
+  private static boolean isValueToken(PsiBuilder builder, IElementType tokenType) {
+    return JavaFeature.VALHALLA_VALUE_CLASSES.isSufficient(getLanguageLevel(builder)) &&
+           tokenType == JavaTokenType.IDENTIFIER &&
+           PsiKeyword.VALUE.equals(builder.getTokenText());
   }
 
    static boolean isNonSealedToken(PsiBuilder builder, IElementType tokenType) {
@@ -438,20 +451,22 @@ public class BasicDeclarationParser {
     return isNonSealed;
   }
 
-  @NotNull
-  public Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder) {
+  public @NotNull Pair<PsiBuilder.Marker, Boolean> parseModifierList(PsiBuilder builder) {
     return parseModifierList(builder, BASIC_MODIFIER_BIT_SET);
   }
 
-  @NotNull
-  public Pair<PsiBuilder.Marker, Boolean> parseModifierList(final PsiBuilder builder, final TokenSet modifiers) {
+  public @NotNull Pair<PsiBuilder.Marker, Boolean> parseModifierList(PsiBuilder builder, TokenSet modifiers) {
     final PsiBuilder.Marker modList = builder.mark();
     boolean isEmpty = true;
 
     while (true) {
       IElementType tokenType = builder.getTokenType();
       if (tokenType == null) break;
-      if (isSealedToken(builder, tokenType)) {
+      if (isValueToken(builder, tokenType)) {
+        builder.remapCurrentToken(JavaTokenType.VALUE_KEYWORD);
+        tokenType = JavaTokenType.VALUE_KEYWORD;
+      }
+      else if (isSealedToken(builder, tokenType)) {
         builder.remapCurrentToken(JavaTokenType.SEALED_KEYWORD);
         tokenType = JavaTokenType.SEALED_KEYWORD;
       }
@@ -477,7 +492,7 @@ public class BasicDeclarationParser {
       }
     }
 
-    done(modList, myJavaElementTypeContainer.MODIFIER_LIST, myWhiteSpaceAndCommentSetHolder);
+    done(modList, myJavaElementTypeContainer.MODIFIER_LIST, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return Pair.create(modList, isEmpty);
   }
 
@@ -499,8 +514,7 @@ public class BasicDeclarationParser {
     return parseMethodBody(builder, declaration, anno);
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseMethodBody(PsiBuilder builder, PsiBuilder.Marker declaration, boolean anno) {
+  private @NotNull PsiBuilder.Marker parseMethodBody(PsiBuilder builder, PsiBuilder.Marker declaration, boolean anno) {
     IElementType tokenType = builder.getTokenType();
     if (tokenType != JavaTokenType.SEMICOLON && tokenType != JavaTokenType.LBRACE) {
       PsiBuilder.Marker error = builder.mark();
@@ -527,7 +541,7 @@ public class BasicDeclarationParser {
     }
 
     done(declaration, anno ? myJavaElementTypeContainer.ANNOTATION_METHOD : myJavaElementTypeContainer.METHOD,
-         myWhiteSpaceAndCommentSetHolder);
+         builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return declaration;
   }
 
@@ -666,20 +680,18 @@ public class BasicDeclarationParser {
       invalidElements.error(errorMessage);
     }
 
-    done(elementList, type.getNodeType(myJavaElementTypeContainer), myWhiteSpaceAndCommentSetHolder);
+    done(elementList, type.getNodeType(myJavaElementTypeContainer), builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseParameter(PsiBuilder builder, boolean ellipsis, boolean disjunctiveType, boolean varType) {
+  public @Nullable PsiBuilder.Marker parseParameter(PsiBuilder builder, boolean ellipsis, boolean disjunctiveType, boolean varType) {
     return parseParameterOrRecordComponent(builder, ellipsis, disjunctiveType, varType, true);
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseParameterOrRecordComponent(PsiBuilder builder,
-                                                           boolean ellipsis,
-                                                           boolean disjunctiveType,
-                                                           boolean varType,
-                                                           boolean isParameter) {
+  public @Nullable PsiBuilder.Marker parseParameterOrRecordComponent(PsiBuilder builder,
+                                                                     boolean ellipsis,
+                                                                     boolean disjunctiveType,
+                                                                     boolean varType,
+                                                                     boolean isParameter) {
     int typeFlags = 0;
     if (ellipsis) typeFlags |= BasicReferenceParser.ELLIPSIS;
     if (disjunctiveType) typeFlags |= BasicReferenceParser.DISJUNCTIONS;
@@ -688,8 +700,7 @@ public class BasicDeclarationParser {
                             isParameter ? myJavaElementTypeContainer.PARAMETER : myJavaElementTypeContainer.RECORD_COMPONENT);
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseResource(PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseResource(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
 
     PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
@@ -703,24 +714,21 @@ public class BasicDeclarationParser {
     return parseListElement(builder, true, BasicReferenceParser.VAR_TYPE, myJavaElementTypeContainer.RESOURCE_VARIABLE);
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseLambdaParameter(PsiBuilder builder, boolean typed) {
+  public @Nullable PsiBuilder.Marker parseLambdaParameter(PsiBuilder builder, boolean typed) {
     int flags = BasicReferenceParser.ELLIPSIS;
     if (JavaFeature.VAR_LAMBDA_PARAMETER.isSufficient(getLanguageLevel(builder))) flags |= BasicReferenceParser.VAR_TYPE;
     return parseListElement(builder, typed, flags, myJavaElementTypeContainer.PARAMETER);
   }
 
 
-  @Nullable
-  private PsiBuilder.Marker parseListElement(PsiBuilder builder, boolean typed, int typeFlags, IElementType type) {
+  private @Nullable PsiBuilder.Marker parseListElement(PsiBuilder builder, boolean typed, int typeFlags, IElementType type) {
     PsiBuilder.Marker param = builder.mark();
 
     Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
 
-    BasicReferenceParser.TypeInfo typeInfo;
     if (typed) {
       int flags = BasicReferenceParser.EAT_LAST_DOT | BasicReferenceParser.WILDCARD | typeFlags;
-      typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, flags);
+      BasicReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, flags);
 
       if (typeInfo == null) {
         if (Boolean.TRUE.equals(modListInfo.second)) {
@@ -742,7 +750,7 @@ public class BasicDeclarationParser {
         PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
         if (expr != null && exprType(expr) == myJavaElementTypeContainer.THIS_EXPRESSION) {
           mark.drop();
-          done(param, myJavaElementTypeContainer.RECEIVER_PARAMETER, myWhiteSpaceAndCommentSetHolder);
+          done(param, myJavaElementTypeContainer.RECEIVER_PARAMETER, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
           return param;
         }
 
@@ -753,7 +761,7 @@ public class BasicDeclarationParser {
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       if (type == myJavaElementTypeContainer.PARAMETER || type == myJavaElementTypeContainer.RECORD_COMPONENT) {
         eatBrackets(builder, null);
-        done(param, type, myWhiteSpaceAndCommentSetHolder);
+        done(param, type, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
         return param;
       }
     }
@@ -769,17 +777,17 @@ public class BasicDeclarationParser {
       }
     }
 
-    done(param, myJavaElementTypeContainer.RESOURCE_VARIABLE, myWhiteSpaceAndCommentSetHolder);
+    done(param, myJavaElementTypeContainer.RESOURCE_VARIABLE, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return param;
   }
 
-  @Nullable
-  private PsiBuilder.Marker parseFieldOrLocalVariable(PsiBuilder builder,
-                                                      PsiBuilder.Marker declaration,
-                                                      int declarationStart,
-                                                      BaseContext context) {
+  private @Nullable PsiBuilder.Marker parseFieldOrLocalVariable(PsiBuilder builder,
+                                                                PsiBuilder.Marker declaration,
+                                                                int declarationStart,
+                                                                BaseContext context) {
     final IElementType varType;
-    if (context == BaseContext.CLASS || context == BaseContext.ANNOTATION_INTERFACE || context == BaseContext.FILE) {
+    if (context == BaseContext.CLASS || context == BaseContext.ANNOTATION_INTERFACE || context == BaseContext.FILE
+        || context == BaseContext.JSHELL) {
       varType = myJavaElementTypeContainer.FIELD;
     }
     else if (context == BaseContext.CODE_BLOCK) {
@@ -816,7 +824,7 @@ public class BasicDeclarationParser {
       }
 
       if (builder.getTokenType() != JavaTokenType.COMMA) break;
-      done(variable, varType, myWhiteSpaceAndCommentSetHolder);
+      done(variable, varType, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       builder.advanceLexer();
 
       if (builder.getTokenType() != JavaTokenType.IDENTIFIER) {
@@ -855,7 +863,7 @@ public class BasicDeclarationParser {
     }
 
     if (openMarker) {
-      done(variable, varType, myWhiteSpaceAndCommentSetHolder);
+      done(variable, varType, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     }
 
     return declaration;
@@ -900,8 +908,7 @@ public class BasicDeclarationParser {
     return paired;
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseAnnotations(final PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseAnnotations(PsiBuilder builder) {
     PsiBuilder.Marker firstAnno = null;
 
     while (builder.getTokenType() == JavaTokenType.AT) {
@@ -912,8 +919,7 @@ public class BasicDeclarationParser {
     return firstAnno;
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseAnnotation(final PsiBuilder builder) {
+  public @NotNull PsiBuilder.Marker parseAnnotation(PsiBuilder builder) {
     assert builder.getTokenType() == JavaTokenType.AT : builder.getTokenType();
     final PsiBuilder.Marker anno = builder.mark();
     builder.advanceLexer();
@@ -928,21 +934,21 @@ public class BasicDeclarationParser {
 
     parseAnnotationParameterList(builder);
 
-    done(anno, myJavaElementTypeContainer.ANNOTATION, myWhiteSpaceAndCommentSetHolder);
+    done(anno, myJavaElementTypeContainer.ANNOTATION, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return anno;
   }
 
-  private void parseAnnotationParameterList(final PsiBuilder builder) {
+  private void parseAnnotationParameterList(PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
 
     if (!expect(builder, JavaTokenType.LPARENTH) || expect(builder, JavaTokenType.RPARENTH)) {
-      done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, myWhiteSpaceAndCommentSetHolder);
+      done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return;
     }
 
     if (builder.getTokenType() == null) {
       error(builder, JavaPsiBundle.message("expected.parameter.or.rparen"));
-      done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, myWhiteSpaceAndCommentSetHolder);
+      done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return;
     }
     PsiBuilder.Marker elementMarker = parseAnnotationElement(builder);
@@ -974,10 +980,10 @@ public class BasicDeclarationParser {
       }
     }
 
-    done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, myWhiteSpaceAndCommentSetHolder);
+    done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
   }
 
-  private PsiBuilder.Marker parseAnnotationElement(final PsiBuilder builder) {
+  private PsiBuilder.Marker parseAnnotationElement(PsiBuilder builder) {
     PsiBuilder.Marker pair = builder.mark();
 
     PsiBuilder.Marker valueMarker = parseAnnotationValue(builder);
@@ -986,7 +992,7 @@ public class BasicDeclarationParser {
       return null;
     }
     if (builder.getTokenType() != JavaTokenType.EQ) {
-      done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, myWhiteSpaceAndCommentSetHolder);
+      done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return pair;
     }
 
@@ -998,12 +1004,11 @@ public class BasicDeclarationParser {
     valueMarker = parseAnnotationValue(builder);
     if (valueMarker == null) error(builder, JavaPsiBundle.message("expected.value"));
 
-    done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, myWhiteSpaceAndCommentSetHolder);
+    done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return pair;
   }
 
-  @Nullable
-  public PsiBuilder.Marker parseAnnotationValue(PsiBuilder builder) {
+  public @Nullable PsiBuilder.Marker parseAnnotationValue(PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.AT) {
       return parseAnnotation(builder);

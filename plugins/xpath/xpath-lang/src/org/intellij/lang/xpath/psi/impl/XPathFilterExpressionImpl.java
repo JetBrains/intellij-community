@@ -29,15 +29,13 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
     }
 
     @Override
-    @NotNull
-    public XPathType getType() {
+    public @NotNull XPathType getType() {
         final XPathExpression expression = getExpression();
         return expression != null ? expression.getType() : XPathType.UNKNOWN;
     }
 
     @Override
-    @Nullable
-    public XPathExpression getExpression() {
+    public @Nullable XPathExpression getExpression() {
       final XPathExpression expression = findChildByClass(XPathExpression.class);
       if (expression != null) {
         return expression;
@@ -51,8 +49,7 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
     }
 
     @Override
-    @NotNull
-    public XPathPredicate getPredicate() {
+    public @NotNull XPathPredicate getPredicate() {
         final ASTNode[] nodes = getNode().getChildren(TokenSet.create(XPathElementTypes.PREDICATE));
         assert nodes.length == 1 : unexpectedPsiAssertion();
         return (XPathPredicate)nodes[0].getPsi();

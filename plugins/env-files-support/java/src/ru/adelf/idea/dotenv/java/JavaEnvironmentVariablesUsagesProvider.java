@@ -17,9 +17,8 @@ public class JavaEnvironmentVariablesUsagesProvider implements EnvironmentVariab
         return file.getFileType().equals(JavaFileType.INSTANCE);
     }
 
-    @NotNull
     @Override
-    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
+    public @NotNull Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if (psiFile instanceof PsiJavaFile) {
             JavaEnvironmentCallsVisitor visitor = new JavaEnvironmentCallsVisitor();
             psiFile.acceptChildren(visitor);

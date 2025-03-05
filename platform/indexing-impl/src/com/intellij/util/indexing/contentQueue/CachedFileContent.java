@@ -68,6 +68,6 @@ public final class CachedFileContent {
     if (myCachedWritable == null) {
       myCachedWritable = myVirtualFile.isWritable();
     }
-    return myCachedWritable == Boolean.TRUE;
+    return myCachedWritable;
   }
 }

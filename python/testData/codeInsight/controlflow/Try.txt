@@ -33,5 +33,5 @@
 32(33) element: PySubscriptionExpression
 33(34) READ ACCESS: sys
 34(35) element: PyCallExpression: sys.exc_info
-35(36) element: PyRaiseStatement
+35(36) raise: PyRaiseStatement
 36() element: null

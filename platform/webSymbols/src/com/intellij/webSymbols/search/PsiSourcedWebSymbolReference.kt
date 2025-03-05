@@ -5,21 +5,24 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.FakePsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
-import com.intellij.psi.util.startOffset
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PsiSourcedWebSymbolReference(private val symbol: WebSymbol,
-                                   private val sourceElement: PsiElement,
-                                   private val host: PsiExternalReferenceHost,
-                                   private val range: TextRange) : PsiReference {
+class PsiSourcedWebSymbolReference(
+  private val symbol: WebSymbol,
+  private val sourceElement: PsiElement,
+  private val host: PsiExternalReferenceHost,
+  private val range: TextRange,
+) : PsiReference {
 
   internal val newName: Ref<String> = Ref()
 
-  fun createRenameHandler() =
+  fun createRenameHandler(): RenameHandler =
     RenameHandler(this)
 
   override fun getElement(): PsiElement =
@@ -64,9 +67,13 @@ class PsiSourcedWebSymbolReference(private val symbol: WebSymbol,
       val file = rangePointer.element ?: return null
       val newName = nameRef.get() ?: return null
       val target = targetPointer.dereference() ?: return null
+      val queryExecutor = WebSymbolsQueryExecutorFactory.create(
+        PsiTreeUtil.findElementOfClassAtRange(file, range.startOffset, range.endOffset, PsiElement::class.java)
+        ?: file
+      )
       return NonCodeUsageInfo.create(file, range.startOffset, range.endOffset, target,
                                      symbol.adjustNameForRefactoring(
-                                       WebSymbolsQueryExecutorFactory.create(file),
+                                       queryExecutor,
                                        newName,
                                        file.text.substring(range.startOffset, range.endOffset)))
     }

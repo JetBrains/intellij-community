@@ -39,6 +39,7 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
     return myBeforeMemoryState;
   }
 
+  @Override
   public String toString() {
     return getInstruction().getIndex() + " " + getInstruction() + ":   " + getMemoryState();
   }

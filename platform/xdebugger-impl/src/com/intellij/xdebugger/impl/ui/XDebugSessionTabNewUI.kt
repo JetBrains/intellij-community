@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.execution.actions.CreateAction
@@ -10,7 +10,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.customization.*
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -89,12 +88,12 @@ open class XDebugSessionTabNewUI(
     toolbar.removeAll()
 
     val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
-    val headerActions = headerGroup.getChildren(null)
+    val headerActions = (headerGroup as CustomisedActionGroup).defaultChildrenOrStubs
     RunContentBuilder.addAvoidingDuplicates(toolbar, headerActions)
 
-    val more = MoreActionGroup()
+    val more = RunContentBuilder.createToolbarMoreActionGroup(toolbar)
     val moreGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP)
-    RunContentBuilder.addAvoidingDuplicates(more, moreGroup.getChildren(null), headerActions)
+    RunContentBuilder.addAvoidingDuplicates(more, (moreGroup as CustomisedActionGroup).defaultChildrenOrStubs)
     more.addSeparator()
 
     // reversed because it was like this in the original tab

@@ -18,8 +18,7 @@ public final class VcsHandleTypeFactory implements HandleTypeFactory {
   }
 
   @Override
-  @Nullable
-  public HandleType createHandleType(final VirtualFile file) {
+  public @Nullable HandleType createHandleType(final VirtualFile file) {
     if (! myProject.isInitialized()) return null;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
     if (vcs != null) {

@@ -47,5 +47,5 @@ object KotlinFailureCollector : CounterUsagesCollector() {
         action()
     }
 
-    private fun KtFile.isScriptFast(): Boolean = virtualFile.nameSequence.endsWith("kts")
+    private fun KtFile.isScriptFast(): Boolean = virtualFile?.nameSequence?.endsWith("kts") == true
 }

@@ -157,6 +157,7 @@ fun <T> Flow<T>.takeUntilInclusive(predicate: (T) -> Boolean): Flow<T> {
   }
 }
 
+//TODO how is it different from produceIn?
 @OptIn(ExperimentalCoroutinesApi::class)
 fun <T> Flow<T>.consumeToChannelIn(scope: CoroutineScope): ReceiveChannel<T> {
   val flow = this

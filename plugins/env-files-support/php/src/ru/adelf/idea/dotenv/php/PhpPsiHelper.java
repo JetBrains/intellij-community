@@ -6,7 +6,7 @@ import com.jetbrains.php.lang.psi.elements.*;
 import java.util.Arrays;
 import java.util.List;
 
-class PhpPsiHelper {
+final class PhpPsiHelper {
 
     public static final List<String> FUNCTIONS = Arrays.asList("getenv", "env");
 
@@ -56,21 +56,19 @@ class PhpPsiHelper {
 
         if (!(variable instanceof Variable)) return false;
 
-        return (variable.getName() != null && ARRAY_NAMES.contains(variable.getName()));
+        return ARRAY_NAMES.contains(variable.getName());
     }
 
     @SuppressWarnings("SameParameterValue")
     private static boolean isFunctionParameter(PsiElement psiElement, int parameterIndex, List<String> functions) {
         PsiElement variableContext = psiElement.getContext();
-        if(!(variableContext instanceof ParameterList)) {
+        if(!(variableContext instanceof ParameterList parameterList)) {
             return false;
         } else {
-            ParameterList parameterList = (ParameterList) variableContext;
             PsiElement context = parameterList.getContext();
-            if(!(context instanceof FunctionReference)) {
+            if(!(context instanceof FunctionReference methodReference)) {
                 return false;
             } else {
-                FunctionReference methodReference = (FunctionReference) context;
                 String name = methodReference.getName();
 
                 return (name != null && functions.contains(name) && getParameterIndex(parameterList, psiElement) == parameterIndex);
@@ -80,7 +78,7 @@ class PhpPsiHelper {
 
     private static int getParameterIndex(ParameterList parameterList, PsiElement parameter) {
         PsiElement[] parameters = parameterList.getParameters();
-        for(int i = 0; i < parameters.length; i = i + 1) {
+        for(int i = 0; i < parameters.length; i += 1) {
             if(parameters[i].equals(parameter)) {
                 return i;
             }

@@ -23,6 +23,17 @@ class GitRecentProjectsBranchesServiceTest : GitSingleRepoTest() {
     assertEquals(expected, actual)
   }
 
+  fun `test project path is in git worktree`() {
+    val worktree = "test"
+    git("worktree add $worktree")
+
+    val actual = runBlocking { GitRecentProjectsBranchesService.loadBranch(previousValue = null, "$projectPath/$worktree") }
+    assertEquals(
+      GitRecentProjectCachedBranch.KnownBranch(branchName = worktree, headFilePath = "${repo.repositoryFiles.worktreesDirFile}/$worktree/HEAD"),
+      actual
+    )
+  }
+
   fun `test branch is unknown if detached HEAD`() {
     makeCommit("1")
     git("checkout HEAD^")

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.utils.impl;
 
@@ -13,13 +13,11 @@ import java.util.function.Predicate;
 public final class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
   public static final int DEFAULT_BLOCK_SIZE = 30;
 
-  @NotNull
-  public static UpdatableIntToIntMap newInstance(@NotNull Predicate<? super Integer> thisIsVisible, int longSize) {
+  public static @NotNull UpdatableIntToIntMap newInstance(@NotNull Predicate<? super Integer> thisIsVisible, int longSize) {
     return newInstance(new PredicateFlags(thisIsVisible, longSize));
   }
 
-  @NotNull
-  public static UpdatableIntToIntMap newInstance(@NotNull Flags visibleNodes) {
+  public static @NotNull UpdatableIntToIntMap newInstance(@NotNull Flags visibleNodes) {
     return newInstance(visibleNodes, DEFAULT_BLOCK_SIZE);
   }
 
@@ -28,8 +26,7 @@ public final class ListIntToIntMap extends AbstractIntToIntMap implements Updata
    *                  getLongIndex access need: log(longSize) + blockSize
    *                  getShortIndex access need: blockSize
    */
-  @NotNull
-  public static UpdatableIntToIntMap newInstance(@NotNull Flags visibility, int blockSize) {
+  public static @NotNull UpdatableIntToIntMap newInstance(@NotNull Flags visibility, int blockSize) {
     int longSize = visibility.size();
     if (longSize < 0) throw new NegativeArraySizeException("size < 0: " + longSize);
 
@@ -41,7 +38,7 @@ public final class ListIntToIntMap extends AbstractIntToIntMap implements Updata
     return listIntToIntMap;
   }
 
-  @NotNull final Flags myVisibility;
+  final @NotNull Flags myVisibility;
 
   private final int myLongSize;
 

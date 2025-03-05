@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.psi.PsiClass;
@@ -71,8 +71,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     }
   }
 
-  @Nullable
-  public PsiMethod getReferencedMethod() {
+  public @Nullable PsiMethod getReferencedMethod() {
     final GroovyResolveResult result = resolveMethod(getElement());
     if (result == null) return null;
 
@@ -80,8 +79,7 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
     return element instanceof PsiMethod ? (PsiMethod)element : null;
   }
 
-  @Nullable
-  private static GroovyResolveResult resolveMethod(final PsiElement ref) {
+  private static @Nullable GroovyResolveResult resolveMethod(final PsiElement ref) {
     if (ref instanceof GrEnumConstant) return ((GrEnumConstant)ref).advancedResolve();
     PsiElement parent = ref.getParent();
     if (parent instanceof GrMethodCall) {

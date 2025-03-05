@@ -36,7 +36,7 @@ import static com.intellij.pom.Navigatable.EMPTY_NAVIGATABLE_ARRAY;
 
 class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGutterRendererComponent implements UiDataProvider {
   private static final int CONTEXT_LINE_NUMBER = 3;
-  @NotNull private final UsageInfo myUsageInfo;
+  private final @NotNull UsageInfo myUsageInfo;
 
   UsageCodeSnippetComponent(@NotNull SnippetRenderingData renderingData,
                             @NotNull UsageInfo usageInfo) {

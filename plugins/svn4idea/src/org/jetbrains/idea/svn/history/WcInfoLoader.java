@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.util.Ref;
@@ -25,19 +25,18 @@ import static java.util.Comparator.comparing;
 
 public class WcInfoLoader {
 
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull SvnVcs myVcs;
   /**
    * filled when showing for selected location
    */
-  @Nullable private final RepositoryLocation myLocation;
+  private final @Nullable RepositoryLocation myLocation;
 
   public WcInfoLoader(@NotNull SvnVcs vcs, @Nullable RepositoryLocation location) {
     myVcs = vcs;
     myLocation = location;
   }
 
-  @NotNull
-  public List<WCInfoWithBranches> loadRoots() {
+  public @NotNull List<WCInfoWithBranches> loadRoots() {
     List<WCInfoWithBranches> result = new ArrayList<>();
 
     for (WCInfo info : myVcs.getAllWcInfos()) {
@@ -47,16 +46,14 @@ public class WcInfoLoader {
     return result;
   }
 
-  @Nullable
-  public WCInfoWithBranches reloadInfo(@NotNull WCInfoWithBranches info) {
+  public @Nullable WCInfoWithBranches reloadInfo(@NotNull WCInfoWithBranches info) {
     File file = info.getRootInfo().getIoFile();
     RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(info.getRootInfo().getVirtualFile()));
 
     return rootInfo != null ? createInfo(new WCInfo(rootInfo, SvnUtil.isWorkingCopyRoot(file), SvnUtil.getDepth(myVcs, file))) : null;
   }
 
-  @Nullable
-  private WCInfoWithBranches createInfo(@NotNull WCInfo info) {
+  private @Nullable WCInfoWithBranches createInfo(@NotNull WCInfo info) {
     if (!info.getFormat().supportsMergeInfo()) {
       return null;
     }
@@ -74,8 +71,7 @@ public class WcInfoLoader {
     return rootForUrl != null ? createInfoWithBranches(info, rootForUrl) : null;
   }
 
-  @NotNull
-  private WCInfoWithBranches createInfoWithBranches(@NotNull WCInfo info, @NotNull RootUrlInfo rootUrlInfo) {
+  private @NotNull WCInfoWithBranches createInfoWithBranches(@NotNull WCInfo info, @NotNull RootUrlInfo rootUrlInfo) {
     SvnBranchConfigurationNew configuration =
       SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootUrlInfo.getVirtualFile());
     Ref<WCInfoWithBranches.Branch> workingCopyBranch = Ref.create();

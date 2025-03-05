@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.components.Service;
@@ -14,10 +14,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -41,7 +38,7 @@ import static com.intellij.util.indexing.roots.IndexableEntityProvider.Indexable
 public final class DependenciesIndexedStatusService {
   private static final Logger LOG = Logger.getInstance(DependenciesIndexedStatusService.class);
   @VisibleForTesting
-  static final Key<Boolean> ENFORCEMENT_USAGE_TEST_MODE_FLAG = new Key<>("enforce.DependenciesIndexedStatusService.usage");
+  public static final Key<Boolean> ENFORCEMENT_USAGE_TEST_MODE_FLAG = new Key<>("enforce.DependenciesIndexedStatusService.usage");
 
 
   public static @NotNull DependenciesIndexedStatusService getInstance(@NotNull Project project) {
@@ -118,7 +115,7 @@ public final class DependenciesIndexedStatusService {
   }
 
 
-  public @NotNull List<IndexableFilesIterator> saveLibsAndInstantiateLibraryIterators() {
+  public @Unmodifiable @NotNull List<IndexableFilesIterator> saveLibsAndInstantiateLibraryIterators() {
     LOG.assertTrue(shouldSaveStatus());
     List<SyntheticLibraryDescriptor> libraries = collectAdditionalLibDescriptors(project);
     synchronized (LOCK) {
@@ -144,7 +141,7 @@ public final class DependenciesIndexedStatusService {
     return libraries;
   }
 
-  public @NotNull List<IndexableFilesIterator> saveIndexableSetsAndInstantiateIterators() {
+  public @Unmodifiable @NotNull List<IndexableFilesIterator> saveIndexableSetsAndInstantiateIterators() {
     LOG.assertTrue(shouldSaveStatus());
     @NotNull List<IndexableSetContributorDescriptor> descriptors = IndexableSetContributorDescriptor.collectDescriptors(project);
     synchronized (LOCK) {
@@ -248,7 +245,7 @@ public final class DependenciesIndexedStatusService {
       return result;
     }
 
-    public @NotNull Map<IndexableSetContributor, IndexableSetContributorDescriptor> contributorsToMap() {
+    public @Unmodifiable @NotNull Map<IndexableSetContributor, IndexableSetContributorDescriptor> contributorsToMap() {
       LOG.assertTrue(contributors != null);
       return ContainerUtil.map2Map(contributors, descriptor -> com.intellij.openapi.util.Pair.create(descriptor.contributor, descriptor));
     }

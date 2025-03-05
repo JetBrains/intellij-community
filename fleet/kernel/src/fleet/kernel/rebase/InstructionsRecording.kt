@@ -5,8 +5,8 @@ import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.EidGen
 import com.jetbrains.rhizomedb.impl.generateSeed
 import fleet.kernel.*
-import fleet.util.serialization.ISerialization
 import fleet.util.UID
+import fleet.fastutil.ints.IntMap
 import kotlinx.collections.immutable.persistentListOf
 
 internal fun <T> ChangeScope.sharedImpl(
@@ -14,8 +14,7 @@ internal fun <T> ChangeScope.sharedImpl(
   uidMemoizer: Memoizer<UID>,
   mutableNovelty: (Datom) -> Unit,
   instructionEncoder: InstructionEncoder,
-  idMappings: List<Map<EID, UID>>,
-  json: ISerialization,
+  idMappings: List<IntMap<UID>>,
   f: SharedChangeScope.() -> T,
 ): Pair<T, List<InstructionsPair>> =
   let { changeScope ->
@@ -23,7 +22,6 @@ internal fun <T> ChangeScope.sharedImpl(
     eidMemoizer.nextEpoch()
     uidMemoizer.nextEpoch()
     val serContext = InstructionEncodingContext(
-      json = json,
       uidAttribute = uidAttribute,
       encoder = instructionEncoder
     )

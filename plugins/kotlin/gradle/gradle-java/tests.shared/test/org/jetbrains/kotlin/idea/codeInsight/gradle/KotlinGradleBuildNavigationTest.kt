@@ -35,7 +35,7 @@ class KotlinGradleBuildNavigationTest : KotlinGradleCodeInsightTestCase() {
     companion object {
 
         private val KOTLIN_PLUGIN_FIXTURE = GradleTestFixtureBuilder.create("GradleBuildNavigationTest") { gradleVersion ->
-            withSettingsFile {
+            withSettingsFile(gradleVersion) {
                 setProjectName("GradleBuildNavigationTest")
             }
             withBuildFile(gradleVersion) {

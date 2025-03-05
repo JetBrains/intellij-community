@@ -15,8 +15,8 @@ import com.jetbrains.python.packaging.pip.PipBasedRepositoryManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk) {
+@ApiStatus.Internal
+internal class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk) {
 
   override val repositories: List<PyPackageRepository>
     get() = listOf(CondaPackageRepository) + super.repositories
@@ -58,16 +58,14 @@ class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryMana
     return super.getLatestVersion(spec)
   }
 
-  override suspend fun initCaches() {
-    super.initCaches()
-    service<CondaPackageCache>().apply {
-      if (isEmpty()) refreshAll(sdk, project)
-    }
+  override suspend fun refreshCaches() {
+    super.refreshCaches()
+    service<CondaPackageCache>().forceReloadCache(sdk, project)
   }
 
-  override suspend fun refreshCashes() {
-    super.refreshCashes()
-    service<CondaPackageCache>().refreshAll(sdk, project)
+  override suspend fun initCaches() {
+    super.initCaches()
+    service<CondaPackageCache>().reloadCache(sdk, project)
   }
 
   override fun searchPackages(query: String, repository: PyPackageRepository): List<String> {

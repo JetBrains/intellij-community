@@ -4,6 +4,7 @@
 import sys
 import pytest
 from _pydev_imps._pydev_saved_modules import thread
+from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
 
 start_new_thread = thread.start_new_thread
 
@@ -105,10 +106,7 @@ class TestCPython(unittest.TestCase):
             if ('/math.so,' in completions or
                 '/math.cpython-33m.so,' in completions or 
                 '/math.cpython-34m.so,' in completions or 
-                'math.cpython-35m' in completions or 
-                'math.cpython-36m' in completions or
-                'math.cpython-37m' in completions or
-                'math.cpython-38' in completions
+                'math.cpython' in completions
                 ):
                 return
             self.assertTrue(completions.startswith(start) or completions.startswith(start_2), '%s DOESNT START WITH %s' % (completions, (start, start_2)))

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
@@ -26,17 +27,24 @@ internal object Logger {
  */
 internal suspend fun runCommandLine(commandLine: GeneralCommandLine): Result<String> {
   Logger.LOG.info("Running command: ${commandLine.commandLineString}")
-  val commandOutput = with(CapturingProcessHandler(commandLine)) {
-    withContext(Dispatchers.IO) {
-      runProcess()
-    }
-  }
+  try {
 
-  return processOutput(
-    commandOutput,
-    commandLine.exePath,
-    commandLine.parametersList.list,
-  )
+
+    val commandOutput = with(CapturingProcessHandler(commandLine)) {
+      withContext(Dispatchers.IO) {
+        runProcess()
+      }
+    }
+
+    return processOutput(
+      commandOutput,
+      commandLine.exePath,
+      commandLine.parametersList.list,
+    )
+  }
+  catch (e: ExecutionException) {
+    return Result.failure(PyExecutionException(e.localizedMessage, commandLine.exePath, commandLine.parametersList.array.toList()))
+  }
 }
 
 /**
@@ -44,7 +52,6 @@ internal suspend fun runCommandLine(commandLine: GeneralCommandLine): Result<Str
  *
  * @param [executable] The [Path] to the executable to run.
  * @param [projectPath] The path to the project directory in which to run the executable, or null if no specific directory is required.
- * @param [errorMessage] The message to log or show in case of an error during the execution.
  * @param [args] The arguments to pass to the executable.
  * @return A [Result] object containing the output of the command execution.
  */
@@ -59,7 +66,6 @@ suspend fun runExecutable(executable: Path, projectPath: Path?, vararg args: Str
  *
  * @param [projectPath] the path to the project directory where the command should be executed
  * @param [command] the command to be executed
- * @param [errorMessage] the error message to be shown in case of failure
  * @param [args] optional arguments for the command
  * @return a [Result] object containing the output of the command execution
  */

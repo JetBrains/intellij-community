@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class LiteralEvaluator
@@ -33,7 +33,7 @@ class LiteralEvaluator implements Evaluator {
     if (myValue == null) {
       return null;
     }
-    VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachineProxy();
     if (myValue instanceof Boolean) {
       return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Boolean)myValue).booleanValue());
     }
@@ -51,7 +51,7 @@ class LiteralEvaluator implements Evaluator {
     }
     if (myValue instanceof String) {
       return vm.mirrorOfStringLiteral(((String)myValue), () -> {
-        StringReference str = DebuggerUtilsEx.mirrorOfString((String)myValue, vm, context);
+        StringReference str = DebuggerUtilsEx.mirrorOfString((String)myValue, context);
         // intern starting from jdk 7
         if (Registry.is("debugger.intern.string.literals") && vm.versionHigher("1.7")) {
           Method internMethod = DebuggerUtils.findMethod(str.referenceType(), "intern", "()Ljava/lang/String;");

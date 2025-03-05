@@ -8,7 +8,6 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.java.JavaRefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;

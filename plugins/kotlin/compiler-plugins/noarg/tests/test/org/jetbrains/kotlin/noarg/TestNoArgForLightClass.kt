@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.noarg
 
+import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.compilerPlugin.noarg.NO_ARG_ANNOTATION_OPTION_PREFIX
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinProjectDescriptorWithFacet
-import org.jetbrains.kotlin.idea.compilerPlugin.noarg.NO_ARG_ANNOTATION_OPTION_PREFIX
-import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -70,7 +70,7 @@ class TestNoArgForLightClass : KotlinLightCodeInsightFixtureTestCase() {
         val targetClass = classes.firstOrNull { it.name == targetClassName }
             ?: error { "Expected class $targetClassName not found" }
 
-        val constructors = targetClass.constructors
+        val constructors: Array<PsiMethod> = targetClass.constructors
         assertEquals(constructors.size, 2)
         assertTrue(constructors.any { it.parameters.isEmpty() })
     }

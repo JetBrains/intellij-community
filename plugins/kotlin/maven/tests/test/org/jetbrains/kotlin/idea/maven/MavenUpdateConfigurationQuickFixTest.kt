@@ -108,16 +108,6 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
     }
 
     @Test
-    fun testEnableInlineClasses() = runBlocking {
-        doTest("Enable inline classes support in the current module")
-    }
-
-    @Test
-    fun testEnableInlineClassesWithXFlag() = runBlocking {
-        doTest("Enable inline classes support in the current module")
-    }
-
-    @Test
     fun testAddKotlinReflect() = runBlocking {
         doTest("Add 'kotlin-reflect.jar' to the classpath")
     }

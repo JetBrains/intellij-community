@@ -22,9 +22,8 @@ public class RestSpellcheckerStrategy extends SpellcheckingStrategy implements D
     }
   };
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     IElementType elementType = element.getNode().getElementType();
     if (elementType == RestTokenTypes.FIELD ||
         elementType == RestTokenTypes.CUSTOM_DIRECTIVE ||

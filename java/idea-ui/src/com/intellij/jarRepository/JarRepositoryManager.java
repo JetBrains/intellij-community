@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
@@ -33,6 +33,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -55,10 +57,14 @@ import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -73,11 +79,15 @@ import static com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider
 public final class JarRepositoryManager {
   private static final Logger LOG = Logger.getInstance(JarRepositoryManager.class);
 
-  private static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
+  static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
+
   private static final String DEFAULT_REPOSITORY_PATH = ".m2/repository";
   private static final AtomicInteger ourTasksInProgress = new AtomicInteger();
 
   private static final Map<String, OrderRootType> ourClassifierToRootType = new HashMap<>();
+
+  // slf4j logger handles format strings with a throwable in the end
+  private static final org.slf4j.Logger slf4jLogger = LoggerFactory.getLogger(JarRepositoryManager.class);
 
   static {
     ourClassifierToRootType.put(ArtifactKind.ARTIFACT.getClassifier(), OrderRootType.CLASSES);
@@ -101,8 +111,7 @@ public final class JarRepositoryManager {
     return ourTasksInProgress.get() > 0;   // todo: count tasks on per-project basis?
   }
 
-  @Nullable
-  public static NewLibraryConfiguration chooseLibraryAndDownload(@NotNull Project project, @Nullable String initialFilter, JComponent parentComponent) {
+  public static @Nullable NewLibraryConfiguration chooseLibraryAndDownload(@NotNull Project project, @Nullable String initialFilter, JComponent parentComponent) {
     RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, initialFilter, RepositoryAttachDialog.Mode.DOWNLOAD);
     if (!dialog.showAndGet()) {
       return null;
@@ -128,12 +137,11 @@ public final class JarRepositoryManager {
     return config;
   }
 
-  @Nullable
-  public static NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
-                                                           @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                           Set<ArtifactKind> kinds,
-                                                           String copyTo,
-                                                           Collection<RemoteRepositoryDescription> repositories) {
+  public static @Nullable NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
+                                                                     @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                                     Set<ArtifactKind> kinds,
+                                                                     String copyTo,
+                                                                     Collection<RemoteRepositoryDescription> repositories) {
     final Collection<OrderRoot> roots = new ArrayList<>();
     if (descriptor.getMavenId() != null) {
       roots.addAll(loadDependenciesModal(project, descriptor, kinds, repositories, copyTo));
@@ -145,23 +153,21 @@ public final class JarRepositoryManager {
     return null;
   }
 
-  @Nullable
-  public static NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
-                                                           String coord,
-                                                           boolean attachSources,
-                                                           boolean attachJavaDoc,
-                                                           boolean includeTransitiveDependencies,
-                                                           String copyTo,
-                                                           Collection<RemoteRepositoryDescription> repositories) {
+  public static @Nullable NewLibraryConfiguration resolveAndDownload(@NotNull Project project,
+                                                                     String coord,
+                                                                     boolean attachSources,
+                                                                     boolean attachJavaDoc,
+                                                                     boolean includeTransitiveDependencies,
+                                                                     String copyTo,
+                                                                     Collection<RemoteRepositoryDescription> repositories) {
     JpsMavenRepositoryLibraryDescriptor libraryDescriptor = new JpsMavenRepositoryLibraryDescriptor(coord, includeTransitiveDependencies, Collections.emptyList());
     return resolveAndDownload(
       project, libraryDescriptor, ArtifactKind.kindsOf(attachSources, attachJavaDoc, libraryDescriptor.getPackaging()), copyTo, repositories
     );
   }
 
-  @NotNull
-  private static NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props,
-                                                                       Collection<? extends OrderRoot> roots) {
+  private static @NotNull NewLibraryConfiguration createNewLibraryConfiguration(RepositoryLibraryProperties props,
+                                                                                Collection<OrderRoot> roots) {
     return new NewLibraryConfiguration(
       suggestLibraryName(props),
       RepositoryLibraryType.getInstance(),
@@ -184,8 +190,7 @@ public final class JarRepositoryManager {
 
 
   private static volatile File ourLocalRepositoryPath;
-  @NotNull
-  public static File getLocalRepositoryPath() {
+  public static @NotNull File getLocalRepositoryPath() {
     File repoPath = ourLocalRepositoryPath;
     if (repoPath != null) {
       return repoPath;
@@ -199,10 +204,11 @@ public final class JarRepositoryManager {
         }
         catch (IOException ignored) {
         }
-        ourLocalRepositoryPath = repoPath;
-        return repoPath;
       }
+      ourLocalRepositoryPath = repoPath;
+      return repoPath;
     }
+
     final String userHome = System.getProperty("user.home", null);
     repoPath = userHome != null ? new File(userHome, DEFAULT_REPOSITORY_PATH) : new File(DEFAULT_REPOSITORY_PATH);
     ourLocalRepositoryPath = repoPath;
@@ -210,7 +216,8 @@ public final class JarRepositoryManager {
   }
 
   @TestOnly
-  static void setLocalRepositoryPath(File localRepo) {
+  @ApiStatus.Internal
+  public static void setLocalRepositoryPath(File localRepo) {
     ourLocalRepositoryPath = localRepo;
   }
 
@@ -235,7 +242,8 @@ public final class JarRepositoryManager {
                                                             @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repositories);
     return submitModalJob(
-      project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1), newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo)
+      project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 1),
+      newOrderRootResolveJob(project, desc, artifactKinds, effectiveRepos, copyTo)
     );
   }
 
@@ -260,25 +268,23 @@ public final class JarRepositoryManager {
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repos);
-    return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
+    return submitBackgroundJob(newOrderRootResolveJob(project, desc, artifactKinds, effectiveRepos, copyTo));
   }
 
-  @Nullable
-  public static List<OrderRoot> loadDependenciesSync(@NotNull Project project,
+  public static @Nullable List<OrderRoot> loadDependenciesSync(@NotNull Project project,
                                                                JpsMavenRepositoryLibraryDescriptor desc,
                                                                final Set<ArtifactKind> artifactKinds,
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repos);
-    return submitSyncJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
+    return submitSyncJob(newOrderRootResolveJob(project, desc, artifactKinds, effectiveRepos, copyTo));
   }
 
   /**
    * Load dependencies within the caller thread with the progress being tracked by the directly provided {@code progressIndicator}.
    */
   @ApiStatus.Internal
-  @NotNull
-  public static Collection<OrderRoot> loadDependenciesSync(@NotNull Project project,
+  public static @NotNull Collection<OrderRoot> loadDependenciesSync(@NotNull Project project,
                                                            @NotNull RepositoryLibraryProperties libraryProps,
                                                            boolean loadSources,
                                                            boolean loadJavadoc,
@@ -290,13 +296,13 @@ public final class JarRepositoryManager {
     if (libDescriptor.getMavenId() != null) {
       EnumSet<ArtifactKind> kinds = ArtifactKind.kindsOf(loadSources, loadJavadoc, libraryProps.getPackaging());
       Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, libDescriptor, repositories);
-      return newOrderRootResolveJob(libDescriptor, kinds, effectiveRepos, copyTo).apply(progressIndicator);
+      return newOrderRootResolveJob(project, libDescriptor, kinds, effectiveRepos, copyTo).apply(progressIndicator);
     }
     return Collections.emptyList();
   }
 
   /**
-   * Get list of remote repositories meeting the priority:
+   * Get a list of remote repositories meeting the priority:
    * <ol>
    * <li>from {@code repositories} param if not null and not empty</li>
    * <li>from {@code desc} library descriptor found by {@link JpsMavenRepositoryLibraryDescriptor#getJarRepositoryId} if present</li>
@@ -323,9 +329,8 @@ public final class JarRepositoryManager {
     return RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
   }
 
-  @Nullable
-  private static RemoteRepositoryDescription getRemoteRepositoryFromLibrary(@NotNull Project project,
-                                                                            @Nullable JpsMavenRepositoryLibraryDescriptor desc) {
+  private static @Nullable RemoteRepositoryDescription getRemoteRepositoryFromLibrary(@NotNull Project project,
+                                                                                      @Nullable JpsMavenRepositoryLibraryDescriptor desc) {
     if (desc == null) {
       return null;
     }
@@ -339,22 +344,19 @@ public final class JarRepositoryManager {
                               it -> it.getId().equals(repositoryId));
   }
 
-  @NotNull
-  public static Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
-                                                                 @NotNull RepositoryLibraryDescription libraryDescription) {
+  public static @NotNull Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
+                                                                          @NotNull RepositoryLibraryDescription libraryDescription) {
     return getAvailableVersions(project, libraryDescription, Collections.emptyList());
   }
 
-  @NotNull
-  public static Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
-                                                                 @NotNull RepositoryLibraryDescription libraryDescription,
-                                                                 @NotNull List<RemoteRepositoryDescription> repositories) {
+  public static @NotNull Promise<Collection<String>> getAvailableVersions(@NotNull Project project,
+                                                                          @NotNull RepositoryLibraryDescription libraryDescription,
+                                                                          @NotNull List<RemoteRepositoryDescription> repositories) {
     List<RemoteRepositoryDescription> repos = selectRemoteRepositories(project, null, repositories).stream().toList();
     return submitBackgroundJob(new VersionResolveJob(libraryDescription, repos));
   }
 
-  @Nullable
-  public static ArtifactDependencyNode loadDependenciesTree(@NotNull RepositoryLibraryDescription description, @NotNull String version, Project project) {
+  public static @Nullable ArtifactDependencyNode loadDependenciesTree(@NotNull RepositoryLibraryDescription description, @NotNull String version, Project project) {
     List<RemoteRepositoryDescription> repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     return submitModalJob(project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 0),
                           new AetherJob<>(repositories) {
@@ -384,7 +386,7 @@ public final class JarRepositoryManager {
       sb.append("<p/>");
       sb.append(root.getFile().getName());
     }
-    @NlsSafe final String content = sb.toString();
+    final @NlsSafe String content = sb.toString();
     Notifications.Bus.notify(getNotificationGroup().createNotification(title, content, NotificationType.INFORMATION), project);
   }
 
@@ -398,7 +400,7 @@ public final class JarRepositoryManager {
                                      String coord,
                                      String packaging,
                                      Consumer<? super Collection<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>>> resultProcessor) {
-    if (coord == null || coord.length() == 0) {
+    if (coord == null || coord.isEmpty()) {
       return;
     }
     final RepositoryArtifactDescription template;
@@ -424,7 +426,7 @@ public final class JarRepositoryManager {
                 }
                 for (RepositoryArtifactDescription artifact : artifacts) {
                   final RemoteRepositoryDescription repository = map.get(artifact.getRepositoryId());
-                  // if the artifact is provided by an unsupported repository just skip it
+                  // if the artifact is provided by an unsupported repository, just skip it
                   // because it won't be resolved anyway
                   if (repository != null) {
                     resultList.add(Pair.create(artifact, repository));
@@ -476,8 +478,7 @@ public final class JarRepositoryManager {
     });
   }
 
-  @Nullable
-  private static <T> T submitSyncJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
+  private static @Nullable <T> T submitSyncJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     try {
       ourTasksInProgress.incrementAndGet();
       ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -490,8 +491,7 @@ public final class JarRepositoryManager {
     }
   }
 
-  @Nullable
-  private static <T> T submitModalJob(@Nullable Project project, @NlsContexts.DialogTitle String title, Function<? super ProgressIndicator, ? extends T> job) {
+  private static @Nullable <T> T submitModalJob(@Nullable Project project, @NlsContexts.DialogTitle String title, Function<? super ProgressIndicator, ? extends T> job) {
     Ref<T> result = Ref.create(null);
     new Task.Modal(project, title, true) {
       @Override
@@ -508,8 +508,7 @@ public final class JarRepositoryManager {
     return result.get();
   }
 
-  @NotNull
-  public static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
+  public static @NotNull <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
     ModalityState startModality = ModalityState.defaultModalityState();
     AsyncPromise<T> promise = new AsyncPromise<>();
     DOWNLOADER_EXECUTOR.execute(() -> {
@@ -537,8 +536,7 @@ public final class JarRepositoryManager {
     return promise;
   }
 
-  @NotNull
-  private static Collection<String> lookupVersionsImpl(String groupId, String artifactId, @NotNull ArtifactRepositoryManager manager) throws Exception {
+  private static @NotNull Collection<String> lookupVersionsImpl(String groupId, String artifactId, @NotNull ArtifactRepositoryManager manager) throws Exception {
     try {
       List<Version> versions = new ArrayList<>(manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT));
       ArrayList<String> strings = new ArrayList<>(versions.size());
@@ -552,9 +550,8 @@ public final class JarRepositoryManager {
     }
   }
 
-  private static abstract class AetherJob<T> implements Function<ProgressIndicator, T> {
-    @NotNull
-    private final Collection<RemoteRepositoryDescription> myRepositories;
+  private abstract static class AetherJob<T> implements Function<ProgressIndicator, T> {
+    private final @NotNull Collection<RemoteRepositoryDescription> myRepositories;
 
     AetherJob(@NotNull Collection<RemoteRepositoryDescription> repositories) {
       myRepositories = repositories;
@@ -612,17 +609,21 @@ public final class JarRepositoryManager {
     protected abstract T getDefaultResult();
   }
 
-  private static Function<ProgressIndicator, List<OrderRoot>> newOrderRootResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc,
+  private static Function<ProgressIndicator, List<OrderRoot>> newOrderRootResolveJob(@NotNull Project project,
+                                                                                     @NotNull JpsMavenRepositoryLibraryDescriptor desc,
                                                                                      @NotNull Set<ArtifactKind> kinds,
                                                                                      @NotNull Collection<RemoteRepositoryDescription> repositories,
                                                                                      @Nullable String copyTo) {
     return new LibraryResolveJob(desc, kinds, repositories).andThen(
-      resolved -> resolved.isEmpty() ? Collections.emptyList() : copyAndRefreshFiles(resolved, copyTo));
+      resolved -> resolved.isEmpty() ? Collections.emptyList() : copyAndRefreshFiles(project, resolved, copyTo));
   }
 
-  static List<OrderRoot> copyAndRefreshFiles(@NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
+  static List<OrderRoot> copyAndRefreshFiles(@NotNull Project project, @NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
+    String targetRepository = PathMacroManager.getInstance(project).expandPath(MAVEN_REPOSITORY_MACRO);
+    String localRepositoryPath = getLocalRepositoryPath().getPath();
+    EelDescriptor targetRepositoryDescriptor = EelProviderUtil.getEelDescriptor(Path.of(targetRepository));
     for (Artifact each : artifacts) {
       long ms = System.currentTimeMillis();
       try {
@@ -634,9 +635,18 @@ public final class JarRepositoryManager {
             FileUtil.copy(repoFile, toFile);
           }
         }
+        else if (!targetRepositoryDescriptor.equals(EelProviderUtil.getEelDescriptor(Path.of(each.getFile().getPath())))) {
+          // if .m2 is located remotely, then we need to copy the files to the remote location
+          String suffix = repoFile.getAbsolutePath().substring(localRepositoryPath.length());
+          String actualPath = targetRepository + suffix;
+          toFile = new File(actualPath);
+          if (repoFile.exists()) {
+            FileUtil.copy(repoFile, toFile);
+          }
+        }
 
         if (DO_REFRESH) {
-          // search for jar file first otherwise lib root won't be found!
+          // search for a jar file first otherwise lib root won't be found!
           manager.refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(toFile.getPath()));
           final String url = VfsUtil.getUrlForLibraryRoot(toFile);
           final VirtualFile file = manager.refreshAndFindFileByUrl(url);
@@ -660,10 +670,8 @@ public final class JarRepositoryManager {
   }
 
   private static class LibraryResolveJob extends AetherJob<Collection<Artifact>> {
-    @NotNull
-    private final JpsMavenRepositoryLibraryDescriptor myDesc;
-    @NotNull
-    private final Set<ArtifactKind> myKinds;
+    private final @NotNull JpsMavenRepositoryLibraryDescriptor myDesc;
+    private final @NotNull Set<ArtifactKind> myKinds;
 
     LibraryResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc,
                       @NotNull Set<ArtifactKind> kinds,
@@ -690,21 +698,38 @@ public final class JarRepositoryManager {
 
     @Override
     protected Collection<Artifact> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
-      long ms = System.currentTimeMillis();
+      var startTime = Instant.now();
+
+      slf4jLogger.debug("LibraryResolveJob({}) #{} started", myDesc.getMavenId(), Thread.currentThread().getId());
+
       final String version = myDesc.getVersion();
       try {
         Collection<Artifact> artifacts = manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
                                                                              myDesc.isIncludeTransitiveDependencies(),
                                                                              myDesc.getExcludedDependencies());
+
+        slf4jLogger.debug("LibraryResolveJob({}) #{} successfully finished in {}ms with {} artifacts", myDesc.getMavenId(),
+                          Thread.currentThread().getId(), Duration.between(startTime, Instant.now()).toMillis(),
+                          artifacts.size());
+
         return artifacts;
       }
       catch (TransferCancelledException e) {
+        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                          Duration.between(startTime, Instant.now()).toMillis(), e);
+
         throw new ProcessCanceledException(e);
       }
       catch (RepositoryOfflineException e) {
+        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                          Duration.between(startTime, Instant.now()).toMillis(), e);
+
         throw e;
       }
       catch (Exception e) {
+        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                          Duration.between(startTime, Instant.now()).toMillis(), e);
+
         final String resolvedVersion = resolveVersion(manager, version);
         if (Objects.equals(version, resolvedVersion)) { // no changes
           throw e;
@@ -719,13 +744,12 @@ public final class JarRepositoryManager {
       }
       finally {
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Artifact " + myDesc + " resolved in " + (System.currentTimeMillis() - ms) + "ms");
+          LOG.trace("Artifact " + myDesc + " resolved in " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
         }
       }
     }
 
-    @Nullable
-    private String resolveVersion(final ArtifactRepositoryManager manager, final String version) throws Exception {
+    private @Nullable String resolveVersion(final ArtifactRepositoryManager manager, final String version) throws Exception {
       final boolean isLatest = RepositoryLibraryDescription.LatestVersionId.equals(version);
       final boolean isRelease = RepositoryLibraryDescription.ReleaseVersionId.equals(version);
       if (isLatest || isRelease) {
@@ -745,8 +769,7 @@ public final class JarRepositoryManager {
   }
 
   private static class VersionResolveJob extends AetherJob<Collection<String>> {
-    @NotNull
-    private final RepositoryLibraryDescription myDescription;
+    private final @NotNull RepositoryLibraryDescription myDescription;
 
     VersionResolveJob(@NotNull RepositoryLibraryDescription repositoryLibraryDescription, @NotNull List<RemoteRepositoryDescription> repositories) {
       super(repositories);
@@ -761,7 +784,14 @@ public final class JarRepositoryManager {
 
     @Override
     protected Collection<String> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
-      return lookupVersionsImpl(myDescription.getGroupId(), myDescription.getArtifactId(), manager);
+      var startTime = Instant.now();
+
+      slf4jLogger.debug("VersionResolveJob({}:{}) #{} started", myDescription.getGroupId(), myDescription.getArtifactId(), Thread.currentThread().getId());
+      try {
+        return lookupVersionsImpl(myDescription.getGroupId(), myDescription.getArtifactId(), manager);
+      } finally {
+        slf4jLogger.debug("VersionResolveJob({}:{}) #{} finished in {}ms", myDescription.getGroupId(), myDescription.getArtifactId(), Thread.currentThread().getId(), Duration.between(startTime, Instant.now()).toMillis());
+      }
     }
 
     @Override

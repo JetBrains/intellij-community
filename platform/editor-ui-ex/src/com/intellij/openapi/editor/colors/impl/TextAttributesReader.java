@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -15,7 +16,8 @@ import java.awt.*;
  *
  * @see TextAttributes#TextAttributes(Element)
  */
-class TextAttributesReader extends ValueElementReader {
+@ApiStatus.Internal
+public final class TextAttributesReader extends ValueElementReader {
   private static final @NonNls String NAME = "name";
   private static final @NonNls String OPTION = "option";
   private static final @NonNls String BACKGROUND = "BACKGROUND";
@@ -79,7 +81,8 @@ class TextAttributesReader extends ValueElementReader {
     WAVE(EffectType.WAVE_UNDERSCORE),
     STRIKEOUT(EffectType.STRIKEOUT),
     BOLD_LINE(EffectType.BOLD_LINE_UNDERSCORE),
-    BOLD_DOTTED_LINE(EffectType.BOLD_DOTTED_LINE);
+    BOLD_DOTTED_LINE(EffectType.BOLD_DOTTED_LINE),
+    FADED(EffectType.FADED);
 
     private final EffectType myType;
 

@@ -1,5 +1,6 @@
 f:com.intellij.application.options.CodeStyle
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
+- s:computeWithLocalSettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,java.util.function.Function):java.lang.Object
 - s:createTestSettings():com.intellij.psi.codeStyle.CodeStyleSettings
 - s:createTestSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleSettings
 - s:doWithTemporarySettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,java.lang.Runnable):V
@@ -113,30 +114,7 @@ e:com.intellij.formatting.DependentSpacingRule$Trigger
 - s:valueOf(java.lang.String):com.intellij.formatting.DependentSpacingRule$Trigger
 - s:values():com.intellij.formatting.DependentSpacingRule$Trigger[]
 com.intellij.formatting.Formatter
-- a:createAlignment(Z,com.intellij.formatting.Alignment$Anchor):com.intellij.formatting.Alignment
-- a:createChildAlignment(com.intellij.formatting.Alignment):com.intellij.formatting.Alignment
-- a:createChildWrap(com.intellij.formatting.Wrap,com.intellij.formatting.WrapType,Z):com.intellij.formatting.Wrap
-- a:createDependentLFSpacing(I,I,com.intellij.openapi.util.TextRange,Z,I,com.intellij.formatting.DependentSpacingRule):com.intellij.formatting.Spacing
-- a:createDependentLFSpacing(I,I,java.util.List,Z,I,com.intellij.formatting.DependentSpacingRule):com.intellij.formatting.Spacing
-- a:createKeepingFirstColumnSpacing(I,I,Z,I):com.intellij.formatting.Spacing
-- a:createSafeSpacing(Z,I):com.intellij.formatting.Spacing
-- a:createSpacing(I,I,I,Z,I):com.intellij.formatting.Spacing
-- a:createSpacing(I,I,I,Z,I,I):com.intellij.formatting.Spacing
-- a:createWrap(com.intellij.formatting.WrapType,Z):com.intellij.formatting.Wrap
-- a:getAbsoluteLabelIndent():com.intellij.formatting.Indent
-- a:getAbsoluteNoneIndent():com.intellij.formatting.Indent
-- a:getContinuationIndent(Z):com.intellij.formatting.Indent
-- a:getContinuationWithoutFirstIndent(Z):com.intellij.formatting.Indent
-- a:getIndent(com.intellij.formatting.Indent$Type,I,Z,Z):com.intellij.formatting.Indent
-- a:getIndent(com.intellij.formatting.Indent$Type,Z,Z):com.intellij.formatting.Indent
 - s:getInstance():com.intellij.formatting.Formatter
-- a:getLabelIndent():com.intellij.formatting.Indent
-- a:getNoneIndent():com.intellij.formatting.Indent
-- a:getNormalIndent(Z):com.intellij.formatting.Indent
-- a:getReadOnlySpacing():com.intellij.formatting.Spacing
-- a:getSmartIndent(com.intellij.formatting.Indent$Type):com.intellij.formatting.Indent
-- a:getSmartIndent(com.intellij.formatting.Indent$Type,Z):com.intellij.formatting.Indent
-- a:getSpaceIndent(I,Z):com.intellij.formatting.Indent
 c:com.intellij.formatting.FormattingContext
 - com.intellij.openapi.util.UserDataHolderBase
 - s:create(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingContext
@@ -623,6 +601,7 @@ c:com.intellij.psi.codeStyle.CodeStyleSettingsManager
 - USE_PER_PROJECT_SETTINGS:Z
 - <init>():V
 - f:cloneSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleSettings
+- computeWithLocalSettings(com.intellij.psi.codeStyle.CodeStyleSettings,java.util.function.Function):java.lang.Object
 - createSettings():com.intellij.psi.codeStyle.CodeStyleSettings
 - f:createTemporarySettings():com.intellij.psi.codeStyle.CodeStyleSettings
 - s:createTestSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleSettings

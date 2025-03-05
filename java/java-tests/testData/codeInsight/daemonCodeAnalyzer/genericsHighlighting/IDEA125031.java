@@ -6,7 +6,7 @@ class Test {
     assertThat(<error descr="'assertThat(Test.Matcher<? super java.util.Set>, java.util.Set)' in 'Test' cannot be applied to '(Test.Matcher<java.lang.Iterable<java.lang.String>>, java.util.Set)'">matcher</error>, foo);
 
     Matcher<Iterable<String>> b = null;
-    <error descr="Incompatible types. Found: 'Test.Matcher<java.lang.Iterable<java.lang.String>>', required: 'Test.Matcher<? super java.util.Set>'">Matcher<? super Set> a = b;</error>
+    Matcher<? super Set> a = <error descr="Incompatible types. Found: 'Test.Matcher<java.lang.Iterable<java.lang.String>>', required: 'Test.Matcher<? super java.util.Set>'">b</error>;
   }
 
   public static <T> void assertThat(Matcher<? super T> matcher, T actual) {}

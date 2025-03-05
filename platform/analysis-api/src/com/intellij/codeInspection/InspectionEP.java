@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.AbstractBundle;
@@ -221,7 +221,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public @NotNull InspectionProfileEntry instantiateTool() {
     // must create a new instance for each invocation
     InspectionProfileEntry entry = createInstance(ApplicationManager.getApplication());
-    entry.myNameProvider = this;
+    entry.setNameProvider(this);
     return entry;
   }
 
@@ -281,6 +281,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
            ", isInternal=" + isInternal +
            ", getImplementationClassName()='"+getImplementationClassName()+"'" +
            ", language="+language+
+           ", pluginDescriptor="+getPluginDescriptor()+
            '}';
   }
 }

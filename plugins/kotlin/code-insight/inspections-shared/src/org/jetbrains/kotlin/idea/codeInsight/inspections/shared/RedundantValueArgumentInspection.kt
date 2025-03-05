@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -22,7 +24,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
+internal class RedundantValueArgumentInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = valueArgumentVisitor(fun(argument: KtValueArgument) {
         val argumentExpression = argument.getArgumentExpression() ?: return
         val argumentList = argument.getStrictParentOfType<KtValueArgumentList>() ?: return
@@ -87,13 +89,12 @@ internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
         return targetParameterSymbol
     }
 
-    private class RemoveArgumentFix(@SafeFieldForPreview private val followingArgumentMapping: Map<Int, Name>) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("fix.remove.argument.text")
+    private class RemoveArgumentFix(private val followingArgumentMapping: Map<Int, Name>) : PsiUpdateModCommandQuickFix() {
 
-        override fun getFamilyName() = name
+        override fun getFamilyName(): @IntentionName String = KotlinBundle.message("fix.remove.argument.text")
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val argument = descriptor.psiElement as? KtValueArgument ?: return
+        override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+            val argument = element as? KtValueArgument ?: return
             val argumentList = argument.getStrictParentOfType<KtValueArgumentList>() ?: return
 
             for ((followingArgumentIndex, name) in followingArgumentMapping) {

@@ -56,9 +56,8 @@ public class ChartsBuilderService extends BuilderService {
       return List.of();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
-    public @NotNull String getPresentableName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getPresentableName() {
       return StringUtil.capitalize(getBuilderName());
     }
 

@@ -55,9 +55,8 @@ public class JavaDocMarkdownFlavourDescriptor extends GFMFlavourDescriptor {
     };
   }
 
-  @NotNull
   @Override
-  public Map<IElementType, GeneratingProvider> createHtmlGeneratingProviders(@NotNull LinkMap linkMap, @Nullable URI baseURI) {
+  public @NotNull Map<IElementType, GeneratingProvider> createHtmlGeneratingProviders(@NotNull LinkMap linkMap, @Nullable URI baseURI) {
     Map<IElementType, GeneratingProvider> result = new HashMap<>(super.createHtmlGeneratingProviders(linkMap, baseURI));
 
     // We don't generate a body
@@ -72,9 +71,8 @@ public class JavaDocMarkdownFlavourDescriptor extends GFMFlavourDescriptor {
     return result;
   }
 
-  @NotNull
   @Override
-  public MarkerProcessorFactory getMarkerProcessorFactory() {
+  public @NotNull MarkerProcessorFactory getMarkerProcessorFactory() {
     return new JavaDocMarkerProcessorFactory();
   }
 

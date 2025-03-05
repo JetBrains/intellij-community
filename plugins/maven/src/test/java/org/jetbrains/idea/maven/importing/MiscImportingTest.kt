@@ -20,9 +20,9 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
-import java.io.File
 import java.util.*
 import java.util.function.Function
+import kotlin.io.path.exists
 
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEventsTestHelper = MavenEventsTestHelper()
@@ -150,6 +150,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportingFiresRootChangesOnlyOnce() = runBlocking {
+    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -161,6 +162,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoRootChangesOnProjectReimportWhenNothingChanges() = runBlocking {
+    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -266,6 +268,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResolvingFiresRootChangesOnlyOnce() = runBlocking {
+    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -288,9 +291,9 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testTakingProxySettingsIntoAccount() = runBlocking {
-    needFixForMaven4()
     val helper = MavenCustomRepositoryHelper(dir, "local1")
-    repositoryPath = helper.getTestDataPath("local1")
+    repositoryPath = helper.getTestData("local1")
+    mavenGeneralSettings.setLocalRepository(repositoryPath.toString())
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -304,8 +307,11 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     </dependencies>
                     """.trimIndent())
     removeFromLocalRepository("junit")
-    updateAllProjects()
-    val jarFile = File(repositoryFile, "junit/junit/4.0/junit-4.0.jar")
+
+    // incremental sync doesn't download dependencies if effective pom dependencies haven't changed
+    updateAllProjectsFullSync()
+
+    val jarFile = repositoryPath.resolve("junit/junit/4.0/junit-4.0.jar")
     assertTrue(jarFile.exists())
     projectsManager.listenForExternalChanges()
     waitForImportWithinTimeout {
@@ -341,7 +347,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   fun testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(dir, "plugins")
-      repositoryPath = helper.getTestDataPath("plugins")
+      repositoryPath = helper.getTestData("plugins")
       mavenGeneralSettings.isWorkOffline = true
       importProjectAsync("""
                       <groupId>test</groupId>

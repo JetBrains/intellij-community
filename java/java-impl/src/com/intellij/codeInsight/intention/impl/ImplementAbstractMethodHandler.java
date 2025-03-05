@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -146,7 +146,7 @@ public class ImplementAbstractMethodHandler {
   private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<@Nls String> problemDetected) {
     ArrayList<PsiClass> list = new ArrayList<>();
     Set<String> classNamesWithPotentialImplementations = new LinkedHashSet<>();
-    for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass)) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass).asIterable()) {
       if (!inheritor.isInterface() || PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, inheritor)) {
         final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);
         PsiMethod method = classSubstitutor != null ? MethodSignatureUtil.findMethodBySignature(inheritor, myMethod.getSignature(classSubstitutor), true)

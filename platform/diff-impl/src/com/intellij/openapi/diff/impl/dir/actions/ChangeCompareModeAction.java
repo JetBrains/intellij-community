@@ -18,9 +18,9 @@ import javax.swing.*;
 */
 @ApiStatus.Internal
 class ChangeCompareModeAction extends DumbAwareAction {
-  private final static Icon ON = PlatformIcons.CHECK_ICON;
-  private final static Icon ON_SELECTED = PlatformIcons.CHECK_ICON_SELECTED;
-  private final static Icon OFF = EmptyIcon.create(ON.getIconHeight());
+  private static final Icon ON = PlatformIcons.CHECK_ICON;
+  private static final Icon ON_SELECTED = PlatformIcons.CHECK_ICON_SELECTED;
+  private static final Icon OFF = EmptyIcon.create(ON.getIconHeight());
 
   private final DirDiffTableModel myModel;
   private final DirDiffSettings.CompareMode myMode;

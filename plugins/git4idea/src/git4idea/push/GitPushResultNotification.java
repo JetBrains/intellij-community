@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -35,9 +35,7 @@ import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdateResult;
 import one.util.streamex.EntryStream;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.Map;
@@ -49,7 +47,8 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
 
-final class GitPushResultNotification extends Notification {
+@ApiStatus.Internal
+public final class GitPushResultNotification extends Notification {
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
   private GitPushResultNotification(@NotNull String groupDisplayId,
@@ -187,7 +186,8 @@ final class GitPushResultNotification extends Notification {
     return notification;
   }
 
-  static @NlsContexts.NotificationContent @NotNull String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
+  @VisibleForTesting
+  public static @NlsContexts.NotificationContent @NotNull String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
     return new HtmlBuilder()
       .append(raw(title).bold()).br()
       .appendRaw(content)

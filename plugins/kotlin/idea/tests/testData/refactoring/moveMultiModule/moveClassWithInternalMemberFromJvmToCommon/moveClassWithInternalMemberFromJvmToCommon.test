@@ -4,6 +4,6 @@
   "targetPackage": "",
   "targetSourceRoot": "A/src",
   "withRuntime": "true",
-  "enabledInK1": "true",
+  "enabledInK1": "false",
   "enabledInK2": "true"
 }

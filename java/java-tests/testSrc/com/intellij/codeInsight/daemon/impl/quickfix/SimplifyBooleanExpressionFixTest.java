@@ -4,12 +4,14 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
-import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
+/**
+ * @see UnwrapIfStatementFixTest -- more tests for the same quickfix
+ */
 public class SimplifyBooleanExpressionFixTest extends LightQuickFixParameterizedTestCase {
 
   @Override

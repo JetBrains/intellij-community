@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.*;
@@ -81,7 +81,8 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  protected CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
+  @ApiStatus.Internal
+  public CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
                                                 @NotNull CompletionContributor contributor, PrefixMatcher matcher) {
     return new BaseCompletionResultSet(consumer, matcher, contributor, parameters, null, null);
   }
@@ -119,12 +120,20 @@ public class BaseCompletionService extends CompletionService {
 
       CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), sorter);
       if (matched != null) {
-        element.putUserData(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
+        passResult(matched);
+      }
+    }
+
+    @Override
+    public void passResult(@NotNull CompletionResult result) {
+      LookupElement element = result.getLookupElement();
+      if (element != null) {
+        element.putUserDataIfAbsent(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
         element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
         element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, itemCounter);
         itemCounter += 1;
-        passResult(matched);
       }
+      super.passResult(result);
     }
 
     @Override

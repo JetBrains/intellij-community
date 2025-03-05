@@ -35,14 +35,12 @@ public final class MethodCouplingInspection extends MethodMetricInspection {
   public boolean m_includeLibraryClasses = false;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "OverlyCoupledMethod";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer coupling = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "method.coupling.problem.descriptor", coupling);

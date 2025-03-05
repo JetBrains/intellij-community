@@ -33,6 +33,8 @@ open class KotlinConstructorUMethod(
 
     override val uastBody: UExpression?
         get() = uastBodyPart.getOrBuild {
+            buildTrampolineForJvmOverload()?.let { return it }
+
             val delegationCall: KtCallElement? = sourcePsi.let {
                 when {
                     isPrimary -> ktClass?.superTypeListEntries?.firstIsInstanceOrNull<KtSuperTypeCallEntry>()

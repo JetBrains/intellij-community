@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.CodeStyleBundle;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -54,10 +56,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
   public static final String VERSION_ATTR = "version";
 
-  @NonNls private static final String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
-  @NonNls static final String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
+  private static final @NonNls String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
+  static final @NonNls String ADDITIONAL_INDENT_OPTIONS = "ADDITIONAL_INDENT_OPTIONS";
 
-  @NonNls private static final String FILETYPE = "fileType";
+  private static final @NonNls String FILETYPE = "fileType";
   private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
   private final CustomCodeStyleSettingsManager myCustomCodeStyleSettingsManager = new CustomCodeStyleSettingsManager(this);
 
@@ -123,24 +125,23 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return myParentSettings;
   }
 
-  @NotNull
-  public <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> aClass) {
+  public @NotNull <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> aClass) {
     return myCustomCodeStyleSettingsManager.getCustomSettings(aClass);
   }
 
   /**
    * This method can return null during plugin unloading, if the requested settings have already been unregistered.
    */
-  @Nullable
-  public <T extends CustomCodeStyleSettings> T getCustomSettingsIfCreated(@NotNull Class<T> aClass) {
+  public @Nullable <T extends CustomCodeStyleSettings> T getCustomSettingsIfCreated(@NotNull Class<T> aClass) {
     return myCustomCodeStyleSettingsManager.getCustomSettingsIfCreated(aClass);
   }
 
   /**
    * @deprecated
-   * For short-lived temporary settings use {@code CodeStyle.doWithTemporarySettings(project,baseSettings,modifier,runnable},
+   * For short-lived temporary settings use {@link CodeStyle#runWithLocalSettings(Project, CodeStyleSettings, Consumer)},
    * for permanently created settings use {@link CodeStyleSettingsManager#cloneSettings(CodeStyleSettings)}
    */
+  @Override
   @Deprecated
   public CodeStyleSettings clone() {
     CodeStyleSettings clone = new CodeStyleSettings(true, true);
@@ -483,8 +484,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private volatile Pattern myFormatterOffPattern;
   private volatile Pattern myFormatterOnPattern;
 
-  @Nullable
-  public Pattern getFormatterOffPattern() {
+  public @Nullable Pattern getFormatterOffPattern() {
     if (myFormatterOffPattern == null && FORMATTER_TAGS_ENABLED && FORMATTER_TAGS_ACCEPT_REGEXP) {
       myFormatterOffPattern = getPatternOrDisableRegexp(FORMATTER_OFF_TAG);
     }
@@ -495,8 +495,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myFormatterOffPattern = formatterOffPattern;
   }
 
-  @Nullable
-  public Pattern getFormatterOnPattern() {
+  public @Nullable Pattern getFormatterOnPattern() {
     if (myFormatterOffPattern == null && FORMATTER_TAGS_ENABLED && FORMATTER_TAGS_ACCEPT_REGEXP) {
       myFormatterOnPattern = getPatternOrDisableRegexp(FORMATTER_ON_TAG);
     }
@@ -507,8 +506,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     myFormatterOnPattern = formatterOnPattern;
   }
 
-  @Nullable
-  private Pattern getPatternOrDisableRegexp(@NotNull String markerText) {
+  private @Nullable Pattern getPatternOrDisableRegexp(@NotNull String markerText) {
     try {
       return Pattern.compile(markerText);
     }
@@ -645,9 +643,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return new IndentOptions();
   }
 
-  @Override
-  @NotNull
-  public IndentOptions getIndentOptions() {
+  @Override public @NotNull IndentOptions getIndentOptions() {
     return OTHER_INDENT_OPTIONS;
   }
 
@@ -660,8 +656,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @see FileTypeIndentOptionsProvider
    * @see LanguageCodeStyleSettingsProvider
    */
-  @NotNull
-  public IndentOptions getIndentOptions(@Nullable FileType fileType) {
+  public @NotNull IndentOptions getIndentOptions(@Nullable FileType fileType) {
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
 
@@ -689,8 +684,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @see FileTypeIndentOptionsProvider
    * @see LanguageCodeStyleSettingsProvider
    */
-  @NotNull
-  public IndentOptions getIndentOptionsByDocument(@Nullable Project project, @NotNull Document document) {
+  public @NotNull IndentOptions getIndentOptionsByDocument(@Nullable Project project, @NotNull Document document) {
     PsiFile file = project != null ? PsiDocumentManager.getInstance(project).getPsiFile(document) : null;
     if (file != null) return getIndentOptionsByFile(file);
 
@@ -699,8 +693,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return getIndentOptions(fileType);
   }
 
-  @NotNull
-  public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file) {
+  public @NotNull IndentOptions getIndentOptionsByFile(@Nullable PsiFile file) {
     if (file != null) {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
@@ -778,8 +771,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
               ", tab size=" + options.TAB_SIZE);
   }
 
-  @Nullable
-  private IndentOptions getLanguageIndentOptions(@Nullable FileType fileType) {
+  private @Nullable IndentOptions getLanguageIndentOptions(@Nullable FileType fileType) {
     if (!(fileType instanceof LanguageFileType)) return null;
     Language lang = ((LanguageFileType)fileType).getLanguage();
     return getIndentOptions(lang);
@@ -797,8 +789,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return langOptions != null ? langOptions : OTHER_INDENT_OPTIONS;
   }
 
-  @Nullable
-  private IndentOptions getIndentOptions(Language lang) {
+  private @Nullable IndentOptions getIndentOptions(Language lang) {
     CommonCodeStyleSettings settings = myCommonSettingsManager.getCommonSettings(lang);
     return settings != null ? settings.getIndentOptions() : null;
   }
@@ -830,8 +821,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  @Nullable
-  private FileType findRegisteredFileType(@NotNull FileType provided) {
+  private @Nullable FileType findRegisteredFileType(@NotNull FileType provided) {
     for (final FileType existing : myAdditionalIndentOptions.keySet()) {
       if (Comparing.strEqual(existing.getDefaultExtension(), provided.getDefaultExtension())) {
         return existing;
@@ -882,25 +872,19 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private static final class TempFileType implements FileType {
     private final String myExtension;
 
-    private TempFileType(@NotNull final String extension) {
+    private TempFileType(final @NotNull String extension) {
       myExtension = extension;
     }
 
-    @Override
-    @NotNull
-    public String getName() {
+    @Override public @NotNull String getName() {
       return "TempFileType";
     }
 
-    @Override
-    @NotNull
-    public @NonNls String getDescription() {
+    @Override public @NotNull @NonNls String getDescription() {
       return "TempFileType";
     }
 
-    @Override
-    @NotNull
-    public String getDefaultExtension() {
+    @Override public @NotNull String getDefaultExtension() {
       return myExtension;
     }
 
@@ -924,8 +908,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    *         returns the instance of settings for this language. Otherwise returns new instance of common code style settings
    *         with default values.
    */
-  @NotNull
-  public CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
+  public @NotNull CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
     CommonCodeStyleSettings settings = myCommonSettingsManager.getCommonSettings(lang);
     if (settings == null) {
       settings = myCommonSettingsManager.getDefaults();
@@ -1109,8 +1092,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return true;
   }
 
-  @NotNull
-  public static CodeStyleSettings getDefaults() {
+  public static @NotNull CodeStyleSettings getDefaults() {
     return DefaultsHolder.myDefaults;
   }
 
@@ -1148,8 +1130,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @return Language or default soft margins.
    * @see #getDefaultSoftMargins()
    */
-  @NotNull
-  public List<Integer> getSoftMargins(@Nullable Language language) {
+  public @NotNull List<Integer> getSoftMargins(@Nullable Language language) {
     if (language != null) {
       CommonCodeStyleSettings languageSettings = myCommonSettingsManager.getCommonSettings(language);
       if (languageSettings != null && !languageSettings.getSoftMargins().isEmpty()) {
@@ -1173,8 +1154,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   /**
    * @return Default (root) soft margins used for languages not defining them explicitly.
    */
-  @NotNull
-  public List<Integer> getDefaultSoftMargins() {
+  public @NotNull List<Integer> getDefaultSoftMargins() {
     return mySoftMargins.getValues();
   }
 
@@ -1186,8 +1166,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     mySoftMargins.setValues(softMargins);
   }
 
-  @NotNull
-  public ExcludedFiles getExcludedFiles() {
+  public @NotNull ExcludedFiles getExcludedFiles() {
     return myExcludedFiles;
   }
 

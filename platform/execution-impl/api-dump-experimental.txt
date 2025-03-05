@@ -22,3 +22,6 @@ a:com.intellij.execution.runners.RunTab
 f:com.intellij.execution.util.EnvFilesUtilKt
 - *sf:configureEnvsFromFiles(com.intellij.execution.EnvFilesOptions,Z):java.util.Map
 - *bs:configureEnvsFromFiles$default(com.intellij.execution.EnvFilesOptions,Z,I,java.lang.Object):java.util.Map
+com.intellij.terminal.ui.TerminalWidget
+- com.intellij.openapi.ui.ComponentContainer
+- *a:getTerminalSizeInitializedFuture():java.util.concurrent.CompletableFuture

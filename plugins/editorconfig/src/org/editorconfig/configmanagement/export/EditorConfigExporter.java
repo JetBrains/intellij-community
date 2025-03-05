@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.export;
 
 import com.intellij.openapi.options.SchemeExporter;
@@ -32,9 +32,8 @@ public class EditorConfigExporter extends SchemeExporter<CodeStyleScheme> {
     return "";
   }
 
-  @NotNull
   @Override
-  public VirtualFile getDefaultDir(@Nullable Project project) {
+  public @NotNull VirtualFile getDefaultDir(@Nullable Project project) {
     if (project != null) {
       @SuppressWarnings("deprecation")
       VirtualFile baseDir = project.getBaseDir();

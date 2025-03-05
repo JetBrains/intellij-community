@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.model;
 
 import com.intellij.designer.palette.PaletteItem;
@@ -15,8 +16,7 @@ import javax.swing.*;
  */
 public class VariationPaletteItem implements PaletteItem {
   private final PaletteItem myDefaultItem;
-  @NotNull
-  private final String myTitle;
+  private final @NotNull String myTitle;
   private final String myIconPath;
   private final String myTooltip;
   private final String myCreation;
@@ -54,9 +54,8 @@ public class VariationPaletteItem implements PaletteItem {
     }
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return myTitle;
   }
 
@@ -99,15 +98,13 @@ public class VariationPaletteItem implements PaletteItem {
     myModel = metaModel;
   }
 
-  @Nullable
   @Override
-  public String getDeprecatedIn() {
+  public @Nullable String getDeprecatedIn() {
     return myDefaultItem.getDeprecatedIn();
   }
 
-  @Nullable
   @Override
-  public String getDeprecatedHint() {
+  public @Nullable String getDeprecatedHint() {
     return myDefaultItem.getDeprecatedHint();
   }
 }

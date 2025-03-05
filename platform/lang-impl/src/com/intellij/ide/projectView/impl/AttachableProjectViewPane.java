@@ -21,12 +21,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.ide.dnd.FileCopyPasteUtil.getVirtualFileListFromAttachedObject;
 
@@ -119,7 +120,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
       myDropArea.add(myLabel, BorderLayout.CENTER);
     }
 
-    private static @NotNull List<VirtualFile> getDirectories(@NotNull DnDEvent event) {
+    private static @Unmodifiable @NotNull List<VirtualFile> getDirectories(@NotNull DnDEvent event) {
       return ContainerUtil.filter(getVirtualFileListFromAttachedObject(event.getAttachedObject()),
                                   file -> file.isDirectory());
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.lang.xml.XMLLanguage;
@@ -143,7 +143,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   private static boolean isIgnoredNamespace(String prefix, String namespace) {
-    return IGNORED_URIS.contains(namespace) || prefix.length() == 0 || "xmlns".equals(prefix);
+    return IGNORED_URIS.contains(namespace) || prefix.isEmpty() || "xmlns".equals(prefix);
   }
 
   private static class StopProcessingException extends Exception {
@@ -203,14 +203,12 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   @Override
-  @Nullable
-  public XmlElement getContextElement() {
+  public @Nullable XmlElement getContextElement() {
     return myContextElement.getElement();
   }
 
   @Override
-  @NotNull
-  public XPathType getExpectedType(XPathExpression expr) {
+  public @NotNull XPathType getExpectedType(XPathExpression expr) {
     final XmlTag tag = PsiTreeUtil.getContextOfType(expr, XmlTag.class, true);
     if (tag != null && XsltSupport.isXsltTag(tag)) {
       final XsltElement element = XsltElementFactory.getInstance().wrapElement(tag, XsltElement.class);
@@ -265,20 +263,17 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   @Override
-  @NotNull
-  public NamespaceContext getNamespaceContext() {
+  public @NotNull NamespaceContext getNamespaceContext() {
     return XsltNamespaceContext.NAMESPACE_CONTEXT;
   }
 
   @Override
-  @NotNull
-  public VariableContext getVariableContext() {
+  public @NotNull VariableContext getVariableContext() {
     return XsltVariableContext.INSTANCE;
   }
 
   @Override
-  @Nullable
-  public Set<QName> getAttributes(boolean forValidation) {
+  public @Nullable Set<QName> getAttributes(boolean forValidation) {
     final ElementNames names = getNames(getFile());
     if (names != null) {
       return !forValidation || names.validateNames ? names.attributeNames : null;
@@ -287,8 +282,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   @Override
-  @Nullable
-  public Set<QName> getElements(boolean forValidation) {
+  public @Nullable Set<QName> getElements(boolean forValidation) {
     final ElementNames names = getNames(getFile());
     if (names != null) {
       return !forValidation || names.validateNames ? names.elementNames : null;
@@ -296,8 +290,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     return null;
   }
 
-  @Nullable
-  private ElementNames getNames(@Nullable PsiFile file) {
+  private @Nullable ElementNames getNames(@Nullable PsiFile file) {
     if (file == null) return null;
 
     return myNamesCache.get(this).getValue();
@@ -343,8 +336,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
     }, false);
   }
 
-  @Nullable
-  private PsiFile getFile() {
+  private @Nullable PsiFile getFile() {
     final XmlElement element = getContextElement();
     if (element == null) {
       return null;
@@ -353,8 +345,7 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   }
 
   @Override
-  @NotNull
-  public XPathQuickFixFactory getQuickFixFactory() {
+  public @NotNull XPathQuickFixFactory getQuickFixFactory() {
     return XsltQuickFixFactory.INSTANCE;
   }
 

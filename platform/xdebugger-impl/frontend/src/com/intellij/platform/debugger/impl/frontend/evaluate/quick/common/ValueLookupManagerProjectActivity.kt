@@ -6,7 +6,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 
 private class ValueLookupManagerProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @deprecated See {@link com.jetbrains.python.newProjectWizard}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class PythonGenerateProjectCallback<T extends PyNewProjectSettings> extends AbstractNewProjectStep.AbstractCallback<T> {
 
   @Override
@@ -48,18 +48,16 @@ public final class PythonGenerateProjectCallback<T extends PyNewProjectSettings>
     }
   }
 
-  @Nullable
-  private static Project generateProject(@NotNull final ProjectSettingsStepBase settings, @Nullable Object generationSettings) {
+  private static @Nullable Project generateProject(final @NotNull ProjectSettingsStepBase settings, @Nullable Object generationSettings) {
     if (generationSettings == null) return null;
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
     final String location = FileUtil.expandUserHome(settings.getProjectLocation());
     return AbstractNewProjectStep.doGenerateProject(null, location, generator, generationSettings);
   }
 
-  @Nullable
-  private static Object computeProjectSettings(DirectoryProjectGenerator<?> generator,
-                                               final ProjectSpecificSettingsStep settingsStep,
-                                               @NotNull final ProjectGeneratorPeer projectGeneratorPeer) {
+  private static @Nullable Object computeProjectSettings(DirectoryProjectGenerator<?> generator,
+                                                         final ProjectSpecificSettingsStep settingsStep,
+                                                         final @NotNull ProjectGeneratorPeer projectGeneratorPeer) {
     Object projectSettings = null;
     if (generator instanceof PythonProjectGenerator<?> projectGenerator) {
       projectSettings = projectGenerator.getProjectSettings();

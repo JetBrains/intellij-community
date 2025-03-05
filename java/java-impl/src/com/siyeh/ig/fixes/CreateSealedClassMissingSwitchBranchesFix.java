@@ -11,6 +11,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -18,7 +19,7 @@ import java.util.function.Function;
 public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwitchBranchesFix {
   private final @NotNull List<String> myAllNames;
 
-  public CreateSealedClassMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, Set<String> names, @NotNull List<String> allNames) {
+  public CreateSealedClassMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, @Unmodifiable Set<String> names, @NotNull List<String> allNames) {
     super(block, names);
     myAllNames = allNames;
   }
@@ -29,7 +30,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
-  protected @NotNull List<String> getAllNames(@NotNull PsiClass ignored, @NotNull PsiSwitchBlock switchBlock) {
+  protected @Unmodifiable @NotNull List<String> getAllNames(@NotNull PsiClass ignored, @NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
     return ContainerUtil.map(myAllNames, name -> mapToConvert.getOrDefault(name, name));
   }
@@ -79,13 +80,13 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
   }
 
   @Override
-  protected @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
+  protected @Unmodifiable @NotNull Set<String> getNames(@NotNull PsiSwitchBlock switchBlock) {
     Map<String, String> mapToConvert = getConversionNewTypeWithGeneric(switchBlock);
     return ContainerUtil.map2Set(myNames, name -> mapToConvert.getOrDefault(name, name));
   }
 
   @Override
-  protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor() {
+  protected @NotNull Function<PsiSwitchLabelStatementBase, @Unmodifiable List<String>> getCaseExtractor() {
     return label -> {
       PsiCaseLabelElementList list = label.getCaseLabelElementList();
       if (list == null) return Collections.emptyList();
@@ -93,10 +94,9 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
     };
   }
 
-  @Nullable
-  public static PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block,
-                                                                        @NotNull Set<String> cases,
-                                                                        @NotNull List<String> names) {
+  public static @Nullable PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block,
+                                                                                  @NotNull Set<String> cases,
+                                                                                  @NotNull List<String> names) {
     return createWithNull(block, () -> new CreateSealedClassMissingSwitchBranchesFix(block, cases, names));
   }
 }

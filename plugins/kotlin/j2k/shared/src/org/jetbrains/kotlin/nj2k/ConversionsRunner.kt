@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
@@ -13,7 +14,7 @@ object ConversionsRunner {
     context(KaSession)
     fun doApply(
         trees: List<JKTreeRoot>,
-        context: NewJ2kConverterContext,
+        context: ConverterContext,
         updateProgress: (conversionIndex: Int, conversionCount: Int, fileIndex: Int, description: String) -> Unit
     ) {
         val j2kKind = if (KotlinPluginModeProvider.isK2Mode()) K2 else K1_NEW

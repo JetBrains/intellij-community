@@ -446,9 +446,9 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
                           
                       class Foo {
                             static void foo(int a) {}
-                             \s
-                             \s
-                             \s
+                          
+                          
+                          
                             static void foo(int a, int b) {}
                           }""${'"'});
            }

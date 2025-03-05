@@ -20,6 +20,7 @@ final class ListenerWrapperMap<T extends EventListener> {
     return myListener2WrapperMap.values();
   }
 
+  @Override
   public String toString() {
     return new HashMap<>(myListener2WrapperMap).toString();
   }

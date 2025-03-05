@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -26,7 +27,11 @@ data class FileSource(
   override var size: Int,
   override var hash: Long,
   @JvmField  @Contextual val file: Path,
-) : Source
+) : Source {
+  init {
+    assert(Files.isRegularFile(file)) { "'$file' is not a file" }
+  }
+}
 
 @Serializable
 data class SearchableOptionSetIndexItem(@JvmField val file: String, @JvmField val size: Int, @JvmField val hash: Long)
@@ -74,16 +79,16 @@ internal suspend fun buildSearchableOptions(
     // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
     // so it's pre-downloaded with proper synchronization
     withContext(Dispatchers.IO) {
-      launch {
+      launch(CoroutineName("download maven4 libs")) {
         BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
       }
-      launch {
+      launch(CoroutineName("download maven3 libs")) {
         BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
       }
-      launch {
+      launch(CoroutineName("download maven distribution")) {
         BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
       }
-      launch {
+      launch(CoroutineName("download maven telemetry dependencies")) {
         BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
       }
     }

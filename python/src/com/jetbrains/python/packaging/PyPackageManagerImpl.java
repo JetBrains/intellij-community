@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
@@ -18,8 +18,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PyLazySdk;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,14 +34,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.intellij.python.community.impl.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
 import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
 
 /**
  * @deprecated This class and all its inheritors are deprecated. Everything should work via {@link PyTargetEnvironmentPackageManager}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.24.5.pyz";
   private static final String LEGACY_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz"; // virtualenv used to create virtual environments for python 2.7 & 3.6
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
@@ -104,8 +108,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw new PyExecutionException(e.getMessage(), "pip", makeSafeToDisplayCommand(simplifiedArgs),
-                                     e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
+      throw e.copyWith("pip", makeSafeToDisplayCommand(simplifiedArgs));
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
@@ -131,7 +134,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       getHelperResult(args, !canModify, true);
     }
     catch (PyExecutionException e) {
-      throw new PyExecutionException(e.getMessage(), "pip", args, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
+      throw e.copyWith("pip", args);
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);

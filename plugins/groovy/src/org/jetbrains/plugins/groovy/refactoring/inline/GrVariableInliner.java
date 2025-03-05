@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
@@ -53,8 +53,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
   }
 
   @Override
-  @Nullable
-  public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
+  public @Nullable MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     GrExpression expr = (GrExpression)reference.getElement();
     if (expr.getParent() instanceof GrAssignmentExpression parent) {
@@ -78,7 +77,7 @@ public class GrVariableInliner implements InlineHandler.Inliner {
   }
 
   @Override
-  public void inlineUsage(@NotNull final UsageInfo usage, @NotNull final PsiElement referenced) {
+  public void inlineUsage(final @NotNull UsageInfo usage, final @NotNull PsiElement referenced) {
     inlineReference(usage, referenced, myTempExpr);
   }
 

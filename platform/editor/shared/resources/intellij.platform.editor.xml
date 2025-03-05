@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.entityTypes implementation="com.intellij.platform.editor.EditorEntityTypeProvider"/>
+  </extensions>
+</idea-plugin>

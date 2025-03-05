@@ -9,6 +9,7 @@ import com.github.ajalt.clikt.parameters.arguments.default
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.intellij.cce.commands.evaluationCommandExtensions
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluable.StrategySerializer
@@ -47,6 +48,11 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         MergeEvaluations(),
         ContextCollectionEvaluationCommand()
       )
+      .also { command ->
+        evaluationCommandExtensions.forEach {
+          it.extend(command)
+        }
+      }
       .main(args.toList().subList(1, args.size))
 
 

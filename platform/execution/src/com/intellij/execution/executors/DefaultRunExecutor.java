@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.executors;
 
@@ -16,43 +16,37 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class DefaultRunExecutor extends Executor {
-  @NonNls public static final String EXECUTOR_ID = ToolWindowId.RUN;
+  public static final @NonNls String EXECUTOR_ID = ToolWindowId.RUN;
 
   @Override
-  @NotNull
-  public String getStartActionText() {
+  public @NotNull String getStartActionText() {
     return ExecutionBundle.message("default.runner.start.action.text");
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
   @Override
-  public @NotNull String getStartActionText(@NotNull String configurationName) {
+  public @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getStartActionText(@NotNull String configurationName) {
     if (configurationName.isEmpty()) return getStartActionText();
     return TextWithMnemonic.parse(ExecutionBundle.message("default.runner.start.action.text.2"))
       .replaceFirst("%s", shortenNameIfNeeded(configurationName)).toString();
   }
 
-  @NotNull
   @Override
-  public String getToolWindowId() {
+  public @NotNull String getToolWindowId() {
     return ToolWindowId.RUN;
   }
 
-  @NotNull
   @Override
-  public Icon getToolWindowIcon() {
+  public @NotNull Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowRun;
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Actions.Execute;
   }
 
   @Override
-  @NotNull
-  public Icon getRerunIcon() {
+  public @NotNull Icon getRerunIcon() {
     return AllIcons.Actions.Rerun;
   }
 
@@ -67,14 +61,12 @@ public class DefaultRunExecutor extends Executor {
   }
 
   @Override
-  @NotNull
-  public String getActionName() {
+  public @NotNull String getActionName() {
     return ExecutionBundle.message("tool.window.name.run");
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return EXECUTOR_ID;
   }
 

@@ -1,0 +1,294 @@
+#file: noinspection MarkdownUnresolvedFileReference,MarkdownUnresolvedHeaderReference
+
+# This file content is rendered by:
+# - SDK Docs (see https://github.com/JetBrains/intellij-sdk-docs/blob/main/.github/scripts/generate_descriptor_pages.main.kts)
+# - org.jetbrains.idea.devkit.documentation.TemplatesDescriptorDocumentationTargetProvider
+# Textual values must be compatible with Writerside Markdown format.
+# Some of the Writerside-specific markup require cleaning up
+# (see org.jetbrains.idea.devkit.documentation.DocumentationRenderer.removeWritersideSpecificTags).
+
+# baseUrl is used to append it to non-PSI element hash anchors
+baseUrl: https://plugins.jetbrains.com/docs/intellij/live-templates-configuration-file.html
+elements:
+  - element:
+      name: templateSet
+      #language=Markdown
+      references:
+        - |
+          [Live Templates](https://plugins.jetbrains.com/docs/intellij/live-templates.html)
+        - |
+          [Live Templates (IntelliJ IDEA Web Help)](https://www.jetbrains.com/help/idea/settings-live-templates.html)
+      requirement:
+        required: yes
+      #language=Markdown
+      description: The live templates file root element.
+      attributes:
+        - attribute:
+            name: group
+            requirement:
+              required: no
+            #language=Markdown
+            description: |
+              Name of the template set group, which is displayed in <ui-path>Settings | Editor | Live Templates</ui-path> list.
+              If the group name is not provided, then templates' XML file name is used by default.
+        - attribute:
+            name: replace
+            requirement:
+              required: no
+            #language=Markdown
+            description: |
+              Name of a template [group](#attribute:templateSet__group) that this template set replaces.
+              Templates from the replaced group are removed and are skipped in settings and completion.
+      children:
+        - element:
+            name: template
+            #language=Markdown
+            description: Describes a template.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: id
+                  requirement:
+                    required: no
+                  # TODO: in what cases is it needed?
+                  #language=Markdown
+                  description: Optional template identifier.
+              - attribute:
+                  name: name
+                  requirement:
+                    required: yes
+                  #language=Markdown
+                  description: |
+                    The template abbreviation typed by users in the editor to expand it.
+                    The abbreviation must be unique in the group containing the template.
+              - attribute:
+                  name: value
+                  requirement:
+                    required: yes
+                  #language=Markdown
+                  description: |
+                    The text that the template is expanded to.<br/>
+                    It may contain plain text and reference [variables](#element:templateSet__template__variable) in the format `$VARIABLE_NAME$`.
+                    To escape a dollar sign `$` in the template text, use `$$`.
+              - attribute:
+                  name: resource-bundle
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: |
+                    Message bundle containing the template description specified by [`key`](#attribute:templateSet__template__key).
+              - attribute:
+                  name: key
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: |
+                    The key of the template description provided in a message bundle defined by [`resource-bundle`](#attribute:templateSet__template__resource-bundle).
+                    Description is used in the UI.
+                    Overrides the value of [`description`](#attribute:templateSet__template__description).
+              - attribute:
+                  name: description
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: |
+                    The template description used in the UI.
+                    It is ignored if the description is provided with [`resource-bundle`](#attribute:templateSet__template__resource-bundle) and [`key`](#attribute:templateSet__template__key).
+              - attribute:
+                  name: shortcut
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: |
+                    Defines a character that expands the template.
+                    Allowed values:
+                      - `SPACE` - space key
+                      - `TAB` - tab key
+                      - `ENTER` - enter key
+                      - `CUSTOM` - key defined in the <control>By default expand with</control> field in <ui-path>Settings | Editor | Live Templates</ui-path>
+                      - `NONE` - disables expanding with a key
+              - attribute:
+                  name: toReformat
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: Defines whether the inserted code should be reformatted according to the language code style.
+                  #language=Markdown
+                  defaultValue: |
+                    `false`
+              - attribute:
+                  name: toShortenFQNames
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: |
+                    Defines whether qualified names in the expanded code should be shortened,
+                    for example, fully qualified names of Java classes are imported.<br/>
+                    Shortening qualified names is performed in implementations of [`TemplateOptionalProcessor`](%gh-ic%/platform/analysis-impl/src/com/intellij/codeInsight/template/impl/TemplateOptionalProcessor.java){fqn="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"}.
+                  #language=Markdown
+                  defaultValue: |
+                    `false`
+              - attribute:
+                  name: useStaticImport
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: |
+                    Defines whether symbols used in the expanded code should be statically imported, if possible.<br/>
+                    Importing symbols statically is performed in implementations of [`TemplateOptionalProcessor`](%gh-ic%/platform/analysis-impl/src/com/intellij/codeInsight/template/impl/TemplateOptionalProcessor.java){fqn="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"}.
+                  #language=Markdown
+                  defaultValue: |
+                    `false`
+              - attribute:
+                  name: deactivated
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: |
+                    Allows deactivating the template.
+                    Deactivated templates are listed in the UI and can be activated by users.
+                  #language=Markdown
+                  defaultValue: |
+                    `false`
+            children:
+              - element:
+                  name: variable
+                  references:
+                    #language=Markdown
+                    - |
+                      [Template Variables](https://www.jetbrains.com/help/idea/edit-template-variables-dialog.html)
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: |
+                    Defines a variable to be used in the template [`value`](#attribute:templateSet__template__value).
+                    A single template can provide multiple variables.
+                    
+                    The order of the variables determines the order in which the IDE will switch between
+                    the corresponding input fields when the template is expanded.
+                  attributes:
+                    - attribute:
+                        name: name
+                        requirement:
+                          required: no
+                        #language=Markdown
+                        description: |
+                          The variable name that is referenced in the [`<template>`](#element:templateSet__template) element's [`value`](#attribute:templateSet__template__value) attribute.
+                    - attribute:
+                        name: expression
+                        requirement:
+                          required: no
+                        #language=Markdown
+                        description: |
+                          Expression to calculate the value of the corresponding template input field automatically.<br/>
+                          The expression may contain the following constructs:
+                            - string constants in escaped double quotes, for example, `&quot;value&quot;`
+                            - names of other variables defined in the template, for example, `ANOTHER_VAR`
+                            - functions ([built-in](https://www.jetbrains.com/help/idea/template-variables.html#predefined_functions) or [custom](https://plugins.jetbrains.com/docs/intellij/creating-live-template-functions.html)) with possible arguments
+                    - attribute:
+                        name: defaultValue
+                        requirement:
+                          required: no
+                        #language=Markdown
+                        description: |
+                          The default value for the corresponding input field of the expanded template
+                          if the expression does not give any result after calculation.<br/>
+                          It can refer to other live template variables, for example, `ANOTHER_VAR`.<br/>
+                          To define the default value as a literal, enclose it in escaped quotation marks, for example, `&quot;value&quot;`.
+                    - attribute:
+                        name: alwaysStopAt
+                        requirement:
+                          required: no
+                        #language=Markdown
+                        description: |
+                          If `true`, the IDE will always stop at the corresponding input of the expanded template.<br/>
+                          If `false`, the IDE will skip the corresponding input of the expanded template if the input value is defined.
+                        #language=Markdown
+                        defaultValue: |
+                          `false`
+                  #language=Markdown
+                  examples:
+                    - |
+                      Empty variable allowing to provide a value manually by a user:
+                          ```xml
+                          <variable
+                              name="MY_VAR"
+                              expression=""
+                              defaultValue=""
+                              alwaysStopAt="true"/>
+                          ```
+                    - |
+                      Variable inserting the content of the clipboard,
+                      and referencing the `PLACEHOLDER` variable if the clipboard content is empty:
+                          ```xml
+                          <variable
+                              name="PLACEHOLDER"
+                              expression=""
+                              defaultValue=""
+                              alwaysStopAt="true"/>
+                          <variable
+                              name="MY_VAR"
+                              expression="clipboard()"
+                              defaultValue="PLACEHOLDER"
+                              alwaysStopAt="true"/>
+                          ```
+                    - |
+                      Variable invoking completion and providing the `myValue` value if the completion doesn't provide any result:
+                          ```xml
+                          <variable
+                              name="MY_VAR"
+                              expression="complete()"
+                              defaultValue="&quot;myValue&quot;"
+                              alwaysStopAt="true"/>
+                          ```
+              - element:
+                  name: context
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: |
+                    Defines a mapping of a context type (for example, a Java method, a Markdown file) to applicability of the template
+                    in this context type.
+                  children:
+                    - element:
+                        name: option
+                        requirement:
+                          required: no
+                        #language=Markdown
+                        description: |
+                          An entry specifying whether a given context type defined by the
+                          [`name`](#attribute:templateSet__template__context__option__name) attribute is applicable for the template.
+                        attributes:
+                          - attribute:
+                              name: name
+                              requirement:
+                                required: yes
+                              #language=Markdown
+                              description: |
+                                The context type name.<br/>
+                                To implement a custom context type, see the
+                                [context type implementation](https://plugins.jetbrains.com/docs/intellij/providing-live-templates.html#implement-templatecontexttype)
+                                tutorial.
+                          - attribute:
+                              name: value
+                              requirement:
+                                required: yes
+                              #language=Markdown
+                              description: |
+                                A boolean value determining whether the context type defined with the
+                                [`<option>`](#element:templateSet__template__context__option) element's
+                                [`name`](#attribute:templateSet__template__context__option__name)
+                                attribute is applicable for the template.<br/>
+                                As context types are hierarchical, the `false` value can be used when the parent context type is applicable,
+                                and it is required to disable the applicability of more specific child context types.
+                  #language=Markdown
+                  examples:
+                    - |
+                      ```xml
+                      <context>
+                        <option name="JAVA_CODE" value="true"/>
+                        <option name="JAVA_COMMENT" value="false"/>
+                        <option name="JAVA_STRING" value="false"/>
+                      </context>
+                      ```

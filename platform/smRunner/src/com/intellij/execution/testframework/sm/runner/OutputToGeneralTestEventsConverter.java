@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ColoredOutputTypeRegistry;
@@ -43,7 +43,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private boolean myFirstTestingStartedEvent = true;
 
 
-  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName, @NotNull final TestConsoleProperties consoleProperties) {
+  public OutputToGeneralTestEventsConverter(final @NotNull String testFrameworkName, final @NotNull TestConsoleProperties consoleProperties) {
     // If console is editable, user may want to see output before new line char.
     // stdout: "enter your name:"
     // There is no new line after it, but user still wants to see this message.
@@ -57,23 +57,23 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
    * @param cutNewLineBeforeServiceMessage see {@link OutputEventSplitter} constructor
    * @param validateServiceMessagesAttributes whether ParseException should happen if message doesn't contain required attributes. see {@link ServiceMessagesParser#setValidateRequiredAttributes(boolean)}
    */
-  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName,
+  public OutputToGeneralTestEventsConverter(final @NotNull String testFrameworkName,
                                             boolean doNotBufferTextUntilNewLine,
-                                            boolean cutNewLineBeforeServiceMessage, 
+                                            boolean cutNewLineBeforeServiceMessage,
                                             boolean validateServiceMessagesAttributes) {
     myTestFrameworkName = testFrameworkName;
     myValidateServiceMessagesAttributes = validateServiceMessagesAttributes;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
     mySplitter = new OutputEventSplitter(!doNotBufferTextUntilNewLine, cutNewLineBeforeServiceMessage) {
       @Override
-      public void onTextAvailable(@NotNull final String text, @NotNull final Key<?> outputType) {
+      public void onTextAvailable(final @NotNull String text, final @NotNull Key<?> outputType) {
         processConsistentText(text, outputType);
       }
     };
   }
 
   @Override
-  public void setProcessor(@Nullable final GeneralTestEventsProcessor processor) {
+  public void setProcessor(final @Nullable GeneralTestEventsProcessor processor) {
     myProcessor = processor;
   }
 
@@ -96,19 +96,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     mySplitter.process(text, outputType);
   }
 
-  /**
-   * Will be removed in 2020
-   *
-   * @deprecated use {@link #processConsistentText(String, Key)} instead
-   */
-  @Deprecated(forRemoval = true)
-  protected void processConsistentText(@NotNull final String text,
-                                       final Key<?> outputType,
-                                       @SuppressWarnings("unused") final boolean tcLikeFakeOutput) {
-    processConsistentText(text, outputType);
-  }
-
-  protected void processConsistentText(@NotNull String text, @NotNull final Key<?> outputType) {
+  protected void processConsistentText(@NotNull String text, final @NotNull Key<?> outputType) {
     try {
       if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
         //fire current output
@@ -203,7 +191,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnTestFrameworkAttached(@NotNull final TestDurationStrategy strategy) {
+  private void fireOnTestFrameworkAttached(final @NotNull TestDurationStrategy strategy) {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
       processor.onTestsReporterAttached();
@@ -301,7 +289,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   protected void fireOnErrorMsg(final String localizedMessage,
-                                @Nullable final String stackTrace,
+                                final @Nullable String stackTrace,
                                 boolean isCritical) {
     assertNotNull(localizedMessage);
 
@@ -346,53 +334,52 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
-    @NonNls private static final String TESTING_STARTED = "testingStarted";
-    @NonNls private static final String TESTING_FINISHED = "testingFinished";
-    @NonNls private static final String KEY_TESTS_COUNT = "testCount";
-    @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
-    @NonNls private static final String ATTR_KEY_TEST_COUNT = "count";
-    @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
-    @NonNls private static final String ATTR_KEY_TEST_OUTPUT_FILE = "outputFile";
-    @NonNls private static final String ATTR_KEY_LOCATION_URL = "locationHint";
-    @NonNls private static final String ATTR_KEY_LOCATION_URL_OLD = "location";
-    @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
-    @NonNls private static final String ATTR_KEY_DIAGNOSTIC = "diagnosticInfo";
-    @NonNls private static final String ATTR_KEY_CONFIG = "config";
+    private static final @NonNls String TESTING_STARTED = "testingStarted";
+    private static final @NonNls String TESTING_FINISHED = "testingFinished";
+    private static final @NonNls String KEY_TESTS_COUNT = "testCount";
+    private static final @NonNls String ATTR_KEY_TEST_ERROR = "error";
+    private static final @NonNls String ATTR_KEY_TEST_COUNT = "count";
+    private static final @NonNls String ATTR_KEY_TEST_DURATION = "duration";
+    private static final @NonNls String ATTR_KEY_TEST_OUTPUT_FILE = "outputFile";
+    private static final @NonNls String ATTR_KEY_LOCATION_URL = "locationHint";
+    private static final @NonNls String ATTR_KEY_LOCATION_URL_OLD = "location";
+    private static final @NonNls String ATTR_KEY_STACKTRACE_DETAILS = "details";
+    private static final @NonNls String ATTR_KEY_DIAGNOSTIC = "diagnosticInfo";
+    private static final @NonNls String ATTR_KEY_CONFIG = "config";
 
-    @NonNls private static final String MESSAGE = "message";
-    @NonNls private static final String TEST_REPORTER_ATTACHED = "enteredTheMatrix";
-    @NonNls private static final String SUITE_TREE_STARTED = "suiteTreeStarted";
-    @NonNls private static final String SUITE_TREE_ENDED = "suiteTreeEnded";
-    @NonNls private static final String SUITE_TREE_NODE = "suiteTreeNode";
-    @NonNls private static final String BUILD_TREE_ENDED_NODE = "treeEnded";
-    @NonNls private static final String ROOT_PRESENTATION = "rootName";
-    @NonNls private static final String SET_NODE_PROPERTY = "setNodeProperty";
+    private static final @NonNls String MESSAGE = "message";
+    private static final @NonNls String TEST_REPORTER_ATTACHED = "enteredTheMatrix";
+    private static final @NonNls String SUITE_TREE_STARTED = "suiteTreeStarted";
+    private static final @NonNls String SUITE_TREE_ENDED = "suiteTreeEnded";
+    private static final @NonNls String SUITE_TREE_NODE = "suiteTreeNode";
+    private static final @NonNls String BUILD_TREE_ENDED_NODE = "treeEnded";
+    private static final @NonNls String ROOT_PRESENTATION = "rootName";
+    private static final @NonNls String SET_NODE_PROPERTY = "setNodeProperty";
 
-    @NonNls private static final String ATTR_KEY_STATUS = "status";
-    @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
-    @NonNls private static final String ATTR_VALUE_STATUS_WARNING = "WARNING";
-    @NonNls private static final String ATTR_KEY_TEXT = "text";
-    @NonNls private static final String ATTR_KEY_TEXT_ATTRIBUTES = "textAttributes";
-    @NonNls private static final String ATTR_KEY_ERROR_DETAILS = "errorDetails";
-    @NonNls private static final String ATTR_KEY_EXPECTED_FILE_PATH = "expectedFile";
-    @NonNls private static final String ATTR_KEY_ACTUAL_FILE_PATH = "actualFile";
+    private static final @NonNls String ATTR_KEY_STATUS = "status";
+    private static final @NonNls String ATTR_VALUE_STATUS_ERROR = "ERROR";
+    private static final @NonNls String ATTR_VALUE_STATUS_WARNING = "WARNING";
+    private static final @NonNls String ATTR_KEY_TEXT = "text";
+    private static final @NonNls String ATTR_KEY_TEXT_ATTRIBUTES = "textAttributes";
+    private static final @NonNls String ATTR_KEY_ERROR_DETAILS = "errorDetails";
+    private static final @NonNls String ATTR_KEY_EXPECTED_FILE_PATH = "expectedFile";
+    private static final @NonNls String ATTR_KEY_ACTUAL_FILE_PATH = "actualFile";
 
-    @NonNls public static final String CUSTOM_STATUS = "customProgressStatus";
-    @NonNls private static final String ATTR_KEY_TEST_TYPE = "type";
-    @NonNls private static final String ATTR_KEY_TESTS_CATEGORY = "testsCategory";
-    @NonNls private static final String ATTR_VAL_TEST_STARTED = "testStarted";
-    @NonNls private static final String ATTR_VAL_TEST_FINISHED = "testFinished";
-    @NonNls private static final String ATTR_VAL_TEST_FAILED = "testFailed";
+    public static final @NonNls String CUSTOM_STATUS = "customProgressStatus";
+    private static final @NonNls String ATTR_KEY_TEST_TYPE = "type";
+    private static final @NonNls String ATTR_KEY_TESTS_CATEGORY = "testsCategory";
+    private static final @NonNls String ATTR_VAL_TEST_STARTED = "testStarted";
+    private static final @NonNls String ATTR_VAL_TEST_FINISHED = "testFinished";
+    private static final @NonNls String ATTR_VAL_TEST_FAILED = "testFailed";
 
     @Override
-    public void visitTestSuiteStarted(@NotNull final TestSuiteStarted suiteStarted) {
+    public void visitTestSuiteStarted(final @NotNull TestSuiteStarted suiteStarted) {
       final String locationUrl = fetchTestLocation(suiteStarted);
       TestSuiteStartedEvent suiteStartedEvent = new TestSuiteStartedEvent(suiteStarted, locationUrl);
       fireOnSuiteStarted(suiteStartedEvent);
     }
 
-    @Nullable
-    private String fetchTestLocation(final TestSuiteStarted suiteStarted) {
+    private @Nullable String fetchTestLocation(final TestSuiteStarted suiteStarted) {
       final Map<String, String> attrs = suiteStarted.getAttributes();
       final String location = attrs.get(ATTR_KEY_LOCATION_URL);
       if (location == null) {
@@ -410,13 +397,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     @Override
-    public void visitTestSuiteFinished(@NotNull final TestSuiteFinished suiteFinished) {
+    public void visitTestSuiteFinished(final @NotNull TestSuiteFinished suiteFinished) {
       TestSuiteFinishedEvent finishedEvent = new TestSuiteFinishedEvent(suiteFinished);
       fireOnSuiteFinished(finishedEvent);
     }
 
     @Override
-    public void visitTestStarted(@NotNull final TestStarted testStarted) {
+    public void visitTestStarted(final @NotNull TestStarted testStarted) {
       // TODO
       // final String locationUrl = testStarted.getLocationHint();
 
@@ -428,7 +415,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     @Override
-    public void visitTestFinished(@NotNull final TestFinished testFinished) {
+    public void visitTestFinished(final @NotNull TestFinished testFinished) {
       //TODO
       //final Integer duration = testFinished.getTestDuration();
       //fireOnTestFinished(testFinished.getTestName(), duration != null ? duration.intValue() : 0);
@@ -448,25 +435,24 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     @Override
-    public void visitTestIgnored(@NotNull final TestIgnored testIgnored) {
+    public void visitTestIgnored(final @NotNull TestIgnored testIgnored) {
       final String stacktrace = testIgnored.getAttributes().get(ATTR_KEY_STACKTRACE_DETAILS);
       fireOnTestIgnored(new TestIgnoredEvent(testIgnored, stacktrace));
     }
 
     @Override
-    public void visitTestStdOut(@NotNull final TestStdOut testStdOut) {
+    public void visitTestStdOut(final @NotNull TestStdOut testStdOut) {
       Key outputType = getOutputType(testStdOut.getAttributes(), ProcessOutputTypes.STDOUT);
       fireOnTestOutput(new TestOutputEvent(testStdOut, testStdOut.getStdOut(), outputType));
     }
 
     @Override
-    public void visitTestStdErr(@NotNull final TestStdErr testStdErr) {
+    public void visitTestStdErr(final @NotNull TestStdErr testStdErr) {
       Key outputType = getOutputType(testStdErr.getAttributes(), ProcessOutputTypes.STDERR);
       fireOnTestOutput(new TestOutputEvent(testStdErr, testStdErr.getStdErr(), outputType));
     }
 
-    @NotNull
-    public Key getOutputType(Map<String, String> attributes, Key baseOutputType) {
+    public @NotNull Key getOutputType(Map<String, String> attributes, Key baseOutputType) {
       String textAttributes = attributes.get(ATTR_KEY_TEXT_ATTRIBUTES);
       if (textAttributes == null) {
         return baseOutputType;
@@ -484,7 +470,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     @Override
-    public void visitTestFailed(@NotNull final TestFailed testFailed) {
+    public void visitTestFailed(final @NotNull TestFailed testFailed) {
       final Map<String, String> attributes = testFailed.getAttributes();
       LOG.assertTrue(testFailed.getFailureMessage() != null, "No failure message for: #" + myTestFrameworkName);
       final boolean testError = attributes.get(ATTR_KEY_TEST_ERROR) != null;
@@ -495,37 +481,37 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     @Override
-    public void visitPublishArtifacts(@NotNull final PublishArtifacts publishArtifacts) {
+    public void visitPublishArtifacts(final @NotNull PublishArtifacts publishArtifacts) {
       //Do nothing
     }
 
     @Override
-    public void visitProgressMessage(@NotNull final ProgressMessage progressMessage) {
+    public void visitProgressMessage(final @NotNull ProgressMessage progressMessage) {
       //Do nothing
     }
 
     @Override
-    public void visitProgressStart(@NotNull final ProgressStart progressStart) {
+    public void visitProgressStart(final @NotNull ProgressStart progressStart) {
       //Do nothing
     }
 
     @Override
-    public void visitProgressFinish(@NotNull final ProgressFinish progressFinish) {
+    public void visitProgressFinish(final @NotNull ProgressFinish progressFinish) {
       //Do nothing
     }
 
     @Override
-    public void visitBuildStatus(@NotNull final BuildStatus buildStatus) {
+    public void visitBuildStatus(final @NotNull BuildStatus buildStatus) {
       //Do nothing
     }
 
     @Override
-    public void visitBuildNumber(@NotNull final BuildNumber buildNumber) {
+    public void visitBuildNumber(final @NotNull BuildNumber buildNumber) {
       //Do nothing
     }
 
     @Override
-    public void visitBuildStatisticValue(@NotNull final BuildStatisticValue buildStatsValue) {
+    public void visitBuildStatisticValue(final @NotNull BuildStatisticValue buildStatsValue) {
       //Do nothing
     }
 
@@ -558,7 +544,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     @Override
-    public void visitServiceMessage(@NotNull final ServiceMessage msg) {
+    public void visitServiceMessage(final @NotNull ServiceMessage msg) {
       final String name = msg.getMessageName();
 
       if (LOG.isDebugEnabled()) {
@@ -642,7 +628,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       return count;
     }
 
-    private long convertToLong(final String countStr, @NotNull final ServiceMessage msg) {
+    private long convertToLong(final String countStr, final @NotNull ServiceMessage msg) {
       long count = 0;
       try {
         count = Long.parseLong(countStr);

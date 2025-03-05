@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -32,9 +32,7 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
   /**
    * @deprecated use {@link CompilerConfiguration#isParallelCompilationEnabled()}
    */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public Boolean PARALLEL_COMPILATION = null;
+  @Deprecated(forRemoval = true) public @Nullable Boolean PARALLEL_COMPILATION = null;
 
   public int COMPILER_PROCESS_HEAP_SIZE = 0;
   public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "";

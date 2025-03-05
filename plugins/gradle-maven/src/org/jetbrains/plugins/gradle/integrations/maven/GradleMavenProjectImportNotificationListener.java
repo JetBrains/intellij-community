@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
  */
 final class GradleMavenProjectImportNotificationListener implements ExternalSystemTaskNotificationListener {
   @Override
-  public void onSuccess(@NotNull ExternalSystemTaskId id) {
+  public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
     if (GradleConstants.SYSTEM_ID.getId().equals(id.getProjectSystemId().getId())
         && id.getType() == ExternalSystemTaskType.RESOLVE_PROJECT) {
       Project project = id.findProject();

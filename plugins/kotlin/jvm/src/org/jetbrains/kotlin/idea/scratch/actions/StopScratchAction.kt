@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 
 class StopScratchAction : ScratchAction(
-    KotlinJvmBundle.message("scratch.stop.button"),
+    KotlinJvmBundle.getLazyMessage("scratch.stop.button"),
     AllIcons.Actions.Suspend
 ) {
 
@@ -20,6 +20,6 @@ class StopScratchAction : ScratchAction(
 
         val scratchFile = e.currentScratchFile ?: return
 
-        e.presentation.isEnabledAndVisible = ScratchCompilationSupport.isInProgress(scratchFile)
+        e.presentation.isEnabledAndVisible = ScratchCompilationSupport.isInProgress(scratchFile) && !scratchFile.options.isInteractiveMode
     }
 }

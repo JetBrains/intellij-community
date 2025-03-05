@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.task;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -15,12 +15,12 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class ExternalSystemTaskId implements Serializable {
 
-  @NotNull private static final AtomicLong COUNTER          = new AtomicLong();
+  private static final @NotNull AtomicLong COUNTER          = new AtomicLong();
   private static final          long       serialVersionUID = 1L;
 
-  @NotNull private final ExternalSystemTaskType myType;
-  @NotNull private final String                 myProjectId;
-  @NotNull private final ProjectSystemId        myProjectSystemId;
+  private final @NotNull ExternalSystemTaskType myType;
+  private final @NotNull String                 myProjectId;
+  private final @NotNull ProjectSystemId        myProjectSystemId;
 
   private final long myId;
 
@@ -31,13 +31,11 @@ public final class ExternalSystemTaskId implements Serializable {
     myId = taskId;
   }
 
-  @NotNull
-  public String getIdeProjectId() {
+  public @NotNull String getIdeProjectId() {
     return myProjectId;
   }
 
-  @NotNull
-  public ProjectSystemId getProjectSystemId() {
+  public @NotNull ProjectSystemId getProjectSystemId() {
     return myProjectSystemId;
   }
 
@@ -48,23 +46,19 @@ public final class ExternalSystemTaskId implements Serializable {
    * @param project  target ide project
    * @return         distinct task id object of the given type
    */
-  @NotNull
-  public static ExternalSystemTaskId create(@NotNull ProjectSystemId projectSystemId, @NotNull ExternalSystemTaskType type, @NotNull Project project) {
+  public static @NotNull ExternalSystemTaskId create(@NotNull ProjectSystemId projectSystemId, @NotNull ExternalSystemTaskType type, @NotNull Project project) {
     return create(projectSystemId, type, getProjectId(project));
   }
 
-  @NotNull
-  public static ExternalSystemTaskId create(@NotNull ProjectSystemId projectSystemId, @NotNull ExternalSystemTaskType type, @NotNull String ideProjectId) {
+  public static @NotNull ExternalSystemTaskId create(@NotNull ProjectSystemId projectSystemId, @NotNull ExternalSystemTaskType type, @NotNull String ideProjectId) {
     return new ExternalSystemTaskId(projectSystemId, type, ideProjectId, COUNTER.getAndIncrement());
   }
 
-  @NotNull
-  public static String getProjectId(@NotNull Project project) {
+  public static @NotNull String getProjectId(@NotNull Project project) {
     return project.isDisposed() ? project.getName() : project.getName() + ":" + project.getLocationHash();
   }
 
-  @Nullable
-  public Project findProject() {
+  public @Nullable Project findProject() {
     final ProjectManager projectManager = ProjectManager.getInstance();
     for (Project project : projectManager.getOpenProjects()) {
       if (myProjectId.equals(getProjectId(project))) return project;
@@ -72,8 +66,7 @@ public final class ExternalSystemTaskId implements Serializable {
     return null;
   }
 
-  @NotNull
-  public ExternalSystemTaskType getType() {
+  public @NotNull ExternalSystemTaskType getType() {
     return myType;
   }
 

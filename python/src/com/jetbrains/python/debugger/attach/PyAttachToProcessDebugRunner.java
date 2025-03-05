@@ -45,7 +45,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
   /**
    * @deprecated Use {@link #PyAttachToProcessDebugRunner(Project, int, Sdk)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, @Nullable String sdkPath) {
     myProject = project;
     myPid = pid;

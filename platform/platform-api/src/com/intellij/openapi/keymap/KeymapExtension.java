@@ -18,4 +18,10 @@ public interface KeymapExtension {
   default boolean skipPluginGroup(@NotNull PluginId pluginId) {
     return false;
   }
+
+  default @NotNull KeymapLocation getGroupLocation() {
+    return KeymapLocation.TOP_LEVEL;
+  }
+
+  enum KeymapLocation {TOP_LEVEL, OTHER}
 }

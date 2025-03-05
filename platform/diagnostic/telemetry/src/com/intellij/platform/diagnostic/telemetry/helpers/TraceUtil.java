@@ -18,8 +18,7 @@ public final class TraceUtil {
    * A workaround for using {@link TraceKt#use(SpanBuilder, Function1)} with checked exceptions.
    * Prefer using {@link TraceKt#use(SpanBuilder, Function1)} where possible.
    */
-  @NotNull
-  public static <T, E extends Throwable> T computeWithSpanThrows(@NotNull SpanBuilder spanBuilder,
+  public static @NotNull <T, E extends Throwable> T computeWithSpanThrows(@NotNull SpanBuilder spanBuilder,
                                                                  @NotNull ThrowableNotNullFunction<Span, T, E> operation) throws E {
     return TraceKt.computeWithSpanIgnoreThrows(spanBuilder, operation);
   }

@@ -327,7 +327,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return new CommentLabel(commentText);
   }
 
-  public static Font getCommentFont(Font font) {
+  public static @NotNull Font getCommentFont(Font font) {
     if (ExperimentalUI.isNewUI()) {
       return JBFont.medium();
     } else {

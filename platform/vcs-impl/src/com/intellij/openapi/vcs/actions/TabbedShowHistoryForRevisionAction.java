@@ -86,8 +86,7 @@ public final class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     return fileAndRevision != null && !fileAndRevision.second.asString().isEmpty();
   }
 
-  @Nullable
-  private static Pair<FilePath, VcsRevisionNumber> getFileAndRevision(@NotNull AnActionEvent event) {
+  private static @Nullable Pair<FilePath, VcsRevisionNumber> getFileAndRevision(@NotNull AnActionEvent event) {
     Change[] changes = event.getData(VcsDataKeys.SELECTED_CHANGES);
     if (changes == null || changes.length != 1) return null;
     Change change = changes[0];
@@ -104,20 +103,17 @@ public final class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     return Pair.create(fileAndRevision.getFirst(), revisionNumber);
   }
 
-  @Nullable
-  private static Pair<FilePath, VcsRevisionNumber> getFileAndRevision(@NotNull Change change) {
+  private static @Nullable Pair<FilePath, VcsRevisionNumber> getFileAndRevision(@NotNull Change change) {
     ContentRevision revision = change.getType() == Change.Type.DELETED ? change.getBeforeRevision() : change.getAfterRevision();
     if (revision == null) return null;
     return Pair.create(revision.getFile(), revision.getRevisionNumber());
   }
 
-  @Nullable
-  private static AbstractVcs getVcs(@NotNull Project project, @Nullable VcsKey vcsKey) {
+  private static @Nullable AbstractVcs getVcs(@NotNull Project project, @Nullable VcsKey vcsKey) {
     return vcsKey == null ? null : ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
   }
 
-  @Nullable
-  private static AbstractVcsHelperImpl getVcsHelper(@NotNull Project project) {
+  private static @Nullable AbstractVcsHelperImpl getVcsHelper(@NotNull Project project) {
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
     return tryCast(helper, AbstractVcsHelperImpl.class);
   }

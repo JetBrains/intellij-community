@@ -1,7 +1,7 @@
-actual fun baz(): String = "baz"
+actual fun bazzz(): String = "bazzz"
 
-actual<caret>
+actual fun ba<caret>
 
-// EXIST: {"lookupString": "actual", "module": "testModule_Common", "icon": "Function", "allLookupStrings": "actual, foo", "itemText": "actual fun foo() {...}"}
-// EXIST: {"lookupString": "actual", "module": "testModule_Common", "icon": "Function", "allLookupStrings": "actual, bar", "itemText": "actual fun bar(): Int {...}"}
-// ABSENT: {"lookupString": "actual", "module": "testModule_Common", "icon": "Function", "allLookupStrings": "actual, baz", "itemText": "actual fun baz(): String {...}"}
+// EXIST: {"lookupString": "bar", "module": "testModule_Common", "icon": "Function", "allLookupStrings": "bar", "itemText": "actual fun bar() {...}"}
+// EXIST: {"lookupString": "baz", "module": "testModule_Common", "icon": "Function", "allLookupStrings": "baz", "itemText": "actual fun baz(): Int {...}"}
+// ABSENT: {"lookupString": "bazzz", "module": "testModule_Common", "icon": "Function", "allLookupStrings": "bazzz", "itemText": "actual fun bazzz(): String {...}"}

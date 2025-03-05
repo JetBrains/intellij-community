@@ -67,22 +67,15 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override fun hashCode() = modulePath.hashCode()
 
   internal class JpsFileContent private constructor(
-    private val reader: JpsFileContentReader,
-    private val components: Map<String, Element>,
-    private val fileUrl: String,
-    private val customModuleFilePath: String?,
+    components: Map<String, Element>?,
+    private val debugFileUrl: String,
+    private val debugCustomModuleFilePath: String?,
   ) {
+    private val components: Map<String, Element> = components ?: emptyMap()
+    val jpsFileExists: Boolean = (components != null)
+
     fun loadComponent(componentName: String): Element? {
-      val result = components[componentName]
-      if (LOG.isDebugEnabled) {
-        val rc = reader.loadComponent(fileUrl, componentName, customModuleFilePath)
-        val rcString = if (rc != null) JDOMUtil.write(rc) else null
-        val itString = if (result != null) JDOMUtil.write(result) else null
-        if (rcString != itString) {
-          LOG.error("Error while parsing ${fileUrl}. Expected:\n$rcString\n\nbut was:\n$itString\n")
-        }
-      }
-      return result
+      return components[componentName]
     }
 
     companion object {
@@ -100,9 +93,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
             transformer?.invoke(rootElement)
             val components = rootElement.children
               .filter { it.getAttributeValue(NAME_ATTRIBUTE) != null }
-              // remove empty components only because ComponentStorageUtil.loadComponents do this (at this point we are not going to change the behavior).
-              // It's likely, that we don't need to remove these components (please check JpsSplitModuleAndContentRootTest)
-              .filter { it.attributes.size > 1 || !it.children.isEmpty() }
               .associateBy { it.getAttributeValue(NAME_ATTRIBUTE) }
             // remove component names only because ComponentStorageUtil.loadComponents do this (at this point we are not going to change the behavior).
             // It's likely, that we don't need to remove this attribute (please check JpsProjectReloadingTest)
@@ -124,7 +114,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           exceptionsCollector.add(e)
           null
         }
-        return if (components == null) null else JpsFileContent(reader, components, url, customModuleFilePath)
+        return if (components == null) null else JpsFileContent(components, url, customModuleFilePath)
       }
 
       fun createFromImlFile(reader: JpsFileContentReader, url: String, customModuleFilePath: String?, exceptionsCollector: MutableList<Throwable>): JpsFileContent {
@@ -136,7 +126,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           null
         }
 
-        return JpsFileContent(reader, components ?: emptyMap(), url, customModuleFilePath)
+        return JpsFileContent(components, url, customModuleFilePath)
       }
     }
   }
@@ -147,7 +137,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     virtualFileManager: VirtualFileUrlManager
   ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> = loadEntitiesTimeMs.addMeasuredTime {
     val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder> = HashMap()
-    val newModuleEntity: ModuleEntity.Builder?
     val exceptionsCollector = ArrayList<Throwable>()
 
     val externalSerializer = if (context.isExternalStorageEnabled) {
@@ -162,28 +151,23 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val moduleLoadedInfo = externalSerializer?.loadModuleEntity(externalContent, reader, errorReporter, virtualFileManager, moduleLibrariesCollector,
                                                                   exceptionsCollector)
 
-    val moduleEntity: ModuleEntity.Builder?
-    if (moduleLoadedInfo != null) {
+    val moduleEntity = if (moduleLoadedInfo != null) {
       val entitySource = getOtherEntitiesEntitySource(internalContent)
       runCatchingXmlIssues(exceptionsCollector) {
         loadContentRoots(moduleLoadedInfo.customRootsSerializer, moduleLoadedInfo.moduleEntity, internalContent,
                          reader, moduleLoadedInfo.customDir, errorReporter, virtualFileManager,
                          entitySource, true, moduleLibrariesCollector)
       }
-
-      moduleEntity = loadAdditionalContents(internalContent, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
+      moduleLoadedInfo.moduleEntity
     }
     else {
       val localModule = loadModuleEntity(internalContent, reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
-
-      var tmpModule = localModule?.moduleEntity
-
-      if (tmpModule != null) {
-        tmpModule = loadAdditionalContents(internalContent, virtualFileManager, tmpModule, exceptionsCollector)
-      }
-      moduleEntity = tmpModule
+      localModule?.moduleEntity
     }
+
     if (moduleEntity != null) {
+      loadAdditionalContents(internalContent, virtualFileManager, moduleEntity, exceptionsCollector)
+
       runCatchingXmlIssues(exceptionsCollector) {
         val internalFacetTag = internalContent.loadComponent(facetManagerComponentName)
         if (internalFacetTag != null) {
@@ -197,13 +181,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           }
         }
       }
-      newModuleEntity = moduleEntity
     }
-    else newModuleEntity = null
 
     return@addMeasuredTime LoadingResult(
       mapOf(
-        ModuleEntity::class.java to listOfNotNull(newModuleEntity),
+        ModuleEntity::class.java to listOfNotNull(moduleEntity),
         LibraryEntity::class.java to moduleLibrariesCollector.values,
       ),
       exceptionsCollector.firstOrNull(),
@@ -241,25 +223,16 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     virtualFileManager: VirtualFileUrlManager,
     moduleEntity: ModuleEntity.Builder,
     exceptionCollector: MutableList<Throwable>,
-  ): ModuleEntity.Builder {
+  ) {
     val source = runCatchingXmlIssues(exceptionCollector) {
       getOtherEntitiesEntitySource(content)
-    } ?: return moduleEntity
+    } ?: return
 
     val roots = runCatchingXmlIssues(exceptionCollector) {
       loadAdditionalContentRoots(moduleEntity, content, virtualFileManager, source)
-    }
+    } ?: return
 
-    if (roots == null) return moduleEntity
-    return if (moduleEntity.isEmpty()) {
-      ModuleEntity(moduleEntity.name, emptyList(), OrphanageWorkerEntitySource) {
-        this.contentRoots = roots
-      }
-    }
-    else {
-      moduleEntity.contentRoots += roots
-      moduleEntity
-    }
+    moduleEntity.contentRoots += roots
   }
 
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
@@ -312,8 +285,16 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
       customDir = moduleOptions[JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE]
       val externalSystemEntitySource = createEntitySource(externalSystemId)
-      val moduleEntitySource = customRootsSerializer?.createEntitySource(fileUrl, internalEntitySource, customDir, virtualFileManager)
-                               ?: externalSystemEntitySource
+      val customEntitySource = customRootsSerializer?.createEntitySource(fileUrl, internalEntitySource, customDir, virtualFileManager)
+      val moduleEntitySource = when {
+        customEntitySource != null -> customEntitySource
+        // for backward compatibility: absence of file is considered as a valid module declaration.
+        // *probably*, to handle cases when modules.xml has already updated from git, but corresponding iml has not (yet).
+        !content.jpsFileExists -> externalSystemEntitySource
+        content.loadComponent(MODULE_ROOT_MANAGER_COMPONENT_NAME) == null -> OrphanageWorkerEntitySource
+        else -> externalSystemEntitySource
+      }
+
       if (moduleEntitySource is DummyParentEntitySource) {
         Pair(moduleEntitySource, externalSystemEntitySource)
       }
@@ -396,7 +377,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
     else {
       val rootManagerElement = content.loadComponent(MODULE_ROOT_MANAGER_COMPONENT_NAME)?.clone()
-      if (rootManagerElement != null) {
+      // MAYBE-ANK: !isEmpty is to please JpsSplitModuleAndContentRootTest on i.i.u.tests.main classpath
+      // because I changed behavior of loadComponent as follows: now it does not replace empty components with nulls, but
+      // honestly returns empty components. This check looks strange to me. What was the original intent here?
+      if (rootManagerElement != null && !rootManagerElement.isEmpty) {
         loadRootManager(rootManagerElement, moduleEntity, virtualFileManager, contentRootEntitySource, loadingAdditionalRoots,
                         moduleLibrariesCollector)
       }
@@ -1241,9 +1225,3 @@ fun ContentRootEntity.getSourceRootsComparator(): Comparator<SourceRootEntity> {
   val order = (sourceRootOrder?.orderOfSourceRoots ?: emptyList()).withIndex().associateBy({ it.value }, { it.index })
   return compareBy<SourceRootEntity> { order[it.url] ?: order.size }.thenBy { it.url.url }
 }
-
-
-private fun ModuleEntity.Builder.isEmpty(): Boolean {
-  return this.contentRoots.isEmpty() && this.javaSettings == null && this.facets.isEmpty() && this.dependencies.filterNot { it is ModuleSourceDependency }.isEmpty()
-}
-

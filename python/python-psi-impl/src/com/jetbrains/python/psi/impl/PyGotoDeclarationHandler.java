@@ -19,6 +19,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyUserInitiatedResolvableReference;
 import com.jetbrains.python.psi.PyElement;
@@ -26,7 +27,6 @@ import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,9 +42,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Ilya.Kazakevich
  */
 public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
-  @Nullable
   @Override
-  public PsiElement getGotoDeclarationTarget(@Nullable final PsiElement sourceElement, final Editor editor) {
+  public @Nullable PsiElement getGotoDeclarationTarget(final @Nullable PsiElement sourceElement, final Editor editor) {
     if (sourceElement == null) {
       return null;
     }
@@ -61,7 +60,7 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
     }
     if (referenceOwner != null) {
       PsiElement resolved = PyResolveUtil.resolveDeclaration(referenceOwner.getReference(context), context);
-      if (resolved != null && resolved.getContainingFile() instanceof PyiFile) {
+      if (resolved != null && PyiUtil.isInsideStub(resolved) && !PyiUtil.isInsideStub(FileContextUtil.getContextFile(sourceElement))) {
         return ObjectUtils.chooseNotNull(PyiUtil.getOriginalElement((PyElement)resolved), resolved);
       }
       return resolved != referenceOwner ? resolved : null;
@@ -77,8 +76,7 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
     return null;
   }
 
-  @Nullable
-  private static PsiElement findProvidedReferenceAndResolve(@NotNull final PsiElement sourceElement) {
+  private static @Nullable PsiElement findProvidedReferenceAndResolve(final @NotNull PsiElement sourceElement) {
     for (final PsiReference reference : sourceElement.getReferences()) {
       if (reference instanceof PyUserInitiatedResolvableReference) {
         final PsiElement element = ((PyUserInitiatedResolvableReference)reference).userInitiatedResolve();

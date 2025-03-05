@@ -34,14 +34,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class InlineXslAttribute implements IntentionAction {
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return getFamilyName();
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.inline.xsl.attribute");
     }
 
@@ -79,7 +77,7 @@ public class InlineXslAttribute implements IntentionAction {
         final PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
             if (child instanceof XmlText text) {
-              if (text.getText().trim().length() == 0) {
+              if (text.getText().trim().isEmpty()) {
                     if (texts.length == 0 && exprs.length == 0) {
                         return false;
                     }
@@ -114,7 +112,7 @@ public class InlineXslAttribute implements IntentionAction {
         final PsiElement[] children = tag.getChildren();
         for (PsiElement child : children) {
             if (child instanceof XmlText text) {
-              if (text.getText().trim().length() > 0) {
+              if (!text.getText().trim().isEmpty()) {
                     sb.append(text.getText().replaceAll("\"", "&quot;"));
                 }
             } else if (child instanceof XmlTag t) {
@@ -141,8 +139,7 @@ public class InlineXslAttribute implements IntentionAction {
         }
     }
 
-    @Nullable
-    private static XmlTag findParent(XmlTag tag) {
+    private static @Nullable XmlTag findParent(XmlTag tag) {
         XmlTag p = tag.getParentTag();
         if (p == null) {
             return null;

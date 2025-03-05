@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.project.Project;
@@ -14,8 +14,10 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -37,7 +39,9 @@ public final class XmlTagNamesIndex extends XmlIndex<Void> {
     return FileBasedIndex.getInstance().getAllKeys(NAME, project);
   }
 
-  static final ID<String, Void> NAME = ID.create("XmlTagNames");
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static final ID<String, Void> NAME = ID.create("XmlTagNames");
 
   @Override
   public @NotNull ID<String, Void> getName() {

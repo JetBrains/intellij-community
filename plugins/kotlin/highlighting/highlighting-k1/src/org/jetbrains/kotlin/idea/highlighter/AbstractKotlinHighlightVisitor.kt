@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.diagnostics.rendering.parameters
+import org.jetbrains.kotlin.idea.base.analysis.injectionRequiresOnlyEssentialHighlighting
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightErrors
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
@@ -51,7 +52,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
         val file = psiFile as? KtFile ?: return false
         val project = file.project
         val highlightingLevelManager = HighlightingLevelManager.getInstance(project)
-        if (highlightingLevelManager.runEssentialHighlightingOnly(file)) {
+        if (highlightingLevelManager.runEssentialHighlightingOnly(file) || psiFile.injectionRequiresOnlyEssentialHighlighting) {
             return true
         }
 

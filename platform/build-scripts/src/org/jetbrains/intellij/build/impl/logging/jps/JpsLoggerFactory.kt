@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.logging.TeamCityBuildMessageLogger
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.messages.*
@@ -86,35 +87,12 @@ internal class JpsMessageHandler(private val context: CompilationContext, privat
   private val compilationFinishTimeForTarget = ConcurrentHashMap<String, Long>()
   private var progress = -1.0f
 
-  override fun processMessage(message: BuildMessage) {
-    val text = message.messageText
+  override fun processMessage(message: BuildMessage): Unit = TeamCityBuildMessageLogger.withFlow(span) {
+    val text = if (message is CompilerMessage) message.compilerMessageText else message.messageText
     when (message.kind) {
       BuildMessage.Kind.ERROR, BuildMessage.Kind.INTERNAL_BUILDER_ERROR -> {
-        val compilerName: String
-        val messageText: String
-        if (message is CompilerMessage) {
-          compilerName = message.compilerName
-          val sourcePath = message.sourcePath
-          messageText = buildString {
-            if (sourcePath != null) {
-              append(sourcePath)
-              if (message.line != -1L) {
-                append(':').append(message.line)
-              }
-              appendLine(':')
-            }
-            append(text)
-            val moduleNames = message.moduleNames
-            if (moduleNames.any()) {
-              append(moduleNames.joinToString(prefix = " (", postfix = ")"))
-            }
-          }
-        }
-        else {
-          compilerName = ""
-          messageText = text
-        }
-        errorMessagesByCompiler.computeIfAbsent(compilerName) { CopyOnWriteArrayList() }.add(messageText)
+        val compilerName: String = if (message is CompilerMessage) message.compilerName else ""
+        errorMessagesByCompiler.computeIfAbsent(compilerName) { CopyOnWriteArrayList() }.add(text)
       }
       BuildMessage.Kind.WARNING -> context.messages.warning(text)
       BuildMessage.Kind.INFO, BuildMessage.Kind.JPS_INFO -> if (message is BuilderStatisticsMessage) {
@@ -181,6 +159,26 @@ internal class JpsMessageHandler(private val context: CompilationContext, privat
     buildMessages.info(" top ${topTargets.size} targets by compilation time:")
     for (entry in topTargets) {
       buildMessages.info("  ${entry.first}: ${TimeUnit.NANOSECONDS.toMillis(entry.second)}ms")
+    }
+  }
+
+  private val CompilerMessage.compilerMessageText: String get() {
+    return buildString {
+      if (sourcePath != null) {
+        append(sourcePath)
+        if (line != -1L) {
+          append(':').append(line)
+        }
+        if (column != -1L) {
+          append(':').append(column)
+        }
+        appendLine(':')
+      }
+      append(messageText)
+      if (moduleNames.any()) {
+        appendLine()
+        append(moduleNames.joinToString(prefix = "(JPS module: ", postfix = ")"))
+      }
     }
   }
 

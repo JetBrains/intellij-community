@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.observable.util.addComponent
 import com.intellij.openapi.observable.util.whenKeyPressed
 import com.intellij.openapi.ui.isComponentUnderMouse
@@ -37,54 +38,58 @@ class EditorFloatingToolbar(editor: EditorImpl) : JPanel() {
 
   private fun addFloatingToolbarComponent(editor: EditorImpl, provider: FloatingToolbarProvider) {
     if (provider.isApplicable(editor.dataContext)) {
-      val disposable = FloatingToolbarProvider.createExtensionDisposable(provider, editor.disposable)
+      val disposable = FloatingToolbarProvider.EP_NAME.createExtensionDisposable(provider, editor.disposable)
       val component = EditorFloatingToolbarComponent(editor, provider, disposable)
       addComponent(component, disposable)
+      provider.register(editor.dataContext, component, disposable)
     }
   }
 
   private class EditorFloatingToolbarComponent(
-    private val editor: EditorImpl,
-    private val provider: FloatingToolbarProvider,
-    private val parentDisposable: Disposable
-  ) : AbstractFloatingToolbarComponent(provider.actionGroup, parentDisposable) {
-
-    override val autoHideable: Boolean = provider.autoHideable
+    editor: EditorImpl,
+    provider: FloatingToolbarProvider,
+    parentDisposable: Disposable,
+  ) : AbstractFloatingToolbarComponent(
+    provider.actionGroup,
+    editor.contentComponent,
+    parentDisposable
+  ) {
 
     override fun isComponentOnHold(): Boolean {
       return component.parent?.isComponentUnderMouse() == true ||
              component.parent?.isFocusAncestor() == true
     }
 
-    override fun installMouseMotionWatcher() {
-      if (provider.autoHideable) {
-        var ignoreMouseMotionRectangle: Rectangle? = null
-        editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
-          override fun mouseMoved(e: EditorMouseEvent) {
-            if (ignoreMouseMotionRectangle?.contains(e.mouseEvent.locationOnScreen) != true) {
-              ignoreMouseMotionRectangle = null
-            }
-            if (ignoreMouseMotionRectangle == null) {
-              scheduleShow()
-            }
-          }
-        }, parentDisposable)
-        editor.contentComponent.whenKeyPressed(parentDisposable) {
-          if (it.keyCode == KeyEvent.VK_ESCAPE) {
-            if (isVisible) {
-              val location = Point()
-              SwingUtilities.convertPointToScreen(location, this)
-              ignoreMouseMotionRectangle = Rectangle(location, size)
-            }
-            hideImmediately()
-          }
-        }
-      }
+    init {
+      backgroundAlpha = provider.backgroundAlpha
+      showingTime = provider.showingTime
+      hidingTime = provider.hidingTime
+      retentionTime = provider.retentionTime
+      autoHideable = provider.autoHideable
     }
 
     init {
-      init(editor.contentComponent)
-      provider.register(editor.dataContext, this, parentDisposable)
+      var ignoreMouseMotionRectangle: Rectangle? = null
+      editor.addEditorMouseMotionListener(object : EditorMouseMotionListener {
+        override fun mouseMoved(e: EditorMouseEvent) {
+          if (ignoreMouseMotionRectangle?.contains(e.mouseEvent.locationOnScreen) != true) {
+            ignoreMouseMotionRectangle = null
+          }
+          if (autoHideable && ignoreMouseMotionRectangle == null) {
+            scheduleShow()
+          }
+        }
+      }, parentDisposable)
+      editor.contentComponent.whenKeyPressed(parentDisposable) {
+        if (it.keyCode == KeyEvent.VK_ESCAPE) {
+          if (isVisible) {
+            val location = Point()
+            SwingUtilities.convertPointToScreen(location, this)
+            ignoreMouseMotionRectangle = Rectangle(location, size)
+          }
+          hideImmediately()
+        }
+      }
     }
   }
 }

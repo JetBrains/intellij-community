@@ -1,0 +1,9 @@
+LineBreakpoint created at internalMembersInInlinedLambda.kt:9
+Run Java
+Connected to the target VM
+internalMembersInInlinedLambda.kt:9
+Compile bytecode for applyLambda(A(1)) { it.internalProp }
+Compile bytecode for applyLambda(A(1)) { it.internalFun() }
+Disconnected from the target VM
+
+Process finished with exit code 0

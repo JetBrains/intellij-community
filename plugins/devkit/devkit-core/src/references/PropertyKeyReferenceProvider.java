@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -42,10 +42,10 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myTagMode;
 
-  @Nullable private final String myFallbackKeyName;
-  @Nullable private final String myFallbackBundleName;
+  private final @Nullable String myFallbackKeyName;
+  private final @Nullable String myFallbackBundleName;
 
-  @Nullable private final NullableFunction<? super XmlTag, String> myBundleNameFunction;
+  private final @Nullable NullableFunction<? super XmlTag, String> myBundleNameFunction;
 
   PropertyKeyReferenceProvider(boolean tagMode, @NonNls @Nullable String fallbackKeyName, @Nullable String fallbackBundleName) {
     myTagMode = tagMode;
@@ -67,7 +67,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
     if (myTagMode && element instanceof XmlTag) {
       return getTagReferences(((XmlTag)element));
     }
@@ -99,13 +99,11 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  @Nullable
-  protected String getFallbackBundleName() {
+  protected @Nullable String getFallbackBundleName() {
     return null;
   }
 
-  @NotNull
-  protected String getFinalKeyValue(String keyValue) {
+  protected @NotNull String getFinalKeyValue(String keyValue) {
     return keyValue;
   }
 
@@ -120,10 +118,8 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
   private static final class MyPropertyReference extends PropertyReference {
 
-    @Nullable
-    private final String myBundleName;
-    @Nullable
-    private final String myFallbackBundleName;
+    private final @Nullable String myBundleName;
+    private final @Nullable String myFallbackBundleName;
 
     private MyPropertyReference(String value, PsiElement psiElement, @Nullable String bundleName, @Nullable String fallbackBundleName) {
       super(value, psiElement, bundleName, false);
@@ -161,8 +157,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
                                                             bundleNameToUse, BundleNameEvaluator.DEFAULT);
     }
 
-    @Nullable
-    private static String getPluginResourceBundle(PsiElement element) {
+    private static @Nullable String getPluginResourceBundle(PsiElement element) {
       final DomElement domElement = DomUtil.getDomElement(element);
       if (domElement == null) return null;
       final DomElement rootElement = DomUtil.getFileElement(domElement).getRootElement();
@@ -183,8 +178,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       return includingDescriptor == null ? null : includingDescriptor.getResourceBundle().getStringValue();
     }
 
-    @Nullable
-    private static IdeaPlugin getSingleIncludingDescriptor(PsiElement element) {
+    private static @Nullable IdeaPlugin getSingleIncludingDescriptor(PsiElement element) {
       final VirtualFile[] includingFiles =
         FileIncludeManager.getManager(element.getProject()).getIncludingFiles(element.getContainingFile().getVirtualFile(), false);
       if (includingFiles.length != 1) return null;

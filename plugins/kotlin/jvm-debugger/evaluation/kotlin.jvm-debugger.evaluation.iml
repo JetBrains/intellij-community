@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.base.statistics" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" />
+    <orderEntry type="module" module-name="intellij.java.debugger" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />

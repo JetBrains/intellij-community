@@ -1131,6 +1131,78 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertDisplayTimeEqualsToSumOfChildren(root);
   }
 
+  public void testDisplayOwnTime() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy child1 = createTestProxy("child1", root);
+    SMTestProxy child2 = createTestProxy("child12", root);
+
+    root.setStarted();
+
+    child1.setStarted();
+    child1.setFinished();
+    child1.setDuration(10L);
+
+    child2.setStarted();
+    child2.setFinished();
+    child2.setDuration(10L);
+
+
+    root.setFinished();
+    root.setDuration(60_000_000_000L);
+
+    assertDisplayTimeEqualsToSumOfChildren(root);
+    assertTrue(root.getEndTimeMillis() - root.getStartTimeMillis() != root.getDuration());
+  }
+
+  public void testDisplayOwnTimeTerminated() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy child1 = createTestProxy("child1", root);
+    SMTestProxy child2 = createTestProxy("child12", root);
+
+    root.setStarted();
+
+    child1.setStarted();
+
+    root.setTerminated();
+
+    assertNotNull(root.getEndTimeMillis());
+    assertNotNull(child1.getEndTimeMillis());
+    assertNotNull(child2.getEndTimeMillis());
+  }
+
+  public void testTerminatedWithNonFinished() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy suite1 = createSuiteProxy("suite1", root);
+    SMTestProxy suite2 = createSuiteProxy("suite2", root);
+
+    root.setStarted();
+
+    suite1.setStarted();
+    suite1.setFinished();
+
+    SMTestProxy test1 = createTestProxy("test1", suite1);
+    SMTestProxy test2 = createTestProxy("test2", suite2);
+
+    test1.setStarted();
+    suite2.setStarted();
+    test2.setStarted();
+
+    root.setTerminated();
+
+    assertNotNull(root.getEndTimeMillis());
+    assertNotNull(suite1.getEndTimeMillis());
+    assertNotNull(suite2.getEndTimeMillis());
+    assertNotNull(test1.getEndTimeMillis());
+    assertNotNull(test2.getEndTimeMillis());
+
+    assertTrue(root.wasTerminated());
+    assertTrue(suite1.isPassed());
+    assertTrue(suite2.wasTerminated());
+    assertTrue(test1.wasTerminated());
+    assertTrue(test2.wasTerminated());
+  }
+
+
   private static void assertDisplayTimeEqualsToSumOfChildren(@NotNull SMTestProxy node) {
     List<? extends SMTestProxy> children = node.collectChildren(new Filter<>() {
       @Override

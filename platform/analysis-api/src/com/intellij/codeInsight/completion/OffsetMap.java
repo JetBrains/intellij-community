@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -97,7 +98,7 @@ public final class OffsetMap implements Disposable {
     }
   }
 
-  public List<OffsetKey> getAllOffsets() {
+  public @Unmodifiable List<OffsetKey> getAllOffsets() {
     synchronized (myMap) {
       ProgressManager.checkCanceled();
       LOG.assertTrue(!myDisposed);

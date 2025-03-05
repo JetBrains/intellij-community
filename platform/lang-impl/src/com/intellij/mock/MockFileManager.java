@@ -1,15 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.codeInsight.multiverse.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +28,14 @@ public final class MockFileManager implements FileManager {
     return new SingleRootFileViewProvider(myManager, vFile, eventSystemEnabled);
   }
 
+  @ApiStatus.Internal
+  @Override
+  public @NotNull FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile,
+                                                          @NotNull CodeInsightContext context,
+                                                          boolean eventSystemEnabled) {
+    return createFileViewProvider(vFile, eventSystemEnabled);
+  }
+
   public MockFileManager(PsiManagerEx manager) {
     myManager = manager;
     myViewProviders = ConcurrentFactoryMap.create(key->new SingleRootFileViewProvider(myManager, key),
@@ -37,6 +44,12 @@ public final class MockFileManager implements FileManager {
 
   @Override
   public @Nullable PsiFile findFile(@NotNull VirtualFile vFile) {
+    return getCachedPsiFile(vFile);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable PsiFile findFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
     return getCachedPsiFile(vFile);
   }
 
@@ -54,7 +67,14 @@ public final class MockFileManager implements FileManager {
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     FileViewProvider provider = findCachedViewProvider(vFile);
+    if (provider == null) return null;
     return provider.getPsi(provider.getBaseLanguage());
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
+    return getCachedPsiFile(vFile);
   }
 
   @Override
@@ -67,9 +87,21 @@ public final class MockFileManager implements FileManager {
     throw new UnsupportedOperationException("Method findViewProvider is not yet implemented in " + getClass().getName());
   }
 
+  @ApiStatus.Internal
   @Override
-  public FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+  public FileViewProvider findViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
+    return findViewProvider(vFile);
+  }
+
+  @Override
+  public @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
     return myViewProviders.get(vFile);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile,@NotNull CodeInsightContext context) {
+    return findCachedViewProvider(vFile);
   }
 
   @Override
@@ -80,5 +112,11 @@ public final class MockFileManager implements FileManager {
   @Override
   public @NotNull List<PsiFile> getAllCachedFiles() {
     throw new UnsupportedOperationException("Method getAllCachedFiles is not yet implemented in " + getClass().getName());
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public @NotNull List<@NotNull FileViewProvider> findCachedViewProviders(@NotNull VirtualFile vFile) {
+    return ContainerUtil.createMaybeSingletonList(myViewProviders.get(vFile));
   }
 }

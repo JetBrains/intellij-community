@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
@@ -40,6 +41,8 @@ import java.util.List;
 @ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public abstract class LocalFileSystemBase extends LocalFileSystem {
+  private static final Boolean EXTRACT_ROOTS_USING_NIO = SystemProperties.getBooleanProperty("vfs.extract.roots.using.nio", true);
+
   private static final ExtensionPointName<LocalFileOperationsHandler> FILE_OPERATIONS_HANDLER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.fileOperationsHandler");
 
@@ -352,6 +355,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   protected static byte @NotNull [] readIfNotTooLarge(Path nioFile) throws IOException {
+    byte[] maybeContent = LocalFileSystemEelUtil.readWholeFileIfNotTooLargeWithEel(nioFile);
+    if (maybeContent != null) {
+      return maybeContent;
+    }
+
     //MAYBE RC: The only reason to get file size here is to check it is not too big. We could skip this check, and start
     //          to load the file, and throw the exception if _loaded_ size exceeds the limit -- huge files are infrequent
     //          cases, so this approach optimizes the fast path.
@@ -359,6 +367,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     //          and OSes cache file-system requests, so 2 file.size() requests one after another cost almost the same
     //          as a first file.size() request alone. So that optimization needs to be carefully benchmarked to prove it
     //          does provide anything -- and my guess: it probably doesn't
+
     var length = Files.size(nioFile);
 
     if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
@@ -490,6 +499,27 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
+    if (EXTRACT_ROOTS_USING_NIO) {
+      final var normalizedPathRootString = Path.of(normalizedPath).getRoot().toString();
+
+      for (Path root : FileSystems.getDefault().getRootDirectories()) {
+        var stringRoot = root.toString();
+
+        if (normalizedPathRootString.equals(stringRoot)) {
+          // root path should be short. See com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache.assertShortFileName
+          if (stringRoot.length() > 1 && (stringRoot.endsWith("\\") || stringRoot.endsWith("/"))) {
+            stringRoot = stringRoot.substring(0, stringRoot.length() - 1);
+          }
+
+          if (PathUtilRt.isWindowsUNCRoot(stringRoot, normalizedPath.indexOf('/', 2))) {
+            stringRoot = stringRoot.replace('\\', '/');
+          }
+
+          return stringRoot;
+        }
+      }
+    }
+
     var rootPath = FileUtil.extractRootPath(normalizedPath);
     return rootPath != null ? rootPath : "";
   }

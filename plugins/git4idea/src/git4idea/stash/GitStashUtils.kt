@@ -20,7 +20,9 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
@@ -64,7 +66,6 @@ import git4idea.util.GitUIUtil
 import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
 import java.awt.Component
-import java.nio.charset.Charset
 
 private val LOG: Logger = Logger.getInstance("#git4idea.stash.GitStashUtils")
 
@@ -371,7 +372,7 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
   val options = arrayOf(GitLogOption.HASH, GitLogOption.PARENTS, GitLogOption.AUTHOR_TIME, GitLogOption.SHORT_REF_LOG_SELECTOR,
                         GitLogOption.SUBJECT) // subject should be the last
   val indexedOptions = options.withIndex().associate { Pair(it.value, it.index) }
-  val charset = Charset.forName(GitConfigUtil.getLogEncoding(project, root))
+  val charset = GitConfigUtil.getLogEncodingCharset(project, root)
 
   val h = GitLineHandler(project, root, GitCommand.STASH.readLockingCommand())
   h.setSilent(true)

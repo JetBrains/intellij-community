@@ -130,6 +130,10 @@ button:focus {
   left: 0;
 }
 
+.autocomplete-items-position {
+  position: relative;
+}
+
 .autocomplete-items div {
   padding: 5px;
   cursor: pointer;

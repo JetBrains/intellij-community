@@ -41,19 +41,15 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
-import com.intellij.openapi.wm.impl.isMergeMainMenuWithWindowTitleOverridden
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
@@ -124,16 +120,10 @@ private val cdExpandNodesWithSingleClick
                              comment = message("checkbox.expand.node.with.single.click.comment"), groupName = uiOptionGroupName)
 private val cdDnDWithAlt
   get() = CheckboxDescriptor(message("dnd.with.alt.pressed.only"), settings::dndWithPressedAltOnly, groupName = uiOptionGroupName)
-private val cdSeparateMainMenu
-  get() = CheckboxDescriptor(message("checkbox.main.menu.separate.toolbar"), settings::separateMainMenu, groupName = uiOptionGroupName)
-
 private val cdUseTransparentMode
   get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), settings.state::enableAlphaMode)
 private val cdUseContrastToolbars
   get() = CheckboxDescriptor(message("checkbox.acessibility.contrast.scrollbars"), settings::useContrastScrollbars)
-private val cdMergeMainMenuWithWindowTitle
-  get() = CheckboxDescriptor(message("checkbox.merge.main.menu.with.window.title"), settings::mergeMainMenuWithWindowTitle,
-                             groupName = windowOptionGroupName)
 private val cdFullPathsInTitleBar
   get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons
@@ -158,10 +148,9 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
     cdShowTreeIndents,
     cdDnDWithAlt,
     cdFullPathsInTitleBar,
-    cdSeparateMainMenu.takeUnless { SystemInfo.isMac },
     cdDifferentiateProjects,
     cdShowMenuIcons
-  ).filterNotNull().map(CheckboxDescriptor::asUiOptionDescriptor)
+  ).map(CheckboxDescriptor::asUiOptionDescriptor)
 }
 
 internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
@@ -181,6 +170,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
 
     return panel {
+      useNewComboBoxRenderer()
+
       val autodetectSupportedPredicate = ComponentPredicate.fromValue(lafManager.autodetectSupported)
       val syncThemeAndEditorSchemePredicate = autodetectSupportedPredicate.and(ComponentPredicate.fromObservableProperty(syncThemeProperty, disposable))
 
@@ -244,7 +235,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           var resetZoom: Cell<ActionLink>? = null
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
-          comboBox(model, textListCellRenderer { it })
+          comboBox(model)
             .bindItem({ settings.ideScale.percentStringValue }, { })
             .onChanged {
               if (IdeScaleTransformer.Settings.validatePercentScaleInput(it.item, false) != null) return@onChanged
@@ -364,9 +355,8 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
                 .selected(colorBlindnessProperty.get() != null)
-              comboBox(supportedValues)
+              comboBox(supportedValues, renderer = textListCellRenderer("") { PlatformEditorBundle.message(it.key) })
                 .enabledIf(enableColorBlindness.selected)
-                .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
                 .comment(UIBundle.message("color.blindness.combobox.comment"))
                 .bind({ if (enableColorBlindness.component.isSelected) it.selectedItem as? ColorBlindness else null },
                       { it, value -> it.selectedItem = value ?: supportedValues.first() },
@@ -409,21 +399,13 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 .comment(cdDifferentiateProjects.comment, 30)
             }
           }
-          if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
-            yield {
-              checkBox(cdSeparateMainMenu).apply {
-                if (!SystemInfo.isWindows) {
-                  comment(message("ide.restart.required.comment"))
-                }
-              }
-            }
-          }
           if (SystemInfo.isMac && MacCustomAppIcon.available()) {
             yield {
               checkBox(message("checkbox.ide.mac.app.icon")).comment(message("ide.restart.required.comment"))
                 .bindSelected({ MacCustomAppIcon.isCustom() }, { MacCustomAppIcon.setCustom(it, true) })
             }
           }
+          yield { checkBox(cdKeepPopupsForToggles) }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
           if (ExperimentalUI.isNewUI()) {
@@ -437,24 +419,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield { checkBox(cdEnableControlsMnemonics) }
           yield { checkBox(cdEnableMenuMnemonics) }
           yield { checkBox(cdShowMenuIcons) }
-          yield { checkBox(cdKeepPopupsForToggles) }
-          if (SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable || CustomWindowHeaderUtil.hideNativeLinuxTitleAvailable) {
-            yield {
-              val checkBox = checkBox(cdMergeMainMenuWithWindowTitle)
-                .gap(RightGap.SMALL)
-              if (SystemInfoRt.isWindows && isMergeMainMenuWithWindowTitleOverridden) {
-                checkBox.enabled(false)
-                contextHelp(message("option.is.overridden.by.jvm.property", MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
-              }
-              if (SystemInfo.isUnix && !SystemInfo.isMac && !CustomWindowHeaderUtil.hideNativeLinuxTitleSupported) {
-                checkBox.enabled(false)
-                checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
-              }
-              else {
-                comment(message("ide.restart.required.comment"))
-              }
-            }
-          }
         }
 
         // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
@@ -493,6 +457,18 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }
         }
 
+        if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
+          row  {
+            comboBox(model = CollectionComboBoxModel<MainMenuDisplayMode>(MainMenuDisplayMode.entries)/* SimpleListCellRenderer<MainMenuDisplayMode>.create { label, value, _ -> label.text = value.description  }*/  )
+              .label(message("main.menu.combobox.label"))
+              .bindItem(settings::mainMenuDisplayMode.toNullableProperty())
+              .apply {
+                if (!SystemInfo.isWindows) {
+                  comment(message("ide.restart.required.comment"))
+                }
+              }
+          }.topGap(TopGap.SMALL).bottomGap(BottomGap.SMALL)
+        }
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
           row {
@@ -514,7 +490,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       groupRowsRange(message("group.window.options")) {
         twoColumnsRow(
-          { checkBox(cdShowToolWindowBars) },
+          { checkBox(cdShowToolWindowBars).apply {
+            enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
+            if(NotRoamableUiSettings.getInstance().xNextStripe) {
+              comment(message("xnext.comment.unavailable"))
+            }
+          } },
           { checkBox(cdLeftToolWindowLayout) },
         )
         if (ExperimentalUI.isNewUI()) {
@@ -529,7 +510,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             )
             twoColumnsRow(
               {
-                checkBox(cdWidescreenToolWindowLayout)
+                checkBox(cdWidescreenToolWindowLayout).apply {
+                  enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
+                  if(NotRoamableUiSettings.getInstance().xNextStripe) {
+                    comment(message("xnext.comment.unavailable"))
+                  }
+                }
                   .gap(RightGap.SMALL)
                 contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
               },
@@ -568,7 +554,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("group.presentation.mode")) {
         row(message("presentation.mode.ide.scale")) {
-          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel(), textListCellRenderer { it })
+          comboBox(IdeScaleTransformer.Settings.createPresentationModeScaleComboboxModel())
             .bindItem({ settings.presentationModeIdeScale.percentStringValue }, { })
             .applyToComponent {
               isEditable = true
@@ -621,19 +607,19 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           {
             val ideAAOptions =
               if (!AntialiasingType.canUseSubpixelAAForIDE()) {
-                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
+                listOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
               }
               else {
-                AntialiasingType.entries.toTypedArray()
+                AntialiasingType.entries
               }
-            comboBox(DefaultComboBoxModel(ideAAOptions), renderer = AAListCellRenderer(false))
+            comboBox(ideAAOptions, renderer = createAAListCellRenderer(false))
               .label(message("label.text.antialiasing.scope.ide"))
               .bindItem(settings::ideAAType.toNullableProperty())
               .accessibleName(message("label.text.antialiasing.scope.ide"))
               .onApply {
                 for (w in Window.getWindows()) {
                   for (c in UIUtil.uiTraverser(w).filter(JComponent::class.java)) {
-                    GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent())
+                    GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAATextInfoForSwingComponent())
                   }
                 }
               }
@@ -641,12 +627,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           {
             val editorAAOptions =
               if (!AntialiasingType.canUseSubpixelAAForEditor()) {
-                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
+                listOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
               }
               else {
-                AntialiasingType.entries.toTypedArray()
+                AntialiasingType.entries
               }
-            comboBox(DefaultComboBoxModel(editorAAOptions), renderer = AAListCellRenderer(true))
+            comboBox(editorAAOptions, renderer = createAAListCellRenderer(true))
               .label(message("label.text.antialiasing.scope.editor"))
               .bindItem(settings::editorAAType.toNullableProperty())
               .accessibleName(message("label.text.antialiasing.scope.editor"))
@@ -658,7 +644,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
   override fun apply() {
     val oldIsSupportScreenReaders = generalSettings.isSupportScreenReaders
-    val oldSeparateMainMenu = settings.separateMainMenu
+    val oldMainMenuDisplayMode = settings.mainMenuDisplayMode
     val oldMergeMainMenuWithWindowTitle = settings.mergeMainMenuWithWindowTitle
 
     val uiSettingsChanged = isModified
@@ -669,7 +655,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
 
     if (oldIsSupportScreenReaders != generalSettings.isSupportScreenReaders ||
-        (!SystemInfo.isWindows && oldSeparateMainMenu != settings.separateMainMenu) ||
+        (!SystemInfo.isWindows && oldMainMenuDisplayMode != settings.mainMenuDisplayMode && listOf(oldMainMenuDisplayMode,  settings.mainMenuDisplayMode).contains(MainMenuDisplayMode.SEPARATE_TOOLBAR)) ||
         oldMergeMainMenuWithWindowTitle != settings.mergeMainMenuWithWindowTitle) {
       RestartDialogImpl.showRestartRequired()
     }
@@ -701,7 +687,6 @@ private fun Row.fontSizeComboBox(prop: MutableProperty<@Nls String?>): Cell<Comb
     .accessibleName(message("presentation.mode.fon.size"))
     .applyToComponent {
       isEditable = true
-      renderer = textListCellRenderer { it }
       selectedItem = prop.get()
     }
     .bind(
@@ -719,24 +704,22 @@ private fun getIntValue(text: String?, defaultValue: Int): Int {
   return defaultValue
 }
 
-private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleListCellRenderer<AntialiasingType>() {
-  private val SUBPIXEL_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
-  private val GREYSCALE_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
-
-  override fun customize(list: JList<out AntialiasingType>, value: AntialiasingType, index: Int, selected: Boolean, hasFocus: Boolean) {
-    val aaType = when (value) {
-      AntialiasingType.SUBPIXEL -> SUBPIXEL_HINT
-      AntialiasingType.GREYSCALE -> GREYSCALE_HINT
-      AntialiasingType.OFF -> null
-    }
-    GraphicsUtil.setAntialiasingType(this, aaType)
-
-    if (myUseEditorFont) {
-      val scheme = EditorColorsManager.getInstance().globalScheme
-      font = UIUtil.getFontWithFallback(scheme.getFont(EditorFontType.PLAIN))
+private fun createAAListCellRenderer(myUseEditorFont: Boolean): ListCellRenderer<AntialiasingType?> {
+  return listCellRenderer {
+    val aaHint = when (value) {
+      AntialiasingType.SUBPIXEL -> RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB
+      AntialiasingType.GREYSCALE -> RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+      AntialiasingType.OFF, null -> RenderingHints.VALUE_TEXT_ANTIALIAS_OFF
     }
 
-    text = value.presentableName
+    text(value?.presentableName ?: "") {
+      renderingHints = mapOf(RenderingHints.KEY_TEXT_ANTIALIASING to aaHint)
+
+      if (myUseEditorFont) {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        font = UIUtil.getFontWithFallback(scheme.getFont(EditorFontType.PLAIN))
+      }
+    }
   }
 }
 

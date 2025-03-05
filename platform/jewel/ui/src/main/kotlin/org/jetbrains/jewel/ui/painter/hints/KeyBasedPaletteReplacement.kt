@@ -15,6 +15,19 @@ private class KeyBasedReplacementPainterSvgPatchHint(val map: Map<String, Color>
     override fun PainterProviderScope.patch(element: Element) {
         element.patchPalette(map)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as KeyBasedReplacementPainterSvgPatchHint
+
+        return map == other.map
+    }
+
+    override fun hashCode(): Int = map.hashCode()
+
+    override fun toString(): String = "KeyBasedReplacementPainterSvgPatchHint(map=$map)"
 }
 
 private fun Element.patchPalette(replacementColors: Map<String, Color>) {

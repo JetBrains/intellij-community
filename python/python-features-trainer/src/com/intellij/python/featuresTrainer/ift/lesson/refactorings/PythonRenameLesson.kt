@@ -3,12 +3,12 @@ package com.intellij.python.featuresTrainer.ift.lesson.refactorings
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.exclusion.ExclusionHandler
+import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
 import org.assertj.swing.fixture.JTreeFixture
 import training.dsl.*
 import training.learn.LessonsBundle
@@ -18,7 +18,7 @@ import javax.swing.JButton
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
-class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesson.name")) {
+internal class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesson.name")) {
   override val testScriptProperties = TaskTestContext.TestScriptProperties(10)
   private val template = """
       class Championship:

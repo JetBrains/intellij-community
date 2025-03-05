@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k
 
@@ -22,7 +22,7 @@ abstract class JKInMemoryFilesSearcher {
 
 internal class JKSingleFileInMemoryFilesSearcher(private val scopeElement: PsiElement) : JKInMemoryFilesSearcher() {
     override fun search(element: KtElement, scope: PsiElement?): Iterable<PsiReference> =
-        doSearch(element, LocalSearchScope(scope ?: scopeElement))
+        doSearch(element, LocalSearchScope(scope ?: scopeElement)).asIterable()
 }
 
 
@@ -32,11 +32,11 @@ internal class JKSingleFileInMemoryFilesSearcher(private val scopeElement: PsiEl
 internal class JKMultipleFilesInMemoryFilesSearcher(private val scopeElements: List<PsiElement>) : JKInMemoryFilesSearcher() {
     override fun search(element: KtElement, scope: PsiElement?): Iterable<PsiReference> {
         if (scope != null) {
-            return doSearch(element, LocalSearchScope(scope))
+            return doSearch(element, LocalSearchScope(scope)).asIterable()
         }
         val result = mutableListOf<PsiReference>()
         for (scopeElement in scopeElements) {
-            result += doSearch(element, LocalSearchScope(scopeElement))
+            result += doSearch(element, LocalSearchScope(scopeElement)).asIterable()
         }
         return result
     }

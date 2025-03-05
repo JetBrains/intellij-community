@@ -24,6 +24,7 @@ $500 (dollars)
 'an' vs. 'and' vs. 'any'
 'arrive' + proper noun ('arrive in' + proper noun)
 'as follow' (as follows)
+'breath of scope' (breadth of scope)
 'by' + passive participle (be)
 'did' with past tense verb
 'does' ... 3rd person verb (base verb)
@@ -473,6 +474,7 @@ GitHub
 Gmail
 Good fuck (luck)
 Google product names
+Google product names (style rules)
 Great (,) thanks
 Great(,) please ...
 Great(,) that is ...
@@ -697,12 +699,14 @@ Materiel (matériel or material)
 Mathematics: +- - ±
 Mathematics: Multiplication: x - ×
 May 20001 (May 2001)
+Maybe you've read a hundred (hundreds) of books
 McDonald's
 Mercedes Benz (Mercedes-Benz)
 Merriam Webster (Merriam-Webster)
 Miami-Dade
 Miami-Dade
 Microsoft product names
+Microsoft product names (style rules)
 Missing 'as' in 'as well as or better than'
 Missing 'to': It's possible do it
 Missing comma 'first come first serve'
@@ -793,6 +797,7 @@ Phillips (Philips) Arena
 Pilates
 Please do this by expire (expiring|the expiration)
 Please(d) to meet you
+Pleaser (Please) let me know when you need these
 Plural form of numbers in 'two dozens of' (two dozen)
 Plural of Pokémon
 Plural verb after 'this' or 'that'
@@ -977,6 +982,7 @@ Translation errors: by/for example
 Twitter (X)
 Two consecutive articles, e.g. 'the a'
 Two consecutive spaces
+Two consecutive spaces following a single character (with two consecutive spaces preceding it)
 Two modal verbs in a row (could should)
 Typography for hypotheses
 Typos that result in swear words
@@ -2105,6 +2111,7 @@ missing apostrophe in 'seasons greetings'
 missing article
 missing article before 'BE + ADJECTIVE + way'
 missing article before 'BE + MOST + ADJECTIVE + NOUN'
+missing comma after 'hey there'
 missing comma after modal verb
 missing comma in 'buy two get one free'
 missing genitive (e.g., 'employee's' instead of 'employee')
@@ -2629,6 +2636,7 @@ spare (spur) of the moment
 sparking (sparkling) wine
 speak (speech)
 speak Americano (American English)
+spell checker.”. (checker.”)
 spilling (spelling) error
 spinal chord (cord)
 splitted (split)

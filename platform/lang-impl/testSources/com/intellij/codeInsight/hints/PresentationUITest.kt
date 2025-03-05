@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.*
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.PlatformTestUtil

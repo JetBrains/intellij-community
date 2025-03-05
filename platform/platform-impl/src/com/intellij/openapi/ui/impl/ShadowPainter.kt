@@ -41,18 +41,6 @@ internal class ShadowPainter(private val top: Icon,
     ApplicationManager.getApplication().messageBus.connect().subscribe(LafManagerListener.TOPIC, LafManagerListener { updateIcons(null) })
   }
 
-  constructor(top: Icon,
-              topRight: Icon,
-              right: Icon,
-              bottomRight: Icon,
-              bottom: Icon,
-              bottomLeft: Icon,
-              left: Icon,
-              topLeft: Icon,
-              borderColor: Color?) : this(top, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft) {
-    this.borderColor = borderColor
-  }
-
   private var cachedScaleContext: ScaleContext? = null
 
   fun setBorderColor(borderColor: Color?) {

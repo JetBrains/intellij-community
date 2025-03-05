@@ -1,4 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:OptIn(UnsafeCastFunction::class)
 
 package org.jetbrains.kotlin.idea.core
 
@@ -14,12 +16,13 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
 import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
+import org.jetbrains.kotlin.idea.base.psi.predictImplicitModality
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
+import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -57,6 +60,7 @@ import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCallExpression {
@@ -188,6 +192,7 @@ private fun FunctionDescriptor.allowsMoveOfLastParameterOutsideParentheses(
     return movableParametersOfCandidateCount == lambdaAndCallableReferencesInOriginalCallCount
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use addElement directly", ReplaceWith("addElement", "org.jetbrains.kotlin.idea.refactoring.addElement"))
 fun KtBlockExpression.appendElement(element: KtElement, addNewLine: Boolean = false): KtElement {
    return addElement(element, addNewLine)
@@ -446,26 +451,6 @@ private fun mapModalityToken(modalityToken: IElementType): Modality = when (moda
     KtTokens.OPEN_KEYWORD -> Modality.OPEN
     KtTokens.ABSTRACT_KEYWORD -> Modality.ABSTRACT
     else -> error("Unexpected modality keyword $modalityToken")
-}
-
-private fun KtDeclaration.predictImplicitModality(): KtModifierKeywordToken {
-    if (this is KtClassOrObject) {
-        if (this is KtClass && this.isInterface()) return KtTokens.ABSTRACT_KEYWORD
-        return KtTokens.FINAL_KEYWORD
-    }
-    val klass = containingClassOrObject ?: return KtTokens.FINAL_KEYWORD
-    if (hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-        if (klass.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
-            klass.hasModifier(KtTokens.OPEN_KEYWORD) ||
-            klass.hasModifier(KtTokens.SEALED_KEYWORD)
-        ) {
-            return KtTokens.OPEN_KEYWORD
-        }
-    }
-    if (klass is KtClass && klass.isInterface() && !hasModifier(KtTokens.PRIVATE_KEYWORD)) {
-        return if (hasBody()) KtTokens.OPEN_KEYWORD else KtTokens.ABSTRACT_KEYWORD
-    }
-    return KtTokens.FINAL_KEYWORD
 }
 
 fun KtParameter.dropDefaultValue() {

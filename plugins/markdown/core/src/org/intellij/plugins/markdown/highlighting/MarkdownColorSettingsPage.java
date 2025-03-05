@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.highlighting;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -26,8 +26,7 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRIBUTE_DESCRIPTORS = AttributeDescriptorsHolder.INSTANCE.get();
 
   @Override
-  @NotNull
-  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  public @NotNull Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     final Map<String, TextAttributesKey> result = new HashMap<>();
 
     result.put("hh1", MarkdownHighlighterColors.HEADER_LEVEL_1);
@@ -78,9 +77,7 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getDemoText() {
+  public @NonNls @NotNull String getDemoText() {
     try (Reader reader = new InputStreamReader(getClass().getResourceAsStream("SampleDocument.md"), StandardCharsets.UTF_8)) {
       String result = StreamUtil.readText(reader);
       return StringUtil.convertLineSeparators(result);
@@ -91,20 +88,17 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return MarkdownBundle.message("markdown.plugin.name");
   }
 
   @Override
-  @NotNull
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     return new MarkdownSyntaxHighlighter();
   }
 
   @Override
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 

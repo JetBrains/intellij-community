@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@SuppressWarnings("PostfixTemplateDescriptionNotFound")
 public class PostfixTemplateWrapper extends PostfixTemplate {
   private final @NotNull PostfixTemplate myDelegate;
 

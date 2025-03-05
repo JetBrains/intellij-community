@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManager;
@@ -343,6 +345,11 @@ public class ClsFileImpl extends PsiBinaryFileImpl
           PsiFileFactory factory = PsiFileFactory.getInstance(getManager().getProject());
           PsiFile mirror = factory.createFileFromText(fileName, JavaLanguage.INSTANCE, mirrorText, false, false, true);
           mirror.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, getLanguageLevel());
+          CodeInsightContextManagerImpl contextManager = CodeInsightContextManagerImpl.Companion.getInstanceImpl(getProject());
+          if (contextManager.isSharedSourceSupportEnabled()) {
+            CodeInsightContext context = contextManager.getCodeInsightContext(getViewProvider());
+            contextManager.setCodeInsightContext(mirror.getViewProvider(), context);
+          }
 
           mirrorTreeElement = SourceTreeToPsiMap.psiToTreeNotNull(mirror);
           try {
@@ -397,6 +404,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     return (PsiFile)getMirror();
   }
 
+  @Override
   public @Nullable PsiFile getCachedMirror() {
     TreeElement mirrorTreeElement = dereference(myMirrorFileElement);
     return mirrorTreeElement == null ? null : (PsiFile)mirrorTreeElement.getPsi();
@@ -565,7 +573,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       if (module) {
         PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, "", level, true);
         ModuleStubBuildingVisitor visitor = new ModuleStubBuildingVisitor(stub);
-        reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+        reader.accept(visitor, visitor.attributes(), ClassReader.SKIP_FRAMES);
         if (visitor.getResult() != null) return stub;
       }
       else {

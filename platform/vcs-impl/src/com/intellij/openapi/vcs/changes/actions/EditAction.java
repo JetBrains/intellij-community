@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -9,8 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,10 +24,10 @@ public final class EditAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    List<VirtualFile> files = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+    Iterable<VirtualFile> files = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
     assert project != null;
     assert files != null;
-    editFilesAndShowErrors(project, files);
+    editFilesAndShowErrors(project, JBIterable.from(files).toList());
   }
 
   public static void editFilesAndShowErrors(@NotNull Project project, @NotNull List<? extends VirtualFile> files) {
@@ -61,8 +63,8 @@ public final class EditAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    List<VirtualFile> files = e.getData(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY);
-    boolean enabled = files != null && !files.isEmpty();
+    Iterable<VirtualFile> files = e.getData(ChangesListView.MODIFIED_WITHOUT_EDITING_DATA_KEY);
+    boolean enabled = files != null && !JBIterable.from(files).isEmpty();
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 

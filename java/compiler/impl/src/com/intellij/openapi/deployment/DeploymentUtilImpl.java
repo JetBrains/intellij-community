@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.deployment;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -36,9 +36,7 @@ public final class DeploymentUtilImpl extends DeploymentUtil {
   }
 
   @Override
-  @Nullable
-  @Nls
-  public String getConfigFileErrorMessage(final ConfigFile configFile) {
+  public @Nullable @Nls String getConfigFileErrorMessage(final ConfigFile configFile) {
     if (configFile.getVirtualFile() == null) {
       String path = FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(configFile.getUrl()));
       return JavaCompilerBundle.message("mesage.text.deployment.descriptor.file.not.exist", path);

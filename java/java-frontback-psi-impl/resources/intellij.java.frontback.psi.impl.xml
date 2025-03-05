@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.java.frontback.psi.impl.fake">
+<idea-plugin>
   <module value="com.intellij.java.frontback.psi.impl" />
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlValidity -->

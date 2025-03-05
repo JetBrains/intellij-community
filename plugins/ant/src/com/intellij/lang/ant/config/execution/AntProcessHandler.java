@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.ExecutionException;
@@ -36,40 +36,34 @@ public final class AntProcessHandler extends KillableColoredProcessHandler {
     });
   }
 
-  @NotNull
   @Override
-  protected Reader createProcessOutReader() {
+  protected @NotNull Reader createProcessOutReader() {
     return myOut.createReader();
   }
 
-  @NotNull
   @Override
-  protected Reader createProcessErrReader() {
+  protected @NotNull Reader createProcessErrReader() {
     return myErr.createReader();
   }
 
-  @NotNull
-  public Extractor getErr() {
+  public @NotNull Extractor getErr() {
     return myErr;
   }
 
-  @NotNull
-  public Extractor getOut() {
+  public @NotNull Extractor getOut() {
     return myOut;
   }
 
-  @NotNull
-  public static AntProcessHandler runCommandLine(@NotNull TargetedCommandLine commandLine,
-                                                 @NotNull TargetEnvironment environment,
-                                                 @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
+  public static @NotNull AntProcessHandler runCommandLine(@NotNull TargetedCommandLine commandLine,
+                                                          @NotNull TargetEnvironment environment,
+                                                          @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
     final AntProcessHandler processHandler = new AntProcessHandler(commandLine, environment, progressIndicator);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
 
-  @NotNull
   @Override
-  protected BaseOutputReader.Options readerOptions() {
+  protected @NotNull BaseOutputReader.Options readerOptions() {
     return BaseOutputReader.Options.NON_BLOCKING;
   }
 }

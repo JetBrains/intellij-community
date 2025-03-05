@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -34,15 +34,13 @@ public class RemoveUnusedGrParameterFix implements IntentionAction {
     myName = parameter.getName();
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return GroovyBundle.message("remove.parameter.0", myName);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("remove.unused.parameter");
   }
 
@@ -66,8 +64,7 @@ public class RemoveUnusedGrParameterFix implements IntentionAction {
     processor.run();
   }
 
-  @Nullable
-  private static GrParameter getParameter(Editor editor, PsiFile file) {
+  private static @Nullable GrParameter getParameter(Editor editor, PsiFile file) {
     PsiElement at = file.findElementAt(editor.getCaretModel().getOffset());
     GrParameter parameter = PsiTreeUtil.getParentOfType(at, GrParameter.class);
     if (parameter == null) return null;

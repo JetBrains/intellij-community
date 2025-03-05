@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
@@ -19,7 +19,7 @@ public class LockDialog extends OptionsDialog {
   private JTextArea myLockTextArea;
   private JCheckBox myForceCheckBox;
 
-  @NonNls private static final String HELP_ID = "reference.VCS.subversion.lockFile";
+  private static final @NonNls String HELP_ID = "reference.VCS.subversion.lockFile";
   private final VcsShowSettingOption myOption;
 
   public LockDialog(Project project, boolean canBeParent, boolean multiple, @NonNls VcsShowSettingOption option) {
@@ -76,7 +76,8 @@ public class LockDialog extends OptionsDialog {
 
     myLockTextArea = new JTextArea(7, 25);
     JScrollPane scrollPane =
-      ScrollPaneFactory.createScrollPane(myLockTextArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      ScrollPaneFactory.createScrollPane(myLockTextArea, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setMinimumSize(scrollPane.getPreferredSize());
     panel.add(scrollPane, gc);
     commentLabel.setLabelFor(myLockTextArea);

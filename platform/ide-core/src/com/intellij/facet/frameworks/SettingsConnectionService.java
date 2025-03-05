@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.frameworks;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,23 +25,19 @@ public abstract class SettingsConnectionService {
     return new String[]{SERVICE_URL_ATTR_NAME};
   }
 
-  @Nullable
-  private final String mySettingsUrl;
-  @Nullable
-  private final String myDefaultServiceUrl;
+  private final @Nullable String mySettingsUrl;
+  private final @Nullable String myDefaultServiceUrl;
 
   protected SettingsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl) {
     mySettingsUrl = settingsUrl;
     myDefaultServiceUrl = defaultServiceUrl;
   }
 
-  @Nullable
-  public String getDefaultServiceUrl() {
+  public @Nullable String getDefaultServiceUrl() {
     return myDefaultServiceUrl;
   }
 
-  @Nullable
-  private Map<String, String> readSettings(final String... attributes) {
+  private @Nullable Map<String, String> readSettings(final String... attributes) {
     if (mySettingsUrl == null) return Collections.emptyMap();
     return HttpRequests.request(mySettingsUrl)
       .productNameAsUserAgent()
@@ -63,14 +59,12 @@ public abstract class SettingsConnectionService {
       }, Collections.emptyMap(), LOG);
   }
 
-  @Nullable
-  public String getServiceUrl() {
+  public @Nullable String getServiceUrl() {
     final String serviceUrl = getSettingValue(SERVICE_URL_ATTR_NAME);
     return serviceUrl == null ? getDefaultServiceUrl() : serviceUrl;
   }
 
-  @Nullable
-  protected String getSettingValue(@NotNull String attributeValue) {
+  protected @Nullable String getSettingValue(@NotNull String attributeValue) {
     if (myAttributesMap == null || myAttributesMap.isEmpty()) {
       myAttributesMap = readSettings(getAttributeNames());
     }

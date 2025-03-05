@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -22,13 +22,9 @@ import java.util.function.Predicate;
 public class JShellParser extends JavaParser {
   public static final JShellParser INSTANCE = new JShellParser();
 
-  private static final TokenSet TOP_LEVEL_DECLARATIONS = TokenSet.create(
-    JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS
-  );
-  private static final Predicate<IElementType> IMPORT_PARSED_CONDITION = tokenType -> JavaElementType.IMPORT_STATEMENT.equals(tokenType);
-  private static final Predicate<IElementType> EXPRESSION_PARSED_CONDITION = type -> type != JavaElementType.REFERENCE_EXPRESSION;
-  private static final Predicate<IElementType> STATEMENTS_PARSED_CONDITION = tokenType-> !JavaElementType.DECLARATION_STATEMENT.equals(tokenType) &&
-                                                                                         !JavaElementType.EXPRESSION_STATEMENT.equals(tokenType);
+  private static final TokenSet TOP_LEVEL_DECLARATIONS =
+    TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS);
+  private static final Predicate<IElementType> IMPORT_PARSED_CONDITION = tokenType -> JavaElementType.IMPORT_STATEMENT == tokenType;
   private static final Predicate<IElementType> DECLARATION_PARSED_CONDITION = tokenType -> TOP_LEVEL_DECLARATIONS.contains(tokenType);
 
   private final FileParser myJShellFileParser = new FileParser(this) {
@@ -60,30 +56,21 @@ public class JShellParser extends JavaParser {
           }
           else {
             revert(marker);
-            marker = getExpressionParser().parse(builder);
-            // in case of reference expression try other options and only if they fail, parse as expression again
-            if (isParsed(marker, builder, EXPRESSION_PARSED_CONDITION) &&
-                !((PsiBuilderImpl)builder).hasErrorsAfter(marker)) { // ensure that it is error-free expression to avoid parsing Iterable<?> as condition
-              wrapperType = JShellElementType.STATEMENTS_HOLDER;
+            marker = getDeclarationParser().parse(builder, DeclarationParser.Context.JSHELL);
+            if (isParsed(marker, builder, DECLARATION_PARSED_CONDITION) && !((PsiBuilderImpl)builder).hasErrorsAfter(marker)) {
+              wrapper.drop(); // don't need wrapper for top-level declaration
+              wrapper = null;
             }
             else {
               revert(marker);
               marker = getStatementParser().parseStatement(builder);
-              if (isParsed(marker, builder, STATEMENTS_PARSED_CONDITION)) {
+              if (marker != null && !((PsiBuilderImpl)builder).hasErrorsAfter(marker)) {
                 wrapperType = JShellElementType.STATEMENTS_HOLDER;
               }
               else {
                 revert(marker);
-                marker = getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS);
-                if (isParsed(marker, builder, DECLARATION_PARSED_CONDITION)) {
-                  wrapper.drop(); // don't need wrapper for top-level declaration
-                  wrapper = null;
-                }
-                else {
-                  revert(marker);
-                  marker = getExpressionParser().parse(builder);
-                  wrapperType = marker != null? JShellElementType.STATEMENTS_HOLDER : null;
-                }
+                marker = getExpressionParser().parse(builder);
+                wrapperType = marker != null ? JShellElementType.STATEMENTS_HOLDER : null;
               }
             }
           }

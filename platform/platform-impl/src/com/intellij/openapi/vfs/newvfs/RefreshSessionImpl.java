@@ -229,7 +229,7 @@ final class RefreshSessionImpl extends RefreshSession {
           fireEventsInWriteAction(events, appliers, asyncProcessing);
           t = NANOSECONDS.toMillis(System.nanoTime() - t);
           if (t > PROGRESS_THRESHOLD_MILLIS) {
-            LOG.warn("Long VFS change processing (" + t + "ms, " + events.size() + " events): " + StringUtil.trimLog(events.toString(), 10_000));
+            LOG.warn("Long VFS change processing (" + t + "ms, " + events.size() + " events): " + StringUtil.trimLog(events.subList(0, Math.min(events.size(), 100)).toString(), 10_000));
           }
         });
       }

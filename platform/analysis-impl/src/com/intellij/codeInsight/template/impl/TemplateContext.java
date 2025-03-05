@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.LiveTemplateContext;
@@ -19,20 +19,21 @@ import java.util.Map;
 public final class TemplateContext {
   private volatile Map<String, Boolean> myContextStates = Map.of();
 
-  @NotNull
-  public TemplateContext createCopy() {
+  public @NotNull TemplateContext createCopy() {
     TemplateContext cloneResult = new TemplateContext();
     cloneResult.myContextStates = myContextStates;
     return cloneResult;
   }
 
-  static boolean contextsEqual(@NotNull LiveTemplateContextsSnapshot allContexts,
+  @ApiStatus.Internal
+  public static boolean contextsEqual(@NotNull LiveTemplateContextsSnapshot allContexts,
                                @NotNull TemplateImpl thisTemplate,
                                @NotNull TemplateImpl defaultTemplate) {
     return getDifference(allContexts, thisTemplate.getTemplateContext(), defaultTemplate.getTemplateContext()) == null;
   }
 
-  static @Nullable LiveTemplateContext getDifference(@NotNull LiveTemplateContextsSnapshot allContexts,
+  @ApiStatus.Internal
+  public static @Nullable LiveTemplateContext getDifference(@NotNull LiveTemplateContextsSnapshot allContexts,
                                                      @NotNull TemplateContext thisContext,
                                                      @NotNull TemplateContext defaultContext) {
     for (LiveTemplateContext value : allContexts.getLiveTemplateContexts()) {
@@ -43,7 +44,8 @@ public final class TemplateContext {
     return null;
   }
 
-  static @Nullable TemplateContextType getDifferenceType(@NotNull LiveTemplateContextsSnapshot allContexts,
+  @ApiStatus.Internal
+  public static @Nullable TemplateContextType getDifferenceType(@NotNull LiveTemplateContextsSnapshot allContexts,
                                                          @NotNull TemplateContext thisContext,
                                                          @NotNull TemplateContext defaultContext) {
     LiveTemplateContext differenceExtension = getDifference(allContexts, thisContext, defaultContext);

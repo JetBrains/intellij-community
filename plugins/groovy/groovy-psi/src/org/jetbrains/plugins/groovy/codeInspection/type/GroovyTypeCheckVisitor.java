@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -540,7 +540,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   @Override
-  public void visitParameterList(@NotNull final GrParameterList parameterList) {
+  public void visitParameterList(final @NotNull GrParameterList parameterList) {
     PsiElement parent = parameterList.getParent();
     if (!(parent instanceof GrFunctionalExpression)) return;
 

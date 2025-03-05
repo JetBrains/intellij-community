@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.diagnostic.PluginException;
@@ -61,8 +61,9 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     return plugin;
   }
 
+  @ApiStatus.Internal
   @Override
-  @NotNull Presentation createTemplatePresentation() {
+  public @NotNull Presentation createTemplatePresentation() {
     return templatePresentation.get();
   }
 

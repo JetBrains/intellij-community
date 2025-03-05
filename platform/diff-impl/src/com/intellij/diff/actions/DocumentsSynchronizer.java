@@ -17,9 +17,9 @@ import java.beans.PropertyChangeListener;
 
 @ApiStatus.Internal
 public abstract class DocumentsSynchronizer {
-  @NotNull protected final Document myDocument1;
-  @NotNull protected final Document myDocument2;
-  @Nullable protected final Project myProject;
+  protected final @NotNull Document myDocument1;
+  protected final @NotNull Document myDocument2;
+  protected final @Nullable Project myProject;
 
   protected boolean myDuringModification = false;
 
@@ -49,13 +49,11 @@ public abstract class DocumentsSynchronizer {
     myDocument2 = document2;
   }
 
-  @NotNull
-  public Document getDocument1() {
+  public @NotNull Document getDocument1() {
     return myDocument1;
   }
 
-  @NotNull
-  public Document getDocument2() {
+  public @NotNull Document getDocument2() {
     return myDocument2;
   }
 

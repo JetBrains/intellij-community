@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl
 
 import com.intellij.internal.statistic.FUCollectorTestCase
@@ -19,8 +19,8 @@ import com.intellij.platform.ml.feature.FeatureSelector
 import com.intellij.platform.ml.impl.logs.LanguageSpecific
 import com.intellij.platform.ml.impl.logs.Versioned
 import com.intellij.platform.ml.logs.AnalysisMethods
-import com.intellij.platform.ml.logs.NO_DESCRIPTION
 import com.intellij.platform.ml.logs.EntireSessionLoggingStrategy
+import com.intellij.platform.ml.logs.NO_DESCRIPTION
 import com.intellij.platform.ml.logs.schema.BooleanEventField
 import com.intellij.platform.ml.logs.schema.EventField
 import com.intellij.platform.ml.logs.schema.EventPair
@@ -119,7 +119,7 @@ object MockTask : MLTask<Double>(
   )
 )
 
-class SomeStructureAnalyser<M : MLModel<Double>> : StructureAnalyser<M, Double> {
+internal class SomeStructureAnalyser<M : MLModel<Double>> : StructureAnalyser<M, Double> {
   companion object {
     val SESSION_IS_GOOD = FeatureDeclaration.boolean("very_good_session")
     val LOOKUP_INDEX = FeatureDeclaration.int("lookup_index")

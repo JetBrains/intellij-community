@@ -62,7 +62,7 @@ public final class LibraryTypeServiceImpl extends LibraryTypeService {
   }
 
   public static @NotNull String suggestLibraryName(@NotNull List<? extends OrderRoot> roots) {
-    if (roots.size() >= 1) {
+    if (!roots.isEmpty()) {
       return FileUtilRt.getNameWithoutExtension(PathUtil.getFileName(roots.get(0).getFile().getPath()));
     }
     return DEFAULT_LIBRARY_NAME;

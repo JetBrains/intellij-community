@@ -3,4 +3,3 @@ open class A(vararg strings: String = arrayOf("a", "b"))
 
 class B(vararg strings: String = arrayOf("a", "b")) : A(*strings)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix
-/* IGNORE_K2 */

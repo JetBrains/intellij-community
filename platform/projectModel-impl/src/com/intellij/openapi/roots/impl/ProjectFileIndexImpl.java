@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -6,15 +6,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.*;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
@@ -95,9 +103,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return getModuleForFile(file, true);
   }
 
-  @Nullable
   @Override
-  public Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+  public @Nullable Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion) {
     WorkspaceFileSetWithCustomData<ModuleRelatedRootData> fileSet =
       myWorkspaceFileIndex.findFileSetWithCustomData(file, honorExclusion, true, false, false, false, ModuleRelatedRootData.class);
     if (fileSet == null) return null;
@@ -105,8 +112,15 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
-  @NotNull
-  public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
+  public @NotNull Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion) {
+    List<WorkspaceFileSetWithCustomData<ModuleRelatedRootData>> fileSet = myWorkspaceFileIndex.findFileSetsWithCustomData(
+      file, honorExclusion, true, false, false, false, ModuleRelatedRootData.class
+    );
+    return ContainerUtil.map2LinkedSet(fileSet, s -> s.getData().getModule());
+  }
+
+  @Override
+  public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
     return myDirectoryIndex.getOrderEntries(file);
   }
 
@@ -220,6 +234,52 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return fileSet != null ? fileSet.getRoot() : null;
   }
 
+  public @NotNull Collection<RootDescriptor> getModuleSourceOrLibraryClassesRoots(@NotNull VirtualFile file) {
+    WorkspaceFileInternalInfo info = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false, false);
+    List<WorkspaceFileSetWithCustomData<?>> fileSets = info.findFileSets(it -> {
+      WorkspaceFileKind kind = it.getKind();
+      return kind.isContent() && it.getData() instanceof ModuleOrLibrarySourceRootData || kind == WorkspaceFileKind.EXTERNAL;
+    });
+
+    if (fileSets.isEmpty()) return Collections.emptyList();
+
+    SmartList<RootDescriptor> result = new SmartList<>();
+
+    ImmutableEntityStorage snapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
+    for (WorkspaceFileSetWithCustomData<?> set : fileSets) {
+      if (set instanceof StoredFileSet) {
+        WorkspaceFileSetData data = set.getData();
+        WorkspaceEntity entity = ((StoredFileSet)set).getEntityPointer().resolve(snapshot);
+        if (entity instanceof LibraryEntity) {
+          Library library = LibraryEntityUtils.findLibraryBridge((LibraryEntity)entity, snapshot);
+          if (library != null) {
+            result.add(new LibraryRootDescriptor(set.getRoot(), library));
+          }
+        }
+        else if (data instanceof ModuleSourceRootData) {
+          Module module = ((ModuleSourceRootData)data).getModule();
+          result.add(new ModuleRootDescriptor(set.getRoot(), module));
+        }
+        else {
+          Sdk sdk = LibrariesAndSdkContributors.Companion.getSdk$intellij_platform_projectModel_impl(set);
+          if (sdk != null) {
+            result.add(new SdkRootDescriptor(set.getRoot(), sdk));
+          }
+
+          Library globalLibrary = LibrariesAndSdkContributors.Companion.getGlobalLibrary$intellij_platform_projectModel_impl(set);
+          if (globalLibrary != null) {
+            result.add(new LibraryRootDescriptor(set.getRoot(), globalLibrary));
+          }
+        }
+      }
+    }
+    if (result.size() != 1) {
+      // distinct, sorted
+      return new LinkedHashSet<>(result);
+    }
+    return result;
+  }
+
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     WorkspaceFileSet fileSet =
@@ -248,9 +308,8 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @SuppressWarnings("deprecation")
-  @Nullable
   @Override
-  public SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
+  public @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet =
       myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, false, false, false, ModuleSourceRootData.class);
     if (fileSet == null) return null;

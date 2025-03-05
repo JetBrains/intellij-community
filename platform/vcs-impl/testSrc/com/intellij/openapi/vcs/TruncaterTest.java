@@ -1,20 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
-import com.intellij.openapi.vcs.ui.CommitMessage;
-import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase;
-import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.VcsUserRegistry;
-import com.intellij.vcs.log.impl.VcsUserImpl;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
 
 public class TruncaterTest extends LightPlatformCodeInsightFixture4TestCase {
   @Test

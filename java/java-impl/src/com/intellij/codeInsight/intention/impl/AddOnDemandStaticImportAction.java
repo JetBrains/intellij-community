@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -114,10 +115,15 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
     PsiClass classToImport = getClassToPerformStaticImport(element);
-    if (classToImport != null) {
-      return Presentation.of(JavaBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName()));
+    if (classToImport == null) {
+      return null;
     }
-    return null;
+    Project project = element.getProject();
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    if (codeStyleManager.isStaticAutoImportName(classToImport.getQualifiedName())) {
+      return null;
+    }
+    return Presentation.of(JavaBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName()));
   }
 
   public static boolean invoke(final Project project, PsiFile file, final Editor editor, @NotNull PsiElement element) {
@@ -150,8 +156,7 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
       }
       boolean alreadyImported = false;
       String qualifiedName = aClass.getQualifiedName();
-      if (qualifiedName != null &&
-          ImportUtils.createImplicitImportChecker(psiJavaFile).isImplicitlyImported(new ImportUtils.Import(qualifiedName + ".*", true))) {
+      if (qualifiedName != null && ImportUtils.createImplicitImportChecker(psiJavaFile).isImplicitlyImported(qualifiedName + ".*", true)) {
         alreadyImported = true;
       }
       if (!alreadyImported) {

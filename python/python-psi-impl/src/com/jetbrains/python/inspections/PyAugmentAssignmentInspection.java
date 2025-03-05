@@ -46,23 +46,19 @@ import java.util.Set;
  */
 public final class PyAugmentAssignmentInspection extends PyInspection {
 
-  @NotNull
-  private static final TokenSet OPERATIONS = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
-                                                             PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND,
-                                                             PyTokenTypes.OR, PyTokenTypes.XOR, PyTokenTypes.LTLT, PyTokenTypes.GTGT,
-                                                             PyTokenTypes.EXP);
-  @NotNull
-  private static final TokenSet COMMUTATIVE_OPERATIONS =
+  private static final @NotNull TokenSet OPERATIONS = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
+                                                                      PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND,
+                                                                      PyTokenTypes.OR, PyTokenTypes.XOR, PyTokenTypes.LTLT, PyTokenTypes.GTGT,
+                                                                      PyTokenTypes.EXP);
+  private static final @NotNull TokenSet COMMUTATIVE_OPERATIONS =
     TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MULT, PyTokenTypes.OR, PyTokenTypes.AND);
 
-  @NotNull
-  private static final List<String> SEQUENCE_METHODS = Arrays.asList(PyNames.LEN, PyNames.ITER, PyNames.GETITEM, PyNames.CONTAINS);
+  private static final @NotNull List<String> SEQUENCE_METHODS = Arrays.asList(PyNames.LEN, PyNames.ITER, PyNames.GETITEM, PyNames.CONTAINS);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 

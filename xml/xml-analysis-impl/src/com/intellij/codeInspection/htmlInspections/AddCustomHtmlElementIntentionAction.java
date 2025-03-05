@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.htmlInspections;
 
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
   private final String myName;
   private final @IntentionName String myText;
-  @NotNull private final Key<HtmlUnknownElementInspection> myInspectionKey;
+  private final @NotNull Key<HtmlUnknownElementInspection> myInspectionKey;
 
   public AddCustomHtmlElementIntentionAction(@NotNull Key<HtmlUnknownElementInspection> inspectionKey, String name, @IntentionName String text) {
     myInspectionKey = inspectionKey;
@@ -27,19 +27,17 @@ public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myText;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlAnalysisBundle.message("html.quickfix.family");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();

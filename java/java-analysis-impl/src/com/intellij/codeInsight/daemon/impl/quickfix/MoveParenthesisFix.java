@@ -2,14 +2,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.ArrayUtil;
@@ -20,6 +19,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class MoveParenthesisFix extends PsiUpdateModCommandAction<PsiCallExpression> {
   private final int myPos;
@@ -78,7 +78,7 @@ public final class MoveParenthesisFix extends PsiUpdateModCommandAction<PsiCallE
     return parentCopy;
   }
 
-  public static boolean registerFix(@NotNull HighlightInfo.Builder info, PsiCallExpression callExpression, final CandidateInfo[] candidates, TextRange fixRange) {
+  public static boolean registerFix(@NotNull Consumer<? super CommonIntentionAction> info, PsiCallExpression callExpression, final CandidateInfo[] candidates) {
     PsiExpressionList parent = ObjectUtils.tryCast(callExpression.getParent(), PsiExpressionList.class);
     if (parent == null) return false;
     PsiCallExpression parentCall = ObjectUtils.tryCast(parent.getParent(), PsiCallExpression.class);
@@ -112,7 +112,7 @@ public final class MoveParenthesisFix extends PsiUpdateModCommandAction<PsiCallE
       fix = new MoveParenthesisFix(parentCall, pos, shift);
     }
     if (fix == null) return false;
-    info.registerFix(fix, null, null, fixRange, null);
+    info.accept(fix);
     return true;
   }
 }

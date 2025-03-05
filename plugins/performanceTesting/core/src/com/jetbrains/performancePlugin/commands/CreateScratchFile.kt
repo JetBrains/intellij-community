@@ -4,7 +4,7 @@ import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.lang.Language
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -42,7 +42,7 @@ internal class CreateScratchFile(text: String, line: Int) : PlaybackCommandCorou
   private suspend fun deleteFileIfExist(context: PlaybackContext, fileName: String) {
     val prevFile = readAction { ScratchRootType.getInstance().findFile(context.project, fileName, ScratchFileService.Option.existing_only) }
     if (prevFile != null && prevFile.exists()) {
-      writeAction {
+      edtWriteAction {
         prevFile.delete(this)
       }
     }

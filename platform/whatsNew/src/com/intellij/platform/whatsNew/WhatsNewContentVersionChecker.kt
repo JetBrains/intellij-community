@@ -44,6 +44,16 @@ internal class WhatsNewContentVersionChecker {
     internal fun shouldShowWhatsNew(
       storedVersion: WhatsNewContent.ContentVersion,
       newVersion: WhatsNewContent.ContentVersion): Boolean {
+      if (storedVersion.eap == null && newVersion.eap == null) {
+        if (storedVersion.hash.nullize() == null || newVersion.hash.nullize() == null) {
+          // Both versions are release ⇒ compare versions only.
+          return newVersion > storedVersion
+        }
+
+        // Both versions are release but might have the same hash ⇒ compare versions and hash.
+        return newVersion > storedVersion && storedVersion.hash != newVersion.hash
+      }
+
       if (storedVersion.hash.nullize() != null && newVersion.hash.nullize() != null) {
         // If both versions have hashes, then show any new content (i.e., hashes are different and the version is new).
         return storedVersion.hash != newVersion.hash && newVersion >= storedVersion

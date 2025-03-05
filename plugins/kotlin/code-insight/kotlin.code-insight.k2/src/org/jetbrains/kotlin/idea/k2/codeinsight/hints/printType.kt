@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -62,15 +63,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
         is KaTypeParameterType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeParameterTypeRenderer.AS_SOURCE
             val symbol = type.symbol
-            text(
-                type.name.asString(),
-                symbol.psi?.createSmartPointer()?.let {
-                    InlayActionData(
-                        PsiPointerInlayActionPayload(it),
-                        PsiPointerInlayActionNavigationHandler.HANDLER_ID
-                    )
-                }
-            )
+            printSymbolPsi(symbol, type.name.asString())
         }
         is KaIntersectionType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtIntersectionTypeRenderer.AS_INTERSECTION
@@ -84,6 +77,10 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
         }
         is KaFunctionType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+            if (type.isSuspend) {
+                text(KtTokens.SUSPEND_KEYWORD.value)
+                text(" ")
+            }
             type.receiverType?.let {
                 printKtType(it)
                 text(".")
@@ -115,7 +112,11 @@ context(KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
     val truncatedName = truncatedName(type)
     if (truncatedName.isNotEmpty()) {
-        printClassId(type.classId, truncatedName)
+        if (type.classId.isLocal) {
+            printSymbolPsi(type.symbol, truncatedName)
+        } else {
+            printClassId(type.classId, truncatedName)
+        }
     }
 
     val ownTypeArguments = type.typeArguments
@@ -170,6 +171,18 @@ private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String)
             )
         )
     }
+}
+
+private fun PresentationTreeBuilder.printSymbolPsi(symbol: KaSymbol, name: String) {
+    text(
+        name,
+        symbol.psi?.createSmartPointer()?.let {
+            InlayActionData(
+                PsiPointerInlayActionPayload(it),
+                PsiPointerInlayActionNavigationHandler.HANDLER_ID
+            )
+        }
+    )
 }
 
 private fun isMutabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
@@ -231,7 +244,7 @@ private fun truncatedName(classType: KaClassType): String {
         .takeIf { names.size <= 1 || it.length < PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH }
         ?.let { return it }
 
-    var lastJoinString: String = ""
+    var lastJoinString = ""
     for (name in names.reversed()) {
         val nameAsString = name.asString()
         if (lastJoinString.length + nameAsString.length + 1 > PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH) {

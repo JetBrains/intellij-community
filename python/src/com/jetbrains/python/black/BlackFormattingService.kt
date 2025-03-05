@@ -5,41 +5,41 @@ import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.formatting.FormatTextRanges
 import com.intellij.formatting.service.AsyncDocumentFormattingService
 import com.intellij.formatting.service.AsyncFormattingRequest
+import com.intellij.formatting.service.CoreFormattingService
 import com.intellij.formatting.service.FormattingService
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorLastActionTracker
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.ui.LightweightHint
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
 import org.jetbrains.annotations.Nls
-import java.awt.Container
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import kotlin.time.toKotlinDuration
 
 
+private val NAME: String = PyBundle.message("black.formatting.service.name")
+val DEFAULT_CHARSET: Charset = StandardCharsets.UTF_8
+private val FEATURES: Set<FormattingService.Feature> = setOf(FormattingService.Feature.FORMAT_FRAGMENTS)
+
 class BlackFormattingService : AsyncDocumentFormattingService() {
+
   companion object {
     private val LOG = Logger.getInstance(BlackFormattingService::class.java)
-    val NAME: String = PyBundle.message("black.formatting.service.name")
-    val DEFAULT_CHARSET: Charset = StandardCharsets.UTF_8
-    const val NOTIFICATION_GROUP_ID = "Black Formatter Integration"
-    val FEATURES: Set<FormattingService.Feature> = setOf()
+    const val NOTIFICATION_GROUP_ID: String = "Black Formatter Integration"
   }
 
   override fun getFeatures(): Set<FormattingService.Feature> = FEATURES
@@ -84,68 +84,71 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
       return null
     }
 
-    val text = formattingRequest.documentText
+    val documentText = formattingRequest.documentText
+    val isFormatFragmentAction = isFormatFragmentAction(documentText, formattingRequest)
 
-    val formattingRange = if (formattingRequest.formattingRanges.size > 1) {
-      TextRange(0, text.length)
+    val blackFormattingRequest = if (isFormatFragmentAction) {
+      val lineRanges = mutableListOf<IntRange>()
+
+      formattingRequest.formattingRanges.forEach { range ->
+        val startLine = document.getLineNumber(range.startOffset) + 1
+        val endLine = document.getLineNumber(range.endOffset) + 1
+        lineRanges.add(IntRange(startLine, endLine))
+      }
+
+      BlackFormattingRequest.Fragment(vFile, documentText, lineRanges)
     }
     else {
-      formattingRequest.formattingRanges.first()
+      BlackFormattingRequest.File(vFile, documentText)
     }
 
-    val isFormatFragmentAction = isFormatFragmentAction(text, formattingRange)
-
-    val fragment = runCatching { text.substring(formattingRange.startOffset, formattingRange.endOffset) }.getOrNull()
-    if (fragment.isNullOrBlank()) return null
-
-    val blackFormattingRequest = if (isFormatFragmentAction)
-      BlackFormattingRequest.Fragment(fragment, vFile)
-    else
-      BlackFormattingRequest.File(fragment, vFile)
-
     return object : FormattingTask {
+
       override fun run() {
         runCatching {
-          val executor = BlackFormatterExecutor(project, sdk, blackConfig)
+          val blackVersion = runBlockingCancellable {
+            BlackFormatterVersionService.getVersion(project)
+          }
 
+          if (isFormatFragmentAction && blackVersion < BlackFormatterUtil.MINIMAL_LINE_RANGES_COMPATIBLE_VERSION) {
+            LOG.debug("Black version $blackVersion is lower than minimal version that supports fragments' formatting, " +
+                      "falling back to embedded formatter for fragment formatting")
+
+            showFormattedLinesInfo(editor, PyBundle.message("black.format.fragments.supported.info"), false)
+            fallbackToEmbeddedFormatter(formattingRequest)
+            return
+          }
+
+          val executor = BlackFormatterExecutor(project, sdk, blackConfig)
           when (val response = executor.getBlackFormattingResponse(blackFormattingRequest, timeout.toKotlinDuration())) {
             is BlackFormattingResponse.Success -> {
-              val formattedFragment = response.formattedText
-              val formattedDocumentText = when (blackFormattingRequest) {
-                is BlackFormattingRequest.Fragment -> {
-                  val postProcessedFragment = blackFormattingRequest.postProcessResponse(formattedFragment)
-                  text.replaceRange(IntRange(formattingRange.startOffset, formattingRange.endOffset - 1), postProcessedFragment)
-                }
-                is BlackFormattingRequest.File -> {
-                  formattedFragment
-                }
-              }
+              val formattedDocumentText = response.formattedText
               val message = buildNotificationMessage(document, formattedDocumentText)
               showFormattedLinesInfo(editor, message, false)
-              if (formattedDocumentText == text) { // if text is unchanged, pass null, see .onTextReady(...) doc
+              if (formattedDocumentText == documentText) { // if text is unchanged, pass null, see .onTextReady(...) doc
                 formattingRequest.onTextReady(null)
-              } else {
+              }
+              else {
                 formattingRequest.onTextReady(formattedDocumentText)
               }
             }
             is BlackFormattingResponse.Failure -> {
               LOG.debug(response.getLoggingMessage())
-              when (blackFormattingRequest) {
-                is BlackFormattingRequest.File -> {
-                  formattingRequest.onError(response.title, response.getPopupMessage())
-                }
-                is BlackFormattingRequest.Fragment -> {
-                  showFormattedLinesInfo(editor,
-                                         PyBundle.message("black.format.fragment.inline.error",
-                                                          response.getInlineNotificationMessage()),
-                                         true)
-                  formattingRequest.onTextReady(text)
-                }
+              if (isFormatFragmentAction) {
+                showFormattedLinesInfo(editor,
+                                       PyBundle.message("black.format.fragment.inline.error",
+                                                        response.getInlineNotificationMessage()),
+                                       true)
+                formattingRequest.onTextReady(documentText)
+
+              }
+              else {
+                formattingRequest.onError(response.title, response.getPopupMessage())
               }
             }
             is BlackFormattingResponse.Ignored -> {
               showFormattedLinesInfo(editor, PyBundle.message("black.file.ignored.notification.message", vFile.name), false)
-              formattingRequest.onTextReady(text)
+              formattingRequest.onTextReady(documentText)
             }
           }
         }.onFailure { exception ->
@@ -159,13 +162,27 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
         }
       }
 
-      override fun cancel(): Boolean {
-        return true
+      private fun fallbackToEmbeddedFormatter(formattingRequest: AsyncFormattingRequest) {
+        val context = formattingRequest.context
+        val project = context.project
+        val psiFile = context.containingFile
+        WriteCommandAction
+          .runWriteCommandAction(project,
+                                 PyBundle.message("black.format.fragment.fallback.title"),
+                                 NOTIFICATION_GROUP_ID, {
+                                   val formatter = EP_NAME.findExtensionOrFail(CoreFormattingService::class.java)
+                                   val ranges = FormatTextRanges().apply {
+                                     formattingRequest.formattingRanges.forEach {
+                                       add(it, false)
+                                     }
+                                   }
+                                   formatter.formatRanges(psiFile, ranges, false, false)
+                                 }, psiFile)
+        formattingRequest.onTextReady(context.containingFile.text)
       }
 
-      override fun isRunUnderProgress(): Boolean {
-        return true
-      }
+      override fun cancel(): Boolean = true
+      override fun isRunUnderProgress(): Boolean = true
     }
   }
 
@@ -192,7 +209,9 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     }
   }
 
-  private fun isFormatFragmentAction(text: CharSequence, range: TextRange): Boolean = range.length != text.length
+  private fun isFormatFragmentAction(documentText: CharSequence, formattingRequest: AsyncFormattingRequest): Boolean {
+    return formattingRequest.formattingRanges.size != 1 || documentText.length != formattingRequest.formattingRanges.first().length
+  }
 
   override fun getNotificationGroupId(): String = NOTIFICATION_GROUP_ID
 

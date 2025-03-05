@@ -21,7 +21,7 @@ public class LombokIntentionsApplicabilityTest extends LightQuickFixParameterize
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
   }
 
   @Override

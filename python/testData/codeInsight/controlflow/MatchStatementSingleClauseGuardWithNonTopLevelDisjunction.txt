@@ -7,8 +7,8 @@
 6(7) matched pattern: [x1, x2, x3]
 7(8) element: PyBinaryExpression
 8(9,10) READ ACCESS: x1
-9(14) element: null. Condition: x1:true
-10(11) element: null. Condition: x1:false
+9(11) element: null. Condition: x1:false
+10(14) element: null. Condition: x1:true
 11(12,13) READ ACCESS: x2
 12(14) element: null. Condition: x2:false
 13(14) element: null. Condition: x2:true

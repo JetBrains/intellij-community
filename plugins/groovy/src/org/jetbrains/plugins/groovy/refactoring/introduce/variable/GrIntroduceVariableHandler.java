@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.editor.Editor;
@@ -109,7 +109,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
    * Inserts new variable declarations and replaces occurrences
    */
   @Override
-  public GrVariable runRefactoring(@NotNull final GrIntroduceContext context, @NotNull final GroovyIntroduceVariableSettings settings) {
+  public GrVariable runRefactoring(final @NotNull GrIntroduceContext context, final @NotNull GroovyIntroduceVariableSettings settings) {
     // Generating variable declaration
 
     GrVariable insertedVar = processExpression(context, settings);
@@ -173,9 +173,8 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     //todo do nothing right now
   }
 
-  @NotNull
-  private static GrVariableDeclaration generateDeclaration(@NotNull GrIntroduceContext context,
-                                                           @NotNull GroovyIntroduceVariableSettings settings) {
+  private static @NotNull GrVariableDeclaration generateDeclaration(@NotNull GrIntroduceContext context,
+                                                                    @NotNull GroovyIntroduceVariableSettings settings) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
     final String[] modifiers = settings.isDeclareFinal() ? new String[]{PsiModifier.FINAL} : null;
 
@@ -186,9 +185,8 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return declaration;
   }
 
-  @NotNull
-  private GrVariable processExpression(@NotNull GrIntroduceContext context,
-                                       @NotNull GroovyIntroduceVariableSettings settings) {
+  private @NotNull GrVariable processExpression(@NotNull GrIntroduceContext context,
+                                                @NotNull GroovyIntroduceVariableSettings settings) {
     GrVariableDeclaration varDecl = generateDeclaration(context, settings);
 
     if (context.getStringPart() != null) {
@@ -202,7 +200,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     }
   }
 
-  private GrVariable doProcessExpression(@NotNull final GrIntroduceContext context,
+  private GrVariable doProcessExpression(final @NotNull GrIntroduceContext context,
                                          @NotNull GroovyIntroduceVariableSettings settings,
                                          @NotNull GrVariableDeclaration varDecl,
                                          PsiElement @NotNull [] elements,
@@ -215,9 +213,8 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     }.processExpression(varDecl);
   }
 
-  @NotNull
-  private static GrExpression generateInitializer(@NotNull GrIntroduceContext context,
-                                                  @NotNull GrVariable variable) {
+  private static @NotNull GrExpression generateInitializer(@NotNull GrIntroduceContext context,
+                                                           @NotNull GrVariable variable) {
     final GrExpression initializer = context.getStringPart() != null
                                      ? context.getStringPart().createLiteralFromSelected()
                                      : context.getExpression();
@@ -239,15 +236,13 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return getRefactoringNameText();
   }
 
-  @NotNull
   @Override
-  protected String getHelpID() {
+  protected @NotNull String getHelpID() {
     return HelpID.INTRODUCE_VARIABLE;
   }
 
   @Override
-  @NotNull
-  protected GroovyIntroduceVariableDialog getDialog(@NotNull GrIntroduceContext context) {
+  protected @NotNull GroovyIntroduceVariableDialog getDialog(@NotNull GrIntroduceContext context) {
     final GroovyVariableValidator validator = new GroovyVariableValidator(context);
     return new GroovyIntroduceVariableDialog(context, validator);
   }

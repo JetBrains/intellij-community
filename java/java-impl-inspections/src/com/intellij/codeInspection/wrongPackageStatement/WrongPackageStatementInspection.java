@@ -3,8 +3,8 @@ package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.openapi.util.Comparing;
@@ -36,9 +36,9 @@ public final class WrongPackageStatementInspection extends AbstractBaseJavaLocal
     }
     if (FileTypeUtils.isInServerPageFile(file)) return null;
 
-    if (JavaHighlightUtil.isJavaHashBangScript(javaFile)) return null;
+    if (JavaPsiSingleFileSourceUtil.isJavaHashBangScript(javaFile)) return null;
 
-    PsiDirectory directory = javaFile.getContainingDirectory();
+    PsiDirectory directory = javaFile.getOriginalFile().getContainingDirectory();
     if (directory == null) return null;
     PsiPackage dirPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (dirPackage == null) return null;
@@ -99,21 +99,17 @@ public final class WrongPackageStatementInspection extends AbstractBaseJavaLocal
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return "";
   }
 
   @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "WrongPackageStatement";
   }
 

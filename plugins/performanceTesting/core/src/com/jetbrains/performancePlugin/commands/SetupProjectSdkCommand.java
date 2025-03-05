@@ -73,8 +73,7 @@ public class SetupProjectSdkCommand extends AbstractCommand {
     }
   }
 
-  @NotNull
-  private Sdk setupOrDetectSdk(@NotNull Consumer<String> logMessage) {
+  private @NotNull Sdk setupOrDetectSdk(@NotNull Consumer<String> logMessage) {
     Sdk oldSdk = ProjectJdkTable.getInstance().findJdk(mySdkName);
     if (oldSdk != null) {
       if (Objects.equals(oldSdk.getSdkType().getName(), mySdkName) && FileUtil.pathsEqual(oldSdk.getHomePath(), mySdkHome)) {

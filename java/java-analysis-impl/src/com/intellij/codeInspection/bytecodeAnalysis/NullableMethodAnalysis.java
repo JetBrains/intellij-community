@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -66,7 +66,7 @@ final class Calls extends BasicValue {
 }
 
 final class Constraint {
-  final static Constraint EMPTY = new Constraint(0, 0);
+  static final Constraint EMPTY = new Constraint(0, 0);
 
   final int calls;
   final int nulls;

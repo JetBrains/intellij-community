@@ -1,4 +1,5 @@
 // "Make '<init>' public explicitly" "true"
+// PRIORITY: HIGH
 // COMPILER_ARGUMENTS: -Xexplicit-api=strict
 
 public class Foo5 {

@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="proxy-vole" type="repository">
-    <properties maven-id="org.bidib.com.github.markusbernhardt:proxy-vole:1.1.5">
+    <properties maven-id="org.bidib.com.github.markusbernhardt:proxy-vole:1.1.6">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.5/proxy-vole-1.1.5.jar">
-          <sha256sum>15afa73395b3136ab9067b55d644e8ead65d374e0f2ae2db91299c0b07866bd9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.6/proxy-vole-1.1.6.jar">
+          <sha256sum>4b9fb2e5a13b37cf8bd62eebada8d3485c3dc17df752783b68d89d657bcc01fd</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.17/delight-rhino-sandbox-0.0.17.jar">
           <sha256sum>e22941d77d0d01dfc6ee5612ad421860baae8a3a0dea2eeb67658061f34527b4</sha256sum>
@@ -18,15 +18,15 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.5/proxy-vole-1.1.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.6/proxy-vole-1.1.6.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.17/delight-rhino-sandbox-0.0.17.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.5/proxy-vole-1.1.5-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.6/proxy-vole-1.1.6-javadoc.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.17/delight-rhino-sandbox-0.0.17-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.5/proxy-vole-1.1.5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bidib/com/github/markusbernhardt/proxy-vole/1.1.6/proxy-vole-1.1.6-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/javadelight/delight-rhino-sandbox/0.0.17/delight-rhino-sandbox-0.0.17-sources.jar!/" />
     </SOURCES>
   </library>

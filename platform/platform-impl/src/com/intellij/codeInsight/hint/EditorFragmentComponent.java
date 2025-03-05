@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -284,13 +284,11 @@ public final class EditorFragmentComponent extends JPanel {
     return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, false);
   }
 
-  @NotNull
-  public static Color getBackgroundColor(@NotNull Editor editor){
+  public static @NotNull Color getBackgroundColor(@NotNull Editor editor){
     return getBackgroundColor(editor, true);
   }
 
-  @NotNull
-  public static Color getBackgroundColor(@NotNull Editor editor, boolean useCaretRowBackground){
+  public static @NotNull Color getBackgroundColor(@NotNull Editor editor, boolean useCaretRowBackground){
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
     if (!useCaretRowBackground || color == null){

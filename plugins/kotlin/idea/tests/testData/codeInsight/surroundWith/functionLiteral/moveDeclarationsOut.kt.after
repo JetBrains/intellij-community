@@ -1,10 +1,10 @@
 fun foo() {
     val a: String
-    val b = <selection>run</selection> {
+    val b = <selection><caret>run</selection> {
         a = "aaa"
-        "aaa"
+        "bbb"
     }
 
-    a.charAt(1)
-    b.charAt(1)
+    a.get(1)
+    b.get(1)
 }

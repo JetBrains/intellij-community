@@ -167,7 +167,7 @@ public final class ConsoleExecutionEditor implements Disposable {
 
           final Editor editor = ((TextEditor)fileEditor).getEditor();
           if (editor instanceof EditorEx editorEx) {
-            editorEx.addFocusListener(myFocusListener);
+            editorEx.addFocusListener(myFocusListener, ConsoleExecutionEditor.this);
             if (selectedTextEditor == editorEx) { // already focused
               myCurrentEditor = editorEx;
             }

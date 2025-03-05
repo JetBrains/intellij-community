@@ -56,7 +56,7 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   private boolean myInitedReloaded;
 
   private final @NotNull MergingUpdateQueue refreshQueue;
-  @NotNull private final CoroutineScope coroutineScope;
+  private final @NotNull CoroutineScope coroutineScope;
 
   @SuppressWarnings("UnusedDeclaration")
   private SvnFileUrlMappingImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {

@@ -1,17 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.OpenProjectTaskBuilder
-import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.ide.impl.TrustedPaths
+import com.intellij.ide.impl.*
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -21,7 +14,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.checkTrustedState
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
@@ -171,8 +166,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @ApiStatus.Internal
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       if (Files.isDirectory(file)) {
-        return ProjectManagerEx.getInstanceEx().openProject(file,
-                                                            createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null))
+        val options = runUnderModalProgressIfIsEdt {
+          createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null)
+        }
+        return ProjectManagerEx.getInstanceEx().openProject(file, options)
       }
 
       var options = originalOptions
@@ -183,7 +180,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var baseDirCandidate = file.parent
-      while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+      while (baseDirCandidate != null && !ProjectCoreUtil.isKnownProjectDirectory(baseDirCandidate)) {
         baseDirCandidate = baseDirCandidate.parent
       }
 
@@ -204,7 +201,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
+        options = options.copy(isNewProject = !ProjectCoreUtil.isKnownProjectDirectory(baseDir))
       }
       else {
         baseDir = baseDirCandidate
@@ -239,7 +236,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var baseDirCandidate = file.parent
-      while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+      while (baseDirCandidate != null && !ProjectCoreUtil.isKnownProjectDirectory(baseDirCandidate)) {
         baseDirCandidate = baseDirCandidate.parent
       }
 
@@ -260,7 +257,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
+        options = options.copy(isNewProject = !ProjectCoreUtil.isKnownProjectDirectory(baseDir))
       }
       else {
         baseDir = baseDirCandidate
@@ -348,24 +345,20 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
      */
     @ApiStatus.Internal
     @JvmStatic
-    fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
+    suspend fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
       return OpenProjectTask {
         runConfigurators = true
-        isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
+        isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
         this.projectToClose = projectToClose
-        // doesn't make sense to refresh
-        isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode
         useDefaultProjectAsTemplate = true
       }
     }
 
     @ApiStatus.Internal
-    fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
+    suspend fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
       runConfigurators = true
-      isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
+      isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
       this.projectToClose = projectToClose
-      // doesn't make sense to refresh
-      isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode
       useDefaultProjectAsTemplate = true
     }
   }
@@ -378,8 +371,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)
-      .copy(forceOpenInNewFrame = forceOpenInNewFrame))
+    val options = runUnderModalProgressIfIsEdt {
+      createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)
+    }.copy(forceOpenInNewFrame = forceOpenInNewFrame)
+    return doOpenProject(baseDir, options)
   }
 
   // force open in a new frame if temp project
@@ -416,13 +411,31 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
 }
 
 @Internal
-suspend fun attachToProjectAsync(projectToClose: Project, projectDir: Path, callback: ProjectOpenedCallback? = null): Boolean {
+suspend fun attachToProjectAsync(
+  projectToClose: Project,
+  projectDir: Path,
+  processor: ProjectAttachProcessor? = null,
+  callback: ProjectOpenedCallback? = null
+): Boolean {
+  if (!checkTrustedState(projectDir)) {
+    return false
+  }
+  if (processor != null) {
+    return attachImpl(processor, projectToClose, projectDir, callback)
+  }
   for (attachProcessor in ProjectAttachProcessor.EP_NAME.lazySequence()) {
-    if (runCatching {
-        attachProcessor.attachToProjectAsync(projectToClose, projectDir, callback)
-      }.getOrLogException(LOG) == true) {
-      return true
-    }
+    if (attachImpl(attachProcessor, projectToClose, projectDir, callback)) return true
   }
   return false
+}
+
+private suspend fun attachImpl(
+  attachProcessor: ProjectAttachProcessor,
+  projectToClose: Project,
+  projectDir: Path,
+  callback: ProjectOpenedCallback?,
+): Boolean {
+  return runCatching {
+    attachProcessor.attachToProjectAsync(projectToClose, projectDir, callback)
+  }.getOrLogException(LOG) == true
 }

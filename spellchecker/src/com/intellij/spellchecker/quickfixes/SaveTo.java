@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction, DumbAware {
-  @Nullable private DictionaryLayer myLayer = null;
+  private @Nullable DictionaryLayer myLayer = null;
   private String myWord;
 
   public SaveTo(@NotNull DictionaryLayer layer) {

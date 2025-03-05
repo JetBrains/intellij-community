@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -61,6 +61,5 @@ public abstract class PromptingMacro extends Macro {
    * @return user input.
    * If {@code null} is returned, {@code ExecutionCancelledException} is thrown by the {@link #expand} method.
    */
-  @Nullable
-  protected abstract String promptUser(@NotNull DataContext dataContext, @Nullable String label, @Nullable String defaultValue);
+  protected abstract @Nullable String promptUser(@NotNull DataContext dataContext, @Nullable String label, @Nullable String defaultValue);
 }

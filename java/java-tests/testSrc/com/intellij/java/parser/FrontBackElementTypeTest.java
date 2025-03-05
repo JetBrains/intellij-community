@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser;
 
 import com.intellij.lang.java.lexer.BasicJavaLexer;
@@ -51,7 +51,7 @@ public class FrontBackElementTypeTest extends AbstractBasicJavaParsingTestCase {
     Map<String, ParentAwareTokenSet> mainParentTokenSets = getFieldsByName(mainTokenSetClass, ParentAwareTokenSet.class);
 
     Assert.assertEquals("ParentAwareTokenSet should not be used in " + mainTokenSetClass.getName() + ", use TokenSet",
-                        mainParentTokenSets.size(), 0);
+                        0, mainParentTokenSets.size());
 
     Map<String, TokenSet> basicTokenSets = getFieldsByName(basicTokenSetClass, TokenSet.class);
     Map<String, ParentAwareTokenSet> basicParentTokenSets = getFieldsByName(basicTokenSetClass, ParentAwareTokenSet.class);
@@ -208,8 +208,8 @@ public class FrontBackElementTypeTest extends AbstractBasicJavaParsingTestCase {
     backJavaElementTypePath =
       backJavaElementTypePath.substring(0, backJavaElementTypePath.length() - backJavaElementType.getSimpleName().length());
 
-    Assert.assertNotEquals(lexerPath, backJavaElementTypePath, "Lexer and element types must be placed in different folders");
-    Assert.assertNotEquals(parserPath, backJavaElementTypePath, "Lexer and element types must be placed in different folders");
+    Assert.assertNotEquals("Lexer and element types must be placed in different folders", lexerPath, backJavaElementTypePath);
+    Assert.assertNotEquals("Lexer and element types must be placed in different folders", parserPath, backJavaElementTypePath);
 
     //not used in parser and lexer
     String pathToModule = FileUtil.toSystemDependentName("/../../java-frontback-psi-impl/src/");

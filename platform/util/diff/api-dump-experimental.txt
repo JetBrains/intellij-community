@@ -1,0 +1,4 @@
+*f:com.intellij.diff.comparison.ByWordRt$WordLineBlock
+- f:fragments:java.util.List
+- f:lineRange:com.intellij.diff.util.Range
+- <init>(com.intellij.diff.util.Range,java.util.List):V

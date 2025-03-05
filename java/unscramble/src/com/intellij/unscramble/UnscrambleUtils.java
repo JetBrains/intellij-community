@@ -19,7 +19,7 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.regex.Pattern;
 
-final public class UnscrambleUtils {
+public final class UnscrambleUtils {
   private static final Condition<ThreadState> DEADLOCK_CONDITION = state -> state.isDeadlocked();
   private static final Pattern STACKTRACE_LINE =
     Pattern.compile(
@@ -111,7 +111,7 @@ final public class UnscrambleUtils {
     int linesCount = 0;
     for (String line : text.split("\n")) {
       line = line.trim();
-      if (line.length() == 0) continue;
+      if (line.isEmpty()) continue;
       line = StringUtil.trimEnd(line, "\r");
       if (STACKTRACE_LINE.matcher(line).matches()) {
         linesCount++;

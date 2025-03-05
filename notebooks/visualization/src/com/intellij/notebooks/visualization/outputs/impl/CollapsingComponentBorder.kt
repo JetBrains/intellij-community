@@ -12,7 +12,7 @@ import javax.swing.border.Border
 class CollapsingComponentBorder(private val editor: Editor) : Border {
 
   /** True if the border is currently resized. */
-  var resized = false
+  var resized: Boolean = false
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
 
@@ -20,7 +20,7 @@ class CollapsingComponentBorder(private val editor: Editor) : Border {
 
     val g2 = g.create()
     try {
-      g2.color = editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
+      g2.color = editor.notebookAppearance.codeCellBackgroundColor.get()
       val insets = getBorderInsets(c)
       assert(insets.top + insets.left + insets.right == 0)
       val yDraw = y + height - insets.bottom / 2

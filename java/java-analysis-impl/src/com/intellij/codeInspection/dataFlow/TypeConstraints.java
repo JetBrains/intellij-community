@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -37,8 +37,7 @@ public final class TypeConstraints {
    */
   public static final @NotNull Exact EXACTLY_OBJECT = new ExactObject();
 
-  @Nullable
-  private static Exact createExact(@NotNull PsiType type) {
+  private static @Nullable Exact createExact(@NotNull PsiType type) {
     if (type instanceof PsiArrayType arrayType) {
       PsiType componentType = arrayType.getComponentType();
       if (componentType instanceof PsiPrimitiveType) {
@@ -69,9 +68,8 @@ public final class TypeConstraints {
    * @return a constraint for the object that has exactly given PsiType;
    * {@link #BOTTOM} if the object of given type cannot be instantiated.
    */
-  @NotNull
   @Contract(pure = true)
-  public static TypeConstraint exact(@NotNull PsiType type) {
+  public static @NotNull TypeConstraint exact(@NotNull PsiType type) {
     type = normalizeType(type);
     Exact exact = createExact(type);
     if (exact != null && exact.canBeInstantiated()) return exact;
@@ -119,9 +117,8 @@ public final class TypeConstraints {
    * @param type PsiType
    * @return a constraint for the object whose type is the supplied type or any subtype
    */
-  @NotNull
   @Contract(pure = true)
-  public static TypeConstraint instanceOf(@NotNull PsiType type) {
+  public static @NotNull TypeConstraint instanceOf(@NotNull PsiType type) {
     if (type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType) return TOP;
     type = normalizeType(type);
     if (type instanceof PsiDisjunctionType disjunctionType) {
@@ -146,8 +143,7 @@ public final class TypeConstraints {
     return exact.instanceOf();
   }
 
-  @NotNull
-  private static PsiType normalizeType(@NotNull PsiType psiType) {
+  private static @NotNull PsiType normalizeType(@NotNull PsiType psiType) {
     if (psiType instanceof PsiArrayType) {
       PsiType normalized = normalizeType(psiType.getDeepComponentType());
       int dimensions = psiType.getArrayDimensions();
@@ -175,8 +171,7 @@ public final class TypeConstraints {
     return psiType;
   }
 
-  @NotNull
-  private static PsiType normalizeClassType(@NotNull PsiClassType psiType, Set<PsiClass> processed) {
+  private static @NotNull PsiType normalizeClassType(@NotNull PsiClassType psiType, Set<PsiClass> processed) {
     PsiClass aClass = psiType.resolve();
     if (aClass instanceof PsiTypeParameter) {
       PsiClassType[] types = aClass.getExtendsListTypes();
@@ -196,13 +191,11 @@ public final class TypeConstraints {
     return psiType;
   }
 
-  @NotNull
-  public static Exact exactClass(@NotNull PsiClass psiClass) {
+  public static @NotNull Exact exactClass(@NotNull PsiClass psiClass) {
     return exactClass(new JavaClassDef(psiClass));
   }
 
-  @NotNull
-  public static Exact exactClass(@NotNull ClassDef classDef) {
+  public static @NotNull Exact exactClass(@NotNull ClassDef classDef) {
     String name = classDef.getQualifiedName();
     if (name != null) {
       switch (name) {
@@ -220,8 +213,7 @@ public final class TypeConstraints {
     return new ExactClass(classDef, false);
   }
 
-  @NotNull
-  public static Exact singleton(@NotNull ClassDef classDef) {
+  public static @NotNull Exact singleton(@NotNull ClassDef classDef) {
     if (!classDef.isFinal()) {
       throw new IllegalArgumentException("Singleton class must be final");
     }
@@ -242,15 +234,13 @@ public final class TypeConstraints {
       myType = type;
     }
 
-    @NotNull
     @Override
-    public PsiType getPsiType(Project project) {
+    public @NotNull PsiType getPsiType(Project project) {
       return myType.createArrayType();
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return myType.getCanonicalText()+"[]";
     }
 
@@ -298,15 +288,13 @@ public final class TypeConstraints {
       myReference = reference;
     }
 
-    @NotNull
     @Override
-    public PsiType getPsiType(Project project) {
+    public @NotNull PsiType getPsiType(Project project) {
       return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(myReference);
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return myReference;
     }
 
@@ -402,15 +390,13 @@ public final class TypeConstraints {
       return name != null && (JAVA_LANG_STRING.equals(name) || TypeConversionUtil.isPrimitiveWrapper(name));
     }
 
-    @Nullable
     @Override
-    public PsiType getPsiType(Project project) {
+    public @Nullable PsiType getPsiType(Project project) {
       return classDef.toPsiType(project);
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return classDef.toString();
     }
 
@@ -539,16 +525,14 @@ public final class TypeConstraints {
       return component == this.component ? this : new ExactArray(component);
     }
 
-    @Nullable
     @Override
-    public PsiType getPsiType(Project project) {
+    public @Nullable PsiType getPsiType(Project project) {
       PsiType componentType = component.getPsiType(project);
       return componentType == null ? null : componentType.createArrayType();
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return component + "[]";
     }
 
@@ -594,9 +578,8 @@ public final class TypeConstraints {
       return false;
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return "<unresolved> " + reference;
     }
 
@@ -662,8 +645,7 @@ public final class TypeConstraints {
 
   @FunctionalInterface
   public interface TypeConstraintFactory {
-    @NotNull
-    default Exact create(@NotNull ClassDef def) {
+    default @NotNull Exact create(@NotNull ClassDef def) {
       String qualifiedName = def.getQualifiedName();
       if (qualifiedName != null) {
         return create(qualifiedName);
@@ -675,11 +657,14 @@ public final class TypeConstraints {
   }
 
   static final class TopConstraint implements TypeConstraint {
-    @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return this;}
+    @Override
+    public @NotNull TypeConstraint join(@NotNull TypeConstraint other) { return this;}
 
-    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return this;}
+    @Override
+    public @NotNull TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return this;}
 
-    @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return other; }
+    @Override
+    public @NotNull TypeConstraint meet(@NotNull TypeConstraint other) { return other; }
 
     @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return true; }
 
@@ -695,11 +680,14 @@ public final class TypeConstraints {
   }
 
   static final class BottomConstraint implements TypeConstraint {
-    @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return other;}
+    @Override
+    public @NotNull TypeConstraint join(@NotNull TypeConstraint other) { return other;}
 
-    @NotNull @Override public TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return other;}
+    @Override
+    public @NotNull TypeConstraint tryJoinExactly(@NotNull TypeConstraint other) { return other;}
 
-    @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return this;}
+    @Override
+    public @NotNull TypeConstraint meet(@NotNull TypeConstraint other) { return this;}
 
     @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return other == this; }
 
@@ -719,9 +707,11 @@ public final class TypeConstraints {
 
     @Override public boolean isConvertibleFrom(@NotNull Exact other) { return true;}
 
-    @NotNull @Override public TypeConstraint instanceOf() { return TOP;}
+    @Override
+    public @NotNull TypeConstraint instanceOf() { return TOP;}
 
-    @NotNull @Override public TypeConstraint notInstanceOf() { return BOTTOM;}
+    @Override
+    public @NotNull TypeConstraint notInstanceOf() { return BOTTOM;}
 
     @Override public String toString() { return JAVA_LANG_OBJECT;}
 

@@ -17,8 +17,8 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
@@ -29,6 +29,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -43,6 +45,14 @@ public class ShowCommitInLogAction extends DumbAwareAction {
     if (project == null) return;
     VcsRevisionNumber revision = getRevisionNumber(event);
     if (revision == null) return;
+
+    VcsLogCommitSelection commitSelection = event.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    List<CommitId> commits = commitSelection != null ? commitSelection.getCommits() : Collections.emptyList();
+    if (!commits.isEmpty()) {
+      CommitId commitId = ContainerUtil.getFirstItem(commits);
+      VcsLogNavigationUtil.jumpToRevisionAsync(project, commitId.getRoot(), commitId.getHash(), null);
+      return;
+    }
 
     jumpToRevision(project, HashImpl.build(revision.asString()));
   }
@@ -84,6 +94,9 @@ public class ShowCommitInLogAction extends DumbAwareAction {
     return VcsLogBundle.message("action.Vcs.Log.SelectInLog.text");
   }
 
+  /**
+   * Consider using {@link VcsLogNavigationUtil#jumpToRevisionAsync} when the root is known
+   */
   @ApiStatus.Internal
   public static void jumpToRevision(@NotNull Project project, @NotNull Hash hash) {
     VcsLogContentUtil.runInMainLog(project, logUi -> jumpToRevisionUnderProgress(project, logUi, hash));

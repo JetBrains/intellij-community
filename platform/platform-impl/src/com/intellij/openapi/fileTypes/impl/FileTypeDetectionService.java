@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
@@ -35,7 +34,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.xmlb.Constants;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.JobKt;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -48,8 +49,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-final class FileTypeDetectionService implements Disposable {
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
+@ApiStatus.Internal
+public final class FileTypeDetectionService {
   private static final Logger LOG = Logger.getInstance(FileTypeDetectionService.class);
+
+  private static final boolean LOG_ACCESSED_FILES = getBooleanProperty("com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.LOG_ACCESSED_FILES", false);
 
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and AUTO_DETECTED_* flags stored in packedFlags are used instead.
@@ -91,13 +97,18 @@ final class FileTypeDetectionService implements Disposable {
   FileTypeDetectionService(@NotNull FileTypeManagerImpl fileTypeManager, @NotNull CoroutineScope coroutineScope) {
     myFileTypeManager = fileTypeManager;
 
+    JobKt.getJob(coroutineScope.getCoroutineContext()).invokeOnCompletion(throwable -> {
+      LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
+      return null;
+    });
+
     fileTypeChangedCount = new AtomicInteger(AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE.getVersion());
     autoDetectedAttribute = AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE;
 
-    FileTypeRegistry.FileTypeDetector.EP_NAME.addChangeListener(() -> {
+    FileTypeRegistry.FileTypeDetector.EP_NAME.addChangeListener(coroutineScope, () -> {
       cachedDetectFileBufferSize = -1;
       onDetectorListChange();
-    }, this);
+    });
 
     List<String> prevDetectors = PropertiesComponent.getInstance().getList(FILE_TYPE_DETECTORS_PROPERTY);
     if (!Objects.equals(prevDetectors, getDetectorListString())) {
@@ -308,12 +319,6 @@ final class FileTypeDetectionService implements Disposable {
       result.add(adapter.getAssignableToClassName());
     }
     return result;
-  }
-
-  @Override
-  public void dispose() {
-    LOG.info(String.format("%s auto-detected files. Detection took %s ms", counterAutoDetect, elapsedAutoDetect));
-    reDetectExecutor.cancel();
   }
 
   static boolean isDetectable(@NotNull VirtualFile file) {
@@ -616,7 +621,7 @@ final class FileTypeDetectionService implements Disposable {
 
   private @NotNull ByteArraySequence readFirstBytesFromFile(@NotNull VirtualFile file, int bufferLength) throws IOException {
     try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
-      if (toLog()) {
+      if (LOG_ACCESSED_FILES || toLog()) {
         log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
       }
       int fileLength = (int)Math.min(file.getLength(), bufferLength);

@@ -3,10 +3,7 @@ package com.intellij.internal.inspector.accessibilityAudit
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
 import javax.swing.JButton
-import javax.swing.JComponent
 import javax.swing.JProgressBar
 
 class AccessibleStateSetContainsFocusableInspectionTest {

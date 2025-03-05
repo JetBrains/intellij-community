@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -112,8 +112,7 @@ class CanUnescapeDollarLiteralInspection :
      * If the length exceeds `prefixLength - 1`, don't add the index of the last entry as replacing it will change the string.
      * However, it's still safe to replace all the dollars before the unsafe one.
      */
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression): Context? {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression): Context? {
         val prefixLength = element.interpolationPrefix?.textLength ?: 0
         var sequentialDollarsCounter = 0
         val confirmedReplaceableIndices = mutableSetOf<Int>()

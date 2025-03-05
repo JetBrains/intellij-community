@@ -36,15 +36,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 public final class GroovyWaitWhileNotSynchronizedInspection extends BaseInspection {
 
     @Override
-    @Nullable
-    protected String buildErrorString(Object... args) {
+    protected @Nullable String buildErrorString(Object... args) {
         return GroovyBundle.message("inspection.message.call.to.ref.outside.of.synchronized.context");
 
     }
 
-    @NotNull
     @Override
-    public BaseInspectionVisitor buildVisitor() {
+    public @NotNull BaseInspectionVisitor buildVisitor() {
         return new Visitor();
     }
 

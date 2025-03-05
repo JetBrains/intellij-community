@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -25,17 +26,13 @@ import java.util.TreeSet;
 public final class AddMissingRequiredAnnotationParametersFix extends PsiUpdateModCommandAction<PsiAnnotation> {
   private static final Logger LOG = Logger.getInstance(AddMissingRequiredAnnotationParametersFix.class);
 
-  private final PsiMethod[] myAnnotationMethods;
   private final Collection<String> myMissedElements;
 
-  public AddMissingRequiredAnnotationParametersFix(final PsiAnnotation annotation,
-                                                   final PsiMethod[] annotationMethods,
-                                                   final Collection<String> missedElements) {
+  public AddMissingRequiredAnnotationParametersFix(final PsiAnnotation annotation, final Collection<String> missedElements) {
     super(annotation);
     if (missedElements.isEmpty()) {
       throw new IllegalArgumentException("missedElements can't be empty");
     }
-    myAnnotationMethods = annotationMethods;
     myMissedElements = missedElements;
   }
 
@@ -55,7 +52,13 @@ public final class AddMissingRequiredAnnotationParametersFix extends PsiUpdateMo
   protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull ModPsiUpdater updater) {
     final PsiNameValuePair[] addedParameters = annotation.getParameterList().getAttributes();
 
-    final Object2IntMap<String> annotationsOrderMap = getAnnotationsOrderMap();
+    PsiClass aClass = annotation.resolveAnnotationType();
+    if (aClass == null) {
+      updater.cancel(JavaBundle.message("error.no.annotation.class.found"));
+      return;
+    }
+    PsiMethod[] methods = aClass.getMethods();
+    final Object2IntMap<String> annotationsOrderMap = getAnnotationsOrderMap(methods);
     final SortedSet<Pair<String, PsiAnnotationMemberValue>> newParameters =
       new TreeSet<>(Comparator.comparingInt(o -> annotationsOrderMap.getInt(o.getFirst())));
 
@@ -80,7 +83,7 @@ public final class AddMissingRequiredAnnotationParametersFix extends PsiUpdateMo
     }
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
-    for (PsiMethod method : myAnnotationMethods) {
+    for (PsiMethod method : methods) {
       if (myMissedElements.contains(method.getName())) {
         PsiType type = method.getReturnType();
         String defaultValue;
@@ -106,10 +109,10 @@ public final class AddMissingRequiredAnnotationParametersFix extends PsiUpdateMo
     }
   }
 
-  private Object2IntMap<String> getAnnotationsOrderMap() {
+  private Object2IntMap<String> getAnnotationsOrderMap(PsiMethod[] methods) {
     final Object2IntMap<String> map = new Object2IntOpenHashMap<>();
-    for (int i = 0; i < myAnnotationMethods.length; i++) {
-      map.put(myAnnotationMethods[i].getName(), i);
+    for (int i = 0; i < methods.length; i++) {
+      map.put(methods[i].getName(), i);
     }
     return map;
   }

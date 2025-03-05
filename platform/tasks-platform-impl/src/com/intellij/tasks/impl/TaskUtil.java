@@ -20,6 +20,7 @@ import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -202,7 +203,7 @@ public final class TaskUtil {
     return URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
 
-  public static List<Task> filterTasks(final String pattern, final List<? extends Task> tasks) {
+  public static @Unmodifiable List<Task> filterTasks(final String pattern, final List<? extends Task> tasks) {
     final Matcher matcher = getMatcher(pattern);
     return ContainerUtil.mapNotNull(tasks,
                                     task -> matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null);

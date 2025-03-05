@@ -131,7 +131,7 @@ public final class DefinitionResolver extends CommonElement.Visitor implements
     final Set<Define> set = map.get(value);
 
     // actually we should always do this, but I'm a bit afraid of the performance impact
-    if (set == null || set.size() == 0) {
+    if (set == null || set.isEmpty()) {
       final PsiElement element = scope.getPsiElement();
       if (element != null) {
         final PsiFile file = element.getContainingFile();

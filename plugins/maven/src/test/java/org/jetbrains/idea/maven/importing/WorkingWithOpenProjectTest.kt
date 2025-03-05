@@ -2,13 +2,14 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PsiTestUtil
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() = runBlocking {
@@ -29,13 +30,13 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldNotFailOnAddingNewContentRootWithAPomFile() = runBlocking {
-    val newRootDir = File(dir, "newRoot")
-    newRootDir.mkdirs()
+    val newRootDir = Path.of(dir.toString(), "newRoot")
+    Files.createDirectories(newRootDir)
 
-    val pomFile = File(newRootDir, "pom.xml")
-    pomFile.createNewFile()
+    val pomFile = newRootDir.resolve("pom.xml")
+    Files.createFile(pomFile)
 
-    val root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(newRootDir)
+    val root = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newRootDir)
 
     PsiTestUtil.addContentRoot(getModule("project"), root!!) // should not throw an exception
 
@@ -47,7 +48,7 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
 
     projectsManager.listenForExternalChanges()
     val d = FileDocumentManager.getInstance().getDocument(projectPom)
-    writeAction {
+    edtWriteAction {
       d!!.setText(createPomXml("""
                                 <groupId>test</groupId>
                                 <artifactId>project</artifactId>

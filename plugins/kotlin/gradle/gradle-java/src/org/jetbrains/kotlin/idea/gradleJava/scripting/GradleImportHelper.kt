@@ -134,6 +134,6 @@ internal class LoadKtGradleConfigurationAction : AnAction() {
 }
 
 fun getGradleVersion(project: Project, settings: GradleProjectSettings): String {
-    val gradleHome = service<GradleInstallationManager>().getGradleHome(project, settings.externalProjectPath)?.path
+    val gradleHome = service<GradleInstallationManager>().getGradleHomePath(project, settings.externalProjectPath)
     return GradleInstallationManager.getGradleVersion(gradleHome) ?: GradleVersion.current().version
 }

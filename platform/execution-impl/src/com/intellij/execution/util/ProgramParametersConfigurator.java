@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.WorkingDirectoryProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.workspace.SubprojectInfoProvider;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -147,12 +148,9 @@ public class ProgramParametersConfigurator {
 
   private static DataContext createContext(@NotNull DataContext fallbackDataContext) {
     DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
-    return envContext == null ? fallbackDataContext : new DataContext() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        Object data = envContext.getData(dataId);
-        return data != null ? data : fallbackDataContext.getData(dataId);
-      }
+    return envContext == null ? fallbackDataContext : dataId -> {
+      Object data = envContext.getData(dataId);
+      return data != null ? data : fallbackDataContext.getData(dataId);
     };
   }
 
@@ -180,7 +178,7 @@ public class ProgramParametersConfigurator {
                                                            @Nullable Module module) {
     String workingDirectory = PathUtil.toSystemIndependentName(configuration.getWorkingDirectory());
 
-    String projectDirectory = getDefaultWorkingDir(project);
+    String projectDirectory = getDefaultWorkingDir(project, module);
     if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
       workingDirectory = projectDirectory;
       if (workingDirectory == null) return null;
@@ -203,6 +201,14 @@ public class ProgramParametersConfigurator {
     }
 
     return workingDirectory;
+  }
+
+  private @Nullable String getDefaultWorkingDir(@NotNull Project project, @Nullable Module module) {
+    if (module != null) {
+      String path = SubprojectInfoProvider.Companion.getSubprojectPath(module);
+      if (path != null) return path;
+    }
+    return getDefaultWorkingDir(project);
   }
 
   protected @Nullable String getDefaultWorkingDir(@NotNull Project project) {

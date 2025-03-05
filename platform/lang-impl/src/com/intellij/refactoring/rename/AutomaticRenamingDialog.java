@@ -23,6 +23,7 @@ import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -114,7 +115,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true);
     toolbar.setTargetComponent(myTable);
     panel.add(toolbar.getComponent(), BorderLayout.EAST);
-    final Box box = Box.createHorizontalBox();
+    final JBBox box = JBBox.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
     return box;

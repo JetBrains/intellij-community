@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
  * E.g., for type {@code Entry<? extends K, ? extends V>[]} the typePath {@code /[]/2/*} points to {@code V}
  */
 public final class ExternalTypeAnnotationContainer implements TypeAnnotationContainer {
-  @NotNull private final String myTypePath;
-  @NotNull private final PsiModifierListOwner myOwner;
+  private final @NotNull String myTypePath;
+  private final @NotNull PsiModifierListOwner myOwner;
 
   private ExternalTypeAnnotationContainer(@NotNull String typePath, @NotNull PsiModifierListOwner owner) {
     myTypePath = typePath;

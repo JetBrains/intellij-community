@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // IGNORE_K2
 
 expect abstract class Base {

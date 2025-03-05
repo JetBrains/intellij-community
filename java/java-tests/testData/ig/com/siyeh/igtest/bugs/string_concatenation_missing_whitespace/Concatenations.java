@@ -15,6 +15,12 @@ class Concatenations {
   String get(String s) {
     return s + "serendipity";
   }
+
+  private int outgoing = 0;
+
+  void addOutgoing(int howMany) {
+    assert outgoing + howMany >= 0 : outgoing + howMany + " must be >= 0";
+  }
 }
 class testclass {
   private static final String WHITESPACE = " TEST ";

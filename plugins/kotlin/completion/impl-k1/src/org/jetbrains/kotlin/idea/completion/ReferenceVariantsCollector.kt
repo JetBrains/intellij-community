@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.completion.PrefixMatcher
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.util.externalDescriptors

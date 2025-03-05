@@ -170,7 +170,7 @@ public final class JsonSchemaVariantsTreeBuilder {
     if (parent.getAdditionalPropertiesSchema() != null) {
       return Pair.create(ThreeState.UNSURE, inheritBaseSchemaIfNeeded(parent, parent.getAdditionalPropertiesSchema()));
     }
-    if (Boolean.FALSE.equals(parent.getAdditionalPropertiesAllowed())) {
+    if (!parent.getAdditionalPropertiesAllowed()) {
       return Pair.create(ThreeState.NO, null);
     }
 

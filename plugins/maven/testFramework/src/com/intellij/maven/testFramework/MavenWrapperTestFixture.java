@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
 import com.intellij.openapi.project.Project;
@@ -12,22 +12,21 @@ import org.jetbrains.idea.maven.project.MavenInSpecificPath;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 
 import java.io.File;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
 public class MavenWrapperTestFixture {
-  private final static String DISTRIBUTION_URL_PATTERN =
+  private static final String DISTRIBUTION_URL_PATTERN =
     "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$version$/apache-maven-$version$-bin.zip";
 
-  private final static String SNAPSHOT_METADATA_URL_PATTERN =
+  private static final String SNAPSHOT_METADATA_URL_PATTERN =
     "https://repository.apache.org/content/repositories/snapshots/org/apache/maven/apache-maven/$version$/maven-metadata.xml";
 
-  private final static String SNAPSHOT_URL_PATTERN =
+  private static final String SNAPSHOT_URL_PATTERN =
     "https://repository.apache.org/content/repositories/snapshots/org/apache/maven/apache-maven/$version$/apache-maven-$versionWithoutSnapshot$-$timestamp$-$build$-bin.zip";
 
-  private final static String MAVEN_4_URL_PATTERN =
+  private static final String MAVEN_4_URL_PATTERN =
     "https://dlcdn.apache.org/maven/maven-4/$version$/binaries/apache-maven-$version$-bin.zip";
   private final Project myProject;
   private final String myMavenVersion;
@@ -51,15 +50,14 @@ public class MavenWrapperTestFixture {
     try {
       return installer.createDist(configuration);
     }
-    catch (SocketException | SocketTimeoutException e) {
+    catch (IOException e) {
       ExternalResourcesChecker.reportUnavailability("Maven Wrapper", e);
 
       throw new IllegalStateException(); // should never happen
     }
   }
 
-  @NotNull
-  protected URI createURI() throws Exception {
+  protected @NotNull URI createURI() throws Exception {
     if (myMavenVersion.contains("4.0.0.")) {
       return URI.create(MAVEN_4_URL_PATTERN.replace("$version$", myMavenVersion));
     }

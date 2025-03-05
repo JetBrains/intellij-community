@@ -21,13 +21,12 @@ public class PyCreatePropertyQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.create.property");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull ModPsiUpdater updater) {
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (element instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
       if (qualifier != null) {

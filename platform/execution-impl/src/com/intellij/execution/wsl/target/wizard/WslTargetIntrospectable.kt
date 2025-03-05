@@ -2,7 +2,7 @@
 package com.intellij.execution.wsl.target.wizard
 
 import com.intellij.execution.Platform
-import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.CapturingProcessRunner
 import com.intellij.execution.process.KillableProcessHandler
 import com.intellij.execution.process.ProcessHandler
@@ -59,7 +59,8 @@ class WslTargetIntrospectable(val distribution: WSLDistribution, val console: Co
       options.isExecuteCommandInInteractiveShell = true
       options.isExecuteCommandInLoginShell = true
     }
-    val commandLine = GeneralCommandLine(cmd).withRedirectErrorStream(true)
+    // Introspection runs in TTY
+    val commandLine = PtyCommandLine(cmd).withRedirectErrorStream(true)
     val output = if (executeCommandInShell) {
       distribution.executeInShellAndGetCommandOnlyStdout(commandLine, options, 10_000,
                                                          Consumer<ProcessHandler> { console.attachToProcess(it) })

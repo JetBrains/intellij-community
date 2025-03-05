@@ -38,6 +38,10 @@ class StatusBarWidgetsManager(private val project: Project,
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
+  init {
+    StatusBarActionManager.getInstance()
+  }
+
   @OptIn(ExperimentalCoroutinesApi::class)
   internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
     override val project: Project

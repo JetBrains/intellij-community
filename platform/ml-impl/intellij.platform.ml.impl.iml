@@ -44,11 +44,16 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ml" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
-    <orderEntry type="library" exported="" name="jetbrains.mlapi.usage" level="project" />
+    <orderEntry type="library" exported="" name="jetbrains.mlapi.catboost.shadow.need.slf4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="library" exported="" name="jetbrains.mlapi.ml.tools" level="project" />
+    <orderEntry type="library" exported="" name="jetbrains.mlapi.ml.tools.suspendable" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
   </component>
 </module>

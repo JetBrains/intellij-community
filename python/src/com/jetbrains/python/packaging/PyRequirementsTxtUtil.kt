@@ -33,6 +33,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.nio.file.Paths
+import java.util.Locale
 
 
 /**
@@ -166,7 +167,7 @@ private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackag
         if (alias.isNotEmpty()) yield(alias)
       }.mapNotNull { name -> installedPackages.find { StringUtil.equalsIgnoreCase(it.name, name) } }
     }
-    .map { it.name.toLowerCase() to it }
+    .map { it.name.lowercase(Locale.getDefault()) to it }
     .toMap(mutableMapOf())
 
   val analysisResult = when (val requirementsFile = PyPackageUtil.findRequirementsTxt(module)) {

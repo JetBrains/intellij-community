@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RunWith(JUnit4.class)
 public abstract class DotEnvLightCodeInsightFixtureTestCase extends BasePlatformTestCase {
 
-    protected String basePath = "java/ru/adelf/idea/dotenv/tests/";
+    protected String basePath = "testResources/ru/adelf/idea/dotenv/tests/";
 
     protected void assertCompletion(String... shouldContain) {
         myFixture.completeBasic();

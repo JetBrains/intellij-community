@@ -4,12 +4,14 @@ package com.intellij.platform.util.io.storages.blobstorage;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
-import com.intellij.platform.util.io.storages.blobstorage.RecordLayout.ActualRecords;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.util.io.storages.blobstorage.RecordLayout.ActualRecords;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.blobstorage.*;
+import com.intellij.util.io.blobstorage.BlobStorageStatistics;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
@@ -494,7 +496,7 @@ public abstract class StreamlinedBlobStorageHelper implements StreamlinedBlobSto
   protected @NotNull ByteBuffer acquireTemporaryBuffer(int expectedRecordSizeHint) {
     ByteBuffer temp = threadLocalBuffer.get();
     if (temp != null && temp.capacity() >= expectedRecordSizeHint) {
-      threadLocalBuffer.set(null);
+      threadLocalBuffer.remove();
       return temp.position(0)
         .limit(0);
     }

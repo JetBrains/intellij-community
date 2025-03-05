@@ -12,8 +12,7 @@ import org.jetbrains.annotations.NonNls;
 
 @ApiStatus.Internal
 public final class NamedLibraryUrl extends AbstractUrl {
-
-  private static final @NonNls String ELEMENT_TYPE = "namedLibrary";
+  private static final @NonNls String ELEMENT_TYPE = TYPE_NAMED_LIBRARY;
 
   public NamedLibraryUrl(String url, String moduleName) {
     super(url, moduleName, ELEMENT_TYPE);

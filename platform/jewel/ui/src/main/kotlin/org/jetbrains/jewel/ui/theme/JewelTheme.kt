@@ -21,6 +21,7 @@ import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import org.jetbrains.jewel.ui.component.styling.GroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.InlineBannerStyles
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
@@ -30,16 +31,19 @@ import org.jetbrains.jewel.ui.component.styling.LocalDefaultBannerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultComboBoxStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultDropdownStyle
+import org.jetbrains.jewel.ui.component.styling.LocalDefaultSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDividerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalEditorTabStyle
 import org.jetbrains.jewel.ui.component.styling.LocalGroupHeaderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalHorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalInlineBannerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLazyTreeStyle
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.LocalOutlinedButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
@@ -60,6 +64,7 @@ import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
+import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
@@ -84,6 +89,12 @@ public val JewelTheme.Companion.defaultButtonStyle: ButtonStyle
 public val JewelTheme.Companion.outlinedButtonStyle: ButtonStyle
     @Composable @ReadOnlyComposable get() = LocalOutlinedButtonStyle.current
 
+public val JewelTheme.Companion.defaultSplitButtonStyle: SplitButtonStyle
+    @Composable @ReadOnlyComposable get() = LocalDefaultSplitButtonStyle.current
+
+public val JewelTheme.Companion.outlinedSplitButtonStyle: SplitButtonStyle
+    @Composable @ReadOnlyComposable get() = LocalOutlinedSplitButtonStyle.current
+
 public val JewelTheme.Companion.checkboxStyle: CheckboxStyle
     @Composable @ReadOnlyComposable get() = LocalCheckboxStyle.current
 
@@ -101,6 +112,9 @@ public val JewelTheme.Companion.comboBoxStyle: ComboBoxStyle
 
 public val JewelTheme.Companion.groupHeaderStyle: GroupHeaderStyle
     @Composable @ReadOnlyComposable get() = LocalGroupHeaderStyle.current
+
+public val JewelTheme.Companion.inlineBannerStyle: InlineBannerStyles
+    @Composable @ReadOnlyComposable get() = LocalInlineBannerStyle.current
 
 public val JewelTheme.Companion.linkStyle: LinkStyle
     @Composable @ReadOnlyComposable get() = LocalLinkStyle.current

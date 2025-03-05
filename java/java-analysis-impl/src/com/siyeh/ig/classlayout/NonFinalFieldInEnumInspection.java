@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -30,16 +30,14 @@ public final class NonFinalFieldInEnumInspection extends BaseInspection {
       checkbox("onlyWarnWhenQuickFix", InspectionGadgetsBundle.message("non.final.field.in.enum.quickfix.option")));
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiClass enumClass = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message("non.final.field.in.enum.problem.descriptor", enumClass.getName());
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiField field = (PsiField)infos[1];
     return MakeFieldFinalFix.buildFix(field);
   }

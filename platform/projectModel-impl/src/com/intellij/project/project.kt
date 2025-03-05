@@ -7,7 +7,6 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -34,10 +33,6 @@ val Project.isDirectoryBased: Boolean
     val stateStore = if (this is ComponentStoreOwner) this.componentStore else service()
     return (stateStore as? IProjectStore)?.storageScheme == StorageScheme.DIRECTORY_BASED
   }
-
-fun getProjectStoreDirectory(file: VirtualFile): VirtualFile? {
-  return if (file.isDirectory) file.findChild(Project.DIRECTORY_STORE_FOLDER) else null
-}
 
 fun isEqualToProjectFileStorePath(project: Project, filePath: Path, storePath: String): Boolean {
   return project.isDirectoryBased && filePath == project.stateStore.storageManager.expandMacro(storePath)

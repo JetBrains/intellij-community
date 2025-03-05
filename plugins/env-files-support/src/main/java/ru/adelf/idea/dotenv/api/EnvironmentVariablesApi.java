@@ -17,10 +17,9 @@ import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 import java.util.*;
 
-public class EnvironmentVariablesApi {
+public final class EnvironmentVariablesApi {
 
-    @NotNull
-    public static Map<String, String> getAllKeyValues(Project project) {
+    public static @NotNull Map<String, String> getAllKeyValues(Project project) {
         FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
         Map<String, String> keyValues = new HashMap<>();
         Map<String, String> secondaryKeyValues = new HashMap<>();
@@ -76,8 +75,7 @@ public class EnvironmentVariablesApi {
      * @param key     environment variable key
      * @return All key declarations, in .env files, Dockerfile, docker-compose.yml, etc
      */
-    @NotNull
-    public static PsiElement[] getKeyDeclarations(Project project, String key) {
+    public static PsiElement @NotNull [] getKeyDeclarations(Project project, String key) {
         List<PsiElement> targets = new ArrayList<>();
         List<PsiElement> secondaryTargets = new ArrayList<>();
 
@@ -107,9 +105,8 @@ public class EnvironmentVariablesApi {
      * @param key     environment variable key
      * @return All key usages, like getenv('KEY')
      */
-    @NotNull
-    public static PsiElement[] getKeyUsages(Project project, String key) {
-        List<PsiElement> targets = new ArrayList<>();
+    public static PsiElement @NotNull [] getKeyUsages(Project project, String key) {
+        Set<PsiElement> targets = new HashSet<>();
 
         PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
 

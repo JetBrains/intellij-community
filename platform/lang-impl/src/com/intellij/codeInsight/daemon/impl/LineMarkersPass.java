@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -39,9 +39,11 @@ import com.intellij.util.containers.NotNullList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 public final class LineMarkersPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LineMarkersPass.class);
@@ -79,7 +81,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
       LineMarkersUtil.setLineMarkersToEditor(myProject, getDocument(), myRestrictRange, markers, getId(), myHighlightingSession);
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.markFileUpToDate(myDocument, getId());
+      fileStatusMap.markFileUpToDate(myDocument, getContext(), getId());
     }
     catch (IndexNotReadyException ignored) {
     }
@@ -109,7 +111,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
                elements.inside(), root, providersList, (__, info) -> {
                  info.updatePass = passId;
                  lineMarkers.add(info);
-                 LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
+                 LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info, myHighlightingSession);
                });
              queryProviders(elements.outside(), root, providersList,
                (__, info) -> {
@@ -152,7 +154,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     return result;
   }
 
-  public static @NotNull List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
+  public static @Unmodifiable @NotNull List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
     List<LineMarkerProvider> forLanguage = LineMarkerProviders.getInstance().allForLanguageOrAny(language);
     List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
     LineMarkerSettings settings = LineMarkerSettings.getSettings();
@@ -179,7 +181,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
           try {
             info = provider.getLineMarkerInfo(element);
           }
-          catch (ProcessCanceledException | IndexNotReadyException e) {
+          catch (IndexNotReadyException e) {
+            continue;
+          }
+          catch (CancellationException e) {
             throw e;
           }
           catch (Exception e) {
@@ -214,14 +219,16 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
     }
 
     List<LineMarkerInfo<?>> slowLineMarkers = new NotNullList<>();
-    //noinspection ForLoopReplaceableByForEach
     for (int j = 0; j < providers.size(); j++) {
       ProgressManager.checkCanceled();
       LineMarkerProvider provider = providers.get(j);
       try {
         provider.collectSlowLineMarkers(elements, slowLineMarkers);
       }
-      catch (ProcessCanceledException | IndexNotReadyException e) {
+      catch (IndexNotReadyException e) {
+        continue;
+      }
+      catch (ProcessCanceledException e) {
         throw e;
       }
       catch (Exception e) {

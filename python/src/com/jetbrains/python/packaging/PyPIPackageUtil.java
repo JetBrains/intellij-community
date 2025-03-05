@@ -24,6 +24,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepositories;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,8 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.python.packaging.common.PackagesKt.normalizePackageName;
 
-public class PyPIPackageUtil {
+@ApiStatus.Internal
+public final class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
   private static final Gson GSON = new GsonBuilder().create();
 
@@ -59,6 +61,9 @@ public class PyPIPackageUtil {
   public static final String PYPI_LIST_URL = PYPI_BASE_URL + PYPI_SIMPLE_REPOSITORY_API;
 
   public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
+
+  private PyPIPackageUtil() {
+  }
 
   /**
    * Contains cached versions of packages from additional repositories.
@@ -92,7 +97,7 @@ public class PyPIPackageUtil {
   /**
    * Contains cached packages taken from additional repositories.
    */
-  protected final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
+  private final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
     new CacheLoader<>() {
       @Override
       public List<RepoPackage> load(@NotNull String key) throws Exception {
@@ -190,7 +195,8 @@ public class PyPIPackageUtil {
     });
   }
 
-  private @NotNull PackageDetails refreshAndGetPackageDetailsFromPyPI(@NotNull String packageName, boolean alwaysRefresh) throws IOException {
+  private @NotNull PackageDetails refreshAndGetPackageDetailsFromPyPI(@NotNull String packageName, boolean alwaysRefresh)
+    throws IOException {
     if (alwaysRefresh) {
       myPackageToDetails.invalidate(packageName);
     }
@@ -219,7 +225,7 @@ public class PyPIPackageUtil {
    * Fetches available package versions using JSON API of PyPI.
    */
   private @NotNull List<String> getPackageVersionsFromPyPI(@NotNull String packageName,
-                                                  boolean force) throws IOException {
+                                                           boolean force) throws IOException {
     final PackageDetails details = refreshAndGetPackageDetailsFromPyPI(packageName, force);
     final List<String> result = details.getReleases();
     result.sort(PyPackageVersionComparator.getSTR_COMPARATOR().reversed());
@@ -241,17 +247,19 @@ public class PyPIPackageUtil {
     return getCachedValueOrRethrowIO(myAdditionalPackagesReleases, packageName);
   }
 
-  private static @NotNull <T> T getCachedValueOrRethrowIO(@NotNull LoadingCache<String, ? extends T> cache, @NotNull String key) throws IOException {
+  private static @NotNull <T> T getCachedValueOrRethrowIO(@NotNull LoadingCache<String, ? extends T> cache, @NotNull String key)
+    throws IOException {
     try {
       return cache.get(key);
     }
-    catch (ExecutionException|UncheckedExecutionException e) {
+    catch (ExecutionException | UncheckedExecutionException e) {
       final Throwable cause = e.getCause();
       throw (cause instanceof IOException ? (IOException)cause : new IOException("Unexpected non-IO error", cause));
     }
   }
 
-  private @Nullable String getLatestPackageVersionFromAdditionalRepositories(@NotNull Project project, @NotNull String packageName) throws IOException {
+  private @Nullable String getLatestPackageVersionFromAdditionalRepositories(@NotNull Project project, @NotNull String packageName)
+    throws IOException {
     final List<String> versions = getPackageVersionsFromAdditionalRepositories(packageName);
     return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
@@ -480,7 +488,7 @@ public class PyPIPackageUtil {
       @SerializedName("description_content_type")
       private String descriptionContentType = "";
       @SerializedName("project_urls")
-      private Map<String, String>  projectUrls = Collections.emptyMap();
+      private Map<String, String> projectUrls = Collections.emptyMap();
 
       public @NotNull String getVersion() {
         return StringUtil.notNullize(version);

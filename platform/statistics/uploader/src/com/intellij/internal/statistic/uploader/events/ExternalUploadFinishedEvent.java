@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader.events;
 
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class ExternalUploadFinishedEvent extends ExternalSystemEvent {
+public final class ExternalUploadFinishedEvent extends ExternalSystemEvent {
   private final String myError;
 
   public ExternalUploadFinishedEvent(long timestamp, @Nullable String error, @Nullable String recorderId) {
@@ -13,8 +13,7 @@ public class ExternalUploadFinishedEvent extends ExternalSystemEvent {
     myError = error;
   }
 
-  @Nullable
-  public String getError() {
+  public @Nullable String getError() {
     return myError;
   }
 

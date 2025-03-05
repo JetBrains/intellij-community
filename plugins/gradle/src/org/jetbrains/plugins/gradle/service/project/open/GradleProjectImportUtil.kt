@@ -95,7 +95,7 @@ fun suggestGradleHome(project: Project?): String? {
     return lastUsedGradleHome
   }
   val gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome(project)
-  return gradleHome?.toPath()?.toCanonicalPath()
+  return gradleHome?.toCanonicalPath()
 }
 
 private fun validateGradleProject(projectFilePath: String, project: Project): ValidationInfo? {

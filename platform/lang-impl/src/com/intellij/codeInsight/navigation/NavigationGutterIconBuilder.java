@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -27,10 +27,7 @@ import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.text.MessageFormat;
@@ -180,9 +177,10 @@ public class NavigationGutterIconBuilder<T> {
   @Deprecated
   public @Nullable Annotation install(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
     if (!myLazy && myTargets.getValue().isEmpty() || element == null) return null;
-    return holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
       .gutterIconRenderer(createGutterIconRenderer(element.getProject(), null))
-      .needsUpdateOnTyping(false).createAnnotation();
+      .needsUpdateOnTyping(false).create();
+    return null;
   }
 
   public void createGutterIcon(@NotNull AnnotationHolder holder, @Nullable PsiElement element) {
@@ -216,7 +214,7 @@ public class NavigationGutterIconBuilder<T> {
       () -> computeGotoTargets());
   }
 
-  protected @NotNull Collection<GotoRelatedItem> computeGotoTargets() {
+  protected @Unmodifiable @NotNull Collection<GotoRelatedItem> computeGotoTargets() {
     if (myTargets == null || myGotoRelatedItemProvider == null) return Collections.emptyList();
     NotNullFactory<Collection<? extends T>> factory = evaluateAndForget(myTargets);
     return ContainerUtil.concat(factory.create(), myGotoRelatedItemProvider);

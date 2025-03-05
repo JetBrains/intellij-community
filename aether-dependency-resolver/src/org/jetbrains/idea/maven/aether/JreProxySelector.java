@@ -1,9 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
+import org.eclipse.aether.repository.*;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.ProxySelector;
-import org.eclipse.aether.repository.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.*;
@@ -24,8 +24,7 @@ final class JreProxySelector implements ProxySelector {
     return getProxy(repository.getUrl());
   }
 
-  @Nullable
-  public Proxy getProxy(final String url) {
+  public @Nullable Proxy getProxy(final String url) {
     try {
       final java.net.ProxySelector systemSelector = java.net.ProxySelector.getDefault();
       if (systemSelector == null) {

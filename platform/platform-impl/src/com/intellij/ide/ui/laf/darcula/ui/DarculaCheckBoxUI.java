@@ -6,6 +6,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -76,6 +77,11 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
     layout.paint(g, getDisabledTextColor(), getMnemonicIndex(button));
     drawCheckIcon(c, g, button, layout.iconRect, button.isSelected(), button.isEnabled());
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Rectangle getTextRect(@NotNull JCheckBox b) {
+    return createLayout(b, b.getSize()).textRect;
   }
 
   @Override

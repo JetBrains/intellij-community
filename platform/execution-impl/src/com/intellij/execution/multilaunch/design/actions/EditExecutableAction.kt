@@ -1,11 +1,10 @@
 package com.intellij.execution.multilaunch.design.actions
 
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-class EditExecutableAction : ManageExecutableAction(ActionsBundle.message("action.multilaunch.EditExecutableAction.text")) {
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+internal class EditExecutableAction : ManageExecutableAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val editableRow = e.editableRow ?: return
@@ -17,4 +16,3 @@ class EditExecutableAction : ManageExecutableAction(ActionsBundle.message("actio
     editableRow.executable?.performEdit()
   }
 }
-

@@ -786,6 +786,16 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
             runTest("../../idea/tests/testData/codeInsight/surroundWith/functionLiteral/moveDeclarationsOut.kt");
         }
 
+        @TestMetadata("moveDeclarationsOutWithNonDeclarationLastStatement.kt")
+        public void testMoveDeclarationsOutWithNonDeclarationLastStatement() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/functionLiteral/moveDeclarationsOutWithNonDeclarationLastStatement.kt");
+        }
+
+        @TestMetadata("moveDeclarationsOutWithTreeValueDeclarations.kt")
+        public void testMoveDeclarationsOutWithTreeValueDeclarations() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/functionLiteral/moveDeclarationsOutWithTreeValueDeclarations.kt");
+        }
+
         @TestMetadata("multiStatement.kt")
         public void testMultiStatement() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/surroundWith/functionLiteral/multiStatement.kt");
@@ -794,6 +804,11 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
         @TestMetadata("singleStatement.kt")
         public void testSingleStatement() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/surroundWith/functionLiteral/singleStatement.kt");
+        }
+
+        @TestMetadata("statementWithElvis.kt")
+        public void testStatementWithElvis() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/functionLiteral/statementWithElvis.kt");
         }
     }
 

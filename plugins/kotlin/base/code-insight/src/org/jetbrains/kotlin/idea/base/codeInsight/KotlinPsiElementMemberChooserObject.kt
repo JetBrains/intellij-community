@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import javax.swing.Icon
@@ -44,7 +45,7 @@ class KotlinPsiElementMemberChooserObject(
         @KaExperimentalApi
         private val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.NONE }
+                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.VARARG_KEYWORD) }
             }
         }
 

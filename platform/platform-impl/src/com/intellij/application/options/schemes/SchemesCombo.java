@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
@@ -7,10 +7,12 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GroupedComboBoxRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +134,8 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     if (separatorInfo != null) mySeparatorInfos.add(separatorInfo);
   }
 
-  static final class MySchemeListItem<T extends Scheme> {
+  @ApiStatus.Internal
+  public static final class MySchemeListItem<T extends Scheme> {
     private final @Nullable T myScheme;
 
     MySchemeListItem(@Nullable T scheme) {
@@ -155,7 +158,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
   private void customizeComponent(@NotNull SimpleColoredComponent item, MySchemeListItem<T> value, int index) {
     final var scheme = value.getScheme();
     if (scheme != null) {
-      item.append(value.getPresentableText(), getSchemeAttributes(scheme));
+      item.append(StringUtil.shortenTextWithEllipsis(value.getPresentableText(), 100, 20), getSchemeAttributes(scheme));
       if (isDefaultScheme(scheme)) {
         item.append(" " + IdeBundle.message("scheme.theme.default"), SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
@@ -170,9 +173,9 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     item.setIpad(JBUI.insetsLeft(indent > 0 ? indent * 10 : 0));
   }
 
-  private class SeparatorInfo {
-    @NotNull private final MySchemeListItem<T> myListItem;
-    @Nls private final String title;
+  private final class SeparatorInfo {
+    private final @NotNull MySchemeListItem<T> myListItem;
+    private final @Nls String title;
 
     SeparatorInfo(@NotNull MySchemeListItem<T> listItem, @Nullable @Nls String title) {
       this.myListItem = listItem;

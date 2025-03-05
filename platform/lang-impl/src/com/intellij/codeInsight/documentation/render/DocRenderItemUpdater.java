@@ -34,7 +34,7 @@ public final class DocRenderItemUpdater implements Runnable {
     getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> i.getFoldRegion()), recreateContent);
   }
 
-  static void updateRenderers(@NotNull Editor editor, boolean recreateContent) {
+  public static void updateRenderers(@NotNull Editor editor, boolean recreateContent) {
     if (recreateContent) {
       DocRenderer.clearCachedLoadingPane(editor);
     }

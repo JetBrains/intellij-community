@@ -16,8 +16,7 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.sdk.PythonSdkUpdater
-import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import com.jetbrains.python.tools.sdkTools.SdkCreationType
 import java.io.File

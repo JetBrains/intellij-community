@@ -109,8 +109,7 @@ public class ValProcessor extends AbstractProcessor {
     return LombokClassNames.VAR.equals(fullQualifiedName) || LombokClassNames.EXPERIMENTAL_VAR.equals(fullQualifiedName);
   }
 
-  @Nullable
-  private static String resolveQualifiedName(@NotNull PsiTypeElement typeElement) {
+  private static @Nullable String resolveQualifiedName(@NotNull PsiTypeElement typeElement) {
     PsiJavaCodeReferenceElement reference = typeElement.getInnermostComponentReferenceElement();
     if (reference == null) {
       return null;
@@ -119,19 +118,17 @@ public class ValProcessor extends AbstractProcessor {
     return reference.getQualifiedName();
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     return Collections.emptyList();
   }
 
-  public void verifyVariable(@NotNull final PsiLocalVariable psiLocalVariable, @NotNull final ProblemsHolder holder) {
+  public void verifyVariable(final @NotNull PsiLocalVariable psiLocalVariable, final @NotNull ProblemsHolder holder) {
     final PsiTypeElement typeElement = psiLocalVariable.getTypeElement();
     final String typeElementText = typeElement.getText();
     boolean isVal = isPossibleVal(typeElementText) && isVal(resolveQualifiedName(typeElement));
@@ -156,7 +153,7 @@ public class ValProcessor extends AbstractProcessor {
     }
   }
 
-  public void verifyParameter(@NotNull final PsiParameter psiParameter, @NotNull final ProblemsHolder holder) {
+  public void verifyParameter(final @NotNull PsiParameter psiParameter, final @NotNull ProblemsHolder holder) {
     final PsiTypeElement typeElement = psiParameter.getTypeElement();
     final String typeElementText = null != typeElement ? typeElement.getText() : null;
     boolean isVal = isPossibleVal(typeElementText) && isVal(resolveQualifiedName(typeElement));
@@ -180,8 +177,7 @@ public class ValProcessor extends AbstractProcessor {
       (parent instanceof PsiParameter && isValOrVarForEach((PsiParameter) parent));
   }
 
-  @Nullable
-  public static PsiType inferType(PsiTypeElement typeElement) {
+  public static @Nullable PsiType inferType(PsiTypeElement typeElement) {
     PsiType psiType = null;
 
     if (canInferType(typeElement)) {

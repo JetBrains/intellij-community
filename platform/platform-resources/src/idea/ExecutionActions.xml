@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <actions>
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
@@ -84,7 +85,7 @@
     <group id="RunConfigurationsActionGroup" class="com.intellij.execution.ui.RunConfigurationsActionGroup"/>
 
     <group id="ExecutionTargetsToolbarGroup" searchable="false" popup="false">
-      <reference id="ExecutionTargets"/>
+      <reference ref="ExecutionTargets"/>
       <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </group>
 
@@ -180,21 +181,26 @@
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
 
+    <group id="ToolbarPanel.MoreActions" searchable="false"/>
+
     <!--region TouchBar -->
     <group id="TouchBarDebug">
       <reference ref="Rerun"/>
       <reference ref="Resume"/>
       <reference ref="Pause"/>
       <reference ref="Stop"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.flexible"/>
       <group id="TouchBarDebug.StepButtons" compact="true">
         <reference ref="StepOver"/>
         <reference ref="StepInto"/>
         <reference ref="StepOut"/>
       </group>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.small"/>
       <group id="TouchBarDebug_alt">
         <reference ref="ViewBreakpoints"/>
+        <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
         <separator text="type.flexible"/>
         <group id="TouchBarDebug.ForceStepButtons" compact="true">
           <reference ref="RunToCursor"/>
@@ -202,6 +208,7 @@
           <reference ref="ForceStepInto"/>
           <reference ref="SmartStepInto"/>
         </group>
+        <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
         <separator text="type.small"/>
       </group>
 
@@ -212,13 +219,15 @@
       <reference ref="RunConfiguration"/>
       <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
       <reference ref="Stop"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.small"/>
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.large"/>
 
       <add-to-group group-id="TouchBarDefault" anchor="first"/>
     </group>
 
-    <reference id="ToggleLineBreakpoint">
+    <reference ref="ToggleLineBreakpoint">
       <add-to-group group-id="TouchBarDefault_cmd" anchor="last"/>
     </reference>
     <!--endregion-->

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,9 +69,8 @@ public final class TypeInferenceHelper {
     }
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static InferenceContext getCurrentContext() {
+  public static @NotNull InferenceContext getCurrentContext() {
     InferenceContext context = ourInferenceContext.get();
     return context != null ? context : getTopContext();
   }
@@ -80,14 +79,12 @@ public final class TypeInferenceHelper {
     return withContext(getTopContext(), computation);
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static InferenceContext getTopContext() {
+  public static @NotNull InferenceContext getTopContext() {
     return InferenceContext.TOP_CONTEXT;
   }
 
-  @Nullable
-  public static PsiType getInferredType(@NotNull final GrReferenceExpression refExpr) {
+  public static @Nullable PsiType getInferredType(final @NotNull GrReferenceExpression refExpr) {
     final GrControlFlowOwner scope = isFlatDFAAllowed() ? ControlFlowUtils.getTopmostOwner(refExpr) : ControlFlowUtils.findControlFlowOwner(refExpr);
     if (scope == null) return null;
 
@@ -109,14 +106,12 @@ public final class TypeInferenceHelper {
     return cache.getInferredType(descriptorIndex, rwInstruction, mixinOnly);
   }
 
-  @Nullable
-  public static PsiType getInferredType(int descriptor, Instruction instruction, GrControlFlowOwner scope) {
+  public static @Nullable PsiType getInferredType(int descriptor, Instruction instruction, GrControlFlowOwner scope) {
     InferenceCache cache = getInferenceCache(scope);
     return cache.getInferredType(descriptor, instruction, false);
   }
 
-  @Nullable
-  public static PsiType getVariableTypeInContext(@Nullable PsiElement context, @NotNull GrVariable variable) {
+  public static @Nullable PsiType getVariableTypeInContext(@Nullable PsiElement context, @NotNull GrVariable variable) {
     if (context == null) return variable.getType();
     final GrControlFlowOwner scope = isFlatDFAAllowed() ? ControlFlowUtils.getTopmostOwner(ControlFlowUtils.findControlFlowOwner(context))
                                                         : ControlFlowUtils.findControlFlowOwner(context);
@@ -147,15 +142,14 @@ public final class TypeInferenceHelper {
     return getInferenceCache(scope).isTooComplexToAnalyze();
   }
 
-  @NotNull
-  static InferenceCache getInferenceCache(@NotNull final GrControlFlowOwner scope) {
+  static @NotNull InferenceCache getInferenceCache(final @NotNull GrControlFlowOwner scope) {
     if (isFlatDFAAllowed() && ControlFlowUtils.getTopmostOwner(scope) != scope) {
       LOG.error("Flat DFA inconsistency: scope is " + scope + ", but topmost owner is " + ControlFlowUtils.getTopmostOwner(scope));
     }
     return CachedValuesManager.getCachedValue(scope, () -> Result.create(new InferenceCache(scope), MODIFICATION_COUNT));
   }
 
-  public static GroovyControlFlow getFlatControlFlow(@NotNull final GrControlFlowOwner scope) {
+  public static GroovyControlFlow getFlatControlFlow(final @NotNull GrControlFlowOwner scope) {
     if (isFlatDFAAllowed()) {
       return CachedValuesManager.getCachedValue(scope, () -> Result.create(ControlFlowBuilder.buildFlatControlFlow(scope), MODIFICATION_COUNT));
     } else {
@@ -163,8 +157,7 @@ public final class TypeInferenceHelper {
     }
   }
 
-  @Nullable
-  static List<DefinitionMap> getDefUseMaps(@NotNull GroovyControlFlow flow) {
+  static @Nullable List<DefinitionMap> getDefUseMaps(@NotNull GroovyControlFlow flow) {
     final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance();
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow.getFlow(), dfaInstance, lattice);
@@ -175,8 +168,7 @@ public final class TypeInferenceHelper {
     return ContainerUtil.map(maps, it -> it == null ? DefinitionMap.NEUTRAL : it);
   }
 
-  @Nullable
-  public static PsiType getInitializerType(final PsiElement element) {
+  public static @Nullable PsiType getInitializerType(final PsiElement element) {
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifierExpression() == null) {
       return getInitializerTypeFor(element);
     }
@@ -188,8 +180,7 @@ public final class TypeInferenceHelper {
     return null;
   }
 
-  @Nullable
-  public static PsiType getInitializerTypeFor(PsiElement element) {
+  public static @Nullable PsiType getInitializerTypeFor(PsiElement element) {
     final PsiElement parent = skipParentheses(element.getParent(), true);
     if (parent instanceof GrAssignmentExpression) {
       if (element instanceof GrIndexProperty) {
@@ -222,8 +213,7 @@ public final class TypeInferenceHelper {
     return null;
   }
 
-  @Nullable
-  public static GrExpression getInitializerFor(GrExpression lValue) {
+  public static @Nullable GrExpression getInitializerFor(GrExpression lValue) {
     final PsiElement parent = lValue.getParent();
     if (parent instanceof GrAssignmentExpression) return ((GrAssignmentExpression)parent).getRValue();
     if (parent instanceof GrTuple) {

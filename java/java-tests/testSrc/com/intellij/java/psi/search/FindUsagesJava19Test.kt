@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search
 
 import com.intellij.psi.PsiPatternVariable
@@ -27,7 +27,7 @@ record B(int n) implements I {}
 record A(int n) implements I {}""")
 
     val pattern = file.findElementAt(myFixture.caretOffset)!!.parentOfType<PsiPatternVariable>()!!
-    val references = ReferencesSearch.search(pattern).toList()
+    val references = ReferencesSearch.search(pattern).asIterable().toList()
     Assert.assertEquals(1, references.size)
   }
 }

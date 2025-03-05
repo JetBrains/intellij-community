@@ -1,0 +1,95 @@
+<idea-plugin package="com.intellij.terminal.frontend">
+  <dependencies>
+    <plugin id="com.intellij.platform.experimental.frontend"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.escapeHandler"
+                    interface="com.intellij.terminal.frontend.action.TerminalEscapeHandler" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
+
+    <editorActionHandler action="Find" implementationClass="com.intellij.terminal.frontend.action.TerminalFindHandler"
+                         id="terminalFind" order="first"/>
+    <editorActionHandler action="FindNext" implementationClass="com.intellij.terminal.frontend.action.TerminalFindNextHandler"
+                         id="terminalFindNext" order="first"/>
+    <editorActionHandler action="FindPrevious" implementationClass="com.intellij.terminal.frontend.action.TerminalFindPreviousHandler"
+                         id="terminalFindPrevious" order="first"/>
+    <editorActionHandler action="Replace" implementationClass="com.intellij.terminal.frontend.action.TerminalReplaceHandler"
+                         id="terminalReplace" order="first"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <terminalWidgetProvider implementation="com.intellij.terminal.frontend.ReworkedTerminalWidgetProvider"/>
+
+    <escapeHandler implementation="com.intellij.terminal.frontend.action.CancelSelection"/>
+    <escapeHandler implementation="com.intellij.terminal.frontend.action.CloseSearch"/>
+    <escapeHandler implementation="com.intellij.terminal.frontend.action.SelectEditor"/>
+  </extensions>
+
+  <actions resource-bundle="messages.TerminalBundle">
+    <action id="Terminal.ClearBuffer" class="com.intellij.terminal.frontend.action.TerminalClearAction">
+      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
+    </action>
+    <action id="Terminal.Paste" class="com.intellij.terminal.frontend.action.TerminalPasteAction" icon="AllIcons.Actions.MenuPaste">
+      <!-- use keyboard-shortcuts of $Paste with Ctrl+Shift+V on Linux  -->
+      <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="control V" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="shift INSERT" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
+    </action>
+    <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="Terminal.Escape" class="com.intellij.terminal.frontend.action.TerminalEscapeAction" use-shortcut-of="EditorEscape"/>
+
+    <action id="Terminal.EnableNewUi" class="com.intellij.terminal.frontend.action.EnableBlockTerminalUiAction"/>
+
+    <group id="Terminal.ToolWindowActions">
+      <reference ref="Terminal.EnableNewUi"/>
+    </group>
+
+    <group id="Terminal.OutputContextMenu">
+      <reference ref="Terminal.CopyBlock"/>
+      <reference ref="Terminal.CopySelectedText"/>
+      <reference ref="Terminal.Paste"/>
+    </group>
+
+    <group id="Terminal.PromptContextMenu">
+      <!-- todo: replace editor actions with dedicated terminal actions -->
+      <reference ref="EditorCut"/>
+      <reference ref="Terminal.CopySelectedText"/>
+      <reference ref="Terminal.Paste"/>
+      <reference ref="Terminal.PromptStyle"/>
+    </group>
+
+    <group id="Terminal.ReworkedTerminalContextMenu">
+      <reference ref="Terminal.Find"/>
+      <reference ref="Terminal.NewTab"/>
+      <reference ref="Terminal.CloseTab"/>
+      <separator/>
+      <reference ref="Terminal.SplitVertically"/>
+      <reference ref="Terminal.SplitHorizontally"/>
+      <reference ref="PreviousTab"/>
+      <reference ref="NextTab"/>
+      <reference ref="Terminal.MoveToolWindowTabRight"/>
+      <reference ref="Terminal.MoveToolWindowTabLeft"/>
+      <reference ref="ShowContent"/>
+      <separator/>
+      <reference ref="Terminal.CopySelectedText"/>
+      <reference ref="Terminal.Paste"/>
+      <reference ref="Terminal.SelectAll"/>
+      <separator/>
+      <reference ref="Terminal.ClearBuffer"/>
+      <reference ref="Terminal.PageUp"/>
+      <reference ref="Terminal.PageDown"/>
+      <separator/>
+      <reference ref="Terminal.LineUp"/>
+      <reference ref="Terminal.LineDown"/>
+    </group>
+  </actions>
+</idea-plugin>

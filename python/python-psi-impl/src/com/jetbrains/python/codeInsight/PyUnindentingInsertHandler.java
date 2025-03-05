@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Adjusts indentation after a final part keyword is inserted, e.g. an "else:".
  */
 public final class PyUnindentingInsertHandler implements InsertHandler<PythonLookupElement> {
-  public final static PyUnindentingInsertHandler INSTANCE = new PyUnindentingInsertHandler();
+  public static final PyUnindentingInsertHandler INSTANCE = new PyUnindentingInsertHandler();
 
   private PyUnindentingInsertHandler() {
   }

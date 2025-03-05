@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public class EditName implements ChangeListCommand {
-  @NotNull private final String myFromName;
-  @NotNull private final String myToName;
+  private final @NotNull String myFromName;
+  private final @NotNull String myToName;
 
   private boolean myResult;
   private LocalChangeList myListCopy;

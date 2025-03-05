@@ -12,10 +12,13 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.JBDimension
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 
-internal class JavaCodeStyleImportsUI(packages: JComponent, importLayout: JComponent,
+internal class JavaCodeStyleImportsUI(packages: JComponent,
+                                      importLayout: JComponent,
                                       private val doNotInsertInnerTable: TableView<InnerClassItem>,
+                                      private val preserveModuleImports: JCheckBox,
                                       private val fqnInJavadocOption: JComponent) : CodeStyleImportsBaseUI(packages, importLayout) {
 
   override fun init() {
@@ -26,6 +29,11 @@ internal class JavaCodeStyleImportsUI(packages: JComponent, importLayout: JCompo
   }
 
   override fun Panel.fillCustomOptions() {
+    row {
+      cell(preserveModuleImports).applyToComponent {
+        isOpaque = false
+      }
+    }
     indent {
       row {
         val decorator = ToolbarDecorator.createDecorator(doNotInsertInnerTable)

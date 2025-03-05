@@ -10,6 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -48,19 +49,18 @@ public abstract class MoveFileHandler {
   /**
    * Finds the list of references to the file being moved that will need to be updated during the move refactoring.
    *
-   * @param psiFile the file being moved.
-   * @param newParent the directory to which the file is being moved.
-   * @param searchInComments if true, search for references in comments has been requested.
+   * @param psiFile              the file being moved.
+   * @param newParent            the directory to which the file is being moved.
+   * @param searchInComments     if true, search for references in comments has been requested.
    * @param searchInNonJavaFiles if true, search for references in non-code files (such as .xml) has been requested.
    * @return the list of usages that need to be updated, or null if nothing needs to be updated.
    */
-  public abstract @Nullable List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles);
+  public abstract @Nullable @Unmodifiable List<UsageInfo> findUsages(@NotNull PsiFile psiFile, @NotNull PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles);
 
   /**
    * Finds conflicts which may arise when file is moved, 
    * e.g. missing module dependency or visibility which makes moved element not accessible
-   * 
-   * {@link #detectConflicts(PsiElement[], UsageInfo[], PsiDirectory, MultiMap)} passes all elements which were moved 
+   * {@link #detectConflicts(PsiElement[], UsageInfo[], PsiDirectory, MultiMap)} passes all elements which were moved
    * as well as all found usages for each handler. It's the responsibility of handler to ignore inappropriate elements/usages.
    * 
    * @param elementsToMove all elements which were moved during refactoring, including those which won't be normally processed by the handler
@@ -77,7 +77,7 @@ public abstract class MoveFileHandler {
    * @param usageInfos  the list of references, as returned from {@link #findUsages}
    * @param oldToNewMap the map of all moved elements, filled by {@link #prepareMovedFile}
    */
-  public abstract void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) ;
+  public abstract void retargetUsages(@Unmodifiable @NotNull List<? extends UsageInfo> usageInfos, @NotNull Map<PsiElement, PsiElement> oldToNewMap) ;
 
   /**
    * Updates the contents of the file after it has been moved (e.g. updates the package statement to correspond to the
@@ -125,12 +125,12 @@ public abstract class MoveFileHandler {
     }
 
     @Override
-    public List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
+    public @Nullable @Unmodifiable List<UsageInfo> findUsages(@NotNull PsiFile psiFile, @NotNull PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles) {
       return null;
     }
 
     @Override
-    public void retargetUsages(List<UsageInfo> usageInfos, Map<PsiElement, PsiElement> oldToNewMap) {
+    public void retargetUsages(@Unmodifiable @NotNull List<? extends UsageInfo> usageInfos, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
 
     }
   };

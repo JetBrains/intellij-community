@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl.psi;
 
 import com.intellij.psi.*;
@@ -7,8 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class PsiMethodCategory implements PsiEnhancerCategory {
-  @Nullable
-  public static PsiClass getClassType(PsiField field) {
+  public static @Nullable PsiClass getClassType(PsiField field) {
     final PsiType type = field.getType();
     return PsiCategoryUtil.getClassType(type, field);
   }

@@ -11,7 +11,7 @@ import com.intellij.ide.DataManager
 import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -46,7 +46,7 @@ private class ArtifactListenerService(
     cs.launch {
       (project.workspaceModel as WorkspaceModelInternal).flowOfDiff(query).collect {
         if (it.removed.any()) {
-          writeAction {
+          edtWriteAction {
             it.removed.forEach { artifactEntity ->
               removeByName(project, providerId, artifactEntity.name)
             }

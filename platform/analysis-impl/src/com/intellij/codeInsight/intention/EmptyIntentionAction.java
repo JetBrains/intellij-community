@@ -38,6 +38,7 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
     return true;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -47,6 +48,7 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
     return myName.equals(that.myName);
   }
 
+  @Override
   public int hashCode() {
     return myName.hashCode();
   }

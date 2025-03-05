@@ -5,5 +5,3 @@ val myVersion = libs.versions.test.l<caret>ibrary.version
 # EXPECTED
 [versions]
 test_library-version = "1.0.5"
-
-// FILE: settings.gradle.kts

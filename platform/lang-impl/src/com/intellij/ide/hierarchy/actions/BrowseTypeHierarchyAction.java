@@ -5,7 +5,6 @@ package com.intellij.ide.hierarchy.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.LanguageTypeHierarchy;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.jetbrains.annotations.ApiStatus;

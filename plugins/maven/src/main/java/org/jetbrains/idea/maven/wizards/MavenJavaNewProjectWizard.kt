@@ -3,16 +3,13 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.*
-import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.RootNewProjectWizardStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
@@ -39,11 +36,8 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
     override val addSampleCodeProperty = propertyGraph.property(true)
       .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
-    override val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
-      .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
 
     override var addSampleCode by addSampleCodeProperty
-    override var generateOnboardingTips by generateOnboardingTipsProperty
 
     private fun setupSampleCodeUI(builder: Panel) {
       builder.row {
@@ -54,22 +48,10 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       }
     }
 
-    private fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
-      builder.indent {
-        row {
-          checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
-            .bindSelected(generateOnboardingTipsProperty)
-            .whenStateChangedFromUi { logAddSampleOnboardingTipsChanged(it) }
-            .onApply { logAddSampleOnboardingTipsFinished(generateOnboardingTips) }
-        }
-      }.enabledIf(addSampleCodeProperty)
-    }
-
     override fun setupSettingsUI(builder: Panel) {
       setupJavaSdkUI(builder)
       setupParentsUI(builder)
       setupSampleCodeUI(builder)
-      setupSampleCodeWithOnBoardingTipsUI(builder)
     }
 
     override fun setupAdvancedSettingsUI(builder: Panel) {
@@ -81,9 +63,12 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       linkMavenProject(project, builder)
     }
 
+    override fun createProjectConfigurator(): ProjectConfigurator? {
+      return builder.createProjectConfigurator()
+    }
+
     init {
       data.putUserData(MavenJavaNewProjectWizardData.KEY, this)
-      data.putUserData(RootNewProjectWizardStep.PROJECT_BUILDER_KEY, builder)
     }
   }
 
@@ -96,10 +81,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
       }
       if (parent.addSampleCode) {
-        if (parent.generateOnboardingTips) {
-          prepareJavaSampleOnboardingTips(project)
-        }
-        withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
+        withJavaSampleCodeAsset(project, "src/main/java", parent.groupId)
       }
     }
   }

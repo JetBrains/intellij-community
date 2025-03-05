@@ -9,6 +9,8 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.ui.component.styling.IconButtonColors
+import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldColors
 import org.jetbrains.jewel.ui.component.styling.TextFieldMetrics
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
@@ -17,13 +19,38 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 public fun TextFieldStyle.Companion.light(
     colors: TextFieldColors = TextFieldColors.light(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
-): TextFieldStyle = TextFieldStyle(colors, metrics)
+    iconButtonStyle: IconButtonStyle =
+        IconButtonStyle.light(
+            colors =
+                IconButtonColors.light(
+                    background = Color.Unspecified,
+                    backgroundDisabled = Color.Unspecified,
+                    backgroundSelected = Color.Unspecified,
+                    backgroundSelectedActivated = Color.Unspecified,
+                    backgroundFocused = Color.Unspecified,
+                    backgroundPressed = Color.Unspecified,
+                    backgroundHovered = Color.Unspecified,
+                )
+        ),
+): TextFieldStyle = TextFieldStyle(colors, metrics, iconButtonStyle)
 
 @Composable
 public fun TextFieldStyle.Companion.dark(
     colors: TextFieldColors = TextFieldColors.dark(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
-): TextFieldStyle = TextFieldStyle(colors, metrics)
+    iconButtonStyle: IconButtonStyle =
+        IconButtonStyle.dark(
+            IconButtonColors.dark(
+                background = Color.Unspecified,
+                backgroundDisabled = Color.Unspecified,
+                backgroundSelected = Color.Unspecified,
+                backgroundSelectedActivated = Color.Unspecified,
+                backgroundFocused = Color.Unspecified,
+                backgroundPressed = Color.Unspecified,
+                backgroundHovered = Color.Unspecified,
+            )
+        ),
+): TextFieldStyle = TextFieldStyle(colors, metrics, iconButtonStyle)
 
 @Composable
 public fun TextFieldColors.Companion.light(

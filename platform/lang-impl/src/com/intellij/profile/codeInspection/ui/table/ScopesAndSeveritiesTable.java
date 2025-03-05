@@ -36,10 +36,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.NamedColorUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -255,20 +252,23 @@ public final class ScopesAndSeveritiesTable extends JBTable {
     return previousValue != null ? previousValue : MIXED_FAKE_KEY;
   }
 
-  private static ArrayList<Pair<TextAttributesKey, @Nls String>> getEditorAttributesKeysAndNames(InspectionProfileImpl profile) {
-    final var textAttributes = ColorSettingsUtil.getErrorTextAttributes();
+  @NotNull
+  @Unmodifiable
+  private static List<Pair<TextAttributesKey, @Nls String>> getEditorAttributesKeysAndNames(InspectionProfileImpl profile) {
+    List<@NotNull Pair<TextAttributesKey, @Nls String>> textAttributes = new ArrayList<>(ColorSettingsUtil.getErrorTextAttributes());
 
-    final Collection<HighlightInfoType> standardSeverities = SeverityRegistrar.standardSeverities();
-    final var registrar = profile.getProfileManager().getSeverityRegistrar();
+    Collection<HighlightInfoType> standardSeverities = SeverityRegistrar.standardSeverities();
+    SeverityRegistrar registrar = profile.getProfileManager().getSeverityRegistrar();
     for (HighlightSeverity severity : registrar.getAllSeverities()) {
-      final var highlightInfoType = registrar.getHighlightInfoTypeBySeverity(severity);
-      if (standardSeverities.contains(highlightInfoType)) continue;
-      final TextAttributesKey attributes = registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
-      textAttributes.add(new Pair<>(attributes, severity.getDisplayName()));
+      HighlightInfoType.HighlightInfoTypeImpl highlightInfoType = registrar.getHighlightInfoTypeBySeverity(severity);
+      if (!standardSeverities.contains(highlightInfoType)) {
+        TextAttributesKey attributes = registrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+        textAttributes.add(new Pair<>(attributes, severity.getDisplayName()));
+      }
     }
 
     textAttributes.add(new Pair<>(EDIT_HIGHLIGHTING, InspectionsBundle.message("inspection.edit.highlighting.action")));
-    return textAttributes;
+    return List.copyOf(textAttributes);
   }
 
   private static final class MyTableModel extends AbstractTableModel implements EditableModel {

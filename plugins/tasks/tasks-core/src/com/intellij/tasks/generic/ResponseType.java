@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.ide.highlighter.HtmlFileType;
@@ -42,8 +43,7 @@ public enum ResponseType {
    * Unfortunately XPATH instance can't be received this way, because XPathSupportLoader
    * registers XPathFileType in FileTypeManager only in unit test and debug modes
    */
-  @NotNull
-  private static FileType findFileTypePlainDefault(@NotNull final String name) {
+  private static @NotNull FileType findFileTypePlainDefault(final @NotNull String name) {
     FileType fileType = FileTypeManager.getInstance().findFileTypeByName(name);
     return fileType == null ? PlainTextFileType.INSTANCE : fileType;
   }
@@ -51,8 +51,7 @@ public enum ResponseType {
   /**
    * Temporary workaround for IDEA-112605
    */
-  @NotNull
-  private static FileType findXPathFileType() {
+  private static @NotNull FileType findXPathFileType() {
     if (LOG == null) {
       LOG = Logger.getInstance(ResponseType.class);
     }
@@ -67,18 +66,15 @@ public enum ResponseType {
     }
   }
 
-  @NotNull
-  public String getMimeType() {
+  public @NotNull String getMimeType() {
     return myMimeType;
   }
 
-  @NotNull
-  public FileType getContentFileType() {
+  public @NotNull FileType getContentFileType() {
     return myContentFileType;
   }
 
-  @NotNull
-  public FileType getSelectorFileType() {
+  public @NotNull FileType getSelectorFileType() {
     return mySelectorFileType;
   }
 }

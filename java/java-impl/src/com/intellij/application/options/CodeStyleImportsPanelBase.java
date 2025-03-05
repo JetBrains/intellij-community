@@ -18,10 +18,10 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
   private final PackageEntryTable myPackageList = new PackageEntryTable();
   private final CodeStyleImportsBaseUI kotlinUI;
   private final JBTable myPackageTable;
-  private final ImportLayoutPanel myImportLayoutPanel;
+  protected final ImportLayoutPanel myImportLayoutPanel;
 
   public CodeStyleImportsPanelBase() {
-    myImportLayoutPanel = new ImportLayoutPanel() {
+    myImportLayoutPanel = new ImportLayoutPanel(isShowLayoutOnDemandImportFromSamePackageFirstCheckbox(), isSupportModule()) {
       @Override
       public void refresh() {
         refreshTable(myPackageTable, myPackageList);
@@ -133,6 +133,14 @@ public abstract class CodeStyleImportsPanelBase extends JPanel {
       }
     }
 
+    return false;
+  }
+
+  protected boolean isShowLayoutOnDemandImportFromSamePackageFirstCheckbox() {
+    return false;
+  }
+
+  protected boolean isSupportModule() {
     return false;
   }
 }

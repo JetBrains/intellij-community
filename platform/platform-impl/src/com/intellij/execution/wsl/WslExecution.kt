@@ -19,6 +19,10 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
+private const val prefixText = "intellij: executing command..."
+// It could be \n or \r\n depending on terminal, see `stty(1)` for `onlcr`
+private val PATTERN = Regex("$prefixText\r?\n")
+
 @JvmOverloads
 @Throws(ExecutionException::class)
 fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCommandLine,
@@ -31,7 +35,6 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
   // When command is executed in interactive/login shell, the result stdout may contain additional output
   // produced by shell configuration files, for example, "Message Of The Day".
   // Let's print some unique message before executing the command to know where command output begins in the result output.
-  val prefixText = "intellij: executing command..."
   options.addInitCommand("echo " + CommandLineUtil.posixQuote(prefixText))
   if (options.isExecuteCommandInInteractiveShell) {
     // Disable oh-my-zsh auto update on shell initialization
@@ -41,7 +44,7 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
   val output: ProcessOutput = executeOnWsl(commandLine, options, timeout, processHandlerCustomizer)
   val stdout = output.stdout
   val markerText = prefixText + LineSeparator.LF.separatorString
-  val index = stdout.indexOf(markerText)
+  val index = PATTERN.find(stdout)?.range?.first ?: -1
   if (index < 0) {
     val application = ApplicationManager.getApplication()
     if (application == null || application.isInternal || application.isUnitTestMode) {

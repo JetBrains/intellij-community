@@ -9,7 +9,8 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
  * Logs misc project creation and renaming to FUS
  */
 internal object MiscProjectUsageCollector : CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("pycharm.misc.project", 2)
+  private val GROUP: EventLogGroup = EventLogGroup("pycharm.misc.project", 3)
+
   private val MISC_PROJECT_CREATED: EventId = GROUP.registerEvent("misc.project.created", "Misc project created (user clicked on the button on welcome screen)")
   private val MISC_PROJECT_RENAMED: EventId = GROUP.registerEvent("misc.project.renamed", "Misc project renamed")
 

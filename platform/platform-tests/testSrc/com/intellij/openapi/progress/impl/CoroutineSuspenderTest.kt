@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.openapi.progress.asContextElement
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineSuspender
 import com.intellij.testFramework.UsefulTestCase.assertSize
@@ -20,7 +21,7 @@ class CoroutineSuspenderTest {
     val started = Channel<Unit>()
     val suspender = coroutineSuspender(false)
     assertTrue(suspender.isPaused())
-    val job = launch(Dispatchers.Default + suspender) {
+    val job = launch(Dispatchers.Default + suspender.asContextElement()) {
       repeat(count) {
         launch {
           started.send(Unit)
@@ -44,7 +45,7 @@ class CoroutineSuspenderTest {
     val paused = Channel<Unit>()
     val suspender = coroutineSuspender()
     assertFalse(suspender.isPaused())
-    val result = async(Dispatchers.Default + suspender) {
+    val result = async(Dispatchers.Default + suspender.asContextElement()) {
       (1..count).map {
         async { // coroutine context (including CoroutineSuspender) is inherited
           checkCanceled() // won't suspend

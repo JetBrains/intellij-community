@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
-import com.intellij.util.containers.HashingStrategy
 
 @Service(Service.Level.PROJECT)
 internal class GradleSuspendTypecheckingService(val project: Project) : Disposable {

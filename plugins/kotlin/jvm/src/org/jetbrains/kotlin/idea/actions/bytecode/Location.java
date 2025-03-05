@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.bytecode;
 
@@ -13,11 +13,9 @@ import org.jetbrains.kotlin.psi.KtFile;
 import java.util.Objects;
 
 class Location {
-    @Nullable
-    final Editor editor;
+    final @Nullable Editor editor;
 
-    @Nullable
-    final KtFile ktFile;
+    final @Nullable KtFile ktFile;
 
     final long modificationStamp;
 
@@ -53,13 +51,11 @@ class Location {
         return new Location(editor, project);
     }
 
-    @Nullable
-    public KtFile getKFile() {
+    public @Nullable KtFile getKFile() {
         return ktFile;
     }
 
-    @Nullable
-    public Editor getEditor() {
+    public @Nullable Editor getEditor() {
         return editor;
     }
 

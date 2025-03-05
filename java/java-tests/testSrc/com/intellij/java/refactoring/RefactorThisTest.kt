@@ -10,8 +10,6 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.refactoring.actions.*
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
-import com.intellij.testFramework.LightJavaCodeInsightTestCase.assertFalse
-import com.intellij.testFramework.LightJavaCodeInsightTestCase.assertTrue
 import org.jetbrains.annotations.NonNls
 
 class RefactorThisTest: LightJavaCodeInsightTestCase() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * A node in the project view tree.
@@ -37,7 +37,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value>
   implements RootsProvider, SettingsProvider, TreeNodeWithCacheableAttributes {
 
   protected static final Logger LOG = Logger.getInstance(ProjectViewNode.class);
-  public static final @ApiStatus.Internal String CACHED_FILE_PATH_KEY = "filePath";
+  @ApiStatus.Internal public static final String CACHED_FILE_PATH_KEY = "filePath";
 
   private final ViewSettings mySettings;
   private boolean myValidating;

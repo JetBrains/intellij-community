@@ -10,16 +10,17 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 
 context(KaSession)
-fun KaType.isNullableAnyType() = isAnyType && isMarkedNullable
+fun KaType.isNullableAnyType(): Boolean = isAnyType && isMarkedNullable
 
 context(KaSession)
-fun KaType.isNonNullableBooleanType() = isBooleanType && !isMarkedNullable
+fun KaType.isNonNullableBooleanType(): Boolean = isBooleanType && !isMarkedNullable
 
 context(KaSession)
 fun KaType.isEnum(): Boolean {
@@ -44,3 +45,12 @@ object KtFlexibleTypeAsUpperBoundRenderer : KaFlexibleTypeRenderer {
         typeRenderer.renderType(analysisSession, type.upperBound, printer)
     }
 }
+
+fun KaType.isInterface(): Boolean {
+    if (this !is KaClassType) return false
+    val classSymbol = symbol
+    return classSymbol is KaClassSymbol && classSymbol.classKind == KaClassKind.INTERFACE
+}
+
+fun KaType.containsStarProjections(): Boolean =
+    this is KaClassType && typeArguments.any { it is KaStarTypeProjection || it.type?.containsStarProjections() == true }

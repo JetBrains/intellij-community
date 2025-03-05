@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,8 +38,7 @@ public abstract class ExtensionsImpl implements Extensions {
   }
 
   @Override
-  @NotNull
-  public String getEpPrefix() {
+  public @NotNull String getEpPrefix() {
     String prefix = getDefaultExtensionNs().getStringValue();
     if (prefix == null) {
       final IdeaPlugin ideaPlugin = getParentOfType(IdeaPlugin.class, true);

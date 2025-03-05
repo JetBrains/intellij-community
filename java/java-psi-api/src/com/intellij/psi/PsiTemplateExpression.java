@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.Contract;
@@ -53,9 +53,8 @@ public interface PsiTemplateExpression extends PsiExpression, PsiCall {
    * @return null, as template expressions have no traditional argument list
    */
   @Override
-  @Nullable
   @Contract("-> null")
-  default PsiExpressionList getArgumentList() {
+  default @Nullable PsiExpressionList getArgumentList() {
     return null;
   }
 

@@ -21,15 +21,14 @@ import java.util.List;
 @ApiStatus.Internal
 public final class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndFontDescriptorsProvider, DisplayPrioritySortable {
   @Override
-  @NotNull
-  public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
+  public @NotNull NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
     final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, getVcsGroup());
     final VcsPreviewPanel previewPanel = new VcsPreviewPanel();
 
     schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
       @Override
-      public void schemeChanged(@NotNull final Object source) {
+      public void schemeChanged(final @NotNull Object source) {
         previewPanel.setColorScheme(options.getSelectedScheme());
         optionsPanel.updateOptionsList();
       }
@@ -67,15 +66,13 @@ public final class VcsColorsPageFactory implements ColorAndFontPanelFactory, Col
     return descriptors.toArray(ColorDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public String getPanelDisplayName() {
+  public @NotNull String getPanelDisplayName() {
     return getVcsGroup();
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return getVcsGroup();
   }
 
@@ -84,8 +81,7 @@ public final class VcsColorsPageFactory implements ColorAndFontPanelFactory, Col
     return DisplayPriority.COMMON_SETTINGS;
   }
 
-  @Nls
-  public static String getVcsGroup() {
+  public static @Nls String getVcsGroup() {
     return ApplicationBundle.message("title.vcs");
   }
 }

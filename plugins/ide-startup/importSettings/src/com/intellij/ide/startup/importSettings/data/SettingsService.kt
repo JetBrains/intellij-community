@@ -38,7 +38,7 @@ import javax.swing.Icon
 internal val useMockDataForStartupWizard: Boolean
   get() = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
 
-interface SettingsService {
+internal interface SettingsService {
   companion object {
     fun getInstance(): SettingsService = service()
   }
@@ -68,8 +68,7 @@ interface SettingsService {
   fun configChosen()
 }
 
-class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : SettingsService, Disposable.Default {
-
+internal class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : SettingsService, Disposable.Default {
   override fun getSyncService() =
     if (useMockDataForStartupWizard) TestSyncService.getInstance()
     else SyncServiceImpl.getInstance()
@@ -120,7 +119,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     return result
   }
 
-  override val importCancelled = Signal<Unit>().apply {
+  override val importCancelled: Signal<Unit> = Signal<Unit>().apply {
     advise(createLifetime()) {
       thisLogger().info("$IMPORT_SERVICE cancelImport")
     }

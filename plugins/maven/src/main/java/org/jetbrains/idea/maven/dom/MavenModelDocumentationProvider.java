@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -46,8 +46,7 @@ public final class MavenModelDocumentationProvider implements DocumentationProvi
     return getDoc(element, true);
   }
 
-  @Nullable
-  private static @Nls String getDoc(PsiElement element, boolean html) {
+  private static @Nullable @Nls String getDoc(PsiElement element, boolean html) {
     return getMavenElementDescription(element, DescKind.TYPE_NAME_VALUE, html);
   }
 
@@ -56,9 +55,7 @@ public final class MavenModelDocumentationProvider implements DocumentationProvi
     return getMavenElementDescription(element, location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false);
   }
 
-  @Nullable
-  @NlsContexts.DetailedDescription
-  private static String getMavenElementDescription(PsiElement e, DescKind kind, boolean html) {
+  private static @Nullable @NlsContexts.DetailedDescription String getMavenElementDescription(PsiElement e, DescKind kind, boolean html) {
     e = getMavenElement(e);
     if (e == null) return null;
 
@@ -88,8 +85,7 @@ public final class MavenModelDocumentationProvider implements DocumentationProvi
     return null;
   }
 
-  @NlsContexts.DetailedDescription
-  private static String buildPropertyName(PsiElement e, boolean property) {
+  private static @NlsContexts.DetailedDescription String buildPropertyName(PsiElement e, boolean property) {
     if (property) return DescriptiveNameUtil.getDescriptiveName(e); //NON-NLS - suprress warning
 
     List<String> path = new ArrayList<>();

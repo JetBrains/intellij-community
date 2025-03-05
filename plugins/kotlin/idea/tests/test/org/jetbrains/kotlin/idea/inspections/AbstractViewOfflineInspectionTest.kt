@@ -31,7 +31,7 @@ abstract class AbstractViewOfflineInspectionTest: KotlinLightCodeInsightFixtureT
         val testPath = testDataFile.toString()
         val shortName = run {
             val parent = testDataFile.parentFile.name
-            parent[0].toUpperCase() + parent.substring(1)
+            parent[0].uppercaseChar() + parent.substring(1)
         }
 
         InspectionProfileImpl.INIT_INSPECTIONS = true

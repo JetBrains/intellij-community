@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -160,8 +160,7 @@ public final class ChangesViewContentEP implements PluginAware {
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public ChangesViewContentProvider getCachedInstance() {
+  public @Nullable ChangesViewContentProvider getCachedInstance() {
     return myInstance;
   }
 
@@ -187,8 +186,7 @@ public final class ChangesViewContentEP implements PluginAware {
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public ChangesViewContentProvider.Preloader newPreloaderInstance(@NotNull Project project) {
+  public @Nullable ChangesViewContentProvider.Preloader newPreloaderInstance(@NotNull Project project) {
     if (preloaderClassName == null) {
       return null;
     }

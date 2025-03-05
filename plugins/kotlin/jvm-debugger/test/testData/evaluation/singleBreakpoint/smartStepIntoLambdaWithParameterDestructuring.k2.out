@@ -1,0 +1,18 @@
+LineBreakpoint created at smartStepIntoLambdaWithParameterDestructuring.kt:17
+Run Java
+Connected to the target VM
+smartStepIntoLambdaWithParameterDestructuring.kt:17
+smartStepIntoLambdaWithParameterDestructuring.kt:20
+smartStepIntoLambdaWithParameterDestructuring.kt:20
+Compile bytecode for a + b + c + d + e + f + g
+KotlinStackFrame (smartStepIntoLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] g: int = 1 (smartStepIntoLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] a: int = 1 (smartStepIntoLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] b: int = 1 (smartStepIntoLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] c: int = 1 (smartStepIntoLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] d: int = 1 (smartStepIntoLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] e: int = 1 (smartStepIntoLambdaWithParameterDestructuring.kt:20)
+    JavaValue[local] f: int = 1 (smartStepIntoLambdaWithParameterDestructuring.kt:20)
+Disconnected from the target VM
+
+Process finished with exit code 0

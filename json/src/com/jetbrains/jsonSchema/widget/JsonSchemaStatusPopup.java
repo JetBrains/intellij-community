@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.json.JsonBundle;
@@ -82,7 +82,7 @@ public final class JsonSchemaStatusPopup {
 
       if (JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled()) {
         otherList = infos.stream().filter(i -> i.getProvider() == null).sorted(comparator).collect(Collectors.toList());
-        if (otherList.size() == 0) {
+        if (otherList.isEmpty()) {
           otherList = ContainerUtil.createMaybeSingletonList(LOAD_REMOTE);
         }
       }

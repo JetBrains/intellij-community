@@ -56,27 +56,15 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myFindPopupPanel = panel;
     initComponents();
 
-    if (PlatformUtils.isWebStorm()) {
-      myComponents = ContainerUtil.ar(
-        new Pair<>(PROJECT, new JLabel()),
-        new Pair<>(DIRECTORY, myDirectoryChooser),
-        new Pair<>(SCOPE, shrink(myScopeCombo))
-      );
-    }
-    else if (PlatformUtils.isDataGrip()) {
-      myComponents = ContainerUtil.ar(
-        new Pair<>(SCOPE, shrink(myScopeCombo)),
-        new Pair<>(DIRECTORY, myDirectoryChooser)
-      );
-    }
-    else {
-      myComponents = ContainerUtil.ar(
-        new Pair<>(PROJECT, new JLabel()),
-        new Pair<>(MODULE, shrink(myModuleComboBox)),
-        new Pair<>(DIRECTORY, myDirectoryChooser),
-        new Pair<>(SCOPE, shrink(myScopeCombo))
-      );
-    }
+    boolean fullVersion = !PlatformUtils.isDataGrip();
+    myComponents =
+      fullVersion
+      ? ContainerUtil.ar(new Pair<>(PROJECT, new JLabel()),
+                         new Pair<>(MODULE, shrink(myModuleComboBox)),
+                         new Pair<>(DIRECTORY, myDirectoryChooser),
+                         new Pair<>(SCOPE, shrink(myScopeCombo)))
+      : ContainerUtil.ar(new Pair<>(SCOPE, shrink(myScopeCombo)),
+                         new Pair<>(DIRECTORY, myDirectoryChooser));
   }
 
   public void initComponents() {

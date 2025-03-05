@@ -10,11 +10,13 @@ public class SimpleDisplayKey<T extends NodeDescriptor> implements DisplayKey<T>
     myKey = key;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof SimpleDisplayKey)) return false;
     return ((SimpleDisplayKey<?>)o).myKey.equals(myKey);
   }
 
+  @Override
   public int hashCode() {
     return myKey.hashCode();
   }

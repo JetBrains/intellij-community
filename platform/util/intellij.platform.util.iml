@@ -45,6 +45,7 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.troveCompileOnly" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
   </component>
   <component name="copyright">
     <Base>

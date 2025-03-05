@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.searching.inheritors
 
 import com.intellij.model.search.SearchService
@@ -33,15 +33,15 @@ object DirectKotlinClassInheritorsSearch {
         }
     }
 
-    fun search(klass: KtClass): Query<PsiElement> {
+    fun search(klass: KtClass): Query<out PsiElement> {
         return search(SearchParameters(klass, runReadAction { klass.useScope }))
     }
 
-    fun search(klass: KtClass, searchScope: SearchScope): Query<PsiElement> {
+    fun search(klass: KtClass, searchScope: SearchScope): Query<out PsiElement> {
         return search(SearchParameters(klass, searchScope))
     }
 
-    fun search(parameters: SearchParameters): Query<PsiElement> {
+    fun search(parameters: SearchParameters): Query<out PsiElement> {
         return SearchService.getInstance().searchParameters(parameters)
     }
 }

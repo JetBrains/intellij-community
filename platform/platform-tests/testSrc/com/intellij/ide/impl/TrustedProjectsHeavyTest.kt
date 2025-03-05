@@ -6,7 +6,7 @@ import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
+import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -109,7 +109,7 @@ class TrustedProjectsHeavyTest : TrustedProjectsHeavyTestCase() {
       registerProjectLocator(object : TrustedProjectsLocator {
         override fun getProjectRoots(projectRoot: Path, project: Project?): List<Path> = emptyList()
         override fun getProjectRoots(project: Project): List<Path> {
-          val index = NioPathPrefixTreeFactory.createSet()
+          val index = PathPrefixTree.createSet()
           for (module in project.modules) {
             for (contentRoot in module.rootManager.contentRoots) {
               index.add(contentRoot.toNioPath())

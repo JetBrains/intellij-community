@@ -8,7 +8,7 @@ import com.intellij.ui.dsl.builder.COLUMNS_LARGE
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 
-class JavaFxSettingsConfigurableUi {
+internal class JavaFxSettingsConfigurableUi {
   lateinit var pathField: TextFieldWithBrowseButton
   var panel = panel {
     row(JavaFXBundle.message("javafx.settings.configurable.path.to.scenebuilder")) {

@@ -1,5 +1,6 @@
-// CHOOSE_USE_SITE_TARGET: file
-// IS_APPLICABLE: false
+// NO_OPTION: FILE|Add use-site target 'file'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
+// AFTER-WARNING: Parameter 'p' is never used
 
 annotation class A
 

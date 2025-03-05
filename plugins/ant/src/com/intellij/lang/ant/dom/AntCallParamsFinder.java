@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -37,8 +37,7 @@ public final class AntCallParamsFinder extends AntDomRecursiveVisitor {
     }
   }
 
-  @NotNull
-  public static List<PsiElement> resolve(@NotNull AntDomProject project, @NotNull @NlsSafe String propertyName) {
+  public static @NotNull List<PsiElement> resolve(@NotNull AntDomProject project, @NotNull @NlsSafe String propertyName) {
     final AntCallParamsFinder resolver = new AntCallParamsFinder(propertyName);
     project.accept(resolver);
     return resolver.myResult;

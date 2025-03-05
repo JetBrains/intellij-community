@@ -56,7 +56,7 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
   }
 
   @Override
-  public void perform(@NotNull final Project project,
+  public void perform(final @NotNull Project project,
                       @NotNull ProjectSystemId projectSystemId,
                       @NotNull ProjectData projectData,
                       @NotNull AnActionEvent e) {

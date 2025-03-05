@@ -30,17 +30,6 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
 
-    <!-- ML API -->
-    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.CandidatesListFeatures"/>
-    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.ImportCandidateRelativeFeatures"/>
-    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.PrimitiveImportFeatures"/>
-    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.PsiStructureFeatures"/>
-    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.RelevanceEvaluationFeatures"/>
-    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.ImportsFeatures"/>
-    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.OpenFilesImportsFeatures"/>
-    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.NeighborFilesImportsFeatures"/>
-    <platform.ml.featureProvider implementation="com.jetbrains.python.codeInsight.imports.mlapi.features.BaseProjectFeatures"/>
-
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
@@ -49,6 +38,7 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyDecoratorStubIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassAttributesIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex"/>
+    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyTypeAliasNameIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PyModuleNameIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex"/>
 
@@ -148,7 +138,7 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStringFormatCompletionContributor" />
 
-    <completion.contributor language="Python" order="first"
+    <completion.contributor language="Python" order="first" id="pyClassNameCompletionContributor"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
     <completion.contributor language="Python" order="last"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyModulePackageCompletionContributor"/>
@@ -195,6 +185,7 @@
     <localInspection language="Python" shortName="PyFromFutureImportInspection" suppressId="PyFromFutureImport" bundle="messages.PyPsiBundle" key="INSP.NAME.from.future.import" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyFromFutureImportInspection"/>
     <localInspection language="Python" shortName="PyGlobalUndefinedInspection" suppressId="PyGlobalUndefined" bundle="messages.PyPsiBundle" key="INSP.NAME.global.undefined" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyGlobalUndefinedInspection"/>
     <localInspection language="Python" shortName="PyInconsistentIndentationInspection" suppressId="PyInconsistentIndentation" bundle="messages.PyPsiBundle" key="INSP.NAME.inconsistent.indentation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyInconsistentIndentationInspection"/>
+    <localInspection language="Python" shortName="PyInconsistentReturnsInspection" suppressId="PyInconsistentReturns" bundle="messages.PyPsiBundle" key="INSP.NAME.inconsistent.returns" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyInconsistentReturnsInspection"/>
     <localInspection language="Python" shortName="PyIncorrectDocstringInspection" suppressId="PyIncorrectDocstring" bundle="messages.PyPsiBundle" key="INSP.NAME.incorrect.docstring" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyIncorrectDocstringInspection"/>
     <localInspection language="Python" shortName="PyMissingOrEmptyDocstringInspection" suppressId="PyMissingOrEmptyDocstring" bundle="messages.PyPsiBundle" key="INSP.NAME.missing.or.empty.docstring" groupKey="INSP.GROUP.python" enabledByDefault="false" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection"/>
     <localInspection language="Python" shortName="PyNamedTupleInspection" suppressId="PyNamedTuple" bundle="messages.PyPsiBundle" key="INSP.named.tuple" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNamedTupleInspection"/>
@@ -247,6 +238,9 @@
     <localInspection language="Python" shortName="PyPep8NamingInspection" suppressId="PyPep8Naming" bundle="messages.PyPsiBundle" key="INSP.NAME.pep8.naming" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyPep8NamingInspection"/>
     <localInspection language="Python" shortName="PyShadowingBuiltinsInspection" suppressId="PyShadowingBuiltins" bundle="messages.PyPsiBundle" key="INSP.NAME.shadowing.builtins" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyShadowingBuiltinsInspection"/>
     <localInspection language="Python" shortName="PyNewStyleGenericSyntaxInspection" suppressId="PyNewStyleGenericSyntax" bundle="messages.PyPsiBundle" key="INSP.NAME.new.style.generics.type.param.syntax" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNewStyleGenericSyntaxInspection"/>
+    <localInspection language="Python" shortName="PyAssertTypeInspection" suppressId="PyAssertType" bundle="messages.PyPsiBundle" key="INSP.NAME.assert.type" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAssertTypeInspection"/>
+    <localInspection language="Python" shortName="PyEnumInspection" suppressId="PyEnum" bundle="messages.PyPsiBundle" key="INSP.NAME.enum" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyEnumInspection"/>
+    <localInspection language="Python" shortName="PyNewTypeInspection" suppressId="PyNewType" bundle="messages.PyPsiBundle" key="INSP.NAME.new.type" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNewTypeInspection"/>
 
     <codeInsight.parameterNameHints language="Python"
                                     implementationClass="com.jetbrains.python.inlayHints.PythonInlayParameterHintsProvider"/>
@@ -528,13 +522,12 @@
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubType"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyTypingNewTypeStubType"/>
+    <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyEnumAttributeStubType"/>
 
     <customClassStubType implementation="com.jetbrains.python.psi.impl.stubs.PyDataclassStubType"/>
     <customDecoratorStubType implementation="com.jetbrains.python.psi.stubs.PyTestFixtureDecoratorStubType"/>
     <customDecoratorStubType implementation="com.jetbrains.python.psi.stubs.PyFunctoolsWrapsDecoratorStubType"/>
     <customDecoratorStubType implementation="com.jetbrains.python.psi.stubs.PyDataclassTransformDecoratorStubType"/>
-
-    <typeProvider implementation="com.jetbrains.python.psi.types.PyCollectionTypeByModificationsProvider" order="last"/>
 
     <!-- typing -->
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider"/>
@@ -588,6 +581,7 @@
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyOverridingClassDunderMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>
+    <typeCheckerExtension implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassInstanceProtocolTypeCheckerExtension"/>
 
     <!-- TensorFlow -->
     <importResolver implementation="com.jetbrains.python.tensorFlow.PyTensorFlowImportResolver"/>

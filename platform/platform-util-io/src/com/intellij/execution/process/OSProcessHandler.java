@@ -158,7 +158,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     if (application.isDispatchThread()) {
       message = "Synchronous execution on EDT: ";
     }
-    else if (application.isReadAccessAllowed()) {
+    else if (application.holdsReadLock()) {
       message = "Synchronous execution under ReadAction: ";
     }
     if (message != null && REPORTED_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
@@ -229,10 +229,10 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     final boolean destroyed = OSProcessUtil.killProcessTree(process);
     if (!destroyed) {
       if (!process.isAlive()) {
-        LOG.warn("Process has been already terminated: " + myCommandLine);
+        LOG.warn("Process has been already terminated: " + getCommandLineForLog());
       }
       else {
-        LOG.warn("Cannot kill process tree. Trying to destroy process using Java API. Cmdline:\n" + myCommandLine);
+        LOG.warn("Cannot kill process tree. Trying to destroy process using Java API. Cmdline:\n" + getCommandLineForLog());
         process.destroy();
       }
     }

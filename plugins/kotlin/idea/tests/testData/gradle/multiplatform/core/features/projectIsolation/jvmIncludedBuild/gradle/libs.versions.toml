@@ -1,0 +1,5 @@
+[versions]
+kotlin = "{{kgp_version}}"
+
+[plugins]
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

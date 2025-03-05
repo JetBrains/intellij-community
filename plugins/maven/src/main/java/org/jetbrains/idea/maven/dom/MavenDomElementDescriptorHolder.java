@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -25,15 +25,23 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0;
+
 @Service(Service.Level.PROJECT)
 public final class MavenDomElementDescriptorHolder {
   private static final Logger LOG = Logger.getInstance(MavenDomElementDescriptorHolder.class);
 
   private enum FileKind {
-    PROJECT_FILE {
+    PROJECT_FILE_4_0 {
       @Override
       public String getSchemaUrl() {
-        return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL;
+        return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_0_URL;
+      }
+    },
+    PROJECT_FILE_4_1 {
+      @Override
+      public String getSchemaUrl() {
+        return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_1_URL;
       }
     },
     PROFILES_FILE {
@@ -75,8 +83,7 @@ public final class MavenDomElementDescriptorHolder {
     return project.getService(MavenDomElementDescriptorHolder.class);
   }
 
-  @Nullable
-  public XmlElementDescriptor getDescriptor(@NotNull XmlTag tag) {
+  public @Nullable XmlElementDescriptor getDescriptor(@NotNull XmlTag tag) {
     FileKind kind = getFileKind(tag.getContainingFile());
     if (kind == null) return null;
 
@@ -90,8 +97,7 @@ public final class MavenDomElementDescriptorHolder {
     return desc.getElementDescriptor(tag.getName(), desc.getDefaultNamespace());
   }
 
-  @Nullable
-  private XmlNSDescriptorImpl tryGetOrCreateDescriptor(final FileKind kind) {
+  private @Nullable XmlNSDescriptorImpl tryGetOrCreateDescriptor(final FileKind kind) {
     CachedValue<XmlNSDescriptorImpl> result = myDescriptorsMap.get(kind);
     if (result == null) {
       result = CachedValuesManager.getManager(myProject).createCachedValue(
@@ -101,8 +107,7 @@ public final class MavenDomElementDescriptorHolder {
     return result.getValue();
   }
 
-  @Nullable
-  private XmlNSDescriptorImpl doCreateDescriptor(FileKind kind) {
+  private @Nullable XmlNSDescriptorImpl doCreateDescriptor(FileKind kind) {
     String schemaUrl = kind.getSchemaUrl();
     String location = ExternalResourceManager.getInstance().getResourceLocation(schemaUrl);
     if (schemaUrl.equals(location)) return null;
@@ -125,16 +130,20 @@ public final class MavenDomElementDescriptorHolder {
     return result;
   }
 
-  @Nullable
-  private static FileKind getFileKind(PsiFile file) {
-    if (MavenDomUtil.isProjectFile(file)) return FileKind.PROJECT_FILE;
+  private static @Nullable FileKind getFileKind(PsiFile file) {
+    if (MavenDomUtil.isProjectFile(file)) return getProjectFileKind(file);
     if (MavenDomUtil.isProfilesFile(file)) return FileKind.PROFILES_FILE;
     if (MavenDomUtil.isSettingsFile(file)) return getSettingsFileKind(file);
     return null;
   }
 
-  @NotNull
-  private static FileKind getSettingsFileKind(PsiFile file) {
+  private static @NotNull FileKind getProjectFileKind(PsiFile file) {
+    String modelVersion = MavenDomUtil.getXmlProjectModelVersion(file);
+    if (MODEL_VERSION_4_1_0.equals(modelVersion)) return FileKind.PROJECT_FILE_4_1;
+    return FileKind.PROJECT_FILE_4_0;
+  }
+
+  private static @NotNull FileKind getSettingsFileKind(PsiFile file) {
     String nameSpace = MavenDomUtil.getXmlSettingsNameSpace(file);
     if (nameSpace == null) return FileKind.SETTINGS_FILE;
     if (nameSpace.contains("1.1.0")) return FileKind.SETTINGS_FILE_1_1;

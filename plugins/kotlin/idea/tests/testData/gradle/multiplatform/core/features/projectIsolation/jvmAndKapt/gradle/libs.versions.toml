@@ -1,0 +1,10 @@
+[versions]
+kotlin = "{{kgp_version}}"
+dagger = "2.55"
+junit = "5.11.4"
+
+[libraries]
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+dagger = { group = "com.google.dagger", name = "dagger", version.ref = "dagger" }
+dagger-compiler = { group = "com.google.dagger", name = "dagger-compiler", version.ref = "dagger" }
+junit = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }

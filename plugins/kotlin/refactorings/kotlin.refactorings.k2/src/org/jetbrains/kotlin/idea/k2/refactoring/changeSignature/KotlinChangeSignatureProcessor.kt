@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.openapi.project.Project
@@ -25,7 +25,7 @@ open class KotlinChangeSignatureProcessor(project: Project, changeInfo: KotlinCh
         return KotlinUsagesViewDescriptor(method, RefactoringBundle.message("0.to.change.signature", UsageViewUtil.getType(method)))
     }
 
-    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>?>): Boolean {
+    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usageProcessors = ChangeSignatureUsageProcessor.EP_NAME.extensions
 
         if (!usageProcessors.all { it.setupDefaultValues(myChangeInfo, refUsages, myProject) }) return false

@@ -16,6 +16,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(StopProfileCommand.PREFIX, StopProfileCommand::new),
       Map.entry(InspectionCommand.PREFIX, InspectionCommand::new),
       Map.entry(InspectionCommandEx.PREFIX, InspectionCommandEx::new),
+      Map.entry(ConfigureNamedScopeCommand.PREFIX, ConfigureNamedScopeCommand::new),
       Map.entry(ReformatCommand.PREFIX, ReformatCommand::new),
       Map.entry(GoToCommand.PREFIX, GoToCommand::new),
       Map.entry(ScrollEditorCommand.PREFIX, ScrollEditorCommand::new),
@@ -40,7 +41,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(SelectCommand.PREFIX, SelectCommand::new),
       Map.entry(CompareIndicesKt.PREFIX, CompareIndices::new),
       Map.entry(StoreIndices.PREFIX, StoreIndices::new),
-      Map.entry(OpenProjectView.PREFIX, OpenProjectView::new),
+      Map.entry(OpenProjectViewCommand.PREFIX, OpenProjectViewCommand::new),
       Map.entry(MoveDirectoryCommand.PREFIX, MoveDirectoryCommand::new),
       Map.entry(RunClassInPlugin.PREFIX, RunClassInPlugin::new),
       Map.entry(RunServiceInPlugin.PREFIX, RunServiceInPlugin::new),
@@ -124,7 +125,10 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(GCCommand.PREFIX, GCCommand::new),
       Map.entry(SetupInlineCompletionListenerCommand.PREFIX, SetupInlineCompletionListenerCommand::new),
       Map.entry(CallInlineCompletionCommand.PREFIX, CallInlineCompletionCommand::new),
-      Map.entry(HandleSpanCommand.PREFIX, HandleSpanCommand::new)
+      Map.entry(HandleSpanCommand.PREFIX, HandleSpanCommand::new),
+      Map.entry(MeasureVfsMassUpdateCommand.PREFIX, MeasureVfsMassUpdateCommand::new),
+      Map.entry(WaitForVfsRefreshSelectedEditorCommand.PREFIX, WaitForVfsRefreshSelectedEditorCommand::new),
+      Map.entry(CloseLookupCommand.PREFIX, CloseLookupCommand::new)
     );
   }
 }

@@ -11,7 +11,7 @@ import com.intellij.vcsUtil.VcsUtil
 import java.awt.Color
 
 object VcsLogColorManagerFactory {
-  const val ROOT_OPENED_STATE = "NEW_UI_ROOT_OPEN_STATE"
+  const val ROOT_OPENED_STATE: String = "NEW_UI_ROOT_OPEN_STATE"
 
   @JvmStatic
   fun create(roots: Set<VirtualFile>): VcsLogColorManager = create(convertRootsToPaths(roots))

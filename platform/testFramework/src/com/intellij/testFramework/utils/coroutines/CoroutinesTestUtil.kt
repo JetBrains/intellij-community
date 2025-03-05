@@ -18,13 +18,21 @@ import kotlinx.coroutines.yield
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
 fun waitCoroutinesBlocking(cs: CoroutineScope) {
+  waitCoroutinesBlocking(cs, -1)
+}
+
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
+fun waitCoroutinesBlocking(cs: CoroutineScope, timeoutMs: Long) {
   runBlockingMaybeCancellable {
     val job = cs.coroutineContext.job
+    val start = System.currentTimeMillis()
     while (true) {
       runInEdtAndWait { UIUtil.dispatchAllInvocationEvents() }
       yield()
       delay(1) //prevent too frequent pooling, otherwise may load cpu with billions of context switches
 
+      if (timeoutMs != -1L && System.currentTimeMillis() - start > timeoutMs) break
       val jobs = job.children.toList()
       if (jobs.isEmpty()) break
     }

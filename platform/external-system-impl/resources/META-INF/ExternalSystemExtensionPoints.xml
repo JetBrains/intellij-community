@@ -9,8 +9,8 @@
     <extensionPoint qualifiedName="com.intellij.externalSystem.debuggerBackend"
                     interface="com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.externalSystemWorkspaceContributor"
-                    interface="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkspaceContributor"
+    <extensionPoint qualifiedName="com.intellij.externalSystemCoordinateContributor"
+                    interface="com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalProjectDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"
@@ -20,9 +20,6 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystem.modifiableModelsProvider"
                     interface="com.intellij.openapi.externalSystem.service.project.ModifiableModelsProviderExtension"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.externalSystem.moduleDataServiceExtension"
-                    interface="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataServiceExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystem.runConfigurationEx"
                     interface="com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtension"

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.rd.util
 
+import com.intellij.codeWithMe.ClientIdContextElementPrecursor
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
@@ -15,8 +16,12 @@ import kotlin.coroutines.CoroutineContext
 @ApiStatus.Internal
 class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
   companion object {
-    val instance by lazy {
+    @Suppress("OPT_IN_USAGE")
+    val instance: RdCoroutineHost by lazy {
       val scope = ApplicationManager.getApplication().service<ScopeHolder>()
+      val precursor = scope.scope.coroutineContext[ClientIdContextElementPrecursor]
+      if (precursor == null) logger<RdCoroutineHost>().error("ClientIdContextElementPrecursor is missing inside scope for RdCoroutineHost. " +
+                                                             "It's required for automatic `ClientId` propagation for `lifetime.coroutineScope.launch {}`")
       RdCoroutineHost(scope.scope).apply {
         override(this)
       }

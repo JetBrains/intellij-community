@@ -7,7 +7,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 
 class KotlinConfiguratorExternalSystemSyncListener : ExternalSystemTaskNotificationListener {
-    override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
+    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
         if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         val project = id.findProject() ?: return
         KotlinProjectConfigurationService.getInstance(project).onSyncStarted()
@@ -16,7 +16,7 @@ class KotlinConfiguratorExternalSystemSyncListener : ExternalSystemTaskNotificat
         KotlinProjectConfigurationService.getInstance(project).refreshEditorNotifications()
     }
 
-    override fun onEnd(id: ExternalSystemTaskId) {
+    override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
         if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         val project = id.findProject() ?: return
         val configurationService = KotlinProjectConfigurationService.getInstance(project)

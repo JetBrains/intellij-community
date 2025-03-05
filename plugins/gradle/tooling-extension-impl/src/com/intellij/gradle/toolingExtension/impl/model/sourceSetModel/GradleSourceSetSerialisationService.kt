@@ -62,13 +62,13 @@ class GradleSourceSetSerialisationService : SerializationService<GradleSourceSet
     private const val SOURCE_SET_MODEL_ADDITIONAL_ARTIFACTS_FIELD: String = "additionalArtifacts"
 
     private const val SOURCE_SET_NAME_FIELD: String = "name"
+    private const val SOURCE_SET_JAVA_TOOLCHAIN_FIELD: String = "javaToolchainHome"
     private const val SOURCE_SET_SOURCE_COMPATIBILITY_FIELD: String = "sourceCompatibility"
     private const val SOURCE_SET_TARGET_COMPATIBILITY_FIELD: String = "targetCompatibility"
-    private const val SOURCE_SET_IS_PREVIEW_FIELD: String = "isPreview"
+    private const val SOURCE_SET_COMPILER_ARGUMENTS_FIELD: String = "compilerArguments"
     private const val SOURCE_SET_ARTIFACTS_FIELD: String = "artifacts"
     private const val SOURCE_SET_DEPENDENCIES_FIELD: String = "dependencies"
     private const val SOURCE_SET_SOURCES_FIELD: String = "sources"
-    private const val SOURCE_SET_JAVA_TOOLCHAIN_FIELD: String = "javaToolchainHome"
 
     private const val SOURCE_DIRECTORY_NAME_FIELD: String = "name"
     private const val SOURCE_DIRECTORY_SRC_DIRS_FIELD: String = "srcDirs"
@@ -140,13 +140,13 @@ class GradleSourceSetSerialisationService : SerializationService<GradleSourceSet
     private fun writeSourceSet(writer: IonWriter, context: SourceSetModelWriteContext, sourceSet: ExternalSourceSet) {
       writer.step(IonType.STRUCT) {
         writeString(writer, SOURCE_SET_NAME_FIELD, sourceSet.name)
+        writeFile(writer, SOURCE_SET_JAVA_TOOLCHAIN_FIELD, sourceSet.javaToolchainHome)
         writeString(writer, SOURCE_SET_SOURCE_COMPATIBILITY_FIELD, sourceSet.sourceCompatibility)
         writeString(writer, SOURCE_SET_TARGET_COMPATIBILITY_FIELD, sourceSet.targetCompatibility)
-        writeBoolean(writer, SOURCE_SET_IS_PREVIEW_FIELD, sourceSet.isPreview)
+        writeStrings(writer, SOURCE_SET_COMPILER_ARGUMENTS_FIELD, sourceSet.compilerArguments)
         writeFiles(writer, SOURCE_SET_ARTIFACTS_FIELD, sourceSet.artifacts)
         writeDependencies(writer, context, sourceSet)
         writeSourceDirectorySets(writer, sourceSet)
-        writeFile(writer, SOURCE_SET_JAVA_TOOLCHAIN_FIELD, sourceSet.javaToolchainHome)
       }
     }
 
@@ -155,13 +155,13 @@ class GradleSourceSetSerialisationService : SerializationService<GradleSourceSet
       return reader.step {
         DefaultExternalSourceSet().apply {
           name = readString(reader, SOURCE_SET_NAME_FIELD)!!
+          javaToolchainHome = readFile(reader, SOURCE_SET_JAVA_TOOLCHAIN_FIELD)
           sourceCompatibility = readString(reader, SOURCE_SET_SOURCE_COMPATIBILITY_FIELD)
           targetCompatibility = readString(reader, SOURCE_SET_TARGET_COMPATIBILITY_FIELD)
-          isPreview = readBoolean(reader, SOURCE_SET_IS_PREVIEW_FIELD)
+          compilerArguments = readStringList(reader, SOURCE_SET_COMPILER_ARGUMENTS_FIELD)
           artifacts = readFileList(reader, SOURCE_SET_ARTIFACTS_FIELD)
           dependencies = readDependencies(reader, context)
           sources = readSourceDirectorySets(reader)
-          javaToolchainHome = readFile(reader, SOURCE_SET_JAVA_TOOLCHAIN_FIELD)
         }
       }
     }

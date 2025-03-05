@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
+import kotlin.jvm.Volatile
 
 data class Call(val route: UID,
                 val service: InstanceId,
@@ -93,30 +94,29 @@ internal fun reconnectingRpcClient(attempts: StateFlow<ConnectionStatus<IRpcClie
     var disconnectedClient: IRpcClient? = null
 
     override suspend fun call(call: Call, publish: (SuspendInvocationHandler.CallResult) -> Unit) {
-      return (withTimeoutOrNull(RpcClient.RPC_TIMEOUT) {
-        optional {
-          mayHaveCalls = true
-          val awaitConnection = coroutineContext[RpcStrategyContextElement]?.awaitConnection ?: true
-          val client = if (awaitConnection) {
-            attempts.mapNotNull { (it as? ConnectionStatus.Connected)?.value }.first { it != disconnectedClient }
-          }
-          else {
-            (attempts.value as? ConnectionStatus.Connected)?.value
-          }
-
-          if (client == null) {
-            throw RpcClientDisconnectedException("Connection is not available. Current rpc strategy opted out waiting for reconnect.", null)
-          }
-          try {
-            client.call(call, publish)
-            disconnectedClient = null
-          }
-          catch (x: RpcClientDisconnectedException) {
-            disconnectedClient = client
-            throw x
-          }
+      withTimeoutOrNull(RpcClient.RPC_TIMEOUT) {
+        mayHaveCalls = true
+        val awaitConnection = coroutineContext[RpcStrategyContextElement]?.awaitConnection ?: true
+        val client = if (awaitConnection) {
+          attempts.mapNotNull { (it as? ConnectionStatus.Connected)?.value }.first { it != disconnectedClient }
         }
-      } ?: throw RpcTimeoutException("Client did not connect after ${RpcClient.RPC_TIMEOUT}", null)).orElse(null)
+        else {
+          (attempts.value as? ConnectionStatus.Connected)?.value
+        }
+
+        if (client == null) {
+          throw RpcClientDisconnectedException("Connection is not available. Current rpc strategy opted out waiting for reconnect.", null)
+        }
+        try {
+          client.call(call, publish)
+          disconnectedClient = null
+        }
+        catch (x: RpcClientDisconnectedException) {
+          disconnectedClient = client
+          throw x
+        }
+        Unit
+      } ?: throw RpcTimeoutException("Client did not connect after ${RpcClient.RPC_TIMEOUT}", null)
     }
   }
 }

@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight">
   <dependencies>
     <module name="kotlin.refactorings.k2"/>
+    <module name="kotlin.searching.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <smartEnterProcessorFixer
@@ -127,6 +128,8 @@
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
                         serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2ReferenceImporterFacility"/>
 
+    <nameSuggestionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2KotlinNameSuggestionProvider"/>
+
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2NameValidatorProviderImpl"/>
 
@@ -209,7 +212,7 @@
     <codeInsight.declarativeInlayProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtParameterHintsProvider"
-            isEnabledByDefault="false"
+            isEnabledByDefault="true"
             group="PARAMETERS_GROUP"
             providerId="kotlin.parameters.hints"
             bundle="messages.KotlinBundle"
@@ -222,6 +225,11 @@
       <!--              descriptionKey="inlay.kotlin.parameters.hints.excluded"/>-->
     </codeInsight.declarativeInlayProvider>
 
+    <registryKey key="kotlin.k2.equals.in.parameter.names.inlay.hints"
+                 description="Use equals instead of colon in inlay hints for parameter names"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
     <codeInsight.declarativeInlayProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtCallChainHintsProvider"
@@ -232,8 +240,32 @@
             nameKey="java.method.chains.inlay.provider.name"
             descriptionKey="inlay.MethodChainsInlayProvider.description" />
 
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.KtCompilerPluginModalityHintProvider"
+            isEnabledByDefault="true"
+            group="OTHER_GROUP"
+            providerId="kotlin.compiler.plugins.modality"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.compiler.plugins.modality"
+            descriptionKey="hints.description.compiler.plugins.modality"/>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.KtCompilerSupertypesHintProvider"
+            isEnabledByDefault="true"
+            group="OTHER_GROUP"
+            providerId="kotlin.compiler.plugins.supertypes"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.compiler.plugins.supertypes"
+            descriptionKey="hints.description.compiler.plugins.supertypes"/>
+
     <vcs.codeVisionLanguageContext language="kotlin"
                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
+    <codeInsight.codeVisionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KotlinReferencesCodeVisionProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="references" language="kotlin"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KotlinInheritorsCodeVisionProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="inheritors" language="kotlin"/>
 
     <callHierarchyProvider
             language="kotlin"
@@ -244,6 +276,11 @@
     <methodHierarchyProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.overrides.KotlinOverrideHierarchyProvider"/>
+
+    <lang.sliceProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.slicer.KotlinSliceProvider"/>
+    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
+    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>
+
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinEqualsHashCodeTemplatesManager"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinToStringTemplatesManager"/>
 

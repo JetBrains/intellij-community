@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -137,7 +137,7 @@ public final class JsonTypedHandler extends TypedHandlerDelegate {
     final ASTNode colon = children[0];
     final ASTNode next = colon.getTreeNext();
     final String text = next.getText();
-    if (text.length() == 0 || !StringUtil.isEmptyOrSpaces(text) || StringUtil.isLineBreak(text.charAt(0))) {
+    if (text.isEmpty() || !StringUtil.isEmptyOrSpaces(text) || StringUtil.isLineBreak(text.charAt(0))) {
       final int insOffset = colon.getStartOffset() + 1;
       editor.getDocument().insertString(insOffset, " ");
       editor.getCaretModel().moveToOffset(insOffset + 1);

@@ -7,12 +7,13 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModification
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.*
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.*
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.math.max
 
 @ApiStatus.Internal
 class ProjectStatus(private val debugName: String? = null) {
-  private var state = AtomicReference(Synchronized(-1) as ProjectState)
+
+  private var state = AtomicReference(Synchronized(Stamp.NONE) as ProjectState)
 
   fun isDirty() = state.get() is Dirty
 
@@ -27,23 +28,23 @@ class ProjectStatus(private val debugName: String? = null) {
     else -> UNKNOWN
   }
 
-  fun markBroken(stamp: Long): ProjectState {
+  fun markBroken(stamp: Stamp): ProjectState {
     return update(Break(stamp))
   }
 
-  fun markDirty(stamp: Long, type: ExternalSystemModificationType = INTERNAL): ProjectState {
+  fun markDirty(stamp: Stamp, type: ExternalSystemModificationType = INTERNAL): ProjectState {
     return update(Invalidate(stamp, type))
   }
 
-  fun markModified(stamp: Long, type: ExternalSystemModificationType = INTERNAL): ProjectState {
+  fun markModified(stamp: Stamp, type: ExternalSystemModificationType = INTERNAL): ProjectState {
     return update(Modify(stamp, type))
   }
 
-  fun markReverted(stamp: Long): ProjectState {
+  fun markReverted(stamp: Stamp): ProjectState {
     return update(Revert(stamp))
   }
 
-  fun markSynchronized(stamp: Long): ProjectState {
+  fun markSynchronized(stamp: Stamp): ProjectState {
     return update(Synchronize(stamp))
   }
 
@@ -100,11 +101,11 @@ class ProjectStatus(private val debugName: String? = null) {
     }
   }
 
-  private fun ProjectEvent.withFuture(state: ProjectState, action: (Long) -> ProjectState): ProjectState {
-    return action(max(stamp, state.stamp))
+  private fun ProjectEvent.withFuture(state: ProjectState, action: (Stamp) -> ProjectState): ProjectState {
+    return action(maxOf(stamp, state.stamp))
   }
 
-  private fun ProjectEvent.ifFuture(state: ProjectState, action: (Long) -> ProjectState): ProjectState {
+  private fun ProjectEvent.ifFuture(state: ProjectState, action: (Stamp) -> ProjectState): ProjectState {
     return if (stamp > state.stamp) action(stamp) else state
   }
 
@@ -135,27 +136,45 @@ class ProjectStatus(private val debugName: String? = null) {
   }
 
   sealed class ProjectEvent {
-    abstract val stamp: Long
+    abstract val stamp: Stamp
 
-    data class Synchronize(override val stamp: Long) : ProjectEvent()
-    data class Invalidate(override val stamp: Long, val type: ExternalSystemModificationType) : ProjectEvent()
-    data class Modify(override val stamp: Long, val type: ExternalSystemModificationType) : ProjectEvent()
-    data class Revert(override val stamp: Long) : ProjectEvent()
-    data class Break(override val stamp: Long) : ProjectEvent()
+    data class Synchronize(override val stamp: Stamp) : ProjectEvent()
+    data class Invalidate(override val stamp: Stamp, val type: ExternalSystemModificationType) : ProjectEvent()
+    data class Modify(override val stamp: Stamp, val type: ExternalSystemModificationType) : ProjectEvent()
+    data class Revert(override val stamp: Stamp) : ProjectEvent()
+    data class Break(override val stamp: Stamp) : ProjectEvent()
 
     companion object {
-      fun externalModify(stamp: Long) = Modify(stamp, EXTERNAL)
-      fun externalInvalidate(stamp: Long) = Invalidate(stamp, EXTERNAL)
+      fun externalModify(stamp: Stamp) = Modify(stamp, EXTERNAL)
+      fun externalInvalidate(stamp: Stamp) = Invalidate(stamp, EXTERNAL)
     }
   }
 
   sealed class ProjectState {
-    abstract val stamp: Long
+    abstract val stamp: Stamp
 
-    data class Synchronized(override val stamp: Long) : ProjectState()
-    data class Dirty(override val stamp: Long, val type: ExternalSystemModificationType) : ProjectState()
-    data class Modified(override val stamp: Long, val type: ExternalSystemModificationType) : ProjectState()
-    data class Reverted(override val stamp: Long) : ProjectState()
-    data class Broken(override val stamp: Long) : ProjectState()
+    data class Synchronized(override val stamp: Stamp) : ProjectState()
+    data class Dirty(override val stamp: Stamp, val type: ExternalSystemModificationType) : ProjectState()
+    data class Modified(override val stamp: Stamp, val type: ExternalSystemModificationType) : ProjectState()
+    data class Reverted(override val stamp: Stamp) : ProjectState()
+    data class Broken(override val stamp: Stamp) : ProjectState()
+  }
+
+  class Stamp private constructor(private val stamp: Int) : Comparable<Stamp> {
+
+    override fun compareTo(other: Stamp): Int {
+      return stamp.compareTo(other.stamp)
+    }
+
+    companion object {
+
+      val NONE = Stamp(-1)
+
+      private val counter = AtomicInteger(0)
+
+      fun nextStamp(): Stamp {
+        return Stamp(counter.incrementAndGet())
+      }
+    }
   }
 }

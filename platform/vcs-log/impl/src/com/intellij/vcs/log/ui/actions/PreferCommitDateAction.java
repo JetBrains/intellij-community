@@ -17,6 +17,7 @@ import com.intellij.vcs.log.ui.table.column.Date;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -58,7 +59,7 @@ public final class PreferCommitDateAction extends BooleanPropertyToggleAction im
     }
   }
 
-  private static boolean isCommitDateSupported(@NotNull Collection<? extends VcsLogProvider> providers) {
+  private static boolean isCommitDateSupported(@NotNull @Unmodifiable Collection<? extends VcsLogProvider> providers) {
     return ContainerUtil.exists(providers, VcsLogProperties.HAS_COMMITTER::getOrDefault);
   }
 

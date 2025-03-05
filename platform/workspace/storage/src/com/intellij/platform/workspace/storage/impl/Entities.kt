@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.trace.ReadTrace
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.ReflectionUtil
+import org.jetbrains.annotations.ApiStatus
 
 public abstract class WorkspaceEntityBase(private var currentEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null) : WorkspaceEntity {
   public var id: EntityId = invalidEntityId
@@ -78,7 +79,8 @@ public abstract class WorkspaceEntityBase(private var currentEntityData: Workspa
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> = id.clazz.findWorkspaceEntity()
 
-  internal open fun getData(): WorkspaceEntityData<out WorkspaceEntity> =
+  @ApiStatus.Internal
+  public open fun getData(): WorkspaceEntityData<out WorkspaceEntity> =
     currentEntityData ?: throw IllegalStateException("Entity data is not initialized")
 
   internal fun getMetadata(): EntityMetadata = getData().getMetadata()

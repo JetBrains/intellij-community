@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
@@ -68,8 +68,7 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
         return element.hasValOrVar()
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtParameter): Context? {
+    override fun KaSession.prepareContext(element: KtParameter): Context? {
         val parameterType = element.symbol.returnType
         if (!parameterType.isArrayOrPrimitiveArray) return null
         val containingClass = element.containingClass() ?: return null
@@ -106,7 +105,7 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
                     }
                 }
             }
-            if (declaration.nameAsName == OperatorNameConventions.HASH_CODE && declaration.valueParameters.size == 0) {
+            if (declaration.nameAsName == OperatorNameConventions.HASH_CODE && declaration.valueParameters.isEmpty()) {
                 overriddenHashCode = true
             }
         }

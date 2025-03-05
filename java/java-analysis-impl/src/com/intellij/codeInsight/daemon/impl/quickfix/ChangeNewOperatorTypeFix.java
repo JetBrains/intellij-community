@@ -1,13 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
@@ -31,8 +27,7 @@ public final class ChangeNewOperatorTypeFix extends PsiUpdateModCommandAction<Ps
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("change.new.operator.type.family");
   }
 
@@ -122,10 +117,10 @@ public final class ChangeNewOperatorTypeFix extends PsiUpdateModCommandAction<Ps
     updater.moveCaretTo(newExpression.getTextRange().getEndOffset() + caretOffset);
   }
 
-  public static void register(@NotNull HighlightInfo.Builder highlightInfo, PsiExpression expression, PsiType lType) {
-    if (PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass) return;
+  public static ModCommandAction createFix(PsiExpression expression, PsiType lType) {
+    if (PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass) return null;
     expression = PsiUtil.deparenthesizeExpression(expression);
-    if (!(expression instanceof PsiNewExpression newExpression)) return;
+    if (!(expression instanceof PsiNewExpression newExpression)) return null;
     final PsiType rType = expression.getType();
     PsiType newType = lType;
     if (rType instanceof PsiClassType rClassType && newType instanceof PsiClassType newClassType) {
@@ -145,16 +140,15 @@ public final class ChangeNewOperatorTypeFix extends PsiUpdateModCommandAction<Ps
         }
       }
     }
-    if (rType == null || newType.getCanonicalText().equals(rType.getCanonicalText())) return;
+    if (rType == null || newType.getCanonicalText().equals(rType.getCanonicalText())) return null;
     final PsiClass aClass = PsiTypesUtil.getPsiClass(newType);
-    if (aClass != null && (aClass.isEnum() || aClass.isAnnotationType())) return;
-    highlightInfo.registerFix(new ChangeNewOperatorTypeFix(newType, newExpression), null, null, null, null);
+    if (aClass != null && (aClass.isEnum() || aClass.isAnnotationType())) return null;
+    return new ChangeNewOperatorTypeFix(newType, newExpression);
   }
 
   /* Guesswork
   */
-  @Nullable
-  private static PsiSubstitutor getInheritorSubstitutorForNewExpression(PsiClass baseClass, PsiClass inheritor,
+  private static @Nullable PsiSubstitutor getInheritorSubstitutorForNewExpression(PsiClass baseClass, PsiClass inheritor,
                                                                         PsiSubstitutor baseSubstitutor, PsiElement context) {
     final Project project = baseClass.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);

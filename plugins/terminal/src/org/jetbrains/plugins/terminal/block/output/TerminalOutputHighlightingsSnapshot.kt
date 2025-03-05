@@ -60,4 +60,21 @@ class TerminalOutputHighlightingsSnapshot(private val document: Document, highli
     }
     return result
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TerminalOutputHighlightingsSnapshot
+
+    return allSortedHighlightings == other.allSortedHighlightings
+  }
+
+  override fun hashCode(): Int {
+    return allSortedHighlightings.hashCode()
+  }
+
+  override fun toString(): String {
+    return "TerminalOutputHighlightingsSnapshot(allSortedHighlightings=$allSortedHighlightings)"
+  }
 }

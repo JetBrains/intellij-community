@@ -65,8 +65,7 @@ public final class FunExprOccurrence {
     }
   }
 
-  @NotNull
-  private static ReferenceChainLink deserializeLink(DataInput in) throws IOException {
+  private static @NotNull ReferenceChainLink deserializeLink(DataInput in) throws IOException {
     String referenceName = IOUtil.readUTF(in);
     boolean isCall = in.readBoolean();
     return new ReferenceChainLink(referenceName, isCall, isCall ? DataInputOutputUtil.readINT(in) : -1);

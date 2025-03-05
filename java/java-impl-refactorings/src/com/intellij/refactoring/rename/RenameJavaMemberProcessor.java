@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.psi.*;
@@ -9,7 +9,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,8 +51,8 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     return createQualifiedMemberReference(context, name, containingClass, member.hasModifierProperty(PsiModifier.STATIC));
   }
 
-  protected static PsiReferenceExpression createQualifiedMemberReference(PsiElement context, String name,
-                                                                         @NotNull PsiClass containingClass, boolean isStatic) {
+  static PsiReferenceExpression createQualifiedMemberReference(PsiElement context, String name,
+                                                               @NotNull PsiClass containingClass, boolean isStatic) {
     PsiReferenceExpression ref;
     final PsiJavaCodeReferenceElement qualifier;
 
@@ -84,7 +83,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     return ref;
   }
 
-  protected static void findMemberHidesOuterMemberCollisions(PsiMember member, String newName, List<? super UsageInfo> result) {
+  static void findMemberHidesOuterMemberCollisions(PsiMember member, String newName, List<? super UsageInfo> result) {
     if (member instanceof PsiCompiledElement) return;
     final PsiClass memberClass = member.getContainingClass();
     for (PsiClass aClass = memberClass != null ? memberClass.getContainingClass() : null; aClass != null; aClass = aClass.getContainingClass()) {
@@ -116,7 +115,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     });
   }
 
-  protected static void qualifyOuterMemberReferences(final List<? extends MemberHidesOuterMemberUsageInfo> outerHides) {
+  static void qualifyOuterMemberReferences(final List<? extends MemberHidesOuterMemberUsageInfo> outerHides) {
     for (MemberHidesOuterMemberUsageInfo usage : outerHides) {
       final PsiElement element = usage.getElement();
       if (element == null) continue;
@@ -127,7 +126,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
   }
 
-  protected static void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<UsageInfo> result) {
+  static void findCollisionsAgainstNewName(final PsiMember memberToRename, final String newName, final List<UsageInfo> result) {
     if (!memberToRename.isPhysical()) {
       return;
     }
@@ -210,8 +209,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     return false;
   }
 
-  protected static void qualifyStaticImportReferences(final List<? extends MemberHidesStaticImportUsageInfo> staticImportHides)
-      throws IncorrectOperationException {
+  static void qualifyStaticImportReferences(final List<? extends MemberHidesStaticImportUsageInfo> staticImportHides) {
     for (MemberHidesStaticImportUsageInfo info : staticImportHides) {
       final PsiReference ref = info.getReference();
       if (ref == null) return;

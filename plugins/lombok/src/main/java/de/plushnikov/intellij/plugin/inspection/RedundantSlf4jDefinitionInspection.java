@@ -15,9 +15,8 @@ public final class RedundantSlf4jDefinitionInspection extends LombokJavaInspecti
   private static final String LOGGER_SLF4J_FQCN = Slf4jProcessor.LOGGER_TYPE;
   private static final String LOGGER_INITIALIZATION = "LoggerFactory.getLogger(%s.class)";
 
-  @NotNull
   @Override
-  protected PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  protected @NotNull PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new LombokDefinitionVisitor(holder);
   }
 

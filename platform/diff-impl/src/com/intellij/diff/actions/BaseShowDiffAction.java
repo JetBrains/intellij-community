@@ -49,21 +49,18 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
     return !DiffUtil.isFileWithoutContent(file);
   }
 
-  @Nullable
-  protected abstract DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e);
+  protected abstract @Nullable DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e);
 
-  @NotNull
-  public static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
-                                                                    @NotNull VirtualFile file1,
-                                                                    @NotNull VirtualFile file2) {
+  public static @NotNull MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                             @NotNull VirtualFile file1,
+                                                                             @NotNull VirtualFile file2) {
     return createMutableChainFromFiles(project, file1, file2, null);
   }
 
-  @NotNull
-  public static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
-                                                                    @NotNull VirtualFile file1,
-                                                                    @NotNull VirtualFile file2,
-                                                                    @Nullable VirtualFile baseFile) {
+  public static @NotNull MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                             @NotNull VirtualFile file1,
+                                                                             @NotNull VirtualFile file2,
+                                                                             @Nullable VirtualFile baseFile) {
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
 

@@ -9,6 +9,7 @@ import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
@@ -650,6 +651,30 @@ class JpsSplitModuleAndContentRootTest {
                                 forceFilesRewrite = true) { builder, orphanage, configLocation ->
       val toRemove = builder.entities(ModuleEntity::class.java).single().contentRoots.filter { it.entitySource !is JpsImportedEntitySource }
       toRemove.first().also { builder.removeEntity(it) }
+    }
+  }
+
+  @Test
+  fun `load iml with no module declaration`() {
+    // <module> is a formal xml root. During the loading it should go to orphan storage, because iml contains no NewModuleRootManager tag.
+    checkSaveProjectAfterChange("after/imlWithoutModuleDeclaration", "after/imlWithoutModuleDeclaration") { builder, orphanage, configLocation ->
+      val mockFacetType = MockFacetType()
+      registerFacetType(mockFacetType, projectModel.disposableRule.disposable)
+
+      val mainModuleEntity = builder.entities(ModuleEntity::class.java).toList()
+      assertEmpty(mainModuleEntity) { "Module should be loaded to orphanage storage" }
+
+      val orphanageModuleEntity = orphanage.entities(ModuleEntity::class.java).toList()
+      assertEquals("Module should be loaded to orphanage storage", 1, orphanageModuleEntity.size)
+    }
+  }
+
+  @Test
+  fun `load minimal iml with module declaration`() {
+    // Minimal module declaration contains only NewModuleRootManager tag
+    checkSaveProjectAfterChange("after/minimalImlWithModuleDeclaration", "after/minimalImlWithModuleDeclaration") { builder, _, configLocation ->
+      val mainModuleEntity = builder.entities(ModuleEntity::class.java).toList()
+      assertEquals("Module should be loaded to main storage", 1, mainModuleEntity.size)
     }
   }
 

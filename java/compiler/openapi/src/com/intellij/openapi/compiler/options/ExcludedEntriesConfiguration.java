@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.compiler.options;
 
@@ -18,12 +18,12 @@ import java.util.LinkedHashSet;
 
 public class ExcludedEntriesConfiguration implements PersistentStateComponent<ExcludedEntriesConfiguration>, JDOMExternalizable, Disposable,
                                                      ExcludesConfiguration {
-  @NonNls private static final String FILE = "file";
-  @NonNls private static final String DIRECTORY = "directory";
-  @NonNls private static final String URL = "url";
-  @NonNls private static final String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
+  private static final @NonNls String FILE = "file";
+  private static final @NonNls String DIRECTORY = "directory";
+  private static final @NonNls String URL = "url";
+  private static final @NonNls String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
   private final Collection<ExcludeEntryDescription> myExcludeEntryDescriptions = new LinkedHashSet<>();
-  @Nullable private final ExcludedEntriesListener myEventPublisher;
+  private final @Nullable ExcludedEntriesListener myEventPublisher;
   private ExcludeEntryDescription[] myCachedDescriptions = null;
 
   @SuppressWarnings("unused")
@@ -153,7 +153,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
   }
 
   @Override
-  public void loadState(@NotNull final ExcludedEntriesConfiguration state) {
+  public void loadState(final @NotNull ExcludedEntriesConfiguration state) {
     for (ExcludeEntryDescription description : state.getExcludeEntryDescriptions()) {
       addExcludeEntryDescription(description.copy(this));
     }

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
@@ -25,8 +26,7 @@ public class WslAttachHost implements XAttachHost {
     myWsl = wsl;
   }
 
-  @NotNull
-  public WSLDistribution getWsl() {
+  public @NotNull WSLDistribution getWsl() {
     return myWsl;
   }
 

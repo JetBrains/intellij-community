@@ -40,9 +40,8 @@ public final class PyTargetElementEvaluator implements TargetElementEvaluator {
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
+  public @Nullable PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
     if ((flags & TargetElementUtilBase.ELEMENT_NAME_ACCEPTED) == 0) {
       return null;
     }

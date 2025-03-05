@@ -2,22 +2,15 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderFactory;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,13 +20,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StatementEffectIntroduceVariableQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.introduce.variable");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+  public void applyFix(final @NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(element), PyAssignmentStatement.class,
                                                                              "var = " + element.getText());

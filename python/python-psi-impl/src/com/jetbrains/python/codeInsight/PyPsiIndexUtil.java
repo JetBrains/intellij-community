@@ -18,8 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class PyPsiIndexUtil {
-  @NotNull
-  public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element, boolean forHighlightUsages) {
+  public static @NotNull List<UsageInfo> findUsages(@NotNull PsiNamedElement element, boolean forHighlightUsages) {
     final List<UsageInfo> usages = new ArrayList<>();
     final FindUsagesHandlerBase handler = new PyPsiFindUsagesHandlerFactory() {
     }.createFindUsagesHandler(element, forHighlightUsages);
@@ -38,7 +37,7 @@ public final class PyPsiIndexUtil {
     return usages;
   }
 
-  public static boolean isNotUnderSourceRoot(@NotNull final Project project, @Nullable final PsiFile psiFile) {
+  public static boolean isNotUnderSourceRoot(final @NotNull Project project, final @Nullable PsiFile psiFile) {
     if (psiFile == null) {
       return true;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.system;
 
 import com.intellij.jna.JnaLoader;
@@ -32,7 +32,7 @@ public enum CpuArch {
    * Here, {@link CpuArch#OTHER} is an architecture not yet supported by JetBrains Runtime,
    * and {@link CpuArch#UNKNOWN} means the code was unable to detect an architecture.</p>
    *
-   * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (e.g. WoW64 or Rosetta 2).</p>
+   * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (like WoW64 or Rosetta 2).</p>
    */
   public static final CpuArch CURRENT = fromString(System.getProperty("os.arch"));
 
@@ -66,7 +66,7 @@ public enum CpuArch {
       }
     }
 
-    return ourEmulated == Boolean.TRUE;
+    return ourEmulated;
   }
 
   private static @Nullable Boolean ourEmulated;

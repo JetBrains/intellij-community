@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.name.FqName
@@ -14,7 +15,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
     data class Result(
         val usedDeclarations: Map<FqName, Set<Name>>,
         val unresolvedNames: Set<Name>,
-        val usedSymbols: Set<SymbolInfoPointer>,
+        val usedSymbols: Set<SymbolInfo>,
         val references: Collection<KtReference>,
     )
 
@@ -26,7 +27,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
     private val aliases: Map<FqName, List<Name>> = collectImportAliases(file)
 
     fun KaSession.collectUsedReferences(): Result {
-        file.accept(object : KtVisitorVoid() {
+        file.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
             override fun visitElement(element: PsiElement) {
                 ProgressIndicatorProvider.checkCanceled()
                 element.acceptChildren(this)
@@ -43,9 +44,7 @@ internal class UsedReferencesCollector(private val file: KtFile) {
             }
         })
 
-        val importableSymbolPointers = importableSymbols
-            .map { it.run { createPointer() } }
-            .toSet()
+        val importableSymbolPointers = importableSymbols.toSet()
 
         return Result(usedDeclarations, unresolvedNames, importableSymbolPointers, references)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.util.paths;
 
 import com.intellij.util.UriUtil;
@@ -44,8 +44,7 @@ public final class FilePathMapping<T> {
     myPathHashSet.clear();
   }
 
-  @NotNull
-  public Collection<T> values() {
+  public @NotNull Collection<T> values() {
     return myPathMap.values();
   }
 
@@ -54,8 +53,7 @@ public final class FilePathMapping<T> {
     return myPathMap.containsKey(path);
   }
 
-  @Nullable
-  public T getMappingFor(@NotNull String filePath) {
+  public @Nullable T getMappingFor(@NotNull String filePath) {
     String path = UriUtil.trimTrailingSlashes(filePath);
 
     int index = 0;

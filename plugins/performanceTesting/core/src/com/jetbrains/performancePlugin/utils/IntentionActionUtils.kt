@@ -3,7 +3,7 @@ package com.jetbrains.performancePlugin.utils
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.runBlocking
@@ -38,7 +38,7 @@ class IntentionActionUtils {
       val project = checkNotNull(editor.project) { "Project is null" }
       val psiFile = checkNotNull(readAction { PsiManager.getInstance(project).findFile(editor.virtualFile) }) { "File is null" }
       if (action.startInWriteAction()) {
-        writeAction {
+        edtWriteAction {
           action.invoke(project, editor, psiFile)
         }
       } else {

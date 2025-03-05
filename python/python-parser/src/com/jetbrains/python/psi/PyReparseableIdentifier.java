@@ -7,6 +7,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.lexer.PythonLexer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ public class PyReparseableIdentifier extends PyReparseableTokenType {
 
 
     var currentLeaf = TreeUtil.findFirstLeaf(lexingContainer);
-    PythonLexer lexer = new PythonLexer();
+    PythonLexer lexer = new PythonHighlightingLexer(LanguageLevel.forElement(leaf.getPsi()));
 
     lexer.start(updatedCharSequence);
 

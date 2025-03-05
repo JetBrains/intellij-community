@@ -4,6 +4,8 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
@@ -23,6 +25,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,23 +33,51 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
 public final class ActionGroupPanelWrapper {
 
-  private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
+  private static final Key<@NlsContexts.Separator String> GROUP_NAME = Key.create("ACTION_GROUP_KEY");
 
-  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(ActionGroup action,
-                                                                      Runnable backAction,
+  /** Only for AbstractNewProjectDialog */
+  @ApiStatus.Obsolete
+  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(@NotNull ActionGroup actionGroup,
+                                                                      @Nullable Runnable backAction,
+                                                                      @NotNull Disposable parentDisposable) {
+    var presentationFactory = new PresentationFactory();
+    var dataContext = DataContext.EMPTY_CONTEXT;
+    class Wrapper extends ActionGroupWrapper {
+      Wrapper(@NotNull ActionGroup action) {
+        super(action);
+      }
+
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        if (e == null) return EMPTY_ARRAY;
+        AnAction[] children = super.getChildren(e);
+        String groupName = e.getPresentation().getText();
+        for (int i = 0; i < children.length; i++) {
+          if (children[i] instanceof ActionGroup g &&
+              !e.getUpdateSession().presentation(g).isPopupGroup()) children[i] = new Wrapper(g);
+          else if (groupName != null) setParentGroupName(groupName, children[i]);
+        }
+        return children;
+      }
+    }
+    List<AnAction> flatChildren = Utils.expandActionGroup(
+      new Wrapper(actionGroup), presentationFactory, dataContext, ActionPlaces.NEW_PROJECT_WIZARD, ActionUiKind.NONE);
+    return createActionGroupPanel(flatChildren, backAction, parentDisposable);
+  }
+
+  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(@NotNull List<AnAction> groups,
+                                                                      @Nullable Runnable backAction,
                                                                       @NotNull Disposable parentDisposable) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
 
     actionsListPanel.setBackground(getProjectsBackground());
-    java.util.List<AnAction> groups = flattenActionGroups(action);
     DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
     JBList<AnAction> list = new JBList<>(model);
     ListListenerCollapsedActionGroupExpander.expandCollapsableGroupsOnSelection(list, model, parentDisposable);
@@ -274,91 +305,83 @@ public final class ActionGroupPanelWrapper {
     });
   }
 
-  private static List<AnAction> flattenActionGroups(final @NotNull ActionGroup action) {
-    final ArrayList<AnAction> groups = new ArrayList<>();
-    for (AnAction anAction : action.getChildren(null)) {
-      if (anAction instanceof ActionGroup actionGroup) {
-        var elementsToAdd = getActionChildrenToAddInsteadOfAction(actionGroup);
-        if (elementsToAdd != null) {
+  private static @NotNull List<AnAction> flattenActionGroups(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
+    ArrayList<AnAction> groups = new ArrayList<>();
+    for (AnAction action : event.getUpdateSession().children(actionGroup)) {
+      if (action instanceof ActionGroup g) {
+        var groupName = event.getUpdateSession().presentation(g).getText();
+        var children = event.getUpdateSession().children(g);
+        if (groupName != null) {
+          for (AnAction childAction : children) {
+            setParentGroupName(groupName, childAction);
+          }
+        }
+        if (!(g instanceof CollapsedActionGroup)) {
           // Some GroupActions shouldn't be added directly, but children must be added instead
-          groups.addAll(Arrays.asList(elementsToAdd));
+          groups.addAll(children);
           continue;
         }
       }
       // Collapse groups and regular actions
-      groups.add(anAction);
+      groups.add(action);
     }
     return groups;
   }
 
-  /**
-   * Action children must have parent name to display group separator.
-   * {@link CollapsedActionGroup} will be substituted with children later, when clicked.
-   * Regular {@link ActionGroup} must be replaced now
-   */
-  @NotNull
-  private static AnAction @Nullable [] getActionChildrenToAddInsteadOfAction(@NotNull ActionGroup actionGroup) {
-    String groupName;
-    AnAction[] children = actionGroup.getChildren(null);
-    groupName = actionGroup.getTemplateText();
-    for (AnAction childAction : children) {
-      if (groupName != null) {
-        setParentGroupName(groupName, childAction);
-      }
-    }
-    return actionGroup instanceof CollapsedActionGroup
-           ? null
-           : children;
+  private static @NlsContexts.Separator String getParentGroupName(@NotNull AnAction value) {
+    return value.getTemplatePresentation().getClientProperty(GROUP_NAME);
   }
 
-  private static @NlsContexts.Separator String getParentGroupName(final @NotNull AnAction value) {
-    return (String)value.getTemplatePresentation().getClientProperty(ACTION_GROUP_KEY);
+  private static void setParentGroupName(@NlsContexts.Separator @NotNull String groupName, final @NotNull AnAction childAction) {
+    childAction.getTemplatePresentation().putClientProperty(GROUP_NAME, groupName);
   }
 
-  private static void setParentGroupName(final @NotNull String groupName, final @NotNull AnAction childAction) {
-    childAction.getTemplatePresentation().putClientProperty(ACTION_GROUP_KEY, groupName);
-  }
-
-  public static @NotNull AnAction wrapGroups(@NotNull AnAction action, @NotNull Disposable parentDisposable) {
-    if (!(action instanceof ActionGroup)) return action;
+  public static @NotNull AnAction wrapGroups(@NotNull ActionGroup action, @NotNull Disposable parentDisposable) {
     if (!(action instanceof ActionsWithPanelProvider)) return action;
 
-    AtomicReference<Component> createdPanel = new AtomicReference<>();
-    final Pair<JPanel, JBList<AnAction>> panel =
-      createActionGroupPanel((ActionGroup)action, () -> goBack(createdPanel.get()), parentDisposable);
-    createdPanel.set(panel.first);
-    final Runnable onDone = () -> {
-      if (action.getTemplateText() != null) {
-        setTitle(StringUtil.removeEllipsisSuffix(action.getTemplateText()));
-      }
-      final JBList<AnAction> list = panel.second;
-      ScrollingUtil.ensureSelectionExists(list);
-      final ListSelectionListener[] listeners =
-        ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
-
-      //avoid component cashing. This helps in case of LaF change
-      for (ListSelectionListener listener : listeners) {
-        listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), false));
-      }
-      JComponent toFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
-    };
-    panel.first.setName(action.getClass().getName());
-    final Presentation p = action.getTemplatePresentation();
-    return new DumbAwareAction(p.getText(), p.getDescription(), p.getIcon()) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
-          .attachComponent(panel.first, onDone);
-      }
+    return new AnActionWrapper(action) {
+      volatile Component actionPanel;
+      volatile Runnable onDone;
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        action.update(e);
+        super.update(e);
+        if (actionPanel == null) {
+          var flatChildren = flattenActionGroups(action, e);
+          e.getUpdateSession().compute(this, "initPanel", ActionUpdateThread.EDT, () -> {
+            initPanel(e, flatChildren);
+            return true;
+          });
+        }
       }
+
       @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return action.getActionUpdateThread();
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
+          .attachComponent(actionPanel, onDone);
+      }
+
+      private void initPanel(@NotNull AnActionEvent e, @NotNull List<AnAction> flatChildren) {
+        String text = e.getPresentation().getText();
+        Pair<JPanel, JBList<AnAction>> panel =
+          createActionGroupPanel(flatChildren, () -> goBack(actionPanel), parentDisposable);
+        panel.first.setName(action.getClass().getName());
+        actionPanel = panel.first;
+        onDone = () -> {
+          if (text != null) setTitle(StringUtil.removeEllipsisSuffix(text));
+          JBList<AnAction> list = panel.second;
+          ScrollingUtil.ensureSelectionExists(list);
+          ListSelectionListener[] listeners =
+            ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
+
+          //avoid component cashing. This helps in case of LaF change
+          for (ListSelectionListener listener : listeners) {
+            listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), false));
+          }
+          JComponent toFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+            () -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
+        };
       }
     };
   }

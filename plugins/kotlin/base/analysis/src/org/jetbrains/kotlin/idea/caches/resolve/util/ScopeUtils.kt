@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInf
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SourceForBinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -20,6 +21,7 @@ fun getResolveScope(file: KtFile): GlobalSearchScope {
         // Scope should be corrected when KT-6223 is implemented
         val contextScope = file.getContextContainingFile()?.resolveScope
         if (contextScope != null) {
+            @OptIn(K1ModeProjectStructureApi::class)
             return when (file.moduleInfo) {
                 is SourceForBinaryModuleInfo -> KotlinSourceFilterScope.libraryClasses(contextScope, file.project)
                 else -> KotlinSourceFilterScope.projectSourcesAndLibraryClasses(contextScope, file.project)
@@ -27,6 +29,7 @@ fun getResolveScope(file: KtFile): GlobalSearchScope {
         }
     }
 
+    @OptIn(K1ModeProjectStructureApi::class)
     return when (file.moduleInfo) {
         is ModuleSourceInfo -> {
             val projectScope = KotlinSourceFilterScope.projectFiles(file.resolveScope, file.project)

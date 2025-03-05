@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
@@ -32,14 +32,13 @@ public class MockFontLayoutService extends FontLayoutService {
     myDescent = descent;
   }
 
-  @NotNull
   @Override
-  public GlyphVector layoutGlyphVector(@NotNull Font font,
-                                       @NotNull FontRenderContext fontRenderContext,
-                                       char @NotNull [] chars,
-                                       int start,
-                                       int end,
-                                       boolean isRtl) {
+  public @NotNull GlyphVector layoutGlyphVector(@NotNull Font font,
+                                                @NotNull FontRenderContext fontRenderContext,
+                                                char @NotNull [] chars,
+                                                int start,
+                                                int end,
+                                                boolean isRtl) {
     return new MockGlyphVector(Arrays.copyOfRange(chars, start, end), isRtl);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.slicer
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
-class GroovySliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer {
+internal class GroovySliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer {
   object GroovySliceLeafEquality : SliceLeafEquality() {
     override fun substituteElement(element: PsiElement): PsiElement = element.getGroovyReferenceTargetOrThis()
   }

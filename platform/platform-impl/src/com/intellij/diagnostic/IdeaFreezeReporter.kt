@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.ITNProxy.appInfoString
@@ -14,7 +14,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -32,8 +31,6 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
-import kotlin.math.max
-import kotlin.math.min
 
 private val FREEZE_NOTIFIER_EP: ExtensionPointName<FreezeNotifier> = ExtensionPointName("com.intellij.diagnostic.freezeNotifier")
 
@@ -51,7 +48,6 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
-    @Suppress("KotlinConstantConditions")
     if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer())) {
       throw ExtensionNotApplicableException.create()
     }
@@ -71,13 +67,6 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
   @Suppress("CompanionObjectInExtension")
   companion object {
-    internal fun setAppInfo(event: IdeaLoggingEvent, appInfo: String?) {
-      val data = event.data
-      if (data is AbstractMessage) {
-        data.appInfo = appInfo
-      }
-    }
-
     internal fun saveAppInfo(appInfoFile: Path, overwrite: Boolean) {
       if (overwrite || !Files.exists(appInfoFile)) {
         Files.createDirectories(appInfoFile.parent)
@@ -85,13 +74,11 @@ internal class IdeaFreezeReporter : PerformanceListener {
       }
     }
 
-    internal fun report(event: IdeaLoggingEvent?) {
-      if (event != null) {
-        // only report to JB
-        val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
-        if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
-          MessagePool.getInstance().addIdeFatalMessage(event)
-        }
+    internal fun report(event: LogMessage) {
+      // only report to JB
+      val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
+      if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
+        MessagePool.getInstance().addIdeFatalMessage(event)
       }
     }
 
@@ -169,23 +156,18 @@ internal class IdeaFreezeReporter : PerformanceListener {
       return
     }
 
-    val dumps = ArrayList(currentDumps) // defensive copy
-
     if (Registry.`is`("freeze.reporter.enabled", false)) {
-      val performanceWatcher = PerformanceWatcher.getInstance()
-      // check that we have at least half of the dumps required
       if ((durationMs / 1000).toInt() > FREEZE_THRESHOLD && !stacktraceCommonPart.isNullOrEmpty()) {
-        val dumpingDurationMs = durationMs - performanceWatcher.unresponsiveInterval
-        val dumpsCount = min(performanceWatcher.maxDumpDuration.toLong(), dumpingDurationMs / 2) / performanceWatcher.dumpInterval
-        if (dumpTask.isValid(dumpingDurationMs) || dumps.size >= max(3, dumpsCount)) {
+        val dumps = ArrayList(currentDumps) // defensive copy
+        if (dumpTask.isValid() && dumps.size >= 2) {
           val attachments = ArrayList<Attachment>()
           addDumpsAttachments(from = dumps, textMapper = { it.rawDump }, container = attachments)
           if (reportDir != null) {
             EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(reportDir)) }
           }
 
-          val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, performanceWatcher, finished = true)
-          if (application.isEAP || application.isInternal) {
+          val loggingEvent = createEvent(dumpTask, durationMs, attachments, reportDir, PerformanceWatcher.getInstance(), finished = true)
+          if (loggingEvent != null && (application.isEAP || application.isInternal)) {
             // plugins freezes reported separately via com.intellij.diagnostic.FreezeNotifier
             report(loggingEvent)
           }
@@ -203,29 +185,37 @@ internal class IdeaFreezeReporter : PerformanceListener {
     reset()
   }
 
+  /**
+   * In Diogen, we check that there is at least one method in report.txt which also exists in threadDumps in the thread responsible for
+   * a freeze that lasts 1+ second.
+   * And we add [SamplingTask.dumpInterval] to each method in [buildTree].
+   */
+  private fun SamplingTask.isValid(): Boolean {
+    return threadInfos.size > (1000 / dumpInterval)
+  }
+
   private fun reset() {
     currentDumps.clear()
     stacktraceCommonPart = null
   }
 
-  private fun createEvent(dumpTask: SamplingTask,
-                          duration: Long,
-                          attachments: List<Attachment>,
-                          reportDir: Path?,
-                          performanceWatcher: PerformanceWatcher,
-                          finished: Boolean): IdeaLoggingEvent? {
-    var infos = dumpTask.threadInfos.toList()
-    val dumpInterval = (if (infos.isEmpty()) performanceWatcher.dumpInterval else dumpTask.dumpInterval).toLong()
-    if (infos.isEmpty()) {
-      infos = currentDumps.map { it.threadInfos }
-    }
+  private fun createEvent(
+    dumpTask: SamplingTask,
+    duration: Long,
+    attachments: List<Attachment>,
+    reportDir: Path?,
+    performanceWatcher: PerformanceWatcher,
+    finished: Boolean,
+  ): LogMessage? {
+    if (!dumpTask.isValid()) return null
+    val infos = dumpTask.threadInfos.toList()
 
     val causeThreads = infos.mapNotNull { getCauseThread(it) }
     val jitProblem = performanceWatcher.jitProblem
     val allInEdt = causeThreads.all { ThreadDumper.isEDT(it) }
-    val root = buildTree(threadInfos = causeThreads, time = dumpInterval)
+    val root = buildTree(threadInfos = causeThreads, time = dumpTask.dumpInterval)
     val classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size
-    val commonStackNode = root.findDominantCommonStack((causeThreads.size * dumpInterval * COMMON_SUB_STACK_WEIGHT).toLong())
+    val commonStackNode = root.findDominantCommonStack((causeThreads.size * dumpTask.dumpInterval * COMMON_SUB_STACK_WEIGHT).toLong())
     var commonStack = commonStackNode?.getStack()
     var nonEdtCause = false
 
@@ -253,7 +243,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     val durationInSeconds = duration / 1000
     val edtNote = if (allInEdt) "in EDT " else ""
     var message = """Freeze ${edtNote}for $durationInSeconds seconds
-${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}Sampled time: ${infos.size * dumpInterval}ms, sampling rate: ${dumpInterval}ms"""
+${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}Sampled time: ${infos.size * dumpTask.dumpInterval}ms, sampling rate: ${dumpTask.dumpInterval}ms"""
     if (jitProblem != null) {
       message += ", $jitProblem"
     }
@@ -267,24 +257,24 @@ ${if (finished) "" else if (appClosing) "IDE is closing. " else "IDE KILLED! "}S
     }
     val processCpuLoad = dumpTask.processCpuLoad
     if (processCpuLoad > 0) {
-      message += ", cpu load: ${(processCpuLoad * 100).toInt()}%"
+      message += ", CPU load: ${(processCpuLoad * 100).toInt()}%"
     }
     if (nonEdtCause) {
       message += "\n\nThe stack is from the thread that was blocking EDT"
     }
     val report = createReportAttachment(durationInSeconds, reportText)
-    return LogMessage.eventOf(Freeze(commonStack), message, attachments + report)
+    return LogMessage(Freeze(commonStack), message, attachments + report)
   }
 }
 
 private class CallTreeNode(private val stackTraceElement: StackTraceElement?,
                            private val parent: CallTreeNode?,
-                           @JvmField var time: Long,
+                           @JvmField var time: Int,
                            @JvmField val threadInfo: ThreadInfo?) {
   private val children = SmartList<CallTreeNode>()
   private val depth: Int = if (parent == null) 0 else parent.depth + 1
 
-  fun addCallee(e: StackTraceElement?, time: Long, threadInfo: ThreadInfo?): CallTreeNode {
+  fun addCallee(e: StackTraceElement?, time: Int, threadInfo: ThreadInfo?): CallTreeNode {
     for (child in children) {
       if (compareStackTraceElements(child.stackTraceElement!!, e!!)) {
         child.time += time
@@ -346,9 +336,9 @@ private class CallTreeNode(private val stackTraceElement: StackTraceElement?,
   }
 }
 
-private val TIME_COMPARATOR: Comparator<CallTreeNode> = Comparator.comparingLong<CallTreeNode> { it.time }.reversed()
+private val TIME_COMPARATOR: Comparator<CallTreeNode> = Comparator.comparingInt<CallTreeNode> { it.time }.reversed()
 
-private fun buildTree(threadInfos: List<ThreadInfo>, time: Long): CallTreeNode {
+private fun buildTree(threadInfos: List<ThreadInfo>, time: Int): CallTreeNode {
   val root = CallTreeNode(null, null, 0, null)
   for (thread in threadInfos) {
     var node = root
@@ -385,7 +375,7 @@ private const val COMMON_SUB_STACK_WEIGHT = 0.25
  * DEBUG = true overrides all this, and enables freeze detection anyway
  * -- useful, e.g., while developing/debugging freeze detection code itself.
  */
-private const val DEBUG = false
+private val DEBUG = "false".toBoolean()
 
 private suspend fun reportUnfinishedFreezes() {
   ApplicationManager.getApplication().serviceAsync<PerformanceWatcher>().processUnfinishedFreeze { dir, duration ->
@@ -459,10 +449,9 @@ private suspend fun reportDeadlocks(files: List<Path>, duration: Int, dir: Path)
 
   addDumpsAttachments(dumps, { it }, attachments)
   EP_NAME.forEachExtensionSafe { attachments.addAll(it.getAttachments(dir)) }
-  @Suppress("LocalVariableName") val _throwable = throwable
-  if (message != null && _throwable != null && !attachments.isEmpty()) {
-    val event = LogMessage.eventOf(_throwable, message, attachments)
-    IdeaFreezeReporter.setAppInfo(event, appInfo)
+  if (message != null && throwable != null && !attachments.isEmpty()) {
+    val event = LogMessage(throwable, message, attachments)
+    event.appInfo = appInfo
     IdeaFreezeReporter.report(event)
   }
 }

@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -16,22 +17,23 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author Dmitry Avdeev
- */
 public final class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileIncludeInfoImpl>> {
-  public static final ID<String,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
+  private static final ID<String,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
+  public static final ExtensionPointName<FileIncludeProvider>
+    FILE_INCLUDE_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.include.provider");
 
-  public static @NotNull List<FileIncludeInfo> getIncludes(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @Unmodifiable @NotNull Stream<FileIncludeInfo> getIncludes(@NotNull VirtualFile file, @NotNull Project project) {
     Map<String, List<FileIncludeInfoImpl>> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project);
-    return ContainerUtil.flatten(data.values());
+    return data.values().stream().flatMap(Collection::stream);
   }
 
   public static @NotNull MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, @NotNull GlobalSearchScope scope) {
@@ -53,9 +55,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
     return new CompositeDataIndexer<String, List<FileIncludeInfoImpl>, Set<FileIncludeProvider>, Set<String>>() {
       @Override
       public @NotNull Set<FileIncludeProvider> calculateSubIndexer(@NotNull IndexedFile file) {
-        return
-          FileIncludeProvider
-            .EP_NAME
+        return FILE_INCLUDE_PROVIDER_EP_NAME
             .getExtensionList()
             .stream()
             .filter(provider -> provider.acceptFile(file.getFile()))
@@ -63,7 +63,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
       }
 
       @Override
-      public @NotNull Set<String> getSubIndexerVersion(@NotNull Set<FileIncludeProvider> providers) {
+      public @Unmodifiable @NotNull Set<String> getSubIndexerVersion(@NotNull Set<FileIncludeProvider> providers) {
         return ContainerUtil.map2Set(providers, provider -> provider.getId() + ":" + provider.getVersion());
       }
 
@@ -133,7 +133,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
         if (file.getFileSystem() == JarFileSystem.getInstance()) {
           return false;
         }
-        for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensionList()) {
+        for (FileIncludeProvider provider : FILE_INCLUDE_PROVIDER_EP_NAME.getExtensionList()) {
           if (provider.acceptFile(file, indexedFile.getProject())) {
             return true;
           }
@@ -143,7 +143,7 @@ public final class FileIncludeIndex extends FileBasedIndexExtension<String, List
 
       @Override
       public void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink) {
-        for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensionList()) {
+        for (FileIncludeProvider provider : FILE_INCLUDE_PROVIDER_EP_NAME.getExtensionList()) {
           provider.registerFileTypesUsedForIndexing(fileTypeSink);
         }
       }

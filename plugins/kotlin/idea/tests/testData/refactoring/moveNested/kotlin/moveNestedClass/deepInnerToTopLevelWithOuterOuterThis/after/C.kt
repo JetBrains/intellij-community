@@ -1,8 +1,8 @@
 package test
 
-class C(private val a: A.B) {
+class C(private val b: A.B) {
     fun test() {
-        OuterOuterY()
+        A.OuterOuterY()
         this@A.OuterOuterY()
     }
 }

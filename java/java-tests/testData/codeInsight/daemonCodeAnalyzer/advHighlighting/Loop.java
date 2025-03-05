@@ -2,7 +2,7 @@ class a {
   static class ff { }
 
   void f() {
-    <error descr="Continue outside of loop">continue;</error>
+    <error descr="'continue' statement outside of loop">continue;</error>
 
     while (true) {
       continue;
@@ -10,7 +10,7 @@ class a {
     do { continue; } while (true);
 
     switch (1) {
-      case 1: <error descr="Continue outside of loop">continue;</error>
+      case 1: <error descr="'continue' statement outside of loop">continue;</error>
     }
 
     for (;;) {
@@ -20,7 +20,7 @@ class a {
     for (;;) {
       new ff() {
         void f() {
-          <error descr="Continue outside of loop">continue;</error>
+          <error descr="'continue' statement outside of loop">continue;</error>
         }
       };
       continue;
@@ -29,7 +29,7 @@ class a {
     while (true) {
       class s {
         {
-          <error descr="Continue outside of loop">continue;</error>
+          <error descr="'continue' statement outside of loop">continue;</error>
         }
       }
       continue;
@@ -38,7 +38,7 @@ class a {
     do {
       class s {
         {
-          <error descr="Continue outside of loop">continue;</error>
+          <error descr="'continue' statement outside of loop">continue;</error>
         }
       }
       continue;
@@ -47,14 +47,14 @@ class a {
     a:
     if (2==4) {
       for (;;) {
-        <error descr="Not a loop label: 'a'">continue a;</error>
+        <error descr="'continue' target must be a loop label: 'a'">continue a;</error>
       }
     }
 
     a:
     b:
     for (;;) {
-      <error descr="Not a loop label: 'a'">continue a;</error>
+      <error descr="'continue' target must be a loop label: 'a'">continue a;</error>
     }
 
     int i = 0;

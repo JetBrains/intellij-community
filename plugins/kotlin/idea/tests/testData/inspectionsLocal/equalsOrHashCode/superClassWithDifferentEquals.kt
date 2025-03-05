@@ -1,6 +1,4 @@
-// ERROR: Unresolved reference: javaClass
-// ERROR: Unresolved reference: javaClass
-
+// WITH_STDLIB
 open class Base() {
     override fun hashCode(): Int = 0
     fun equals(base: Base?) = false

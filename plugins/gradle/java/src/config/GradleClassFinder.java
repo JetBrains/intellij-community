@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -33,9 +33,8 @@ public final class GradleClassFinder extends NonClasspathClassFinder {
     return GradleBuildClasspathManager.getInstance(myProject).getAllClasspathEntries();
   }
 
-  @NotNull
   @Override
-  protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
+  protected @NotNull PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     if (scope instanceof GradleModuleBuildGlobalSearchScope) {
       GradleBuildClasspathManager buildClasspathManager = GradleBuildClasspathManager.getInstance(myProject);
       Map<String, PackageDirectoryCache> classFinderCache = buildClasspathManager.getClassFinderCache();

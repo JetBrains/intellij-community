@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -214,8 +214,7 @@ public interface ExtensionPoint extends DomElement {
     String getAdditionalData();
   }
 
-  @Nullable
-  static ExtensionPoint resolveFromDeclaration(PsiElement declaration) {
+  static @Nullable ExtensionPoint resolveFromDeclaration(PsiElement declaration) {
     DomElement domElement = null;
     if (declaration instanceof PomTargetPsiElement) {
       final PomTarget pomTarget = ((PomTargetPsiElement)declaration).getTarget();

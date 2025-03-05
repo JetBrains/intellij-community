@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide.legacyBridge.sdk
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import org.jetbrains.annotations.ApiStatus

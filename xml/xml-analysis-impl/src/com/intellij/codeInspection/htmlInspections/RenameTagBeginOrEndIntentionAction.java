@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -27,31 +27,29 @@ public final class RenameTagBeginOrEndIntentionAction implements IntentionAction
   private final String myTargetName;
   private final String mySourceName;
 
-  RenameTagBeginOrEndIntentionAction(@NotNull final String targetName, @NotNull final String sourceName, final boolean start) {
+  RenameTagBeginOrEndIntentionAction(final @NotNull String targetName, final @NotNull String sourceName, final boolean start) {
     myTargetName = targetName;
     mySourceName = sourceName;
     myStart = start;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getName();
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getName();
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
     PsiElement psiElement = file.findElementAt(offset);
 
@@ -88,8 +86,7 @@ public final class RenameTagBeginOrEndIntentionAction implements IntentionAction
     }
   }
 
-  @Nullable
-  public static PsiElement findOtherSide(PsiElement psiElement, final boolean start) {
+  public static @Nullable PsiElement findOtherSide(PsiElement psiElement, final boolean start) {
     PsiElement target = null;
     PsiElement parent = psiElement.getParent();
     if (parent instanceof PsiErrorElement) {
@@ -116,8 +113,7 @@ public final class RenameTagBeginOrEndIntentionAction implements IntentionAction
     return true;
   }
 
-  @NotNull
-  public @IntentionName String getName() {
+  public @NotNull @IntentionName String getName() {
     return myStart
            ? XmlAnalysisBundle.message("xml.intention.rename.start.tag", mySourceName, myTargetName)
            : XmlAnalysisBundle.message("xml.intention.rename.end.tag", mySourceName, myTargetName);

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.gradleJava
 
 import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.module.Module
@@ -10,7 +9,7 @@ import icons.GradleIcons
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.extensions.gradle.*
+import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType

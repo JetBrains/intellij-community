@@ -74,8 +74,8 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
   implements CheckableRunConfigurationEditor<XsltRunConfiguration> {
@@ -138,7 +138,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         public String getText(JTextField component) {
           final String text = component.getText();
           final VirtualFile baseDir = project.getBaseDir();
-          return text.length() > 0 ? text : (baseDir != null ? baseDir.getPresentableUrl() : "");
+          return !text.isEmpty() ? text : (baseDir != null ? baseDir.getPresentableUrl() : "");
         }
 
         @Override
@@ -156,7 +156,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           final String text = myXsltFile.getText();
           final JComboBox comboBox = myXmlInputFile.getComboBox();
           final Object oldXml = getXmlInputFile(); //NON-NLS
-          if (text.length() != 0) {
+          if (!text.isEmpty()) {
             final ComboBoxModel model = comboBox.getModel();
 
             boolean found = false;
@@ -197,7 +197,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         @Override
         public String getText(JComboBox comboBox) {
           Object item = comboBox.getEditor().getItem();
-          if (item.toString().length() == 0) {
+          if (item.toString().isEmpty()) {
             final String text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
             final VirtualFile file =
               VirtualFileManager.getInstance()
@@ -461,8 +461,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
       myJDK.setEnabled(getSelectedIndex(myJdkOptions) == XsltRunConfiguration.JdkChoice.JDK.ordinal());
     }
 
-    @Nullable
-    private Module getModule() {
+    private @Nullable Module getModule() {
       final Object selectedItem = myModule.getSelectedItem();
       return selectedItem instanceof Module ? (Module)selectedItem : null;
     }
@@ -511,6 +510,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           this.value = value;
         }
 
+        @Override
         public boolean equals(Object o) {
           if (this == o) return true;
           if (o == null || getClass() != o.getClass()) return false;
@@ -520,6 +520,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
           return name.equals(param.name) && value.equals(param.value);
         }
 
+        @Override
         public int hashCode() {
           int result = name.hashCode();
           result = 29 * result + value.hashCode();
@@ -624,8 +625,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
   }
 
   @Override
-  @NotNull
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     myEditor = new Editor(myProject);
     return myEditor.getComponent();
   }

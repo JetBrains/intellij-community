@@ -66,9 +66,19 @@ public class K2IdeK2MultiplatformCodeKotlinEvaluateExpressionTestGenerated exten
         runTest("../testData/evaluation/multiplatform/functionBreakpointInCommonCode.kt");
     }
 
+    @TestMetadata("inlineFromFileWithSerializableDeclaration.kt")
+    public void testInlineFromFileWithSerializableDeclaration() throws Exception {
+        runTest("../testData/evaluation/multiplatform/inlineFromFileWithSerializableDeclaration.kt");
+    }
+
     @TestMetadata("inlineFunWithDefaultArgument.kt")
     public void testInlineFunWithDefaultArgument() throws Exception {
         runTest("../testData/evaluation/multiplatform/inlineFunWithDefaultArgument.kt");
+    }
+
+    @TestMetadata("inlineInCommonModule.kt")
+    public void testInlineInCommonModule() throws Exception {
+        runTest("../testData/evaluation/multiplatform/inlineInCommonModule.kt");
     }
 
     @TestMetadata("interface.kt")

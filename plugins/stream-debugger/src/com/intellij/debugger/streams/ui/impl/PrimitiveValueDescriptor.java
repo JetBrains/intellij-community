@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.DebuggerContext;
@@ -14,10 +14,7 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Vitaliy.Bibaev
- */
-public class PrimitiveValueDescriptor extends InstanceValueDescriptor {
+public final class PrimitiveValueDescriptor extends InstanceValueDescriptor {
   PrimitiveValueDescriptor(@NotNull Project project, @Nullable Value value) {
     super(project, value);
   }

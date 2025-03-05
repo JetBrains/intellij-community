@@ -3,6 +3,7 @@ package com.intellij.cce.report
 
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.metric.MetricValueType
+import com.intellij.cce.metric.generateJsonStructureForSankeyChart
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import kotlinx.html.*
@@ -30,9 +31,12 @@ class HtmlReportGenerator(
       "/style.css",
       "/pako.min.js",
       "/tabulator.min.js",
+      "/chart.umd.min.js",
+      "/chartjs-chart-sankey.min.js",
       "/tabulator.min.css",
       "/tabulator.min.css.map",
       "/error.js",
+      "/chartBuilder.js",
       "/options.css",
       "/fonts/JetBrainsMono-Medium.eot",
       "/fonts/JetBrainsMono-Medium.woff"
@@ -92,13 +96,15 @@ class HtmlReportGenerator(
 
   override fun generateGlobalReport(globalMetrics: List<MetricInfo>): Path {
     val reportPath = Paths.get(dirs.filterDir.toString(), globalReportName)
-
     val reportTitle = "Evaluation report"
     createHTML().html {
       head {
         title(reportTitle)
         meta { charset = "utf-8" }
         script { src = "res/tabulator.min.js" }
+        script { src = "res/chart.umd.min.js" }
+        script { src = "res/chartjs-chart-sankey.min.js" }
+        script { src = "res/chartBuilder.js" }
         link {
           href = "res/tabulator.min.css"
           rel = "stylesheet"
@@ -130,7 +136,7 @@ class HtmlReportGenerator(
     var rowId = 1
 
     val errorMetrics = globalMetrics.map {
-      MetricInfo(it.name, it.description, Double.NaN, null, it.evaluationType, it.valueType, it.showByDefault)
+      MetricInfo(it.name, it.description, Double.NaN, null, it.evaluationType, it.valueType, it.showByDefault, null)
     }
 
     fun getReportMetrics(repRef: ReferenceInfo) = globalMetrics.map { metric ->
@@ -142,7 +148,8 @@ class HtmlReportGenerator(
         refMetric?.confidenceInterval,
         metric.evaluationType,
         metric.valueType,
-        metric.showByDefault
+        metric.showByDefault,
+        metric.individualScores
       )
     }
 
@@ -150,7 +157,7 @@ class HtmlReportGenerator(
       if (withDiff) listOf(metrics, metrics
         .groupBy({ it.name }, { Triple(it.value, it.valueType, it.showByDefault) })
         .mapValues { with(it.value) { Triple(first().first - last().first, first().second, first().third) } }
-        .map { MetricInfo(it.key, "", it.value.first, null, diffColumnTitle, it.value.second, it.value.third) }).flatten()
+        .map { MetricInfo(it.key, "", it.value.first, null, diffColumnTitle, it.value.second, it.value.third, null) }).flatten()
       else metrics
                                                            ).joinToString(",") {
         "${it.name}${it.evaluationType}:'${
@@ -163,8 +170,8 @@ class HtmlReportGenerator(
 
     fun getReportRow(repRef: Map.Entry<String, ReferenceInfo>) =
       "{id:${rowId++},file:${getReportLink(repRef)},${formatMetrics(getReportMetrics(repRef.value))}}"
-
     return """
+        |let sankeyChartStructure = ${generateJsonStructureForSankeyChart(globalMetrics)};
         |let tableData = [{id:0,file:'Summary',${formatMetrics(globalMetrics)}}
         |${with(errorReferences) { if (isNotEmpty()) map { getErrorRow(it) }.joinToString(",\n", ",") else "" }}
         |${with(fileGenerator.reportReferences) { if (isNotEmpty()) map { getReportRow(it) }.joinToString(",\n", ",") else "" }}];
@@ -276,12 +283,13 @@ class HtmlReportGenerator(
             ||if(${metric}.checked){${evaluationTypes.joinToString("") { type -> "table.showColumn('${metric}${type}');" }}
             ||${ifDiff("if (diffHidden())table.hideColumn('${metric}$diffColumnTitle');")}}
             ||else{${evaluationTypes.joinToString("") { type -> "table.hideColumn('${metric}${type}');" }}}
+            ||redrawCharts();
             """.trimMargin()
       }
     }}
         |function toggleColumn(name){${evaluationTypes.joinToString("") { "table.toggleColumn(name+'$it');" }}}
         |let search=document.getElementById('search');search.oninput=()=>table.setFilter(myFilter);
-        |let redrawBtn=document.getElementById('redrawBtn');redrawBtn.onclick=()=>table.redraw();
+        |let redrawBtn=document.getElementById('redrawBtn');redrawBtn.onclick=()=>{table.redraw();redrawCharts();}
         ${
       ifDiff("""
             ||let diffBtn=document.getElementById('diffBtn');

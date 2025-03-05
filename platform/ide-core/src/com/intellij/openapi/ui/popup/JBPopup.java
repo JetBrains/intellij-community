@@ -45,6 +45,22 @@ public interface JBPopup extends Disposable, LightweightWindow {
    */
   void show(@NotNull RelativePoint point);
 
+  /**
+   * Shows the popup according to the specified options.
+   * <p>
+   *   The options should be created using one of the static builders in {@link PopupShowOptions},
+   *   for example {@link PopupShowOptions#aboveComponent(Component) aboveComponent}.
+   * </p>
+   * @param showOptions the options determining where and how to show the popup
+   */
+  default void show(@NotNull PopupShowOptions showOptions) {
+    PopupShowOptionsImpl options = ((PopupShowOptionsBuilder)showOptions).build();
+    var owner = options.getOwner();
+    var aScreenX = options.getScreenX();
+    var aScreenY = options.getScreenY();
+    showInScreenCoordinates(owner, new Point(aScreenX, aScreenY));
+  }
+
   void showInScreenCoordinates(@NotNull Component owner, @NotNull Point point);
 
   /**

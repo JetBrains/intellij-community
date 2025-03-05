@@ -31,15 +31,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public final class GroovyConstantConditionalInspection extends BaseInspection {
 
-    @NotNull
     @Override
-    public BaseInspectionVisitor buildVisitor() {
+    public @NotNull BaseInspectionVisitor buildVisitor() {
         return new ConstantConditionalExpressionVisitor();
     }
 
     @Override
-    @NotNull
-    public String buildErrorString(Object... args) {
+    public @NotNull String buildErrorString(Object... args) {
         return GroovyBundle.message("inspection.message.ref.can.be.simplified");
     }
 
@@ -65,8 +63,7 @@ public final class GroovyConstantConditionalInspection extends BaseInspection {
     private static class ConstantConditionalFix extends PsiUpdateModCommandQuickFix {
 
         @Override
-        @NotNull
-        public String getFamilyName() {
+        public @NotNull String getFamilyName() {
             return GroovyBundle.message("intention.family.name.simplify");
         }
 
@@ -102,12 +99,12 @@ public final class GroovyConstantConditionalInspection extends BaseInspection {
     }
 
     private static boolean isFalse(GrExpression expression) {
-        @NonNls final String text = expression.getText();
+        final @NonNls String text = expression.getText();
         return "false".equals(text);
     }
 
     private static boolean isTrue(GrExpression expression) {
-        @NonNls final String text = expression.getText();
+        final @NonNls String text = expression.getText();
         return "true".equals(text);
     }
 }

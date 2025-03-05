@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.List;
@@ -39,6 +40,7 @@ public interface TabbedContent extends Content {
   void selectContent(int index);
 
   @NotNull
+  @Unmodifiable
   List<Pair<@Nls String, JComponent>> getTabs();
 
   default boolean hasMultipleTabs() {

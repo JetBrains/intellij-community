@@ -241,7 +241,7 @@ public final class org/jetbrains/jewel/foundation/code/MimeTypeKt {
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/code/highlighting/CodeHighlighter {
-	public abstract fun highlight-C7ITchA (Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+	public abstract fun highlight-zTGadEY (Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
 }
 
 public final class org/jetbrains/jewel/foundation/code/highlighting/CodeHighlighterKt {
@@ -251,7 +251,11 @@ public final class org/jetbrains/jewel/foundation/code/highlighting/CodeHighligh
 public final class org/jetbrains/jewel/foundation/code/highlighting/NoOpCodeHighlighter : org/jetbrains/jewel/foundation/code/highlighting/CodeHighlighter {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/foundation/code/highlighting/NoOpCodeHighlighter;
-	public fun highlight-C7ITchA (Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+	public fun highlight-zTGadEY (Ljava/lang/String;Ljava/lang/String;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class org/jetbrains/jewel/foundation/layout/BasicTableLayoutKt {
+	public static final fun BasicTableLayout-yE4rkUQ (IIJLandroidx/compose/ui/Modifier;FLjava/util/List;Landroidx/compose/runtime/Composer;II)V
 }
 
 public class org/jetbrains/jewel/foundation/lazy/DefaultMacOsSelectableColumnKeybindings : org/jetbrains/jewel/foundation/lazy/DefaultSelectableColumnKeybindings {
@@ -831,8 +835,13 @@ public final class org/jetbrains/jewel/foundation/modifier/BorderKt {
 	public static synthetic fun border-QWjY48E$default (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;FJLandroidx/compose/ui/graphics/Shape;FILjava/lang/Object;)Landroidx/compose/ui/Modifier;
 }
 
-public final class org/jetbrains/jewel/foundation/modifier/OnHoverModifierKt {
+public final class org/jetbrains/jewel/foundation/modifier/ModifierExtensionsKt {
+	public static final fun thenIf (Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+}
+
+public final class org/jetbrains/jewel/foundation/modifier/PointerModifiersKt {
 	public static final fun onHover (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
+	public static final fun onMove (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
 }
 
 public final class org/jetbrains/jewel/foundation/state/CommonStateBitMask {

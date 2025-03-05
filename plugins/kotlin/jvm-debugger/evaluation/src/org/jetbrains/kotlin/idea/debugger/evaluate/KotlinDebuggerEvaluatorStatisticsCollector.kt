@@ -6,7 +6,11 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.utils.hasStandardExceptionPrefix
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
 import org.jetbrains.annotations.ApiStatus
@@ -19,7 +23,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 10)
+    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 11)
 
     // fields
     private val compilerField = EventFields.Enum<CompilerType>("compiler")
@@ -32,6 +36,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
     private val wholeTimeField = EventFields.Long("whole_time_field")
     private val interruptionsField = EventFields.Int("total_interruptions")
     private val compilerExceptionField = EventFields.Class("exception")
+    private val stdInvocationExceptionField = EventFields.StringValidatedByCustomRule("invocation_exception", StandardExceptionNameRuleValidator::class.java)
 
     // events
     private val analysisCompilationEvent = GROUP.registerVarargEvent(
@@ -39,7 +44,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
         wrapTimeMsField, analysisTimeMsField, compilationTimeMsField, wholeTimeField, interruptionsField, compilerExceptionField
     )
     // no need to record evaluation time, as it reflects what user evaluates, not how effective our evaluation is
-    private val evaluationEvent = GROUP.registerEvent("evaluation.result", resultField, compilerField, originField)
+    private val evaluationEvent = GROUP.registerVarargEvent("evaluation.result", resultField, compilerField, originField, stdInvocationExceptionField)
 
     @JvmStatic
     fun logAnalysisAndCompilationResult(
@@ -60,8 +65,19 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    internal fun logEvaluationResult(project: Project?, evaluationResult: StatisticsEvaluationResult, compilerType: CompilerType, origin: XEvaluationOrigin) {
-        evaluationEvent.log(project, evaluationResult, compilerType, origin)
+    internal fun logEvaluationResult(
+        project: Project?,
+        evaluationResult: StatisticsEvaluationResult,
+        compilerType: CompilerType,
+        origin: XEvaluationOrigin,
+        invocationException: String? = null,
+    ) {
+        val parameters = listOf(
+            EventPair(resultField, evaluationResult),
+            EventPair(compilerField, compilerType),
+            EventPair(originField, origin),
+        ) + (invocationException?.let { listOf(EventPair(stdInvocationExceptionField, it)) } ?: emptyList())
+        evaluationEvent.log(project, parameters)
     }
 }
 
@@ -93,5 +109,16 @@ fun extractExceptionCauseClass(e: Throwable): Class<out Throwable> {
         cause.cause?.javaClass ?: cause.javaClass
     } else {
         cause.javaClass
+    }
+}
+
+private class StandardExceptionNameRuleValidator : CustomValidationRule() {
+    override fun getRuleId(): String = "standard_exception_name"
+
+    override fun doValidate(data: String, context: EventContext): ValidationResultType {
+        if (hasStandardExceptionPrefix(data)) {
+            return ValidationResultType.ACCEPTED
+        }
+        return ValidationResultType.REJECTED
     }
 }

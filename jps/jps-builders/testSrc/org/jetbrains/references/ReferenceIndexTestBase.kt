@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.references
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.indexing.IndexId
+import com.intellij.util.indexing.forEachValueOf
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
+import com.intellij.util.indexing.withDataOf
 import com.intellij.util.io.PersistentStringEnumerator
 import org.jetbrains.jps.backwardRefs.*
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData
@@ -15,6 +17,8 @@ import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   public override fun setUp() {
@@ -56,7 +60,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   }
 
   protected fun addFile(name: String): String {
-    return createFile("m/$name", FileUtil.loadFile(File(getTestDataPath() + name), Charsets.UTF_8))
+    return createFile("m/$name", Files.readString(Path.of(getTestDataPath() + name), Charsets.UTF_8))
   }
 
 
@@ -67,9 +71,8 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   protected fun indexAsText(): String {
     val pd = createProjectDescriptor(BuildLoggingManager(TestProjectBuilderLogger()))
     val manager = pd.dataManager
-    val buildDir = manager.dataPaths.dataStorageRoot
-    val index = JavaCompilerBackwardReferenceIndex(buildDir,
-                                                   PathRelativizerService(myProject), true)
+    val buildDir = manager.dataPaths.dataStorageDir
+    val index = JavaCompilerBackwardReferenceIndex(buildDir, PathRelativizerService(myProject), true)
 
     try {
       val fileEnumerator = index.filePathEnumerator
@@ -81,7 +84,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       storage(index, JavaCompilerIndices.BACK_HIERARCHY).processKeys { superClass ->
         val superClassName = superClass.asText(nameEnumerator)
         val inheritorsText = mutableListOf<String>()
-        index[JavaCompilerIndices.BACK_HIERARCHY].getData(superClass).forEach { i, children ->
+        index[JavaCompilerIndices.BACK_HIERARCHY].forEachValueOf(superClass) { i, children ->
           children.mapTo(inheritorsText) { it.asText(nameEnumerator) }
           true
         }
@@ -98,18 +101,20 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val referencesText = mutableListOf<String>()
       storage(index, JavaCompilerIndices.BACK_USAGES).processKeys { usage ->
         val referents = mutableListOf<String>()
-        val valueIt = index[JavaCompilerIndices.BACK_USAGES].getData(usage)
-
-        var sumOccurrences = 0
-        valueIt.forEach({ fileId, occurrenceCount ->
-                          referents.add(fileId.asFileName(fileEnumerator))
-                          sumOccurrences += occurrenceCount
-                          true
-                        })
-        if (!referents.isEmpty()) {
-          referents.sort()
-          referencesText.add(usage.asText(nameEnumerator) + " in " + referents.joinToString(separator = " ") + " occurrences = $sumOccurrences")
+        index[JavaCompilerIndices.BACK_USAGES].withDataOf(usage) { valueIt ->
+          var sumOccurrences = 0
+          valueIt.forEach({ fileId, occurrenceCount ->
+                            referents.add(fileId.asFileName(fileEnumerator))
+                            sumOccurrences += occurrenceCount
+                            true
+                          })
+          if (!referents.isEmpty()) {
+            referents.sort()
+            referencesText.add(usage.asText(nameEnumerator) + " in " + referents.joinToString(separator = " ") + " occurrences = $sumOccurrences")
+          }
+          true
         }
+
         true
       }
       referencesText.sort()
@@ -119,13 +124,16 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val classDefs = mutableListOf<String>()
       storage(index, JavaCompilerIndices.BACK_CLASS_DEF).processKeys { usage ->
         val definitionFiles = mutableListOf<String>()
-        val valueIt = index[JavaCompilerIndices.BACK_CLASS_DEF].getData(usage).valueIterator
-        while (valueIt.hasNext()) {
-          valueIt.next()
-          val files = valueIt.inputIdsIterator
-          while (files.hasNext()) {
-            definitionFiles.add(files.next().asFileName(fileEnumerator))
+        index[JavaCompilerIndices.BACK_CLASS_DEF].withDataOf(usage) { container ->
+          val valueIt = container.valueIterator
+          while (valueIt.hasNext()) {
+            valueIt.next()
+            val files = valueIt.inputIdsIterator
+            while (files.hasNext()) {
+              definitionFiles.add(files.next().asFileName(fileEnumerator))
+            }
           }
+          true
         }
         if (!definitionFiles.isEmpty()) {
           definitionFiles.sort()
@@ -140,14 +148,17 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val signs = mutableListOf<String>()
       storage(index, JavaCompilerIndices.BACK_MEMBER_SIGN).processKeys { sign ->
         val definedMembers = mutableListOf<String>()
-        val valueIt = index[JavaCompilerIndices.BACK_MEMBER_SIGN].getData(sign).valueIterator
-        while (valueIt.hasNext()) {
-          val nextRefs = valueIt.next()
-          nextRefs.mapTo(definedMembers) { it.asText(nameEnumerator) }
-        }
-        if (!definedMembers.isEmpty()) {
-          definedMembers.sort()
-          signs.add(sign.asText(nameEnumerator) + " <- " + definedMembers.joinToString(separator = " "))
+        index[JavaCompilerIndices.BACK_MEMBER_SIGN].withDataOf(sign) { container ->
+          val valueIt = container.valueIterator
+          while (valueIt.hasNext()) {
+            val nextRefs = valueIt.next()
+            nextRefs.mapTo(definedMembers) { it.asText(nameEnumerator) }
+          }
+          if (!definedMembers.isEmpty()) {
+            definedMembers.sort()
+            signs.add(sign.asText(nameEnumerator) + " <- " + definedMembers.joinToString(separator = " "))
+          }
+          true
         }
         true
       }
@@ -157,13 +168,16 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       val typeCasts = mutableListOf<String>()
       storage(index, JavaCompilerIndices.BACK_CAST).processKeys { castType ->
         val operands = mutableListOf<String>()
-        val valueIt = index[JavaCompilerIndices.BACK_CAST].getData(castType).valueIterator
-        while (valueIt.hasNext()) {
-          val nextRefs = valueIt.next()
-          nextRefs.mapTo(operands) { it.asText(nameEnumerator) }
-        }
-        if (!operands.isEmpty()) {
-          typeCasts.add(castType.asText(nameEnumerator) + " -> " + operands.joinToString(separator = " "))
+        index[JavaCompilerIndices.BACK_CAST].withDataOf(castType) { container ->
+          val valueIt = container.valueIterator
+          while (valueIt.hasNext()) {
+            val nextRefs = valueIt.next()
+            nextRefs.mapTo(operands) { it.asText(nameEnumerator) }
+          }
+          if (!operands.isEmpty()) {
+            typeCasts.add(castType.asText(nameEnumerator) + " -> " + operands.joinToString(separator = " "))
+          }
+          true
         }
         true
       }
@@ -174,15 +188,18 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       }
 
       val implicitToString = mutableListOf<String>()
-      storage(index, JavaCompilerIndices.IMPLICIT_TO_STRING).processKeys {type ->
+      storage(index, JavaCompilerIndices.IMPLICIT_TO_STRING).processKeys { type ->
         val callPlaceFiles = mutableListOf<String>()
-        val valueIt = index[JavaCompilerIndices.IMPLICIT_TO_STRING].getData(type).valueIterator
-        while (valueIt.hasNext()) {
-          valueIt.next()
-          val files = valueIt.inputIdsIterator
-          while (files.hasNext()) {
-            callPlaceFiles.add(files.next().asFileName(fileEnumerator))
+        index[JavaCompilerIndices.IMPLICIT_TO_STRING].withDataOf(type) { container ->
+          val valueIt = container.valueIterator
+          while (valueIt.hasNext()) {
+            valueIt.next()
+            val files = valueIt.inputIdsIterator
+            while (files.hasNext()) {
+              callPlaceFiles.add(files.next().asFileName(fileEnumerator))
+            }
           }
+          true
         }
         if (!callPlaceFiles.isEmpty()) {
           callPlaceFiles.sort()
@@ -211,14 +228,14 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   private fun Int.asName(nameEnumerator: NameEnumerator): String = nameEnumerator.valueOf(this)!!
 
   private fun CompilerRef.asText(nameEnumerator: NameEnumerator): String =
-      when (this) {
-        is CompilerRef.JavaCompilerMethodRef -> "${this.owner.name.asName(nameEnumerator)}.${this.name.asName(nameEnumerator)}(${this.parameterCount})"
-        is CompilerRef.JavaCompilerFieldRef -> "${this.owner.name.asName(nameEnumerator)}.${this.name.asName(nameEnumerator)}"
-        is CompilerRef.JavaCompilerClassRef -> this.name.asName(nameEnumerator)
-        is CompilerRef.JavaCompilerFunExprDef -> "fun_expr(id=${this.id})"
-        is CompilerRef.JavaCompilerAnonymousClassRef -> "anonymous(id=${this.name})"
-        else -> throw UnsupportedOperationException()
-      }
+    when (this) {
+      is CompilerRef.JavaCompilerMethodRef -> "${this.owner.name.asName(nameEnumerator)}.${this.name.asName(nameEnumerator)}(${this.parameterCount})"
+      is CompilerRef.JavaCompilerFieldRef -> "${this.owner.name.asName(nameEnumerator)}.${this.name.asName(nameEnumerator)}"
+      is CompilerRef.JavaCompilerClassRef -> this.name.asName(nameEnumerator)
+      is CompilerRef.JavaCompilerFunExprDef -> "fun_expr(id=${this.id})"
+      is CompilerRef.JavaCompilerAnonymousClassRef -> "anonymous(id=${this.name})"
+      else -> throw UnsupportedOperationException()
+    }
 
   private fun SignatureData.asText(nameEnumerator: NameEnumerator): String {
     return (if (this.isStatic) "static " else "") + this.rawReturnType.asName(nameEnumerator) + decodeVectorKind(this.iteratorKind)

@@ -92,8 +92,7 @@ class DebuggerConnector implements Runnable {
     session.start();
   }
 
-  @Nullable
-  private Debugger connect() {
+  private @Nullable Debugger connect() {
     Throwable lastException = null;
     for (int i = 0; i < 10; i++) {
       if (myProcess.isProcessTerminated()) return null;

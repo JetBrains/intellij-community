@@ -7,21 +7,24 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryManager
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
-internal class TerminalPromptController(
+@ApiStatus.Internal
+class TerminalPromptController(
   project: Project,
   private val editor: EditorEx,
   session: BlockTerminalSession,
-  private val commandExecutor: TerminalCommandExecutor
+  private val commandExecutor: TerminalCommandExecutor,
 ) {
   private val commandHistoryManager: CommandHistoryManager
   private val listeners: MutableList<PromptStateListener> = CopyOnWriteArrayList()
@@ -53,7 +56,16 @@ internal class TerminalPromptController(
 
     Disposer.register(session, model)
 
-    session.addCommandListener(ShellEditorBufferReportShellCommandListener(session, model, editor), session)
+    val bufferReporting = ShellEditorBufferReportShellCommandListener(session) { buffer ->
+      if (buffer.isNotBlank()) {
+        invokeLater {
+          model.commandText = buffer
+          editor.caretModel.moveToOffset(editor.document.textLength)
+        }
+      }
+    }
+
+    session.addCommandListener(bufferReporting, session)
   }
 
   fun addListener(listener: PromptStateListener) {

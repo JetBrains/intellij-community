@@ -38,8 +38,7 @@ public final class PyQuotesUtil {
     return true;
   }
 
-  @NotNull
-  public static PyStringElement createCopyWithConvertedQuotes(@NotNull PyStringElement element) {
+  public static @NotNull PyStringElement createCopyWithConvertedQuotes(@NotNull PyStringElement element) {
     StringBuilder builder = new StringBuilder();
     processStringElement(builder, element);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());

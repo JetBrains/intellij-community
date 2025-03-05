@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
@@ -12,8 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 // this is a base implementation for shared functionality in both DependencyGraph and Delta
-abstract class GraphImpl implements Graph {
-
+@ApiStatus.Internal
+public abstract class GraphImpl implements Graph {
   private final BackDependencyIndex myDependencyIndex; // nodeId -> nodes, referencing the nodeId
   private final List<BackDependencyIndex> myIndices = new ArrayList<>();
   protected final MultiMaplet<ReferenceID, NodeSource> myNodeToSourcesMap;
@@ -22,12 +23,18 @@ abstract class GraphImpl implements Graph {
 
   protected GraphImpl(@NotNull MapletFactory cFactory) {
     myContainerFactory = cFactory;
-    addIndex(myDependencyIndex = new NodeDependenciesIndex(cFactory));
+    try {
+      addIndex(myDependencyIndex = new NodeDependenciesIndex(cFactory));
 
-    // important: if multiple implementations of NodeSource are available, change to generic graph element externalizer
-    Externalizer<NodeSource> srcExternalizer = Externalizer.forGraphElement(PathSource::new);
-    myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", Externalizer.forGraphElement(JvmNodeReferenceID::new), srcExternalizer);
-    mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, Externalizer.forAnyGraphElement());
+      // important: if multiple implementations of NodeSource are available, change to generic graph element externalizer
+      Externalizer<NodeSource> srcExternalizer = Externalizer.forGraphElement(PathSource::new);
+      myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", Externalizer.forGraphElement(JvmNodeReferenceID::new), srcExternalizer);
+      mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, Externalizer.forAnyGraphElement());
+    }
+    catch (RuntimeException e) {
+      closeIgnoreErrors();
+      throw e;
+    }
   }
 
   protected final void addIndex(BackDependencyIndex index) {
@@ -72,6 +79,14 @@ abstract class GraphImpl implements Graph {
   @Override
   public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
     return mySourceToNodesMap.get(source);
+  }
+
+  protected final void closeIgnoreErrors() {
+    try {
+      close();
+    }
+    catch (Throwable ignored) {
+    }
   }
 
   public void close() throws IOException {

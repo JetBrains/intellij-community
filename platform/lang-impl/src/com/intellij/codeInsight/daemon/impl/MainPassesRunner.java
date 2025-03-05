@@ -4,6 +4,9 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
@@ -33,6 +36,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +109,7 @@ public final class MainPassesRunner {
                              @NotNull ProgressIndicatorEx progress,
                              @Nullable HighlightSeverity minimumSeverity) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessNotAllowed();
+    ThreadingAssertions.assertNoOwnReadAccess();
     progress.setIndeterminate(false);
     List<Pair<VirtualFile, DaemonProgressIndicator>> daemonIndicators = Collections.synchronizedList(new ArrayList<>(files.size()));
     progress.addStateDelegate(new AbstractProgressIndicatorExBase() {
@@ -172,11 +176,23 @@ public final class MainPassesRunner {
       return;
     }
     ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
-    ProgressManager.getInstance().runProcess(() ->
-      HighlightingSessionImpl.runInsideHighlightingSession(psiFile, null, range, false, session -> {
+    ProgressManager.getInstance().runProcess(() -> {
+      // todo ijpl-339 figure out what is the correct context here
+      CodeInsightContext context;
+      if (CodeInsightContextKt.isSharedSourceSupportEnabled(myProject)) {
+        context = ReadAction.compute(() -> {
+          CodeInsightContextManager manager = CodeInsightContextManager.getInstance(psiFile.getProject());
+          return manager.getCodeInsightContext(psiFile.getViewProvider());
+        });
+      }
+      else {
+        context = CodeInsightContextKt.defaultContext();
+      }
+      HighlightingSessionImpl.runInsideHighlightingSession(psiFile, context, null, range, false, session -> {
         ((HighlightingSessionImpl)session).setMinimumSeverity(minimumSeverity);
         runMainPasses(daemonIndicator, result, psiFile, document);
-      }), daemonIndicator);
+      });
+    }, daemonIndicator);
   }
 
   private void runMainPasses(@NotNull ProgressIndicator daemonIndicator,

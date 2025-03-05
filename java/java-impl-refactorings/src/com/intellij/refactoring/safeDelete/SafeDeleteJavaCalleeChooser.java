@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
@@ -23,6 +23,7 @@ import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -107,7 +108,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
     }
 
     @Override
-    protected List<PsiElement> computeCallers() {
+    protected @Unmodifiable List<PsiElement> computeCallers() {
       PsiElement member = getMember();
       if (getTopMember().equals(member)) {
         return ContainerUtil.map(getTopLevelItems(), info -> info.getCalledElement());

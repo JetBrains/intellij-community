@@ -14,7 +14,9 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.FileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
@@ -39,6 +41,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+
+private val LOG: Logger = fileLogger()
 
 internal data class PluginAdvertiserExtensionsData(
   // Either extension or file name. Depends on which of the two properties has more priority for advertising plugins for this specific file.

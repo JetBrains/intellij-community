@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl;
 
 import com.intellij.diff.DiffDialogHints;
@@ -28,10 +28,10 @@ import java.awt.*;
 @ApiStatus.Internal
 public abstract class DiffWindowBase {
 
-  @NotNull @NonNls public static final String DEFAULT_DIALOG_GROUP_KEY = "DiffContextDialog";
+  public static final @NotNull @NonNls String DEFAULT_DIALOG_GROUP_KEY = "DiffContextDialog";
 
-  @Nullable protected final Project myProject;
-  @NotNull protected final DiffDialogHints myHints;
+  protected final @Nullable Project myProject;
+  protected final @NotNull DiffDialogHints myHints;
 
   private DiffRequestProcessor myProcessor;
   private WindowWrapper myWrapper;
@@ -80,8 +80,7 @@ public abstract class DiffWindowBase {
     myWrapper.show();
   }
 
-  @NotNull
-  protected abstract DiffRequestProcessor createProcessor();
+  protected abstract @NotNull DiffRequestProcessor createProcessor();
 
   //
   // Getters

@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.artifact.impl.elements;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,15 +14,14 @@ import org.jetbrains.jps.model.library.JpsLibraryReference;
 public class JpsPackagingElementFactoryImpl extends JpsPackagingElementFactory {
 
   @Override
-  @NotNull
-  public JpsDirectoryCopyPackagingElement createDirectoryCopy(@NotNull String directoryPath) {
+  public @NotNull JpsDirectoryCopyPackagingElement createDirectoryCopy(@NotNull String directoryPath) {
     return new JpsDirectoryCopyPackagingElementImpl(directoryPath);
   }
 
   @Override
   public JpsPackagingElement createParentDirectories(String relativeOutputPath, JpsPackagingElement element) {
-    relativeOutputPath = StringUtil.trimStart(relativeOutputPath, "/");
-    if (relativeOutputPath.length() == 0) {
+    relativeOutputPath = Strings.trimStart(relativeOutputPath, "/");
+    if (relativeOutputPath.isEmpty()) {
       return element;
     }
     int slash = relativeOutputPath.indexOf('/');
@@ -59,11 +44,10 @@ public class JpsPackagingElementFactoryImpl extends JpsPackagingElementFactory {
     return getOrCreateDirectoryOrArchive(root, path, false);
   }
 
-  @NotNull
-  private JpsCompositePackagingElement getOrCreateDirectoryOrArchive(@NotNull JpsCompositePackagingElement root,
-                                                                     @NotNull @NonNls String path, final boolean directory) {
-    path = StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/");
-    if (path.length() == 0) {
+  private @NotNull JpsCompositePackagingElement getOrCreateDirectoryOrArchive(@NotNull JpsCompositePackagingElement root,
+                                                                              @NotNull @NonNls String path, final boolean directory) {
+    path = Strings.trimStart(Strings.trimEnd(path, "/"), "/");
+    if (path.isEmpty()) {
       return root;
     }
     int index = path.lastIndexOf('/');
@@ -76,44 +60,37 @@ public class JpsPackagingElementFactoryImpl extends JpsPackagingElementFactory {
   }
 
   @Override
-  @NotNull
-  public JpsFileCopyPackagingElement createFileCopy(@NotNull String filePath, @Nullable String outputFileName) {
+  public @NotNull JpsFileCopyPackagingElement createFileCopy(@NotNull String filePath, @Nullable String outputFileName) {
     return new JpsFileCopyPackagingElementImpl(filePath, outputFileName);
   }
 
   @Override
-  @NotNull
-  public JpsExtractedDirectoryPackagingElement createExtractedDirectory(@NotNull String jarPath, @NotNull String pathInJar) {
+  public @NotNull JpsExtractedDirectoryPackagingElement createExtractedDirectory(@NotNull String jarPath, @NotNull String pathInJar) {
     return new JpsExtractedDirectoryPackagingElementImpl(jarPath, pathInJar);
   }
 
   @Override
-  @NotNull
-  public JpsDirectoryPackagingElement createDirectory(@NotNull String directoryName) {
+  public @NotNull JpsDirectoryPackagingElement createDirectory(@NotNull String directoryName) {
     return new JpsDirectoryPackagingElementImpl(directoryName);
   }
 
   @Override
-  @NotNull
-  public JpsArchivePackagingElement createArchive(@NotNull String archiveName) {
+  public @NotNull JpsArchivePackagingElement createArchive(@NotNull String archiveName) {
     return new JpsArchivePackagingElementImpl(archiveName);
   }
 
   @Override
-  @NotNull
-  public JpsArtifactRootElement createArtifactRoot() {
+  public @NotNull JpsArtifactRootElement createArtifactRoot() {
     return new JpsArtifactRootElementImpl();
   }
 
   @Override
-  @NotNull
-  public JpsLibraryFilesPackagingElement createLibraryElement(@NotNull JpsLibraryReference reference) {
+  public @NotNull JpsLibraryFilesPackagingElement createLibraryElement(@NotNull JpsLibraryReference reference) {
     return new JpsLibraryFilesPackagingElementImpl(reference);
   }
 
   @Override
-  @NotNull
-  public JpsArtifactOutputPackagingElement createArtifactOutput(@NotNull JpsArtifactReference reference) {
+  public @NotNull JpsArtifactOutputPackagingElement createArtifactOutput(@NotNull JpsArtifactReference reference) {
     return new JpsArtifactOutputPackagingElementImpl(reference);
   }
 }

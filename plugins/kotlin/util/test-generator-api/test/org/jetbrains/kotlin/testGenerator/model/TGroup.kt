@@ -54,6 +54,7 @@ enum class GroupCategory {
     J2K,
     ANALYSIS_API,
     INJECTION,
+    PROJECT_STRUCTURE,
 }
 
 fun MutableTWorkspace.testGroup(

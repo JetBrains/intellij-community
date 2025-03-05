@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,9 +51,8 @@ public final class ConvertConcatenationToGstringIntention extends Intention {
   private static final String END_BRACE = "}";
   private static final String START_BRACE = "${";
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new MyPredicate();
   }
 
@@ -77,9 +76,8 @@ public final class ConvertConcatenationToGstringIntention extends Intention {
     }
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return file;
   }
 

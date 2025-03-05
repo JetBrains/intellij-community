@@ -1,0 +1,1057 @@
+[
+  {
+    "name": "A-IM",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Accept</code></strong> request HTTP header advertises which content types, expressed as <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types\">MIME types</a>, the client is able to understand. Using <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation\">content negotiation</a>, the server then selects one of the proposals, uses it and informs the client of its choice with the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type\" title=\"The Content-Type entity header is used to indicate the media type of the resource.\"><code>Content-Type</code></a> response header. Browsers set adequate values for this header depending on\u00a0the context where the request is done: when fetching a CSS stylesheet a different value is set for the request than when fetching an image,\u00a0video or a script.",
+    "name": "Accept",
+    "rfc-ref": "7231#section-5.3.2",
+    "rfc-title": "[RFC7231, Section 5.3.2]"
+  },
+  {
+    "name": "Accept-Additions",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Accept-Charset</code></strong> request HTTP header advertises which <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/character_encoding\" title=\"character encodings: An encoding defines a mapping between bytes and text. A sequence of bytes allows for different textual interpretations. By specifying a particular encoding (such as UTF-8), we specify how the sequence of bytes is to be interpreted.\">character encodings</a> the client understands.",
+    "name": "Accept-Charset",
+    "rfc-ref": "7231#section-5.3.3",
+    "rfc-title": "[RFC7231, Section 5.3.3]"
+  },
+  {
+    "name": "Accept-Datetime",
+    "rfc-ref": "7089",
+    "rfc-title": "[RFC7089]"
+  },
+  {
+    "descr": "The <strong><code>Accept-Encoding</code></strong> request HTTP header advertises which content encoding, usually a compression algorithm, the client is able to understand. Using <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation\">content negotiation</a>, the server selects one of the proposals, uses it and informs the client of its choice with the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding\" title=\"The Content-Encoding entity header is used to compress the media-type. When present, its value indicates which encodings were applied to the entity-body. It lets the client know how to decode in order to obtain the media-type referenced by the Content-Type header.\"><code>Content-Encoding</code></a> response header.",
+    "name": "Accept-Encoding",
+    "rfc-ref": "7694#section-3",
+    "rfc-title": "[RFC7694, Section 3]"
+  },
+  {
+    "name": "Accept-Features",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Accept-Language</code></strong> request HTTP header advertises which languages the client is able to understand, and which locale variant is preferred. (By languages, we mean natural languages, such as English, and not programming languages.) Using <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation\">content negotiation</a>, the server then selects one of the proposals, uses it and informs the client of its choice with the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Language\" title=\"The Content-Language entity header is used to describe the language(s) intended for the audience, so that it allows a user to differentiate according to the users' own preferred language.\"><code>Content-Language</code></a> response header. Browsers set adequate values for this header according to their user interface language and even if a user can change it, this happens rarely (and is frowned upon as it leads to fingerprinting).",
+    "name": "Accept-Language",
+    "rfc-ref": "7231#section-5.3.5",
+    "rfc-title": "[RFC7231, Section 5.3.5]"
+  },
+  {
+    "descr": "The <strong><code>Accept-Patch</code></strong>\u00a0response HTTP header advertises which media-type the server\u00a0is able to understand.",
+    "name": "Accept-Patch",
+    "rfc-ref": "5789",
+    "rfc-title": "[RFC5789]"
+  },
+  {
+    "name": "Accept-Post"
+  },
+  {
+    "descr": "The <code><strong>Accept-Ranges</strong></code> response HTTP header is a marker used by the server to advertise its support of partial requests. The value of this field indicates the unit that can be used to define a range.",
+    "name": "Accept-Ranges",
+    "rfc-ref": "7233#section-2.3",
+    "rfc-title": "[RFC7233, Section 2.3]"
+  },
+  {
+    "descr": "The <code><strong>Age</strong></code> header contains the time in seconds the object has been in a proxy cache.",
+    "name": "Age",
+    "rfc-ref": "7234#section-5.1",
+    "rfc-title": "[RFC7234, Section 5.1]"
+  },
+  {
+    "descr": "The <code><strong>Allow</strong></code> header lists the set of methods supported by a resource.",
+    "name": "Allow",
+    "rfc-ref": "7231#section-7.4.1",
+    "rfc-title": "[RFC7231, Section 7.4.1]"
+  },
+  {
+    "name": "ALPN",
+    "rfc-ref": "7639#section-2",
+    "rfc-title": "[RFC7639, Section 2]"
+  },
+  {
+    "descr": "The <strong><code style=\"white-space: nowrap;\">Alt-Svc</code></strong> HTTP response header is used to advertise alternative services through which the same resource can be reached. An alternative service is defined by a protocol/host/port combination.",
+    "name": "Alt-Svc",
+    "rfc-ref": "7838",
+    "rfc-title": "[RFC7838]"
+  },
+  {
+    "name": "Alt-Used",
+    "rfc-ref": "7838",
+    "rfc-title": "[RFC7838]"
+  },
+  {
+    "name": "Alternates",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Apply-To-Redirect-Ref",
+    "rfc-ref": "4437",
+    "rfc-title": "[RFC4437]"
+  },
+  {
+    "name": "Authentication-Control",
+    "rfc-ref": "8053#section-4",
+    "rfc-title": "[RFC8053, Section 4]"
+  },
+  {
+    "name": "Authentication-Info",
+    "rfc-ref": "7615#section-3",
+    "rfc-title": "[RFC7615, Section 3]"
+  },
+  {
+    "descr": "The HTTP <strong><code>Authorization</code></strong> request header contains the credentials to authenticate a user agent with a server, usually after the server has responded with a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401\" title=\"The HTTP 401 Unauthorized client error status response code indicates that the request has not been applied because it lacks valid authentication credentials for the target resource.\"><code>401</code></a> <code>Unauthorized</code> status and the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate\" title=\"The HTTP WWW-Authenticate response header defines the authentication method that should be used to gain access to a resource.\"><code>WWW-Authenticate</code></a> header.",
+    "name": "Authorization",
+    "rfc-ref": "7235#section-4.2",
+    "rfc-title": "[RFC7235, Section 4.2]"
+  },
+  {
+    "name": "C-Ext",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "C-Man",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "C-Opt",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "C-PEP",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "C-PEP-Info",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The\u00a0<strong><code>Cache-Control</code></strong> HTTP header holds <em>directives</em> (instructions) for <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching\">caching</a> in both requests and responses. A given directive in a request does not mean the same directive should be in the response.",
+    "name": "Cache-Control",
+    "rfc-ref": "7234#section-5.2",
+    "rfc-title": "[RFC7234, Section 5.2]"
+  },
+  {
+    "name": "Cal-Managed-ID",
+    "rfc-ref": "8607#section-5.1",
+    "rfc-title": "[RFC8607, Section 5.1]"
+  },
+  {
+    "name": "CalDAV-Timezones",
+    "rfc-ref": "7809#section-7.1",
+    "rfc-title": "[RFC7809, Section 7.1]"
+  },
+  {
+    "name": "CDN-Loop",
+    "rfc-ref": "8586",
+    "rfc-title": "[RFC8586]"
+  },
+  {
+    "name": "Cert-Not-After"
+  },
+  {
+    "name": "Cert-Not-Before"
+  },
+  {
+    "name": "Close",
+    "rfc-ref": "7230#section-8.1",
+    "rfc-title": "[RFC7230, Section 8.1]"
+  },
+  {
+    "descr": "The <strong><code>Connection</code></strong> general header controls whether or not the network connection stays open after the current transaction finishes. If the value sent is <code>keep-alive</code>, the connection is persistent and not closed, allowing for subsequent requests to the same server to be done.",
+    "name": "Connection",
+    "rfc-ref": "7230#section-6.1",
+    "rfc-title": "[RFC7230, Section 6.1]"
+  },
+  {
+    "name": "Content-Base",
+    "obsolete": true,
+    "rfc-ref": "2616",
+    "rfc-title": "[RFC2616]"
+  },
+  {
+    "descr": "In a <code>multipart/form-data</code> body, the HTTP <strong><code>Content-Disposition</code></strong> general header is a header that can be used on the subpart of a multipart body to give information about the field it applies to. The subpart is delimited by the <em>boundary</em> defined in the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type\" title=\"The Content-Type entity header is used to indicate the media type of the resource.\"><code>Content-Type</code></a> header. Used on the body itself, <code>Content-Disposition</code> has no effect.",
+    "name": "Content-Disposition",
+    "rfc-ref": "6266",
+    "rfc-title": "[RFC6266]"
+  },
+  {
+    "descr": "The <strong><code>Content-Encoding</code></strong> entity header is used to compress the media-type. When present, its value indicates which encodings were applied to the entity-body. It lets the client know how to decode in order to obtain the media-type referenced by the <code>Content-Type</code> header.",
+    "name": "Content-Encoding",
+    "rfc-ref": "7231#section-3.1.2.2",
+    "rfc-title": "[RFC7231, Section 3.1.2.2]"
+  },
+  {
+    "name": "Content-ID",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Content-Language</code></strong> <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/entity_header\" title=\"entity header: An entity header is an HTTP header describing the content of the body of the message. Entity headers are used in both, HTTP requests and responses. Headers like Content-Length, Content-Language, Content-Encoding are entity headers.\">entity header</a> is used to <strong>describe the language(s) intended for the audience</strong>, so that it allows a user to differentiate according to the users' own preferred language.",
+    "name": "Content-Language",
+    "rfc-ref": "7231#section-3.1.3.2",
+    "rfc-title": "[RFC7231, Section 3.1.3.2]"
+  },
+  {
+    "descr": "The <strong><code>Content-Length</code></strong> entity header indicates\u00a0the size of the entity-body, in bytes, sent to the recipient.",
+    "name": "Content-Length",
+    "rfc-ref": "7230#section-3.3.2",
+    "rfc-title": "[RFC7230, Section 3.3.2]"
+  },
+  {
+    "descr": "The <strong><code>Content-Location</code></strong> header indicates an alternate location for the returned data. The principal use is to indicate the URL of a resource transmitted as the result of <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation\">content negotiation</a>.",
+    "name": "Content-Location",
+    "rfc-ref": "7231#section-3.1.4.2",
+    "rfc-title": "[RFC7231, Section 3.1.4.2]"
+  },
+  {
+    "name": "Content-MD5",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Content-Range</code></strong> response HTTP header indicates where in a full body message a partial message belongs.",
+    "name": "Content-Range",
+    "rfc-ref": "7233#section-4.2",
+    "rfc-title": "[RFC7233, Section 4.2]"
+  },
+  {
+    "name": "Content-Script-Type",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Content-Style-Type",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Content-Type</code></strong> entity header is used to indicate the <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/MIME_type\" title='media type: A\u00a0MIME type\u00a0(now properly called \"media type\", but\u00a0also sometimes \"content type\") is a string sent along\u00a0with a file indicating the type of the file (describing the content format, for example, a sound file might be labeled\u00a0audio/ogg, or an image file\u00a0image/png).'>media type</a> of the resource.",
+    "name": "Content-Type",
+    "rfc-ref": "7231#section-3.1.1.5",
+    "rfc-title": "[RFC7231, Section 3.1.1.5]"
+  },
+  {
+    "name": "Content-Version",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Cookie</code></strong> HTTP request header contains stored <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies\">HTTP cookies</a> previously sent by the server with the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie\" title=\"The Set-Cookie HTTP response header is used to send cookies from the server to the user agent, so the user agent can send them back to the server later.\"><code>Set-Cookie</code></a> header.",
+    "name": "Cookie",
+    "rfc-ref": "6265",
+    "rfc-title": "[RFC6265]"
+  },
+  {
+    "descr": "The obsolete <strong><code>Cookie2</code></strong> HTTP request header used to\u00a0advise the server that the user agent understands \"new-style\" cookies, but nowadays user agents will use the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cookie\" title=\"The Cookie HTTP request header contains stored HTTP cookies previously sent by the server with the Set-Cookie header.\"><code>Cookie</code></a> header instead, not this one.",
+    "name": "Cookie2",
+    "obsolete": true,
+    "rfc-ref": "6265",
+    "rfc-title": "[RFC6265]"
+  },
+  {
+    "name": "DASL",
+    "rfc-ref": "5323",
+    "rfc-title": "[RFC5323]"
+  },
+  {
+    "name": "DAV",
+    "rfc-ref": "4918",
+    "rfc-title": "[RFC4918]"
+  },
+  {
+    "descr": "The <strong><code>Date</code></strong> general HTTP header contains the date and time at which the message was originated.",
+    "name": "Date",
+    "rfc-ref": "7231#section-7.1.1.2",
+    "rfc-title": "[RFC7231, Section 7.1.1.2]"
+  },
+  {
+    "name": "Default-Style",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Delta-Base",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Depth",
+    "rfc-ref": "4918",
+    "rfc-title": "[RFC4918]"
+  },
+  {
+    "name": "Derived-From",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Destination",
+    "rfc-ref": "4918",
+    "rfc-title": "[RFC4918]"
+  },
+  {
+    "name": "Differential-ID",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <code><strong>Digest</strong></code> response HTTP header provides a <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/digest\" title=\"digest: A\u00a0digest is a\u00a0small value generated by a hash function from a whole message. Ideally, a digest is quick to calculate, irreversible,\u00a0and unpredictable, and therefore indicates whether someone has\u00a0tampered with a given message.\">digest</a> of the requested resource.",
+    "name": "Digest",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <code><strong>Early-Data</strong></code> header is set by an intermediate to indicate\u00a0that the request has been conveyed in <a href=\"https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security#TLS_1.3\">TLS early data</a>, and additionally indicates that an intermediary understands the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/425\" title=\"The HyperText Transfer Protocol (HTTP) 425 Too Early response status code indicates that the server is unwilling to risk processing a request that might be replayed, which creates the potential for a replay attack.\"><code>425 (Too Early)</code></a> status code.\u00a0 The <code><strong>Early-Data</strong></code> header is not set by the originator of the request (i.e., a browser).",
+    "name": "Early-Data",
+    "rfc-ref": "8470",
+    "rfc-title": "[RFC8470]"
+  },
+  {
+    "descr": "The <strong><code>ETag</code></strong> HTTP response header is an identifier for a specific version of a resource. It lets caches be more efficient and save bandwidth, as a web server does not need to resend a full response if the content has not changed. Additionally, etags help prevent simultaneous updates of a resource from overwriting each other (<a href=\"#Caching_of_unchanged_resources\">\"mid-air collisions\"</a>).",
+    "name": "ETag",
+    "rfc-ref": "7232#section-2.3",
+    "rfc-title": "[RFC7232, Section 2.3]"
+  },
+  {
+    "descr": "The <strong><code>Expect</code></strong> HTTP request header indicates expectations that need to be fulfilled by the server in order to properly handle the request.",
+    "name": "Expect",
+    "rfc-ref": "7231#section-5.1.1",
+    "rfc-title": "[RFC7231, Section 5.1.1]"
+  },
+  {
+    "descr": "The <code>Expect-CT</code>\u00a0header allows sites to opt in to reporting and/or enforcement of <a href=\"https://developer.mozilla.org/en-US/docs/Web/Security/Certificate_Transparency\">Certificate Transparency</a> requirements, which prevents the use of misissued certificates for that site from going unnoticed.",
+    "name": "Expect-CT"
+  },
+  {
+    "descr": "The <code><strong>Expires</strong></code> header contains the date/time after which the response is considered stale.",
+    "name": "Expires",
+    "rfc-ref": "7234#section-5.3",
+    "rfc-title": "[RFC7234, Section 5.3]"
+  },
+  {
+    "name": "Ext",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Forwarded</code></strong> header contains information from the client-facing side of proxy servers that is altered or lost when a proxy is involved in the path of the request.",
+    "name": "Forwarded",
+    "rfc-ref": "7239",
+    "rfc-title": "[RFC7239]"
+  },
+  {
+    "descr": "The <code><strong>From</strong></code> request header contains an Internet email address for a human user who controls the requesting user agent.",
+    "name": "From",
+    "rfc-ref": "7231#section-5.5.1",
+    "rfc-title": "[RFC7231, Section 5.5.1]"
+  },
+  {
+    "name": "GetProfile",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Hobareg",
+    "rfc-ref": "7486#section-6.1.1",
+    "rfc-title": "[RFC7486, Section 6.1.1]"
+  },
+  {
+    "descr": "The <code><strong>Host</strong></code> request header specifies the domain name of the server (for virtual hosting), and (optionally) the TCP port number on which the server is listening.",
+    "name": "Host",
+    "rfc-ref": "7230#section-5.4",
+    "rfc-title": "[RFC7230, Section 5.4]"
+  },
+  {
+    "name": "HTTP2-Settings",
+    "rfc-ref": "7540#section-3.2.1",
+    "rfc-title": "[RFC7540, Section 3.2.1]"
+  },
+  {
+    "name": "IM",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "If",
+    "rfc-ref": "4918",
+    "rfc-title": "[RFC4918]"
+  },
+  {
+    "descr": "The <strong><code>If-Match</code></strong> HTTP request header makes the request conditional. For <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET\" title=\"The HTTP GET method requests a representation of the specified resource. Requests using GET should only retrieve data.\"><code>GET</code></a> and <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD\" title=\"The HTTP HEAD method requests the headers that are returned if the specified resource would be requested with an HTTP GET method. Such a request can be done before deciding to download a large resource to save bandwidth, for example.\"><code>HEAD</code></a> methods, the server will send back the requested resource only if it matches one of the listed <code>ETags</code>. For <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT\" title=\"The HTTP PUT request method creates a new resource or replaces a representation of the target resource with the request payload.\"><code>PUT</code></a> and other non-safe methods, it will only upload the resource in this case.",
+    "name": "If-Match",
+    "rfc-ref": "7232#section-3.1",
+    "rfc-title": "[RFC7232, Section 3.1]"
+  },
+  {
+    "descr": "The <strong><code>If-Modified-Since</code></strong> request HTTP header makes the request conditional: the server will send back the requested resource, with a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200\" title=\"The HTTP 200 OK success status response code indicates that the request has succeeded. A 200 response is cacheable by default.\"><code>200</code></a> status, only if it has been last modified after the given date. If the request has not been modified since, the response will be a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/304\" title=\"The HTTP 304 Not Modified client redirection response code indicates that there is no need to retransmit the requested resources. It is an implicit redirection to a cached resource. This happens when the request method is safe, like a GET or a HEAD request, or when the request is conditional and uses a If-None-Match or a If-Modified-Since header.\"><code>304</code></a> without any body; the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified\" title=\"The Last-Modified response HTTP header contains the date and time at which the origin server believes the resource was last modified. It is used as a validator to determine if a resource received or stored is the same. Less accurate than an ETag header, it is a fallback mechanism. Conditional requests containing If-Modified-Since or If-Unmodified-Since headers make use of this field.\"><code>Last-Modified</code></a> response header of a previous request will contain the date of last modification. Unlike <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Unmodified-Since\" title=\"The If-Unmodified-Since request HTTP header makes the request conditional: the server will send back the requested resource, or accept it in the case of a POST or another non-safe method, only if it has not been last modified after the given date. If the resource has been modified after the given date, the response will be a 412 (Precondition Failed) error.\"><code>If-Unmodified-Since</code></a>, <code>If-Modified-Since</code> can only be used with a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET\" title=\"The HTTP GET method requests a representation of the specified resource. Requests using GET should only retrieve data.\"><code>GET</code></a> or <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD\" title=\"The HTTP HEAD method requests the headers that are returned if the specified resource would be requested with an HTTP GET method. Such a request can be done before deciding to download a large resource to save bandwidth, for example.\"><code>HEAD</code></a>.",
+    "name": "If-Modified-Since",
+    "rfc-ref": "7232#section-3.3",
+    "rfc-title": "[RFC7232, Section 3.3]"
+  },
+  {
+    "descr": "The <strong><code>If-None-Match</code></strong> HTTP request header makes the request conditional. For <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/GET\" title=\"The HTTP GET method requests a representation of the specified resource. Requests using GET should only retrieve data.\"><code>GET</code></a> and <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/HEAD\" title=\"The HTTP HEAD method requests the headers that are returned if the specified resource would be requested with an HTTP GET method. Such a request can be done before deciding to download a large resource to save bandwidth, for example.\"><code>HEAD</code></a> methods, the server will send back the requested resource, with a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200\" title=\"The HTTP 200 OK success status response code indicates that the request has succeeded. A 200 response is cacheable by default.\"><code>200</code></a> status, only if it doesn't have an <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag\" title='The ETag HTTP response header is an identifier for a specific version of a resource. It lets caches be more efficient and save bandwidth, as a web server does not need to resend a full response if the content has not changed. Additionally, etags help prevent simultaneous updates of a resource from overwriting each other (\"mid-air collisions\").'><code>ETag</code></a> matching the given ones. For other methods, the request will be processed only if the eventually existing resource's <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag\" title='The ETag HTTP response header is an identifier for a specific version of a resource. It lets caches be more efficient and save bandwidth, as a web server does not need to resend a full response if the content has not changed. Additionally, etags help prevent simultaneous updates of a resource from overwriting each other (\"mid-air collisions\").'><code>ETag</code></a> doesn't match any of the values listed.",
+    "name": "If-None-Match",
+    "rfc-ref": "7232#section-3.2",
+    "rfc-title": "[RFC7232, Section 3.2]"
+  },
+  {
+    "descr": "The <strong><code>If-Range</code></strong> HTTP request header makes a range request conditional: if the condition is fulfilled, the range request will be issued and the server sends back a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/206\" title=\"The HTTP 206 Partial Content success status response code indicates that the request has succeeded and has the body contains the requested ranges of data, as described in the Range header of the request.\"><code>206</code></a> <code>Partial Content</code> answer with the appropriate body. If the condition is not fulfilled, the full resource is sent back, with a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200\" title=\"The HTTP 200 OK success status response code indicates that the request has succeeded. A 200 response is cacheable by default.\"><code>200</code></a> <code>OK</code> status.",
+    "name": "If-Range",
+    "rfc-ref": "7233#section-3.2",
+    "rfc-title": "[RFC7233, Section 3.2]"
+  },
+  {
+    "name": "If-Schedule-Tag-Match",
+    "rfc-ref": "6638",
+    "rfc-title": "[RFC6638]"
+  },
+  {
+    "descr": "The <strong><code>If-Unmodified-Since</code></strong> request HTTP header makes the request conditional: the server will send back the requested resource, or accept it in the case of a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST\" title=\"The HTTP POST method sends data to the server. The type of the body of the request is indicated by the Content-Type header.\"><code>POST</code></a> or another non-<a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/safe\" title=\"safe: An HTTP method is safe if it doesn't alter the state of the server. In other words, a method is safe if it leads to a read-only operation. Several common HTTP methods are safe: GET, HEAD, or OPTIONS. All safe methods are also idempotent, but not all idempotent methods are safe. For example, PUT and DELETE are both idempotent but unsafe.\">safe</a> method, only if it has not been last modified after the given date. If the resource has been modified after the given date, the response will be a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/412\" title=\"The HyperText Transfer Protocol (HTTP) 412 Precondition Failed client error response code indicates that access to the target resource has been denied. This happens with conditional requests on methods other than GET or HEAD when the condition defined by the If-Unmodified-Since or If-None-Match headers is not fulfilled. In that case, the request, usually an upload or a modification of a resource, cannot be made and this error response is sent back.\"><code>412</code></a> (Precondition Failed) error.",
+    "name": "If-Unmodified-Since",
+    "rfc-ref": "7232#section-3.4",
+    "rfc-title": "[RFC7232, Section 3.4]"
+  },
+  {
+    "name": "Include-Referred-Token-Binding-ID",
+    "rfc-ref": "8473",
+    "rfc-title": "[RFC8473]"
+  },
+  {
+    "descr": "The <code><strong>Keep-Alive</strong></code> general header allows the sender to hint about how the connection may be used to set a timeout and a maximum amount of requests.",
+    "name": "Keep-Alive",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Label",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Last-Modified</code></strong> response HTTP header contains the date and time at which the origin server believes the resource was last modified. It is used as a validator to determine if a resource received or stored is the same. Less accurate than an <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag\" title='The ETag HTTP response header is an identifier for a specific version of a resource. It lets caches be more efficient and save bandwidth, as a web server does not need to resend a full response if the content has not changed. Additionally, etags help prevent simultaneous updates of a resource from overwriting each other (\"mid-air collisions\").'><code>ETag</code></a> header, it is a fallback mechanism. Conditional requests containing <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since\" title=\"The If-Modified-Since request HTTP header makes the request conditional: the server will send back the requested resource, with a 200 status, only if it has been last modified after the given date. If the request has not been modified since, the response will be a 304 without any body; the Last-Modified response header of a previous request will contain the date of last modification. Unlike If-Unmodified-Since, If-Modified-Since can only be used with a GET or HEAD.\"><code>If-Modified-Since</code></a> or <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Unmodified-Since\" title=\"The If-Unmodified-Since request HTTP header makes the request conditional: the server will send back the requested resource, or accept it in the case of a POST or another non-safe method, only if it has not been last modified after the given date. If the resource has been modified after the given date, the response will be a 412 (Precondition Failed) error.\"><code>If-Unmodified-Since</code></a> headers make use of this field.",
+    "name": "Last-Modified",
+    "rfc-ref": "7232#section-2.2",
+    "rfc-title": "[RFC7232, Section 2.2]"
+  },
+  {
+    "descr": "The HTTP <strong><code>Link</code></strong> entity-header field provides a means for serialising one or more links in HTTP headers. It is semantically equivalent to the HTML <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/link\" title='The HTML External Resource Link element (&lt;link&gt;) specifies relationships between the current document and an external resource. This element is most commonly used to link to stylesheets, but is also used to establish site icons (both \"favicon\" style icons and icons for the home screen and apps on mobile devices) among other things.'><code>&lt;link&gt;</code></a> element.",
+    "name": "Link",
+    "rfc-ref": "8288",
+    "rfc-title": "[RFC8288]"
+  },
+  {
+    "descr": "The <strong><code>Location</code></strong> response header indicates the URL to redirect a page to. It only provides a meaning when served with a <code>3xx</code>\u00a0(redirection) or <code>201</code> (created) status response.",
+    "name": "Location",
+    "rfc-ref": "7231#section-7.1.2",
+    "rfc-title": "[RFC7231, Section 7.1.2]"
+  },
+  {
+    "name": "Lock-Token",
+    "rfc-ref": "4918",
+    "rfc-title": "[RFC4918]"
+  },
+  {
+    "name": "Man",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Max-Forwards",
+    "rfc-ref": "7231#section-5.1.2",
+    "rfc-title": "[RFC7231, Section 5.1.2]"
+  },
+  {
+    "name": "Memento-Datetime",
+    "rfc-ref": "7089",
+    "rfc-title": "[RFC7089]"
+  },
+  {
+    "name": "Meter",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "MIME-Version",
+    "rfc-ref": "7231",
+    "rfc-title": "[RFC7231]"
+  },
+  {
+    "name": "Negotiate",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "OData-EntityId"
+  },
+  {
+    "name": "OData-Isolation"
+  },
+  {
+    "name": "OData-MaxVersion"
+  },
+  {
+    "name": "OData-Version"
+  },
+  {
+    "name": "Opt",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Optional-WWW-Authenticate",
+    "rfc-ref": "8053#section-3",
+    "rfc-title": "[RFC8053, Section 3]"
+  },
+  {
+    "name": "Ordering-Type",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Origin</code></strong> request header indicates where a fetch originates from. It doesn't include any path information, but only the server name. It is sent with <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/CORS\" title=\"CORS: CORS (Cross-Origin Resource Sharing) is a system, consisting of transmitting HTTP headers, that determines whether browsers block frontend JavaScript code from accessing responses for cross-origin requests.\">CORS</a> requests, as well as with <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST\" title=\"The HTTP POST method sends data to the server. The type of the body of the request is indicated by the Content-Type header.\"><code>POST</code></a> requests. It is similar to the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer\" title=\"The Referer request header contains the address of the previous web page from which a link to the currently requested page was followed. The Referer header allows servers to identify where people are visiting them from and may use that data for analytics, logging, or optimized caching, for example.\"><code>Referer</code></a> header, but, unlike this header, it doesn't disclose the whole path.",
+    "name": "Origin",
+    "rfc-ref": "6454",
+    "rfc-title": "[RFC6454]"
+  },
+  {
+    "name": "OSCORE",
+    "rfc-ref": "8613#section-11.1",
+    "rfc-title": "[RFC8613, Section 11.1]"
+  },
+  {
+    "name": "Overwrite",
+    "rfc-ref": "4918",
+    "rfc-title": "[RFC4918]"
+  },
+  {
+    "name": "P3P",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "PEP",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "PICS-Label",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Pep-Info",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Position",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <code><strong>Pragma</strong></code> HTTP/1.0 general header is an implementation-specific header that may have various effects along the request-response chain. It is used for backwards compatibility with HTTP/1.0 caches where the <code>Cache-Control</code> HTTP/1.1 header is not yet present.",
+    "name": "Pragma",
+    "rfc-ref": "7234#section-5.4",
+    "rfc-title": "[RFC7234, Section 5.4]"
+  },
+  {
+    "name": "Prefer",
+    "rfc-ref": "7240",
+    "rfc-title": "[RFC7240]"
+  },
+  {
+    "name": "Preference-Applied",
+    "rfc-ref": "7240",
+    "rfc-title": "[RFC7240]"
+  },
+  {
+    "name": "ProfileObject",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Protocol",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Protocol-Info",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Protocol-Query",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Protocol-Request",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The HTTP <strong><code>Proxy-Authenticate</code></strong> response header defines the authentication method that should be used to gain access to a resource behind a <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/proxy_server\" title=\"proxy server: A proxy server is an intermediate program or computer used when navigating through different networks of the Internet. They facilitate access to content on the World Wide Web. A proxy intercepts requests and serves back responses; it may forward the requests, or not (for example in the case of a cache), and it may modify it (for example changing its headers, at the boundary between two networks).\">proxy server</a>. It authenticates the request to the proxy server, allowing it to transmit the request further.",
+    "name": "Proxy-Authenticate",
+    "rfc-ref": "7235#section-4.3",
+    "rfc-title": "[RFC7235, Section 4.3]"
+  },
+  {
+    "name": "Proxy-Authentication-Info",
+    "rfc-ref": "7615#section-4",
+    "rfc-title": "[RFC7615, Section 4]"
+  },
+  {
+    "descr": "The HTTP <strong><code>Proxy-Authorization</code></strong> request header contains the credentials to authenticate a user agent to a proxy server, usually after the server has responded with a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/407\" title=\"The HTTP 407 Proxy Authentication Required  client error status response code indicates that the request has not been applied because it lacks valid authentication credentials for a proxy server that is between the browser and the server that can access the requested resource.\"><code>407</code></a> <code>Proxy Authentication Required</code> status and the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Proxy-Authenticate\" title=\"The HTTP Proxy-Authenticate response header defines the authentication method that should be used to gain access to a resource behind a proxy server. It authenticates the request to the proxy server, allowing it to transmit the request further.\"><code>Proxy-Authenticate</code></a> header.",
+    "name": "Proxy-Authorization",
+    "rfc-ref": "7235#section-4.4",
+    "rfc-title": "[RFC7235, Section 4.4]"
+  },
+  {
+    "name": "Proxy-Features",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Proxy-Instruction",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Public",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The HTTP <code><strong>Public-Key-Pins</strong></code> response header associates a specific cryptographic public <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/key\" title=\"key: A key is a piece of information used by a cipher for encryption and/or decryption.\">key</a> with a certain web server to decrease the risk of <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/MITM\" title=\"MITM: A Man-in-the-middle attack (MitM) intercepts a communication between two systems. For example, a Wi-Fi router can be compromised.\">MITM</a> attacks with forged certificates. If one or several keys are pinned and none of them are used by the server, the browser will not accept the response as legitimate, and will not display it.",
+    "name": "Public-Key-Pins",
+    "rfc-ref": "7469",
+    "rfc-title": "[RFC7469]"
+  },
+  {
+    "descr": "The HTTP <code><strong>Public-Key-Pins-Report-Only</strong></code> response header sends reports of pinning violation to the <code>report-uri</code> specified in the header but, unlike <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Public-Key-Pins\" title=\"The HTTP Public-Key-Pins response header associates a specific cryptographic public key with a certain web server to decrease the risk of MITM attacks with forged certificates. If one or several keys are pinned and none of them are used by the server, the browser will not accept the response as legitimate, and will not display it.\"><code>Public-Key-Pins</code></a> still allows browsers to connect to the server if the pinning is violated.",
+    "name": "Public-Key-Pins-Report-Only",
+    "rfc-ref": "7469",
+    "rfc-title": "[RFC7469]"
+  },
+  {
+    "descr": "The <strong><code>Range</code></strong> HTTP request header indicates the part of a document that the server should return. Several parts can be requested with one <code>Range</code> header at once, and the server may send back these ranges in a multipart document. If the server sends back ranges, it uses the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/206\" title=\"The HTTP 206 Partial Content success status response code indicates that the request has succeeded and has the body contains the requested ranges of data, as described in the Range header of the request.\"><code>206</code></a> <code>Partial Content</code> for the response. If the ranges are invalid, the server returns the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/416\" title=\"The HyperText Transfer Protocol (HTTP) 416 Range Not Satisfiable error response code indicates that a server cannot serve the requested ranges. The most likely reason is that the document doesn't contain such ranges, or that the Range header value, though syntactically correct, doesn't make sense.\"><code>416</code></a> <code>Range Not Satisfiable</code> error. The server can also ignore the <code>Range</code> header and return the whole document with a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/200\" title=\"The HTTP 200 OK success status response code indicates that the request has succeeded. A 200 response is cacheable by default.\"><code>200</code></a> status code.",
+    "name": "Range",
+    "rfc-ref": "7233#section-3.1",
+    "rfc-title": "[RFC7233, Section 3.1]"
+  },
+  {
+    "name": "Redirect-Ref",
+    "rfc-ref": "4437",
+    "rfc-title": "[RFC4437]"
+  },
+  {
+    "descr": "The <code><strong>Referer</strong></code> request header contains the address of the previous web page from which a link to the currently requested page was followed. The <code>Referer</code> header allows servers to identify where people are visiting them from and may use that data for analytics, logging, or optimized caching, for example.",
+    "name": "Referer",
+    "rfc-ref": "7231#section-5.5.2",
+    "rfc-title": "[RFC7231, Section 5.5.2]"
+  },
+  {
+    "name": "Replay-Nonce",
+    "rfc-ref": "8555#section-6.5.1",
+    "rfc-title": "[RFC8555, Section 6.5.1]"
+  },
+  {
+    "descr": "The <strong><code>Retry-After</code></strong> response HTTP header indicates how long the user agent should wait before making a follow-up request. There are three main cases this header is used:",
+    "name": "Retry-After",
+    "rfc-ref": "7231#section-7.1.3",
+    "rfc-title": "[RFC7231, Section 7.1.3]"
+  },
+  {
+    "name": "Safe",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Schedule-Reply",
+    "rfc-ref": "6638",
+    "rfc-title": "[RFC6638]"
+  },
+  {
+    "name": "Schedule-Tag",
+    "rfc-ref": "6638",
+    "rfc-title": "[RFC6638]"
+  },
+  {
+    "name": "Sec-Token-Binding",
+    "rfc-ref": "8473",
+    "rfc-title": "[RFC8473]"
+  },
+  {
+    "descr": "The <strong>Sec-WebSocket-Accept</strong>\u00a0header\u00a0is used in the websocket opening handshake. It would appear in the response headers. That is, this is header is sent from server to client to inform that server is willing to initiate a websocket connection.",
+    "name": "Sec-WebSocket-Accept",
+    "rfc-ref": "6455",
+    "rfc-title": "[RFC6455]"
+  },
+  {
+    "name": "Sec-WebSocket-Extensions",
+    "rfc-ref": "6455",
+    "rfc-title": "[RFC6455]"
+  },
+  {
+    "name": "Sec-WebSocket-Key",
+    "rfc-ref": "6455",
+    "rfc-title": "[RFC6455]"
+  },
+  {
+    "name": "Sec-WebSocket-Protocol",
+    "rfc-ref": "6455",
+    "rfc-title": "[RFC6455]"
+  },
+  {
+    "name": "Sec-WebSocket-Version",
+    "rfc-ref": "6455",
+    "rfc-title": "[RFC6455]"
+  },
+  {
+    "name": "Security-Scheme",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <code><strong>Server</strong></code> header contains information about the software used by the origin server to handle the request.",
+    "name": "Server",
+    "rfc-ref": "7231#section-7.4.2",
+    "rfc-title": "[RFC7231, Section 7.4.2]"
+  },
+  {
+    "descr": "The <strong><code>Set-Cookie</code></strong> HTTP response header is used to send cookies from the server to the user agent, so the user agent can send them back to the server later.",
+    "name": "Set-Cookie",
+    "rfc-ref": "6265",
+    "rfc-title": "[RFC6265]"
+  },
+  {
+    "descr": "The obsolete <strong><code>Set-Cookie2</code></strong> HTTP response header used to send cookies from the server to the user agent, but has been deprecated by the specification. Use <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie\" title=\"The Set-Cookie HTTP response header is used to send cookies from the server to the user agent, so the user agent can send them back to the server later.\"><code>Set-Cookie</code></a> instead.",
+    "name": "Set-Cookie2",
+    "obsolete": true,
+    "rfc-ref": "6265",
+    "rfc-title": "[RFC6265]"
+  },
+  {
+    "name": "SetProfile",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "SLUG",
+    "rfc-ref": "5023",
+    "rfc-title": "[RFC5023]"
+  },
+  {
+    "name": "SoapAction",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Status-URI",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong>HTTP <code>Strict-Transport-Security</code></strong> response header (often abbreviated as <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/HSTS\" title=\"HSTS: HTTP Strict Transport Security lets a web site inform the browser that it should never load the site using HTTP\u00a0and should automatically convert all attempts to access the site using HTTP to HTTPS\u00a0requests instead. It consists in one HTTP header, Strict-Transport-Security, sent back by the server with the resource.\">HSTS</a>) lets a web site tell browsers that it should only be accessed using HTTPS, instead of using HTTP.",
+    "name": "Strict-Transport-Security",
+    "rfc-ref": "6797",
+    "rfc-title": "[RFC6797]"
+  },
+  {
+    "name": "Sunset",
+    "rfc-ref": "8594",
+    "rfc-title": "[RFC8594]"
+  },
+  {
+    "name": "Surrogate-Capability",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Surrogate-Control",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "TCN",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <code><strong>TE</strong></code> request header specifies the transfer encodings the user agent is willing to accept. (you could informally call it <em><code>Accept-Transfer-Encoding</code></em>, which would be more intuitive).",
+    "name": "TE",
+    "rfc-ref": "7230#section-4.3",
+    "rfc-title": "[RFC7230, Section 4.3]"
+  },
+  {
+    "name": "Timeout",
+    "rfc-ref": "4918",
+    "rfc-title": "[RFC4918]"
+  },
+  {
+    "name": "Topic",
+    "rfc-ref": "8030#section-5.4",
+    "rfc-title": "[RFC8030, Section 5.4]"
+  },
+  {
+    "descr": "The <strong>Trailer</strong> response header allows the sender to include additional fields at the end of chunked messages in order to supply metadata that might be dynamically generated while the message body is sent, such as a message integrity check, digital signature, or post-processing status.",
+    "name": "Trailer",
+    "rfc-ref": "7230#section-4.4",
+    "rfc-title": "[RFC7230, Section 4.4]"
+  },
+  {
+    "descr": "The <strong><code>Transfer-Encoding</code></strong> header specifies the form of encoding used to safely transfer the <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/Payload_body\" title=\"The definition of that term (payload body) has not been written yet; please consider contributing it!\">payload body</a> to the user.",
+    "name": "Transfer-Encoding",
+    "rfc-ref": "7230#section-3.3.1",
+    "rfc-title": "[RFC7230, Section 3.3.1]"
+  },
+  {
+    "name": "TTL",
+    "rfc-ref": "8030#section-5.2",
+    "rfc-title": "[RFC8030, Section 5.2]"
+  },
+  {
+    "name": "Urgency",
+    "rfc-ref": "8030#section-5.3",
+    "rfc-title": "[RFC8030, Section 5.3]"
+  },
+  {
+    "name": "URI",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Upgrade",
+    "rfc-ref": "7230#section-6.7",
+    "rfc-title": "[RFC7230, Section 6.7]"
+  },
+  {
+    "descr": "The <strong>User-Agent</strong> <a href=\"https://developer.mozilla.org/en-US/docs/Glossary/Request_header\">request header</a> is a characteristic string that lets servers and network peers identify the application, operating system, vendor, and/or version of the requesting <a href=\"https://developer.mozilla.org/en-US/docs/Glossary/User_agent\">user agent</a>.",
+    "name": "User-Agent",
+    "rfc-ref": "7231#section-5.5.3",
+    "rfc-title": "[RFC7231, Section 5.5.3]"
+  },
+  {
+    "name": "Variant-Vary",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Vary</code></strong> HTTP response header determines how to match future request headers to decide whether a cached response can be used rather than requesting a fresh one from the origin server. It is used by the server to indicate which headers it used when selecting a representation of a resource in a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation\">content negotiation</a> algorithm.",
+    "name": "Vary",
+    "rfc-ref": "7231#section-7.1.4",
+    "rfc-title": "[RFC7231, Section 7.1.4]"
+  },
+  {
+    "descr": "The <code><strong>Via</strong></code> general header is added by proxies, both forward and reverse proxies, and can appear in the request headers and the response headers. It is used for tracking message forwards, avoiding request loops, and identifying the protocol capabilities of senders along the request/response chain.",
+    "name": "Via",
+    "rfc-ref": "7230#section-5.7.1",
+    "rfc-title": "[RFC7230, Section 5.7.1]"
+  },
+  {
+    "descr": "The HTTP <strong><code>WWW-Authenticate</code></strong> response header defines the authentication method that should be used to gain access to a resource.",
+    "name": "WWW-Authenticate",
+    "rfc-ref": "7235#section-4.1",
+    "rfc-title": "[RFC7235, Section 4.1]"
+  },
+  {
+    "descr": "The <code><strong>Want-Digest</strong></code> HTTP header is primarily used in a HTTP request, to ask the responder to provide a <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/digest\" title=\"digest: A\u00a0digest is a\u00a0small value generated by a hash function from a whole message. Ideally, a digest is quick to calculate, irreversible,\u00a0and unpredictable, and therefore indicates whether someone has\u00a0tampered with a given message.\">digest</a> of the requested resource using the <code><a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Digest\">Digest</a></code> response header.",
+    "name": "Want-Digest",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <strong><code>Warning</code></strong> general HTTP header contains information about possible problems with the status of the message. More than one <code>Warning</code> header may appear in a response.",
+    "name": "Warning",
+    "rfc-ref": "7234#section-5.5",
+    "rfc-title": "[RFC7234, Section 5.5]"
+  },
+  {
+    "descr": "The <code><strong>X-Content-Type-Options</strong></code> response HTTP header is a marker used by the server to indicate that the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types\">MIME types</a> advertised in the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type\" title=\"The Content-Type entity header is used to indicate the media type of the resource.\"><code>Content-Type</code></a> headers should not be changed and be followed. This allows to opt-out of <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#MIME_sniffing\">MIME type sniffing</a>, or, in other words, it is a way to say that the webmasters knew what they were doing.",
+    "name": "X-Content-Type-Options"
+  },
+  {
+    "descr": "The <strong><code>X-Frame-Options</code></strong> <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP\">HTTP</a> response header can be used to indicate whether or not a browser should be allowed to render a page in a <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/frame\" title=\"&lt;frame&gt; is an HTML element which defines a particular area in which another HTML document can be displayed. A frame should be used within a &lt;frameset&gt;.\"><code>&lt;frame&gt;</code></a>, <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe\" title=\"The HTML Inline Frame element (&lt;iframe&gt;) represents a nested browsing context, embedding another HTML page into the current one.\"><code>&lt;iframe&gt;</code></a>, <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/embed\" title=\"The HTML &lt;embed&gt; element embeds external content at the specified point in the document. This content is provided by an external application or other source of interactive content such as a browser plug-in.\"><code>&lt;embed&gt;</code></a> or <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/object\" title=\"The HTML &lt;object&gt; element represents an external resource, which can be treated as an image, a nested browsing context, or a resource to be handled by a plugin.\"><code>&lt;object&gt;</code></a>. Sites can use this to avoid <a href=\"https://en.wikipedia.org/wiki/clickjacking\" title=\"clickjacking\">clickjacking</a> attacks, by ensuring that their content is not embedded into other sites.",
+    "name": "X-Frame-Options",
+    "rfc-ref": "7034",
+    "rfc-title": "[RFC7034]"
+  },
+  {
+    "name": "Access-Control",
+    "obsolete": true
+  },
+  {
+    "descr": "The <strong><code>Access-Control-Allow-Credentials</code></strong> response header tells browsers whether to expose the response to frontend JavaScript code when the request's credentials mode (<a href=\"https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials\" title=\"The credentials read-only property of the Request interface indicates whether the user agent should send cookies from the other domain in the case of cross-origin requests.\"><code>Request.credentials</code></a>) is <code>include</code>.",
+    "name": "Access-Control-Allow-Credentials"
+  },
+  {
+    "descr": "The <strong><code>Access-Control-Allow-Headers</code></strong> response header is used in response to a <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/preflight_request\" title=\"preflight request: A CORS preflight request is a CORS request that checks to see if the CORS protocol is understood and a server is aware using specific methods and headers.\">preflight request</a> which includes the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Request-Headers\" title=\"The Access-Control-Request-Headers request header is used by browsers when issuing a preflight request, to let the server know which HTTP headers the client might send when the actual request is made.\"><code>Access-Control-Request-Headers</code></a> to indicate which HTTP headers can be used during the actual request.",
+    "name": "Access-Control-Allow-Headers"
+  },
+  {
+    "descr": "The <strong><code>Access-Control-Allow-Methods</code></strong> response header specifies the method or methods allowed when accessing the resource in response to a <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/preflight_request\" title=\"preflight request: A CORS preflight request is a CORS request that checks to see if the CORS protocol is understood and a server is aware using specific methods and headers.\">preflight request</a>.",
+    "name": "Access-Control-Allow-Methods"
+  },
+  {
+    "descr": "The <code><strong>Access-Control-Allow-Origin</strong></code> response header indicates whether the response can be shared with requesting code from the given <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/origin\" title=\"origin: Web content's origin is defined by the scheme (protocol), host (domain), and port of the URL used to access it. Two objects have the same origin only when the scheme, host, and port all match.\">origin</a>.",
+    "name": "Access-Control-Allow-Origin"
+  },
+  {
+    "descr": "The <strong><code>Access-Control-Max-Age</code></strong> response header indicates how long the results of a <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/preflight_request\" title=\"preflight request: A CORS preflight request is a CORS request that checks to see if the CORS protocol is understood and a server is aware using specific methods and headers.\">preflight request</a> (that is the information contained in the <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Methods\" title=\"The Access-Control-Allow-Methods response header specifies the method or methods allowed when accessing the resource in response to a preflight request.\"><code>Access-Control-Allow-Methods</code></a> and <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Headers\" title=\"The Access-Control-Allow-Headers response header is used in response to a preflight request which includes the Access-Control-Request-Headers to indicate which HTTP headers can be used during the actual request.\"><code>Access-Control-Allow-Headers</code></a> headers) can be cached.",
+    "name": "Access-Control-Max-Age"
+  },
+  {
+    "descr": "The <strong><code>Access-Control-Request-Method</code></strong> request header is used by browsers when issuing a <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/preflight_request\" title=\"preflight request: A CORS preflight request is a CORS request that checks to see if the CORS protocol is understood and a server is aware using specific methods and headers.\">preflight request</a>, to let the server know which <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods\">HTTP method</a> will be used when the actual request is made. This header is necessary as the preflight request is always an <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS\" title=\"The HTTP OPTIONS method is used to describe the communication options for the target resource. The client can specify a URL for the OPTIONS method, or an asterisk (*) to refer to the entire server.\"><code>OPTIONS</code></a> and doesn't use the same method as the actual request.",
+    "name": "Access-Control-Request-Method"
+  },
+  {
+    "descr": "The <strong><code>Access-Control-Request-Headers</code></strong> request header is used by browsers when issuing a <a class=\"glossaryLink\" href=\"/en-US/docs/Glossary/preflight_request\" title=\"preflight request: A CORS preflight request is a CORS request that checks to see if the CORS protocol is understood and a server is aware using specific methods and headers.\">preflight request</a>, to let the server know which <a href=\"https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers\">HTTP headers</a> the client might send when the actual request is made.",
+    "name": "Access-Control-Request-Headers"
+  },
+  {
+    "name": "AMP-Cache-Transform"
+  },
+  {
+    "name": "Compliance",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Content-Transfer-Encoding",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Cost",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "EDIINT-Features",
+    "rfc-ref": "6017",
+    "rfc-title": "[RFC6017]"
+  },
+  {
+    "name": "Isolation"
+  },
+  {
+    "name": "Message-ID",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Method-Check",
+    "obsolete": true
+  },
+  {
+    "name": "Method-Check-Expires",
+    "obsolete": true
+  },
+  {
+    "name": "Non-Compliance",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Optional",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Referer-Root",
+    "obsolete": true
+  },
+  {
+    "name": "Resolution-Hint",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Resolver-Location",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "SubOK",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Subst",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "descr": "The <code><strong>Timing-Allow-Origin</strong></code> response header specifies origins that are allowed to see values of attributes retrieved via features of the <a href=\"https://developer.mozilla.org/en-US/docs/Web/API/Resource_Timing_API\">Resource Timing API</a>, which would otherwise be reported as zero due to cross-origin restrictions.",
+    "name": "Timing-Allow-Origin"
+  },
+  {
+    "name": "Title",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Traceparent"
+  },
+  {
+    "name": "Tracestate"
+  },
+  {
+    "name": "UA-Color",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "UA-Media",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "UA-Pixels",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "UA-Resolution",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "UA-Windowpixels",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "Version",
+    "rfc-ref": "4229",
+    "rfc-title": "[RFC4229]"
+  },
+  {
+    "name": "X-Device-Accept"
+  },
+  {
+    "name": "X-Device-Accept-Charset"
+  },
+  {
+    "name": "X-Device-Accept-Encoding"
+  },
+  {
+    "name": "X-Device-Accept-Language"
+  },
+  {
+    "name": "X-Device-User-Agent"
+  }
+]

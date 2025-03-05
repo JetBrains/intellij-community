@@ -8,16 +8,15 @@ import java.util.Collection;
 import java.util.Iterator;
 
 class RangesDiffIterable extends ChangeDiffIterableBase {
-  @NotNull private final Collection<? extends Range> myRanges;
+  private final @NotNull Collection<? extends Range> myRanges;
 
   RangesDiffIterable(@NotNull Collection<? extends Range> ranges, int length1, int length2) {
     super(length1, length2);
     myRanges = ranges;
   }
 
-  @NotNull
   @Override
-  protected ChangeIterable createChangeIterable() {
+  protected @NotNull ChangeIterable createChangeIterable() {
     return new RangesChangeIterable(myRanges);
   }
 

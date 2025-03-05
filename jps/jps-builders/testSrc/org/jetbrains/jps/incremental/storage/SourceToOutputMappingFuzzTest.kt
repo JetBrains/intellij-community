@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage
 
 import net.jqwik.api.*
 import net.jqwik.api.lifecycle.AfterProperty
 import net.jqwik.api.lifecycle.BeforeProperty
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.random.Random
 
 class SourceToOutputMappingFuzzTest {
@@ -29,7 +29,17 @@ class SourceToOutputMappingFuzzTest {
     targetMapping = ExperimentalOutputToTargetMapping(storageManager)
     mapping = ExperimentalSourceToOutputMapping.createSourceToOutputMap(
       storageManager = storageManager,
-      relativizer = PathRelativizerService(),
+      relativizer = object : PathTypeAwareRelativizer {
+        override fun toRelative(path: String, type: RelativePathType): String = path
+
+        override fun toRelative(path: Path, type: RelativePathType): String {
+          return if (path is MockPath) path.toString() else path.invariantSeparatorsPathString
+        }
+
+        override fun toAbsolute(path: String, type: RelativePathType): String = path
+
+        override fun toAbsoluteFile(path: String, type: RelativePathType): Path = MockPath(path)
+      },
       targetId = "test-module",
       targetTypeId = "java",
       outputToTargetMapping = targetMapping,
@@ -65,18 +75,19 @@ class SourceToOutputMappingFuzzTest {
 
   @Property
   fun setOutputs(@ForAll("pathStrings") source: String, @ForAll("pathStringLists") outputs: List<String>) {
-    mapping.setOutputs(source, outputs)
-    val result = mapping.getOutputs(source)
+    val outputFiles = outputs.map { MockPath(it) }
+    mapping.setOutputs(MockPath(source), outputFiles)
+    val result = mapping.getOutputs(MockPath(source))?.map { it.toString() }
     assertThat(result).isNotNull()
     assertThat(result).containsExactlyInAnyOrderElementsOf(outputs)
 
-    checkCursorAndSourceIterator(source, outputs)
+    checkCursorAndSourceIterator(source, outputs.map { it.toString() })
   }
 
   @Property
   fun appendOutput(@ForAll("pathStrings") source: String, @ForAll("pathStrings") output: String) {
     mapping.appendOutput(source, output)
-    val outputs = mapping.getOutputs(source)
+    val outputs = mapping.getOutputs(MockPath(source))?.map { it.toString() }
     assertThat(outputs).isNotNull
     assertThat(outputs).contains(output)
 
@@ -85,9 +96,9 @@ class SourceToOutputMappingFuzzTest {
   
   @Property
   fun removeOutputs(@ForAll("pathStrings") source: String, @ForAll("pathStringLists") outputs: List<String>) {
-    mapping.setOutputs(source, outputs)
-    mapping.remove(source)
-    val result = mapping.getOutputs(source)
+    mapping.setOutputs(MockPath(source), outputs.map { MockPath(it) })
+    mapping.remove(MockPath(source))
+    val result = mapping.getOutputs(MockPath(source))
     assertThat(result).isNull()
 
     val cursor = mapping.cursor()
@@ -111,7 +122,7 @@ class SourceToOutputMappingFuzzTest {
     for (source in sources) {
       val list = outputs[Random.nextInt(outputs.size)]
       expectedMap.put(source, list)
-      mapping.setOutputs(source, list)
+      mapping.setOutputs(MockPath(source), list.map { MockPath(it) })
     }
 
     val actualMap = LinkedHashMap<String, List<String>>()

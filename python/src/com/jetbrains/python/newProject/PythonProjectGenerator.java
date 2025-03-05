@@ -50,7 +50,7 @@ import java.util.function.Consumer;
 /**
  * @deprecated Use {@link com.jetbrains.python.newProjectWizard}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGeneratorBase<T> implements
                                                                                                                       PyProjectTypeGenerator {
   public static final PyNewProjectSettings NO_SETTINGS = new PyNewProjectSettings();
@@ -61,8 +61,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
   protected Consumer<String> myErrorCallback;
 
-  @Nullable
-  private final PythonInterpreterSelectionMode preferredEnvironmentType;
+  private final @Nullable PythonInterpreterSelectionMode preferredEnvironmentType;
 
   /**
    * @param allowRemoteProjectCreation if project of this type could be created remotely
@@ -258,12 +257,6 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
   public interface SettingsListener {
     void stateChanged();
-  }
-
-  public void fireStateChanged() {
-    for (SettingsListener listener : myListeners) {
-      listener.stateChanged();
-    }
   }
 
   public void afterProjectGenerated(final @NotNull Project project) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class Breakpoint
@@ -79,32 +79,27 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer, InternalDebugLoggingRequestor {
+public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor, OverheadProducer {
   private static final ExecutorService RELOAD_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("Breakpoint reload", 1);
   public static final Key<Breakpoint<?>> DATA_KEY = Key.create("JavaBreakpoint");
   private static final Key<Long> HIT_COUNTER = Key.create("HIT_COUNTER");
 
   final XBreakpoint<P> myXBreakpoint;
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
 
-  @NonNls private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
+  private static final @NonNls String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   protected boolean myCachedVerifiedState = false;
-
-  private boolean myIsDebugLogBreakpoint;
 
   protected Breakpoint(@NotNull Project project, XBreakpoint<P> xBreakpoint) {
     myProject = project;
     myXBreakpoint = xBreakpoint;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  protected P getProperties() {
+  protected @NotNull P getProperties() {
     return myXBreakpoint.getProperties();
   }
 
@@ -112,8 +107,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return myXBreakpoint;
   }
 
-  @Nullable
-  public abstract PsiClass getPsiClass();
+  public abstract @Nullable PsiClass getPsiClass();
 
   /**
    * Request for creating all needed JPDA requests in the specified VM
@@ -185,8 +179,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return getDisplayName();
   }
 
-  @Nullable
-  public String getClassName() {
+  public @Nullable String getClassName() {
     return null;
   }
 
@@ -204,8 +197,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  @Nullable
-  public String getShortClassName() {
+  public @Nullable String getShortClassName() {
     final String className = getClassName();
     if (className == null) {
       return null;
@@ -215,8 +207,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return dotIndex >= 0 && dotIndex + 1 < className.length() ? className.substring(dotIndex + 1) : className;
   }
 
-  @Nullable
-  public String getPackageName() {
+  public @Nullable String getPackageName() {
     return null;
   }
 
@@ -284,7 +275,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
+  protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, final @NotNull SourcePosition classPosition) {
     long startTimeNs = System.nanoTime();
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
     if (debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
@@ -411,10 +402,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     if (isCountFilterEnabled() && !isConditionEnabled()) {
-      context.getSuspendContext().getVirtualMachineProxy().suspend();
+      context.getVirtualMachineProxy().suspend();
       debugProcess.getRequestsManager().deleteRequest(this);
       createRequest(debugProcess);
-      context.getSuspendContext().getVirtualMachineProxy().resume();
+      context.getVirtualMachineProxy().resume();
     }
 
     StackFrameProxyImpl frame = context.getFrameProxy();
@@ -478,8 +469,8 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         XEvaluationOrigin originBackup = XEvaluationOrigin.getOrigin(context);
         boolean evaluationResult;
         try {
+          XEvaluationOrigin.setOrigin(context, XEvaluationOrigin.BREAKPOINT_CONDITION);
           if (Registry.is("debugger.retry.conditional.breakpoints", true)) {
-            XEvaluationOrigin.setOrigin(context, XEvaluationOrigin.BREAKPOINT_CONDITION);
             context.setMayRetryEvaluation(true);
           }
           evaluationResult = DebuggerUtilsEx.evaluateBoolean(evaluator, context);
@@ -521,12 +512,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       myEvaluator = evaluator;
     }
 
-    @Nullable
-    static ExpressionEvaluator cacheOrGet(String propertyName,
-                                          EventRequest request,
-                                          PsiElement context,
-                                          TextWithImports text,
-                                          EvaluatingComputable<? extends ExpressionEvaluator> supplier) throws EvaluateException {
+    static @Nullable ExpressionEvaluator cacheOrGet(String propertyName,
+                                                    EventRequest request,
+                                                    PsiElement context,
+                                                    TextWithImports text,
+                                                    EvaluatingComputable<? extends ExpressionEvaluator> supplier) throws EvaluateException {
       EvaluatorCache cache = (EvaluatorCache)request.getProperty(propertyName);
       if (cache != null && Objects.equals(cache.myContext, context) && Objects.equals(cache.myTextWithImports, text)) {
         return cache.myEvaluator;
@@ -661,8 +651,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
   }
 
-  @Nullable
-  public abstract PsiElement getEvaluationElement();
+  public abstract @Nullable PsiElement getEvaluationElement();
 
   protected TextWithImports getLogMessage() {
     return TextWithImportsImpl.fromXExpression(myXBreakpoint.getLogExpressionObject());
@@ -833,14 +822,5 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected void fireBreakpointChanged() {
     ((XBreakpointBase<?, ?, ?>)myXBreakpoint).fireBreakpointChanged();
-  }
-
-  public void setIsDebugLogBreakpoint(boolean isDebugLogBreakpoint) {
-    myIsDebugLogBreakpoint = isDebugLogBreakpoint;
-  }
-
-  @Override
-  public boolean isDebugLogBreakpoint() {
-    return myIsDebugLogBreakpoint;
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.Assert;
 
 import java.io.File;
@@ -230,7 +231,7 @@ public final class VfsTestUtil {
     return allEvents;
   }
 
-  public static @NotNull List<String> print(@NotNull List<? extends VFileEvent> events) {
+  public static @Unmodifiable @NotNull List<String> print(@NotNull List<? extends VFileEvent> events) {
     return ContainerUtil.map(events, VfsTestUtil::print);
   }
 

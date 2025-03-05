@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +76,7 @@ public final class VersionComparatorUtil {
       }
 
       str = str.trim();
-      if (str.length() == 0) {
+      if (str.isEmpty()) {
         return _WS;
       }
 
@@ -171,15 +171,15 @@ public final class VersionComparatorUtil {
 
   private static int compareNumbers(String n1, String n2) {
     // trim leading zeros
-    while(n1.length() > 0 && n2.length() > 0 && n1.charAt(0) == '0' && n2.charAt(0) == '0') {
+    while(!n1.isEmpty() && !n2.isEmpty() && n1.charAt(0) == '0' && n2.charAt(0) == '0') {
       n1 = n1.substring(1);
       n2 = n2.substring(1);
     }
 
     // starts with zero => less
-    if (n1.length() > 0 && n1.charAt(0) == '0') {
+    if (!n1.isEmpty() && n1.charAt(0) == '0') {
       return -1;
-    } else if (n2.length() > 0 && n2.charAt(0) == '0') {
+    } else if (!n2.isEmpty() && n2.charAt(0) == '0') {
       return 1;
     }
 

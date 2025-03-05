@@ -278,6 +278,26 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
+   * @see #showDialog(Project, String, String, String[], int, Icon, DialogWrapper.DoNotAskOption)
+   * @see #showDialog(Component, String, String, String[], int, Icon)
+   */
+  public static int showDialog(@DialogMessage String message,
+                               @NotNull @DialogTitle String title,
+                               String @NotNull @NlsContexts.Button [] options,
+                               int defaultOptionIndex,
+                               int focusedOptionIndex,
+                               @Nullable Icon icon,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                               @Nullable String invocationPlace) {
+    return MessagesService.getInstance()
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null,
+                         invocationPlace, new ExitActionType[0]);
+  }
+
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @return number of button pressed: from 0 up to options.length-1 inclusive, or -1 for Cancel
    * @see #showDialog(Project, String, String, String[], int, Icon)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
@@ -1067,6 +1087,7 @@ public class Messages {
       for (int i = 0; i < myOptions.length; i++) {
         String option = myOptions[i];
         final int exitCode = i;
+        ExitActionType exitType = myExitActionTypes.length > i ? myExitActionTypes[i] : ExitActionType.UNDEFINED;
         if (i == 0) { // "OK" is default button. It has index 0.
           actions[0] = getOKAction();
           actions[0].putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
@@ -1085,7 +1106,7 @@ public class Messages {
           actions[i] = new AbstractAction(option) {
             @Override
             public void actionPerformed(ActionEvent e) {
-              close(exitCode);
+              close(exitCode, exitType);
             }
           };
         }

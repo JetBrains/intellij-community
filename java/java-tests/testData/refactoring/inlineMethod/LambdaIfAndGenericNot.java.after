@@ -1,0 +1,15 @@
+import java.util.function.*;
+import java.util.*;
+
+class InlineTest {
+  Predicate<List<String>> getPredicate(String pivot) {
+    return list -> {
+        if (list == null) return false;
+        for (String t : list) {
+          if (t.compareTo(pivot) > 0) return false;
+        }
+        return true;
+    };
+  }
+
+}

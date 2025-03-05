@@ -29,12 +29,12 @@ project.commonTest
 project.iosArm64Main
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -nostdlib -opt-in project.Foo,project.ios
+    compilerSettings = -nopack -nostdlib -opt-in project.Foo,project.ios
 
 project.iosArm64Test
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -nostdlib -opt-in project.Foo,project.ios
+    compilerSettings = -nopack -nostdlib -opt-in project.Foo,project.ios
 
 project.iosMain
     languageLevel = 1.7
@@ -44,12 +44,12 @@ project.iosMain
 project.iosSimulatorArm64Main
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -nostdlib -opt-in project.Foo,project.ios
+    compilerSettings = -nopack -nostdlib -opt-in project.Foo,project.ios
 
 project.iosSimulatorArm64Test
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -nostdlib -opt-in project.Foo,project.ios
+    compilerSettings = -nopack -nostdlib -opt-in project.Foo,project.ios
 
 project.iosTest
     languageLevel = 1.7
@@ -59,12 +59,12 @@ project.iosTest
 project.iosX64Main
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -nostdlib -opt-in project.Foo,project.ios
+    compilerSettings = -nopack -nostdlib -opt-in project.Foo,project.ios
 
 project.iosX64Test
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -nostdlib -opt-in project.Foo,project.ios
+    compilerSettings = -nopack -nostdlib -opt-in project.Foo,project.ios
 
 project.jsMain
     languageLevel = 1.7

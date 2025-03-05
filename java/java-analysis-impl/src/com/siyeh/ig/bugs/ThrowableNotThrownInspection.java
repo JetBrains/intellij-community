@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -27,8 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ThrowableNotThrownInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     if (expression instanceof PsiMethodCallExpression) {
       return InspectionGadgetsBundle.message("throwable.result.of.method.call.ignored.problem.descriptor");

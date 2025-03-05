@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
@@ -21,10 +20,6 @@ import java.util.*;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 final class DumpVfsInfoForExcludedFilesAction extends DumbAwareAction {
-
-  DumpVfsInfoForExcludedFilesAction() {
-    super(ActionsBundle.messagePointer("action.DumpVfsInfoForExcludedFilesAction.text"));
-  }
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

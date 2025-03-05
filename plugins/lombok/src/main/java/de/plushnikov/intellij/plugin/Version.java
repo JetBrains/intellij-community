@@ -31,8 +31,7 @@ public interface Version {
     }
   }
 
-  @Nullable
-  static String parseLombokVersion(@Nullable OrderEntry orderEntry) {
+  static @Nullable String parseLombokVersion(@Nullable OrderEntry orderEntry) {
     String result = null;
     if (orderEntry != null) {
       final String presentableName = orderEntry.getPresentableName();

@@ -3,6 +3,7 @@ package org.jetbrains.concurrency;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -11,6 +12,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * Please use <a href="https://plugins.jetbrains.com/docs/intellij/kotlin-coroutines.html">Kotlin coroutines</a>.
+ */
+@ApiStatus.Obsolete
 public abstract class AsyncValueLoader<T> {
   private final AtomicReference<Promise<T>> ref = new AtomicReference<>();
 
@@ -24,8 +31,7 @@ public abstract class AsyncValueLoader<T> {
     }
   };
 
-  @NotNull
-  public final Promise<T> get() {
+  public final @NotNull Promise<T> get() {
     return get(true);
   }
 
@@ -73,8 +79,7 @@ public abstract class AsyncValueLoader<T> {
     }
   }
 
-  @NotNull
-  public final Promise<T> get(boolean checkFreshness) {
+  public final @NotNull Promise<T> get(boolean checkFreshness) {
     Promise<T> promise = ref.get();
     if (promise == null) {
       if (!ref.compareAndSet(null, promise = new AsyncPromise<>())) {
@@ -118,8 +123,7 @@ public abstract class AsyncValueLoader<T> {
     return false;
   }
 
-  @NotNull
-  private Promise<T> getPromise(@NotNull AsyncPromise<T> promise) {
+  private @NotNull Promise<T> getPromise(@NotNull AsyncPromise<T> promise) {
     final Promise<T> effectivePromise;
     try {
       effectivePromise = load(promise);
@@ -145,8 +149,7 @@ public abstract class AsyncValueLoader<T> {
     return effectivePromise;
   }
 
-  @NotNull
-  protected abstract Promise<T> load(@NotNull AsyncPromise<T> result) throws IOException;
+  protected abstract @NotNull Promise<T> load(@NotNull AsyncPromise<T> result) throws IOException;
 
   private boolean isUpToDate() {
     return loadedModificationCount == modificationCount;

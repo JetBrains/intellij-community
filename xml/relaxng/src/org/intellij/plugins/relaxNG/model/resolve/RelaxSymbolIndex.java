@@ -61,7 +61,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
                   attributeHandler = new NanoXmlBuilder() {
                     @Override
                     public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
-                      if ("name".equals(key) && (nsURI == null || nsURI.length() == 0) && value != null) {
+                      if ("name".equals(key) && (nsURI == null || nsURI.isEmpty()) && value != null) {
                         map.put(value, null);
                       }
                     }

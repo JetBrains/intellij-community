@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.configuration.ui.changes
 
 import com.intellij.openapi.Disposable
@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.util.containers.ContainerUtil
 
-class KotlinConfiguratorChangesBrowser(project: Project, private val changes: List<Change>, private val changeSelector: (Change) -> Unit) :
+internal class KotlinConfiguratorChangesBrowser(project: Project, private val changes: List<Change>, private val changeSelector: (Change) -> Unit) :
     AsyncChangesBrowserBase(project, false, false), Disposable {
 
     override val changesTreeModel: AsyncChangesTreeModel = SimpleAsyncChangesTreeModel.create { grouping ->

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.PushTarget;
@@ -31,9 +31,9 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
   private final @Nls String myRepositoryName;
   private final @Nls String mySourceName;
   private final ColoredTreeCellRenderer myTextRenderer;
-  @NotNull private final List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull List<RepositoryNodeListener<T>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public RepositoryWithBranchPanel(@NotNull final Project project, @NotNull @Nls String repoName,
+  public RepositoryWithBranchPanel(final @NotNull Project project, @NotNull @Nls String repoName,
                                    @NotNull @Nls String sourceName, @NotNull PushTargetPanel<T> destPushTargetPanelComponent) {
     super();
     setLayout(new BorderLayout());
@@ -89,30 +89,25 @@ public class RepositoryWithBranchPanel<T extends PushTarget> extends NonOpaquePa
     add(panel, BorderLayout.CENTER);
   }
 
-  @Nls
-  @NotNull
-  public String getRepositoryName() {
+  public @Nls @NotNull String getRepositoryName() {
     return myRepositoryName;
   }
 
-  @Nls
-  public String getSourceName() {
+  public @Nls String getSourceName() {
     return mySourceName;
   }
 
-  @Nls
-  public String getArrow() {
+  public @Nls String getArrow() {
     return " " + UIUtil.rightArrow() + " ";
   }
 
-  @NotNull
-  public Component getTreeCellEditorComponent(JTree tree,
-                                              Object value,
-                                              boolean selected,
-                                              boolean expanded,
-                                              boolean leaf,
-                                              int row,
-                                              boolean hasFocus) {
+  public @NotNull Component getTreeCellEditorComponent(JTree tree,
+                                                       Object value,
+                                                       boolean selected,
+                                                       boolean expanded,
+                                                       boolean leaf,
+                                                       int row,
+                                                       boolean hasFocus) {
     Rectangle bounds = tree.getPathBounds(tree.getPathForRow(row));
     invalidate();
     myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);

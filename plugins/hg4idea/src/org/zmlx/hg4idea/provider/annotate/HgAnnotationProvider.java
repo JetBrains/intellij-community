@@ -37,7 +37,7 @@ import java.util.List;
 
 public class HgAnnotationProvider implements AnnotationProviderEx {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public HgAnnotationProvider(@NotNull Project project) {
     myProject = project;
@@ -49,14 +49,12 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
   }
 
   @Override
-  @NotNull
-  public FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
+  public @NotNull FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
     return annotate(file, null);
   }
 
   @Override
-  @NotNull
-  public FileAnnotation annotate(@NotNull VirtualFile file, VcsFileRevision revision) throws VcsException {
+  public @NotNull FileAnnotation annotate(@NotNull VirtualFile file, VcsFileRevision revision) throws VcsException {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(file.getPath()));
     if (vcsRoot == null) {
       throw new VcsException(HgBundle.message("error.cannot.find.repository.for.file", file.getPresentableUrl()));
@@ -75,9 +73,8 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
                             revisionNumber != null ? revisionNumber : new HgWorkingCopyRevisionsCommand(myProject).tip(vcsRoot));
   }
 
-  @NotNull
   @Override
-  public FileAnnotation annotate(@NotNull FilePath path, @NotNull VcsRevisionNumber revision) throws VcsException {
+  public @NotNull FileAnnotation annotate(@NotNull FilePath path, @NotNull VcsRevisionNumber revision) throws VcsException {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, path);
     if (vcsRoot == null) {
       throw new VcsException(HgBundle.message("error.cannot.find.repository.for.file", path.getPresentableUrl()));

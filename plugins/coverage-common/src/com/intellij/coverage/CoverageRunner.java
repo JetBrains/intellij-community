@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -22,23 +22,18 @@ public abstract class CoverageRunner {
    * @param baseCoverageSuite suite where coverage would be loaded. 
    *                          Can be used to retrieve additional information about configuration which was run with coverage.
    */
-  @Nullable
-  public abstract ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite baseCoverageSuite);
+  public abstract @Nullable ProjectData loadCoverageData(final @NotNull File sessionDataFile, final @Nullable CoverageSuite baseCoverageSuite);
 
   /**
    * When multiple coverage runners are available for one {@link CoverageEngine}, 
    * {@code getPresentableName()} is used to render coverage runner in UI.
    */
-  @NotNull
-  @NonNls
-  public abstract String getPresentableName();
+  public abstract @NotNull @NonNls String getPresentableName();
 
   /**
    * @return unique id to serialize/deserialize used coverage runner.
    */
-  @NotNull
-  @NonNls
-  public abstract String getId();
+  public abstract @NotNull @NonNls String getId();
 
   /**
    * Used to compose file name where coverage framework should save coverage data.
@@ -46,12 +41,9 @@ public abstract class CoverageRunner {
    * 
    * @return file extension of the file where coverage framework stores coverage data.
    */
-  @NotNull
-  @NonNls
-  public abstract String getDataFileExtension();
+  public abstract @NotNull @NonNls String getDataFileExtension();
 
-  @NonNls
-  public String @NotNull [] getDataFileExtensions() {
+  public @NonNls String @NotNull [] getDataFileExtensions() {
     return new String[]{getDataFileExtension()};
   }
 
@@ -65,7 +57,7 @@ public abstract class CoverageRunner {
   /**
    * @return true if coverage runner works with the languages which corresponds to {@link CoverageEngine}.
    */
-  public abstract boolean acceptsCoverageEngine(@NotNull final CoverageEngine engine);
+  public abstract boolean acceptsCoverageEngine(final @NotNull CoverageEngine engine);
 
   public static <T extends CoverageRunner> T getInstance(@NotNull Class<T> coverageRunnerClass) {
     for (CoverageRunner coverageRunner : EP_NAME.getExtensionList()) {

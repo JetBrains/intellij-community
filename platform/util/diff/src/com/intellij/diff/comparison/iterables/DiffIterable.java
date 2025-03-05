@@ -35,13 +35,11 @@ public interface DiffIterable {
   @NotNull
   Iterator<Range> unchanged();
 
-  @NotNull
-  default Iterable<Range> iterateChanges() {
+  default @NotNull Iterable<Range> iterateChanges() {
     return this::changes;
   }
 
-  @NotNull
-  default Iterable<Range> iterateUnchanged() {
+  default @NotNull Iterable<Range> iterateUnchanged() {
     return this::unchanged;
   }
 }

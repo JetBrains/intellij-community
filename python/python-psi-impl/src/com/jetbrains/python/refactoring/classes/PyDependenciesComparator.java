@@ -35,8 +35,8 @@ import java.util.function.Supplier;
  * If A depends on B, then A &lt; B
  */
 public final class PyDependenciesComparator implements Comparator<PyElement>, Serializable {
-  private final static Key<UUID> UUID_KEY = new Key<>("pyUUIDKey");
-  private final static Key<Set<UUID>> DEPENDENCIES_KEY = new Key<>("pyUUIDDependencies");
+  private static final Key<UUID> UUID_KEY = new Key<>("pyUUIDKey");
+  private static final Key<Set<UUID>> DEPENDENCIES_KEY = new Key<>("pyUUIDDependencies");
   /**
    * Singleton comparator instance
    */
@@ -45,8 +45,7 @@ public final class PyDependenciesComparator implements Comparator<PyElement>, Se
   private PyDependenciesComparator() {
   }
 
-  @NotNull
-  private static <T> T getObject(@NotNull Key<T> key, @NotNull PyElement element, @NotNull Supplier<T> create) {
+  private static @NotNull <T> T getObject(@NotNull Key<T> key, @NotNull PyElement element, @NotNull Supplier<T> create) {
     var value = element.getCopyableUserData(key);
     if (value == null) {
       value = create.get();
@@ -59,7 +58,7 @@ public final class PyDependenciesComparator implements Comparator<PyElement>, Se
    * Same as {@link #compare(PyElement, PyElement)} but stores dependency info in {@link PsiElement#getCopyableUserData(Key)}
    * so dependency information is stored until {@link #clearDependencyInfo(Iterable)} is called
    */
-  public int compareAndStoreDependency(@NotNull final PyElement o1, @NotNull final PyElement o2) {
+  public int compareAndStoreDependency(final @NotNull PyElement o1, final @NotNull PyElement o2) {
     var o1UUID = getObject(UUID_KEY, o1, () -> UUID.randomUUID());
     var o2UUID = getObject(UUID_KEY, o2, () -> UUID.randomUUID());
 
@@ -86,7 +85,7 @@ public final class PyDependenciesComparator implements Comparator<PyElement>, Se
   }
 
   @Override
-  public int compare(@NotNull final PyElement o1, @NotNull final PyElement o2) {
+  public int compare(final @NotNull PyElement o1, final @NotNull PyElement o2) {
     if (depends(o1, o2)) {
       return 1;
     }
@@ -96,8 +95,7 @@ public final class PyDependenciesComparator implements Comparator<PyElement>, Se
     return getBlockType(o1).compareTo(getBlockType(o2));
   }
 
-  @NotNull
-  private static BlockType getBlockType(@NotNull final PyElement statement) {
+  private static @NotNull BlockType getBlockType(final @NotNull PyElement statement) {
     for (BlockType type : BlockType.values()) {
       if (type.myClass.isAssignableFrom(statement.getClass())) {
         return type;
@@ -110,7 +108,7 @@ public final class PyDependenciesComparator implements Comparator<PyElement>, Se
   /**
    * @return true if first param depends on second.
    */
-  public static boolean depends(@NotNull final PyElement o1, @NotNull final PyElement o2) {
+  public static boolean depends(final @NotNull PyElement o1, final @NotNull PyElement o2) {
     var uuid2 = o2.getCopyableUserData(UUID_KEY);
     if (uuid2 != null) {
       var dependencies = o1.getCopyableUserData(DEPENDENCIES_KEY);
@@ -141,10 +139,9 @@ public final class PyDependenciesComparator implements Comparator<PyElement>, Se
     METHOD(PyFunction.class),
     OTHER(PyElement.class);
 
-    @NotNull
-    private final Class<? extends PyElement> myClass;
+    private final @NotNull Class<? extends PyElement> myClass;
 
-    BlockType(@NotNull final Class<? extends PyElement> aClass) {
+    BlockType(final @NotNull Class<? extends PyElement> aClass) {
       myClass = aClass;
     }
   }

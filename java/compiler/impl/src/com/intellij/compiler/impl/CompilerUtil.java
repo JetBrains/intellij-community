@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompileContext;
@@ -22,7 +22,7 @@ import java.util.HashSet;
 public final class CompilerUtil {
   private static final Logger LOG = Logger.getInstance(CompilerUtil.class);
 
-  public static void refreshIOFiles(@NotNull final Collection<? extends File> files) {
+  public static void refreshIOFiles(final @NotNull Collection<? extends File> files) {
     if (!files.isEmpty()) {
       LocalFileSystem.getInstance().refreshIoFiles(files);
     }

@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.project.autoimport
 
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.autoimport.*
@@ -14,6 +13,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.RES
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -50,6 +50,9 @@ class ProjectAware(
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
     progressManager.addNotificationListener(TaskNotificationListener(listener), parentDisposable)
+
+    val projectsManager = ExternalProjectsManager.getInstance(project)
+    projectsManager.runWhenInitialized { listener.onSettingsFilesListChange() }
   }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
@@ -69,11 +72,12 @@ class ProjectAware(
   ) : ExternalSystemTaskNotificationListener {
     var externalSystemTaskId = AtomicReference<ExternalSystemTaskId?>(null)
 
-    override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
+    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
       if (id.type != RESOLVE_PROJECT) return
-      if (!FileUtil.pathsEqual(workingDir, externalProjectPath)) return
+      if (!FileUtil.pathsEqual(projectPath, externalProjectPath)) return
 
-      val task = ApplicationManager.getApplication().getService(ExternalSystemProcessingManager::class.java).findTask(id)
+      val processingManager = ExternalSystemProcessingManager.getInstance()
+      val task = processingManager.findTask(id)
       if (task is ExternalSystemResolveProjectTask) {
         if (!autoImportAware.isApplicable(task.resolverPolicy)) {
           return
@@ -89,15 +93,15 @@ class ProjectAware(
       delegate.onProjectReloadFinish(status)
     }
 
-    override fun onSuccess(id: ExternalSystemTaskId) {
+    override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
       afterProjectRefresh(id, ExternalSystemRefreshStatus.SUCCESS)
     }
 
-    override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
+    override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
       afterProjectRefresh(id, ExternalSystemRefreshStatus.FAILURE)
     }
 
-    override fun onCancel(id: ExternalSystemTaskId) {
+    override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
       afterProjectRefresh(id, ExternalSystemRefreshStatus.CANCEL)
     }
   }

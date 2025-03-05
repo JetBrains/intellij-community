@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PyKeywordArgumentSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiReference> consumer) {
+  public void processQuery(final @NotNull ReferencesSearch.SearchParameters queryParameters, final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement element = queryParameters.getElementToSearch();
     if (!(element instanceof PyNamedParameter)) {
       return;

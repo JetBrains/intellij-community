@@ -36,26 +36,32 @@ public class VariableImpl implements Debugger.Variable {
     myLineNumber = lineNumber;
   }
 
+  @Override
   public String getURI() {
     return myUri;
   }
 
+  @Override
   public int getLineNumber() {
     return myLineNumber;
   }
 
+  @Override
   public String getName() {
     return myRealname;
   }
 
+  @Override
   public Value getValue() {
     return myValue;
   }
 
+  @Override
   public boolean isGlobal() {
     return myGlobal;
   }
 
+  @Override
   public Kind getKind() {
     return myKind;
   }
@@ -65,6 +71,7 @@ public class VariableImpl implements Debugger.Variable {
     return (myGlobal ? "global:" : "") + "{" + myKind + ":" + myRealname + "=" + myValue + "}";
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -74,6 +81,7 @@ public class VariableImpl implements Debugger.Variable {
     return myRealname.equals(that.myRealname);
   }
 
+  @Override
   public int hashCode() {
     return myRealname.hashCode();
   }

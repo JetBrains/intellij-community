@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ide.HelpTooltipManager;
@@ -43,7 +43,7 @@ public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   @Override
-  public void customizeCellRenderer(@NotNull final JTree tree,
+  public void customizeCellRenderer(final @NotNull JTree tree,
                                     final Object value,
                                     final boolean selected,
                                     final boolean expanded,
@@ -185,9 +185,8 @@ public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  @NotNull
   @Override
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     if (myHaveLink) {
       size.width += myLinkWidth;
@@ -195,9 +194,8 @@ public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return size;
   }
 
-  @Nullable
   @Override
-  public Object getFragmentTagAt(int x) {
+  public @Nullable Object getFragmentTagAt(int x) {
     if (myHaveLink) {
       Object linkTag = myLink.getFragmentTagAt(x - myLinkOffset);
       if (linkTag != null) {

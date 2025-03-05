@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class A(val n: Int, val k: Int)
 
 fun test() {

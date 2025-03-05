@@ -12,7 +12,7 @@ kotlin {
         attributes.attribute(attr, "jvm")
     }
 
-    android() {
+    {{androidTargetPlaceholder}} {
         attributes.attribute(attr, "android") // the attribute conflicts with consumer -> androidJvm priority doesn't work
     }
 }

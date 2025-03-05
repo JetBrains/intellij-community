@@ -19,7 +19,7 @@ class KotlinNewUserTrackerState : BaseState() {
     var newKtUserSince by property(0L)
 }
 
-@State(name = "KotlinNewUserTracker", storages = [Storage("kotlin-onboarding.xml")])
+@State(name = "KotlinNewUserTracker", storages = [Storage(value = "kotlin-onboarding.xml", roamingType = RoamingType.DISABLED)])
 class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState> {
     companion object {
         // Offer survey after one week of using Kotlin

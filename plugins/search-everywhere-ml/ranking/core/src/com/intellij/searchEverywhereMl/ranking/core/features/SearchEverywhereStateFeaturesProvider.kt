@@ -13,8 +13,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.usages.impl.ScopeRuleValidator
 
-
-class SearchEverywhereStateFeaturesProvider {
+internal class SearchEverywhereStateFeaturesProvider {
   companion object {
     internal val QUERY_LENGTH_DATA_KEY = EventFields.Int("queryLength")
     internal val IS_EMPTY_QUERY_DATA_KEY = EventFields.Boolean("isEmptyQuery")

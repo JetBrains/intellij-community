@@ -6,7 +6,10 @@ import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
+import com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID
+import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.PluginManagerCore.loadedPlugins
+import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencies
 import com.intellij.ide.plugins.PluginManagerCore.writeThirdPartyPluginsIds
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.idea.AppMode
@@ -71,6 +74,8 @@ object PluginManagerCore {
   @JvmField val JAVA_MODULE_ID: PluginId = PluginId.getId("com.intellij.modules.java")
   @JvmField val ALL_MODULES_MARKER: PluginId = PluginId.getId("com.intellij.modules.all")
   @JvmField val SPECIAL_IDEA_PLUGIN_ID: PluginId = PluginId.getId("IDEA CORE")
+  @Internal
+  @JvmField val ULTIMATE_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.modules.ultimate")
 
   @VisibleForTesting
   @Volatile
@@ -315,6 +320,8 @@ object PluginManagerCore {
     if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
       if (!isUnitTestMode) {
         logger.warn(logMessage)
+      }else{
+        logger.info(logMessage)
       }
       @Suppress("HardCodedStringLiteral")
       return (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().filter(PluginLoadingError::isNotifyUser).map(PluginLoadingError::detailedMessageSupplier))
@@ -622,6 +629,12 @@ object PluginManagerCore {
     }
 
     val idMap = loadingResult.getIdMap()
+    val fullIdMap = idMap + loadingResult.getIncompleteIdMap() +
+                    loadingResult.getIncompleteIdMap().flatMap { (_, value) ->
+                      value.pluginAliases.map { it to value }
+                    }.toMap()
+
+
     if (checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
       throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
     }
@@ -643,15 +656,15 @@ object PluginManagerCore {
       }
     }
 
-    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap { descriptor ->
+    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(disabler = { descriptor ->
       val disabledPlugins = context.disabledPlugins
-      val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, disabledPlugins, pluginErrorsById)
+      val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, fullIdMap, disabledPlugins, pluginErrorsById)
       if (loadingError != null) {
         registerLoadingError(loadingError)
       }
       descriptor.isEnabled = descriptor.isEnabled() && loadingError == null && !context.expiredPlugins.contains(descriptor.getPluginId())
       !descriptor.isEnabled()
-    }
+    })
     for (loadingError in additionalErrors) {
       registerLoadingError(loadingError)
     }
@@ -957,7 +970,7 @@ object PluginManagerCore {
         FileVisitResult.TERMINATE -> return false
         FileVisitResult.CONTINUE -> {
           if (descriptor != null && depProcessed.add(descriptor)) {
-            processAllNonOptionalDependencies(descriptor, depProcessed, pluginIdMap, consumer)
+            if (!processAllNonOptionalDependencies(descriptor, depProcessed, pluginIdMap, consumer)) return false
           }
         }
         FileVisitResult.SKIP_SUBTREE -> {}
@@ -1105,5 +1118,18 @@ fun getPluginDistDirByClass(aClass: Class<*>): Path? {
   else {
     // for now, we support only plugins that for some reason pack plugin.xml into JAR (e.g., kotlin)
     return null
+  }
+}
+
+@Internal
+fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>): Boolean {
+  if (!isDisabled(ULTIMATE_PLUGIN_ID)) return false
+  val rootDescriptor = pluginMap[plugin]
+  if (rootDescriptor == null) return false
+  return !processAllNonOptionalDependencies(rootDescriptor, pluginMap) { descriptorImpl ->
+    when (descriptorImpl.pluginId) {
+      ULTIMATE_PLUGIN_ID -> FileVisitResult.TERMINATE
+      else -> FileVisitResult.CONTINUE
+    }
   }
 }

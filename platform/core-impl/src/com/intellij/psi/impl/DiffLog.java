@@ -20,20 +20,39 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A utility class for making and managing changes to an Abstract Syntax Tree (AST).
+ * This class works like a tool for building and applying updates to the tree structure,
+ * using a delayed execution approach to handle the changes efficiently.
+ * <p>
+ * The class works with AST structures represented by {@link ASTNode}. It supports
+ * actions like replacing, deleting, and inserting nodes. Changes are logged and
+ * applied in batches to keep things consistent and reduce processing time.
+ *
+ * <h2>How It Works</h2>
+ * Changes are stored as "log entries", which are special objects created from the
+ * {@link LogEntry} class. Each type of change (like replacing or deleting a node)
+ * has its own subclass of {@code LogEntry} with specific logic for that change. These log
+ * entries are saved in a list and only applied later when needed.
+ *
+ * <h2>Main Features</h2>
+ * - Keeps track of all changes made to the AST.
+ * - Delays and batches changes for efficient execution.
+ * - Handles common AST tasks like replacing, inserting, or deleting nodes.
+ * - Ensures the AST stays correct and consistent after updates.
+ *
+ * <h2>Thread Safety</h2>
+ * This class is not thread-safe. It should only be used in a single-threaded environment,
+ * like under locks or in the IntelliJ platform's PSI handling thread.
+ */
 @ApiStatus.Internal
 public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   public DiffLog() { }
-
-  private abstract static class LogEntry {
-    LogEntry() {
-      ProgressIndicatorProvider.checkCanceled();
-    }
-    abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event);
-  }
 
   private final List<LogEntry> myEntries = new ArrayList<>();
 
@@ -185,7 +204,7 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     }
   }
 
-  private static PsiElement getPsi(ASTNode node, PsiFile file) {
+  private static @Nullable PsiElement getPsi(@NotNull ASTNode node, @NotNull PsiFile file) {
     node.putUserData(TreeUtil.CONTAINING_FILE_KEY_AFTER_REPARSE, ((PsiFileImpl)file).getTreeElement());
     PsiElement psiChild = file.isPhysical() ? node.getPsi() : null;
     node.putUserData(TreeUtil.CONTAINING_FILE_KEY_AFTER_REPARSE, null);
@@ -251,5 +270,13 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
         }
       }
     });
+  }
+
+  private abstract static class LogEntry {
+    LogEntry() {
+      ProgressIndicatorProvider.checkCanceled();
+    }
+
+    abstract void doActualPsiChange(@NotNull PsiFile file, @NotNull TreeChangeEventImpl event);
   }
 }

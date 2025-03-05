@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -16,14 +16,17 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-final class PreferredProducerFind {
+@ApiStatus.Internal
+public final class PreferredProducerFind {
   private static final Logger LOG = Logger.getInstance(PreferredProducerFind.class);
 
   private PreferredProducerFind() {}
@@ -86,7 +89,7 @@ final class PreferredProducerFind {
    * @param preferExisting if <code>true</code> then {@link RunConfigurationProducer#findOrCreateConfigurationFromContext(ConfigurationContext)} will be used;
    *                       if <code>false</code> then {@link RunConfigurationProducer#createConfigurationFromContext(ConfigurationContext)} will be used.
    */
-  public static @Nullable List<ConfigurationFromContext> getConfigurationsFromContext(Location location,
+  public static @Unmodifiable @Nullable List<ConfigurationFromContext> getConfigurationsFromContext(Location location,
                                                                                       @NotNull ConfigurationContext context,
                                                                                       boolean strict,
                                                                                       boolean preferExisting) {
@@ -138,7 +141,7 @@ final class PreferredProducerFind {
     return configurationsFromContext;
   }
 
-  private static @Nullable List<ConfigurationFromContext> getConfigurationsFromAlternativeLocations(
+  private static @Unmodifiable @Nullable List<ConfigurationFromContext> getConfigurationsFromAlternativeLocations(
     @NotNull MultipleRunLocationsProvider.AlternativeLocationsInfo alternativeLocationsInfo,
     @NotNull Location originalLocation,
     boolean strict,

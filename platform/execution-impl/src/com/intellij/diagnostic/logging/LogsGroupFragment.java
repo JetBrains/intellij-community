@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.ui.NestedGroupFragment;
 import com.intellij.execution.ui.SettingsEditorFragment;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptorFactory;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -27,10 +27,10 @@ public final class LogsGroupFragment<T extends RunConfigurationBase<?>> extends 
   @Override
   protected List<SettingsEditorFragment<T, ?>> createChildren() {
     var myOutputFile = new TextFieldWithBrowseButton();
-    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+    var descriptor = FileSaverDescriptorFactory.createSingleFileNoJarsDescriptor()
       .withTitle(ExecutionBundle.message("choose.file.to.save.console.output"))
       .withDescription(ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"));
-    myOutputFile.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myOutputFile.addFileSaverDialog(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     LabeledComponent<TextFieldWithBrowseButton> component =
       LabeledComponent.create(myOutputFile, ExecutionBundle.message("save.output.console.to.file"), BorderLayout.WEST);
     SettingsEditorFragment<T, LabeledComponent<TextFieldWithBrowseButton>> fragment =

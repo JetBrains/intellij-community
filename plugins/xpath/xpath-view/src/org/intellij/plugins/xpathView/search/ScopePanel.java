@@ -137,20 +137,17 @@ public class ScopePanel extends JPanel implements Disposable{
         myCustomScopeSelection = new ScopeChooserCombo();
     }
 
-    @Nullable
-    private String getDirectoryName() {
+    private @Nullable String getDirectoryName() {
         final String s = myDirectory.getText();
-        return s.length() > 0 ? s : null;
+        return !s.isEmpty() ? s : null;
     }
 
-    @Nullable
-    private String getModuleName() {
+    private @Nullable String getModuleName() {
         final Module module = myModuleSelection.getSelectedModule();
         return module != null ? module.getName() : null;
     }
 
-    @NotNull
-    private SearchScope.ScopeType getScopeType() {
+    private @NotNull SearchScope.ScopeType getScopeType() {
         if (myWholeProjectScope.isSelected()) return SearchScope.ScopeType.PROJECT;
         if (myModuleScope.isSelected()) return SearchScope.ScopeType.MODULE;
         if (myDirectoryScope.isSelected()) return SearchScope.ScopeType.DIRECTORY;

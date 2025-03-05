@@ -23,6 +23,28 @@ public class ComboBoxStyle(
     public val metrics: ComboBoxMetrics,
     public val icons: ComboBoxIcons,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ComboBoxStyle
+
+        if (colors != other.colors) return false
+        if (metrics != other.metrics) return false
+        if (icons != other.icons) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = colors.hashCode()
+        result = 31 * result + metrics.hashCode()
+        result = 31 * result + icons.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "ComboBoxStyle(colors=$colors, metrics=$metrics, icons=$icons)"
+
     public companion object
 }
 
@@ -88,6 +110,73 @@ public class ComboBoxColors(
             )
         )
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ComboBoxColors
+
+        if (background != other.background) return false
+        if (nonEditableBackground != other.nonEditableBackground) return false
+        if (backgroundDisabled != other.backgroundDisabled) return false
+        if (backgroundFocused != other.backgroundFocused) return false
+        if (backgroundPressed != other.backgroundPressed) return false
+        if (backgroundHovered != other.backgroundHovered) return false
+        if (content != other.content) return false
+        if (contentDisabled != other.contentDisabled) return false
+        if (contentFocused != other.contentFocused) return false
+        if (contentPressed != other.contentPressed) return false
+        if (contentHovered != other.contentHovered) return false
+        if (border != other.border) return false
+        if (borderDisabled != other.borderDisabled) return false
+        if (borderFocused != other.borderFocused) return false
+        if (borderPressed != other.borderPressed) return false
+        if (borderHovered != other.borderHovered) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = background.hashCode()
+        result = 31 * result + nonEditableBackground.hashCode()
+        result = 31 * result + backgroundDisabled.hashCode()
+        result = 31 * result + backgroundFocused.hashCode()
+        result = 31 * result + backgroundPressed.hashCode()
+        result = 31 * result + backgroundHovered.hashCode()
+        result = 31 * result + content.hashCode()
+        result = 31 * result + contentDisabled.hashCode()
+        result = 31 * result + contentFocused.hashCode()
+        result = 31 * result + contentPressed.hashCode()
+        result = 31 * result + contentHovered.hashCode()
+        result = 31 * result + border.hashCode()
+        result = 31 * result + borderDisabled.hashCode()
+        result = 31 * result + borderFocused.hashCode()
+        result = 31 * result + borderPressed.hashCode()
+        result = 31 * result + borderHovered.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "ComboBoxColors(" +
+            "background=$background, " +
+            "nonEditableBackground=$nonEditableBackground, " +
+            "backgroundDisabled=$backgroundDisabled, " +
+            "backgroundFocused=$backgroundFocused, " +
+            "backgroundPressed=$backgroundPressed, " +
+            "backgroundHovered=$backgroundHovered, " +
+            "content=$content, " +
+            "contentDisabled=$contentDisabled, " +
+            "contentFocused=$contentFocused, " +
+            "contentPressed=$contentPressed, " +
+            "contentHovered=$contentHovered, " +
+            "border=$border, " +
+            "borderDisabled=$borderDisabled, " +
+            "borderFocused=$borderFocused, " +
+            "borderPressed=$borderPressed, " +
+            "borderHovered=$borderHovered" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -102,12 +191,65 @@ public class ComboBoxMetrics(
     public val borderWidth: Dp,
     public val maxPopupHeight: Dp,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ComboBoxMetrics
+
+        if (arrowAreaSize != other.arrowAreaSize) return false
+        if (minSize != other.minSize) return false
+        if (cornerSize != other.cornerSize) return false
+        if (contentPadding != other.contentPadding) return false
+        if (popupContentPadding != other.popupContentPadding) return false
+        if (borderWidth != other.borderWidth) return false
+        if (maxPopupHeight != other.maxPopupHeight) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = arrowAreaSize.hashCode()
+        result = 31 * result + minSize.hashCode()
+        result = 31 * result + cornerSize.hashCode()
+        result = 31 * result + contentPadding.hashCode()
+        result = 31 * result + popupContentPadding.hashCode()
+        result = 31 * result + borderWidth.hashCode()
+        result = 31 * result + maxPopupHeight.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "ComboBoxMetrics(" +
+            "arrowAreaSize=$arrowAreaSize, " +
+            "minSize=$minSize, " +
+            "cornerSize=$cornerSize, " +
+            "contentPadding=$contentPadding, " +
+            "popupContentPadding=$popupContentPadding, " +
+            "borderWidth=$borderWidth, " +
+            "maxPopupHeight=$maxPopupHeight" +
+            ")"
+    }
+
     public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
 public class ComboBoxIcons(public val chevronDown: IconKey) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ComboBoxIcons
+
+        return chevronDown == other.chevronDown
+    }
+
+    override fun hashCode(): Int = chevronDown.hashCode()
+
+    override fun toString(): String = "ComboBoxIcons(chevronDown=$chevronDown)"
+
     public companion object
 }
 

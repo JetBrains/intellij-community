@@ -9,7 +9,6 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
@@ -91,9 +90,6 @@ internal class BreakpointCreator(
                     comment.startsWith("//FunctionBreakpoint!") -> {
                         createFunctionBreakpoint(breakpointManager, file, lineIndex, false)
                     }
-                    comment.startsWith("//LogFirstArgumentBreakpoint!") -> {
-                        createLogFirstArgumentBreakpoint(breakpointManager, file, lineIndex)
-                    }
                     else -> throw AssertionError("Cannot create breakpoint at line ${lineIndex + 1}")
                 }
             }
@@ -168,22 +164,6 @@ internal class BreakpointCreator(
         if (breakpoint is KotlinFunctionBreakpoint) {
             val lineNumberSuffix = if (fromLibrary) "" else ":${lineIndex + 1}"
             logger("FunctionBreakpoint created at ${file.virtualFile.name}$lineNumberSuffix")
-        }
-    }
-
-    private fun createLogFirstArgumentBreakpoint(breakpointManager: XBreakpointManager, file: PsiFile, lineIndex: Int) {
-        val kotlinLineBreakpointType = findBreakpointType(KotlinLineBreakpointType::class.java)
-        val javaBreakpoint = createBreakpointOfType(
-            breakpointManager,
-            kotlinLineBreakpointType,
-            lineIndex,
-            file.virtualFile,
-            null,
-            false,
-        )
-        javaBreakpoint?.setIsDebugLogBreakpoint(true)
-        if (javaBreakpoint is LineBreakpoint<*>) {
-            thisLogger().debug("LogFirstArgumentBreakpoint created at ${file.virtualFile.name}:${lineIndex + 1}")
         }
     }
 

@@ -4,7 +4,6 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 
 public class SimplifiableIfStatementInspectionFixTest extends LightQuickFixParameterizedTestCase {

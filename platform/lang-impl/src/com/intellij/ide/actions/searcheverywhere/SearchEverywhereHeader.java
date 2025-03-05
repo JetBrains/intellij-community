@@ -28,8 +28,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -424,7 +424,7 @@ public final class SearchEverywhereHeader {
       return contributors.size() == 1;
     }
 
-    public @NotNull List<SearchEverywhereContributor<?>> getContributors() {
+    public @Unmodifiable @NotNull List<SearchEverywhereContributor<?>> getContributors() {
       if (myContributorsFilter == null) return contributors;
 
       return ContainerUtil.filter(contributors, contributor -> myContributorsFilter.isSelected(contributor.getSearchProviderId()));

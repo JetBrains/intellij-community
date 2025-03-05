@@ -8,10 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
-import com.sun.jdi.Location;
-import com.sun.jdi.Type;
-import com.sun.jdi.Value;
-import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +33,20 @@ public interface DfaAssistProvider {
     @Override
     public String toString() { return "null"; }
   };
+
+  /**
+   * Represents a 'virtual' boxed value which in fact does not exist in the VM memory.
+   * Can be useful to virtually undo optimizations like instantiation of inline function generic parameter with a primitive value in Kotlin.
+   *
+   * @param value a primitive value to box
+   * @param type type of the box (e.g. {@code java.lang.Integer})
+   */
+  record BoxedValue(@NotNull Value value, @NotNull ReferenceType type) implements Value {
+    @Override
+    public VirtualMachine virtualMachine() {
+      return value.virtualMachine();
+    }
+  }
 
   /**
    * Quick check whether code location matches the source code in the editor

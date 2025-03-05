@@ -69,10 +69,12 @@ public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
     return myOffset;
   }
 
+  @Override
   public int hashCode() {
     return myOffset + myIcon.hashCode();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (obj instanceof OffsetIcon icon) {

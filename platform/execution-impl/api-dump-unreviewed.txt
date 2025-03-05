@@ -101,12 +101,11 @@ com.intellij.execution.ConfigurationWithCommandLineShortener
 a:com.intellij.execution.ConsoleFolding
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
+- getNestingPriority():I
 - getPlaceholderText(com.intellij.openapi.project.Project,java.util.List):java.lang.String
-- getPlaceholderText(java.util.List):java.lang.String
 - isEnabledForConsole(com.intellij.execution.ui.ConsoleView):Z
 - shouldBeAttachedToThePreviousLine():Z
 - shouldFoldLine(com.intellij.openapi.project.Project,java.lang.String):Z
-- shouldFoldLine(java.lang.String):Z
 com.intellij.execution.DisplayDescriptorChooser
 - sf:Companion:com.intellij.execution.DisplayDescriptorChooser$Companion
 - a:chooseDescriptor(java.util.List,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.ui.RunContentDescriptor
@@ -304,27 +303,17 @@ a:com.intellij.execution.actions.ChooseRunConfigurationPopup$ItemWrapper
 - com.intellij.ui.popup.NumericMnemonicItem
 - p:<init>(java.lang.Object):V
 - p:<init>(java.lang.Object,Z):V
-- addSeparatorAbove():Z
 - available(com.intellij.execution.Executor):Z
 - canBeDeleted():Z
-- digitMnemonicsEnabled():Z
 - equals(java.lang.Object):Z
-- a:getIcon():javax.swing.Icon
-- getMnemonic():I
-- getMnemonicChar():java.lang.Character
 - getNextStep(com.intellij.openapi.project.Project,com.intellij.execution.actions.ChooseRunConfigurationPopup):com.intellij.openapi.ui.popup.PopupStep
-- a:getText():java.lang.String
 - getType():com.intellij.execution.configurations.ConfigurationType
 - getValue():java.lang.Object
 - hasActions():Z
 - hashCode():I
-- isChecked():Z
 - isDynamic():Z
 - a:perform(com.intellij.openapi.project.Project,com.intellij.execution.Executor,com.intellij.openapi.actionSystem.DataContext):V
-- setChecked(Z):V
 - setDynamic(Z):V
-- setMnemonic(I):V
-- p:setMnemonicsEnabled(Z):V
 - s:wrap(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings):com.intellij.execution.actions.ChooseRunConfigurationPopup$ItemWrapper
 - s:wrap(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings,Z):com.intellij.execution.actions.ChooseRunConfigurationPopup$ItemWrapper
 c:com.intellij.execution.actions.ChooseRunConfigurationPopupAction
@@ -558,6 +547,7 @@ c:com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseBu
 - pf:myParentDefaults:java.util.Map
 - <init>():V
 - addChangeListener(javax.swing.event.ChangeListener):V
+- addEnvFilePathsChangeListener(javax.swing.event.ChangeListener):V
 - ps:convertToVariables(java.util.Map,Z):java.util.List
 - p:createDialog():com.intellij.execution.configuration.EnvironmentVariablesDialog
 - getData():com.intellij.execution.configuration.EnvironmentVariablesData
@@ -569,6 +559,7 @@ c:com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseBu
 - p:isModifiedSysEnv(com.intellij.execution.util.EnvironmentVariable):Z
 - isPassParentEnvs():Z
 - removeChangeListener(javax.swing.event.ChangeListener):V
+- removeEnvFilePathsChangeListener(javax.swing.event.ChangeListener):V
 - setData(com.intellij.execution.configuration.EnvironmentVariablesData):V
 - setEnvs(java.util.Map):V
 - setPassParentEnvs(Z):V
@@ -776,7 +767,6 @@ c:com.intellij.execution.impl.RunConfigurable
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.options.Configurable
 - sf:Companion:com.intellij.execution.impl.RunConfigurable$Companion
-- sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project):V
 - p:addRunConfigurationsToModel(javax.swing.tree.DefaultMutableTreeNode):V
 - apply():V
@@ -1081,6 +1071,8 @@ f:com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 - isTemporary():Z
 - f:needsToBeMigrated():Z
 - f:readExternal(org.jdom.Element,Z):V
+- f:readExternal(org.jdom.Element,Z,java.lang.String):V
+- bs:readExternal$default(com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl,org.jdom.Element,Z,java.lang.String,I,java.lang.Object):V
 - setActivateToolWindowBeforeRun(Z):V
 - f:setConfiguration(com.intellij.execution.configurations.RunConfiguration):V
 - setEditBeforeRun(Z):V
@@ -1118,7 +1110,6 @@ f:com.intellij.execution.impl.SingleConfigurationConfigurable
 - getHelpTopic():java.lang.String
 - getNameText():java.lang.String
 - getNameTextField():javax.swing.JTextField
-- isModified():Z
 - isStoredInFile():Z
 - isValid():Z
 - reset():V
@@ -1490,8 +1481,6 @@ f:com.intellij.execution.runners.RunContentBuilder
 - s:addActionsWithConstraints(java.util.List,com.intellij.openapi.actionSystem.Constraints,com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - s:addActionsWithConstraints(com.intellij.openapi.actionSystem.AnAction[],com.intellij.openapi.actionSystem.Constraints,com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.DefaultActionGroup):V
 - s:addAdditionalConsoleEditorActions(com.intellij.execution.ui.ExecutionConsole,com.intellij.ui.content.Content):V
-- s:addAvoidingDuplicates(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.AnAction[]):V
-- s:addAvoidingDuplicates(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.AnAction[],com.intellij.openapi.actionSystem.AnAction[]):V
 - s:buildConsoleUiDefault(com.intellij.execution.ui.RunnerLayoutUi,com.intellij.execution.ui.ExecutionConsole):com.intellij.ui.content.Content
 - s:fix(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.runners.ProgramRunner):com.intellij.execution.runners.ExecutionEnvironment
 - getSearchScope():com.intellij.psi.search.GlobalSearchScope
@@ -1642,6 +1631,8 @@ f:com.intellij.execution.ui.BeforeRunComponent
 - cleanUpOnLeave():V
 - dispose():V
 - drop(com.intellij.ide.dnd.DnDEvent):V
+- getAccessibleContext():javax.accessibility.AccessibleContext
+- getEnabledTasks():java.util.List
 - hasEnabledTask(com.intellij.openapi.util.Key):Z
 - reset(com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl):V
 - showPopup():V

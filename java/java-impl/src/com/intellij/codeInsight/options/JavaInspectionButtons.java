@@ -5,7 +5,6 @@ import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.packageDependencies.ui.DependencyConfigurable;
 import org.jetbrains.annotations.NotNull;
 

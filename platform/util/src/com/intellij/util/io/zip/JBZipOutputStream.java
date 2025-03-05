@@ -5,6 +5,8 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.*;
@@ -56,7 +58,7 @@ final class JBZipOutputStream {
   /**
    * Optional random access output.
    */
-  private final RandomAccessFile raf;
+  private final SeekableByteChannel raf;
   private final JBZipFile myFile;
 
   /**
@@ -297,17 +299,17 @@ final class JBZipOutputStream {
     }
     flushBuffer();
     long offset = ze.getHeaderOffset() + LFH_OFFSET_FOR_CRC;
-    raf.seek(offset);
-    raf.write(ZipLong.getBytes(crc));
-    raf.write(ZipLong.getBytes(compressedSize));
-    raf.write(ZipLong.getBytes(ze.getSize()));
+    raf.position(offset);
+    raf.write(ByteBuffer.wrap(ZipLong.getBytes(crc)));
+    raf.write(ByteBuffer.wrap(ZipLong.getBytes(compressedSize)));
+    raf.write(ByteBuffer.wrap(ZipLong.getBytes(ze.getSize())));
 
-    raf.seek(extra.offset);
+    raf.position(extra.offset);
     byte[] extraData = ze.getLocalFileHeaderDataExtra();
     if (extra.length != extraData.length) {
       throw new IOException("Extra data is unstable");
     }
-    raf.write(extraData);
+    raf.write(ByteBuffer.wrap(extraData));
   }
 
   private void writeOutShort(int s) throws IOException {
@@ -449,8 +451,8 @@ final class JBZipOutputStream {
   }
 
   private void flushBuffer() throws IOException {
-    raf.seek(writtenOnDisk);
-    raf.write(myBuffer.getInternalBuffer(), 0, myBuffer.size());
+    raf.position(writtenOnDisk);
+    raf.write(ByteBuffer.wrap(myBuffer.getInternalBuffer(), 0, myBuffer.size()));
     writtenOnDisk += myBuffer.size();
     myBuffer.reset();
   }
@@ -488,7 +490,7 @@ final class JBZipOutputStream {
     ExtraFieldData extra = writeLocalFileHeader(entry);
     flushBuffer();
 
-    RandomAccessFileOutputStream fileOutput = new RandomAccessFileOutputStream(raf);
+    FileAccessorOutputStream fileOutput = new FileAccessorOutputStream(raf);
     OutputStream bufferedFileOutput = new BufferedOutputStream(fileOutput);
 
     OutputStream output;
@@ -542,23 +544,26 @@ final class JBZipOutputStream {
     return writtenOnDisk + myBuffer.size();
   }
 
-  private static class RandomAccessFileOutputStream extends OutputStream {
-    private final RandomAccessFile myFile;
+  private static class FileAccessorOutputStream extends OutputStream {
+    private final SeekableByteChannel myAccessor;
     private long myWrittenBytes;
 
-    RandomAccessFileOutputStream(RandomAccessFile file) {
-      myFile = file;
+    FileAccessorOutputStream(SeekableByteChannel file) {
+      myAccessor = file;
     }
 
     @Override
     public void write(int b) throws IOException {
-      myFile.write(b);
+      ByteBuffer buf = ByteBuffer.allocate(1);
+      buf.put((byte)b);
+      buf.flip();
+      myAccessor.write(buf);
       myWrittenBytes++;
     }
 
     @Override
     public void write(byte @NotNull [] b, int off, int len) throws IOException {
-      myFile.write(b, off, len);
+      myAccessor.write(ByteBuffer.wrap(b, off, len));
       myWrittenBytes += len;
     }
   }

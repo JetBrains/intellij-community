@@ -19,13 +19,12 @@ public class PyMoveAttributeToInitQuickFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.move.attribute");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final PsiElement element, @NotNull ModPsiUpdater updater) {
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof PyTargetExpression targetExpression)) return;
 
     final PyClass containingClass = targetExpression.getContainingClass();

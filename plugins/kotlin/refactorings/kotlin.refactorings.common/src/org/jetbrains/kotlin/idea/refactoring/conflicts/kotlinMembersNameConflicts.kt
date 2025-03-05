@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.conflicts
 
 import com.intellij.psi.*
@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -68,12 +67,13 @@ fun KaScope.findSiblingsByName(
 
 context(KaSession)
 fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclarationSymbol): Boolean {
+    if (symbol == candidateSymbol) return false
     if (candidateSymbol is KaFunctionSymbol) {
         val skipCandidate = when (symbol) {
             is KaFunctionSymbol -> !areSameSignatures(candidateSymbol, symbol)
             is KaPropertySymbol -> !areSameSignatures(symbol, candidateSymbol)
             is KaClassSymbol -> symbol.declaredMemberScope.constructors.none { areSameSignatures(it, candidateSymbol) }
-            else -> false
+            else -> true
         }
 
         return !skipCandidate
@@ -301,7 +301,7 @@ private fun checkRedeclarationConflictsInInheritors(declaration: KtNamedDeclarat
             }
 
             val propertyName = if (declaration is KtProperty || declaration is KtParameter && declaration.hasValOrVar()) newName else null
-            ClassInheritorsSearch.search(initialPsiClass).forEach { current ->
+            ClassInheritorsSearch.search(initialPsiClass).asIterable().forEach { current ->
                 methods.mapNotNull { current.findMethodBySignature(it, false)?.unwrapped as? PsiNamedElement }.forEach(::reportAccidentalOverride)
                 if (propertyName != null) {
                     (current.unwrapped as? KtClassOrObject)?.findPropertyByName(propertyName)?.let { reportAccidentalOverride(it) }

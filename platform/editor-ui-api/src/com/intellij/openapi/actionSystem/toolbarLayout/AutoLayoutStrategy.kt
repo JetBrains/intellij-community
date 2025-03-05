@@ -89,7 +89,7 @@ internal class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean
         val isLast = i == componentCount - 1
 
         val eachBound = Rectangle(getChildPreferredSize(component, i))
-        maxHeight = max(eachBound.height.toDouble(), maxHeight.toDouble()).toInt()
+        maxHeight = max(eachBound.height, maxHeight)
 
         if (!full) {
           val inside = if (isLast) eachX + eachBound.width <= widthToFit else eachX + eachBound.width + autoButtonSize.width <= widthToFit

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +7,7 @@ import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  * Determines the set of targets and files from them which should be recompiled during the build. Normally you should use {@link DirtyFilesHolder#processDirtyFiles(org.jetbrains.jps.builders.FileProcessor)}
@@ -32,14 +19,23 @@ import java.io.File;
 public abstract class CompileScope {
   /**
    * Determines whether {@code file} is included into the scope as part of {@code target}. A file may belong to several targets
-   * (e.g. if there are two artifacts which are configured to copy the same source file to different output directories), so a file may be
+   * (e.g., if there are two artifacts which are configured to copy the same source file to different output directories), so a file may be
    * affected as part of one target and not affected as part of another. Note that even a file is included into the scope it doesn't mean
    * that it should be recompiled: if incremental compilation is invoked and the file and its dependencies weren't changed since last
    * compilation it should not be recompiled.
    *
    * @return {@code true} if {@code file} is included into the scope as part of {@code target}
    */
-  public abstract boolean isAffected(BuildTarget<?> target, @NotNull File file);
+  public abstract boolean isAffected(BuildTarget<?> target, @NotNull Path file);
+
+  /**
+   * @deprecated Use {@link #isAffected(BuildTarget, Path)}
+   */
+  @SuppressWarnings("IO_FILE_USAGE")
+  @Deprecated
+  public final boolean isAffected(BuildTarget<?> target, @NotNull File file) {
+    return isAffected(target, file.toPath());
+  }
 
   /**
    * @return {@code true} if at least one file from {@code target} is included into the scope
@@ -74,5 +70,5 @@ public abstract class CompileScope {
    */
   public abstract boolean isBuildIncrementally(@NotNull BuildTargetType<?> targetType);
 
-  public abstract void markIndirectlyAffected(BuildTarget<?> target, @NotNull File file);
+  public abstract void markIndirectlyAffected(BuildTarget<?> target, @NotNull Path file);
 }

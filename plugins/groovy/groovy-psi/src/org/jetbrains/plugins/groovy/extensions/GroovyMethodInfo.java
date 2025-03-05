@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -100,8 +100,7 @@ public final class GroovyMethodInfo {
     }
  }
 
-  @Nullable
-  private static List<GroovyMethodInfo> getInfos(Map<String, Map<String, List<GroovyMethodInfo>>> map, String key, PsiMethod method) {
+  private static @Nullable List<GroovyMethodInfo> getInfos(Map<String, Map<String, List<GroovyMethodInfo>>> map, String key, PsiMethod method) {
     Map<String, List<GroovyMethodInfo>> methodMap = map.get(key);
     if (methodMap == null) return null;
 
@@ -276,8 +275,7 @@ public final class GroovyMethodInfo {
     methodsList.add(new GroovyMethodInfo(method, classLoader));
   }
 
-  @Nullable
-  public String getReturnType() {
+  public @Nullable String getReturnType() {
     return myReturnType;
   }
 
@@ -285,8 +283,7 @@ public final class GroovyMethodInfo {
     return myReturnTypeCalculatorClassName != null;
   }
 
-  @NotNull
-  public PairFunction<GrMethodCall, PsiMethod, PsiType> getReturnTypeCalculator() {
+  public @NotNull PairFunction<GrMethodCall, PsiMethod, PsiType> getReturnTypeCalculator() {
     if (myReturnTypeCalculatorInstance == null) {
       myReturnTypeCalculatorInstance = SingletonInstancesCache.getInstance(myReturnTypeCalculatorClassName, myClassLoader);
     }
@@ -302,16 +299,14 @@ public final class GroovyMethodInfo {
   /**
    * @return instance of PsiReferenceProvider or GroovyNamedArgumentReferenceProvider or null.
    */
-  @Nullable
-  public Object getNamedArgReferenceProvider(String namedArgumentName) {
+  public @Nullable Object getNamedArgReferenceProvider(String namedArgumentName) {
     NamedArgumentReference r = myNamedArgReferenceProviders.get(namedArgumentName);
     if (r == null) return null;
 
     return r.getProvider(myClassLoader);
   }
 
-  @Nullable
-  public Map<String, NamedArgumentDescriptor> getNamedArguments() {
+  public @Nullable Map<String, NamedArgumentDescriptor> getNamedArguments() {
     return myNamedArguments;
   }
 

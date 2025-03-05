@@ -21,8 +21,8 @@ internal class GroovyInlineTransformationHighlightingPassFactory : TextEditorHig
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? = file.getGroovyFile()?.let {
-    GroovyInlineTransformationHighlightingPass(file, it, editor.document)
+  override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? = psiFile.getGroovyFile()?.let {
+    GroovyInlineTransformationHighlightingPass(psiFile, it, editor.document)
   }
 }
 

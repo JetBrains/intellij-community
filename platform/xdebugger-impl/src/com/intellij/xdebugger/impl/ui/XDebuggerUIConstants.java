@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -31,7 +31,7 @@ public final class XDebuggerUIConstants {
     get(JBColor.namedColor("Debugger.Variables.valueForeground", new JBColor(new Color(128, 0, 0), DarculaColors.RED.brighter())));
   public static final SimpleTextAttributes ERROR_MESSAGE_ATTRIBUTES =
     get(JBColor.namedColor("Debugger.Variables.errorMessageForeground", JBColor.red));
-  @NonNls public static final String EQ_TEXT = " = ";
+  public static final @NonNls String EQ_TEXT = " = ";
 
   public static final SimpleTextAttributes TYPE_ATTRIBUTES =
     get(JBColor.namedColor("Debugger.Variables.typeForeground", JBColor.gray));
@@ -49,13 +49,11 @@ public final class XDebuggerUIConstants {
     return XDebuggerBundle.message("xdebugger.building.tree.node.message");
   }
 
-  @Nls
-  public static String getEvaluatingExpressionMessage() {
+  public static @Nls String getEvaluatingExpressionMessage() {
     return XDebuggerBundle.message("xdebugger.evaluating.expression.node.message");
   }
 
-  @Nls
-  public static String getModifyingValueMessage() {
+  public static @Nls String getModifyingValueMessage() {
     return XDebuggerBundle.message("xdebugger.modifiyng.value.node.message");
   }
 }

@@ -31,8 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class MissortedImportsInspection extends GlobalSimpleInspectionTool {
-  @NonNls
-  public static final String SHORT_NAME = "MISSORTED_IMPORTS";
+  public static final @NonNls String SHORT_NAME = "MISSORTED_IMPORTS";
 
   @Override
   public void checkFile(@NotNull PsiFile file,
@@ -53,7 +52,7 @@ public final class MissortedImportsInspection extends GlobalSimpleInspectionTool
       int entryIndex = JavaCodeStyleManager.getInstance(javaFile.getProject()).findEntryIndex(importStatement);
       if (entryIndex < currentEntryIndex) {
         // mis-sorted import found
-        IntentionAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(true, javaFile);
+        IntentionAction fix = QuickFixFactory.getInstance().createOptimizeImportsFix(false, javaFile);
         problemsHolder.registerProblem(importList, getDisplayNameText(), new IntentionWrapper(fix));
         return;
       }
@@ -61,9 +60,8 @@ public final class MissortedImportsInspection extends GlobalSimpleInspectionTool
     }
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -72,8 +70,7 @@ public final class MissortedImportsInspection extends GlobalSimpleInspectionTool
     return false;
   }
 
-  @NotNull
-  public static @Nls String getDisplayNameText() {
+  public static @NotNull @Nls String getDisplayNameText() {
     return JavaAnalysisBundle.message("missorted.imports.inspection.display.name");
   }
 }

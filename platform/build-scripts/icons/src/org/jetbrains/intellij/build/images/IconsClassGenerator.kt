@@ -67,6 +67,9 @@ internal open class IconsClassGenerator(
       this["MenuSaveall"] = "Menu_saveall"
       this["PhpIcon"] = "Php_icon"
       this["Emulator02"] = "Emulator2"
+      this["Language"] = "LocalizationSettings"
+      this["PipetteRollover"] = "Pipette_rollover"
+      this["RunAnything"] = "Run_anything"
     }
 
     private val commentRegExp = Regex("(?s)<!--.*?-->")

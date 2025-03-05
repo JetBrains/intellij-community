@@ -9,7 +9,7 @@ import com.jediterm.terminal.model.TextBufferChangesListener
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraperImpl
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
-import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
@@ -62,6 +62,10 @@ internal class TerminalOutputChangesTracker(
   private var isChangesDiscarded: Boolean = false
 
   private val changeListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
+
+  @Volatile
+  var pendingOutput: PartialCommandOutput? = null
+    private set
 
   init {
     val listener = object : TextBufferChangesListener {
@@ -175,7 +179,9 @@ internal class TerminalOutputChangesTracker(
     isAnyLineChanged = false
     isChangesDiscarded = false
 
-    return PartialCommandOutput(output.text, output.styleRanges, logicalLineIndex, textBuffer.width, anyDiscarded)
+    return PartialCommandOutput(output.text, output.styleRanges, logicalLineIndex, textBuffer.width, anyDiscarded).also {
+      pendingOutput = it
+    }
   }
 
   /**
@@ -189,5 +195,9 @@ internal class TerminalOutputChangesTracker(
       }
     }
     return count
+  }
+
+  internal fun onOutputApplied() {
+    pendingOutput = null
   }
 }

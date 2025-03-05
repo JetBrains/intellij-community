@@ -21,18 +21,21 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.addSuppressed
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
+@Suppress("CanUnescapeDollarLiteral")
 const val ROOT_CONFIG: String = "\$ROOT_CONFIG\$"
 
 internal typealias FileChangeSubscriber = (schemeManager: SchemeManagerImpl<*, *>) -> Unit
 
-sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingComponent {
+sealed class SchemeManagerFactoryBase(
+  private val componentManager: ComponentManager?,
+  private val cs: CoroutineScope?
+) : SchemeManagerFactory(componentManager as? Project), SettingsSavingComponent {
   private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, Scheme>>()
-
-  protected open val componentManager: ComponentManager? = null
 
   protected open fun createFileChangeSubscriber(): FileChangeSubscriber? = null
 
@@ -53,17 +56,9 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       streamProvider != null && streamProvider.isApplicable(path, roamingType) -> null
       else -> createFileChangeSubscriber()
     }
-    val manager = SchemeManagerImpl(
-      path,
-      processor,
-      streamProvider ?: componentManager?.stateStore?.storageManager?.streamProvider,
-      ioDirectory = directoryPath ?: pathToFile(path),
-      roamingType,
-      presentableName,
-      schemeNameToFileName,
-      fileChangeSubscriber,
-      settingsCategory,
-    )
+    val streamProvider = streamProvider ?: componentManager?.stateStore?.storageManager?.streamProvider
+    val ioDirectory = directoryPath ?: pathToFile(path)
+    val manager = SchemeManagerImpl(project, path, processor, streamProvider, ioDirectory, roamingType, presentableName, schemeNameToFileName, fileChangeSubscriber, settingsCategory, cs)
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -125,10 +120,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   }
 
   @Suppress("unused")
-  private class ApplicationSchemeManagerFactory : SchemeManagerFactoryBase() {
-    override val componentManager: ComponentManager
-      get() = ApplicationManager.getApplication()
-
+  private class ApplicationSchemeManagerFactory(cs: CoroutineScope) : SchemeManagerFactoryBase(ApplicationManager.getApplication(), cs) {
     override fun checkPath(originalPath: String): String {
       var path = super.checkPath(originalPath)
       if (path.startsWith(ROOT_CONFIG)) {
@@ -149,9 +141,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   }
 
   @Suppress("unused")
-  private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
-    override val componentManager = project
-
+  private class ProjectSchemeManagerFactory(override val project: Project, cs: CoroutineScope) : SchemeManagerFactoryBase(project, cs) {
     override fun createFileChangeSubscriber(): FileChangeSubscriber = { schemeManager ->
       if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
         project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
@@ -176,7 +166,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   @TestOnly
   @ApiStatus.Internal
-  class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase() {
+  class TestSchemeManagerFactory(private val basePath: Path) : SchemeManagerFactoryBase(componentManager = null, cs = null) {
     override fun pathToFile(path: String): Path = basePath.resolve(path)
   }
 }

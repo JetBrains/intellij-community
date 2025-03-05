@@ -67,9 +67,8 @@ public final class IgnoreEntryManipulator extends AbstractElementManipulator<Ign
    * @param element element to be changed
    * @return range
    */
-  @NotNull
   @Override
-  public TextRange getRangeInElement(@NotNull IgnoreEntry element) {
+  public @NotNull TextRange getRangeInElement(@NotNull IgnoreEntry element) {
     IgnoreNegation negation = element.getNegation();
     if (negation != null) {
       return TextRange.create(

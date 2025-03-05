@@ -14,13 +14,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.JLabel
 
-/**
- * Empty label parameter for [Panel.row] method in case label is omitted.
- */
-@Deprecated("Use \"\" instead of this constant", level = DeprecationLevel.HIDDEN)
-@ApiStatus.ScheduledForRemoval
-val EMPTY_LABEL: String = ""
-
 @ApiStatus.NonExtendable
 @JvmDefaultWithCompatibility
 interface Panel : CellBase<Panel> {
@@ -167,4 +160,12 @@ interface Panel : CellBase<Panel> {
    * Overrides default spacing configuration. Should be used for very specific cases
    */
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
+
+  /**
+   * Forces to use new [com.intellij.ui.dsl.listCellRenderer.textListCellRenderer] as the default renderer in combo boxes inside panel.
+   * In the near release [textListCellRenderer] will be used by default in Kotlin UI DSL and this method will be removed
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  fun useNewComboBoxRenderer()
 }

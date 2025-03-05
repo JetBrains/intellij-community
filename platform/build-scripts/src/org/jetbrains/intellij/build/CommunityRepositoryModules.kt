@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
@@ -8,7 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
-import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAutoWithDeprecatedCustomDirName
+import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAutoWithCustomDirName
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
@@ -26,12 +26,6 @@ object CommunityRepositoryModules {
    * Specifies non-trivial layout for all plugins that sources are located in 'community' and 'contrib' repositories
    */
   val COMMUNITY_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
-    pluginAuto("intellij.json") { spec ->
-      spec.withModule("intellij.json.split", "json-split.jar")
-    },
-    pluginAuto("intellij.yaml") { spec ->
-      spec.withModule("intellij.yaml.editing", "yaml-editing.jar")
-    },
     plugin("intellij.ant") { spec ->
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
@@ -73,7 +67,7 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.platform.langInjection", "intellij.java.langInjection", "intellij.xml.langInjection")) { spec ->
       spec.withModule("intellij.java.langInjection.jps")
     },
-    pluginAutoWithDeprecatedCustomDirName("intellij.tasks.core") { spec ->
+    pluginAutoWithCustomDirName("intellij.tasks.core") { spec ->
       spec.directoryName = "tasks"
       spec.withModule("intellij.tasks")
       spec.withModule("intellij.tasks.compatibility")
@@ -216,7 +210,11 @@ object CommunityRepositoryModules {
       )
     ),
     pluginAuto(listOf("intellij.performanceTesting.ui")),
-    githubPlugin("intellij.vcs.github.community", kind = "community"),
+    githubPlugin("intellij.vcs.github.community", productCode = "IC"),
+    gitlabPlugin("intellij.vcs.gitlab.community", productCode = "IC"),
+    pluginAuto("intellij.vcs.git.commit.modal") { spec ->
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
+    }
   )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
@@ -235,10 +233,7 @@ object CommunityRepositoryModules {
   )
 
   private fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin.descriptor"): PluginLayout {
-    return pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
-      spec.directoryName = "design-tools"
-      spec.mainJarName = "design-tools.jar"
-
+    return pluginAutoWithCustomDirName(mainModuleName, "design-tools") { spec ->
       // modules:
       // design-tools.jar
       spec.withModule("intellij.android.compose-designer")
@@ -287,9 +282,7 @@ object CommunityRepositoryModules {
     allPlatforms: Boolean,
     addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?,
   ): PluginLayout =
-    pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
-      spec.directoryName = "android"
-      spec.mainJarName = "android.jar"
+    pluginAutoWithCustomDirName(mainModuleName, "android") { spec ->
       spec.semanticVersioning = true
       spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
         val pluginXml = pluginXmlSupplier()
@@ -303,6 +296,8 @@ object CommunityRepositoryModules {
       }
 
       spec.excludeProjectLibrary("Gradle")
+      // android jar is already quite big - put into separate JAR
+      spec.withProjectLibrary("jewel-ide-laf-bridge", "jewel-ide-laf-bridge.jar")
 
       // modules:
       // adt-ui.jar
@@ -625,39 +620,33 @@ object CommunityRepositoryModules {
     }
 
   fun javaFXPlugin(mainModuleName: String): PluginLayout {
-    return pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
-      spec.directoryName = "javaFX"
-      spec.mainJarName = "javaFX.jar"
+    return pluginAutoWithCustomDirName(mainModuleName, "javaFX") { spec ->
       spec.withModule("intellij.javaFX.jps")
       spec.withModule("intellij.javaFX.common", "javaFX-common.jar")
       spec.withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
     }
   }
 
-  fun aeDatabasePlugin(mainModuleName: String, extraModules: List<String> = emptyList()): PluginLayout {
+  fun githubPlugin(mainModuleName: String, productCode: String): PluginLayout {
     return plugin(mainModuleName) { spec ->
-      spec.directoryName = "ae-database"
-      spec.mainJarName = "ae-database.jar"
-      spec.withModules(listOf(
-        "intellij.ae.database.core",
-        "intellij.ae.database.counters.community"
-      ))
-      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.ALL
-      if (extraModules.isNotEmpty()) {
-        spec.withModules(extraModules)
-      }
-    }
-  }
-
-  fun githubPlugin(mainModuleName: String, kind: String): PluginLayout {
-    return plugin(mainModuleName) { spec ->
-      spec.directoryName = "vcs-github-$kind"
+      spec.directoryName = "vcs-github-$productCode"
       spec.mainJarName = "vcs-github.jar"
       spec.withModules(listOf(
         "intellij.vcs.github"
       ))
       spec.withCustomVersion { _, version, _ ->
-        PluginVersionEvaluatorResult(pluginVersion = "$version-$kind")
+        PluginVersionEvaluatorResult(pluginVersion = "$productCode-$version")
+      }
+    }
+  }
+
+  // inspired by CommunityRepositoryModules.githubPlugin
+  fun gitlabPlugin(mainModuleName: String, productCode: String): PluginLayout {
+    return plugin(mainModuleName) { spec ->
+      spec.directoryName = "vcs-gitlab-$productCode"
+      spec.mainJarName = "vcs-gitlab.jar"
+      spec.withCustomVersion { _, version, _ ->
+        PluginVersionEvaluatorResult(pluginVersion = "$productCode-$version")
       }
     }
   }
@@ -698,7 +687,7 @@ private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<Distri
       dirFilter = { !it.endsWith("src") },
       fileFilter = { file ->
         if (file.toString().endsWith(".jar")) {
-          sources.add(ZipSource(file = file, distributionFileEntryProducer = null))
+          sources.add(ZipSource(file = file, distributionFileEntryProducer = null, filter = ::defaultLibrarySourcesNamesFilter))
           false
         }
         else {

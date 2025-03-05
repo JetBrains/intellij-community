@@ -46,8 +46,7 @@ import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.DurationUnit.MILLISECONDS
 import kotlin.time.toDuration
 
-private val LOG: Logger
-  get() = FSRecords.LOG
+private val LOG = FSRecords.LOG
 
 private object VFSHealthCheckerConstants {
   val HEALTH_CHECKING_ENABLED = getBooleanProperty("vfs.health-check.enabled",
@@ -101,7 +100,7 @@ private class VFSHealthCheckServiceStarter : ApplicationActivity {
 
   override suspend fun execute() {
     LOG.info("VFS health-check enabled: first after $HEALTH_CHECKING_START_DELAY_MS ms, " +
-             "and each following $HEALTH_CHECKING_PERIOD_MS ms, wrap in RA: ${WRAP_HEALTH_CHECK_IN_READ_ACTION}")
+             "and each following $HEALTH_CHECKING_PERIOD_MS ms, wrap in RA: $WRAP_HEALTH_CHECK_IN_READ_ACTION")
 
     delay(HEALTH_CHECKING_START_DELAY_MS.toDuration(MILLISECONDS))
 
@@ -154,8 +153,9 @@ private class VFSHealthCheckServiceStarter : ApplicationActivity {
     val checkHealthReport = try {
       checker.checkHealth(CHECK_ORPHAN_RECORDS)
     }
-    catch (e: AlreadyDisposedException) {
-      return
+    catch (_: AlreadyDisposedException) {
+      return //VFS is already closed
+      //TODO RC: do we need it to catch it now, as ADE extends PCE?
     }
 
     VfsUsageCollector.logVfsHealthCheck(

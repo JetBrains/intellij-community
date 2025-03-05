@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNamedElement;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExceptPart;
@@ -27,8 +26,7 @@ public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implem
     pyVisitor.visitPyExceptBlock(this);
   }
 
-  @Nullable
-  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
+  public @Nullable PsiNamedElement getNamedElement(final @NotNull String the_name) {
     // Requires switching from stubs to AST in getTarget()
     return PyUtil.IterHelper.findName(getNamedElements(), the_name);
   }

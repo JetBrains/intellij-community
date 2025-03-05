@@ -21,5 +21,5 @@ kotlin {
         val customNonTest by compilations.creating
     }
 
-    android()
+    {{androidTargetPlaceholder}}
 }

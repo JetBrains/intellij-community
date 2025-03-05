@@ -1,4 +1,5 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to 'outer'" "true"
+// PRIORITY: HIGH
 
 @RequiresOptIn
 @Target(AnnotationTarget.FUNCTION)
@@ -18,5 +19,5 @@ class Outer {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityPropagateOptInAnnotationFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityPropagateOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix

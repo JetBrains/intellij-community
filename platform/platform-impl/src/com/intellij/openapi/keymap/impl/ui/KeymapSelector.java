@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,12 +118,12 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
           settings.select(settings.find("preferences.pluginManager"), "/tag:Keymap");
         }
       });
-    Box row = new Box(BoxLayout.X_AXIS);
+    JBBox row = new JBBox(BoxLayout.X_AXIS);
     row.add(Box.createRigidArea(new JBDimension(2, 0)));
     row.add(link);
     row.add(Box.createHorizontalGlue());
 
-    Box box = new Box(BoxLayout.Y_AXIS);
+    JBBox box = new JBBox(BoxLayout.Y_AXIS);
     box.add(Box.createRigidArea(new JBDimension(0, 5)));
     box.add(row);
     box.add(Box.createRigidArea(new JBDimension(0, 12)));

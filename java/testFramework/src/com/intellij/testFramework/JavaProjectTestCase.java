@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.module.ModuleType;
@@ -18,8 +18,7 @@ public abstract class JavaProjectTestCase extends HeavyPlatformTestCase {
     myJavaFacade = JavaPsiFacadeEx.getInstanceEx(myProject);
   }
 
-  @NotNull
-  protected LanguageLevel getProjectLanguageLevel() {
+  protected @NotNull LanguageLevel getProjectLanguageLevel() {
     return LanguageLevel.JDK_1_6;
   }
 
@@ -29,8 +28,7 @@ public abstract class JavaProjectTestCase extends HeavyPlatformTestCase {
     super.tearDown();
   }
 
-  @NotNull
-  public final JavaPsiFacadeEx getJavaFacade() {
+  public final @NotNull JavaPsiFacadeEx getJavaFacade() {
     return myJavaFacade;
   }
 

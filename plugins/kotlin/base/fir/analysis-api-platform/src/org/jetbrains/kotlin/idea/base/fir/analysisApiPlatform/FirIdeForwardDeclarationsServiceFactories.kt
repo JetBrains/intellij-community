@@ -9,8 +9,9 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.createDeclaration
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinForwardDeclarationsPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.api.platform.packages.createPackageProvider
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModuleByModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.K2ForwardDeclarationScopeProvider
 
 /**
  * FIR IDE declaration provider factory implementation for Kotlin/Native forward declarations.
@@ -20,9 +21,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModule
  */
 internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclarationProviderFactory {
     override fun createDeclarationProvider(module: KaModule): KotlinDeclarationProvider? {
-        if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
+        if (module !is KaLibraryModule) return null
+        val scope = K2ForwardDeclarationScopeProvider.getInstance(module.project).createForwardDeclarationScope(module) ?: return null
 
-        return module.project.createDeclarationProvider(module.forwardDeclarationsScope, module)
+        return module.project.createDeclarationProvider(scope, module)
     }
 }
 
@@ -34,8 +36,9 @@ internal class FirIdeForwardDeclarationProviderFactory : KotlinForwardDeclaratio
  */
 internal class FirIdeForwardDeclarationPackageProviderFactory : KotlinForwardDeclarationsPackageProviderFactory {
     override fun createPackageProvider(module: KaModule): KotlinPackageProvider? {
-        if (module !is KtNativeKlibLibraryModuleByModuleInfo) return null
+        if (module !is KaLibraryModule) return null
+        val scope = K2ForwardDeclarationScopeProvider.getInstance(module.project).createForwardDeclarationScope(module) ?: return null
 
-        return module.project.createPackageProvider(module.forwardDeclarationsScope)
+        return module.project.createPackageProvider(scope)
     }
 }

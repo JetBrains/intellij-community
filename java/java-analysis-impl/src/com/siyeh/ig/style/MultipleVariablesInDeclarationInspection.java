@@ -1,24 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class MultipleVariablesInDeclarationInspection extends BaseInspection {
 
@@ -30,14 +27,12 @@ public final class MultipleVariablesInDeclarationInspection extends BaseInspecti
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MultipleVariablesInDeclaration";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return onlyWarnArrayDimensions
            ? InspectionGadgetsBundle.message("multiple.typed.declaration.problem.descriptor")
            : InspectionGadgetsBundle.message("multiple.declaration.problem.descriptor");
@@ -91,11 +86,9 @@ public final class MultipleVariablesInDeclarationInspection extends BaseInspecti
       else {
         highlightType = ProblemHighlightType.WARNING;
       }
-      if (highlightType == ProblemHighlightType.INFORMATION
-          || InspectionProjectProfileManager.isInformationLevel(getShortName(), statement)) {
-        if (isOnTheFly()) {
-          registerError(statement, highlightType);
-        }
+      if (isOnTheFly() && (highlightType == ProblemHighlightType.INFORMATION
+                           || InspectionProjectProfileManager.isInformationLevel(getShortName(), statement))) {
+        registerError(statement, highlightType);
       }
       else {
         final PsiElement nameIdentifier = ((PsiVariable)declaredElements[0]).getNameIdentifier();

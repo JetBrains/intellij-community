@@ -3,6 +3,7 @@ package com.jetbrains.rhizomedb
 
 import com.jetbrains.rhizomedb.impl.Editor
 import kotlinx.collections.immutable.*
+import fleet.util.removeShim
 
 internal data class EAT(val e: EID, val a: Attribute<*>, val t: TX)
 
@@ -203,7 +204,7 @@ private class SetWithEditor(val set: PersistentSet.Builder<Any>,
 // true if removed
 private fun MutableMap<EAT, Any>.removeCardinalityAware(editor: Editor, eat: EAT, value: Any): Boolean =
   when (eat.a.schema.cardinality) {
-    Cardinality.One -> remove(eat, value)
+    Cardinality.One -> removeShim(eat, value)
     Cardinality.Many -> {
       when (val set = this[eat]) {
         null -> {

@@ -15,9 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class JavaDocMarkerProcessorFactory implements MarkerProcessorFactory {
-  @NotNull
   @Override
-  public MarkerProcessor<?> createMarkerProcessor(@NotNull ProductionHolder holder) {
+  public @NotNull MarkerProcessor<?> createMarkerProcessor(@NotNull ProductionHolder holder) {
     return new JavaDocMarkerProcessor(holder);
   }
 
@@ -30,9 +29,8 @@ public class JavaDocMarkerProcessorFactory implements MarkerProcessorFactory {
       super(productionHolder, CommonMarkdownConstraints.Companion.getBASE());
     }
 
-    @NotNull
     @Override
-    protected List<MarkerBlockProvider<StateInfo>> getMarkerBlockProviders() {
+    protected @NotNull List<MarkerBlockProvider<StateInfo>> getMarkerBlockProviders() {
       return Arrays.asList(new HorizontalRuleProvider(),
                            new CodeFenceProvider(),
                            new SetextHeaderProvider(),

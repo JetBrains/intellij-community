@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.ide.FileIconProvider;
@@ -17,9 +17,8 @@ import javax.swing.*;
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 public final class MavenIconProvider implements DumbAware, FileIconProvider {
-  @Nullable
   @Override
-  public Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
+  public @Nullable Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
     if (project == null) return null;
 
     MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(file);

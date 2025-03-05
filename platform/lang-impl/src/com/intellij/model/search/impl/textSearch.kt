@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.search.impl
 
 import com.intellij.find.usages.api.PsiUsage
@@ -24,8 +24,8 @@ internal fun buildTextUsageQuery(
   searchScope: SearchScope,
   searchContexts: Set<SearchContext>
 ): Query<out PsiUsage> {
-  require(SearchContext.IN_CODE !in searchContexts)
-  require(SearchContext.IN_CODE_HOSTS !in searchContexts)
+  require(SearchContext.inCode() !in searchContexts)
+  require(SearchContext.inCodeHosts() !in searchContexts)
   if (searchContexts.isEmpty()) {
     return EmptyQuery.getEmptyQuery()
   }
@@ -33,9 +33,9 @@ internal fun buildTextUsageQuery(
   val searchStringLength = searchString.length
   val effectiveSearchScope = searchRequest.searchScope?.let(searchScope::intersectWith)
                              ?: searchScope
-  val comments = SearchContext.IN_COMMENTS in searchContexts
-  val strings = SearchContext.IN_STRINGS in searchContexts
-  val plainText = SearchContext.IN_PLAIN_TEXT in searchContexts
+  val comments = SearchContext.inComments() in searchContexts
+  val strings = SearchContext.inStrings() in searchContexts
+  val plainText = SearchContext.inPlainText() in searchContexts
   val occurrenceQuery = SearchService.getInstance()
     .searchWord(project, searchString)
     .inContexts(searchContexts)

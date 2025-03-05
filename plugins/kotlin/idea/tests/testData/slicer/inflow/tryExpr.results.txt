@@ -1,0 +1,5 @@
+4 <bold>val s</bold> = try { (in n(Int))
+4 	val s = <bold>try {</bold> (in n(Int))
+5 		<bold>a</bold> (in n(Int))
+3 			fun n(<bold>a: Int</bold>) { (in n(Int))
+10 				n(<bold>1</bold>) (in m())

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-public class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
+public final class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
   private static final String ANOTATION_NAME = MockAnnotation.class.getName().replace('.', '/');
   private static final String HIERARCHY_ANOTATION_NAME = MockHierarchyAnnotation.class.getName().replace('.', '/');
 

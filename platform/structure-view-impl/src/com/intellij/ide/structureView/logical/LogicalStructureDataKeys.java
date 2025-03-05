@@ -4,7 +4,7 @@ package com.intellij.ide.structureView.logical;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.openapi.actionSystem.DataKey;
 
-public class LogicalStructureDataKeys {
+public final class LogicalStructureDataKeys {
 
   public static final DataKey<StructureViewTreeElement> STRUCTURE_TREE_ELEMENT = DataKey.create("structure_tree_element");
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.JBIterable;
@@ -41,6 +42,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -178,6 +180,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     if (!isPhysical()) {
       FileManager fileManager = getManager().getFileManager();
       VirtualFile virtualFile = getVirtualFile();
+      // todo ijpl-339 check no real context is used here???
       if (fileManager.findCachedViewProvider(virtualFile) == null && getCachedPsiFiles().isEmpty()) {
         fileManager.setViewProvider(virtualFile, this);
       }
@@ -374,9 +377,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   public abstract PsiFile getCachedPsi(@NotNull Language target);
 
-  public abstract @NotNull List<PsiFile> getCachedPsiFiles();
+  public abstract @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles();
 
-  public abstract @NotNull List<FileASTNode> getKnownTreeRoots();
+  public abstract @Unmodifiable @NotNull List<FileASTNode> getKnownTreeRoots();
 
   public final void markInvalidated() {
     invalidateCachedPsi();
@@ -412,10 +415,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     if (copy instanceof FreeThreadedFileViewProvider) {
       LOG.assertTrue(this instanceof FreeThreadedFileViewProvider, "Injected file can't have non-injected original file");
     }
-    Set<AbstractFileViewProvider> copies = getUserData(KNOWN_COPIES);
-    if (copies == null) {
-      copies = putUserDataIfAbsent(KNOWN_COPIES, Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap()));
-    }
+    Set<AbstractFileViewProvider> copies = ConcurrencyUtil.computeIfAbsent(this, KNOWN_COPIES, () -> Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap()));
     if (copy.getUserData(KNOWN_COPIES) != null) {
       List<AbstractFileViewProvider> derivations = JBTreeTraverser.from(AbstractFileViewProvider::getKnownCopies).withRoot(copy).toList();
       if (derivations.contains(this)) {

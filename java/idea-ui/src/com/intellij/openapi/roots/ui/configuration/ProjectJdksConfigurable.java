@@ -138,7 +138,7 @@ public final class ProjectJdksConfigurable extends MasterDetailsComponent {
     final ArrayList<AnAction> actions = new ArrayList<>();
     DefaultActionGroup group = DefaultActionGroup.createPopupGroup(JavaUiBundle.messagePointer("add.new.jdk.text"));
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
-    myProjectJdksModel.createAddActions(group, myTree, projectJdk -> {
+    myProjectJdksModel.createAddActions(myProject, group, myTree, projectJdk -> {
       addNode(new MyNode(new JdkConfigurable(projectJdk, myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
       selectNodeInTree(findNodeByObject(myRoot, projectJdk));
     }, SimpleJavaSdkType.notSimpleJavaSdkType());

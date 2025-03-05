@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml.refactoring;
 
@@ -87,7 +87,7 @@ public final class XmlTagInplaceRenamer {
           public void templateCancelled(final Template template) {
             finish();
           }
-        }, (variableName, value) -> value.length() == 0 || value.charAt(value.length() - 1) != ' ');
+        }, (variableName, value) -> value.isEmpty() || value.charAt(value.length() - 1) != ' ');
 
         // restore old offset
         myEditor.getCaretModel().moveToOffset(offset);

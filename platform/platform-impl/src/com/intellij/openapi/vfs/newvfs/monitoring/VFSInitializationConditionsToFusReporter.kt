@@ -81,53 +81,54 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
       totalInitializationDurationMs
     )
   }
-
-  /**
-   * Kind of VFS initialization happened.
-   *
-   * Better schema would be 2-levels:
-   * init_kind= CREATED_EMPTY | REGULAR | RECOVERED
-   * errors   = SCHEDULED_REBUILD|NOT_CLOSED_PROPERLY|VERSION_MISMATCH|...
-   */
-  enum class VFSInitKind {
-    /** VFS was created from scratch */
-    CREATED_EMPTY,
-
-    /** VFS was loaded from already existing files, without any issue */
-    LOADED_NORMALLY,
-
-
-    /** VFS was loaded from already existing files, with some errors fixed along the way */
-    RECOVERED,
-
-    /** VFS was cleared and rebuild from scratch because: rebuild marker was found */
-    SCHEDULED_REBUILD,
-
-    /** VFS was cleared and rebuild from scratch because: application wasn't closed properly,
-     *  VFS storages are fractured */
-    NOT_CLOSED_PROPERLY,
-
-    /** VFS error was detected in a previous session (see [FSRecords.handleError]) */
-    HAS_ERRORS_IN_PREVIOUS_SESSION,
-
-    /** VFS was cleared and rebuild from scratch because: current VFS impl (code)
-     *  version != VFS on-disk format version */
-    IMPL_VERSION_MISMATCH,
-
-    /** VFS was cleared and rebuild from scratch because: name storage is not able to resolve existing reference */
-    NAME_STORAGE_INCOMPLETE,
-
-    /** Attributes storage has corrupted record(s) */
-    ATTRIBUTES_STORAGE_CORRUPTED,
-
-    /** Content and ContentHashes storages are not match with each other */
-    CONTENT_STORAGES_NOT_MATCH,
-
-    /** Content or ContentHashes storages are not able to resolve existing reference */
-    CONTENT_STORAGES_INCOMPLETE,
-
-    /** Everything else is not covered by the specific constants above */
-    UNRECOGNIZED
-  }
 }
+
+/**
+ * Kind of VFS initialization happened.
+ *
+ * Better schema would be 2-levels:
+ * init_kind= CREATED_EMPTY | REGULAR | RECOVERED
+ * errors   = SCHEDULED_REBUILD|NOT_CLOSED_PROPERLY|VERSION_MISMATCH|...
+ */
+internal enum class VFSInitKind {
+  /** VFS was created from scratch */
+  CREATED_EMPTY,
+
+  /** VFS was loaded from already existing files, without any issue */
+  LOADED_NORMALLY,
+
+
+  /** VFS was loaded from already existing files, with some errors fixed along the way */
+  RECOVERED,
+
+  /** VFS was cleared and rebuild from scratch because: rebuild marker was found */
+  SCHEDULED_REBUILD,
+
+  /** VFS was cleared and rebuild from scratch because: application wasn't closed properly,
+   *  VFS storages are fractured */
+  NOT_CLOSED_PROPERLY,
+
+  /** VFS error was detected in a previous session (see [FSRecords.handleError]) */
+  HAS_ERRORS_IN_PREVIOUS_SESSION,
+
+  /** VFS was cleared and rebuild from scratch because: current VFS impl (code)
+   *  version != VFS on-disk format version */
+  IMPL_VERSION_MISMATCH,
+
+  /** VFS was cleared and rebuild from scratch because: name storage is not able to resolve existing reference */
+  NAME_STORAGE_INCOMPLETE,
+
+  /** Attributes storage has corrupted record(s) */
+  ATTRIBUTES_STORAGE_CORRUPTED,
+
+  /** Content and ContentHashes storages are not match with each other */
+  CONTENT_STORAGES_NOT_MATCH,
+
+  /** Content or ContentHashes storages are not able to resolve existing reference */
+  CONTENT_STORAGES_INCOMPLETE,
+
+  /** Everything else is not covered by the specific constants above */
+  UNRECOGNIZED
+}
+
                                                                 

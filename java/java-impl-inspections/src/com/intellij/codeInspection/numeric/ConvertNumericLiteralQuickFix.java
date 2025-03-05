@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.numeric;
 
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -20,12 +20,12 @@ import org.jetbrains.annotations.NotNull;
  */
 final class ConvertNumericLiteralQuickFix extends PsiUpdateModCommandQuickFix {
 
-  @NotNull private final String myConvertedValue;
-  @NotNull @IntentionName private final String myName;
-  @NotNull @IntentionFamilyName private final String myFamilyName;
+  private final @NotNull String myConvertedValue;
+  private final @NotNull @IntentionName String myName;
+  private final @NotNull @IntentionFamilyName String myFamilyName;
 
-  ConvertNumericLiteralQuickFix(@NotNull final String convertedValue,
-                                @NotNull @IntentionName final String name,
+  ConvertNumericLiteralQuickFix(final @NotNull String convertedValue,
+                                final @NotNull @IntentionName String name,
                                 @NotNull @IntentionFamilyName String familyName) {
     myConvertedValue = convertedValue;
     myName = name;

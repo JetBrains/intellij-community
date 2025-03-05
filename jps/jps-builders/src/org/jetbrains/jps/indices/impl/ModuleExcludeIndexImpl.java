@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.indices.impl;
 
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.JpsModel;
@@ -178,12 +179,12 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   }
 
   @Override
-  public boolean isExcludedFromModule(File file, JpsModule module) {
+  public boolean isExcludedFromModule(@NotNull File file, @NotNull JpsModule module) {
     return determineFileLocation(file.toPath(), myModuleToContentMap.get(module), myModuleToExcludesMap.get(module)) == FileLocation.EXCLUDED;
   }
 
   @Override
-  public boolean isInContent(File file) {
+  public boolean isInContent(@NotNull File file) {
     return determineFileLocation(file.toPath(), myTopLevelContentRoots, myExcludedRoots) == FileLocation.IN_CONTENT;
   }
 
@@ -223,7 +224,7 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   }
 
   @Override
-  public Collection<Path> getModuleExcludes(JpsModule module) {
+  public @Unmodifiable @NotNull Collection<@NotNull Path> getModuleExcludes(@NotNull JpsModule module) {
     return myModuleToExcludesMap.get(module);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.time.Instant;
@@ -35,8 +36,8 @@ public class ChangeBrowserSettings {
   public boolean USE_CHANGE_BEFORE_FILTER = false;
   public boolean USE_CHANGE_AFTER_FILTER = false;
 
-  public String DATE_BEFORE = "";
-  public String DATE_AFTER = "";
+  public @Nullable String DATE_BEFORE = "";
+  public @Nullable String DATE_AFTER = "";
 
   public String CHANGE_BEFORE = "";
   public String CHANGE_AFTER = "";
@@ -102,7 +103,7 @@ public class ChangeBrowserSettings {
   }
 
   // used externally
-  protected @NotNull List<Filter> createFilters() {
+  protected @Unmodifiable @NotNull List<Filter> createFilters() {
     return ContainerUtil.packNullables(
       createDateFilter(getDateBeforeFilter(), true),
       createDateFilter(getDateAfterFilter(), false),

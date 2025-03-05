@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.completion.ml.features.ContextFeaturesStorage
 import com.intellij.completion.ml.performance.MLCompletionPerformanceTracker
 import com.intellij.completion.ml.personalization.UserFactorStorage

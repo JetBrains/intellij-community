@@ -22,12 +22,12 @@ See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for mo
         <iconMapper mappingFile="JewelIntUiIconMappings.json"/>
     </extensions>
 
-    <actions>
-        <action id="Jewel Dialog Demo" class="org.jetbrains.jewel.samples.ideplugin.dialog.JewelDemoAction"
-                text="Jewel Demo Dialog">
-        </action>
-        <action id="Jewel Action System Test" class="org.jetbrains.jewel.samples.ideplugin.ActionSystemTestAction"
-                text="Jewel Action System Test">
-        </action>
+    <actions resource-bundle="messages.JewelBundle">
+        <action id="JewelWizardDialog" class="org.jetbrains.jewel.samples.ideplugin.dialog.JewelWizardDialogAction"
+                internal="true"/>
+        <action id="JewelActionSystemTest" class="org.jetbrains.jewel.samples.ideplugin.ActionSystemTestAction"
+                internal="true"/>
+        <action id="JewelComponentShowcaseDialog"
+                class="org.jetbrains.jewel.samples.ideplugin.dialog.ComponentShowcaseDialogAction" internal="true"/>
     </actions>
 </idea-plugin>

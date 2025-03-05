@@ -35,6 +35,11 @@ public class K1IdeK2CodeBreakpointHighlightingTestGenerated extends AbstractK1Id
         runTest("testData/highlighting/anonymousFun.kt");
     }
 
+    @TestMetadata("breakpointInInternalInlineFun.kt")
+    public void testBreakpointInInternalInlineFun() throws Exception {
+        runTest("testData/highlighting/breakpointInInternalInlineFun.kt");
+    }
+
     @TestMetadata("conditionalReturn.kt")
     public void testConditionalReturn() throws Exception {
         runTest("testData/highlighting/conditionalReturn.kt");

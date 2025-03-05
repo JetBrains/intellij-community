@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineScope
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFocusGainedAction
 import training.featuresSuggester.settings.FeatureSuggesterSettings
@@ -19,7 +20,7 @@ import training.featuresSuggester.ui.NotificationSuggestionPresenter
 import training.featuresSuggester.ui.SuggestionPresenter
 
 @Service(Service.Level.PROJECT)
-internal class FeatureSuggestersManager(private val project: Project) : Disposable {
+internal class FeatureSuggestersManager(private val project: Project, private val coroutineScope: CoroutineScope) : Disposable {
   private val suggestionPresenter: SuggestionPresenter = NotificationSuggestionPresenter()
 
   init {
@@ -53,17 +54,22 @@ internal class FeatureSuggestersManager(private val project: Project) : Disposab
 
   private fun processSuggester(suggester: FeatureSuggester, action: Action) {
     val suggestion = suggester.getSuggestion(action)
-    if (suggestion is PopupSuggestion) {
+    if (suggestion is UiSuggestion) {
       suggester.logStatisticsThatSuggestionIsFound(suggestion)
       if (suggester.isEnabled() && (SuggestingUtils.forceShowSuggestions || suggester.isSuggestionNeeded())) {
-        suggestionPresenter.showSuggestion(project, suggestion, disposable = this)
+        when(suggestion) {
+          is PopupSuggestion ->
+            suggestionPresenter.showSuggestion(project, suggestion, coroutineScope = coroutineScope)
+          is CustomSuggestion ->
+            suggestion.activate()
+        }
         fireSuggestionFound(suggestion)
         FeatureSuggesterSettings.instance().updateSuggestionShownTime(suggestion.suggesterId)
       }
     }
   }
 
-  private fun fireSuggestionFound(suggestion: PopupSuggestion) {
+  private fun fireSuggestionFound(suggestion: UiSuggestion) {
     // send event for testing
     project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
   }

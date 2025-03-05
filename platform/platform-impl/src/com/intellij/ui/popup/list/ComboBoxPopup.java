@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
+import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -13,6 +14,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.dsl.listCellRenderer.LcrRow;
 import com.intellij.ui.popup.WizardPopup;
@@ -130,8 +132,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   protected @NotNull JComponent createPopupComponent(JComponent content) {
     final var component = super.createPopupComponent(content);
     final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
-    if (component instanceof JScrollPane scrollPane && isRendererWithInsets(renderer)) {
-      scrollPane.getVerticalScrollBar().setBackground(UIManager.getColor("ComboBox.background"));
+    if (component instanceof JBScrollPane scrollPane && isRendererWithInsets(renderer)) {
+      scrollPane.setOverlappingScrollBar(true);
     }
     return component;
   }
@@ -151,8 +153,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   }
 
   public static boolean isRendererWithInsets(ListCellRenderer<?> comboRenderer) {
-    return comboRenderer instanceof ExperimentalUI.NewUIComboBoxRenderer
-           || comboRenderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof ExperimentalUI.NewUIComboBoxRenderer;
+    ListCellRenderer<?> unwrappedRenderer = unwrap(comboRenderer);
+    return ExperimentalUI.isNewUI() && unwrappedRenderer instanceof ExperimentalUI.NewUIComboBoxRenderer;
   }
 
   private void configurePopup() {
@@ -192,7 +194,9 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       //noinspection unchecked
       Component component = myContext.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
       if (component instanceof JComponent jComponent && !(component instanceof JSeparator || component instanceof TitledSeparator)) {
-        if (!(component instanceof GroupedElementsRenderer.MyComponent) && !(component instanceof KotlinUIDslRendererComponent)) {
+        if (!(component instanceof GroupedElementsRenderer.MyComponent)
+            && !(component instanceof KotlinUIDslRendererComponent)
+            && !(component instanceof DarculaComboBoxRenderer)) {
           jComponent.setBorder(COMBO_ITEM_BORDER);
         }
         myContext.customizeListRendererComponent(jComponent);

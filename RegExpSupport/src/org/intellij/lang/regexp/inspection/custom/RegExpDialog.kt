@@ -119,7 +119,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
         filterButton = actionButton(MyFilterAction())
           .component
       }
-    }.customize(UnscaledGaps(0, intelliJSpacingConfiguration.horizontalIndent, 0, intelliJSpacingConfiguration.horizontalIndent))
+    }.customize(UnscaledGaps(0, intelliJSpacingConfiguration.horizontalSmallGap, 0, intelliJSpacingConfiguration.horizontalSmallGap))
 
     row {
       searchEditor = cell(createEditor(true))
@@ -143,7 +143,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
           replace = !replace
         }.component
       }
-    }.customize(UnscaledGaps(10, intelliJSpacingConfiguration.horizontalIndent, 0, intelliJSpacingConfiguration.horizontalIndent))
+    }.customize(UnscaledGaps(10, intelliJSpacingConfiguration.horizontalSmallGap, 0, intelliJSpacingConfiguration.horizontalSmallGap))
 
     replaceRow = row {
       replaceEditor = cell(createEditor(false))

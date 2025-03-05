@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -28,9 +29,7 @@ import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -76,11 +75,16 @@ public class HyperlinkAnnotator implements Annotator, DumbAware {
     }
   }
 
+  @VisibleForTesting
+  public static @NotNull List<PsiReference> calculateReferences(@NotNull PsiElement element) {
+    return PsiReferenceService.getService().getReferences(element, Hints.HIGHLIGHTED_REFERENCES);
+  }
+
   private static final Key<ParameterizedCachedValue<List<PsiReference>, PsiElement>> REFS_KEY = Key.create("HyperlinkAnnotator");
   private static final ParameterizedCachedValueProvider<List<PsiReference>, PsiElement> REFS_PROVIDER = element -> {
     List<PsiReference> references;
     try {
-      references = PsiReferenceService.getService().getReferences(element, Hints.HIGHLIGHTED_REFERENCES);
+      references = calculateReferences(element);
     }
     catch (IndexNotReadyException ignored) {
       return Result.create(emptyList(), DumbService.getInstance(element.getProject()));
@@ -135,6 +139,20 @@ public class HyperlinkAnnotator implements Annotator, DumbAware {
   @ApiStatus.Internal
   public static @Nls @NotNull String getMessage() {
     String message = IdeBundle.message("open.url.in.browser.tooltip");
+    String shortcutsText = getGoToDeclarationShortcutsText();
+    if (!shortcutsText.isEmpty()) {
+      return message + " (" + shortcutsText + ")";
+    }
+    return message;
+  }
+
+  /**
+   * Returns a comma-separated list of shortcuts assigned to the 'Go To Declaration' action.
+   * This list includes up to two shortcuts: at most one mouse shortcut and one keyboard shortcut.
+   * If no shortcuts are assigned, this method returns an empty string.
+   */
+  @ApiStatus.Internal
+  public static @NlsSafe @NotNull String getGoToDeclarationShortcutsText() {
     Shortcut[] shortcuts = requireNonNull(KeymapManager.getInstance()).getActiveKeymap().getShortcuts(IdeActions.ACTION_GOTO_DECLARATION);
     String shortcutText = "";
     Shortcut mouseShortcut = ContainerUtil.find(shortcuts, shortcut -> !shortcut.isKeyboard());
@@ -148,8 +166,8 @@ public class HyperlinkAnnotator implements Annotator, DumbAware {
       shortcutText += KeymapUtil.getShortcutText(keyboardShortcut);
     }
     if (!shortcutText.isEmpty()) {
-      message += " (" + shortcutText + ")";
+      return shortcutText;
     }
-    return message;
+    return "";
   }
 }

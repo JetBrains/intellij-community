@@ -8,6 +8,7 @@ import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -22,12 +23,13 @@ import java.util.Map;
 public abstract class MavenRepositoryService {
   public abstract @NotNull String getDisplayName();
 
-  public abstract @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException;
+  public abstract @Unmodifiable @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException;
 
   public abstract @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException;
 
 
+  @Override
   public final String toString() {
     return getDisplayName();
   }

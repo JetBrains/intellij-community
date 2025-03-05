@@ -1,13 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
-import java.security.SecureRandom
+import kotlinx.datetime.Clock
+import kotlin.random.Random
 
 object Random {
   private val cacheBits = ByteArray(8 * 1024)
   private var served: Int = cacheBits.size
 
-  private val rnd = SecureRandom()
+  private val rnd = Random(Clock.System.now().toEpochMilliseconds())
 
   fun nextBytes(len: Int): ByteArray {
     return ByteArray(len).also { answer ->
@@ -36,6 +37,17 @@ object Random {
       l < 0L -> -l
       else -> l
     }
+  }
+
+  internal fun nextUidString(len: Int): String {
+    val string = buildString {
+      repeat(len / 8 + 1) {
+        // Would give 8 chars per chunk (radix 32 -> 5 bits per char, 5 * 8 bits generated)
+        append(nextBytes(5).toLong().toString(32).padStart(8, '0'))
+      }
+    }
+
+    return string.take(len)
   }
 
   fun nextInt(bound: Int): Int {

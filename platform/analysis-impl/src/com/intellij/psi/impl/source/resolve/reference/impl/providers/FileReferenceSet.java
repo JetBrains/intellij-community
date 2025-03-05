@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -176,6 +177,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     reparse();
   }
 
+  @Override
   public @NotNull PsiElement getElement() {
     return myElement;
   }
@@ -398,7 +400,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
   /**
    * Finds file target contexts, locations where users can create a file. Includes only local file directory items.
    */
-  public Collection<FileTargetContext> getTargetContexts() {
+  public @Unmodifiable Collection<FileTargetContext> getTargetContexts() {
     PsiFile file = getContainingFile();
     if (file == null) return emptyList();
 
@@ -415,7 +417,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return filterLocalFsContexts(targetContexts);
   }
 
-  private static Collection<FileTargetContext> filterLocalFsContexts(Collection<? extends FileTargetContext> contexts) {
+  private static @Unmodifiable Collection<FileTargetContext> filterLocalFsContexts(Collection<? extends FileTargetContext> contexts) {
     return ContainerUtil.filter(contexts, c -> {
       VirtualFile file = c.getFileSystemItem().getVirtualFile();
       return file != null && c.getFileSystemItem().isDirectory() && file.isInLocalFileSystem();
@@ -459,7 +461,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return null;
   }
 
-  private @NotNull Collection<FileTargetContext> getTargetContextByFile(@NotNull PsiFile file) {
+  private @Unmodifiable @NotNull Collection<FileTargetContext> getTargetContextByFile(@NotNull PsiFile file) {
     boolean absolutePathReference = isAbsolutePathReference();
 
     if (!absolutePathReference) {
@@ -586,11 +588,11 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return new ArrayList<>(result);
   }
 
-  protected @NotNull Collection<PsiFileSystemItem> toFileSystemItems(VirtualFile... files) {
+  protected @Unmodifiable @NotNull Collection<PsiFileSystemItem> toFileSystemItems(VirtualFile... files) {
     return toFileSystemItems(Arrays.asList(files));
   }
 
-  protected @NotNull Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<? extends VirtualFile> files) {
+  protected @Unmodifiable @NotNull Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<? extends VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
     return ContainerUtil.mapNotNull(files, file -> file != null && file.isValid() ? manager.findDirectory(file) : null);
   }

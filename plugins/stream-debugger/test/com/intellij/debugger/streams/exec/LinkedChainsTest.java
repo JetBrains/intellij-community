@@ -1,8 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.exec;
 
+import com.intellij.debugger.streams.core.testFramework.ChainSelector;
+import com.intellij.debugger.streams.core.wrapper.StreamChain;
 import com.intellij.debugger.streams.test.TraceExecutionTestCase;
-import com.intellij.debugger.streams.wrapper.StreamChain;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class LinkedChainsTest extends TraceExecutionTestCase {
 
     @NotNull
     @Override
-    public StreamChain select(@NotNull List<StreamChain> chains) {
+    public StreamChain select(@NotNull List<? extends StreamChain> chains) {
       final List<StreamChain> orderedChains = new ArrayList<>(chains);
       orderedChains.sort(Comparator.comparingInt(x -> x.getText().length()));
       return orderedChains.get(myIndex);

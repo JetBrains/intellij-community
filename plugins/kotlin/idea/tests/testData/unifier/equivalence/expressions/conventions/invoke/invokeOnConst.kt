@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun Int.invoke() = this + 1
 
 val a = <selection>1()</selection>

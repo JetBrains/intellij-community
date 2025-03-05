@@ -23,8 +23,7 @@ class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameter
   private static final int PRIORITY = 10;
 
   private final String @NotNull [] myKeywords;
-  @NotNull
-  private final EventId myEventId;
+  private final @NotNull EventId myEventId;
   private final boolean myWithDescription;
 
   ShKeywordCompletionProvider(@NotNull EventId eventId, @NonNls String @NotNull ... keywords) {
@@ -47,8 +46,7 @@ class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameter
     }
   }
 
-  @NotNull
-  private LookupElement createKeywordLookupElement(@NotNull Project project, @NotNull final String keyword) {
+  private @NotNull LookupElement createKeywordLookupElement(@NotNull Project project, final @NotNull String keyword) {
     TemplateManagerImpl templateManager = (TemplateManagerImpl) TemplateManager.getInstance(project);
     Template template = TemplateSettings.getInstance().getTemplateById("shell_" + keyword);
 

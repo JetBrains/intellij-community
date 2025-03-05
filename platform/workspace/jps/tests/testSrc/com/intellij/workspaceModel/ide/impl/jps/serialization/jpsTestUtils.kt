@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EntityStorageInstrumentationApi::class)
 
 package com.intellij.workspaceModel.ide.impl.jps.serialization
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
@@ -36,6 +37,7 @@ import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelRegistry
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
@@ -437,10 +439,10 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
       ApplicationManager.getApplication().replaceService(JpsGlobalModelSynchronizer::class.java,
                                                          JpsGlobalModelSynchronizerImpl(coroutineScope),
                                                          parentDisposable)
-      ApplicationManager.getApplication().replaceService(GlobalWorkspaceModel::class.java, GlobalWorkspaceModel(), parentDisposable)
+      ApplicationManager.getApplication().replaceService(GlobalWorkspaceModelRegistry::class.java, GlobalWorkspaceModelRegistry(), parentDisposable)
 
       // Entity source for global entities
-      val virtualFileManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
+      val virtualFileManager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
       val globalLibrariesFile = virtualFileManager.getOrCreateFromUrl("$testDir/options/applicationLibraries.xml")
       val libraryEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
 
@@ -453,7 +455,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
         application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
         val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
                                         "platform/workspace/jps/tests/testData/serialization/global/$expectedFile")
-        val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
+        val entityStorage = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).entityStorage.current
         if (entityStorage.entities(LibraryEntity::class.java).toList().isEmpty()) {
           optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
                                       filePathFilter = { it.contains("jdk.table.xml") })

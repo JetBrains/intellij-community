@@ -86,7 +86,7 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     try (AccessToken ignore = SlowOperations.knownIssue("EA-1051315, IJPL-149483")) {
       Collection<? extends VirtualFile> files = new ArrayList<>(realFiles);
       OperationStatusImpl status = myProject.isDefault() ? null : WritingAccessProvider.EP.computeSafeIfAny(myProject, provider -> {
-        Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !provider.isPotentiallyWritable(virtualFile));
+        Collection<? extends VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !provider.isPotentiallyWritable(virtualFile));
         if (denied.isEmpty()) {
           denied = provider.requestWriting(files);
         }

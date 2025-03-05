@@ -35,13 +35,13 @@ class Main {
   void nestedStatement(Object o, Object o2, int p) {
     int m = 0;
     switch (o) {
-      case Integer n when <error descr="Variable used in guarded pattern should be final or effectively final">n</error> < 1:
+      case Integer n when <error descr="Variable used in guard expression should be final or effectively final">n</error> < 1:
         n ++;
       case Integer n when n > 1:
         switch(o2) {
-          case Integer <error descr="Variable 'm' is already defined in the scope">m</error> when <error descr="Variable used in guarded pattern should be final or effectively final">m</error> > 0:
+          case Integer <error descr="Variable 'm' is already defined in the scope">m</error> when <error descr="Variable used in guard expression should be final or effectively final">m</error> > 0:
             m += n;
-          case Integer <error descr="Variable 'p' is already defined in the scope">p</error> when <error descr="Variable used in guarded pattern should be final or effectively final">p</error> > 0:
+          case Integer <error descr="Variable 'p' is already defined in the scope">p</error> when <error descr="Variable used in guard expression should be final or effectively final">p</error> > 0:
             p += n + m;
             break;
           case Integer p1:

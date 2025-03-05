@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -23,8 +23,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.ASSOCIATE
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.ASSOCIATE_TO
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.JOIN_TO
@@ -40,10 +39,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConver
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM_OF
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.TO_MAP
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -60,20 +56,18 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     override fun createQuickFix(
         element: KtQualifiedExpression,
         context: CallChainConversion,
-    ): KotlinModCommandQuickFix<KtQualifiedExpression> {
-        return SimplifyCallChainFix(
-            context,
-            modifyArguments = { callExpression ->
-                if (context.replacement.startsWith(JOIN_TO)) {
-                    val lastArgument = callExpression.valueArgumentList?.arguments?.singleOrNull()
-                    val argumentExpression = lastArgument?.getArgumentExpression()
-                    if (argumentExpression != null) {
-                        lastArgument.replace(createArgument(argumentExpression, Name.identifier("transform")))
-                    }
+    ): KotlinModCommandQuickFix<KtQualifiedExpression> = SimplifyCallChainFix(
+        context,
+        modifyArguments = { callExpression ->
+            if (context.replacement.startsWith(JOIN_TO)) {
+                val lastArgument = callExpression.valueArgumentList?.arguments?.singleOrNull()
+                val argumentExpression = lastArgument?.getArgumentExpression()
+                if (argumentExpression != null) {
+                    lastArgument.replace(createArgument(argumentExpression, Name.identifier("transform")))
                 }
             }
-        )
-    }
+        }
+    )
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> {
         return qualifiedExpressionVisitor { qualifiedExpression ->
@@ -91,8 +85,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtQualifiedExpression): CallChainConversion? {
+    override fun KaSession.prepareContext(element: KtQualifiedExpression): CallChainConversion? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val conversionId = ConversionId(callChainExpressions.firstCalleeExpression, callChainExpressions.secondCalleeExpression)
         val candidateConversions = getPotentialConversions(element, conversionId).ifEmpty { return null }

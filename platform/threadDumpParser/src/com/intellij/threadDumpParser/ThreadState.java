@@ -2,7 +2,6 @@
 package com.intellij.threadDumpParser;
 
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,6 +21,7 @@ public class ThreadState {
   private String myThreadStateDetail;
   private String myExtraState;
   private boolean isDaemon;
+  private boolean isVirtual;
   private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<>();
   private final Set<ThreadState> myDeadlockedThreads = new HashSet<>();
   private String ownableSynchronizers;
@@ -31,7 +31,17 @@ public class ThreadState {
   private int myStackDepth;
 
   public ThreadState(final String name, final String state) {
-    myName = name;
+    // Loom's virtual threads often have empty name, try to make it look nicer.
+    var explicitlyUnnamedName = "{unnamed}";
+    if (name.isEmpty()) {
+      myName = explicitlyUnnamedName;
+    }
+    else if (name.matches("@\\d+")) {
+      myName = explicitlyUnnamedName + name;
+    }
+    else {
+      myName = name;
+    }
     myState = state.trim();
   }
 
@@ -73,6 +83,11 @@ public class ThreadState {
     return Collections.unmodifiableSet(myThreadsWaitingForMyLock);
   }
 
+  public Collection<ThreadState> getDeadlockedThreads() {
+    return Collections.unmodifiableSet(myDeadlockedThreads);
+  }
+
+  @Override
   public String toString() {
     return myName;
   }
@@ -153,6 +168,10 @@ public class ThreadState {
     return isEDT(name);
   }
 
+  public boolean isIdle() {
+    return "idle".equals(myThreadStateDetail);
+  }
+
   public String getOwnableSynchronizers() {
     return ownableSynchronizers;
   }
@@ -173,116 +192,11 @@ public class ThreadState {
     isDaemon = daemon;
   }
 
-  public static class CompoundThreadState extends ThreadState {
-    private final ThreadState myOriginalState;
-    private int myCounter = 1;
+  public boolean isVirtual() {
+    return isVirtual;
+  }
 
-    public CompoundThreadState(ThreadState state) {
-      super(state.myName, state.myState);
-      myOriginalState = state;
-    }
-
-    public boolean add(ThreadState state) {
-      if (myOriginalState.isEDT()) return false;
-      if (!Objects.equals(state.myState, myOriginalState.myState)) return false;
-      if (state.myEmptyStackTrace != myOriginalState.myEmptyStackTrace) return false;
-      if (state.isDaemon != myOriginalState.isDaemon) return false;
-      if (!Objects.equals(state.myJavaThreadState, myOriginalState.myJavaThreadState)) return false;
-      if (!Objects.equals(state.myThreadStateDetail, myOriginalState.myThreadStateDetail)) return false;
-      if (!Objects.equals(state.myExtraState, myOriginalState.myExtraState)) return false;
-      if (!Comparing.haveEqualElements(state.myThreadsWaitingForMyLock, myOriginalState.myThreadsWaitingForMyLock)) return false;
-      if (!Comparing.haveEqualElements(state.myDeadlockedThreads, myOriginalState.myDeadlockedThreads)) return false;
-      if (!Objects.equals(getMergeableStackTrace(state.myStackTrace, true), getMergeableStackTrace(myOriginalState.myStackTrace, true))) return false;
-      myCounter++;
-      return true;
-    }
-
-    private static String getMergeableStackTrace(String stackTrace, boolean skipFirstLine) {
-      if (stackTrace == null) return null;
-      StringBuilder builder = new StringBuilder();
-      String[] lines = stackTrace.split("\n");
-      for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        if (i == 0 && skipFirstLine) continue;//first line has unique details
-        line = line.replaceAll("<0x.+>\\s", "<merged>");
-        builder.append(line).append("\n");
-      }
-      return builder.toString();
-    }
-
-    @Override
-    public String getName() {
-      return (myCounter == 1) ? myOriginalState.getName() : myCounter + " similar threads";
-    }
-
-    @Override
-    public String getState() {
-      return myOriginalState.getState();
-    }
-
-    @Override
-    public String getStackTrace() {
-      return myCounter == 1 ? myOriginalState.getStackTrace() : getMergeableStackTrace(myOriginalState.getStackTrace(), false);
-    }
-
-    @Override
-    public Collection<ThreadState> getAwaitingThreads() {
-      return myOriginalState.getAwaitingThreads();
-    }
-
-    @Override
-    public String getJavaThreadState() {
-      return myOriginalState.getJavaThreadState();
-    }
-
-    @Override
-    public String getThreadStateDetail() {
-      return myOriginalState.getThreadStateDetail();
-    }
-
-    @Override
-    public boolean isEmptyStackTrace() {
-      return myOriginalState.isEmptyStackTrace();
-    }
-
-    @Override
-    public String getExtraState() {
-      return myOriginalState.getExtraState();
-    }
-
-    @Override
-    public boolean isAwaitedBy(ThreadState thread) {
-      return myOriginalState.isAwaitedBy(thread);
-    }
-
-    @Override
-    public boolean isDeadlocked() {
-      return myOriginalState.isDeadlocked();
-    }
-
-    @Override
-    public @Nullable ThreadOperation getOperation() {
-      return myOriginalState.getOperation();
-    }
-
-    @Override
-    public boolean isWaiting() {
-      return myOriginalState.isWaiting();
-    }
-
-    @Override
-    public boolean isEDT() {
-      return myOriginalState.isEDT();
-    }
-
-    @Override
-    public boolean isDaemon() {
-      return myOriginalState.isDaemon();
-    }
-
-    @Override
-    public boolean isSleeping() {
-      return myOriginalState.isSleeping();
-    }
+  public void setVirtual(boolean virtual) {
+    isVirtual = virtual;
   }
 }

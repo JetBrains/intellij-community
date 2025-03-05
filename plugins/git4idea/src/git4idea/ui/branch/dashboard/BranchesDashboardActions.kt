@@ -16,22 +16,14 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.VcsLogProperties
-import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
-import com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
 import com.intellij.vcs.log.util.VcsLogUtil.HEAD
 import git4idea.GitRemoteBranch
-import git4idea.actions.GitFetch
 import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialName
-import git4idea.branch.GitBranchType
-import git4idea.branch.GitBranchUtil
-import git4idea.branch.GitBrancher
-import git4idea.branch.GitRefType
-import git4idea.branch.IncomingOutgoingState
+import git4idea.branch.*
 import git4idea.commands.Git
 import git4idea.config.GitVcsSettings
-import git4idea.fetch.GitFetchResult
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
@@ -43,6 +35,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.*
 import org.jetbrains.annotations.Nls
+import java.util.*
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -186,7 +179,7 @@ internal object BranchesDashboardActions {
       val selectedRepositories = selection.repositoriesOfSelectedBranches
 
       val branchNames = branches.map(BranchInfo::branchName)
-      val updateMethodName = GitVcsSettings.getInstance(project).updateMethod.name.toLowerCase()
+      val updateMethodName = GitVcsSettings.getInstance(project).updateMethod.name.lowercase(Locale.getDefault())
       presentation.description = message("action.Git.Update.Selected.description", branches.size, updateMethodName)
       val trackingInfosExist = isTrackingInfosExist(branchNames, selectedRepositories)
       presentation.isEnabled = trackingInfosExist
@@ -307,9 +300,10 @@ internal object BranchesDashboardActions {
     }
   }
 
-  internal abstract class BranchesPairActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
-                                                 description: @Nls(capitalization = Nls.Capitalization.Sentence) () -> String = { "" },
-                                                 icon: Icon? = null
+  internal abstract class BranchesPairActionBase(
+    text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
+    description: @Nls(capitalization = Nls.Capitalization.Sentence) () -> String = { "" },
+    icon: Icon? = null,
   ) : BranchesActionBase(text = text, description = description, icon = icon) {
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>, selection: BranchesTreeSelection) {
       val branchPair = getBranchPair(selection, project, e)
@@ -360,10 +354,12 @@ internal object BranchesDashboardActions {
         selection.getSelectedRepositories(branchOne) intersect selection.getSelectedRepositories(branchTwo)
     }
 
-    abstract fun performAction(project: Project,
-                               branchOne: BranchInfo,
-                               branchTwo: BranchInfo,
-                               commonRepositories: Collection<GitRepository>)
+    abstract fun performAction(
+      project: Project,
+      branchOne: BranchInfo,
+      branchTwo: BranchInfo,
+      commonRepositories: Collection<GitRepository>,
+    )
   }
 
   class ShowArbitraryBranchesDiffAction() :
@@ -371,10 +367,12 @@ internal object BranchesDashboardActions {
                            description = messagePointer("action.Git.Compare.Selected.description"),
                            icon = AllIcons.Actions.Diff) {
 
-    override fun performAction(project: Project,
-                               branchOne: BranchInfo,
-                               branchTwo: BranchInfo,
-                               commonRepositories: Collection<GitRepository>) {
+    override fun performAction(
+      project: Project,
+      branchOne: BranchInfo,
+      branchTwo: BranchInfo,
+      commonRepositories: Collection<GitRepository>,
+    ) {
       GitBrancher.getInstance(project).compareAny(branchOne.branchName, branchTwo.branchName, commonRepositories.toList())
     }
   }
@@ -383,21 +381,26 @@ internal object BranchesDashboardActions {
     BranchesPairActionBase(text = messagePointer("action.Git.Compare.Selected.Heads.title"),
                            description = messagePointer("action.Git.Compare.Selected.Heads.description"), null) {
 
-    override fun performAction(project: Project,
-                               branchOne: BranchInfo,
-                               branchTwo: BranchInfo,
-                               commonRepositories: Collection<GitRepository>) {
+    override fun performAction(
+      project: Project,
+      branchOne: BranchInfo,
+      branchTwo: BranchInfo,
+      commonRepositories: Collection<GitRepository>,
+    ) {
       GitBrancher.getInstance(project).showDiff(branchOne.branchName, branchTwo.branchName, commonRepositories.toList())
     }
   }
 
-  class ShowMyBranchesAction(private val uiController: BranchesDashboardController)
-    : ToggleAction(messagePointer("action.Git.Show.My.Branches.title"), AllIcons.Actions.Find), DumbAware {
+  class ShowMyBranchesAction : ToggleAction(messagePointer("action.Git.Show.My.Branches.title"), AllIcons.Actions.Find), DumbAware {
 
-    override fun isSelected(e: AnActionEvent) = uiController.showOnlyMy
+    override fun isSelected(e: AnActionEvent): Boolean {
+      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return false
+      return controller.showOnlyMy
+    }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      uiController.showOnlyMy = state
+      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return
+      controller.showOnlyMy = state
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
@@ -440,23 +443,6 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class FetchAction(private val ui: BranchesDashboardUi) : GitFetch() {
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.text = message("action.Git.Fetch.title")
-      e.presentation.icon = AllIcons.Vcs.Fetch
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      ui.startLoadingBranches()
-      super.actionPerformed(e)
-    }
-
-    override fun onFetchFinished(project: Project, result: GitFetchResult) {
-      ui.stopLoadingBranches()
-    }
-  }
-
   class ToggleFavoriteAction : RefActionBase(text = messagePointer("action.Git.Toggle.Favorite.title"), icon = AllIcons.Nodes.Favorite) {
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
@@ -472,30 +458,29 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class ChangeBranchFilterAction : BooleanPropertyToggleAction() {
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
-      super.setSelected(e, state)
-      e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY] = false
+  internal abstract class SelectionHandlingModeAction(private val mode: BranchesDashboardTreeSelectionHandler.SelectionAction)
+    : ToggleAction(), DumbAware {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = e.getData(BRANCHES_UI_CONTROLLER) != null
+      super.update(e)
     }
 
-    override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
-  }
-
-  class NavigateLogToBranchAction : BooleanPropertyToggleAction() {
     override fun isSelected(e: AnActionEvent): Boolean {
-      return super.isSelected(e) &&
-             !e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]
+      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return false
+      return controller.selectionAction == mode
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      super.setSelected(e, state)
-      e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY] = false
+      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return
+      controller.selectionAction = if (state) mode else null
     }
-
-    override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY
-
-    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
+
+  class ChangeBranchFilterAction : SelectionHandlingModeAction(BranchesDashboardTreeSelectionHandler.SelectionAction.FILTER)
+
+  class NavigateLogToBranchAction : SelectionHandlingModeAction(BranchesDashboardTreeSelectionHandler.SelectionAction.NAVIGATE)
 
   class GroupingSettingsGroup : DefaultActionGroup(), DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread {
@@ -578,9 +563,11 @@ internal object BranchesDashboardActions {
     }
   }
 
-  abstract class RemoteActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String,
-                                  private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
-                                  icon: Icon? = null) :
+  abstract class RemoteActionBase(
+    text: () -> @Nls(capitalization = Nls.Capitalization.Title) String,
+    private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
+    icon: Icon? = null,
+  ) :
     DumbAwareAction(text, description, icon) {
 
     open fun update(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {}
@@ -632,9 +619,11 @@ internal object BranchesDashboardActions {
     open fun update(e: AnActionEvent, project: Project, refs: Collection<RefInfo>, selection: BranchesTreeSelection) {}
   }
 
-  abstract class BranchesActionBase(text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
-                                    private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
-                                    icon: Icon? = null) :
+  abstract class BranchesActionBase(
+    text: () -> @Nls(capitalization = Nls.Capitalization.Title) String = { "" },
+    private val description: () -> @Nls(capitalization = Nls.Capitalization.Sentence) String = { "" },
+    icon: Icon? = null,
+  ) :
     DumbAwareAction(text, description, icon) {
 
     override fun getActionUpdateThread(): ActionUpdateThread {

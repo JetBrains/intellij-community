@@ -1,0 +1,62 @@
+<idea-plugin package="com.intellij.platform.vcs.impl.frontend">
+  <projectListeners>
+  </projectListeners>
+  <dependencies>
+    <module name="intellij.platform.vcs.impl.shared"/>
+    <plugin id="com.intellij.platform.experimental.frontend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.vcs.impl.frontend.shelf.ShelveContentReplacer"/>
+  </extensions>
+  <actions>
+    <group id="Frontend.Shelve.KeymapGroup" searchable="false">
+      <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>
+    </group>
+
+    <group id="Frontend.ChangesView.GroupBy" icon="AllIcons.Actions.GroupBy" popup="true"
+           class="com.intellij.platform.vcs.impl.frontend.changes.actions.SelectChangesGroupingFrontendActionGroup">
+      <separator key="group.ChangesView.GroupBy.text"/>
+      <action class="com.intellij.platform.vcs.impl.frontend.changes.actions.GroupByDirectoryAction" id="Frontend.ChangesView.GroupBy.Directory"/>
+      <action class="com.intellij.platform.vcs.impl.frontend.changes.actions.GroupByModuleAction" id="Frontend.ChangesView.GroupBy.Module"/>
+      <action class="com.intellij.platform.vcs.impl.frontend.changes.actions.GroupByRepositoryAction" id="Frontend.ChangesView.GroupBy.Repository"/>
+      <add-to-group group-id="Vcs.KeymapGroup"/>
+    </group>
+
+    <group id="ShelvedChangesToolbarFrontend">
+      <action id="Frontend.ChangesView.UnshelveSilently" class="com.intellij.platform.vcs.impl.frontend.shelf.actions.UnshelveSilentlyAction"
+              icon="AllIcons.Vcs.UnshelveSilent">
+        <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
+      </action>
+      <group id="Frontend.ShelvedChangesToolbar.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy">
+        <reference ref="Frontend.ChangesView.GroupBy"/>
+        <separator key="separator.show"/>
+        <!--<action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"/>-->
+      </group>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+    </group>
+
+    <group id="ShelvedChangesPopupMenuFrontend" popup="true">
+      <action id="Frontend.ShelveChanges.UnshelveWithDialog" class="com.intellij.platform.vcs.impl.frontend.shelf.actions.UnshelveWithDialogAction"
+              icon="AllIcons.Vcs.Unshelve">
+      </action>
+      <action id="Frontend.ChangesView.Shelf.Restore" class="com.intellij.platform.vcs.impl.frontend.shelf.actions.RestoreShelfAction"/>
+      <action id="Frontend.ChangesView.ShowDiff" class="com.intellij.platform.vcs.impl.frontend.changes.actions.ShowDiffAction"
+              icon="AllIcons.Actions.Diff"
+              use-shortcut-of="Diff.ShowDiff"/>
+      <action id="Frontend.Vcs.ShowStandaloneDiff.window" class="com.intellij.platform.vcs.impl.frontend.shelf.actions.ShowDifInNewWindowAction" icon="AllIcons.Actions.Diff"/>
+      <action id="Frontend.Vcs.CompareWithLocal" class="com.intellij.platform.vcs.impl.frontend.shelf.actions.CompareWithLocalAction"/>
+      <action id="Frontend.ChangesView.Shelf.CreatePatchFromChanges" class="com.intellij.platform.vcs.impl.frontend.changes.actions.CreatePatchForShelvedChangeActionDialog"
+              icon="AllIcons.Vcs.Patch"/>
+      <action id="Frontend.ChangesView.Shelf.CreatePatchFromChanges.Clipboard" class="com.intellij.platform.vcs.impl.frontend.changes.actions.CreatePatchForShelvedChangeActionClipboard"
+              icon="AllIcons.Vcs.Patch"/>
+      <action id="Frontend.ChangesView.Shelf.ImportFromPatches" class="com.intellij.platform.vcs.impl.frontend.shelf.actions.ImportShelvesFromPatchesAction"/>
+      <separator/>
+      <action id="Frontend.ChangesView.Shelf.Rename" class="com.intellij.platform.vcs.impl.frontend.shelf.actions.RenameShelvedChangelistAction"/>
+      <action id="Frontend.Delete.Action" class="com.intellij.platform.vcs.impl.frontend.changes.actions.FrontendDeleteAction" use-shortcut-of="$Delete"/>
+      <separator/>
+    </group>
+    <action id="Frontend.EditSource" class="com.intellij.platform.vcs.impl.frontend.navigation.FrontendNavigateToSourceAction" use-shortcut-of="EditSource"/>
+  </actions>
+</idea-plugin>

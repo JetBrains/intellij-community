@@ -22,11 +22,11 @@ import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
 abstract class ChangeCorrector {
   private final int myLength1;
   private final int myLength2;
-  @NotNull private final FairDiffIterable myChanges;
+  private final @NotNull FairDiffIterable myChanges;
 
-  @NotNull protected final CancellationChecker myIndicator;
+  protected final @NotNull CancellationChecker myIndicator;
 
-  @NotNull protected final DiffIterableUtil.ChangeBuilder myBuilder;
+  protected final @NotNull DiffIterableUtil.ChangeBuilder myBuilder;
 
   ChangeCorrector(int length1,
                          int length2,
@@ -40,8 +40,7 @@ abstract class ChangeCorrector {
     myBuilder = new DiffIterableUtil.ChangeBuilder(length1, length2);
   }
 
-  @NotNull
-  public FairDiffIterable build() {
+  public @NotNull FairDiffIterable build() {
     execute();
     return fair(myBuilder.finish());
   }
@@ -83,10 +82,10 @@ abstract class ChangeCorrector {
   //
 
   public static class DefaultCharChangeCorrector extends ChangeCorrector {
-    @NotNull private final ByCharRt.CodePointsOffsets myCodePoints1;
-    @NotNull private final ByCharRt.CodePointsOffsets myCodePoints2;
-    @NotNull private final CharSequence myText1;
-    @NotNull private final CharSequence myText2;
+    private final @NotNull ByCharRt.CodePointsOffsets myCodePoints1;
+    private final @NotNull ByCharRt.CodePointsOffsets myCodePoints2;
+    private final @NotNull CharSequence myText1;
+    private final @NotNull CharSequence myText2;
 
     public DefaultCharChangeCorrector(@NotNull ByCharRt.CodePointsOffsets codePoints1,
                                       @NotNull ByCharRt.CodePointsOffsets codePoints2,
@@ -128,15 +127,15 @@ abstract class ChangeCorrector {
   }
 
   public static final class SmartLineChangeCorrector extends ChangeCorrector {
-    @NotNull private final IntList myIndexes1;
-    @NotNull private final IntList myIndexes2;
-    @NotNull private final List<? extends Line> myLines1;
-    @NotNull private final List<? extends Line> myLines2;
+    private final @NotNull IntList myIndexes1;
+    private final @NotNull IntList myIndexes2;
+    private final @NotNull List<Line> myLines1;
+    private final @NotNull List<Line> myLines2;
 
     public SmartLineChangeCorrector(@NotNull IntList indexes1,
                                     @NotNull IntList indexes2,
-                                    @NotNull List<? extends Line> lines1,
-                                    @NotNull List<? extends Line> lines2,
+                                    @NotNull List<Line> lines1,
+                                    @NotNull List<Line> lines2,
                                     @NotNull FairDiffIterable changes,
                                     @NotNull CancellationChecker indicator) {
       super(lines1.size(), lines2.size(), changes, indicator);
@@ -150,8 +149,8 @@ abstract class ChangeCorrector {
     protected void matchGap(int start1, int end1, int start2, int end2) {
       Range expand = expand(myLines1, myLines2, start1, start2, end1, end2);
 
-      List<? extends Line> inner1 = myLines1.subList(expand.start1, expand.end1);
-      List<? extends Line> inner2 = myLines2.subList(expand.start2, expand.end2);
+      List<Line> inner1 = myLines1.subList(expand.start1, expand.end1);
+      List<Line> inner2 = myLines2.subList(expand.start2, expand.end2);
       FairDiffIterable innerChanges = diff(inner1, inner2, myIndicator);
 
       myBuilder.markEqual(start1, start2, expand.start1, expand.start2);

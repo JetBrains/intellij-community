@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor.Simple {
-  @NotNull private final DiffRequestChain myRequestChain;
+  private final @NotNull DiffRequestChain myRequestChain;
   private int myIndex;
 
   public CacheDiffRequestChainProcessor(@Nullable Project project, @NotNull DiffRequestChain requestChain) {
@@ -53,8 +53,7 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor.Si
   // Getters
   //
 
-  @NotNull
-  public DiffRequestChain getRequestChain() {
+  public @NotNull DiffRequestChain getRequestChain() {
     return myRequestChain;
   }
 

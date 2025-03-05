@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.Operation.FlatMapOperation;
@@ -64,8 +64,7 @@ class StreamToLoopReplacementContext extends ChainContext {
     myCommentTracker.markUnchanged(element);
   }
 
-  @Nullable
-  private String allocateLabel() {
+  private @Nullable String allocateLabel() {
     if (!myHasNestedLoops) return null;
     if (myLabel == null) {
       String base = StringUtil.toUpperCase(mySuffix);
@@ -291,8 +290,7 @@ class StreamToLoopReplacementContext extends ChainContext {
     return condition;
   }
 
-  @NotNull
-  private ConditionalExpression tryUnwrapOptional(ConditionalExpression.Optional condition, boolean unwrapLazilyEvaluated) {
+  private @NotNull ConditionalExpression tryUnwrapOptional(ConditionalExpression.Optional condition, boolean unwrapLazilyEvaluated) {
     if (myChainExpression instanceof PsiExpression) {
       PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)myChainExpression);
       if (call != null && !(call.getParent() instanceof PsiExpressionStatement)) {

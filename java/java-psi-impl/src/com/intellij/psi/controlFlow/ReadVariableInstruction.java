@@ -11,6 +11,7 @@ public final class ReadVariableInstruction extends SimpleInstruction {
     this.variable = variable;
   }
 
+  @Override
   public String toString() {
     return "READ " + variable.getName();
   }

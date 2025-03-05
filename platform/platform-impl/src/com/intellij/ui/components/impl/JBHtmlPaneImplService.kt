@@ -10,12 +10,18 @@ import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.util.ui.CSSFontResolver
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Component
 import java.awt.Image
 import java.net.URL
 import java.util.*
+import javax.swing.JComponent
+import javax.swing.text.ComponentView
+import javax.swing.text.LabelView
+import javax.swing.text.View
+import javax.swing.text.html.BlockView
 import javax.swing.text.html.StyleSheet
 
-internal class JBHtmlPaneImplService: JBHtmlPane.ImplService {
+internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
 
   override fun transpileHtmlPaneInput(@Nls text: String): @Nls String =
     JBHtmlPaneInputTranspiler.transpileHtmlPaneInput(text)
@@ -23,13 +29,63 @@ internal class JBHtmlPaneImplService: JBHtmlPane.ImplService {
   override fun defaultEditorCssFontResolver(): CSSFontResolver =
     EditorCssFontResolver.getGlobalInstance()
 
-  override fun getDefaultStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
-    ApplicationManager.getApplication().service<JBHtmlPaneStyleSheetRulesProvider>().getStyleSheet(paneBackgroundColor, configuration)
+  override fun getDefaultStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, baseFontSize: Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
+    ApplicationManager.getApplication().service<JBHtmlPaneStyleSheetRulesProvider>().getStyleSheet(paneBackgroundColor, scaleFactor, baseFontSize, configuration)
 
   override fun getEditorColorsSchemeStyleSheet(editorColorsScheme: EditorColorsScheme): StyleSheet =
     EditorColorsSchemeStyleSheet(editorColorsScheme)
 
   override fun createDefaultImageResolver(pane: JBHtmlPane): Dictionary<URL, Image> =
     JBHtmlPaneImageResolver(pane, null)
+
+  override fun applyCssToView(pane: JBHtmlPane) {
+    visitViews(pane.ui.getRootView(pane)) { childView ->
+      when (childView) {
+        is BlockView -> blockViewSetPropertiesFromAttributesMethod.invoke(childView)
+        is LabelView -> labelViewSetPropertiesFromAttributesMethod.invoke(childView)
+      }
+    }
+  }
+
+  override fun ensureEditableViewsAreNotFocusable(pane: JBHtmlPane) {
+    visitViews(pane.ui.getRootView(pane)) { childView ->
+      when (childView) {
+        is ComponentView ->
+          if (childView.javaClass.name.let {
+              it.startsWith("javax.swing.text.html.")
+              && (it.endsWith("html.EditableView") || it.endsWith("html.HiddenTagView") || it.endsWith("html.CommentView"))
+            }) {
+            val components = mutableListOf<Component?>(childView.component)
+            while (components.isNotEmpty()) {
+              val component = components.removeLast()
+              component?.isFocusable = false
+              if (component is JComponent)
+                components.addAll(component.components)
+            }
+          }
+      }
+    }
+  }
+
+  private fun visitViews(view: View, visitor: (View) -> Unit) {
+    for (i in 0..<view.viewCount) {
+      view.getView(i)?.let {
+        visitViews(it, visitor)
+      }
+    }
+    visitor(view)
+  }
+
+  private val blockViewSetPropertiesFromAttributesMethod by lazy {
+    BlockView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
+      it.isAccessible = true
+    }
+  }
+
+  private val labelViewSetPropertiesFromAttributesMethod by lazy {
+    LabelView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
+      it.isAccessible = true
+    }
+  }
 
 }

@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DirectoryContentSpec;
@@ -125,7 +126,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   protected static String getJUnitJarPath() {
     final File file = new File(assertOneElement(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3")));
     assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
-    return FileUtil.toSystemIndependentName(file.getAbsolutePath());
+    return FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
   }
 
   protected static void assertEmptyOutput(JpsArtifact a) {

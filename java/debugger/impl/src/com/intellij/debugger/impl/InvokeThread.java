@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -11,20 +12,24 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class InvokeThread<E extends PrioritizedTask> {
   private static final Logger LOG = Logger.getInstance(InvokeThread.class);
 
   private static final ThreadLocal<WorkerThreadRequest<?>> ourWorkerRequest = new ThreadLocal<>();
+  private static final AtomicInteger ourWorkerCounter = new AtomicInteger(1);
 
   public static final class WorkerThreadRequest<E extends PrioritizedTask> implements Runnable {
     private final InvokeThread<E> myOwner;
     private final ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
     private volatile Future<?> myRequestFuture;
+    private final int myId = ourWorkerCounter.getAndIncrement();
 
     WorkerThreadRequest(InvokeThread<E> owner) {
       myOwner = owner;
@@ -66,6 +71,11 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       return myProgressIndicator.isCanceled() || future.isCancelled() || future.isDone();
     }
 
+    @ApiStatus.Internal
+    public @NotNull ProgressIndicator getProgressIndicator() {
+      return myProgressIndicator;
+    }
+
     public void join() throws InterruptedException, ExecutionException {
       assert myRequestFuture != null;
       try {
@@ -99,6 +109,11 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       assert myRequestFuture != null;
       return myRequestFuture.isDone() && ourWorkerRequest.get() == null;
     }
+
+    @Override
+    public String toString() {
+      return String.valueOf(myId);
+    }
   }
 
   protected final EventQueue<E> myEvents;
@@ -113,9 +128,31 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   protected abstract void processEvent(@NotNull E e);
 
   protected void startNewWorkerThread() {
+    assertCurrentThreadIsActive();
+
     final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this);
+    WorkerThreadRequest<E> oldRequest = myCurrentRequest; // just for logging
     myCurrentRequest = workerRequest;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Started new worker thread request " + workerRequest + ", was " + oldRequest);
+    }
     workerRequest.setRequestFuture(ApplicationManager.getApplication().executeOnPooledThread(workerRequest));
+  }
+
+  protected static boolean assertCurrentThreadIsActive() {
+    InvokeThread<?> thread = currentThread();
+    if (thread == null) {
+      return true;
+    }
+    WorkerThreadRequest<?> currentRequest = thread.getCurrentRequest();
+    WorkerThreadRequest<?> threadRequest = getCurrentThreadRequest();
+    if (currentRequest != threadRequest) {
+      String message =
+        "Expected worker request " + threadRequest + " instead of " + currentRequest + " closed=" + thread.myEvents.isClosed();
+      LOG.error(message, new IllegalStateException(message));
+      return false;
+    }
+    return true;
   }
 
   // Extracted to have a separate method for @Async.Execute
@@ -132,11 +169,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
               break;
             }
 
-            final WorkerThreadRequest<E> currentRequest = getCurrentRequest();
-            if (currentRequest != threadRequest) {
-              String message = "Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed();
-              LOG.error(message, new IllegalStateException(message), ThreadDumper.dumpThreadsToString());
-              break; // ensure events are processed by one thread at a time
+            if (!assertCurrentThreadIsActive()) {
+              break;
             }
 
             doProcessEvent(myEvents.get());
@@ -170,7 +204,9 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
         processRemaining();
       }
 
-      LOG.debug("Request " + this + " exited");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Request " + threadRequest + " exited");
+      }
     }
   }
 
@@ -202,6 +238,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     if (LOG.isDebugEnabled()) {
       LOG.debug("schedule " + r + " in " + this);
     }
+    setCommandManagerThread(r);
     return myEvents.put(r, r.getPriority().ordinal());
   }
 
@@ -209,7 +246,15 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pushBack " + r + " in " + this);
     }
+    setCommandManagerThread(r);
     return myEvents.pushBack(r, r.getPriority().ordinal());
+  }
+
+  @ApiStatus.Internal
+  public void setCommandManagerThread(E event) {
+    if (event instanceof DebuggerCommandImpl command) {
+      command.setCommandManagerThread$intellij_java_debugger_impl((DebuggerManagerThreadImpl)this);
+    }
   }
 
   protected void switchToRequest(WorkerThreadRequest newRequest) {
@@ -217,7 +262,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     LOG.assertTrue(currentThreadRequest != null);
     myCurrentRequest = newRequest;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Closing " + currentThreadRequest + " new request = " + newRequest);
+      LOG.debug("Switched current request from " + currentThreadRequest + " to " + newRequest);
     }
 
     currentThreadRequest.requestStop();

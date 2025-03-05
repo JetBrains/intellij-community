@@ -1,0 +1,14 @@
+<html>
+<body>
+Reports redundant initializers for local variables.
+<p><b>Example:</b></p>
+<pre><code>
+  fun example() {
+      var local = 42 // Initializer is redundant
+      local = 0
+      println(local)
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

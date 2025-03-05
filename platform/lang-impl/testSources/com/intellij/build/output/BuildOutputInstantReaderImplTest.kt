@@ -134,7 +134,7 @@ class BuildOutputInstantReaderImplTest {
     val lines = (0..5).map(::line)
     val outputReader = BuildOutputInstantReaderImpl(Object(), Object(), BuildProgressListener { _, _ -> }, listOf(slowParser), 0, 1)
     lines.forEach {
-      outputReader.appendln(it)
+      outputReader.appendLine(it)
       eventLog += it.appended()
     }
     outputReader.closeAndGetFuture().get()

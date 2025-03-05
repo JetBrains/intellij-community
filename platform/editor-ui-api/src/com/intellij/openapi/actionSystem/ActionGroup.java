@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -27,6 +28,9 @@ public abstract class ActionGroup extends AnAction {
       return EMPTY_ARRAY;
     }
   };
+
+  @ApiStatus.Internal
+  public static final DataKey<ActionGroup> CONTEXT_ACTION_GROUP_KEY = DataKey.create("context.action.group");
 
   private boolean mySearchable = true;
   private Set<AnAction> mySecondaryActions;
@@ -144,7 +148,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Allows the group to intercept and transform its expanded visible children.
    */
-  public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
+  public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
     @NotNull AnActionEvent e,
     @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     return Collections.unmodifiableList(visibleChildren);

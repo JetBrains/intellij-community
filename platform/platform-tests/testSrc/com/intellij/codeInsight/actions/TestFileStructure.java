@@ -51,7 +51,7 @@ public class TestFileStructure {
 
   @NotNull
   public PsiFile addTestFile(@NotNull String name, @NotNull String content) {
-    PsiFile createdFile = null;
+    PsiFile createdFile;
     try {
       createdFile = createFile(myModule, myCurrentLevelDirectory.getVirtualFile(), name, content);
     }

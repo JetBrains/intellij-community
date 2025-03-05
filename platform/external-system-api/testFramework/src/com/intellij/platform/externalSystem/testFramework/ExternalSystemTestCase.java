@@ -46,8 +46,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
@@ -258,8 +258,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return myProjectRoot.getParent().getPath();
   }
 
-  @SystemIndependent
-  protected String path(@NotNull String relativePath) {
+  protected @SystemIndependent String path(@NotNull String relativePath) {
     return toSystemIndependentName(file(relativePath).getPath());
   }
 
@@ -327,8 +326,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
   }
 
-  @NotNull
-  protected VirtualFile createProjectJarSubFile(String relativePath, Pair<ByteArraySequence, String>... contentEntries) throws IOException {
+  protected @NotNull VirtualFile createProjectJarSubFile(String relativePath, Pair<ByteArraySequence, String>... contentEntries) throws IOException {
     assertTrue("Use 'jar' extension for JAR files: '" + relativePath + "'", FileUtilRt.extensionEquals(relativePath, "jar"));
     File f = new File(getProjectPath(), relativePath);
     FileUtil.ensureExists(f.getParentFile());
@@ -475,9 +473,8 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       return myDelegate.contains(o);
     }
 
-    @NotNull
     @Override
-    public Iterator<T> iterator() {
+    public @NotNull Iterator<T> iterator() {
       return myDelegate.iterator();
     }
 

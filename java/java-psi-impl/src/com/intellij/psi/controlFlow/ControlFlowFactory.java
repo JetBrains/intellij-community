@@ -44,6 +44,16 @@ public final class ControlFlowFactory implements Disposable {
     registerControlFlow(codeFragment, flow, options, policy);
   }
 
+  /**
+   * @param body body element to compute control flow for
+   * @return control flow where constants are not evaluated (e.g., unreachable code due to always false loop condition is still present)
+   * @throws AnalysisCanceledException if control flow cannot be built (e.g., syntax error inside the body)
+   */
+  public static @NotNull ControlFlow getControlFlowNoConstantEvaluate(@NotNull PsiElement body) throws AnalysisCanceledException {
+    LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+    return getControlFlow(body, policy, ControlFlowOptions.NO_CONST_EVALUATE);
+  }
+
   private static final class ControlFlowContext {
     private final ControlFlowPolicy policy;
     private final @NotNull ControlFlowOptions options;

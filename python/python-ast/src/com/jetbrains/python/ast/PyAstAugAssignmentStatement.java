@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface PyAstAugAssignmentStatement extends PyAstStatement {
-  @NotNull
-  default PyAstExpression getTarget() {
+  default @NotNull PyAstExpression getTarget() {
     final PyAstExpression target = childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
     if (target == null) {
       throw new RuntimeException("Target missing in augmented assignment statement");
@@ -21,13 +20,11 @@ public interface PyAstAugAssignmentStatement extends PyAstStatement {
     return target;
   }
 
-  @Nullable
-  default PyAstExpression getValue() {
+  default @Nullable PyAstExpression getValue() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
-  @Nullable
-  default PsiElement getOperation() {
+  default @Nullable PsiElement getOperation() {
     return PyPsiUtilsCore.getChildByFilter(this, PyTokenTypes.AUG_ASSIGN_OPERATIONS, 0);
   }
 

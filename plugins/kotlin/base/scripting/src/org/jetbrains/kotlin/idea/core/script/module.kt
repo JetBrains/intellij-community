@@ -13,20 +13,20 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptDependenciesData
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import java.nio.file.Path
 import kotlin.script.experimental.api.valueOrNull
 
-const val KOTLIN_SCRIPTS_MODULE_NAME = "Kotlin Scripts"
+const val KOTLIN_SCRIPTS_MODULE_NAME: String = "kotlin.scripts"
 
 open class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?) : EntitySource
 
 @ApiStatus.Internal
 fun getUpdatedStorage(
     project: Project,
-    dependenciesData: ScriptDependenciesData,
+    configurationsData: Map<VirtualFile, ScriptConfigurationWithSdk>,
     entitySourceSupplier: (virtualFileUrl: VirtualFileUrl) -> KotlinScriptEntitySource,
 ): MutableEntityStorage {
     val updatedStorage = MutableEntityStorage.create()
@@ -36,8 +36,8 @@ fun getUpdatedStorage(
     val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val updatedFactory = LibraryDependencyFactory(fileUrlManager, updatedStorage)
 
-    for ((scriptFile, configurationWrapper) in dependenciesData.configurations) {
-        val configuration = configurationWrapper.valueOrNull() ?: continue
+    for ((scriptFile, configurationWithSdk) in configurationsData) {
+        val configuration = configurationWithSdk.scriptConfiguration.valueOrNull() ?: continue
         val source = entitySourceSupplier(scriptFile.toVirtualFileUrl(fileUrlManager))
 
         val basePath = projectPath.toFile()
@@ -50,12 +50,9 @@ fun getUpdatedStorage(
         val locationName = relativeLocation.replace(VfsUtilCore.VFS_SEPARATOR_CHAR, ':')
         val moduleName = "$definitionScriptModuleName.$locationName"
 
-        val sdkDependency =
-            configuration.javaHome?.toPath()
-                ?.let { dependenciesData.sdks[it] }
-                ?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
+        val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
-        val libraryDependencies = toVfsRoots(configuration.dependenciesClassPath)
+        val libraryDependencies = toVfsRoots(configuration.dependenciesClassPath).sortedBy { it.name }
             .map { updatedFactory.get(it, source) }
 
         val allDependencies = listOfNotNull(sdkDependency) + libraryDependencies

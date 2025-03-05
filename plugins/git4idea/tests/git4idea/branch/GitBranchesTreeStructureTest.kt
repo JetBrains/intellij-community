@@ -1,21 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.testFramework.LightVirtualFile
-import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchesTreeTestContext.Companion.NOT_ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.ORIGIN
-import git4idea.branch.GitBranchesTreeTestContext.Companion.ORIGIN_URLS
 import git4idea.branch.GitBranchesTreeTestContext.Companion.branchInfo
 import git4idea.branch.GitBranchesTreeTestContext.Companion.tagInfo
-import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.test.MockGitRepository
-import git4idea.ui.branch.dashboard.BranchInfo
-import git4idea.ui.branch.dashboard.TagInfo
 
 class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
   private lateinit var repo1: GitRepository
@@ -135,20 +131,22 @@ class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
       expanded = true,
     )
 
+    val repo1Name = DvcsUtil.getShortRepositoryName(repo1)
+    val repo2Name = DvcsUtil.getShortRepositoryName(repo2)
     assertTree("""
       |-ROOT
       | HEAD
       | -LOCAL
-      |  -REPO:/repo-1
+      |  -REPO:$repo1Name
       |   BRANCH:main
       | -REMOTE
-      |  -REPO:/repo-1
+      |  -REPO:$repo1Name
       |   BRANCH:not-origin/a-branch
-      |  -REPO:/repo-2
+      |  -REPO:$repo2Name
       |   BRANCH:not-origin/a-branch
       |   BRANCH:origin/a-branch
       | -TAG
-      |  -REPO:/repo-2
+      |  -REPO:$repo2Name
       |   TAG:tag
     """.trimMargin())
   }

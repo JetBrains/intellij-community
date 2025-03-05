@@ -3,22 +3,13 @@ package org.jetbrains.kotlin.idea.base.codeInsight.tooling
 
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.facet.externalSystemNativeMainRunTasks
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import org.jetbrains.kotlin.idea.testIntegration.genericKotlinTestUrls
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import javax.swing.Icon
 
 interface KotlinNativeRunConfigurationProvider {
     val isForTests: Boolean

@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -127,8 +128,8 @@ public final class AdjustWhiteSpacesState extends State {
     return myAlignmentsInsideRangesToModify.contains(alignment);
   }
 
-  private static List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
-                                                                                final WhiteSpace whiteSpace) {
+  private static @Unmodifiable List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
+                                                                                              final WhiteSpace whiteSpace) {
     if (!(spaceProperty instanceof DependantSpacingImpl spacing)) return ContainerUtil.emptyList();
 
     if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return ContainerUtil.emptyList();

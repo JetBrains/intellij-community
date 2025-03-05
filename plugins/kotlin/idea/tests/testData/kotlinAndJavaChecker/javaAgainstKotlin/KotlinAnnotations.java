@@ -1,17 +1,17 @@
 class KotlinAnnotations {
 
-    @<error descr="'d' missing though required">k.Anno1</error>()
-    @<error descr="'c', 'g' missing though required">k.Anno2</error>()
+    @<error descr="'d' missing but required">k.Anno1</error>()
+    @<error descr="'c', 'g' missing but required">k.Anno2</error>()
     public static void m1() {
     }
 
-    @<error descr="'d' missing though required">k.Anno1</error>(c = 3)
-    @<error descr="'g' missing though required">k.Anno2</error>(c = 3)
+    @<error descr="'d' missing but required">k.Anno1</error>(c = 3)
+    @<error descr="'g' missing but required">k.Anno2</error>(c = 3)
     public static void m2() {
     }
 
     @k.Anno1(d = 5)
-    @<error descr="'c' missing though required">k.Anno2</error>(g = "asdas")
+    @<error descr="'c' missing but required">k.Anno2</error>(g = "asdas")
     public static void m3() {
     }
 

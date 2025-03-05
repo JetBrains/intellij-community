@@ -27,8 +27,7 @@ import java.util.Set;
 public final class CallToNativeMethodWhileLockedInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "call.to.native.method.while.locked.problem.descriptor");
   }

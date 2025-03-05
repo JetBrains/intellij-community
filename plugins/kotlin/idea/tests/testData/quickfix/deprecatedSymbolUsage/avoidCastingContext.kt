@@ -1,0 +1,12 @@
+// "Replace with 'lowercase(Locale.getDefault())'" "true"
+// WITH_STDLIB
+
+fun m(s: String?) {
+    val string = s?.toLower<caret>Case()
+}
+
+@Deprecated("", ReplaceWith("lowercase(Locale.getDefault())", "java.util.Locale"))
+fun String.toLowerCase(): String = (this as java.lang.String).toLowerCase()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

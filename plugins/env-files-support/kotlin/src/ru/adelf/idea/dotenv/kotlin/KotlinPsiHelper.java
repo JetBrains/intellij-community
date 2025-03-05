@@ -13,7 +13,7 @@ import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import java.util.Arrays;
 import java.util.List;
 
-class KotlinPsiHelper {
+final class KotlinPsiHelper {
     /**
      * Checks that this element environment string
      *
@@ -90,8 +90,7 @@ class KotlinPsiHelper {
         return checkReferences(methodCallExpression.getCalleeExpression(), classNames);
     }
 
-    @Nullable
-    static KeyUsagePsiElement getKeyUsageFromCall(@NotNull KtCallExpression expression) {
+    static @Nullable KeyUsagePsiElement getKeyUsageFromCall(@NotNull KtCallExpression expression) {
         if (!isEnvMethodCall(expression)) {
             return null;
         }
@@ -127,8 +126,7 @@ class KotlinPsiHelper {
         return checkReferences(arrayAccess, classNames);
     }
 
-    @Nullable
-    static KeyUsagePsiElement getKeyUsageFromArrayAccess(@NotNull KtArrayAccessExpression expression) {
+    static @Nullable KeyUsagePsiElement getKeyUsageFromArrayAccess(@NotNull KtArrayAccessExpression expression) {
         if (!isEnvArrayAccess(expression)) {
             return null;
         }
@@ -142,8 +140,7 @@ class KotlinPsiHelper {
         return getKeyUsageFromStringTemplate(indexExpressions.get(0));
     }
 
-    @Nullable
-    private static KeyUsagePsiElement getKeyUsageFromStringTemplate(PsiElement element) {
+    private static @Nullable KeyUsagePsiElement getKeyUsageFromStringTemplate(PsiElement element) {
         if (!(element instanceof KtStringTemplateExpression)) {
             return null;
         }

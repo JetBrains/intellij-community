@@ -43,15 +43,13 @@ final class OptionsImpl implements Options, JDOMExternalizable {
   private final EditorOptions editorOptions = new EditorOptionsImpl(propertyChangeSupport);
   private final ExternalEditorOptions externalEditorOptions = new ExternalEditorOptionsImpl(propertyChangeSupport);
 
-  @NotNull
   @Override
-  public EditorOptions getEditorOptions() {
+  public @NotNull EditorOptions getEditorOptions() {
     return editorOptions;
   }
 
-  @NotNull
   @Override
-  public ExternalEditorOptions getExternalEditorOptions() {
+  public @NotNull ExternalEditorOptions getExternalEditorOptions() {
     return externalEditorOptions;
   }
 

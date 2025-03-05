@@ -37,7 +37,7 @@ class ProgressEventConverter {
         InternalTaskSuccessResult(startTime, endTime, isUpToDate, isFromCache, taskExecutionDetails())
       }
       is TaskFailureResult -> return result.run {
-        InternalTaskFailureResult(startTime, endTime, failures?.map<Failure?, Failure?>(::convert), taskExecutionDetails())
+        InternalTaskFailureResult(startTime, endTime, failures?.map<Failure?, Failure?>(::toInternalFailure), taskExecutionDetails())
       }
       is TaskSkippedResult -> return result.run { InternalTaskSkippedResult(startTime, endTime, skipMessage) }
       else -> throw IllegalArgumentException("Unsupported task operation result ${result.javaClass}")
@@ -49,7 +49,7 @@ class ProgressEventConverter {
       null -> return null
       is TestSuccessResult -> return result.run { InternalTestSuccessResult(startTime, endTime) }
       is TestSkippedResult -> return result.run { InternalTestSkippedResult(startTime, endTime) }
-      is TestFailureResult -> return result.run { InternalTestFailureResult(startTime, endTime, failures?.map<Failure?, Failure?>(::convert)) }
+      is TestFailureResult -> return result.run { InternalTestFailureResult(startTime, endTime, failures?.map<Failure?, Failure?>(::toInternalFailure)) }
       else -> throw IllegalArgumentException("Unsupported test operation result ${result.javaClass}")
     }
   }
@@ -59,7 +59,7 @@ class ProgressEventConverter {
       null -> return null
       is SuccessResult -> return result.run { InternalOperationSuccessResult(startTime, endTime) }
       is FailureResult -> return result.run {
-        InternalOperationFailureResult(startTime, endTime, failures?.map<Failure?, Failure?>(::convert))
+        InternalOperationFailureResult(startTime, endTime, failures?.map<Failure?, Failure?>(::toInternalFailure))
       }
       else -> throw IllegalArgumentException("Unsupported operation result ${result.javaClass}")
     }
@@ -70,10 +70,6 @@ class ProgressEventConverter {
   }
   catch (e: UnsupportedMethodException) {
     InternalTaskExecutionDetails.unsupported()
-  }
-
-  private fun convert(failure: Failure?): InternalFailure? {
-    return failure?.run { InternalFailure(message, description, causes?.map<Failure?, InternalFailure?>(::convert)) }
   }
 
   private fun convert(operationDescriptor: OperationDescriptor?): InternalOperationDescriptor? {

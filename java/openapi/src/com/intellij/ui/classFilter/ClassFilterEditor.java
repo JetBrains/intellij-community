@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class ClassFilterEditor
@@ -46,8 +46,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   protected FilterTableModel myTableModel;
   protected final Project myProject;
   private final ClassFilter myChooserFilter;
-  @Nullable
-  private final String myPatternsHelpId;
+  private final @Nullable String myPatternsHelpId;
   private String classDelimiter = "$";
 
   public ClassFilterEditor(Project project) {
@@ -151,9 +150,8 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myTable.getEmptyText();
   }
 
@@ -339,8 +337,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
   }
 
-  @NotNull
-  protected com.intellij.ui.classFilter.ClassFilter createFilter(String pattern) {
+  protected @NotNull com.intellij.ui.classFilter.ClassFilter createFilter(String pattern) {
     return new com.intellij.ui.classFilter.ClassFilter(pattern);
   }
 
@@ -376,8 +373,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     }
   }
 
-  @Nullable
-  private String getJvmClassName(PsiClass aClass) {
+  private @Nullable String getJvmClassName(PsiClass aClass) {
     PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     if (parentClass != null) {
       final String parentName = getJvmClassName(parentClass);

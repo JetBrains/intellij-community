@@ -26,6 +26,7 @@ import java.util.List;
 public class CompositeFilterTest extends LightPlatformTestCase {
   private CompositeFilter myCompositeFilter;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myCompositeFilter = new CompositeFilter(new MockDumbService(null));

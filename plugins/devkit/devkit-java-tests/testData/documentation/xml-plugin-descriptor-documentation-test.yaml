@@ -1,0 +1,217 @@
+baseUrl: https://example.com/docs/my-page.html
+elements:
+  - element:
+      name: root
+      requirement:
+        required: yes
+      #language=Markdown
+      description: The <path>test.xml</path> file root element. A link to an [`attribute`](#attribute:root__firstLevelChild2__child-attribute-2).
+      attributes:
+        - attribute:
+            name: first-attribute
+            requirement:
+              required: no
+              #language=Markdown
+              details:
+                - &ignoredInAdditionalPluginXml |
+                  additional details with an alias
+            #language=Markdown
+            description: |
+              The `first-attribute` description.
+        - attribute:
+            name: secondAttribute
+            requirement:
+              required: no
+            #language=Markdown
+            defaultValue: |
+              `false`
+            #language=Markdown
+            description: |
+              The `secondAttribute` description. And a [link](https://example.com).
+      children:
+        - element:
+            name: first-level-child-1
+            #language=Markdown
+            description: |
+              The `first-level-child-1` description.
+              
+              > Some warning about `first-level-child-1`.
+              >
+              {style="warning"}
+            requirement:
+              required: no
+              #language=Markdown
+              details:
+                - *ignoredInAdditionalPluginXml
+                - |
+                  **Additional detail about `first-level-child-1`.**
+            #language=Markdown
+            defaultValue: Value of the [`<name>`](#element:idea-plugin__name) element. See <ui-path>UI Path</ui-path>.
+            #language=Markdown
+            examples:
+              - |
+                An example description 2:
+                    ```xml
+                    <first-level-child>any1</first-level-child>
+                    ```
+              - |
+                An example description 1:
+                ```xml
+                <first-level-child>any2</first-level-child>
+                ```
+            children:
+              - element: &root_firstLevelChild_secondLevelChild
+                  name: second-level-child
+                  #language=Markdown
+                  description: |
+                    A description with an [external link](https://example.com/a-page).
+                    A link to an [internal doc page](#section-a).
+                  requirement:
+                    required: yes
+        - element:
+            name: firstLevelChild2
+            since: 2021.2
+            #language=Markdown
+            description: |
+              The `secondLevelChild2` description.
+              A link to [`first-attribute`](#attribute:root__first-attribute).
+            requirement:
+              required: no
+            #language=Markdown
+            defaultValue: Value of the [`<first-level-child1>`](#element:root__first-level-child) element.
+            attributes:
+              - attribute:
+                  name: child-attribute-1
+                  requirement:
+                    required: yes
+                  #language=Markdown
+                  description: &testAttributeAnchor | 
+                    A `child-attribute` description. A link to [`<root>`](#element:root).
+                    
+                    > Callout here.
+                    > 
+                    {style="warning"}
+              - attribute:
+                  name: child-attribute-2
+                  requirement:
+                    required: no
+                  #language=Markdown
+                  description: *testAttributeAnchor
+            #language=Markdown
+            examples:
+              - |
+                ```xml
+                <first-level-child>any</first-level-child>
+                ```
+            containsItself: true
+            children:
+              - element:
+                  name: second-level-child-1
+                  #language=Markdown
+                  description: any
+                  requirement:
+                    required: no
+              - element: *root_firstLevelChild_secondLevelChild
+        - element:
+            name: deprecatedElement
+            deprecatedSince: 2020.1
+            deprecationNote: |
+              Do not use it in new plugins.
+              See [Components](https://example.com) for the migration guide.
+            #language=Markdown
+            description: |
+              The `deprecatedElement` description.
+            requirement:
+              required: no
+        - element:
+            name: elementWithDeprecatedAttribute
+            #language=Markdown
+            description: |
+              The `elementWithDeprecatedAttribute` description.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: deprecated-attribute
+                  #language=Markdown
+                  description: The `deprecated-attribute` description.
+                  deprecatedSince: "2005.1"
+                  #language=Markdown
+                  deprecationNote: Use [`new-attribute`](#attribute:root__elementWithDeprecatedAttribute__new-attribute) instead.
+              - attribute:
+                  name: new-attribute
+                  #language=Markdown
+                  description: The `new-attribute` description.
+        - element:
+            name: elementWithCallouts
+            #language=Markdown
+            description: |
+              Dummy text 1.
+              
+              > This is a 1st callout without style.
+              
+              Dummy text 2.
+              
+              > This is a 2nd callout - note.
+              > Checking multiline.
+              >
+              {style="warning"}
+              
+              
+              Dummy text 3.
+              
+              > This is a 3rd callout - warning.
+              >
+              > New paragraph.
+              >
+              {style="warning"}
+              
+              Dummy text 4.
+              
+              > This is a 4th callout - warning with a custom title at the end.
+              >
+              > New paragraph.
+              >
+              {style="warning" title="Custom Title"}
+              
+              Dummy text 5.
+              
+              > This is a 5th callout - warning with a custom title at the start.
+              >
+              > New paragraph.
+              >
+              {title="Custom Title" style="warning"}
+              
+              Dummy text 6.
+              
+              > This is a 6th callout - the implicit tip style and a custom title.
+              >
+              > New paragraph.
+              >
+              {title="Custom Title"}
+            requirement:
+              required: no
+        - element:
+            name: elementWithChildrenDescription
+            description: any
+            childrenDescription: Test children description.
+            # should not be rendered
+            children:
+              - element:
+                  name: child1
+              - element:
+                  name: child2
+        - element:
+            name: "*"
+            attributes:
+              - attribute:
+                  name: attributeUnderWildcard
+                  description: Description of `attributeUnderWildcard`.
+            children:
+              - element:
+                  name: childUnderWildcard
+                  description: Description of `childUnderWildcard`.
+                  attributes:
+                    - attribute:
+                        name: attributeOfElementUnderWildcard
+                        description: Description of `attributeOfElementUnderWildcard`.

@@ -26,8 +26,7 @@ public final class JarFileSerializer {
   private static final Attributes.Name BOOTSTRAP_MODULE_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Module-Name");
   private static final Attributes.Name BOOTSTRAP_CLASSPATH_ATTRIBUTE_NAME = new Attributes.Name("Bootstrap-Class-Path");
 
-  @NotNull
-  public static RawRuntimeModuleRepositoryData loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
+  public static @NotNull RawRuntimeModuleRepositoryData loadFromJar(@NotNull Path jarPath) throws IOException, XMLStreamException {
     Map<String, RawRuntimeModuleDescriptor> rawData = new HashMap<>();
     String mainPluginModuleId;
     try (JarInputStream input = new JarInputStream(new BufferedInputStream(Files.newInputStream(jarPath)))) {

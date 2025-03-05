@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.facet.Facet;
@@ -43,8 +43,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  @NotNull
-  public ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
+  public @NotNull ModifiableArtifactModel getOrCreateModifiableArtifactModel() {
     return myParent.getOrCreateModifiableArtifactModel();
   }
 
@@ -54,8 +53,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  @NotNull
-  public ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module) {
+  public @NotNull ModifiableRootModel getOrCreateModifiableRootModel(@NotNull Module module) {
     return myParent.getOrCreateModifiableRootModel(module);
   }
 
@@ -65,8 +63,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myParent.getProject();
   }
 
@@ -137,20 +134,17 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
 
 
   @Override
-  @NotNull
-  public ArtifactModel getArtifactModel() {
+  public @NotNull ArtifactModel getArtifactModel() {
     return myParent.getArtifactModel();
   }
 
   @Override
-  @NotNull
-  public ModulesProvider getModulesProvider() {
+  public @NotNull ModulesProvider getModulesProvider() {
     return myParent.getModulesProvider();
   }
 
   @Override
-  @NotNull
-  public FacetsProvider getFacetsProvider() {
+  public @NotNull FacetsProvider getFacetsProvider() {
     return myParent.getFacetsProvider();
   }
 
@@ -159,9 +153,8 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
     return myParent.findLibrary(level, libraryName);
   }
 
-  @NotNull
   @Override
-  public ManifestFileProvider getManifestFileProvider() {
+  public @NotNull ManifestFileProvider getManifestFileProvider() {
     return myParent.getManifestFileProvider();
   }
 
@@ -171,8 +164,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   }
 
   @Override
-  @NotNull
-  public ArtifactType getArtifactType() {
+  public @NotNull ArtifactType getArtifactType() {
     return myEditor.getArtifact().getArtifactType();
   }
 

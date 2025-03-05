@@ -20,8 +20,7 @@ internal class SpecifyExplicitLambdaSignatureIntention :
         return element.functionLiteral.arrow == null || !element.valueParameters.all { it.typeReference != null }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtLambdaExpression): String? {
+    override fun KaSession.prepareContext(element: KtLambdaExpression): String? {
         return getExplicitLambdaSignature(element)
     }
 

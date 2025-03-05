@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
 import com.intellij.codeInspection.IntentionWrapper
@@ -11,11 +11,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPrefixExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -25,7 +22,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 //  Once it is fixed, it should be used for both K1 and K2.
 //  See: KT-65376
 class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
-    override val uselessFqNames = mapOf(
+    override val uselessFqNames: Map<CallableId, Conversion> = mapOf(
         topLevelCallableId("kotlin.collections", "orEmpty") to Conversion.Delete,
         topLevelCallableId("kotlin.sequences", "orEmpty") to Conversion.Delete,
         topLevelCallableId("kotlin.text", "orEmpty") to Conversion.Delete,
@@ -51,7 +48,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         if (newName != null && (notNullType || safeExpression != null)) {
             val fixes = listOfNotNull(
                 createRenameUselessCallFix(expression, newName),
-                safeExpression?.let { IntentionWrapper(ReplaceWithDotCallFix(safeExpression)) }
+                safeExpression?.let { IntentionWrapper(ReplaceWithDotCallFix(safeExpression).asIntention()) }
             )
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
@@ -77,7 +74,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
                 safeExpression.operationTokenNode.psi,
                 KotlinBundle.message("this.call.is.useless.with"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(ReplaceWithDotCallFix(safeExpression))
+                IntentionWrapper(ReplaceWithDotCallFix(safeExpression).asIntention())
             )
         }
     }

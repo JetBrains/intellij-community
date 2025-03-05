@@ -101,6 +101,9 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
                                     override val data: WorkspaceFileSetData,
                                     val recursive: Boolean = true)
   : WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, StoredFileSet, WorkspaceFileInternalInfo {
+
+  override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = listOf(this)
+
   fun isUnloaded(project: Project): Boolean {
     return (data as? UnloadableFileSetData)?.isUnloaded(project) == true
   }
@@ -122,6 +125,10 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
 
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
     return this.takeIf(condition)
+  }
+
+  override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
+    return listOfNotNull(findFileSet(condition))
   }
 
   override fun toString(): String {
@@ -172,6 +179,19 @@ private data class TwoWorkspaceFileSets(private val first: WorkspaceFileSetImpl,
 
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
     return first.takeIf(condition) ?: second.takeIf(condition)
+  }
+
+  override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
+    val firstChecked = first.takeIf(condition)
+    val secondChecked = second.takeIf(condition)
+
+    @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+    return when {
+      firstChecked != null && secondChecked != null -> java.util.List.of(firstChecked, secondChecked)
+      firstChecked != null -> listOf(firstChecked)
+      secondChecked != null -> listOf(secondChecked)
+      else -> emptyList()
+    }
   }
 
   override fun toString(): String {
@@ -236,6 +256,13 @@ internal class MultipleStoredWorkspaceFileSets(private val storedFileSets: Mutab
     } as? WorkspaceFileSetWithCustomData<*>
   }
 
+  override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
+    @Suppress("UNCHECKED_CAST")
+    return storedFileSets.filter {
+      it is WorkspaceFileSetImpl && condition(it)
+    } as List<WorkspaceFileSetWithCustomData<*>>
+  }
+
   override fun toString(): String {
     return "MultipleStoredWorkspaceFileSets{${storedFileSets.joinToString()}}"
   }
@@ -252,6 +279,10 @@ internal class MultipleWorkspaceFileSetsImpl(override val fileSets: List<Workspa
 
   override fun toString(): String {
     return "MultipleWorkspaceFileSets{${fileSets.joinToString()}}"
+  }
+
+  override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> {
+    return fileSets.filter(condition)
   }
 }
 

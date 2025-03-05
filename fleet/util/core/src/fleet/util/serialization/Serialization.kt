@@ -3,19 +3,10 @@ package fleet.util.serialization
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.serializer
 import kotlin.reflect.KType
-
-/**
- * Please don't use it anywhere except fleet.kernel!!!
- * */
-interface ISerialization {
-  val json: Json
-  fun kSerializer(type: KType): KSerializer<Any?>
-}
 
 val DefaultJson = Json {
   ignoreUnknownKeys = true
@@ -28,6 +19,7 @@ val LenientJson = Json {
   encodeDefaults = true
   isLenient = true
   allowTrailingComma = true
+  allowComments = true
 }
 
 fun <T> JsonElement.lenientDecodeOrNull(deserializer: DeserializationStrategy<T>): T? {

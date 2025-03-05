@@ -42,7 +42,7 @@ public class PyDebuggerTask extends PyCustomConfigDebuggerTask {
   @Nullable
   @Override
   public Set<String> getTagsToCover() {
-    return Sets.newHashSet("python2.7", "python3.5", "python3.6", "python3.7", "python3.8", "jython", "IronPython", "pypy");
+    return Sets.newHashSet("python2.7", "python3.5", "python3.6", "python3.7", "python3.8");
   }
 
   protected boolean usePytestRunner() {

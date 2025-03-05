@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.options.OptPane;

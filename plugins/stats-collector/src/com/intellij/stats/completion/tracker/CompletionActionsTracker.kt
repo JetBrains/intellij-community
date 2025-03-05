@@ -5,7 +5,7 @@ package com.intellij.stats.completion.tracker
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupUsageTracker
-import com.intellij.completion.ml.experiment.ExperimentInfo
+import com.intellij.completion.ml.experiments.ExperimentInfo
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.util.prefix
 import com.intellij.openapi.application.ApplicationManager

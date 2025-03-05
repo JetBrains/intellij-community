@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.execution.JavaExecutionUtil;
@@ -129,8 +129,7 @@ public final class ClassEditorField extends EditorTextField {
     return className.replace('$', '.');
   }
 
-  @Nullable
-  private String getJvmName(@Nullable String className) {
+  private @Nullable String getJvmName(@Nullable String className) {
     if (className == null || className.isEmpty()) return null;
 
     return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {

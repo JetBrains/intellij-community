@@ -1,0 +1,11 @@
+{
+    "modules": [
+        { "name": "A1", "dependencies": ["B1"]},
+        { "name": "B1", "dependencies": [{"name": "L", "exported": true}]},
+        { "name": "A2", "dependencies": ["B2"]},
+        { "name": "B2", "dependencies": [{"name": "L", "exported": true}]}
+    ],
+    "libraries": [
+        { "name": "L" }
+    ]
+}

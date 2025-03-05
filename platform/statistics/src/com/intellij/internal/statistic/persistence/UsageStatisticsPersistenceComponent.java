@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.persistence;
 
 import com.intellij.analytics.AndroidStudioAnalytics;
@@ -45,7 +45,7 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   }
 
   @Override
-  public void loadState(@NotNull final Element element) {
+  public void loadState(final @NotNull Element element) {
     try {
       setSentTime(Long.parseLong(element.getAttributeValue(LAST_TIME_ATTR, "0")));
     }
@@ -141,8 +141,7 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     return isShowNotification && !ApplicationManager.getApplication().isInternal();
   }
 
-  @Nullable
-  public static ConsentOptionsProvider getConsentOptionsProvider() {  // Android Studio: made public by Change Iab5d02d8 / commit c12f3af8
+  public static @Nullable ConsentOptionsProvider getConsentOptionsProvider() {  // Android Studio: made public by Change Iab5d02d8 / commit c12f3af8
     return ApplicationManager.getApplication().getService(ConsentOptionsProvider.class);
   }
 

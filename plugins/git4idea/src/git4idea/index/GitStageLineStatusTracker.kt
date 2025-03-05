@@ -121,6 +121,8 @@ class GitStageLineStatusTracker(
       isInitialized = true
       updateHighlighters()
     }
+
+    if (isValid()) listeners.multicaster.onBecomingValid()
   }
 
   @RequiresEdt
@@ -349,6 +351,8 @@ class GitStageLineStatusTracker(
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
       listeners.multicaster.onRangesChanged()
+
+      if (isValid()) listeners.multicaster.onBecomingValid()
     }
 
     private fun isTrackerEmpty(): Boolean {

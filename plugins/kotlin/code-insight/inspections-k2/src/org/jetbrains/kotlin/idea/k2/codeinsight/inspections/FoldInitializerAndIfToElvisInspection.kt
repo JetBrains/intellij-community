@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -33,15 +33,14 @@ internal class FoldInitializerAndIfToElvisInspection :
         else -> ProblemHighlightType.INFORMATION
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
+    override fun KaSession.prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
         return prepareData(element)
     }
 
     override fun createQuickFix(
         element: KtIfExpression,
         context: FoldInitializerAndIfExpressionData,
-    ) = object : KotlinModCommandQuickFix<KtIfExpression>() {
+    ): KotlinModCommandQuickFix<KtIfExpression> = object : KotlinModCommandQuickFix<KtIfExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.if.with.elvis.operator")

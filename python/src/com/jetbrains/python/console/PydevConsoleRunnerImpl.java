@@ -44,7 +44,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,7 +65,6 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.console.actions.ConsoleCopyOutputAction;
 import com.jetbrains.python.console.actions.ScrollToTheEndAction;
@@ -98,8 +96,8 @@ import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -827,36 +825,39 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     TargetEnvironment targetEnvironment = processCreationResult.getTargetEnvironment();
     UIUtil.invokeAndWaitIfNeeded(() -> {
       // Init console view
-      myConsoleView = createConsoleView(sdk);
-      myConsoleView.setRunner(this);
-      myConsoleView.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
-      myPydevConsoleCommunication.setConsoleView(myConsoleView);
-      myProcessHandler = processCreationResult.createPythonConsoleProcessHandler(myConsoleView);
+      ApplicationManager.getApplication().runWriteIntentReadAction(() -> {
+        myConsoleView = createConsoleView(sdk);
+        myConsoleView.setRunner(this);
+        myConsoleView.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
+        myPydevConsoleCommunication.setConsoleView(myConsoleView);
+        myProcessHandler = processCreationResult.createPythonConsoleProcessHandler(myConsoleView);
 
-      myConsoleExecuteActionHandler = createExecuteActionHandler();
+        myConsoleExecuteActionHandler = createExecuteActionHandler();
 
-      ProcessTerminatedListener.attach(myProcessHandler);
+        ProcessTerminatedListener.attach(myProcessHandler);
 
-      PythonConsoleView consoleView = myConsoleView;
-      myProcessHandler.addProcessListener(new ProcessAdapter() {
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          consoleView.setEditable(false);
-          // PY-53068: When we send to python side command `exit` we don't get notifyFinished,
-          // so we should clear Console Command Queue
-          consoleView.restoreQueueWindow(true);
+        PythonConsoleView consoleView = myConsoleView;
+        myProcessHandler.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void processTerminated(@NotNull ProcessEvent event) {
+            consoleView.setEditable(false);
+            // PY-53068: When we send to python side command `exit` we don't get notifyFinished,
+            // so we should clear Console Command Queue
+            consoleView.restoreQueueWindow(true);
+          }
+        });
+
+        // Attach to process
+        if (targetEnvironment != null) {
+          myConsoleView.setTargetEnvironment(targetEnvironment);
         }
+        myConsoleView.attachToProcess(myProcessHandler);
+        createContentDescriptorAndActions();
+
+        // Run
+        myProcessHandler.startNotify();
+        return null;
       });
-
-      // Attach to process
-      if (targetEnvironment != null) {
-        myConsoleView.setTargetEnvironment(targetEnvironment);
-      }
-      myConsoleView.attachToProcess(myProcessHandler);
-      createContentDescriptorAndActions();
-
-      // Run
-      myProcessHandler.startNotify();
     });
   }
 

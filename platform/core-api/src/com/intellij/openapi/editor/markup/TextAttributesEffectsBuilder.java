@@ -20,7 +20,7 @@ public final class TextAttributesEffectsBuilder {
   private static final Logger LOG = Logger.getInstance(TextAttributesEffectsBuilder.class);
 
   public enum EffectSlot {
-    FRAME_SLOT, UNDERLINE_SLOT, STRIKE_SLOT
+    FRAME_SLOT, UNDERLINE_SLOT, STRIKE_SLOT, FOREGROUND_SLOT
   }
 
   // this probably could be a property of the EffectType
@@ -36,6 +36,7 @@ public final class TextAttributesEffectsBuilder {
     map.put(LINE_UNDERSCORE, UNDERLINE_SLOT);
     map.put(WAVE_UNDERSCORE, UNDERLINE_SLOT);
     map.put(BOLD_DOTTED_LINE, UNDERLINE_SLOT);
+    map.put(FADED, FOREGROUND_SLOT);
     EFFECT_SLOTS_MAP = Collections.unmodifiableMap(map);
   }
 

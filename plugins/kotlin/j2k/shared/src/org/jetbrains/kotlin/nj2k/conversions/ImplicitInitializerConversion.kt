@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.Nullable
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.conversions.InitializationState.*
 import org.jetbrains.kotlin.nj2k.declarationList
@@ -18,13 +18,19 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKTypeParameterType
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
-class ImplicitInitializerConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+/**
+ * Handles Java implicit initialization of fields.
+ *
+ * Identifies fields that are uninitialized in constructors or initializer blocks
+ * and generates explicit initializers with default values (e.g., `null`, `0`, or `false`).
+ */
+class ImplicitInitializerConversion(context: ConverterContext) : RecursiveConversion(context) {
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKField) return recurse(element)
         if (element.initializer !is JKStubExpression) return recurse(element)
 
-        val state = element.initializationState()
+        val state = element.computeInitializationState()
         if (state == INITIALIZED_IN_ALL_CONSTRUCTORS) return recurse(element)
         if (state == INITIALIZED_IN_SOME_CONSTRUCTORS && element.modality == FINAL) return recurse(element)
 
@@ -33,7 +39,7 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
     }
 
     context(KaSession)
-    private fun JKField.initializationState(): InitializationState {
+    private fun JKField.computeInitializationState(): InitializationState {
         val containingClass = parentOfType<JKClass>() ?: return NON_INITIALIZED
         val constructors = containingClass.declarationList.filterIsInstance<JKConstructor>()
         val initBlocks = containingClass.declarationList.filterIsInstance<JKInitDeclaration>()
@@ -94,7 +100,16 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
                 else -> null
             } ?: continue
 
-            val containingDeclaration = (assignmentStatement.parent as? JKBlock)?.parent as? JKDeclaration ?: continue
+            // If the field is final (i.e., a val) as determined by Java control-flow analysis on the JK tree building stage,
+            // then it should be considered initialized from arbitrarily nested assignments within the constructor.
+            // However, if the field is mutable, we only account for top-level assignment statements
+            // because in this case it is not guaranteed that the field is definitely assigned from nested blocks.
+            val containingDeclaration = if (field.modality == FINAL) {
+                assignmentStatement.parentOfType<JKDeclaration>()
+            } else {
+                (assignmentStatement.parent as? JKBlock)?.parent as? JKDeclaration
+            } ?: continue
+
             val isInitializer = when (parent) {
                 is JKKtAssignmentStatement -> (parent.field as? JKFieldAccessExpression)?.identifier == fieldSymbol
                 is JKQualifiedExpression -> (parent.selector as? JKFieldAccessExpression)?.identifier == fieldSymbol

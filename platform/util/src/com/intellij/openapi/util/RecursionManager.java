@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -376,6 +376,8 @@ public final class RecursionManager {
   }
 
   private static final @NonNls String[] toleratedFrames = {
+    "com.intellij.util.indexing.FileBasedIndexEx.getCurrentDumbModeAccessType_NoDumbChecks(",
+
     "com.intellij.psi.impl.source.xml.XmlAttributeImpl.getDescriptor(", // IDEA-228451
     "org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolHierarchy.getAncestorsCaching(", // RUBY-25487
     "com.intellij.lang.aspectj.psi.impl.PsiInterTypeReferenceImpl.", // IDEA-228779
@@ -490,7 +492,8 @@ public final class RecursionManager {
    * In this case, you may call {@link #disableMissedCacheAssertions} in the tests
    * which check such exotic situations.
    */
-  static final class CachingPreventedException extends RuntimeException {
+  @ApiStatus.Internal
+  public static final class CachingPreventedException extends RuntimeException {
     CachingPreventedException(Map<MyKey, Throwable> preventions) {
       super("Caching disabled due to recursion prevention, please get rid of cyclic dependencies. Preventions: "
             + new ArrayList<>(preventions.keySet()) + getPreventionStackTrace(preventions),

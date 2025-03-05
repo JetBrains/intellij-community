@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.patch.tool
 import com.intellij.diff.DiffContext
 import com.intellij.diff.editor.DiffEditorViewerFileEditor
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.requests.ErrorDiffRequest
 import com.intellij.diff.requests.MessageDiffRequest
 import com.intellij.diff.tools.combined.CombinedBlockProducer
 import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
@@ -38,14 +37,13 @@ import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromPr
 import com.intellij.openapi.vcs.changes.patch.PatchFileType
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer.getTitleCustomizers
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers.getTitleCustomizers
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.util.ui.update.queueTracked
 import com.intellij.vcsUtil.VcsUtil
-import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.Nls
 import javax.swing.event.HyperlinkEvent
 
@@ -120,15 +118,26 @@ private fun buildCombinedDiffModel(document: Document): List<CombinedBlockProduc
 
 private fun createDiffRequestProducers(document: Document): List<ChangeDiffRequestChain.Producer> {
   try {
-    val reader = PatchReader(document.text)
+    val patchText = document.text
+    if (patchText.isBlank()) {
+      // avoid patch parse error on empty files
+      val message = VcsBundle.message("patch.parse.error.empty.file")
+      return listOf(createStatusMessageContent(document, message))
+    }
+
+    val reader = PatchReader(patchText)
     reader.parseAllPatches()
     return reader.allPatches.map { PatchDiffRequestProducer(it) }
   }
   catch (e: PatchSyntaxException) {
-    val file = FileDocumentManager.getInstance().getFile(document)!!
     val message = VcsBundle.message("patch.parse.error", e.message)
-    return listOf(ErrorDiffRequestProducer(file, message))
+    return listOf(createStatusMessageContent(document, message))
   }
+}
+
+private fun createStatusMessageContent(document: Document, message: @Nls String): ChangeDiffRequestChain.Producer {
+  val file = FileDocumentManager.getInstance().getFile(document)!!
+  return StatusDiffRequestProducer(VcsUtil.getFilePath(file), message)
 }
 
 private class CombinedViewerPatchChangeListener(
@@ -185,15 +194,17 @@ private class PatchDiffRequestProducer(private val patch: FilePatch) : ChangeDif
   }
 }
 
-private class ErrorDiffRequestProducer(private val file: VirtualFile,
-                                       private val message: @Nls String) : ChangeDiffRequestChain.Producer {
-  override fun getName(): @Nls String = file.name
-  override fun getFilePath(): FilePath = VcsUtil.getFilePath(file)
+private class StatusDiffRequestProducer(
+  private val filePath: FilePath,
+  private val message: @Nls String,
+) : ChangeDiffRequestChain.Producer {
+  override fun getName(): @Nls String = filePath.name
+  override fun getFilePath(): FilePath = filePath
   override fun getFileStatus(): FileStatus = FileStatus.MERGED_WITH_CONFLICTS
 
   @Throws(ProcessCanceledException::class)
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
-    return ErrorDiffRequest(message)
+    return MessageDiffRequest(message)
   }
 }
 

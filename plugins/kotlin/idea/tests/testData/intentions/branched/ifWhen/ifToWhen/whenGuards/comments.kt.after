@@ -1,0 +1,19 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+// Issue about misplaced comments: KTIJ-32066
+
+fun test(a: Any, b: Boolean) {
+    /* c1 */
+    // c2
+    /* c6 */ /* c7 */
+    /* c3 */when (a) {
+        is Int if a > 5 -> { // c4
+        }
+
+        is String if a.isNotEmpty() -> /* c5 */ { //c8
+        }
+
+        else -> {
+            // c9
+        }
+    }
+}

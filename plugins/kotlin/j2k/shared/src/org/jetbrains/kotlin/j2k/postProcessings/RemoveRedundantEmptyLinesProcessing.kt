@@ -8,10 +8,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.j2k.PostProcessingApplier
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.descendantsOfType
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -26,7 +25,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
  * because such lines may be introduced rather randomly from various other processings.
  */
 class RemoveRedundantEmptyLinesProcessing : ElementsBasedPostProcessing() {
-    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
         val containers = runReadAction {
             elements.descendantsOfType<KtBlockExpression>() +
                     elements.descendantsOfType<KtClassBody>() +
@@ -53,8 +52,7 @@ class RemoveRedundantEmptyLinesProcessing : ElementsBasedPostProcessing() {
         }
     }
 
-    context(KaSession)
-    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
         val containers = elements.descendantsOfType<KtBlockExpression>() +
                 elements.descendantsOfType<KtClassBody>() +
                 elements.descendantsOfType<KtFunctionLiteral>()

@@ -4,8 +4,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -14,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
-  private final @Nullable ProjectFileIndex myIndex;
+  private final @Nullable FileIndexFacade myIndex;
   private final boolean myIncludeLibrarySources;
 
   public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate) {
@@ -29,7 +28,7 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
   public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeLibrarySources) {
     super(delegate);
     Project project = getProject();
-    myIndex = project == null ? null : ProjectRootManager.getInstance(project).getFileIndex();
+    myIndex = project == null ? null : FileIndexFacade.getInstance(project);
     myIncludeLibrarySources = includeLibrarySources;
   }
 

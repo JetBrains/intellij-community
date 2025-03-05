@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.update
 
@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import java.io.IOException
 import java.net.URL
@@ -72,7 +73,7 @@ class GooglePluginUpdateVerifier : PluginUpdateVerifier() {
     }
 
     private fun buildInRange(name: String?, sinceBuild: String?, untilBuild: String?): Boolean {
-        val descriptor = PluginNode()
+        val descriptor = PluginNode(PluginId.getId(KOTLIN_PLUGIN_ID))
         descriptor.name = name
         descriptor.sinceBuild = sinceBuild
         descriptor.untilBuild = untilBuild

@@ -24,6 +24,7 @@ public class TextResult implements Result{
     return text.equals(myText);
   }
 
+  @Override
   public String toString() {
     return myText;
   }

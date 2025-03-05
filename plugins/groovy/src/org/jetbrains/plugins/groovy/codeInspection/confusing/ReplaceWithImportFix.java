@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -21,9 +21,8 @@ public class ReplaceWithImportFix extends PsiUpdateModCommandQuickFix {
     GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)startElement);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("replace.qualified.name.with.import");
   }
 }

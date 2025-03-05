@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiFileTest
@@ -44,6 +44,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/supercalls", pattern = pattern)
             model("$idea/quickfix/surroundWithArrayOfForNamedArgumentsToVarargs", pattern = pattern)
             model("$idea/quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
+            model("$idea/quickfix/variables/changeMutability/canBeVal", pattern = pattern)
             model("$idea/quickfix/variables/removeValVarFromParameter", pattern = pattern)
             model("$idea/quickfix/when", pattern = pattern)
             model("$idea/quickfix/wrapWithSafeLetCall", pattern = pattern)
@@ -52,11 +53,15 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern)
             model("$idea/quickfix/typeMismatch/convertKClassToJavaClass", pattern = pattern)
             model("$idea/quickfix/typeMismatch/incompatibleTypes", pattern = pattern)
+            model("$idea/quickfix/typeMismatch/letImplementInterface", pattern = pattern)
             model("$idea/quickfix/typeMismatch/numberConversion", pattern = pattern)
             model("$idea/quickfix/typeMismatch/parameterTypeMismatch", pattern = pattern)
+            model("$idea/quickfix/typeMismatch/roundNumber", pattern = pattern)
             model("$idea/quickfix/typeMismatch/surroundWithLambda", pattern = pattern)
             model("$idea/quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
             model("$idea/quickfix/typeMismatch/wrongPrimitive", pattern = pattern)
+            model("$idea/quickfix/typeMismatch/definitelyNonNullableTypes", pattern = pattern)
+            model("$idea/quickfix/typeMismatch/fixOverloadedOperator", pattern = pattern)
             model("$idea/quickfix/typeMismatch", isRecursive = false, pattern = pattern)
             model("$idea/quickfix/toString", pattern = pattern)
             model("$idea/quickfix/specifySuperType", pattern = pattern)
@@ -65,6 +70,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/dataClassConstructorVsCopyVisibility", pattern = pattern)
             model("$idea/quickfix/addAnnotationTarget", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addAnnotationUseSiteTarget", pattern = pattern)
+            model("$idea/quickfix/addAnnotationUseSiteTargetForConstructorParameter", pattern = pattern)
             model("$idea/quickfix/addConstructorParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addConstructorParameterFromSuperTypeCall", pattern = pattern)
             model("$idea/quickfix/addConversionCall", pattern = pattern)
@@ -97,14 +103,14 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addVarianceModifier", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/assignToProperty", pattern = pattern)
             model("$idea/quickfix/callFromPublicInline", pattern = pattern)
-            model("$idea/quickfix/canBeParameter", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/canBePrimaryConstructorProperty", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/canBeParameter", pattern = pattern)
+            model("$idea/quickfix/canBePrimaryConstructorProperty", pattern = pattern)
             model("$idea/quickfix/castDueToProgressionResolveChange", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/changeObjectToClass", pattern = pattern)
             model("$idea/quickfix/changeSuperTypeListEntryTypeArgument", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/changeToLabeledReturn", pattern = pattern)
-            model("$idea/quickfix/changeToMutableCollection", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/changeToUseSpreadOperator", pattern = pattern)
+            model("$idea/quickfix/checkArguments/addNameToArgument", pattern = pattern)
             model("$idea/quickfix/compilerError", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/convertCollectionLiteralToIntArrayOf", pattern = pattern)
             model("$idea/quickfix/convertIllegalEscapeToUnicodeEscape", pattern = pattern)
@@ -119,9 +125,9 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/declaringJavaClass", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/decreaseVisibility", pattern = pattern)
             model("$idea/quickfix/deprecatedJavaAnnotation", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = false, excludedDirectories = listOf("wholeProject"))
+            model("$idea/quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = false)
             model("$idea/quickfix/equalityNotApplicable", pattern = pattern)
-            model("$idea/quickfix/final", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/final", pattern = pattern)
             model("$idea/quickfix/foldTryCatch", pattern = pattern)
             model("$idea/quickfix/functionWithLambdaExpressionBody", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/implement", pattern = pattern)
@@ -135,7 +141,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/javaClassOnCompanion", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/kdocMissingDocumentation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/leakingThis", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/libraries", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/libraries", pattern = pattern)
             model("$idea/quickfix/makeConstructorParameterProperty", pattern = pattern)
             model("$idea/quickfix/makePrivateAndOverrideMember", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/makeTypeParameterReified", pattern = pattern)
@@ -162,49 +168,53 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/redundantFun", pattern = pattern)
             model("$idea/quickfix/redundantInline", pattern = pattern)
             model("$idea/quickfix/redundantLateinit", pattern = pattern)
-            model("$idea/quickfix/redundantModalityModifier", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/redundantModalityModifier", pattern = pattern)
             model("$idea/quickfix/redundantSuspend", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/redundantVisibilityModifier", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/runBlockingInSuspendFunction", pattern = pattern)
+            model("$idea/quickfix/redundantVisibilityModifier", pattern = pattern)
             model("$idea/quickfix/removeAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeArgument", pattern = pattern)
-            model("$idea/quickfix/removeAtFromAnnotationArgument", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/removeAtFromAnnotationArgument", pattern = pattern)
             model("$idea/quickfix/removeDefaultParameterValue", pattern = pattern)
             model("$idea/quickfix/removeFinalUpperBound", pattern = pattern)
             model("$idea/quickfix/removeNoConstructor", pattern = pattern)
-            model("$idea/quickfix/removeRedundantAssignment", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/removeRedundantInitializer", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/removeRedundantAssignment", pattern = pattern)
+            model("$idea/quickfix/removeRedundantInitializer", pattern = pattern)
             model("$idea/quickfix/removeRedundantLabel", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeSingleLambdaParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeSuspend", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/removeToStringInStringTemplate", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/removeToStringInStringTemplate", pattern = pattern)
             model("$idea/quickfix/removeTypeVariance", pattern = pattern)
             model("$idea/quickfix/removeUnused", pattern = pattern)
             model("$idea/quickfix/removeUnusedParameter", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/removeUnusedReceiver", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/removeUseSiteTarget", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/renameToRem", pattern = pattern)
+            model("$idea/quickfix/removeUseSiteTarget", pattern = pattern)
             model("$idea/quickfix/renameToUnderscore", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/renameUnresolvedReference", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/reorderParameters", pattern = pattern)
             model("$idea/quickfix/replaceJvmFieldWithConst", pattern = pattern)
-            model("$idea/quickfix/restrictedRetentionForExpressionAnnotation", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/restrictedRetentionForExpressionAnnotation", pattern = pattern)
             model("$idea/quickfix/simplifyComparison", pattern = pattern)
+            model("$idea/quickfix/simplifyExpression", pattern = pattern)
             model("$idea/quickfix/smartCastImpossibleInIfThen", pattern = pattern)
+            model("$idea/quickfix/specifyAllRemainingArgumentsByName", pattern = pattern)
             model("$idea/quickfix/specifyOverrideExplicitly", pattern = pattern)
+            model("$idea/quickfix/specifyRemainingRequiredArgumentsByName", pattern = pattern)
             model("$idea/quickfix/specifySuperExplicitly", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/specifyTypeExplicitly", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/specifyTypeExplicitly", pattern = pattern)
             model("$idea/quickfix/superTypeIsExtensionType", pattern = pattern)
             model("$idea/quickfix/surroundWithNullCheck", pattern = pattern)
-            model("$idea/quickfix/suspiciousCollectionReassignment", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/suspiciousCollectionReassignment", pattern = pattern)
             model("$idea/quickfix/tooLongCharLiteralToString", pattern = pattern)
             model("$idea/quickfix/typeImports", pattern = pattern)
             model("$idea/quickfix/typeInferenceExpectedTypeMismatch", pattern = pattern)
             model("$idea/quickfix/typeOfAnnotationMember", pattern = pattern)
             model("$idea/quickfix/typeParameters", pattern = pattern)
             model("$idea/quickfix/typeProjection", pattern = pattern)
+            model("$idea/quickfix/renameUnresolvedReference", pattern = pattern)
+            model("$idea/quickfix/removeRedundantLabel", pattern = pattern)
             model("$idea/quickfix/unnecessaryLateinit", pattern = pattern)
             model("$idea/quickfix/unusedSuppressAnnotation", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/useFullyqualifiedCall", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/variables", pattern = pattern, isRecursive = false, isIgnored = true)
             model("$idea/quickfix/variables/changeToPropertyAccess", pattern = pattern, isRecursive = false, isIgnored = true)
             model("$idea/quickfix/variables/changeToFunctionInvocation", pattern = pattern, isRecursive = false)
@@ -212,6 +222,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/wrapWhenExpressionInParentheses", pattern = pattern)
             model("$idea/quickfix/wrongLongSuffix", pattern = pattern)
             model("$idea/quickfix/yieldUnsupported", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/changeSuperTypeListEntryTypeArgument", pattern = pattern, isRecursive = false)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
@@ -240,6 +251,22 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model(
                 "$idea/quickfix/migration/javaAnnotationPositionedArguments",
                 pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/deprecatedSymbolUsage/imports",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/deprecatedSymbolUsage/classUsages/wholeProject",
+                pattern = pattern,
+                testMethodName = testMethodName,
+            )
+            model(
+                "$idea/quickfix/override/overriddenJavaAccessor",
+                pattern = pattern,
+                isRecursive = false,
                 testMethodName = testMethodName,
             )
         }

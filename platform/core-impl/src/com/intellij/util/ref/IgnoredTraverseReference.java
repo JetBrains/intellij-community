@@ -18,20 +18,20 @@ public class IgnoredTraverseReference implements IgnoredTraverseEntry {
    * @param index index of the {@param field} frame. Index can be positive and negative. If it's positive it will be enumerated starting
    *              from the traverse root, from the traverse leaf if it's negative.
    */
-  public IgnoredTraverseReference(@NotNull final String field, int index) {
+  public IgnoredTraverseReference(final @NotNull String field, int index) {
     myField = field;
     myIndex = index;
   }
 
   @Override
-  public boolean test(@NotNull final DebugReflectionUtil.BackLink<?> link) {
+  public boolean test(final @NotNull DebugReflectionUtil.BackLink<?> link) {
     if (myIndex >= 0) {
       throw new NotImplementedError("Handling of positive indexes is not implemented yet");
     }
     return checkNegativeIndex(link);
   }
 
-  private boolean checkNegativeIndex(@NotNull final DebugReflectionUtil.BackLink<?> link) {
+  private boolean checkNegativeIndex(final @NotNull DebugReflectionUtil.BackLink<?> link) {
     int currentIndex = myIndex;
     DebugReflectionUtil.BackLink<?> backLink = link;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.icons.AllIcons;
@@ -45,7 +45,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class PropertiesComponent extends JPanel {
-  @NonNls public static final @NotNull String ID = "SVN Properties";
+  public static final @NonNls @NotNull String ID = "SVN Properties";
 
   private final @NotNull PropertiesTableView myTable = new PropertiesTableView();
   private JTextArea myTextArea;
@@ -146,8 +146,7 @@ public class PropertiesComponent extends JPanel {
     return group;
   }
 
-  @Nullable
-  private String getSelectedPropertyName() {
+  private @Nullable String getSelectedPropertyName() {
     PropertyData property = myTable.getSelectedObject();
     return property != null ? property.getName() : null;
   }
@@ -379,7 +378,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       // change file
       if (myIsFollowSelection) {

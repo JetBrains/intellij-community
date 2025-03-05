@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 object G {
     fun cat(x: Int, y: Int): Int {
         return x + y

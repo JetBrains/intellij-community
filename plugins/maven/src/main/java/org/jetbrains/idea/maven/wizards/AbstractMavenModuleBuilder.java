@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -14,7 +14,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.InvalidDataException;
@@ -39,13 +38,13 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
@@ -207,7 +206,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   protected VirtualFile createAndGetContentEntry() {
     String path = FileUtil.toSystemIndependentName(getContentEntryPath());
-    new File(path).mkdirs();
+    try {
+      Files.createDirectory(Path.of(path));
+    }
+    catch (IOException e) {
+      // ignore
+    }
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
   }
 
@@ -306,9 +310,8 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return "Maven";
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
     if (nameLocationSettings != null && myProjectId != null && myProjectId.getArtifactId() != null) {
       nameLocationSettings.setModuleName(StringUtil.sanitizeJavaIdentifier(myProjectId.getArtifactId()));
@@ -319,18 +322,16 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return super.modifySettingsStep(settingsStep);
   }
 
-  @Nullable
   @Override
-  public Project createProject(String name, String path) {
+  public @Nullable Project createProject(String name, String path) {
     setCreatingNewProject(true);
     return super.createProject(name, path);
   }
 
   @Override
-  public @Nullable Consumer<Module> createModuleConfigurator() {
-    return module -> {
-      VirtualFile root = ModuleRootManager.getInstance(module).getContentEntries()[0].getFile();
-      configure(module.getProject(), root);
+  public @Nullable ProjectConfigurator createProjectConfigurator() {
+    return (project, projectDir) -> {
+      configure(project, projectDir);
     };
   }
 }

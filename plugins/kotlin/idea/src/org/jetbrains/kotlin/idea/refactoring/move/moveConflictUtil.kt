@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
@@ -531,7 +531,7 @@ fun checkInternalMemberUsages(moveCheckerInfo: KotlinMoveConflictCheckerInfo): M
     moveCheckerInfo.elementsToMove.forEach { it.accept(memberCollector) }
 
     for (memberToCheck in membersToCheck) {
-        for (reference in ReferencesSearch.search(memberToCheck)) {
+        for (reference in ReferencesSearch.search(memberToCheck).asIterable()) {
             val element = reference.element
             val usageModule = ModuleUtilCore.findModuleForPsiElement(element) ?: continue
             if (usageModule != targetModule && targetModule !in usageModule.implementedModules && !moveCheckerInfo.isToBeMoved(element)) {
@@ -818,6 +818,7 @@ private class SealedHierarchyChecker {
         val searchParameters = SearchParameters(lightClass, searchScope, false, true, false)
 
         return ClassInheritorsSearch.search(searchParameters)
+            .asIterable()
             .map mapper@{
                 val resolutionFacade = it.javaResolutionFacade() ?: return@mapper null
                 it.resolveToDescriptor(resolutionFacade)

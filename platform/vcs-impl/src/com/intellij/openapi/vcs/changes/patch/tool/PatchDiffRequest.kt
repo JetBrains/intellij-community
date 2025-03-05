@@ -18,9 +18,7 @@ package com.intellij.openapi.vcs.changes.patch.tool
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.util.NlsContexts
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class PatchDiffRequest(
   val patch: TextFilePatch,
   private val windowTitle: @NlsContexts.DialogTitle String?,

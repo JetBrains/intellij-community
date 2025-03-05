@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -30,15 +30,13 @@ public final class ChangeClassParametersIntention extends PsiElementBaseIntentio
 
   private static final Logger LOG = Logger.getInstance(ChangeClassParametersIntention.class);
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return TypeMigrationBundle.message("change.class.type.parameter.family.name");
   }
 
@@ -60,7 +58,7 @@ public final class ChangeClassParametersIntention extends PsiElementBaseIntentio
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiTypeElement typeElement = PsiTreeUtil.getTopmostParentOfType(element, PsiTypeElement.class);
     final PsiReferenceParameterList parameterList = PsiTreeUtil.getParentOfType(typeElement, PsiReferenceParameterList.class);
     if (parameterList != null) {

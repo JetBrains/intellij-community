@@ -31,10 +31,9 @@ import java.util.Set;
 
 public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
 
-  @NotNull
   @Override
-  public List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact,
-                                                            @NotNull ArtifactBuildPhase buildPhase) {
+  public @NotNull List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact,
+                                                                     @NotNull ArtifactBuildPhase buildPhase) {
     if (buildPhase != ArtifactBuildPhase.POST_PROCESSING) {
       return Collections.emptyList();
     }

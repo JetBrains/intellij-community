@@ -11,10 +11,13 @@ import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -58,8 +61,9 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * @see java.lang.instrument.Instrumentation#appendToSystemClassLoaderSearch
    */
   @SuppressWarnings("unused")
-  final void appendToClassPathForInstrumentation(@NotNull String jar) {
-    classPath.addFile(Paths.get(jar));
+  private void appendToClassPathForInstrumentation(@NotNull String jar) {
+    FileSystem fileSystem = getPlatformDefaultFileSystem();
+    classPath.addFile(fileSystem.getPath(jar));
   }
 
   /**
@@ -109,6 +113,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   protected static @NotNull UrlClassLoader.Builder createDefaultBuilderForJdk(@NotNull ClassLoader parent) {
+    FileSystem fileSystem = getPlatformDefaultFileSystem();
     Builder configuration = new Builder();
 
     if (parent instanceof URLClassLoader) {
@@ -116,7 +121,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       // LinkedHashSet is used to remove duplicates
       Set<Path> files = new LinkedHashSet<>(urls.length);
       for (URL url : urls) {
-        files.add(Paths.get(url.getPath()));
+        files.add(fileSystem.getPath(url.getPath()));
       }
       configuration.files = files;
     }
@@ -124,7 +129,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       String[] parts = System.getProperty("java.class.path").split(File.pathSeparator);
       Set<Path> files = new LinkedHashSet<>(parts.length);
       for (String s : parts) {
-        files.add(Paths.get(s));
+        files.add(fileSystem.getPath(s));
       }
       configuration.files = files;
     }
@@ -681,6 +686,33 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     public @NotNull UrlClassLoader get() {
       return new UrlClassLoader(this, null, isParallelCapable);
+    }
+  }
+
+  private static volatile FileSystem theFileSystem;
+  /**
+   * This is a workaround to avoid `getSystemClassLoader()` call during the system class loader instantiation.
+   * When system property "java.system.class.loader" is set to UrlClassLoader(or inheritors),
+   * such classloader is being instantiated during `ClassLoader#initSystemClassLoader()` call.
+   * Since UrlClassLoader uses nio in constructor, it triggers default file system initialization
+   * which calls ClassLoader.getSystemClassLoader() and fails because it's not permitted (to avoid recursion issue).
+   * <p>
+   * Also, loading nio classes might not work during `#appendToClassPathForInstrumentation`.
+   * Because for some versions of JBR, it leads to NPE during initialization of ZipFile through FileSystems.getDefault.
+   */
+  private static FileSystem getPlatformDefaultFileSystem() {
+    if (theFileSystem != null) {
+      return theFileSystem;
+    }
+    try {
+      Class<?> aClass = Class.forName("sun.nio.fs.DefaultFileSystemProvider");
+      Method theFileSystemMethod = aClass.getDeclaredMethod("theFileSystem");
+      FileSystem fileSystem = (FileSystem)theFileSystemMethod.invoke(aClass);
+      theFileSystem = fileSystem;
+      return fileSystem;
+    }
+    catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+      throw new Error(e);
     }
   }
 }

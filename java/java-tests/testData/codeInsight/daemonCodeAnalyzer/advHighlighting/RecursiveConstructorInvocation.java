@@ -40,6 +40,6 @@ class X {
   
   X() {
     <error descr="Recursive constructor call">this()</error>;
-    <error descr="Variable 'value' might already have been assigned to">value</error> = 1;
+    <error descr="Cannot assign final field 'value' after chained constructor call">value</error> = 1;
   }
 }

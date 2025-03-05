@@ -35,11 +35,14 @@ internal open class PoweredLibraryScopeBase(
     }
 }
 
-internal fun Array<VirtualFile>.calculateTopPackageNames(): Set<String> =
-    this.flatMap { it.children.toList() }
+internal fun Array<VirtualFile>.calculateTopPackageNames(): Set<String>? {
+    if (isEmpty()) return null
+    val topPackageNames = this.flatMap { it.children.toList() }
         .filter(VirtualFile::isDirectory)
         .map(VirtualFile::getName)
-        .toSet() + "" // empty package is always present
+        .toSet()
+    return topPackageNames + "" // empty package is always present
+}
 
 internal fun Array<VirtualFile>.calculateEntriesVirtualFileSystems(): Set<NewVirtualFileSystem>? {
     val fileSystems = hashSetOf<NewVirtualFileSystem>()

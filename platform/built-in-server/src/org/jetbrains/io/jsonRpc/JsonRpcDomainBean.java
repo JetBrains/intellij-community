@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.jsonRpc;
 
 import com.intellij.diagnostic.PluginException;
@@ -28,9 +28,8 @@ public final class JsonRpcDomainBean extends BaseKeyedLazyInstance<Object> {
   @Attribute("overridable")
   public boolean overridable;
 
-  @NotNull
   @Override
-  public Object createInstance(@NotNull ComponentManager componentManager, @NotNull PluginDescriptor pluginDescriptor) {
+  public @NotNull Object createInstance(@NotNull ComponentManager componentManager, @NotNull PluginDescriptor pluginDescriptor) {
     if (service == null) {
       return super.createInstance(componentManager, pluginDescriptor);
     }

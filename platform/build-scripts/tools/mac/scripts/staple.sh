@@ -8,7 +8,7 @@ if [ "$staple" = 'true' ]; then
   # only unzipped application can be stapled
   app="$exploded/$(ls "$exploded")"
   echo "Stapling $app..."
-  xcrun stapler staple "$app"
+  xcrun stapler staple --verbose "$app"
 else
   echo "Stapling of $exploded is skipped"
 fi

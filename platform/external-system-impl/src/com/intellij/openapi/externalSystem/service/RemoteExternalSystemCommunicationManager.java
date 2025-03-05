@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.configurationStore.StorageUtilKt;
@@ -71,10 +71,10 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
   private final AtomicReference<RemoteExternalSystemProgressNotificationManager> myExportedNotificationManager
     = new AtomicReference<>();
 
-  @NotNull private final ThreadLocal<ProjectSystemId> myTargetExternalSystemId = new ThreadLocal<>();
+  private final @NotNull ThreadLocal<ProjectSystemId> myTargetExternalSystemId = new ThreadLocal<>();
 
-  @NotNull private final ExternalSystemProgressNotificationManagerImpl                    myProgressManager;
-  @NotNull private final RemoteProcessSupport<Object, RemoteExternalSystemFacade, String> mySupport;
+  private final @NotNull ExternalSystemProgressNotificationManagerImpl                    myProgressManager;
+  private final @NotNull RemoteProcessSupport<Object, RemoteExternalSystemFacade, String> mySupport;
 
   public RemoteExternalSystemCommunicationManager() {
     myProgressManager = (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager.getInstance();
@@ -179,14 +179,12 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
       }
 
       @Override
-      @NotNull
-      public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+      public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
         ProcessHandler processHandler = startProcess();
         return new DefaultExecutionResult(processHandler);
       }
 
-      @NotNull
-      private OSProcessHandler startProcess() throws ExecutionException {
+      private @NotNull OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
         GeneralCommandLine commandLine = params.toCommandLine();
         OSProcessHandler processHandler = new OSProcessHandler(commandLine);
@@ -196,9 +194,8 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
     };
   }
 
-  @Nullable
   @Override
-  public RemoteExternalSystemFacade acquire(@NotNull String id, @NotNull ProjectSystemId externalSystemId)
+  public @Nullable RemoteExternalSystemFacade acquire(@NotNull String id, @NotNull ProjectSystemId externalSystemId)
     throws Exception
   {
     myTargetExternalSystemId.set(externalSystemId);
@@ -207,7 +204,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
       facade = mySupport.acquire(this, id);
     }
     finally {
-      myTargetExternalSystemId.set(null);
+      myTargetExternalSystemId.remove();
     }
     if (facade == null) {
       return null;
@@ -232,8 +229,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
     return wrapResolverDeserialization(facade);
   }
 
-  @NotNull
-  private static RemoteExternalSystemFacade wrapResolverDeserialization(@NotNull RemoteExternalSystemFacade facade) {
+  private static @NotNull RemoteExternalSystemFacade wrapResolverDeserialization(@NotNull RemoteExternalSystemFacade facade) {
     return new ResolverDeserializationWrapper(facade);
   }
 

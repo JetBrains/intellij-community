@@ -5,8 +5,10 @@ import com.intellij.openapi.util.io.FileUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion.version
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImportingTestCase() {
@@ -232,6 +234,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       currentGradleBaseVersion >= version("8.7") -> "artifacts"
       else -> "files"
     }
+    val configurationName = when {
+      currentGradleBaseVersion >= version("8.11") -> "classpath"
+      else -> ":classpath"
+    }
 
     // check unresolved dependency w/o repositories
     importProject {
@@ -245,7 +251,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     val projectQualifier = if (isGradleAtLeast("8.10")) "root project" else "project"
     assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined", """
       |A problem occurred configuring root project 'project'.
-      |> Could not resolve all $artifacts for configuration ':classpath'.
+      |> Could not resolve all $artifacts for configuration '$configurationName'.
       |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
       |     Required by:
       |         $projectQualifier :
@@ -284,7 +290,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     }
     assertSyncViewSelectedNode("Could not resolve junit:junit:99.99", """
       |A problem occurred configuring root project 'project'.
-      |> Could not resolve all $artifacts for configuration ':classpath'.
+      |> Could not resolve all $artifacts for configuration '$configurationName'.
       |   > Could not resolve junit:junit:99.99.
       |     Required by:
       |         $projectQualifier :
@@ -313,7 +319,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     }
     assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
                                "A problem occurred configuring root project 'project'.\n" +
-                               "> Could not resolve all $artifacts for configuration ':classpath'.\n" +
+                               "> Could not resolve all $artifacts for configuration '$configurationName'.\n" +
                                "   > Could not find junit:junit:99.99.\n" +
                                "     Searched in the following locations:\n" +
                                "       $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
@@ -432,6 +438,31 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
         .joinToString(separator = "\n")
 
       assertEquals( scriptOutputText + scriptOutputTextWOEol, text)
+    }
+  }
+
+  @Test
+  @TargetVersions("8.8+")
+  fun `test build output project using Daemon Jvm criteria`() {
+    val jdkHome = requireJdkHome()
+    val jdkVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(jdkHome)!!.version.feature
+    createProjectSubFile("gradle.properties", "org.gradle.java.installations.paths=$jdkHome")
+    createProjectSubFile("gradle/gradle-daemon-jvm.properties", "toolchainVersion=$jdkVersion")
+
+    overrideGradleUserHome(".gradle")
+
+    importProject()
+    assertSyncViewSelectedNode("finished", false) {
+      assertThat(it)
+        .containsOnlyOnce("Starting Gradle Daemon...")
+        .containsOnlyOnce("Gradle Daemon started in")
+    }
+
+    importProject()
+    assertSyncViewSelectedNode("finished", false) {
+      assertThat(it)
+        .doesNotContain("Starting Gradle Daemon...")
+        .doesNotContain("Gradle Daemon started in")
     }
   }
 

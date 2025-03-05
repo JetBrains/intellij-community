@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProjectBundle.message
 import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType
 import org.jetbrains.idea.maven.utils.MavenUtil
+import kotlin.io.path.pathString
 
 class MavenEnvironmentSettingsDialog(private val project: Project,
                                      private val settings: MavenGeneralSettings,
@@ -48,12 +49,12 @@ class MavenEnvironmentSettingsDialog(private val project: Project,
   }
 
   private fun resolveDefaultUserSettingsFile(): String {
-    return MavenUtil.resolveUserSettingsFile("").path
+    return MavenUtil.resolveUserSettingsPath("", project).pathString
   }
 
   private fun resolveDefaultLocalRepository(): String {
     val mavenHomeType = settings.mavenHomeType.let { it as? StaticResolvedMavenHomeType } ?: BundledMaven3
-    return MavenUtil.resolveLocalRepository("", mavenHomeType, userSettingsProperty.get()).path
+    return MavenUtil.resolveLocalRepository(project, "", mavenHomeType, userSettingsProperty.get()).pathString
   }
 
   override fun createActions() = arrayOf(okAction)

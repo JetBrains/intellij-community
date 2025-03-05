@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.search.impl
 
 import com.intellij.model.search.LeafOccurrenceMapper
@@ -10,9 +10,9 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
 
-internal class SearchWordQuery<R>(
+internal class SearchWordQuery<R : Any>(
   private val myParameters: SearchWordQueryBuilderImpl.Parameters,
-  private val mapper: LeafOccurrenceMapper<R>
+  private val mapper: LeafOccurrenceMapper<out R>
 ) : AbstractDecomposableQuery<R>() {
 
   override fun processResults(consumer: Processor<in R>): Boolean {

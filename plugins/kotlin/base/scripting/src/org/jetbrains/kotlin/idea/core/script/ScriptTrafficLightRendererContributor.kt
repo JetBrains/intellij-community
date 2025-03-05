@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -20,11 +19,11 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
     @RequiresBackgroundThread
     override fun createRenderer(editor: Editor, file: PsiFile?): TrafficLightRenderer? {
         val ktFile = (file as? KtFile)?.takeIf { runReadAction(it::isScript) } ?: return null
-        return ScriptTrafficLightRenderer(ktFile.project, editor.document, ktFile)
+        return ScriptTrafficLightRenderer(ktFile.project, editor, ktFile)
     }
 
-    class ScriptTrafficLightRenderer(project: Project, document: Document, private val file: KtFile) :
-        TrafficLightRenderer(project, document) {
+    class ScriptTrafficLightRenderer(project: Project, editor: Editor, private val file: KtFile) :
+        TrafficLightRenderer(project, editor) {
         override fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 

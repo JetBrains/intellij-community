@@ -1,0 +1,17 @@
+JSHELL_FILE
+  PsiImportList
+    <empty list>
+  PsiJShellRootClassImpl(JSHELL_ROOT_CLASS)
+    PsiField:i
+      PsiModifierList:
+        <empty list>
+      PsiTypeElement:var
+        PsiKeyword:var('var')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:i('i')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:EQ('=')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:10
+        PsiJavaToken:INTEGER_LITERAL('10')
+      PsiJavaToken:SEMICOLON(';')

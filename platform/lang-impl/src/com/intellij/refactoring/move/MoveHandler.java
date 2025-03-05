@@ -27,6 +27,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -222,7 +223,7 @@ public final class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  private static @NotNull List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
+  private static @Unmodifiable @NotNull List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
     return ContainerUtil.filter(MoveHandlerDelegate.EP_NAME.getExtensionList(),
                                 (delegate) -> delegate.supportsLanguage(element.getLanguage()));
   }

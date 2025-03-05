@@ -5,7 +5,6 @@ import com.intellij.openapi.wm.InteractiveCourseFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.InteractiveCoursePanel
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnButton
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyWelcomeScreenBundle
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI

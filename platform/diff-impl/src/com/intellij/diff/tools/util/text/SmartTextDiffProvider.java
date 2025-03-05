@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.comparison.ComparisonManagerImpl;
@@ -36,17 +36,16 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
   public static final IgnorePolicy[] IGNORE_POLICIES = {DEFAULT, TRIM_WHITESPACES, IGNORE_WHITESPACES, IGNORE_WHITESPACES_CHUNKS, FORMATTING};
   public static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD, BY_WORD_SPLIT, BY_CHAR, DO_NOT_HIGHLIGHT};
 
-  @Nullable private final Project myProject;
-  @NotNull private final DiffContent myContent1;
-  @NotNull private final DiffContent myContent2;
-  @NotNull private final DiffIgnoredRangeProvider myProvider;
+  private final @Nullable Project myProject;
+  private final @NotNull DiffContent myContent1;
+  private final @NotNull DiffContent myContent2;
+  private final @NotNull DiffIgnoredRangeProvider myProvider;
 
-  @Nullable
-  public static TwosideTextDiffProvider create(@Nullable Project project,
-                                               @NotNull ContentDiffRequest request,
-                                               @NotNull TextDiffSettings settings,
-                                               @NotNull Runnable rediff,
-                                               @NotNull Disposable disposable) {
+  public static @Nullable TwosideTextDiffProvider create(@Nullable Project project,
+                                                         @NotNull ContentDiffRequest request,
+                                                         @NotNull TextDiffSettings settings,
+                                                         @NotNull Runnable rediff,
+                                                         @NotNull Disposable disposable) {
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
@@ -54,12 +53,11 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     return new SmartTextDiffProvider(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider);
   }
 
-  @Nullable
-  public static TwosideTextDiffProvider.NoIgnore createNoIgnore(@Nullable Project project,
-                                                                @NotNull ContentDiffRequest request,
-                                                                @NotNull TextDiffSettings settings,
-                                                                @NotNull Runnable rediff,
-                                                                @NotNull Disposable disposable) {
+  public static @Nullable TwosideTextDiffProvider.NoIgnore createNoIgnore(@Nullable Project project,
+                                                                          @NotNull ContentDiffRequest request,
+                                                                          @NotNull TextDiffSettings settings,
+                                                                          @NotNull Runnable rediff,
+                                                                          @NotNull Disposable disposable) {
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
@@ -93,23 +91,21 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     myProvider = ignoredRangeProvider;
   }
 
-  @Nullable
   @Override
-  protected String getText(@NotNull IgnorePolicy option) {
+  protected @Nullable String getText(@NotNull IgnorePolicy option) {
     if (option == FORMATTING) return myProvider.getDescription();
     return null;
   }
 
-  @NotNull
   @Override
-  protected List<List<LineFragment>> doCompare(@NotNull CharSequence text1,
-                                               @NotNull CharSequence text2,
-                                               @NotNull LineOffsets lineOffsets1,
-                                               @NotNull LineOffsets lineOffsets2,
-                                               @Nullable List<? extends Range> linesRanges,
-                                               @NotNull IgnorePolicy ignorePolicy,
-                                               @NotNull HighlightPolicy highlightPolicy,
-                                               @NotNull ProgressIndicator indicator) {
+  protected @NotNull List<List<LineFragment>> doCompare(@NotNull CharSequence text1,
+                                                        @NotNull CharSequence text2,
+                                                        @NotNull LineOffsets lineOffsets1,
+                                                        @NotNull LineOffsets lineOffsets2,
+                                                        @Nullable List<? extends Range> linesRanges,
+                                                        @NotNull IgnorePolicy ignorePolicy,
+                                                        @NotNull HighlightPolicy highlightPolicy,
+                                                        @NotNull ProgressIndicator indicator) {
     if (ignorePolicy == FORMATTING) {
       return compareIgnoreFormatting(text1, text2, lineOffsets1, lineOffsets2, linesRanges, highlightPolicy, indicator);
     }
@@ -119,14 +115,13 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     }
   }
 
-  @NotNull
-  private List<List<LineFragment>> compareIgnoreFormatting(@NotNull CharSequence text1,
-                                                           @NotNull CharSequence text2,
-                                                           @NotNull LineOffsets lineOffsets1,
-                                                           @NotNull LineOffsets lineOffsets2,
-                                                           @Nullable List<? extends Range> linesRanges,
-                                                           @NotNull HighlightPolicy highlightPolicy,
-                                                           @NotNull ProgressIndicator indicator) {
+  private @NotNull List<List<LineFragment>> compareIgnoreFormatting(@NotNull CharSequence text1,
+                                                                    @NotNull CharSequence text2,
+                                                                    @NotNull LineOffsets lineOffsets1,
+                                                                    @NotNull LineOffsets lineOffsets2,
+                                                                    @Nullable List<? extends Range> linesRanges,
+                                                                    @NotNull HighlightPolicy highlightPolicy,
+                                                                    @NotNull ProgressIndicator indicator) {
     InnerFragmentsPolicy fragmentsPolicy = highlightPolicy.getFragmentsPolicy();
 
     List<TextRange> ignoredRanges1 = myProvider.getIgnoredRanges(myProject, text1, myContent1);
@@ -151,10 +146,9 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     }
   }
 
-  @Nullable
-  private static DiffIgnoredRangeProvider getIgnoredRangeProvider(@Nullable Project project,
-                                                                  @NotNull DiffContent content1,
-                                                                  @NotNull DiffContent content2) {
+  private static @Nullable DiffIgnoredRangeProvider getIgnoredRangeProvider(@Nullable Project project,
+                                                                            @NotNull DiffContent content1,
+                                                                            @NotNull DiffContent content2) {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-339105, EA-832803")) {
       for (DiffIgnoredRangeProvider provider : DiffIgnoredRangeProvider.EP_NAME.getExtensionList()) {
         if (provider.accepts(project, content1) &&
@@ -178,21 +172,19 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
             IGNORE_POLICIES, ArrayUtil.remove(HIGHLIGHT_POLICIES, DO_NOT_HIGHLIGHT));
     }
 
-    @NotNull
     @Override
-    public List<LineFragment> compare(@NotNull CharSequence text1,
-                                      @NotNull CharSequence text2,
-                                      @NotNull ProgressIndicator indicator) {
+    public @NotNull List<LineFragment> compare(@NotNull CharSequence text1,
+                                               @NotNull CharSequence text2,
+                                               @NotNull ProgressIndicator indicator) {
       //noinspection ConstantConditions
       return super.compare(text1, text2, indicator);
     }
 
-    @NotNull
     @Override
-    public List<List<LineFragment>> compare(@NotNull CharSequence text1,
-                                            @NotNull CharSequence text2,
-                                            @NotNull List<? extends Range> linesRanges,
-                                            @NotNull ProgressIndicator indicator) {
+    public @NotNull List<List<LineFragment>> compare(@NotNull CharSequence text1,
+                                                     @NotNull CharSequence text2,
+                                                     @NotNull List<? extends Range> linesRanges,
+                                                     @NotNull ProgressIndicator indicator) {
       //noinspection ConstantConditions
       return super.compare(text1, text2, linesRanges, indicator);
     }

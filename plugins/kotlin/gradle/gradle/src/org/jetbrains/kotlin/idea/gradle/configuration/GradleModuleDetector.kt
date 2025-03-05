@@ -5,6 +5,7 @@ import com.intellij.facet.FacetManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VfsUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector
@@ -29,7 +30,8 @@ class GradleModuleDetector : BuildSystemTypeDetector {
     }
 }
 
-private fun Module.isConfiguredViaAmperFiles(): Boolean {
+@ApiStatus.Internal
+fun Module.isConfiguredViaAmperFiles(): Boolean {
     // We can't rely on the presence of the Amper plugin in settings.gradle.kts. Even if the Amper plugin is there, each 
     // subproject can either be pure Gradle or Gradle-based Amper depending on the presence of Amper module files.
     // That's why we have to check if the subproject itself has Amper files.

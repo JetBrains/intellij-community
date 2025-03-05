@@ -1,5 +1,5 @@
-// ERROR: Initializer type mismatch: expected 'kotlin.Array<kotlin.String?>', actual 'kotlin.Array<kotlin.String>'.
-// ERROR: Type mismatch: inferred type is 'kotlin.String?', but 'kotlin.String' was expected.
+// ERROR: Initializer type mismatch: expected 'Array<String?>', actual 'Array<String>'.
+// ERROR: Type mismatch: inferred type is 'String?', but 'String' was expected.
 class C {
     var stringsField: Array<String> = arrayOf<String>("Hello", "World")
 

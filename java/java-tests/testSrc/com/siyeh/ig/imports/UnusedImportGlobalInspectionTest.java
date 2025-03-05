@@ -300,11 +300,11 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
     doTest();
   }
 
-  public void testRedundantModuleImport() {
+  public void testSingleImportWithModuleImport() {
     doTest("""
-      /*Unused import 'import module java.base;'*/import module java.base;/**/
-      import java.util.List;
-      import java.util.ArrayList;
+      import module java.base;
+      /*Unused import 'import java.util.List;'*/import java.util.List;/**/
+      /*Unused import 'import java.util.ArrayList;'*/import java.util.ArrayList;/**/
       
       class Main {
           public static void main(String[] args) {
@@ -337,6 +337,123 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                                       }
                                       """);
                            });
+  }
+
+  public void testImportModuleWithRedundantPackage() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+                           () -> {
+                             doTest("""
+                                      import module java.base;
+                                      /*Unused import 'import java.util.*;'*/import java.util.*;/**/
+                                      
+                                      class Main {
+                                          public static void main(String[] args) {
+                                              List<String> a = new ArrayList<>();
+                                          }
+                                      }
+                                      """);
+                           });
+  }
+
+  public void testImportImplicitModuleWithRedundantPackage() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+                           () -> {
+                             doTest("""
+                                      /*Unused import 'import java.util.*;'*/import java.util.*;/**/
+                                      
+                                      public static void main(String[] args) {
+                                          List<String> a = new ArrayList<>();
+                                      }
+                                      """);
+                           });
+  }
+
+
+  public void testRedundantImportModuleWithNotRedundantPackage() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(),
+                           () -> {
+                             myFixture.addClass("""
+                                                  package a.b;
+                                                  
+                                                  public final class List {
+                                                  }
+                                                  """);
+                             doTest("""
+                                      /*Unused import 'import module java.base;'*/import module java.base;/**/
+                                      import a.b.*;
+                                      
+                                      class Main {
+                                          public static void main(String[] args) {
+                                              List a;
+                                          }
+                                      }
+                                      """);
+                           });
+  }
+
+  public void testStaticMethodInInterface() {
+    myFixture.addClass("""
+      package org.example;
+      
+      public interface Any {
+          static void fromAny() {
+          }
+      }
+      """);
+    myFixture.addClass("""
+      package org.example;
+      
+      public class Child implements Any {
+          public static void fromChild(){}
+      }""");
+    myFixture.addFileToProject("Test.java", """
+      package org.test;
+      
+      import static org.example.Any.*;
+      import static org.example.Child.*;
+      
+      public class Test {
+          public static void main(String[] args) {
+              fromChild();
+              fromAny();
+          }
+      }
+      """);
+    doTest();
+  }
+
+  public void testDoubleStaticSameMethodInheritance() {
+    myFixture.addClass("""
+      package org.example;
+      
+      public class Child2 extends Child {
+      }""");
+    myFixture.addClass("""
+      package org.example;
+      
+      public class Child extends Any {
+          public static void test(){
+              Any.test();
+          }
+      }""");
+    myFixture.addClass("""
+      package org.example;
+      
+      public class Any {
+          public static void test() {
+          }
+      }""");
+    myFixture.addFileToProject("Test.java", """
+      package org.test;
+      
+      import static org.example.Child2.*;
+      
+      public class Test {
+          public static void main(String[] args) {
+              test();
+          }
+      }""");
+    doTest();
   }
 
   private void doTest(String classText) {

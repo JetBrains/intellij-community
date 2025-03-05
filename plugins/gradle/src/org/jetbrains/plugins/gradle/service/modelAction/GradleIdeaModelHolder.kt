@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.modelAction
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelId
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializer
-import com.intellij.gradle.toolingExtension.impl.telemetry.TelemetryHolder
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.PathMapper
 import org.gradle.tooling.model.BuildModel
@@ -29,7 +28,6 @@ class GradleIdeaModelHolder(
 
   private val models: MutableMap<GradleModelId, Any> = LinkedHashMap()
   private val buildIdMapping: MutableMap<String, String> = LinkedHashMap()
-  private val telemetry = ArrayList<TelemetryHolder>()
 
   private val serializer = ToolingSerializer()
   private val modelPathConverter = GradleObjectTraverser(
@@ -129,15 +127,10 @@ class GradleIdeaModelHolder(
     models[modelId] = model
   }
 
-  fun getTelemetry(): List<TelemetryHolder> {
-    return telemetry
-  }
-
   fun addState(state: GradleModelHolderState) {
     val rootBuild = state.rootBuild
     val nestedBuilds = state.nestedBuilds
     val buildEnvironment = state.buildEnvironment
-    val telemetry = state.openTelemetry
     val models = state.models
 
     if (rootBuild != null) {
@@ -153,9 +146,6 @@ class GradleIdeaModelHolder(
       this.buildEnvironment = buildEnvironment
     }
     this.models.putAll(models)
-    if (!telemetry.traces.isEmpty()) {
-      this.telemetry.add(telemetry)
-    }
   }
 
   private fun convertModelPathsInPlace(model: Any) {

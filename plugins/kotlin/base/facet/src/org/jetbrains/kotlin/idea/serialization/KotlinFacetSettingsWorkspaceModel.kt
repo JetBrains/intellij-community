@@ -49,23 +49,29 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         }
 
     private var _compilerArguments: CommonCompilerArguments? = null
+    private var _lastKnownCompilerArguments: String? = null
     override var compilerArguments: CommonCompilerArguments?
         get() {
-            if (_compilerArguments != null) {
+            val currentSerializedArguments = entity.compilerArguments
+            if (_compilerArguments != null && currentSerializedArguments == _lastKnownCompilerArguments) {
+                // Cache is valid, return the cached value
                 return _compilerArguments
             }
 
-            val serializedArguments = entity.compilerArguments
-            _compilerArguments = serializedArguments?.let {
+            // Deserialize and update the cache
+            _compilerArguments = currentSerializedArguments?.let {
                 CompilerArgumentsSerializer.deserializeFromString(it)
             }
+            _lastKnownCompilerArguments = currentSerializedArguments
 
             return _compilerArguments
         }
         set(value) {
-            entity.compilerArguments = CompilerArgumentsSerializer.serializeToString(value)
+            val serializedValue = CompilerArgumentsSerializer.serializeToString(value)
+            entity.compilerArguments = serializedValue
             updateMergedArguments()
             _compilerArguments = value?.unfrozen()
+            _lastKnownCompilerArguments = serializedValue
         }
 
     override val mergedCompilerArguments: CommonCompilerArguments?
@@ -82,24 +88,35 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         }
 
     private var _compilerSettings: CompilerSettings? = null
+    private var _lastKnownCompilerSettingsData: CompilerSettingsData? = null
     override var compilerSettings: CompilerSettings?
         get() {
-            if (_compilerSettings != null) {
+            val currentCompilerSettingsData = entity.compilerSettings
+            if (_compilerSettings != null && currentCompilerSettingsData == _lastKnownCompilerSettingsData) {
+                // Cache is valid, return the cached value
                 return _compilerSettings
             }
 
-            val compilerSettingsData = entity.compilerSettings ?: return null
-            _compilerSettings = compilerSettingsData.toCompilerSettings { newSettings ->
+            if (currentCompilerSettingsData == null) {
+                _compilerSettings = null
+                _lastKnownCompilerSettingsData = null
+                return null
+            }
+
+            _compilerSettings = currentCompilerSettingsData.toCompilerSettings { newSettings ->
                 entity.compilerSettings = newSettings.toCompilerSettingsData()
                 updateMergedArguments()
             }
+            _lastKnownCompilerSettingsData = currentCompilerSettingsData
 
             return _compilerSettings
         }
         set(value) {
-            entity.compilerSettings = value.toCompilerSettingsData()
+            val newCompilerSettingsData = value.toCompilerSettingsData()
+            entity.compilerSettings = newCompilerSettingsData
             updateMergedArguments()
             _compilerSettings = null
+            _lastKnownCompilerSettingsData = null
         }
 
     private var _dependsOnModuleNames: List<String> = entity.dependsOnModuleNames

@@ -16,6 +16,7 @@ import git4idea.test.createRepository
 import git4idea.test.git
 import git4idea.test.tac
 import java.io.File
+import java.util.Locale
 
 class GitConfigTest : GitPlatformTest() {
   private val HOOK_FAILURE_MESSAGE = "IJ_TEST_GIT_HOOK_FAILED"
@@ -322,7 +323,7 @@ class GitConfigTest : GitPlatformTest() {
       assertNotNull("result $message", resultFile)
 
       val testName = FileUtil.loadFile(descriptionFile!!).lines()[0] // description is in the first line of the desc-file
-      if (!testName.toLowerCase().startsWith("ignore")) {
+      if (!testName.lowercase(Locale.getDefault()).startsWith("ignore")) {
         data.add(TestSpec(testName, configFile!!, resultFile!!))
       }
     }

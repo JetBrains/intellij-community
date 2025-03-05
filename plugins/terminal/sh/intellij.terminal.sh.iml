@@ -31,8 +31,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.terminal" />
-    <orderEntry type="module" module-name="intellij.sh" />
-    <orderEntry type="module" module-name="intellij.platform.monolith" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.sh.core" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
   </component>

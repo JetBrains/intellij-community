@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
@@ -104,9 +90,8 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     ProjectModelExternalSource externalSource = myContext.getFacet().getExternalSource();
     if (externalSource != null) {
       myErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
-        @NotNull
         @Override
-        public ValidationResult check() {
+        public @NotNull ValidationResult check() {
           if (isModified()) {
             String text = ModificationOfImportedModelWarningComponent.getWarningText(
               JavaUiBundle.message("facet.banner.text", myContext.getFacetName()), externalSource);
@@ -148,8 +133,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     super.disposeUIResources();
   }
 
-  @Nullable
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return 0 <= mySelectedTabIndex && mySelectedTabIndex < myEditorTabs.length ? myEditorTabs[mySelectedTabIndex].getHelpTopic() : null;
   }
 
@@ -187,7 +171,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
   }
 
   @Override
-  public <T extends FacetEditorTab> T getEditorTab(@NotNull final Class<T> aClass) {
+  public <T extends FacetEditorTab> T getEditorTab(final @NotNull Class<T> aClass) {
     for (FacetEditorTab editorTab : myEditorTabs) {
       if (aClass.isInstance(editorTab)) {
         return aClass.cast(editorTab);

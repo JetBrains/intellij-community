@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.ide.DataManager;
@@ -68,8 +68,7 @@ public class PlainEnterProcessor implements ASTNodeEnterProcessor {
     return EditorActionManager.getInstance().getActionHandler(actionId);
   }
 
-  @Nullable
-  private static ASTNode getControlStatementBlock(int caret, ASTNode astNode) {
+  private static @Nullable ASTNode getControlStatementBlock(int caret, ASTNode astNode) {
     if (BasicJavaAstTreeUtil.is(astNode, BASIC_TRY_STATEMENT)) {
       ASTNode tryBlock = BasicJavaAstTreeUtil.getCodeBlock(astNode);
       if (tryBlock != null && caret < tryBlock.getTextRange().getEndOffset()) return tryBlock;

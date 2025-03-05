@@ -1,6 +1,8 @@
 // "Replace with 'New'" "true"
 // WITH_STDLIB
 // ERROR: Not enough information to infer type variable T
+// K2_AFTER_ERROR: Cannot infer type for this parameter. Specify it explicitly.
+// K2_AFTER_ERROR: Not enough information to infer type argument for 'T'.
 
 abstract class Main<T>
 

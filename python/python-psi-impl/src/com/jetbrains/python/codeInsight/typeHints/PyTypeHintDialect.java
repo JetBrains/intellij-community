@@ -8,8 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyTypeHintDialect extends Language implements DependentLanguage {
 
-  @NotNull
-  public static final PyTypeHintDialect INSTANCE = new PyTypeHintDialect();
+  public static final @NotNull PyTypeHintDialect INSTANCE = new PyTypeHintDialect();
 
   private PyTypeHintDialect() {
     super(PythonLanguage.getInstance(), "PyTypeHint");

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseData
@@ -73,7 +73,7 @@ class TargetGTDActionData(private val project: Project, private val targetData: 
       1 -> {
         // don't compute presentation for single target
         val (navigationTarget, navigationProvider) = result.single()
-        SingleTarget(navigationTarget::navigationRequest, navigationProvider)
+        SingleTarget({ navigationTarget.navigationRequest() }, navigationProvider)
       }
       else -> {
         val targets = result.map { (navigationTarget, navigationProvider) ->

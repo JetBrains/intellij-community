@@ -26,10 +26,7 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.RequirementsImpl;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.Future;
@@ -132,9 +129,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
   }
 
-  @NotNull
-  private DataPack loadRecentData(@NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements,
-                                  int commitCount, boolean isSmallPack) throws VcsException {
+  private @NotNull DataPack loadRecentData(@NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements,
+                                           int commitCount, boolean isSmallPack) throws VcsException {
     LogInfo data = loadRecentData(requirements);
     Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
     Map<VirtualFile, CompressedRefs> refs = data.getRefs();
@@ -165,7 +161,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     });
   }
 
-  private @NotNull Map<VirtualFile, VcsLogProvider> getProvidersForRoots(@NotNull Set<? extends VirtualFile> roots) {
+  private @Unmodifiable @NotNull Map<VirtualFile, VcsLogProvider> getProvidersForRoots(@NotNull Set<? extends VirtualFile> roots) {
     return ContainerUtil.map2Map(roots, root -> Pair.create(root, myProviders.get(root)));
   }
 
@@ -512,6 +508,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }
 
     @NotNull
+    @Unmodifiable
     Map<VirtualFile, VcsLogProvider.Requirements> asMap(@NotNull Collection<? extends VirtualFile> roots) {
       return ContainerUtil.map2Map(roots, root -> Pair.create(root, this));
     }

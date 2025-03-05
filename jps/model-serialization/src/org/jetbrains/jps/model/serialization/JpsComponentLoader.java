@@ -1,17 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.impl.TimingLog;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.serialization.impl.TimingLog;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,10 +21,10 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
-public class JpsComponentLoader {
+public final class JpsComponentLoader {
   private static final Logger LOG = Logger.getInstance(JpsComponentLoader.class);
   private static final int MAX_ATTEMPTS = 5;
-  protected final @Nullable Path myExternalConfigurationDirectory;
+  private final @Nullable Path myExternalConfigurationDirectory;
   private final JpsMacroExpander myMacroExpander;
   private static final Element NULL_VALUE = new Element("null");
   private final ConcurrentHashMap<Path, Element> myRootElementsCache;
@@ -115,10 +115,10 @@ public class JpsComponentLoader {
   /**
    * Returns null if file doesn't exist
    */
-  protected static @Nullable Element loadRootElement(@NotNull Path file, @NotNull JpsMacroExpander macroExpander) {
+  static @Nullable Element loadRootElement(@NotNull Path file, @NotNull JpsMacroExpander macroExpander) {
     final Element element = tryLoadRootElement(file);
     if (element != null) {
-      macroExpander.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+      macroExpander.substitute(element, SystemInfoRt.isFileSystemCaseSensitive);
     }
     return element;
   }
@@ -140,7 +140,7 @@ public class JpsComponentLoader {
 
         LOG.info("Loading attempt #" + i + " failed for " + file.toAbsolutePath(), e);
         try {
-          LOG.info("File content: " + FileUtil.loadFile(file.toFile()));
+          LOG.info("File content: " + FileUtilRt.loadFile(file.toFile()));
         }
         catch (IOException ignored) {
         }

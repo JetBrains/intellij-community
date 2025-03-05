@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +10,7 @@ import java.io.File;
 public final class JpsArtifactPathUtil {
   //todo reuse code from DeploymentUtil instead
   public static String trimForwardSlashes(@NotNull String path) {
-    while (path.length() != 0 && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
+    while (!path.isEmpty() && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
       path = path.substring(1);
     }
     return path;
@@ -24,7 +24,7 @@ public final class JpsArtifactPathUtil {
     if (endsWithSlash && startsWithSlash) {
       tail = trimForwardSlashes(relativePath);
     }
-    else if (!endsWithSlash && !startsWithSlash && basePath.length() > 0 && relativePath.length() > 0) {
+    else if (!endsWithSlash && !startsWithSlash && !basePath.isEmpty() && !relativePath.isEmpty()) {
       tail = "/" + relativePath;
     }
     else {

@@ -10,12 +10,14 @@ import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -110,7 +112,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
         val toolbar = LayoutActionsFloatingToolbar(parentComponent = layeredPane, actionGroup = toolbarGroup, parentDisposable = host)
         layeredPane.add(splitter, JLayeredPane.DEFAULT_LAYER as Any)
         layeredPane.add(toolbar, JLayeredPane.POPUP_LAYER as Any)
-        host.registerToolbarListeners(splitter, toolbar)
+        host.registerToolbarListeners(splitter, toolbar, host)
       }
       else {
         val panel = JPanel(BorderLayout())
@@ -187,18 +189,15 @@ open class TextEditorWithPreview @JvmOverloads constructor(
   protected open val isShowActionsInTabs: Boolean
     get() = isNewUI() && getInstance().editorTabPlacement != UISettings.TABS_NONE
 
-  private fun registerToolbarListeners(actualComponent: JComponent, toolbar: LayoutActionsFloatingToolbar) {
-    addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar, MyMouseListener(toolbar))
+  private fun registerToolbarListeners(actualComponent: JComponent, toolbar: LayoutActionsFloatingToolbar, parentDisposable: Disposable) {
+    addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable, MyMouseListener(toolbar, parentDisposable))
     val actualEditor = UIUtil.findComponentOfType(actualComponent, EditorComponentImpl::class.java) ?: return
     val editorKeyListener = object : KeyAdapter() {
       override fun keyPressed(event: KeyEvent) {
         toolbar.scheduleHide()
       }
     }
-    actualEditor.editor.contentComponent.addKeyListener(editorKeyListener)
-    Disposer.register(toolbar) {
-      actualEditor.editor.contentComponent.removeKeyListener(editorKeyListener)
-    }
+    actualEditor.editor.contentComponent.addKeyListener(parentDisposable, editorKeyListener)
   }
 
   open fun isVerticalSplit(): Boolean = isVerticalSplit
@@ -358,7 +357,9 @@ open class TextEditorWithPreview @JvmOverloads constructor(
   protected open fun createLeftToolbarActionGroup(): ActionGroup? = null
 
   protected open fun createRightToolbar(): ActionToolbar {
-    val viewActions = createViewActionGroup().getChildren(null)
+    val viewActions = createViewActionGroup().run {
+      (this as? DefaultActionGroup)?.getChildren(ActionManager.getInstance()) ?: getChildren(null)
+    }
     val viewActionsGroup = ConditionalActionGroup(viewActions) { !isShowActionsInTabs }
     val group = createRightToolbarActionGroup()
     val rightToolbarActions = if (group == null) {
@@ -382,7 +383,11 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
   override fun getTabActions(): ActionGroup = ConditionalActionGroup(actions = createTabActions()) { isShowActionsInTabs }
 
-  protected open fun createTabActions(): Array<AnAction> = createViewActionGroup().getChildren(null)
+  protected open fun createTabActions(): Array<AnAction> {
+    return createViewActionGroup().run {
+      (this as? DefaultActionGroup)?.getChildren(ActionManager.getInstance()) ?: getChildren(null)
+    }
+  }
 
   protected open val showEditorAction: ToggleAction
     get() = getAction("TextEditorWithPreview.Layout.EditorOnly")!! as ToggleAction
@@ -436,12 +441,16 @@ open class TextEditorWithPreview @JvmOverloads constructor(
     ui.valueIfInitialized?.handleLayoutChange(isVerticalSplit)
   }
 
-  private inner class MyMouseListener(private val toolbar: LayoutActionsFloatingToolbar) : AWTEventListener {
-    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, toolbar)
+  private inner class MyMouseListener(
+    private val toolbar: LayoutActionsFloatingToolbar,
+    parentDisposable: Disposable,
+  ) : AWTEventListener {
+    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
 
     override fun eventDispatched(event: AWTEvent) {
+      val isMouseInsideComponent = component.mousePosition != null
       val isMouseOutsideToolbar = toolbar.mousePosition == null
-      if (component.mousePosition != null) {
+      if (isMouseInsideComponent) {
         alarm.cancelAllRequests()
         toolbar.scheduleShow()
         if (isMouseOutsideToolbar) {

@@ -13,9 +13,24 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListItem
 import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
+import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 
+/**
+ * Renders one or more [MarkdownBlock]s into a Compose UI.
+ *
+ * @param rootStyling The [MarkdownStyling] to use to render the Markdown into composables.
+ * @param rendererExtensions The [MarkdownRendererExtension]s used to render [MarkdownBlock.CustomBlock]s.
+ * @param inlineRenderer The [InlineMarkdownRenderer] used to render
+ *   [inline content][org.jetbrains.jewel.markdown.InlineMarkdown].
+ * @see render
+ */
+@Suppress("ComposableNaming")
 @ExperimentalJewelApi
 public interface MarkdownBlockRenderer {
+    public val rootStyling: MarkdownStyling
+    public val rendererExtensions: List<MarkdownRendererExtension>
+    public val inlineRenderer: InlineMarkdownRenderer
+
     @Composable
     public fun render(
         blocks: List<MarkdownBlock>,
@@ -102,6 +117,18 @@ public interface MarkdownBlockRenderer {
     @Composable public fun renderThematicBreak(styling: MarkdownStyling.ThematicBreak)
 
     @Composable public fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock)
+
+    /**
+     * Creates a copy of this instance, using the provided non-null parameters, or the current values for the null ones.
+     */
+    public fun createCopy(
+        rootStyling: MarkdownStyling? = null,
+        rendererExtensions: List<MarkdownRendererExtension>? = null,
+        inlineRenderer: InlineMarkdownRenderer? = null,
+    ): MarkdownBlockRenderer
+
+    /** Creates a copy of this [MarkdownBlockRenderer] with the same properties, plus the provided [extension]. */
+    @ExperimentalJewelApi public operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer
 
     public companion object
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
@@ -12,8 +12,9 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil
+import java.util.*
 
-class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference>() {
+private class JavaFxEventHandlerReferenceQuickFixProvider : UnresolvedReferenceQuickFixProvider<JavaFxEventHandlerReference>() {
 
   override fun getReferenceClass(): Class<JavaFxEventHandlerReference> = JavaFxEventHandlerReference::class.java
 
@@ -66,7 +67,7 @@ private fun getVisibility(element: XmlAttributeValue): JvmModifier {
   val visibility = JavaCodeStyleSettings.getInstance(element.containingFile).VISIBILITY
   if (VisibilityUtil.ESCALATE_VISIBILITY == visibility) return JvmModifier.PRIVATE
   if (visibility == PsiModifier.PACKAGE_LOCAL) return JvmModifier.PACKAGE_LOCAL
-  return JvmModifier.valueOf(visibility.toUpperCase())
+  return JvmModifier.valueOf(visibility.uppercase(Locale.getDefault()))
 }
 
 private fun getEventType(element: XmlAttributeValue): PsiType {

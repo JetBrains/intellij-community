@@ -1,4 +1,4 @@
-// "Convert to record class" "false"
+// "Convert to record class" "INFORMATION"
 class <caret>R {
   final int first;
 

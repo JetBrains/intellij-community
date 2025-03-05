@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.ArrayFactory;
@@ -85,20 +84,17 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
   List<PyAssignmentStatement> findAttributes();
 
   @Override
-  @NotNull
-  default PyStatementList getStatementList() {
+  default @NotNull PyStatementList getStatementList() {
     return (PyStatementList)PyAstFunction.super.getStatementList();
   }
 
   @Override
-  @Nullable
-  default PyFunction asMethod() {
+  default @Nullable PyFunction asMethod() {
     return (PyFunction)PyAstFunction.super.asMethod();
   }
 
   @Override
-  @Nullable
-  default PyStringLiteralExpression getDocStringExpression() {
+  default @Nullable PyStringLiteralExpression getDocStringExpression() {
     return (PyStringLiteralExpression)PyAstFunction.super.getDocStringExpression();
   }
 
@@ -120,8 +116,7 @@ public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctio
   }
 
   @Override
-  @Nullable
-  default PyClass getContainingClass() {
+  default @Nullable PyClass getContainingClass() {
     return (PyClass)PyAstFunction.super.getContainingClass();
   }
 }

@@ -15,28 +15,24 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class ConditionSignalInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CallToSignalInsteadOfSignalAll";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "condition.signal.problem.descriptor");
   }
@@ -67,7 +63,7 @@ public final class ConditionSignalInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      @NonNls final String signal = "signal";
+      final @NonNls String signal = "signal";
       if (!signal.equals(methodName)) {
         return;
       }

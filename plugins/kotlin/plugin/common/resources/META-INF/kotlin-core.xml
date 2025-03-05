@@ -95,6 +95,15 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.bundledFirCompilerPluginProvider"
                     interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinBundledFirCompilerPluginProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.firCompilerPluginConfigurationProvider"
+                    interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinFirCompilerPluginConfigurationForIdeProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider"
+                    interface="org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter"
+                    dynamic="true">
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -110,14 +119,13 @@
     <applicationActivity implementation="org.jetbrains.kotlin.idea.macros.ApplicationWideKotlinBundledPathMacroCleaner"/>
 
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderIdeImpl"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.RootKindMatcherImpl"/>
+
+    <psi.batchReferenceProcessingSuppressor implementation="org.jetbrains.kotlin.idea.base.analysis.KotlinBatchReferenceProcessingSuppressor"/>
 
     <applicationConfigurable
             groupId="language"
@@ -261,7 +269,7 @@
             id="kotlinSkipAutopopupInStrings"
             order="after propertyKeys"/>
 
-    <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.KotlinNotebookSuggestionProvider"/>
+    <pluginSuggestionProvider order="first" implementation="org.jetbrains.kotlin.idea.suggestions.JupyterNotebookSuggestionProvider"/>
   </extensions>
 
   <!-- Templates -->
@@ -576,6 +584,7 @@
     <filePasteProvider implementation="org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinFilePasteProvider" order="first"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertTextJavaCopyPasteProcessor"/>
+    <diff.lang.DiffIgnoredRangeProvider implementation="org.jetbrains.kotlin.idea.diff.KotlinDiffIgnoredRangeProvider"/>
   </extensions>
 
   <actions>
@@ -627,23 +636,15 @@
                 id="CheckComponentsUsageSearchAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
         <action
-                id="FindImplicitNothingAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.FindImplicitNothingAction"/>
-        <action
                 id="PrintOutNotPropertyMatches"
                 class="org.jetbrains.kotlin.idea.actions.internal.SearchNotPropertyCandidatesAction"/>
         <action
                 id="StoredExceptionsThrowToggleAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
-        <action
-                id="DebugTypeResolutionAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.resolutionDebugging.DebugTypeResolutionAction"/>
+
         <action
                 id="LibraryToSourceDependencySupportToggleAction"
                 class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
-        <action
-                id="CopyAsDiagnosticTest"
-                class="org.jetbrains.kotlin.idea.actions.internal.CopyAsDiagnosticTestAction"/>
         <action
                 id="KotlinFormattingSettingsStatusAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.KotlinFormattingSettingsStatusAction"/>

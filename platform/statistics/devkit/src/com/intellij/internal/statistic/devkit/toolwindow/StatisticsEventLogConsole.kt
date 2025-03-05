@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.devkit.toolwindow
 
 import com.intellij.diagnostic.logging.LogConsoleBase
 import com.intellij.diagnostic.logging.LogFilterModel
-import com.intellij.internal.statistic.devkit.actions.OpenEventsSchemeFileAction.Companion.getEventsSchemeFile
+import com.intellij.internal.statistic.devkit.actions.OpenEventsSchemeFileAction.Manager.getEventsSchemeFile
 import com.intellij.json.JsonLanguage
 import com.intellij.json.psi.JsonArray
 import com.intellij.json.psi.JsonObject

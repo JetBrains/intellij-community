@@ -10,6 +10,10 @@ class IjentWslNioPath(
   val delegate: Path,
   cachedAttributes: IjentNioPosixFileAttributesWithDosAdapter?,
 ) : Path, BasicFileAttributesHolder2.Impl(cachedAttributes) {
+  init {
+    require(delegate !is IjentWslNioPath) { "IjentWslNioPath should be a wrapper over other instances of path, namely WindowsPath or IjentNioPath" }
+  }
+
   override fun getFileSystem(): IjentWslNioFileSystem = fileSystem
 
   override fun isAbsolute(): Boolean = delegate.isAbsolute

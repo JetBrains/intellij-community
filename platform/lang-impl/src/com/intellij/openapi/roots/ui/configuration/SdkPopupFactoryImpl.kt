@@ -23,6 +23,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationPanel.ActionHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.list.ComboBoxPopup
+import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.Component
 import java.awt.Point
 import java.awt.Window
@@ -286,6 +287,13 @@ private class SdkPopupImpl(
   context: SdkListItemContext,
   onItemSelected: Consumer<SdkListItem>
 ) : ComboBoxPopup<SdkListItem>(context, null, onItemSelected), SdkPopup {
+
+  init {
+    if (ScreenReader.isActive()) {
+      setRequestFocus(true)
+    }
+  }
+
   val popupOwner: JComponent
     get() {
       val owner = myOwner

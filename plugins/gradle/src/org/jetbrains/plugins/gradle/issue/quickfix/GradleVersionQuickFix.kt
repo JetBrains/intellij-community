@@ -128,7 +128,7 @@ class GradleVersionQuickFix(
         wrapperPropertiesPath.createParentDirectories().createFile()
       }
 
-      GradleUtil.writeWrapperConfiguration(wrapperPropertiesPath, wrapperConfiguration)
+      GradleUtil.writeWrapperConfiguration(wrapperConfiguration, wrapperPropertiesPath)
       LocalFileSystem.getInstance().refreshNioFiles(listOf(wrapperPropertiesPath))
     }
   }

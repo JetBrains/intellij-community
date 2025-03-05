@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.editor.Editor;
@@ -74,8 +74,7 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
    *
    * @return relative path to the test data.
    */
-  @NonNls
-  protected String getBasePath() {
+  protected @NonNls String getBasePath() {
     return "";
   }
 
@@ -84,8 +83,7 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
    *
    * @return absolute path to the test data.
    */
-  @NonNls
-  protected final String getTestDataPath() {
+  protected final @NonNls String getTestDataPath() {
     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : IdeaTestExecutionPolicy.getHomePathWithPolicy();
     return path.replace(File.separatorChar, '/') + getBasePath();
   }

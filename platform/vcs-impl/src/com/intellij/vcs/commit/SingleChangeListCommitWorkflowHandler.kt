@@ -22,17 +22,14 @@ import org.jetbrains.concurrency.await
 
 class SingleChangeListCommitWorkflowHandler(
   override val workflow: CommitChangeListDialogWorkflow,
-  override val ui: SingleChangeListCommitWorkflowUi
+  override val ui: SingleChangeListCommitWorkflowUi,
+  initialCommitMessage: String?,
+  val initiallyIncluded: Collection<Any>,
 ) : AbstractCommitWorkflowHandler<CommitChangeListDialogWorkflow, SingleChangeListCommitWorkflowUi>(),
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener {
 
-  override val commitPanel: CheckinProjectPanel = object : CommitProjectPanelAdapter(this) {
-    override fun setCommitMessage(currentDescription: String?) {
-      commitMessagePolicy.onCommitMessageReset(currentDescription)
-      super.setCommitMessage(currentDescription)
-    }
-  }
+  override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
 
   @ApiStatus.Internal
   override val amendCommitHandler: AmendCommitHandlerImpl = AmendCommitHandlerImpl(this)
@@ -41,14 +38,17 @@ class SingleChangeListCommitWorkflowHandler(
 
   private fun getCommitState() = ChangeListCommitState(getChangeList(), getIncludedChanges(), getCommitMessage())
 
-  private val commitMessagePolicy get() = workflow.commitMessagePolicy
+  private val commitMessagePolicy = SingleChangeListCommitMessagePolicy(project, ui, initialCommitMessage, getChangeList())
 
   init {
     Disposer.register(this, Disposable { workflow.disposeCommitOptions() })
     Disposer.register(ui, this)
 
+    Disposer.register(this, commitMessagePolicy)
+
     workflow.addListener(this, this)
     workflow.addCommitCustomListener(CommitCustomListener(), this)
+    workflow.addVcsCommitListener(ChangeListDescriptionCleaner(), this)
 
     ui.addStateListener(this, this)
     ui.addExecutorListener(this, this)
@@ -62,11 +62,11 @@ class SingleChangeListCommitWorkflowHandler(
     if (workflow.isDefaultCommitEnabled) {
       LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
     }
-    ui.getInclusionModel().setInclusion(workflow.initiallyIncluded)
+    ui.getInclusionModel().setInclusion(initiallyIncluded)
 
     ui.addInclusionListener(this, this)
     updateDefaultCommitActionName()
-    setCommitMessage(commitMessagePolicy.init(getChangeList(), getIncludedChanges()))
+    commitMessagePolicy.init()
     initCommitOptions()
 
     amendCommitHandler.initialMessage = getCommitMessage()
@@ -76,7 +76,6 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun cancelled() {
     commitOptions.saveChangeListSpecificOptions()
-    commitMessagePolicy.onDialogClosed(getCommitState(), false)
 
     if (workflow.isDefaultCommitEnabled) {
       LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
@@ -84,7 +83,7 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun changeListChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList) {
-    commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList, ui.commitMessageUi)
+    commitMessagePolicy.onChangelistChanged(newChangeList)
     updateCommitOptions()
   }
 
@@ -144,7 +143,7 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.onDialogClosed(getCommitState(), true)
+    commitMessagePolicy.onBeforeCommit()
   }
 
   private fun initCommitOptions() {
@@ -168,6 +167,14 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private inner class CommitCustomListener : CommitterResultHandler {
-    override fun onSuccess() = ui.deactivate()
+    override fun onSuccess() {
+      ui.deactivate()
+    }
+  }
+
+  private inner class ChangeListDescriptionCleaner : CommitterResultHandler { // TODO: CommitStateCleaner?
+    override fun onSuccess() {
+      commitMessagePolicy.onAfterCommit()
+    }
   }
 }

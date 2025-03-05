@@ -19,16 +19,14 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
@@ -37,8 +35,15 @@ import java.awt.Graphics
 import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.*
+import javax.accessibility.AccessibleAction
 import javax.accessibility.AccessibleContext
-import javax.swing.*
+import javax.accessibility.AccessibleRole
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JEditorPane
+import javax.swing.JLabel
+import javax.swing.LayoutFocusTraversalPolicy
+import javax.swing.UIManager
 import javax.swing.event.HyperlinkEvent
 
 private const val ID = "NonCommercial"
@@ -77,15 +82,9 @@ internal class NonCommercialFactory : StatusBarWidgetFactory {
 }
 
 private class NonCommercialWidget : CustomStatusBarWidget {
-  val isRider by lazy { PlatformUtils.isRider() || LicensingFacade.getInstance()?.platformProductCode == "RD" }
-
-  private val myComponent by lazy { if (isRider) createRiderComponent() else createComponent() }
+  private val myComponent by lazy { createComponent() }
 
   override fun install(statusBar: StatusBar) {
-    if (isRider && statusBar is IdeStatusBarImpl) {
-      statusBar.border = RiderWidgetLabel.createStatusBarBorder()
-    }
-
     statusBar.addListener(object : StatusBarListener {
       override fun widgetAdded(widget: StatusBarWidget, anchor: @NonNls String?) {
         if (widget.ID() != ID) {
@@ -102,7 +101,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
     val borderColor = JBColor.namedColor("Badge.greenOutlineBorderColor", JBColor(0x55A76A, 0x4E8052))
     val uiSettings = UISettings.Companion.getInstance()
     val icon = TextIcon(title, foreground, null, borderColor, 0, true)
-    icon.setFont(JBFont.medium())
+    icon.setFont(getStatusFont())
     icon.setRound(18)
     icon.setInsets(JBUI.insets(if (!ExperimentalUI.Companion.isNewUI() || uiSettings.compactMode) 3 else 4, 8))
 
@@ -120,7 +119,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
             scale = newScale
             oldFont = font
             icon.setInsets(JBUI.insets(if (newValue) 3 else 4, 8))
-            icon.font = JBFont.medium()
+            icon.font = getStatusFont()
             icon.setFontTransform(getFontMetrics(icon.font).fontRenderContext.transform)
             parent.revalidate()
           }
@@ -141,39 +140,7 @@ private class NonCommercialWidget : CustomStatusBarWidget {
     return label
   }
 
-  private fun createRiderComponent(): JLabel {
-    val title = IdeBundle.message("status.bar.widget.non.commercial.usage")
-
-    val label = object : RiderWidgetLabel(title, false) {
-      var oldIcon: Icon? = null
-
-      val iconProvider = ScaleContextCache {
-        loadSmallApplicationIcon(scaleContext = it)
-      }
-
-      override fun getIcon(): Icon? {
-        val newIcon = iconProvider.getOrProvide(ScaleContext.Companion.create(this))
-        val bool = oldIcon !== newIcon
-        val oldRef = oldIcon
-        oldIcon = newIcon
-        if (bool) {
-          firePropertyChange("icon", oldRef, newIcon)
-        }
-        return newIcon
-      }
-    }
-    label.isOpaque = false
-    label.foreground = JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND
-    label.iconTextGap = JBUI.scale(8)
-    label.horizontalTextPosition = SwingConstants.LEFT
-    label.border = JBUI.Borders.empty(0, 12)
-
-    val popup = NonCommercialPopup(this)
-    label.clickListener = popup
-    popup.installOn(label)
-
-    return label
-  }
+  private fun getStatusFont() = if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) JBFont.small() else JBFont.medium()
 
   override fun getComponent(): JComponent = myComponent
 
@@ -192,9 +159,6 @@ private class NonCommercialPopup(private val widget: NonCommercialWidget) : Clic
 
     val dimension = popup.content.preferredSize
     val at = Point(event.component.width - dimension.width, -dimension.height)
-    if (widget.isRider) {
-      at.x -= JBUI.scale(4)
-    }
 
     Disposer.register(popupDisposable, popup)
     popup.show(RelativePoint(event.component, at))
@@ -285,6 +249,39 @@ private class NonCommercialPopup(private val widget: NonCommercialWidget) : Clic
     }.lowercase()
 
     return "https://www.jetbrains.com/$product/buy/?fromIDE&lang=$tag"
+  }
+}
+
+@ApiStatus.Internal
+open class WidgetLabel(image: Icon) : JLabel(image) {
+  var clickListener: ClickListener? = null
+
+  override fun getAccessibleContext(): AccessibleContext? {
+    if (accessibleContext == null) {
+      accessibleContext = object : AccessibleJLabel(), AccessibleAction {
+        override fun getAccessibleRole() = AccessibleRole.PUSH_BUTTON
+
+        override fun getAccessibleAction() = this
+
+        override fun getAccessibleActionCount() = 1
+
+        override fun getAccessibleActionDescription(i: Int): String? {
+          if (i == 0) {
+            return UIManager.getString("AbstractButton.clickText")
+          }
+          return null
+        }
+
+        override fun doAccessibleAction(i: Int): Boolean {
+          if (i == 0 && clickListener != null) {
+            clickListener!!.onClick(MouseEvent(this@WidgetLabel, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false), 1)
+            return true
+          }
+          return false
+        }
+      }
+    }
+    return accessibleContext
   }
 }
 

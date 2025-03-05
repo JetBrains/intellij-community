@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.tree.IElementType;
@@ -36,6 +36,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,20 +48,45 @@ import static com.intellij.psi.JavaTokenType.WHEN_KEYWORD;
 public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiExpression> {
   private static final Logger LOG = Logger.getInstance(SimplifyBooleanExpressionFix.class);
 
+  enum SideEffectStatus {
+    NO_SIDE_EFFECTS,
+    CAN_BE_EXTRACTED,
+    MAY_CHANGE_SEMANTICS,
+    BREAKS_COMPILATION
+  }
+
   private final boolean mySubExpressionValue;
+  private final @NotNull SideEffectStatus mySideEffectStatus;
 
   public SimplifyBooleanExpressionFix(@NotNull PsiExpression subExpression, boolean subExpressionValue) {
     super(subExpression);
     mySubExpressionValue = subExpressionValue;
+    mySideEffectStatus = computeStatus(subExpression);
   }
 
   private @IntentionName @NotNull String getText(@NotNull PsiExpression subExpression) {
-    String suffix = "";
-    if (SideEffectChecker.mayHaveSideEffects(subExpression, e -> shouldIgnore(e, subExpression))) {
-      suffix = canExtractSideEffect(subExpression) ? QuickFixBundle.message("simplify.boolean.expression.extracting.side.effects")
-                                                   : JavaBundle.message("quickfix.text.suffix.may.change.semantics");
-    }
+    String suffix = switch (mySideEffectStatus) {
+      case NO_SIDE_EFFECTS, BREAKS_COMPILATION -> "";
+      case CAN_BE_EXTRACTED -> QuickFixBundle.message("simplify.boolean.expression.extracting.side.effects");
+      case MAY_CHANGE_SEMANTICS -> JavaBundle.message("quickfix.text.suffix.may.change.semantics");
+    };
     return getIntentionText(subExpression, mySubExpressionValue) + suffix;
+  }
+
+  private SideEffectStatus computeStatus(@NotNull PsiExpression expression) {
+    return StreamEx.of(SideEffectChecker.extractSideEffectExpressions(expression))
+      .map(sideEffectExpression -> {
+        if (sideEffectExpression instanceof PsiInstanceOfExpression instanceOf) {
+          return shouldIgnore(instanceOf, expression) ? SideEffectStatus.NO_SIDE_EFFECTS :
+                 canExtractSideEffect(sideEffectExpression) ? SideEffectStatus.CAN_BE_EXTRACTED :
+                 SideEffectStatus.BREAKS_COMPILATION;
+        }
+        else {
+          return canExtractSideEffect(sideEffectExpression) ? SideEffectStatus.CAN_BE_EXTRACTED : SideEffectStatus.MAY_CHANGE_SEMANTICS;
+        }
+      })
+      .max(Comparator.naturalOrder())
+      .orElse(SideEffectStatus.NO_SIDE_EFFECTS);
   }
 
   private boolean shouldIgnore(PsiElement e, PsiExpression subExpression) {
@@ -119,6 +145,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
 
   public boolean isAvailable(@NotNull PsiExpression expression) {
     if (PsiUtil.isAccessedForWriting(expression)) return false;
+    if (mySideEffectStatus == SideEffectStatus.BREAKS_COMPILATION) return false;
     PsiElement element = PsiUtil.skipParenthesizedExprUp(expression);
     PsiElement parent = element == null ? null : element.getParent();
     if (parent instanceof PsiDoWhileStatement && containsBreakOrContinue((PsiDoWhileStatement)parent)) return false;
@@ -409,7 +436,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
   private static boolean blockAlwaysReturns(@Nullable PsiStatement statement) {
     if (statement == null) return false;
     try {
-      return ControlFlowUtil.returnPresent(HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(statement));
+      return ControlFlowUtil.returnPresent(ControlFlowFactory.getControlFlowNoConstantEvaluate(statement));
     }
     catch (AnalysisCanceledException e) {
       return false;
@@ -580,7 +607,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
           final Boolean constBoolean = getConstBoolean(operand);
           if (constBoolean != null) {
             markAndCheckCreateResult();
-            if (constBoolean == Boolean.TRUE) {
+            if (constBoolean) {
               negate = !negate;
             }
             continue;

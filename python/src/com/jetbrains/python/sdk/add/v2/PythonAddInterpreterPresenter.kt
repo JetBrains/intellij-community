@@ -24,7 +24,7 @@ import kotlin.coroutines.CoroutineContext
  * @param state is the model for this presented in Model-View-Presenter pattern
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-open class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val uiContext: CoroutineContext) {
+internal open class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val uiContext: CoroutineContext) {
 
   lateinit var controller: PythonAddInterpreterModel
 

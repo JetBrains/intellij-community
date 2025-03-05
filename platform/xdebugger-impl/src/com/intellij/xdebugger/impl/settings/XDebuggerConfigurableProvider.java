@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
@@ -11,9 +11,8 @@ import java.util.Collection;
 import java.util.List;
 
 final class XDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
-  @NotNull
   @Override
-  public Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
+  public @NotNull Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
     List<Configurable> list = new SmartList<>();
     if (category == DebuggerSettingsCategory.GENERAL) {
       list.add(new DebuggerGeneralConfigurable());

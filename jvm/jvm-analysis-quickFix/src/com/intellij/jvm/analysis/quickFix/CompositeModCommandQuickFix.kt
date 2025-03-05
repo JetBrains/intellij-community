@@ -3,15 +3,12 @@ package com.intellij.jvm.analysis.quickFix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
-import com.intellij.util.asSafely
 
 /**
  * A quickfix that can call multiple JVM intention actions and bundle them into a single quick fix.
@@ -22,7 +19,7 @@ abstract class CompositeModCommandQuickFix : PsiUpdateModCommandQuickFix() {
   protected fun applyFixes(project: Project, element: PsiElement, containingFile: PsiFile) {
     val target = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element)
     getActions(project).forEach { factory ->
-      val actions = factory(target.element.asSafely<JvmModifiersOwner>() ?: return@forEach)
+      val actions = factory(target.element as? JvmModifiersOwner ?: return@forEach)
       performActions(actions, containingFile)
     }
   }

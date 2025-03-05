@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
@@ -8,9 +8,10 @@ import com.intellij.util.Functions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.WeakHashMap;
 import java.util.*;
+import java.util.WeakHashMap;
 
 import static com.intellij.openapi.util.Conditions.not;
 
@@ -104,6 +105,9 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   /**
    * Restricts the nodes that can have children by the specified condition.
    * Subsequent calls will AND all the conditions.
+   * <p>
+   * If the condition is false, the node children will not be traversed over.
+   * Use {@link #expandAndFilter(Condition)} to skip the non-matching nodes themselves as well.
    */
   public final @NotNull Self expand(@NotNull Condition<? super T> c) {
     return newInstance(myMeta.expand(c));
@@ -258,7 +262,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     return myMeta.children(node);
   }
 
-  public final @NotNull List<T> toList() {
+  public final @Unmodifiable @NotNull List<T> toList() {
     return traverse().toList();
   }
 

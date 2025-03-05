@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -37,9 +37,8 @@ public class ImportedTestRunnableState implements RunProfileState, HistoryTestRu
     myFile = file;
   }
 
-  @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) {
+  public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) {
     final MyEmptyProcessHandler handler = new MyEmptyProcessHandler();
     final SMTRunnerConsoleProperties properties;
     final RunProfile configuration;
@@ -95,9 +94,8 @@ public class ImportedTestRunnableState implements RunProfileState, HistoryTestRu
       return false;
     }
 
-    @Nullable
     @Override
-    public OutputStream getProcessInput() {
+    public @Nullable OutputStream getProcessInput() {
       return null;
     }
   }

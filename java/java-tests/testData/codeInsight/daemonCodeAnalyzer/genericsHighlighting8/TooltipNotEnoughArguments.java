@@ -3,6 +3,6 @@ class MyTest {
   }
 
   {
-    new MyTest(1, <error descr="'MyTest(int, int, int)' in 'MyTest' cannot be applied to '(int, java.lang.String)'">""</error>);
+    new MyTest(1, <error descr="Expected 3 arguments but found 2">""</error>);
   }
 }

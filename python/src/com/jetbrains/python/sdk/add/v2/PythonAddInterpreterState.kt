@@ -7,7 +7,7 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import kotlinx.coroutines.CoroutineScope
 
-class PythonAddInterpreterState(
+internal class PythonAddInterpreterState(
   val propertyGraph: PropertyGraph, // todo move to presenter
   val projectPath: ObservableProperty<String>,
   val scope: CoroutineScope,

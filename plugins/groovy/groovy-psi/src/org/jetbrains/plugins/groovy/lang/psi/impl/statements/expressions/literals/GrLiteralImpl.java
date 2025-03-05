@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
 import com.intellij.lang.ASTNode;
@@ -153,9 +153,8 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
   }
 
-  @Nullable
   @Override
-  public PsiReference getReference() {
+  public @Nullable PsiReference getReference() {
     final PsiReference[] references = getReferences();
     if (references.length == 1) {
       return references[0];
@@ -173,7 +172,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
   }
 
   @Override
-  public GrLiteralImpl updateText(@NotNull final String text) {
+  public GrLiteralImpl updateText(final @NotNull String text) {
     final GrExpression newExpr = GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(text);
     LOG.assertTrue(newExpr instanceof GrLiteral, text);
     LOG.assertTrue(newExpr.getFirstChild() != null, text);
@@ -183,8 +182,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
   }
 
   @Override
-  @NotNull
-  public LiteralTextEscaper<GrLiteralContainer> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<GrLiteralContainer> createLiteralTextEscaper() {
     return new GrLiteralEscaper(this);
   }
 }

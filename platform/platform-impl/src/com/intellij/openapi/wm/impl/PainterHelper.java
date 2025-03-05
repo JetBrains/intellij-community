@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -505,7 +505,7 @@ final class PainterHelper implements Painter.Listener {
       boolean newOk = newImage != null;
       if (prevOk || newOk) {
         ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
-        if (modalityState.dominates(ModalityState.nonModal())) {
+        if (!modalityState.accepts(ModalityState.nonModal())) {
           ComponentUtil.getActiveWindow().repaint();
         }
         else {

@@ -15,7 +15,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge
@@ -34,6 +33,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -63,6 +63,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.serialization.SerializationConstants
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assert.*
 import org.junit.Assume.assumeFalse
 import org.junit.Before
@@ -122,7 +123,7 @@ class ExternalSystemStorageTest {
   fun `applying external system options twice`() {
     createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true, useDefaultProjectSettings = false) { project ->
       runBlocking {
-        writeAction {
+        edtWriteAction {
           val projectDir = project.stateStore.directoryStorePath!!.parent
           val module = ModuleManager.getInstance(project).newModule(projectDir.resolve("test.iml").invariantSeparatorsPathString,
                                                                     JAVA_MODULE_ENTITY_TYPE_ID_NAME)
@@ -131,7 +132,7 @@ class ExternalSystemStorageTest {
 
           val propertyManager = ExternalSystemModulePropertyManager.getInstance(module)
 
-          val systemId = ProjectSystemId("GRADLE")
+          val systemId = GradleConstants.SYSTEM_ID
           val moduleData = ModuleData("test", systemId, "", "", "", projectDir.invariantSeparatorsPathString).also {
             it.group = "group"
             it.version = "42.0"
@@ -186,7 +187,7 @@ class ExternalSystemStorageTest {
 
   private fun setExternalSystemOptions(module: Module, projectDir: Path) {
     val propertyManager = ExternalSystemModulePropertyManager.getInstance(module)
-    val systemId = ProjectSystemId("GRADLE")
+    val systemId = GradleConstants.SYSTEM_ID
     val moduleData = ModuleData("test", systemId, "", "", "", projectDir.invariantSeparatorsPathString).also {
       it.group = "group"
       it.version = "42.0"
@@ -572,20 +573,26 @@ class ExternalSystemStorageTest {
     }
   }
 
+  fun writeTextToProjectFile(project: Project, newText: String) {
+    val miscXmlPath = project.projectFilePath!!
+    val miscFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(miscXmlPath) ?: error("Cannot find $miscXmlPath")
+    VfsUtil.saveText(miscFile, newText)
+  }
+
   @Test
   fun `check project model saved correctly at internal storage after misc manual modification`() {
     loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
-      val miscFile = File(project.projectFilePath!!)
-      miscFile.writeText("""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <project version="4">
-          <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
-        </project>
-      """.trimIndent())
-      WriteAction.runAndWait<RuntimeException> {
-        VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
+      runBlocking {
+        edtWriteAction {
+          writeTextToProjectFile(project, """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project version="4">
+              <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
+            </project>
+          """.trimIndent())
+        }
+        StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
       }
-      runBlocking { StoreReloadManager.getInstance(project).reloadChangedStorageFiles() }
       ApplicationManager.getApplication().invokeAndWait {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }
@@ -595,18 +602,18 @@ class ExternalSystemStorageTest {
   @Test
   fun `check project model saved correctly at external storage after misc manual modification`() {
     loadModifySaveAndCheck("twoModulesWithLibrariesAndFacets", "twoModulesInExtAndLibsAndFacetsInInternalStorage") { project ->
-      val miscFile = File(project.projectFilePath!!)
-      miscFile.writeText("""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <project version="4">
-          <component name="ExternalStorageConfigurationManager" enabled="true" />
-          <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
-        </project>
-      """.trimIndent())
-      WriteAction.runAndWait<RuntimeException> {
-        VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
+      runBlocking {
+        edtWriteAction {
+          writeTextToProjectFile(project, """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project version="4">
+              <component name="ExternalStorageConfigurationManager" enabled="true" />
+              <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
+            </project>
+            """.trimIndent())
+        }
+        StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
       }
-      runBlocking { StoreReloadManager.getInstance(project).reloadChangedStorageFiles() }
       ApplicationManager.getApplication().invokeAndWait {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }

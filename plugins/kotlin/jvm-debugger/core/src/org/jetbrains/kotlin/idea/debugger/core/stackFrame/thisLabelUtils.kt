@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.Type
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
+import org.jetbrains.kotlin.codegen.AsmUtil
 
 fun getThisName(label: String): String {
-    return KotlinDebuggerConstants.THIS + " (@" + label + ")"
+    return AsmUtil.THIS + " (@" + label + ")"
 }
 
 fun getThisValueLabel(thisValue: ObjectReference): String? {

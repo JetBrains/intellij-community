@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.*;
@@ -329,7 +329,7 @@ public final class CodeEditUtil {
     return element.getCopyableUserData(REFORMAT_BEFORE_KEY) != null;
   }
 
-  public static @Nullable PsiElement createLineFeed(@NotNull PsiManager manager) {
+  public static PsiElement createLineFeed(@NotNull PsiManager manager) {
     return Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n", 0, 1, null, manager).getPsi();
   }
 

@@ -1,3 +1,4 @@
 import `foo bar`.FooBar
 
+// IGNORE_K1
 fun bar(fooBar: FooBar<caret>)

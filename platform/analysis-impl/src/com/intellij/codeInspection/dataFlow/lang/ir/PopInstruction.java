@@ -17,6 +17,7 @@ public class PopInstruction extends Instruction {
     return nextStates(interpreter, stateBefore);
   }
 
+  @Override
   public String toString() {
     return "POP";
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -83,67 +83,26 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("IFoo");
   }
 
-  public void testUsageInExtendsList() {
-    doSingleFileTest();
-  }
+  public void testUsageInExtendsList() { doSingleFileTest(); }
+  public void testDeepDeleteParameterSimple() { doSingleFileTest(); }
+  public void testDeepDeleteParameterOtherTypeInBinaryExpression() { doSingleFileTest(); }
+  public void testDeepDeleteFieldAndAssignedParameter() { doSingleFileTest(); }
+  public void testImpossibleToDeepDeleteParameter() { doSingleFileTest(); }
+  public void testNoDeepDeleteParameterUsedInCallQualifier() { doSingleFileTest(); }
+  public void testNoDeepDeleteParameterUsedInNextArgumentExpression() { doSingleFileTest(); }
+  public void testToDeepDeleteParameterOverriders() { doSingleFileTest(); }
+  public void testDeleteParameterOfASiblingMethod() { doSingleFileTest(); }
+  public void testDeleteMethodCascade() { doSingleFileTest(); }
+  public void testDeleteMethodKeepEnumValues() { doSingleFileTest(); }
+  public void testDeleteMethodCascadeRecursive() { doSingleFileTest(); }
+  public void testDeleteMethodCascadeOverridden() { doSingleFileTest(); }
+  public void testDeleteParameterAndUpdateJavadocRef() { doSingleFileTest(); }
+  public void testDeleteConstructorParameterWithAnonymousClassUsage() { doSingleFileTest(); }
+  public void testAccidentalPropertyRef() { doSingleFileTest(); }
+  public void testMethodCannotBePrivate() { doSingleFileTest(); }
 
-  public void testDeepDeleteParameterSimple() {
-    doSingleFileTest();
-  }
-
-  public void testDeepDeleteParameterOtherTypeInBinaryExpression() {
-    doSingleFileTest();
-  }
-
-  public void testDeepDeleteFieldAndAssignedParameter() {
-    doSingleFileTest();
-  }
-
-  public void testImpossibleToDeepDeleteParameter() {
-    doSingleFileTest();
-  }
-
-  public void testNoDeepDeleteParameterUsedInCallQualifier() {
-    doSingleFileTest();
-  }
-
-  public void testNoDeepDeleteParameterUsedInNextArgumentExpression() {
-    doSingleFileTest();
-  }
-
-  public void testToDeepDeleteParameterOverriders() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteParameterOfASiblingMethod() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteMethodCascade() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteMethodKeepEnumValues() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteMethodCascadeRecursive() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteMethodCascadeOverridden() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteParameterAndUpdateJavadocRef() {
-    doSingleFileTest();
-  }
-
-  public void testDeleteConstructorParameterWithAnonymousClassUsage() {
-    doSingleFileTest();
-  }
-
-  public void testAccidentalPropertyRef() {
+  public void testRecordAccessorCannotBePrivate() {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_16, getTestRootDisposable());
     doSingleFileTest();
   }
 

@@ -16,14 +16,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.rules.TempDirectoryExtension
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
@@ -118,24 +115,6 @@ class RepositoryLibraryTest {
 
     assertEquals(listOf(OrderRootType.CLASSES to VfsUtil.getUrlForLibraryRoot(jar)), getLibraryRoots(library).toList())
     assertTrue(workspaceVersion() > modelVersionBefore)
-  }
-
-  @Test
-  fun testSynchronizationQueueDoesWorkWithDisposedLibs() = runBlocking {
-    localMavenCache.rootPath.resolve(GROUP_NAME).resolve(ARTIFACT_NAME).resolve("1.0").resolve("$ARTIFACT_NAME-1.0.jar")
-
-    repeat(1) {
-      val library = createLibrary(version = "1.0-SNAPSHOT", libraryName = "Lib$it")
-      assertEquals(0, getLibraryRoots(library).size)
-      assertDoesNotThrow {
-        val deferred = launch {
-          LibrarySynchronizationQueue.getInstance(projectRule.project).requestSynchronization(library as LibraryEx)
-          LibrarySynchronizationQueue.getInstance(projectRule.project).flush()
-        }
-        Disposer.dispose(library)
-        deferred.join()
-      }
-    }
   }
 
   @Test

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -28,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -38,9 +39,9 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
-  @NonNls protected static final String BEFORE_PREFIX = "before";
-  @NonNls protected static final String AFTER_PREFIX = "after";
-  @NonNls protected static final String PREVIEW_PREFIX = "preview";
+  protected static final @NonNls String BEFORE_PREFIX = "before";
+  protected static final @NonNls String AFTER_PREFIX = "after";
+  protected static final @NonNls String PREVIEW_PREFIX = "preview";
 
   private static QuickFixTestCase myWrapper;
 
@@ -223,13 +224,11 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return ActionHint.parse(file, contents);
   }
 
-  @NotNull
-  protected QuickFixTestCase createWrapper() {
+  protected @NotNull QuickFixTestCase createWrapper() {
     return createWrapper(null);
   }
 
-  @NotNull
-  protected QuickFixTestCase createWrapper(final String testDataPath) {
+  protected @NotNull QuickFixTestCase createWrapper(final String testDataPath) {
     return new QuickFixTestCase() {
       String myTestDataPath = testDataPath;
 
@@ -238,18 +237,16 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         return LightQuickFixTestCase.this.getBasePath();
       }
 
-      @NotNull
       @Override
-      public String getTestDataPath() {
+      public @NotNull String getTestDataPath() {
         if (myTestDataPath == null) {
           myTestDataPath = LightQuickFixTestCase.this.getTestDataPath();
         }
         return myTestDataPath;
       }
 
-      @NotNull
       @Override
-      public ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
+      public @NotNull ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents) {
         return LightQuickFixTestCase.this.parseActionHintImpl(file, contents);
       }
 
@@ -313,15 +310,13 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         }
       }
 
-      @NotNull
       @Override
-      public List<HighlightInfo> doHighlighting() {
+      public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
         return LightQuickFixTestCase.this.doHighlighting();
       }
 
-      @NotNull
       @Override
-      public List<IntentionAction> getAvailableActions() {
+      public @NotNull @Unmodifiable List<IntentionAction> getAvailableActions() {
         return LightQuickFixTestCase.this.getAvailableActions();
       }
 
@@ -347,15 +342,14 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     };
   }
 
-  protected List<IntentionAction> getAvailableActions() {
+  protected @Unmodifiable List<IntentionAction> getAvailableActions() {
     doHighlighting();
     return getAvailableActions(getEditor(), getFile());
   }
 
-  @NotNull
-  public static List<IntentionAction> getAvailableActions(@NotNull Editor editor, @NotNull PsiFile file) {
+  public static @NotNull @Unmodifiable List<IntentionAction> getAvailableActions(@NotNull Editor editor, @NotNull PsiFile file) {
     return CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file);
   }
 
-  @NonNls protected String getBasePath() {return null;}
+  protected @NonNls String getBasePath() {return null;}
 }

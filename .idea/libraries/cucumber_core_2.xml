@@ -1,0 +1,38 @@
+<component name="libraryTable">
+  <library name="cucumber-core-2" type="repository">
+    <properties maven-id="io.cucumber:cucumber-core:2.4.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/cucumber/cucumber-core/2.4.0/cucumber-core-2.4.0.jar">
+          <sha256sum>ac0f343d6fc0dca4c93f8b6a6266b3bf4cb4d61913b8a4cd2b3abf50025268cf</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/info/cukes/cucumber-html/0.2.6/cucumber-html-0.2.6.jar">
+          <sha256sum>e2167e99bdb018576cce9cc0aad154ad995fe67a4b0c36c63344f743865f96e7</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/cucumber/cucumber-jvm-deps/1.0.6/cucumber-jvm-deps-1.0.6.jar">
+          <sha256sum>d1c2cc901dd702eb77a2258c0d1446e4a302d28da0d4b49cd11ff3d5929281fa</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/cucumber/gherkin/5.0.0/gherkin-5.0.0.jar">
+          <sha256sum>e35cfa4a16204bf59fa167bb6d45be0717d6b7cfba1c30f156d8f21cde2f4065</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/cucumber/tag-expressions/1.1.1/tag-expressions-1.1.1.jar">
+          <sha256sum>e5a0a71fb846752900c0e5a99aa13e5a1bbc3ec97e7faf26803648fa45215584</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-core/2.4.0/cucumber-core-2.4.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/info/cukes/cucumber-html/0.2.6/cucumber-html-0.2.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-jvm-deps/1.0.6/cucumber-jvm-deps-1.0.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/gherkin/5.0.0/gherkin-5.0.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/tag-expressions/1.1.1/tag-expressions-1.1.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-core/2.4.0/cucumber-core-2.4.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/info/cukes/cucumber-html/0.2.6/cucumber-html-0.2.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-jvm-deps/1.0.6/cucumber-jvm-deps-1.0.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/gherkin/5.0.0/gherkin-5.0.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/tag-expressions/1.1.1/tag-expressions-1.1.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

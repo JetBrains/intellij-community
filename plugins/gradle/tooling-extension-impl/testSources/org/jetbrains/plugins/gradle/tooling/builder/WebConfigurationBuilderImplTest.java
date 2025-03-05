@@ -30,7 +30,7 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
 
   @Test
   public void testDefaultWarModel() {
-    createProjectFile("settings.gradle", GradleSettingScriptBuilder.create(false)
+    createProjectFile("settings.gradle", GradleSettingScriptBuilder.create(gradleVersion, false)
       .include("project")
       .generate()
     );

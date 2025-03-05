@@ -100,17 +100,17 @@ public final class ReplaceFormatStringWithConcatenationIntention extends MCInten
     int count = 0;
     while (end >= 0) {
       if (end > start) {
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
           builder.append('+');
         }
         builder.append('"').append(StringUtil.escapeStringCharacters(value.substring(start, end))).append('"');
       }
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         builder.append('+');
       }
       count++;
       final PsiExpression argument = arguments[indexOfFormatString + count];
-      if (builder.length() == 0 && !ExpressionUtils.hasStringType(argument)) {
+      if (builder.isEmpty() && !ExpressionUtils.hasStringType(argument)) {
         builder.append("String.valueOf(").append(commentTracker.text(argument)).append(')');
       }
       else {
@@ -120,7 +120,7 @@ public final class ReplaceFormatStringWithConcatenationIntention extends MCInten
       end = value.indexOf("%s", start);
     }
     if (start < value.length()) {
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         builder.append('+');
       }
       builder.append('"').append(StringUtil.escapeStringCharacters(value.substring(start))).append('"');

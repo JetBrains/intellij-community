@@ -9,9 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("UnstableApiUsage")
 public class PhpFileTypeOverrider implements FileTypeOverrider {
-    @Nullable
     @Override
-    public FileType getOverriddenFileType(@NotNull VirtualFile virtualFile) {
+    public @Nullable FileType getOverriddenFileType(@NotNull VirtualFile virtualFile) {
         if (virtualFile.getName().startsWith(".env") && virtualFile.getName().endsWith(".php")) {
             return PhpFileType.INSTANCE;
         }

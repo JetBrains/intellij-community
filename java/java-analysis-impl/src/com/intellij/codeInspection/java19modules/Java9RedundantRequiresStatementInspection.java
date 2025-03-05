@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.analysis.AnalysisScope;
@@ -128,17 +128,13 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       return !myDependencies.isEmpty();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.redundant.requires.statement.fix.family");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return JavaAnalysisBundle.message("inspection.redundant.requires.statement.fix.name", myRequiredModuleName);
     }
 
@@ -150,8 +146,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       statementToDelete.delete();
     }
 
-    @NotNull
-    private Set<String> getReexportedDependencies(@NotNull PsiJavaModule currentModule, @NotNull PsiJavaModule dependencyModule) {
+    private @NotNull Set<String> getReexportedDependencies(@NotNull PsiJavaModule currentModule, @NotNull PsiJavaModule dependencyModule) {
       Set<String> directDependencies = StreamEx
         .of(currentModule.getRequires().iterator())
         .map(PsiRequiresStatement::getModuleName)

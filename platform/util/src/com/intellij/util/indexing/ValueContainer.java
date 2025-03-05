@@ -2,6 +2,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.util.indexing.containers.EmptyValueContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,11 +20,19 @@ import java.util.function.IntPredicate;
  * <p>
  * (There is a bit of mess with keys/values labels, since in inverted index keys effectively switch roles
  * with values: that is called 'Value' in ValueContainer definition is 'Key' when ValueContainer is utilized in
- * the inverted index -- which is it's primary role)
+ * the inverted index -- which is its primary role)
  * </p>
+ *
  * @author Eugene Zhuravlev
  */
 public abstract class ValueContainer<Value> {
+
+  /** @return empty unmodifiable container */
+  public static <V> ValueContainer<V> emptyContainer() {
+    //noinspection unchecked
+    return EmptyValueContainer.INSTANCE;
+  }
+
   public interface IntIterator {
     boolean hasNext();
 
@@ -54,10 +63,14 @@ public abstract class ValueContainer<Value> {
 
   //TODO RC: .forEach() is synchronized, but .process() is not -- and they are otherwise identical. Why the difference?
 
-  public synchronized final boolean forEach(@NotNull ContainerAction<? super Value> action) {
-    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+  /**
+   * @return true if all the container data was processed, false if processing was stopped early because the action
+   * returns false
+   */
+  public final synchronized boolean forEach(@NotNull ContainerAction<? super Value> action) {
+    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       Value value = valueIterator.next();
-      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
+      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext(); ) {
         if (!action.perform(intIterator.next(), value)) {
           return false;
         }
@@ -66,10 +79,14 @@ public abstract class ValueContainer<Value> {
     return true;
   }
 
+  /**
+   * @return true if all the container data was processed, false if processing was stopped early because the action
+   * returns false
+   */
   public final <T extends Throwable> boolean process(@NotNull ThrowableContainerProcessor<? super Value, T> action) throws T {
-    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       Value value = valueIterator.next();
-      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {
+      for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext(); ) {
         if (!action.process(intIterator.next(), value)) {
           return false;
         }

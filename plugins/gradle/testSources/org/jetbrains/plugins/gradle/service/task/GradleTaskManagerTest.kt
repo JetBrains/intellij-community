@@ -17,12 +17,12 @@ import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase.requireJdkHome
+import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.junit.Test
@@ -46,8 +46,8 @@ class GradleTaskManagerTest: UsefulTestCase() {
     taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID,
                                              ExternalSystemTaskType.EXECUTE_TASK,
                                              myProject)
-    gradleExecSettings = GradleExecutionSettings(null, null,
-                                                     DistributionType.WRAPPED, false)
+    gradleExecSettings = GradleExecutionSettings()
+    gradleExecSettings.distributionType = DistributionType.WRAPPED
   }
 
   override fun tearDown() {
@@ -66,10 +66,17 @@ class GradleTaskManagerTest: UsefulTestCase() {
   @Test
   fun `test task manager calls Operation Helper Extension`() {
     val executed: AtomicReference<Boolean> = AtomicReference(false)
-    val ext = TestOperationHelperExtension(prepareExec = {
-      executed.set(true)
-    })
-    ExtensionTestUtil.maskExtensions(GradleOperationHelperExtension.EP_NAME, listOf(ext), testRootDisposable, false)
+    val extension = object : GradleExecutionHelperExtension {
+      override fun prepareForExecution(
+        id: ExternalSystemTaskId,
+        operation: LongRunningOperation,
+        settings: GradleExecutionSettings,
+        buildEnvironment: BuildEnvironment?,
+      ) {
+        executed.set(true)
+      }
+    }
+    ExtensionTestUtil.maskExtensions(GradleExecutionHelperExtension.EP_NAME, listOf(extension), testRootDisposable, false)
     runHelpTask(GradleVersion.version("4.8.1"))
     assertTrue(executed.get())
   }
@@ -134,17 +141,14 @@ class GradleTaskManagerTest: UsefulTestCase() {
       }
     }
 
-    gradleExecSettings.javaHome = GradleImportingTestCase.requireJdkHome(gradleVersion)
+    gradleExecSettings.javaHome = requireJdkHome(gradleVersion, JavaVersionRestriction.NO)
+
+    val settings = GradleExecutionSettings(gradleExecSettings).apply {
+      tasks = listOf("help")
+    }
 
     val listener = TaskExecutionOutput()
-    tm.executeTasks(
-      taskId,
-      listOf("help"),
-      myProject.basePath!!,
-      gradleExecSettings,
-      null,
-      listener
-    )
+    tm.executeTasks(myProject.basePath!!, taskId, settings, listener)
     return listener
   }
 
@@ -163,18 +167,4 @@ class TaskExecutionOutput : ExternalSystemTaskNotificationListener {
   }
 
   fun anyLineContains(something: String): Boolean = storage.any { it.contains(something) }
-}
-
-class TestOperationHelperExtension(val prepareSync: () -> Unit = {},
-                                   val prepareExec: () -> Unit = {}): GradleOperationHelperExtension {
-  override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) {
-    prepareSync()
-  }
-
-  override fun prepareForExecution(id: ExternalSystemTaskId,
-                                   operation: LongRunningOperation,
-                                   gradleExecutionSettings: GradleExecutionSettings,
-                                   buildEnvironment: BuildEnvironment?) {
-    prepareExec()
-  }
 }

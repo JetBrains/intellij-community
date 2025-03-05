@@ -30,7 +30,6 @@ import java.util.concurrent.FutureTask
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 import java.util.function.Function
-import kotlin.Pair
 import kotlin.coroutines.*
 import kotlin.coroutines.cancellation.CancellationException
 import com.intellij.openapi.util.Pair as JBPair
@@ -156,6 +155,19 @@ fun createChildContext(debugName: @NonNls String) : ChildContext = doCreateChild
 
 @Internal
 fun createChildContextWithContextJob(debugName: @NonNls String) : ChildContext = doCreateChildContext(debugName, true)
+
+/**
+ * Creates a child context without attaching a computation via coroutine to the current BlockingJob.
+ *
+ * This is useful when some computations should not block outer scope from finishing.
+ */
+@Internal
+fun createChildContextIgnoreStructuredConcurrency(debugName: @NonNls String) : ChildContext {
+  // probably we need to exclude some elements like PlatformActivityTrackerService.ObservationTracker
+  installThreadContext(currentThreadContext().minusKey(BlockingJob), true).use {
+    return createChildContext(debugName)
+  }
+}
 
 /**
  * Use `unconditionalCancellationPropagation` only when you are sure that the current context will always outlive a child computation.

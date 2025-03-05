@@ -4,8 +4,6 @@ package com.intellij.ide.lightEdit.intentions.openInProject;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Predicate;
-
 final class GitProjectRootFinder extends ProjectRootFinder {
   @Override
   protected boolean isProjectDir(@NotNull VirtualFile file) {

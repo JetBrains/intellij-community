@@ -70,6 +70,9 @@ class PercentileLatencyMetric(private val percentile: Int) : LatencyMetric("Late
   override val description: String = "Latency $percentile percentile by all invocations"
   override val showByDefault = false
 
+  override val maximumSessions: Int
+    get() = 10000
+
   override fun compute(sample: List<Double>): Double = computePercentile(sample, percentile)
 }
 
@@ -77,6 +80,9 @@ class SuccessPercentileLatencyMetric(private val percentile: Int) : LatencyMetri
   override val valueType = MetricValueType.INT
   override val description: String = "Latency $percentile percentile by invocations with selected proposal"
   override val showByDefault = false
+
+  override val maximumSessions: Int
+    get() = 10000
 
   override fun compute(sample: List<Double>): Double = computePercentile(sample, percentile)
 

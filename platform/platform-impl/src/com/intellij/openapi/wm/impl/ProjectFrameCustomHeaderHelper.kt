@@ -13,6 +13,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
@@ -40,13 +41,7 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.ui.JBUI
 import com.jetbrains.WindowDecorations
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.swing.*
-import javax.swing.JFrame
-import javax.swing.JRootPane
 
 private typealias MainToolbarActions = List<Pair<ActionGroup, HorizontalLayout.Group>>
 
@@ -146,7 +141,7 @@ internal class ProjectFrameCustomHeaderHelper(
       else {
         val uiSettings = UISettings.shadowInstance
         !IdeFrameDecorator.isCustomDecorationActive() && uiSettings.showMainMenu && !hideNativeLinuxTitle(uiSettings) &&
-        (!isMenuButtonInToolbar(uiSettings) || (ExperimentalUI.isNewUI() && isCompactHeader(uiSettings) { computeMainActionGroups() }))
+        (!isMenuButtonInToolbar(uiSettings) || (ExperimentalUI.isNewUI() && isCompactHeader { computeMainActionGroups() }))
       }
       if (visible != menuBar.isVisible) {
         menuBar.isVisible = visible
@@ -235,7 +230,7 @@ internal class ProjectFrameCustomHeaderHelper(
   ): Boolean {
     return !isFullScreen ||
            !SystemInfoRt.isMac && CustomWindowHeaderUtil.isToolbarInHeader(uiSettings, isFullScreen) ||
-           SystemInfoRt.isMac && !isCompactHeader(uiSettings, mainToolbarActionSupplier)
+           SystemInfoRt.isMac && !isCompactHeader(mainToolbarActionSupplier)
   }
 
   private inline fun isToolbarVisible(
@@ -245,12 +240,12 @@ internal class ProjectFrameCustomHeaderHelper(
   ): Boolean {
     val isNewToolbar = ExperimentalUI.isNewUI()
     return isNewToolbar && !CustomWindowHeaderUtil.isToolbarInHeader(uiSettings, isFullScreen)
-           && !isCompactHeader(uiSettings, mainToolbarActionSupplier)
+           && !isCompactHeader(mainToolbarActionSupplier)
            || !isNewToolbar && uiSettings.showMainToolbar
   }
 
-  private inline fun isCompactHeader(uiSettings: UISettings, mainToolbarActionSupplier: () -> MainToolbarActions): Boolean =
-    isLightEdit || CustomWindowHeaderUtil.isCompactHeader(uiSettings, mainToolbarActionSupplier)
+  private inline fun isCompactHeader(mainToolbarActionSupplier: () -> MainToolbarActions): Boolean =
+    isLightEdit || CustomWindowHeaderUtil.isCompactHeader(mainToolbarActionSupplier)
 }
 
 private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame, isFullScreen: () -> Boolean): JComponent {
@@ -260,7 +255,7 @@ private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame,
         coroutineScope = coroutineScope,
         frame = frame,
         isOpaque = true,
-        background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true),
+        background = InternalUICustomization.getInstance().getMainToolbarBackground(true),
         isFullScreen
       )
       toolbar.border = JBUI.Borders.emptyLeft(5)

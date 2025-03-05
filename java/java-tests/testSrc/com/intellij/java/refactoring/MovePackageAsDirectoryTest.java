@@ -175,7 +175,7 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
       final PsiPackage sourcePackage = psiFacade.findPackage(myPackageName);
       assertNotNull(sourcePackage);
       final PsiDirectory[] srcDirectories = sourcePackage.getDirectories();
-      assertEquals(srcDirectories.length, 2);
+      assertEquals(2, srcDirectories.length);
       Arrays.sort(srcDirectories, directoryComparator);
 
       final PsiPackage targetPackage = psiFacade.findPackage(myTargetPackageName);

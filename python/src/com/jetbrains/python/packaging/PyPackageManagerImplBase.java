@@ -15,6 +15,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.execution.FailureReason;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PyDetectedSdk;
@@ -124,8 +125,12 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
       return setuptoolsPackage != null ? setuptoolsPackage : PyPsiPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE);
     }
     catch (PyExecutionException e) {
-      if (e.getExitCode() == ERROR_NO_SETUPTOOLS) {
-        return null;
+      var error = e.getFailureReason();
+      if (error instanceof FailureReason.ExecutionFailed executionFailed) {
+        int exitCode = executionFailed.getOutput().getExitCode();
+        if (exitCode == ERROR_NO_SETUPTOOLS) {
+          return null;
+        }
       }
       throw e;
     }

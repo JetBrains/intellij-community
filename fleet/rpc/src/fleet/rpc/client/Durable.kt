@@ -14,7 +14,15 @@ import kotlin.coroutines.coroutineContext
  *
  * be aware that there is no at-most-once guarantee, your calls should be idempotent
  */
-suspend fun <T> durable(body: suspend CoroutineScope.() -> T): T {
+suspend fun <T> durable(verbose: Boolean = false, body: suspend CoroutineScope.() -> T): T {
+  fun logRetry(t: Throwable?, msg: () -> Any?) {
+    if (verbose) {
+      DurableLogger.logger.info(t, msg)
+    }
+    else {
+      DurableLogger.logger.trace(t, msg)
+    }
+  }
   while (true) {
     coroutineContext.job.ensureActive()
     try {
@@ -23,7 +31,7 @@ suspend fun <T> durable(body: suspend CoroutineScope.() -> T): T {
     catch (ex: Throwable) {
       when (val clientException = ex.causeOfType(RpcClientException::class)) {
         null -> {
-          DurableLogger.logger.trace(ex) { "durable will not retry" }
+          logRetry(ex) { "durable will not retry" }
           throw ex
         }
         is UnresolvedServiceException -> {
@@ -44,7 +52,7 @@ suspend fun <T> durable(body: suspend CoroutineScope.() -> T): T {
           delay(100)
         }
       }
-      DurableLogger.logger.trace(ex) { "durable will retry" }
+      logRetry(ex) { "durable will retry" }
     }
   }
 }

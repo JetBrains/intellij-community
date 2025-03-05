@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
@@ -126,7 +126,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
   }
 
   @Test
-  fun emptyGradleProject() {
+  fun emptyJavaGradleProject() {
     JavaFxModuleBuilder().setupTestModule(fixture.module) {
       language = JAVA_STARTER_LANGUAGE
       projectType = GRADLE_PROJECT
@@ -151,68 +151,157 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
       }
     """.trimIndent())
     val dlr = "\$"
-    expectFile("build.gradle", """
+    expectFile("build.gradle.kts", """
       plugins {
-          id 'java'
-          id 'application'
-          id 'org.javamodularity.moduleplugin' version '1.8.12'
-          id 'org.openjfx.javafxplugin' version '0.0.13'
-          id 'org.beryx.jlink' version '2.25.0'
+          java
+          application
+          id("org.javamodularity.moduleplugin") version "1.8.12"
+          id("org.openjfx.javafxplugin") version "0.0.13"
+          id("org.beryx.jlink") version "2.25.0"
       }
-
-      group 'com.example'
-      version '1.0-SNAPSHOT'
-
+      
+      group = "com.example"
+      version = "1.0-SNAPSHOT"
+      
       repositories {
           mavenCentral()
       }
-
-      ext {
-          junitVersion = '5.10.2'
+      
+      val junitVersion = "5.10.2"
+      
+      java {
+          toolchain {
+              languageVersion = JavaLanguageVersion.of(11)
+          }
       }
-
-      sourceCompatibility = '11'
-      targetCompatibility = '11'
-
-      tasks.withType(JavaCompile) {
-          options.encoding = 'UTF-8'
+      
+      tasks.withType<JavaCompile> {
+          options.encoding = "UTF-8"
       }
-
+      
       application {
-          mainModule = 'com.example.demo'
-          mainClass = 'com.example.demo.HelloApplication'
+          mainModule.set("com.example.demo")
+          mainClass.set("com.example.demo.HelloApplication")
       }
-
+      
       javafx {
-          version = '17.0.6'
-          modules = ['javafx.controls', 'javafx.fxml']
+          version = "17.0.6"
+          modules = listOf("javafx.controls", "javafx.fxml")
       }
-
+      
       dependencies {
-
           testImplementation("org.junit.jupiter:junit-jupiter-api:${dlr}{junitVersion}")
           testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${dlr}{junitVersion}")
       }
 
-      test {
+      tasks.withType<Test> {
           useJUnitPlatform()
       }
       
       jlink {
-          imageZip = project.file("${dlr}{buildDir}/distributions/app-${dlr}{javafx.platform.classifier}.zip")
-          options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+          imageZip.set(layout.buildDirectory.file("/distributions/app-${dlr}{javafx.platform.classifier}.zip"))
+          options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
           launcher {
-              name = 'app'
+              name = "app"
           }
       }
 
-      jlinkZip {
-          group = 'distribution'
-      }
     """.trimIndent())
 
-    expectFile("settings.gradle", """
+    expectFile("settings.gradle.kts", """
       rootProject.name = "demo"
+
+    """.trimIndent())
+  }
+
+  @Test
+  fun emptyGroovyGradleProject() {
+    JavaFxModuleBuilder().setupTestModule(fixture.module) {
+      language = GROOVY_STARTER_LANGUAGE
+      projectType = GRADLE_PROJECT
+      testFramework = JUNIT_TEST_RUNNER
+      isCreatingNewProject = true
+    }
+
+    expectFile("src/main/groovy/com/example/demo/HelloController.groovy", """
+      package com.example.demo
+
+      import javafx.fxml.FXML
+      import javafx.scene.control.Label
+      
+      class HelloController {
+          @FXML
+          private Label welcomeText
+      
+          @FXML
+          protected void onHelloButtonClick() {
+              welcomeText.setText("Welcome to JavaFX Application!")
+          }
+      }
+    """.trimIndent())
+    val dlr = "\$"
+    expectFile("build.gradle.kts", """
+      plugins {
+          java
+          application
+          groovy
+          id("org.javamodularity.moduleplugin") version "1.8.12"
+          id("org.openjfx.javafxplugin") version "0.0.13"
+          id("org.beryx.jlink") version "2.25.0"
+      }
+      
+      group = "com.example"
+      version = "1.0-SNAPSHOT"
+      
+      repositories {
+          mavenCentral()
+      }
+      
+      val junitVersion = "5.10.2"
+      
+      java {
+          toolchain {
+              languageVersion = JavaLanguageVersion.of(11)
+          }
+      }
+      
+      tasks.withType<JavaCompile> {
+          options.encoding = "UTF-8"
+      }
+      
+      application {
+          mainModule.set("com.example.demo")
+          mainClass.set("com.example.demo.HelloApplication")
+      }
+      
+      javafx {
+          version = "17.0.6"
+          modules = listOf("javafx.controls", "javafx.fxml")
+      }
+      
+      dependencies {
+          implementation("org.apache.groovy:groovy:4.0.21")
+          testImplementation("org.junit.jupiter:junit-jupiter-api:${dlr}{junitVersion}")
+          testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${dlr}{junitVersion}")
+      }
+
+      tasks.withType<Test> {
+          useJUnitPlatform()
+      }
+      
+      jlink {
+          imageZip.set(layout.buildDirectory.file("/distributions/app-${dlr}{javafx.platform.classifier}.zip"))
+          options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+          launcher {
+              name = "app"
+          }
+      }
+
+    """.trimIndent())
+
+    expectFile("settings.gradle.kts", """
+      rootProject.name = "demo"
+
     """.trimIndent())
   }
 

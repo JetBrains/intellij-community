@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyType;
@@ -24,9 +25,8 @@ import static com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef;
  */
 public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
 
-  @Nullable
   @Override
-  public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
+  public @Nullable Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (!(referenceTarget instanceof PyDecoratable pyDecoratable)) {
       return null;
     }
@@ -75,10 +75,9 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     return true;
   }
 
-  @Nullable
-  private static Ref<PyType> evaluateType(@NotNull PyDecoratable referenceTarget,
-                                          @NotNull TypeEvalContext context,
-                                          @NotNull List<PyDecorator> decorators) {
+  private static @Nullable Ref<PyType> evaluateType(@NotNull PyDecoratable referenceTarget,
+                                                    @NotNull TypeEvalContext context,
+                                                    @NotNull List<PyDecorator> decorators) {
     PyExpression fakeCallExpression = fakeCallExpression(referenceTarget, decorators, context);
     if (fakeCallExpression == null) {
       return null;
@@ -87,10 +86,9 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     return notNullToRef(context.getType(fakeCallExpression));
   }
 
-  @Nullable
-  private static PyExpression fakeCallExpression(@NotNull PyDecoratable referenceTarget,
-                                                 @NotNull List<PyDecorator> decorators,
-                                                 @NotNull TypeEvalContext context) {
+  private static @Nullable PyExpression fakeCallExpression(@NotNull PyDecoratable referenceTarget,
+                                                           @NotNull List<PyDecorator> decorators,
+                                                           @NotNull TypeEvalContext context) {
     StringBuilder result = new StringBuilder();
 
     for (PyDecorator decorator : decorators) {
@@ -103,6 +101,9 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
           .append(decorator.hasArgumentList() ? "()" : "");
       }
       result.append("(");
+    }
+    if (ScopeUtil.getScopeOwner(referenceTarget) instanceof PyClass containingClass) {
+      result.append(containingClass.getName()).append(".");
     }
     result.append(referenceTarget.getName());
     StringUtil.repeatSymbol(result, ')', decorators.size());

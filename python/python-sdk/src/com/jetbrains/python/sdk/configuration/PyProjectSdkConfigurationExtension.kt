@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
  * Used with an attempt to suggest suitable Python interpreter
  * or try setup and register it in case of headless mode if no interpreter is specified.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface PyProjectSdkConfigurationExtension {
 
   companion object {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
@@ -16,13 +16,10 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class PathMacroUtil {
-  @ApiStatus.Internal
-  @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
-  @ApiStatus.Internal
-  @NonNls public static final String PROJECT_NAME_MACRO_NAME = "PROJECT_NAME";
+  @ApiStatus.Internal public static final @NonNls String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
+  @ApiStatus.Internal public static final @NonNls String PROJECT_NAME_MACRO_NAME = "PROJECT_NAME";
 
-  @ApiStatus.Internal
-  @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  @ApiStatus.Internal public static final @NonNls String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
   @ApiStatus.Internal
   public static final String DEPRECATED_MODULE_DIR = "$" + MODULE_DIR_MACRO_NAME + "$";
   @ApiStatus.Internal
@@ -30,16 +27,11 @@ public final class PathMacroUtil {
   @ApiStatus.Internal
   public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
 
-  @ApiStatus.Internal
-  @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
-  @ApiStatus.Internal
-  @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
-  @ApiStatus.Internal
-  @NonNls public static final String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
-  @ApiStatus.Internal
-  @NonNls public static final String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
-  @ApiStatus.Internal
-  @NonNls public static final String USER_HOME_NAME = "USER_HOME";
+  @ApiStatus.Internal public static final @NonNls String DIRECTORY_STORE_NAME = ".idea";
+  @ApiStatus.Internal public static final @NonNls String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
+  @ApiStatus.Internal public static final @NonNls String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
+  @ApiStatus.Internal public static final @NonNls String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
+  @ApiStatus.Internal public static final @NonNls String USER_HOME_NAME = "USER_HOME";
 
   private static volatile Map<String, String> ourGlobalMacrosForIde;
   private static volatile Map<String, String> globalMacrosForStandalone;

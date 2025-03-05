@@ -26,7 +26,7 @@ public final class PsiMethodUtil {
     return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
   };
 
-  private final static Comparator<PsiMethod> mainCandidateComparator = (o1, o2) -> {
+  private static final Comparator<PsiMethod> mainCandidateComparator = (o1, o2) -> {
 
     boolean isO1Static = o1.hasModifierProperty(PsiModifier.STATIC);
     boolean isO2Static = o2.hasModifierProperty(PsiModifier.STATIC);
@@ -55,8 +55,7 @@ public final class PsiMethodUtil {
 
   private PsiMethodUtil() { }
 
-  @Nullable
-  public static PsiMethod findMainMethod(final PsiClass aClass) {
+  public static @Nullable PsiMethod findMainMethod(final PsiClass aClass) {
     JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(aClass);
     if (mainMethodProvider != null) {
       return mainMethodProvider.findMainInClass(aClass);
@@ -94,14 +93,17 @@ public final class PsiMethodUtil {
    * @param first If true, return the first encountered main method; otherwise, sorting them.
    * @return The main method if found, or null if not found or if it does not meet the criteria.
    */
-  @Nullable
-  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass, boolean first) {
+  private static @Nullable PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass, boolean first) {
     List<@NotNull PsiMethod> candidates = new ArrayList<>();
+    //from java 22 main methods are chosen according to parameters
+    boolean chooseMainMethodByParametersEnabled = inheritedStaticMainEnabled(aClass);
     for (final PsiMethod mainMethod : mainMethods) {
       if (mainMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         continue;
       }
-      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !mainMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+          !mainMethod.hasModifierProperty(PsiModifier.STATIC) &&
+          !chooseMainMethodByParametersEnabled) {
         continue;
       }
       PsiClass containingClass = mainMethod.getContainingClass();
@@ -111,12 +113,12 @@ public final class PsiMethodUtil {
         }
         if (containingClass.isInterface() &&
             mainMethod.hasModifierProperty(PsiModifier.STATIC) &&
-            !inheritedStaticMainEnabled(containingClass)) {
+            !chooseMainMethodByParametersEnabled) {
           continue;
         }
       }
       if (isMainMethod(mainMethod)) {
-        if (first) {
+        if (first && !chooseMainMethodByParametersEnabled) {
           //fast exit
           return mainMethod;
         }
@@ -127,7 +129,18 @@ public final class PsiMethodUtil {
       return null;
     }
     candidates.sort(mainCandidateComparator);
-    return candidates.get(0);
+    PsiMethod method = candidates.get(0);
+    if (chooseMainMethodByParametersEnabled) {
+      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+        if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          return null;
+        }
+        if (!PsiUtil.hasDefaultConstructor(aClass, true, true)) {
+          return null;
+        }
+      }
+    }
+    return method;
   }
 
   private static boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
@@ -147,7 +160,7 @@ public final class PsiMethodUtil {
    * @return true, if the method satisfies a main method signature. false, otherwise
    */
   @Contract("null -> false")
-  public static boolean isMainMethod(@Nullable final PsiMethod method) {
+  public static boolean isMainMethod(final @Nullable PsiMethod method) {
     if (method == null || method.getContainingClass() == null) return false;
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
@@ -232,8 +245,7 @@ public final class PsiMethodUtil {
     }
   }
 
-  @Nullable
-  public static String getMainJVMClassName(@NotNull PsiClass psiClass) {
+  public static @Nullable String getMainJVMClassName(@NotNull PsiClass psiClass) {
     JavaMainMethodProvider mainMethodProvider = getApplicableMainMethodProvider(psiClass);
     if (mainMethodProvider != null) {
       return mainMethodProvider.getMainClassName(psiClass);
@@ -242,8 +254,7 @@ public final class PsiMethodUtil {
     return ClassUtil.getJVMClassName(psiClass);
   }
 
-  @Nullable
-  public static PsiMethod findMainInClass(@NotNull final PsiClass aClass) {
+  public static @Nullable PsiMethod findMainInClass(final @NotNull PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return null;
     return findMainMethod(aClass);
   }
@@ -254,13 +265,12 @@ public final class PsiMethodUtil {
    * @param aClass the class to check for a main method.
    * @return true if the class has a main method, false otherwise.
    */
-  public static boolean hasMainInClass(@NotNull final PsiClass aClass) {
+  public static boolean hasMainInClass(final @NotNull PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return false;
     return hasMainMethod(aClass);
   }
 
-  @Nullable
-  private static JavaMainMethodProvider getApplicableMainMethodProvider(@NotNull PsiClass aClass) {
+  private static @Nullable JavaMainMethodProvider getApplicableMainMethodProvider(@NotNull PsiClass aClass) {
     DumbService dumbService = DumbService.getInstance(aClass.getProject());
 
     List<JavaMainMethodProvider> javaMainMethodProviders =

@@ -31,6 +31,7 @@ public abstract class AbstractProperty<T> {
     return (T)value;
   }
 
+  @Override
   public String toString() {
     return getName();
   }

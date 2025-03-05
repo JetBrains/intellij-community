@@ -1,4 +1,5 @@
 // "Make 'x' public" "true"
+// PRIORITY: HIGH
 class First(protected val x: Int)
 
 class Second(f: First) {

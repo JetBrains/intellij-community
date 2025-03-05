@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.dynatrace.hash4j.hashing.HashStream64;
@@ -8,7 +8,6 @@ import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +17,6 @@ import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
-import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BuildListener;
@@ -62,8 +60,8 @@ import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHE
 public final class BuildTargetSourcesState implements BuildListener {
   private static final Logger LOG = Logger.getInstance(BuildTargetSourcesState.class);
   public static final String TARGET_SOURCES_STATE_FILE_NAME = "target_sources_state.json";
-  private final ExecutorService parallelBuildExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-    "TargetSourcesState Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+  private final ExecutorService parallelBuildExecutor = SharedThreadPool.getInstance().createBoundedExecutor(
+    "TargetSourcesState Executor Pool", MAX_BUILDER_THREADS);
   private final Map<String, BuildTarget<?>> changedBuildTargets = new ConcurrentHashMap<>();
   // Some modules can have same out folder for different BuildTarget's to avoid an extra hash calculation collection will be used
   // There are no pre-calculated hashes for entries from this collection in FileStampStorage
@@ -84,8 +82,7 @@ public final class BuildTargetSourcesState implements BuildListener {
     buildTargetIndex = projectDescriptor.getBuildTargetIndex();
     outputFolderPath = getOutputFolderPath(projectDescriptor.getProject());
 
-    BuildDataPaths dataPaths = projectDescriptor.getTargetsState().getDataPaths();
-    targetStateStorage = dataPaths.getDataStorageRoot().toPath().resolve(TARGET_SOURCES_STATE_FILE_NAME);
+    targetStateStorage = dataManager.getDataPaths().getDataStorageDir().resolve(TARGET_SOURCES_STATE_FILE_NAME);
 
     // subscribe to events for reporting only changed build targets
     context.addBuildListener(this);
@@ -259,7 +256,7 @@ public final class BuildTargetSourcesState implements BuildListener {
                               @NotNull LongArrayList hash,
                               @NotNull HashStream64 hashToReuse) {
     try {
-      Path rootFile = rootDescriptor.getRootFile().toPath();
+      Path rootFile = rootDescriptor.getFile();
       if (Files.notExists(rootFile) || rootFile.toAbsolutePath().startsWith(outputFolderPath)) {
         return;
       }
@@ -275,7 +272,7 @@ public final class BuildTargetSourcesState implements BuildListener {
 
           @Override
           public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
-            if (!buildRootIndex.isFileAccepted(path.toFile(), rootDescriptor)) {
+            if (!buildRootIndex.isFileAccepted(path, rootDescriptor)) {
               return FileVisitResult.CONTINUE;
             }
             getFileHash(path, rootFile, hash, hashToReuse, stampStorage);

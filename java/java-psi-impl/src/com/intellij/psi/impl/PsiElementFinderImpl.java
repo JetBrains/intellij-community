@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
   private final Project myProject;
@@ -52,6 +53,14 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
       return PsiClass.EMPTY_ARRAY;
     }
     return myFileManager.findClasses(qualifiedName, scope);
+  }
+
+  @Override
+  public boolean hasClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, @NotNull Predicate<PsiClass> filter) {
+    if (skipIndices()) {
+      return false;
+    }
+    return myFileManager.hasClass(qualifiedName, scope, filter);
   }
 
   @Override
@@ -89,11 +98,13 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   }
 
   @Override
-  public PsiClass @NotNull [] getClasses(@Nullable String shortName, @NotNull PsiPackage psiPackage, final @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClasses(@Nullable String shortName,
+                                         @NotNull PsiPackage psiPackage,
+                                         @NotNull GlobalSearchScope scope) {
     List<PsiClass> list = null;
     String packageName = psiPackage.getQualifiedName();
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-      PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
+      PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir, scope);
       if (classes.length == 0) continue;
       if (list == null) list = new ArrayList<>();
       for (PsiClass aClass : classes) {
@@ -121,7 +132,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     Set<String> names = null;
     FileIndexFacade facade = FileIndexFacade.getInstance(myProject);
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-      for (PsiFile file : dir.getFiles()) {
+      for (PsiFile file : dir.getFiles(scope)) {
         if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
           VirtualFile vFile = file.getVirtualFile();
           if (vFile != null &&

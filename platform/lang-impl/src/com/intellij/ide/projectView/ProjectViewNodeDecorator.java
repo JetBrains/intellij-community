@@ -5,6 +5,7 @@ package com.intellij.ide.projectView;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows modifying the presentation of project view and package dependencies view nodes.
@@ -23,7 +24,7 @@ public interface ProjectViewNodeDecorator {
    * @param node the node to modify (use {@link ProjectViewNode#getValue()} to get the object represented by the node).
    * @param data the current presentation of the node, which you can modify as necessary.
    */
-  void decorate(ProjectViewNode<?> node, PresentationData data);
+  void decorate(@NotNull ProjectViewNode<?> node, @NotNull PresentationData data);
 
   /**
    * @deprecated This method is never called by the platform and should not be overridden.

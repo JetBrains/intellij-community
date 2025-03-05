@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.util;
 
@@ -56,8 +56,7 @@ public final class RefactoringHierarchyUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiClass getNearestBaseClass(PsiClass subClass, boolean includeNonProject) {
+  public static @Nullable PsiClass getNearestBaseClass(PsiClass subClass, boolean includeNonProject) {
     PsiClassType[] superTypes = subClass.getSuperTypes();
 
     if (superTypes.length > 0) {

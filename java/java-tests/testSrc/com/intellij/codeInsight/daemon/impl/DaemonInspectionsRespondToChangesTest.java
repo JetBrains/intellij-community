@@ -47,6 +47,7 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TestTimeOut;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -55,6 +56,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
@@ -83,7 +85,6 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    DaemonProgressIndicator.setDebug(true);
     PlatformTestUtil.assumeEnoughParallelism();
   }
 
@@ -106,6 +107,11 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -283,12 +289,12 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     MyTrackingInspection tool = registerInspection(new MyTrackingInspection(){});
 
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
-    DaemonRespondToChangesTest.waitForDaemon(myProject, myEditor.getDocument());
+    DaemonRespondToChangesTest.waitForDaemonToFinish(myProject, myEditor.getDocument());
     tool.visited.clear();
 
     getPsiManager().dropPsiCaches();
 
-    DaemonRespondToChangesTest.waitForDaemon(myProject, myEditor.getDocument());
+    DaemonRespondToChangesTest.waitForDaemonToFinish(myProject, myEditor.getDocument());
     assertNotEmpty(tool.visited);
   }
 
@@ -359,6 +365,7 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     assertEmpty(fixes);
   }
 
+  @Unmodifiable
   private @NotNull List<IntentionAction> findStupidFixes() {
     return ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()), f -> f.getFamilyName()
       .equals(new FindElseBranchInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability().getFamilyName()));
@@ -629,12 +636,12 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     editor.getScrollPane().getViewport().setExtentSize(new Dimension(100, editor.getPreferredHeight() - (int)caretVisualPoint.getY()));
     ProperTextRange visibleRange = editor.calculateVisibleRange();
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     expectedVisibleRange = visibleRange;
     doHighlighting();
     assertNull(expectedVisibleRange); // check the inspection was run
     DaemonRespondToChangesTest.makeWholeEditorWindowVisible(editor);
-    myDaemonCodeAnalyzer.restart();
+    myDaemonCodeAnalyzer.restart(getTestName(false));
     expectedVisibleRange = new TextRange(0, editor.getDocument().getTextLength());
     doHighlighting();
     assertNull(expectedVisibleRange); // check the inspection was run

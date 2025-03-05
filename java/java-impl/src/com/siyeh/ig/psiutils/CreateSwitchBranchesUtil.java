@@ -19,6 +19,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -53,10 +54,10 @@ public final class CreateSwitchBranchesUtil {
    *                      thus some kind of normalization could be necessary.
    * @return a list of created branches
    */
-  public static List<PsiSwitchLabelStatementBase> createMissingBranches(@NotNull PsiSwitchBlock switchBlock,
+  public static @Unmodifiable List<PsiSwitchLabelStatementBase> createMissingBranches(@NotNull PsiSwitchBlock switchBlock,
                                                                         @NotNull List<String> allNames,
-                                                                        @NotNull Collection<String> missingNames,
-                                                                        @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends List<String>> caseExtractor) {
+                                                                        @NotNull @Unmodifiable Collection<String> missingNames,
+                                                                        @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends @Unmodifiable List<String>> caseExtractor) {
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(switchBlock.getProject());
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
     final PsiCodeBlock body = switchBlock.getBody();

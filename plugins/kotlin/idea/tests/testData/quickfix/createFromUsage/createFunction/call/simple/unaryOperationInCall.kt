@@ -1,5 +1,5 @@
 // "Create function 'operate'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 class Operated
 
 fun operate(p: Any?) {}

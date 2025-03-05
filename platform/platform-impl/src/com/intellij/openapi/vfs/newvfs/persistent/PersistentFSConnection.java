@@ -207,13 +207,15 @@ public final class PersistentFSConnection {
       //not an issue on close, but could provide some insights
       LOG.info("Free records loading is failed", ex);
     }
-
-    closeStorages(records,
-                  namesEnumerator,
-                  attributesStorage,
-                  contentStorage);
-
-    closed = true;
+    try {
+      closeStorages(records,
+                    namesEnumerator,
+                    attributesStorage,
+                    contentStorage);
+    }
+    finally {
+      closed = true;
+    }
   }
 
 

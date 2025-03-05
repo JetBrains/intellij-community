@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace
 
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecksDsl

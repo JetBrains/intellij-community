@@ -66,6 +66,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     return 0;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
@@ -78,6 +79,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     return true;
   }
 
+  @Override
   public int hashCode() {
     PsiElement psiElement = getPsiElement();
     return psiElement == null ? 0 : psiElement.hashCode();

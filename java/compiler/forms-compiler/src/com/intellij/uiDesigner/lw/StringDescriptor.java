@@ -114,6 +114,7 @@ public final class StringDescriptor {
     myFormClass = formClass;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof StringDescriptor)) return false;
@@ -128,6 +129,7 @@ public final class StringDescriptor {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myBundleName != null ? myBundleName.hashCode() : 0);
@@ -136,6 +138,7 @@ public final class StringDescriptor {
     return result;
   }
 
+  @Override
   public String toString() {
     if (myValue != null) {
       return "[StringDescriptor:" + myValue + "]";

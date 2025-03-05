@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.ResultKind;
@@ -48,9 +48,8 @@ abstract class TerminalOperation extends Operation {
 
   abstract String generate(ChainVariable inVar, StreamToLoopReplacementContext context);
 
-  @Nullable
-  static TerminalOperation createTerminal(@NotNull String name, PsiExpression @NotNull [] args,
-                                          @NotNull PsiType elementType, @NotNull PsiType resultType, boolean isVoid) {
+  static @Nullable TerminalOperation createTerminal(@NotNull String name, PsiExpression @NotNull [] args,
+                                                    @NotNull PsiType elementType, @NotNull PsiType resultType, boolean isVoid) {
     if(isVoid) {
       if ((name.equals("forEach") || name.equals("forEachOrdered")) && args.length == 1) {
         FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
@@ -140,8 +139,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   @Contract("_, _, null -> null")
-  @Nullable
-  private static TerminalOperation fromCollector(@NotNull PsiType elementType, @NotNull PsiType resultType, PsiExpression expr) {
+  private static @Nullable TerminalOperation fromCollector(@NotNull PsiType elementType, @NotNull PsiType resultType, PsiExpression expr) {
     expr = PsiUtil.skipParenthesizedExprDown(expr);
     if (!(expr instanceof PsiMethodCallExpression collectorCall)) return null;
     PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
@@ -154,11 +152,10 @@ abstract class TerminalOperation extends Operation {
     return null;
   }
 
-  @Nullable
-  private static TerminalOperation fromCollector(@NotNull PsiType elementType,
-                                                 @NotNull PsiType resultType,
-                                                 PsiMethod collector,
-                                                 PsiExpression[] collectorArgs) {
+  private static @Nullable TerminalOperation fromCollector(@NotNull PsiType elementType,
+                                                           @NotNull PsiType resultType,
+                                                           PsiMethod collector,
+                                                           PsiExpression[] collectorArgs) {
     String collectorName = collector.getName();
     FunctionHelper fn;
     switch (collectorName) {
@@ -319,8 +316,7 @@ abstract class TerminalOperation extends Operation {
    *                             superclass type parameter correction if necessary
    * @return the corrected type.
    */
-  @NotNull
-  static PsiType correctTypeParameters(PsiType resultType, String superClassName, Map<String, Function<? super PsiType, ? extends PsiType>> downstreamCorrectors) {
+  static @NotNull PsiType correctTypeParameters(PsiType resultType, String superClassName, Map<String, Function<? super PsiType, ? extends PsiType>> downstreamCorrectors) {
     PsiClass resultClass = PsiUtil.resolveClassInClassTypeOnly(resultType);
     if(resultClass == null) return resultType;
 
@@ -415,8 +411,7 @@ abstract class TerminalOperation extends Operation {
       return ifClause + " else {\n" + accumulator + "=" + myUpdater.getText() + ";\n}\n";
     }
 
-    @Nullable
-    static ReduceToOptionalTerminalOperation create(PsiExpression arg, PsiType resultType) {
+    static @Nullable ReduceToOptionalTerminalOperation create(PsiExpression arg, PsiType resultType) {
       PsiType optionalElementType = OptionalUtil.getOptionalElementType(resultType);
       FunctionHelper fn = FunctionHelper.create(arg, 2);
       if(fn != null && optionalElementType != null) {
@@ -715,20 +710,17 @@ abstract class TerminalOperation extends Operation {
       return map + ".merge(" + key + "," + val + "," + merger + ");\n";
     }
 
-    @NotNull
-    static TemplateBasedOperation summing(PsiType type) {
+    static @NotNull TemplateBasedOperation summing(PsiType type) {
       String defValue = TypeUtils.getDefaultValue(type);
       return new TemplateBasedOperation("sum", type, defValue, "{acc}+={item};");
     }
 
-    @NotNull
-    static TemplateBasedOperation summarizing(@NotNull PsiType resultType) {
+    static @NotNull TemplateBasedOperation summarizing(@NotNull PsiType resultType) {
       return new TemplateBasedOperation("stat", resultType, "new " + resultType.getCanonicalText() + "()",
                                         "{acc}.accept({item});");
     }
 
-    @NotNull
-    static TemplateBasedOperation counting() {
+    static @NotNull TemplateBasedOperation counting() {
       return new TemplateBasedOperation("count", PsiTypes.longType(), "0L", "{acc}++;");
     }
   }
@@ -790,14 +782,12 @@ abstract class TerminalOperation extends Operation {
       return myList;
     }
 
-    @NotNull
-    private static ToCollectionTerminalOperation toList(@NotNull PsiType resultType) {
+    private static @NotNull ToCollectionTerminalOperation toList(@NotNull PsiType resultType) {
       return new ToCollectionTerminalOperation(resultType,
                                                FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_ARRAY_LIST), "list");
     }
 
-    @NotNull
-    private static ToCollectionTerminalOperation toSet(@NotNull PsiType resultType) {
+    private static @NotNull ToCollectionTerminalOperation toSet(@NotNull PsiType resultType) {
       return new ToCollectionTerminalOperation(resultType,
                                                FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_SET), "set");
     }
@@ -806,7 +796,7 @@ abstract class TerminalOperation extends Operation {
   static class MinMaxTerminalOperation extends TerminalOperation {
     private final PsiType myType;
     private final String myTemplate;
-    private @Nullable final FunctionHelper myComparator;
+    private final @Nullable FunctionHelper myComparator;
     private final boolean myMax;
 
     MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator, boolean max) {
@@ -868,8 +858,7 @@ abstract class TerminalOperation extends Operation {
              best + "=" + inVar + ";\n}\n";
     }
 
-    @Nullable
-    static MinMaxTerminalOperation create(@Nullable PsiExpression comparator, PsiType elementType, boolean max) {
+    static @Nullable MinMaxTerminalOperation create(@Nullable PsiExpression comparator, PsiType elementType, boolean max) {
       String sign = max ? ">" : "<";
       if(comparator == null) {
         if (PsiTypes.intType().equals(elementType) || PsiTypes.longType().equals(elementType)) {
@@ -1218,7 +1207,7 @@ abstract class TerminalOperation extends Operation {
 
   static class SortedTerminalOperation extends TerminalOperation {
     private final AccumulatedOperation myOrigin;
-    @Nullable private final PsiExpression myComparator;
+    private final @Nullable PsiExpression myComparator;
 
     SortedTerminalOperation(AccumulatedOperation origin, @Nullable PsiExpression comparator) {
       myOrigin = origin;

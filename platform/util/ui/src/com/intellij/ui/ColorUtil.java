@@ -147,17 +147,11 @@ public final class ColorUtil {
   }
 
   public static @NotNull String toHex(final @NotNull Color c, final boolean withAlpha) {
-    final String R = Integer.toHexString(c.getRed());
-    final String G = Integer.toHexString(c.getGreen());
-    final String B = Integer.toHexString(c.getBlue());
-
-    final String rgbHex = (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
-    if (!withAlpha) {
-      return rgbHex;
-    }
-
-    final String A = Integer.toHexString(c.getAlpha());
-    return rgbHex + (A.length() < 2 ? "0" : "") + A;
+    String result = withAlpha
+                    ? Integer.toHexString(((c.getRGB() & 0xFFFFFF) << 8) /*RGB*/ + c.getAlpha())
+                    : Integer.toHexString(c.getRGB() & 0xFFFFFF);
+    int expectedLength = 3 * 2 + (withAlpha ? 2 : 0);
+    return "0".repeat(expectedLength - result.length()) + result;
   }
 
   public static @NotNull @NlsSafe String toHtmlColor(final @NotNull Color c) {
@@ -333,5 +327,9 @@ public final class ColorUtil {
     double weightG = 4.0;
     double weightB = 2 + (255 - rmean) / 256;
     return Math.sqrt(weightR * r * r + weightG * g * g + weightB * b * b);
+  }
+
+  public static @NotNull Color faded(@NotNull Color color) {
+    return withAlpha(color, 0.45f);
   }
 }

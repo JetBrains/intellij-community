@@ -12,7 +12,6 @@ import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
 import org.jetbrains.kotlin.codegen.inline.*
 import org.jetbrains.kotlin.idea.debugger.base.util.*
-import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.KOTLIN_DEBUG_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
@@ -30,7 +29,8 @@ object InlineStackTraceCalculator {
     fun calculateVisibleVariables(frameProxy: StackFrameProxyImpl): List<LocalVariableProxyImpl> {
         // This is called from CoroutineStackFrame even for Java frames. We only need to compute for Kotlin frames.
         return if (frameProxy.location().isInKotlinSources()) {
-            frameProxy.stackFrame.computeKotlinStackFrameInfos().last().visibleVariableProxies(frameProxy)
+            frameProxy.stackFrame.computeKotlinStackFrameInfos()
+                .lastOrNull()?.visibleVariableProxies(frameProxy) ?: emptyList()
         } else {
             frameProxy.safeVisibleVariables()
         }

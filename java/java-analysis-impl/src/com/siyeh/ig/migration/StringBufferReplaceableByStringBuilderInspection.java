@@ -47,14 +47,12 @@ public final class StringBufferReplaceableByStringBuilderInspection extends Base
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "StringBufferMayBeStringBuilder";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.problem.descriptor");
   }
 
@@ -63,8 +61,7 @@ public final class StringBufferReplaceableByStringBuilderInspection extends Base
     return new StringBufferMayBeStringBuilderFix();
   }
 
-  @Nullable
-  private static PsiExpression getNewStringBuffer(PsiExpression expression) {
+  private static @Nullable PsiExpression getNewStringBuffer(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return null;
@@ -74,7 +71,7 @@ public final class StringBufferReplaceableByStringBuilderInspection extends Base
     }
     else if (expression instanceof PsiMethodCallExpression) {
       final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if ("append".equals(methodName) || "appendCodePoint".equals(methodName) || "insert".equals(methodName)) {
         return getNewStringBuffer(methodExpression.getQualifierExpression());
       }
@@ -85,8 +82,7 @@ public final class StringBufferReplaceableByStringBuilderInspection extends Base
   private static class StringBufferMayBeStringBuilderFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "StringBuilder");
     }
 

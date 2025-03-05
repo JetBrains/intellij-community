@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class OverwriteEqualsInsertHandler implements InsertHandler<LookupElement> {
-  public final static OverwriteEqualsInsertHandler INSTANCE = new OverwriteEqualsInsertHandler();
+  public static final OverwriteEqualsInsertHandler INSTANCE = new OverwriteEqualsInsertHandler();
 
   private OverwriteEqualsInsertHandler() { }
 

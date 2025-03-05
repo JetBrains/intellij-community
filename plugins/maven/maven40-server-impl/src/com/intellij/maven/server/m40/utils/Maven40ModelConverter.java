@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.util.ReflectionUtilRt;
@@ -20,8 +20,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 public class Maven40ModelConverter {
-  @NotNull
-  public static MavenModel convertModel(Model model) {
+  public static @NotNull MavenModel convertModel(Model model) {
     if (model.getBuild() == null) {
       model.setBuild(new Build());
     }
@@ -31,10 +30,9 @@ public class Maven40ModelConverter {
                         asSourcesList(build.getTestSourceDirectory()));
   }
 
-  @NotNull
-  public static MavenModel convertModel(Model model,
-                                        List<String> sources,
-                                        List<String> testSources) {
+  public static @NotNull MavenModel convertModel(Model model,
+                                                 List<String> sources,
+                                                 List<String> testSources) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -328,8 +326,7 @@ public class Maven40ModelConverter {
            || Xpp3Dom.class.isAssignableFrom(clazz);
   }
 
-  @NotNull
-  public static Model toNativeModel(MavenModel model) {
+  public static @NotNull Model toNativeModel(MavenModel model) {
     Model result = new Model();
     result.setArtifactId(model.getMavenId().getArtifactId());
     result.setGroupId(model.getMavenId().getGroupId());

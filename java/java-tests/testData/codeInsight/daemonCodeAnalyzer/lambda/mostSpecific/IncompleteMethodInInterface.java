@@ -7,6 +7,6 @@ class Test {
   public static void call(I i) {  }
 
   public static void main(String[] args)   {
-      <error descr="Ambiguous method call: both 'Test.call(IStr)' and 'Test.call(I)' match">call</error>(()-> null);
+      call<error descr="Ambiguous method call: both 'Test.call(IStr)' and 'Test.call(I)' match">(()-> null)</error>;
   }
 }

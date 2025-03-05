@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.CommonBundle;
@@ -40,11 +40,11 @@ public final class DuplicatesImpl {
 
   private DuplicatesImpl() {}
 
-  public static void invoke(@NotNull  final Project project, @NotNull Editor editor, @NotNull MatchProvider provider) {
+  public static void invoke(final @NotNull Project project, @NotNull Editor editor, @NotNull MatchProvider provider) {
     invoke(project, editor, provider, true);
   }
 
-  public static void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull MatchProvider provider, boolean skipPromptWhenOne) {
+  public static void invoke(final @NotNull Project project, @NotNull Editor editor, @NotNull MatchProvider provider, boolean skipPromptWhenOne) {
     final List<Match> duplicates = provider.getDuplicates();
     int idx = 0;
     final Ref<Boolean> showAll = new Ref<>();
@@ -73,8 +73,7 @@ public final class DuplicatesImpl {
     }
   }
 
-  @Nullable
-  private static String getConfirmationPrompt(MatchProvider provider, List<Match> duplicates) {
+  private static @Nullable String getConfirmationPrompt(MatchProvider provider, List<Match> duplicates) {
     String confirmDuplicatePrompt = null;
     for (Match duplicate : duplicates) {
       confirmDuplicatePrompt = provider.getConfirmDuplicatePrompt(duplicate);
@@ -88,7 +87,7 @@ public final class DuplicatesImpl {
   private static boolean replaceMatch(final Project project,
                                       final MatchProvider provider,
                                       final Match match,
-                                      @NotNull final Editor editor,
+                                      final @NotNull Editor editor,
                                       final int idx,
                                       final int size,
                                       Ref<Boolean> showAll,

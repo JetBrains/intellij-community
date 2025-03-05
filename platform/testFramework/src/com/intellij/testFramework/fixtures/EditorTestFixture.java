@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -53,6 +53,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -66,12 +67,9 @@ import static org.junit.Assert.*;
 public class EditorTestFixture {
   private static final @NotNull Logger LOG = Logger.getInstance(EditorTestFixture.class);
 
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final Editor myEditor;
-  @NotNull
-  private final VirtualFile myVirtualFile;
+  private final @NotNull Project myProject;
+  private final @NotNull Editor myEditor;
+  private final @NotNull VirtualFile myVirtualFile;
 
   private boolean myEmptyLookup;
 
@@ -146,8 +144,7 @@ public class EditorTestFixture {
     return false;
   }
 
-  @NotNull
-  private DataContext getEditorDataContext() {
+  private @NotNull DataContext getEditorDataContext() {
     return EditorUtil.getEditorDataContext(myEditor);
   }
 
@@ -155,13 +152,11 @@ public class EditorTestFixture {
     return ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(myVirtualFile));
   }
 
-  @NotNull
-  public List<HighlightInfo> doHighlighting() {
+  public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
     return doHighlighting(false, false);
   }
 
-  @NotNull
-  public List<HighlightInfo> doHighlighting(boolean myAllowDirt, boolean readEditorMarkupModel) {
+  public @NotNull @Unmodifiable List<HighlightInfo> doHighlighting(boolean myAllowDirt, boolean readEditorMarkupModel) {
     EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myProject).commitAllDocuments());
 
     PsiFile file = getFile();
@@ -174,8 +169,7 @@ public class EditorTestFixture {
     return instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDirt, readEditorMarkupModel);
   }
 
-  @NotNull
-  protected Editor getCompletionEditor() {
+  protected @NotNull Editor getCompletionEditor() {
     return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, getFile());
   }
 
@@ -183,7 +177,7 @@ public class EditorTestFixture {
     return (LookupImpl)LookupManager.getActiveLookup(myEditor);
   }
 
-  public LookupElement[] complete(@NotNull final CompletionType type) {
+  public LookupElement[] complete(final @NotNull CompletionType type) {
     return complete(type, 1);
   }
 
@@ -191,7 +185,7 @@ public class EditorTestFixture {
     return complete(CompletionType.BASIC);
   }
 
-  public LookupElement[] complete(@NotNull final CompletionType type, final int invocationCount) {
+  public LookupElement[] complete(final @NotNull CompletionType type, final int invocationCount) {
     myEmptyLookup = false;
     ApplicationManager.getApplication().invokeAndWait(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
       final CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(type) {
@@ -220,16 +214,15 @@ public class EditorTestFixture {
     }
   }
 
-  public List<String> getLookupElementStrings() {
+  public @Unmodifiable List<String> getLookupElementStrings() {
     final LookupElement[] elements = getLookupElements();
     if (elements == null) return null;
 
     return ContainerUtil.map(elements, LookupElement::getLookupString);
   }
 
-  @NotNull
-  public final List<LookupElement> completeBasicAllCarets(@Nullable final Character charToTypeIfOnlyOneOrNoCompletion,
-                                                          @Nullable final Character charToTypeIfMultipleCompletions) {
+  public final @NotNull List<LookupElement> completeBasicAllCarets(final @Nullable Character charToTypeIfOnlyOneOrNoCompletion,
+                                                                   final @Nullable Character charToTypeIfMultipleCompletions) {
     final CaretModel caretModel = myEditor.getCaretModel();
     final List<Caret> carets = caretModel.getAllCarets();
 
@@ -320,8 +313,7 @@ public class EditorTestFixture {
     return PsiTreeUtil.getParentOfType(getFile().findElementAt(pos), elementClass);
   }
 
-  @NotNull
-  public List<IntentionAction> getAllQuickFixes() {
+  public @NotNull List<IntentionAction> getAllQuickFixes() {
     List<HighlightInfo> infos = doHighlighting();
     List<IntentionAction> actions = new ArrayList<>();
     for (HighlightInfo info : infos) {
@@ -333,14 +325,12 @@ public class EditorTestFixture {
     return actions;
   }
 
-  @NotNull
-  public List<Crumb> getBreadcrumbsAtCaret() {
+  public @NotNull @Unmodifiable List<Crumb> getBreadcrumbsAtCaret() {
     FileBreadcrumbsCollector breadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myVirtualFile);
     return ContainerUtil.newArrayList(breadcrumbsCollector.computeCrumbs(myVirtualFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset(), true));
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 }

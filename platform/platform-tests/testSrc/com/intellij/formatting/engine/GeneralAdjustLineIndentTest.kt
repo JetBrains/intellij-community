@@ -20,7 +20,6 @@ import com.intellij.formatting.FormatterEx
 import com.intellij.formatting.engine.testModel.TestFormattingModel
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
 import org.junit.Test

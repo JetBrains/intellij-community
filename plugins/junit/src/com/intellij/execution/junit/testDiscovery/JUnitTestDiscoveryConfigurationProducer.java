@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.testDiscovery;
 
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -23,9 +23,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public final class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return JUnitConfigurationType.getInstance().getConfigurationFactories()[0];
   }
 
@@ -48,12 +47,11 @@ public final class JUnitTestDiscoveryConfigurationProducer extends TestDiscovery
     return JUnitUtil.isTestMethod(testMethod);
   }
 
-  @NotNull
   @Override
-  public RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
-                                       Module module,
-                                       RunConfiguration configuration,
-                                       ExecutionEnvironment environment) {
+  public @NotNull RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
+                                                Module module,
+                                                RunConfiguration configuration,
+                                                ExecutionEnvironment environment) {
     JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
     data.setPatterns(collectMethodPatterns(testMethods));
     data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;

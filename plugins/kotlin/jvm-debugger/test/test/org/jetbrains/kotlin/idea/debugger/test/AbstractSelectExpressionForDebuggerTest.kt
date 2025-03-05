@@ -2,14 +2,18 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.debugger.core.KotlinEditorTextProvider
 import org.jetbrains.kotlin.idea.debugger.core.withCustomConfiguration
 import org.jetbrains.kotlin.idea.test.*
 import org.junit.Assert
 
+/**
+ * See also [KotlinDebuggerEvaluatorTest].
+ */
 sealed class AbstractSelectExpressionForDebuggerTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun setUp() {
         super.setUp()
@@ -24,14 +28,16 @@ sealed class AbstractSelectExpressionForDebuggerTest : KotlinLightCodeInsightFix
         myFixture.configureByFile(testFile)
         val fileText = myFixture.file.text
 
-        val selectedExpression: PsiElement? = executeOnPooledThreadInReadAction {
-            val allowMethodCalls = !InTextDirectivesUtils.isDirectiveDefined(fileText, "DISALLOW_METHOD_CALLS")
-            val elementAt = myFixture.file?.findElementAt(myFixture.caretOffset)!!
+        val selectedExpression: PsiElement? = ApplicationManager.getApplication().executeOnPooledThread<PsiElement?> {
+            runReadAction {
+                val allowMethodCalls = !InTextDirectivesUtils.isDirectiveDefined(fileText, "DISALLOW_METHOD_CALLS")
+                val elementAt = myFixture.file?.findElementAt(myFixture.caretOffset)!!
 
-            KotlinEditorTextProvider.withCustomConfiguration(useAnalysisApi = useAnalysisApi) { provider ->
-                provider.findEvaluationTarget(elementAt, allowMethodCalls)
+                KotlinEditorTextProvider.withCustomConfiguration(useAnalysisApi = useAnalysisApi) { provider ->
+                    provider.findEvaluationTarget(elementAt, allowMethodCalls)
+                }
             }
-        }
+        }.get()
 
         val actual = selectedExpression?.text ?: "null"
 

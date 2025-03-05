@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.extension;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,22 +46,31 @@ public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariabl
       final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
 
       final String getterName = LombokUtils.toGetterName(accessorsInfo, currentFieldName, isBoolean);
-      final PsiMethod[] psiGetterMethods = containingClass.findMethodsByName(getterName, false);
-      for (PsiMethod psiMethod : psiGetterMethods) {
-        allRenames.put(psiMethod, LombokUtils.toGetterName(accessorsInfo, newFieldName, isBoolean));
+      final String newGetterName = LombokUtils.toGetterName(accessorsInfo, newFieldName, isBoolean);
+      if (StringUtil.isNotEmpty(getterName) && StringUtil.isNotEmpty(newGetterName)) {
+        final PsiMethod[] psiGetterMethods = containingClass.findMethodsByName(getterName, false);
+        for (PsiMethod psiMethod : psiGetterMethods) {
+          allRenames.put(psiMethod, newGetterName);
+        }
       }
 
       final String setterName = LombokUtils.toSetterName(accessorsInfo, currentFieldName, isBoolean);
-      final PsiMethod[] psiSetterMethods = containingClass.findMethodsByName(setterName, false);
-      for (PsiMethod psiMethod : psiSetterMethods) {
-        allRenames.put(psiMethod, LombokUtils.toSetterName(accessorsInfo, newFieldName, isBoolean));
+      final String newSetterName = LombokUtils.toSetterName(accessorsInfo, newFieldName, isBoolean);
+      if (StringUtil.isNotEmpty(setterName) && StringUtil.isNotEmpty(newSetterName)) {
+        final PsiMethod[] psiSetterMethods = containingClass.findMethodsByName(setterName, false);
+        for (PsiMethod psiMethod : psiSetterMethods) {
+          allRenames.put(psiMethod, newSetterName);
+        }
       }
 
       if (!accessorsInfo.isFluent()) {
         final String witherName = LombokUtils.toWitherName(accessorsInfo, currentFieldName, isBoolean);
-        final PsiMethod[] psiWitherMethods = containingClass.findMethodsByName(witherName, false);
-        for (PsiMethod psiMethod : psiWitherMethods) {
-          allRenames.put(psiMethod, LombokUtils.toWitherName(accessorsInfo, newFieldName, isBoolean));
+        final String newWitherName = LombokUtils.toWitherName(accessorsInfo, newFieldName, isBoolean);
+        if (StringUtil.isNotEmpty(witherName) && StringUtil.isNotEmpty(newWitherName)) {
+          final PsiMethod[] psiWitherMethods = containingClass.findMethodsByName(witherName, false);
+          for (PsiMethod psiMethod : psiWitherMethods) {
+            allRenames.put(psiMethod, newWitherName);
+          }
         }
       }
 
@@ -73,11 +83,14 @@ public final class LombokRenameFieldReferenceProcessor extends RenameJavaVariabl
         final String setterPrefix =
           PsiAnnotationUtil.getStringAnnotationValue(builderAnnotation, BuilderHandler.ANNOTATION_SETTER_PREFIX, "");
 
-        final List<String> currentBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(currentFieldName),
+        final String currentFiledNameWithoutPrefix = accessorsInfo.removePrefixWithDefault(currentFieldName);
+        final List<String> currentBuilderMethodNames = handler.getBuilderMethodNames(currentFiledNameWithoutPrefix,
                                                                                      setterPrefix,
                                                                                      singularAnnotation,
                                                                                      accessorsInfo.getCapitalizationStrategy());
-        final List<String> newBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(newFieldName),
+
+        final String newFieldNameWithoutPrefix = accessorsInfo.removePrefixWithDefault(newFieldName);
+        final List<String> newBuilderMethodNames = handler.getBuilderMethodNames(newFieldNameWithoutPrefix,
                                                                                  setterPrefix,
                                                                                  singularAnnotation,
                                                                                  accessorsInfo.getCapitalizationStrategy());

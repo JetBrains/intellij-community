@@ -1,10 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework.xml
 
+import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 
 class MavenBuildFileBuilder(val artifactId: String) {
-  private var modelVersion: String = "4.0.0"
+  private var modelVersion: String = MODEL_VERSION_4_0_0
   private var groupId: String = "org.example"
   private var version: String = "1.0-SNAPSHOT"
   private var packaging: String? = null

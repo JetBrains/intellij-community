@@ -9,7 +9,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.intellij.openapi.util.text.StringUtil;
 
 
-class _PythonLexer implements FlexLexerEx {
+public final class _PythonLexer implements FlexLexerEx {
 
   /** This character denotes the end of file */
   public static final int YYEOF = -1;

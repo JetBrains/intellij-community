@@ -92,9 +92,8 @@ public class StubDetailsViewer {
       myRoot = root != null ? new StubDetailsRootNode(root) : new Object();
     }
 
-    @NotNull
     @Override
-    public Object getRootElement() {
+    public @NotNull Object getRootElement() {
       return myRoot;
     }
   }

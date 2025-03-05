@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.transformations.impl.synch
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.*
 import com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField

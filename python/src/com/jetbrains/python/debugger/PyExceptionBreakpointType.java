@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TooltipWithClickableLinks;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -163,7 +164,7 @@ public final class PyExceptionBreakpointType
       myNotifyOnRaiseCheckBox = new JCheckBox(PyBundle.message("debugger.exception.breakpoint.on.raise"));
       myIgnoreLibrariesCheckBox = new JCheckBox(PyBundle.message("debugger.exception.breakpoint.ignore.library.files"));
 
-      Box notificationsBox = Box.createVerticalBox();
+      JBBox notificationsBox = JBBox.createVerticalBox();
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(myNotifyOnTerminateCheckBox, BorderLayout.NORTH);
       notificationsBox.add(panel);

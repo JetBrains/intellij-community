@@ -49,7 +49,7 @@ class ModuleOutputPatcher {
             AttributeKey.stringKey("oldContent"), byteArrayToTraceStringValue(existing),
             AttributeKey.stringKey("newContent"), byteArrayToTraceStringValue(content),
           ))
-          error("Patched directory $path is already added for module $moduleName")
+          error("Patched file '$path' is already added for module $moduleName")
         }
 
         pathToData.put(path, content)

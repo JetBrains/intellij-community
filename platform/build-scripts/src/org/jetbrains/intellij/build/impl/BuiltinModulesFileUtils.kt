@@ -3,12 +3,12 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItemKind
 import io.opentelemetry.api.trace.Span
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.BuiltinModulesFileData
-import org.jetbrains.intellij.build.ProductInfoLayoutItemKind
 import java.nio.file.Files
 import java.nio.file.Path
 

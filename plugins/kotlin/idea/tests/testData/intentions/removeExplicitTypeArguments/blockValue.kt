@@ -1,4 +1,4 @@
-// IS_APPLICABLE: true
+// FIX: Remove explicit type arguments
 // WITH_STDLIB
 
 fun f(p: Int): List<String>? {

@@ -1,0 +1,4 @@
+~int_col~float_col~strings~dict~list
+0~1~1.00~f~{'age': 30, 'height': 5.5}~[1.1 2.2]
+1~2~2.00~s~{'age': 25, 'height': 6.1}~[2.2 3.3]
+2~3~NaN~NaN~{'age': 35, 'height': None}~[4.4 nan]

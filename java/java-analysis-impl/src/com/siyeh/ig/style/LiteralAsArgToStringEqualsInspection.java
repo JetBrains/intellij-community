@@ -17,8 +17,8 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -35,8 +35,7 @@ import org.jetbrains.annotations.NotNull;
 public class LiteralAsArgToStringEqualsInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final String methodName = (String)infos[0];
     return InspectionGadgetsBundle.message(
       "literal.as.arg.to.string.equals.problem.descriptor",
@@ -62,16 +61,13 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection impleme
       myMethodName = methodName;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return InspectionGadgetsBundle.message("literal.as.arg.to.string.equals.flip.quickfix", myMethodName);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("swap.equals.fix.family.name");
     }
 
@@ -105,7 +101,7 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection impleme
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.EQUALS.equals(methodName) &&
           !HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(methodName)) {
         return;

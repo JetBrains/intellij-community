@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
@@ -32,19 +32,29 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ApiStatus.Internal
 public class CodeSmellDetectorImpl extends CodeSmellDetector {
   private static final Key<Boolean> CODE_SMELL_DETECTOR_KEY = new Key<Boolean>("CODE_SMELL_DETECTOR_KEY");
+
+  /**
+   * Highlighting entries are also generated for tests failures (e.g., for JUnit line with failed 'assert...' can be highlighted).
+   * However, it makes no sense to prevent commit for these kinds of warnings.
+   */
+  private static final @NotNull Set<@NotNull String> INSPECTIONS_TO_IGNORE = Set.of(
+    "TestFailedLine",
+    "PestTestFailedLineInspection",
+    "JSTestFailedLine",
+    "PhpUnitTestFailedLineInspection"
+  );
 
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance(CodeSmellDetectorImpl.class);
@@ -54,12 +64,12 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   }
 
   @Override
-  public void showCodeSmellErrors(@NotNull final List<CodeSmellInfo> smellList) {
-    smellList.sort(Comparator.comparingInt(o -> o.getTextRange().getStartOffset()));
+  public void showCodeSmellErrors(@NotNull @Unmodifiable List<? extends CodeSmellInfo> smellList) {
+    List<? extends CodeSmellInfo> sorted = ContainerUtil.sorted(smellList, Comparator.comparingInt(o -> o.getTextRange().getStartOffset()));
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
-      if (smellList.isEmpty()) {
+      if (sorted.isEmpty()) {
         return;
       }
 
@@ -67,7 +77,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
       FileDocumentManager fileManager = FileDocumentManager.getInstance();
 
-      for (CodeSmellInfo smellInfo : smellList) {
+      for (CodeSmellInfo smellInfo : sorted) {
         final VirtualFile file = fileManager.getFile(smellInfo.getDocument());
         if (file == null) continue;
         String presentableUrl = file.getPresentableUrl();
@@ -112,16 +122,14 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     });
   }
 
-  @NotNull
   @Override
-  public List<CodeSmellInfo> findCodeSmells(@NotNull final List<? extends VirtualFile> filesToCheck) throws ProcessCanceledException {
+  public @NotNull List<CodeSmellInfo> findCodeSmells(final @NotNull List<? extends VirtualFile> filesToCheck) throws ProcessCanceledException {
     MainPassesRunner runner =
       new MainPassesRunner(myProject, VcsBundle.message("checking.code.smells.progress.title"), getInspectionProfile());
     Map<Document, List<HighlightInfo>> infos = runner.runMainPasses(filesToCheck, HighlightSeverity.WARNING);
     return convertErrorsAndWarnings(infos);
   }
-  @Nullable
-  private InspectionProfile getInspectionProfile() {
+  private @Nullable InspectionProfile getInspectionProfile() {
     InspectionProfile currentProfile;
     VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
     String codeSmellProfile = vcsConfiguration.CODE_SMELLS_PROFILE;
@@ -141,6 +149,8 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
       Document document = e.getKey();
       List<HighlightInfo> infos = e.getValue();
       for (HighlightInfo info : infos) {
+        String inspectionToolId = info.getInspectionToolId();
+        if (inspectionToolId != null && INSPECTIONS_TO_IGNORE.contains(inspectionToolId)) continue;
         final HighlightSeverity severity = info.getSeverity();
         if (SeverityRegistrar.getSeverityRegistrar(myProject).compare(severity, HighlightSeverity.WARNING) >= 0) {
             result.add(new CodeSmellInfo(document, getDescription(info),

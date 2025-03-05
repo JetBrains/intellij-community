@@ -5,8 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class DelombokToStringAction extends AbstractDelombokAction {
   @Override
-  @NotNull
-  protected DelombokHandler createHandler() {
+  protected @NotNull DelombokHandler createHandler() {
     return new DelombokHandler(LombokProcessorManager.getInstance().getToStringProcessor());
   }
 }

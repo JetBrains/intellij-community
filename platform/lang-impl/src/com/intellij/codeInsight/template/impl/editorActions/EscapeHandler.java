@@ -3,8 +3,6 @@
 package com.intellij.codeInsight.template.impl.editorActions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -30,20 +28,18 @@ public class EscapeHandler extends EditorActionHandler {
     TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null && !templateState.isFinished()) {
       SelectionModel selectionModel = editor.getSelectionModel();
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
 
       // the idea behind lookup checking is that if there is a preselected value in lookup
       // then user might want just to close lookup but not finish a template.
       // E.g. user wants to move to the next template segment by Tab without completion invocation.
       // If there is no selected value in completion that user definitely wants to finish template
-      boolean lookupIsEmpty = lookup == null || lookup.getCurrentItem() == null;
-      if (!selectionModel.hasSelection() && lookupIsEmpty) {
+      if (!selectionModel.hasSelection()) {
         CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("finish.template.command"));
         templateState.gotoEnd(true);
         return;
       }
-      else if (lookup != null) { //to hide lookup and remove selection at once
-        lookup.hide();
+      else { //to hide lookup and remove selection at once
+        selectionModel.removeSelection();
       }
     }
 

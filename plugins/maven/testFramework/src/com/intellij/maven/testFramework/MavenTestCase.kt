@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework
 
+import com.intellij.UtilBundle
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
@@ -25,6 +26,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
@@ -32,9 +36,11 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.TemporaryDirectory.Companion.generateTemporaryPath
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
@@ -49,9 +55,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator.MavenProgressTracker
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.junit.AssumptionViolatedException
 import java.awt.HeadlessException
-import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -59,21 +63,44 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.absolutePathString
+import kotlin.io.path.*
 
+/**
+ * This test case uses the NIO API for handling file operations.
+ *
+ * **Background**:
+ * The test framework is transitioning from the `IO` API to the`NIO` API
+ *
+ * **Implementation Notes**:
+ * - `<TestCase>` represents the updated implementation using the `NIO` API.
+ * - `<TestCaseLegacy>` represents the legacy implementation using the `IO` API.
+ * - For now, both implementations coexist to allow for a smooth transition and backward compatibility.
+ * - Eventually, `<TestCaseLegacy>` will be removed from the codebase.
+ *
+ * **Action Items**:
+ * - Prefer using `<TestCase>` for new test cases.
+ * - Update existing tests to use `<TestCase>` where possible.
+ *
+ *
+ *
+ * **Future Direction**:
+ * Once the transition is complete, all test cases relying on the `IO` API will be retired,
+ * and the codebase will exclusively use the `NIO` implementation.
+ */
 abstract class MavenTestCase : UsefulTestCase() {
   protected var mavenProgressIndicator: MavenProgressIndicator? = null
     private set
   private var myWSLDistribution: WSLDistribution? = null
   private var myPathTransformer: RemotePathTransformerFactory.Transformer? = null
 
-  private var ourTempDir: File? = null
+  private lateinit var ourTempDir: Path
+  private lateinit var myDir: Path
 
   private var myTestFixture: IdeaProjectTestFixture? = null
+  private var myJdk: Sdk? = null
 
   private var myProject: Project? = null
 
-  private var myDir: File? = null
   private var myProjectRoot: VirtualFile? = null
 
   private var myProjectPom: VirtualFile? = null
@@ -95,8 +122,8 @@ abstract class MavenTestCase : UsefulTestCase() {
   val project: Project
     get() = myProject!!
 
-  val dir: File
-    get() = myDir!!
+  val dir: Path
+    get() = myDir
 
   val projectRoot: VirtualFile
     get() = myProjectRoot!!
@@ -114,20 +141,18 @@ abstract class MavenTestCase : UsefulTestCase() {
     myAllPoms.add(pom)
   }
 
-  @Throws(Exception::class)
   override fun setUp() {
-    assumeThisTestCanBeReusedForPreimport()
     super.setUp()
 
     setUpFixtures()
     myProject = myTestFixture!!.project
     myPathTransformer = RemotePathTransformerFactory.createForProject(project)
-    setupWsl()
+    setupWslDistribution()
+    setupCustomJdk()
     ensureTempDirCreated()
 
-    myDir = File(ourTempDir, getTestName(false))
-    FileUtil.ensureExists(myDir!!)
-
+    myDir = ourTempDir.resolve(getTestName(false))
+    myDir.ensureExists()
 
     mavenProgressIndicator = MavenProgressIndicator(project, EmptyProgressIndicator(ModalityState.nonModal()), null)
 
@@ -159,41 +184,67 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  protected fun assumeThisTestCanBeReusedForPreimport() {
-    assumeTestCanBeReusedForPreimport(this.javaClass, name)
+  private fun setupCustomJdk() {
+    var jdkPath: String? = null
+    if (myWSLDistribution != null) {
+      jdkPath = System.getProperty("wsl.jdk.path") ?: "/usr/lib/jvm/java-11-openjdk-amd64"
+      assertTrue(myWSLDistribution!!.getWindowsPath(myWSLDistribution!!.userHome!!).toNioPathOrNull()!!.isDirectory())
+      // SDK might be null; if so, jdkPath will be used to create a JDK instance
+      myJdk = findExisingJdkByPath(myWSLDistribution!!.getWindowsPath(jdkPath))
+    }
+    if (isProjectInEelEnvironment()) {
+      jdkPath = getEelFixtureEngineJavaHome()
+    }
+    if (myJdk == null && jdkPath != null) {
+      myJdk = JavaSdk.getInstance().createJdk("Maven Test JDK", jdkPath)
+      val jdkTable = ProjectJdkTable.getInstance()
+      WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(myJdk!!) }
+    }
+    if (myJdk != null) {
+      WriteAction.runAndWait<RuntimeException> { ProjectRootManagerEx.getInstanceEx(myProject).projectSdk = myJdk }
+    }
   }
 
+  private fun tearDownJdk() {
+    if (myJdk != null) {
+      WriteAction.runAndWait<RuntimeException> {
+        val jdkTable = ProjectJdkTable.getInstance()
+        jdkTable.removeJdk(myJdk!!)
+      }
+    }
+  }
 
-  private fun setupWsl() {
+  private fun setupWslDistribution() {
     val wslMsId = System.getProperty("wsl.distribution.name")
     if (wslMsId == null) return
     val distributions = WslDistributionManager.getInstance().installedDistributions
     if (distributions.isEmpty()) throw IllegalStateException("no WSL distributions configured!")
     myWSLDistribution = distributions.firstOrNull { it.msId == wslMsId }
                         ?: throw IllegalStateException("Distribution $wslMsId was not found")
-    var jdkPath = System.getProperty("wsl.jdk.path")
-    if (jdkPath == null) {
-      jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64"
-    }
+  }
 
-    val wslSdk = getWslSdk(myWSLDistribution!!.getWindowsPath(jdkPath))
-    WriteAction.runAndWait<RuntimeException> { ProjectRootManagerEx.getInstanceEx(myProject).projectSdk = wslSdk }
-    assertTrue(File(myWSLDistribution!!.getWindowsPath(myWSLDistribution!!.userHome!!)).isDirectory)
+  private fun isProjectInEelEnvironment(): Boolean {
+    return System.getenv("EEL_FIXTURE_ENGINE") != null
+  }
+
+  private fun getEelFixtureEngineJavaHome(): String {
+    return System.getenv("EEL_FIXTURE_ENGINE_JAVA_HOME") ?: throw IllegalArgumentException("The system environment variable EEL_FIXTURE_ENGINE_JAVA_HOME should be explicitly specified")
   }
 
   protected fun waitForMavenUtilRunnablesComplete() {
     PlatformTestUtil.waitWithEventsDispatching(
-      { "Waiting for MavenUtils runnables completed" + MavenUtil.getUncompletedRunnables() },
+      { "Waiting for MavenUtils runnables completed" + MavenUtil.uncompletedRunnables },
       { MavenUtil.noUncompletedRunnables() }, 15)
   }
 
-  @Throws(Throwable::class)
   override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
     LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
-      override fun processError(category: String,
-                                message: String,
-                                details: Array<String>,
-                                t: Throwable?): Set<Action> {
+      override fun processError(
+        category: String,
+        message: String,
+        details: Array<String>,
+        t: Throwable?,
+      ): Set<Action> {
         val intercept = t != null && ((t.message ?: "").contains("The network name cannot be found") &&
                                       message.contains("Couldn't read shelf information") ||
                                       "JDK annotations not found" == t.message && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl" == category)
@@ -202,19 +253,15 @@ abstract class MavenTestCase : UsefulTestCase() {
     }) { super.runBare(testRunnable) }
   }
 
-  private fun getWslSdk(jdkPath: String): Sdk {
+  private fun findExisingJdkByPath(jdkPath: String): Sdk? {
     val sdk = ProjectJdkTable.getInstance().allJdks.find { jdkPath == it.homePath }!!
     val jdkTable = ProjectJdkTable.getInstance()
     for (existingSdk in jdkTable.allJdks) {
       if (existingSdk === sdk) return sdk
     }
-    val newSdk = JavaSdk.getInstance().createJdk("Wsl JDK For Tests", jdkPath)
-    WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(newSdk, testRootDisposable) }
-    return newSdk
+    return null
   }
 
-
-  @Throws(Exception::class)
   override fun tearDown() {
     val basePath = myProject!!.basePath
     RunAll(
@@ -227,6 +274,7 @@ abstract class MavenTestCase : UsefulTestCase() {
       ThrowableRunnable { tearDownEmbedders() },
       ThrowableRunnable { checkAllMavenConnectorsDisposed() },
       ThrowableRunnable { myProject = null },
+      ThrowableRunnable { tearDownJdk() },
       ThrowableRunnable {
         val defaultProject = ProjectManager.getInstance().defaultProject
         val mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager::class.java)
@@ -238,7 +286,7 @@ abstract class MavenTestCase : UsefulTestCase() {
       ThrowableRunnable { deleteDirOnTearDown(myDir) },
       ThrowableRunnable {
         if (myWSLDistribution != null && basePath != null) {
-          deleteDirOnTearDown(File(basePath))
+          deleteDirOnTearDown(basePath.toNioPathOrNull())
         }
       },
       ThrowableRunnable { super.tearDown() }
@@ -267,51 +315,43 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
 
-  @Throws(IOException::class)
   private fun ensureTempDirCreated() {
-    if (ourTempDir != null) return
-
-    ourTempDir = if (myWSLDistribution == null) {
-      File(FileUtil.getTempDirectory(), "mavenTests")
+    ourTempDir = when {
+      isProjectInEelEnvironment() -> {
+        val mount = System.getenv("EEL_FIXTURE_MOUNT") ?: throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
+        Path("$mount/mavenTests")
+      }
+      myWSLDistribution != null -> myWSLDistribution!!.getWindowsPath("/tmp").toNioPathOrNull()!!.resolve("mavenTests")
+      else -> FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
     }
-    else {
-      File(myWSLDistribution!!.getWindowsPath("/tmp"), "mavenTests")
-    }
-
-    FileUtil.delete(ourTempDir!!)
-    FileUtil.ensureExists(ourTempDir!!)
+    FileUtil.delete(ourTempDir)
+    ourTempDir.ensureExists()
   }
 
-  @Throws(Exception::class)
   protected open fun setUpFixtures() {
-    val wslMsId = System.getProperty("wsl.distribution.name")
-
-    val isDirectoryBasedProject = useDirectoryBasedProjectFormat()
-    if (wslMsId != null) {
-      val path = generateTemporaryPath(FileUtil.sanitizeFileName(name, false), Paths.get(
-        "\\\\wsl$\\$wslMsId\\tmp"))
-      myTestFixture =
-        IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, path, isDirectoryBasedProject).fixture
+    val wslDistributionName = System.getProperty("wsl.distribution.name")
+    myTestFixture = when {
+      wslDistributionName != null -> setupWsl(wslDistributionName)
+      else -> IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedProjectFormat()).fixture
     }
-    else {
-      myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, isDirectoryBasedProject).fixture
-    }
-
     myTestFixture!!.setUp()
+  }
+
+  private fun setupWsl(wslDistributionName: String): IdeaProjectTestFixture {
+    val path = generateTemporaryPath(FileUtil.sanitizeFileName(name, false), Paths.get("\\\\wsl$\\${wslDistributionName}\\tmp"))
+    return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, path, useDirectoryBasedProjectFormat()).fixture
   }
 
   protected open fun useDirectoryBasedProjectFormat(): Boolean {
     return false
   }
 
-  @Throws(Exception::class)
   protected open fun setUpInWriteAction() {
-    val projectDir = File(myDir, "project")
-    projectDir.mkdirs()
-    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir)
+    val projectDir = myDir.resolve("project")
+    projectDir.createDirectories()
+    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)
   }
 
-  @Throws(Exception::class)
   protected open fun tearDownFixtures() {
     try {
       myTestFixture!!.tearDown()
@@ -321,7 +361,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  @Throws(Throwable::class)
   override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
     try {
       super.runTestRunnable(testRunnable)
@@ -340,56 +379,58 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected val mavenImporterSettings: MavenImportingSettings
     get() = MavenProjectsManager.getInstance(myProject!!).importingSettings
 
-  protected var repositoryPath: String?
-    get() {
-      val path = repositoryFile.path
-      return FileUtil.toSystemIndependentName(path)
-    }
-    protected set(path) {
-      mavenGeneralSettings.setLocalRepository(path)
+  protected var repositoryPath: Path
+    get() = mavenGeneralSettings.effectiveRepositoryPath
+    set(path) {
+      mavenGeneralSettings.setLocalRepository(path.toCanonicalPath())
     }
 
-  protected val repositoryFile: File
-    get() = mavenGeneralSettings.effectiveLocalRepository
+  protected fun resetRepositoryFile() {
+    mavenGeneralSettings.setLocalRepository(null)
+  }
 
-  protected val projectPath: String
-    get() = myProjectRoot!!.path
+  protected val projectPath: Path
+    get() = myProjectRoot!!.path.toNioPathOrNull()!!
 
-  protected val parentPath: String
-    get() = myProjectRoot!!.parent.path
+  protected val parentPath: Path
+    get() = projectPath.parent
 
   protected fun pathFromBasedir(relPath: String): String {
     return pathFromBasedir(myProjectRoot, relPath)
   }
 
-  @Throws(IOException::class)
   protected fun createSettingsXml(innerContent: String): VirtualFile {
     val content = createSettingsXmlContent(innerContent)
-    val path = Path.of(myDir!!.path, "settings.xml")
+    val path = myDir.resolve("settings.xml")
     Files.writeString(path, content)
     mavenGeneralSettings.setUserSettingsFile(path.toString())
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
   }
 
-  @Throws(IOException::class)
   protected fun updateSettingsXml(content: String): VirtualFile {
     return updateSettingsXmlFully(createSettingsXmlContent(content))
   }
 
-  @Throws(IOException::class)
   protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
-    val ioFile = File(myDir, "settings.xml")
-    ioFile.createNewFile()
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)!!
+    val ioFile = myDir.resolve("settings.xml")
+    ioFile.findOrCreateFile()
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
     setFileContent(f, content)
     refreshFiles(listOf(f))
     mavenGeneralSettings.setUserSettingsFile(f.path)
     return f
   }
 
-  @Throws(IOException::class)
   protected fun restoreSettingsFile() {
-    updateSettingsXml("")
+    updateSettingsXml("""
+      <mirrors>
+        <mirror>
+          <id>central-mirror</id>
+          <url>https://cache-redirector.jetbrains.com/repo1.maven.org/maven2</url>
+          <mirrorOf>central</mirrorOf>
+        </mirror>
+      </mirrors>
+    """.trimIndent())
   }
 
   protected fun createModule(name: String, type: ModuleType<*>): Module {
@@ -419,25 +460,33 @@ abstract class MavenTestCase : UsefulTestCase() {
     return pom
   }
 
-  protected fun createModulePom(relativePath: String,
-                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+  protected fun createModulePom(
+    relativePath: String,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  ): VirtualFile {
     return createPomFile(createProjectSubDir(relativePath), xml)
   }
 
-  protected fun updateModulePom(relativePath: String,
-                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+  protected fun updateModulePom(
+    relativePath: String,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  ): VirtualFile {
     val pom = createModulePom(relativePath, xml)
     refreshFiles(listOf(pom))
     return pom
   }
 
-  protected fun createPomFile(dir: VirtualFile,
-                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+  protected fun createPomFile(
+    dir: VirtualFile,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  ): VirtualFile {
     return createPomFile(dir, "pom.xml", xml)
   }
 
-  protected fun createPomFile(dir: VirtualFile, fileName: String = "pom.xml",
-                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+  protected fun createPomFile(
+    dir: VirtualFile, fileName: String = "pom.xml",
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  ): VirtualFile {
     val filePath = Path.of(dir.path, fileName)
     setPomContent(filePath, xml)
     dir.refresh(false, false)
@@ -471,7 +520,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     return createProfilesFile(createProjectSubDir(relativePath), content)
   }
 
-  @Throws(IOException::class)
   protected fun deleteProfilesXml() {
     WriteCommandAction.writeCommandAction(myProject).run<IOException> {
       val f = myProjectRoot!!.findChild("profiles.xml")
@@ -486,20 +534,22 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun createProjectSubDir(relativePath: String): VirtualFile {
-    val f = File(projectPath, relativePath)
-    f.mkdirs()
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)!!
+    val f = projectPath.resolve(relativePath)
+    f.createDirectories()
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
   }
 
-  @Throws(IOException::class)
+  protected fun createFile(path: Path): VirtualFile {
+    path.parent.createDirectories()
+    path.createFile()
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
+  }
+
   protected fun createProjectSubFile(relativePath: String): VirtualFile {
-    val f = File(projectPath, relativePath)
-    f.parentFile.mkdirs()
-    f.createNewFile()
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f)!!
+    val f = projectPath.resolve(relativePath)
+    return createFile(f)
   }
 
-  @Throws(IOException::class)
   protected fun createProjectSubFile(relativePath: String, content: String): VirtualFile {
     val file = createProjectSubFile(relativePath)
     setFileContent(file, content)
@@ -507,15 +557,25 @@ abstract class MavenTestCase : UsefulTestCase() {
     return file
   }
 
-  protected fun refreshFiles(files: List<VirtualFile>) {
-    val relativePaths = files.map { dir.toPath().relativize(Path.of(it.path)) }
-    MavenLog.LOG.warn("Refreshing files: $relativePaths")
-    LocalFileSystem.getInstance().refreshFiles(files)
+  protected fun createFile(path: Path, content: String): VirtualFile {
+    val file = createFile(path)
+    setFileContent(file, content)
+    refreshFiles(listOf(file))
+    return file
   }
 
-  protected fun ignore(): Boolean {
-    //printIgnoredMessage(null);
-    return false
+  protected fun updateProjectSubFile(relativePath: String, content: String): VirtualFile {
+    val f = projectPath.resolve(relativePath)
+    val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
+    setFileContent(file, content)
+    refreshFiles(listOf(file))
+    return file
+  }
+
+  protected fun refreshFiles(files: List<VirtualFile>) {
+    val relativePaths = files.map { dir.relativize(it.path.toNioPathOrNull()!!) }
+    MavenLog.LOG.warn("Refreshing files: $relativePaths")
+    LocalFileSystem.getInstance().refreshFiles(files)
   }
 
   protected fun hasMavenInstallation(): Boolean {
@@ -574,28 +634,25 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  protected fun deleteDirOnTearDown(dir: File?) {
+  protected fun deleteDirOnTearDown(dir: Path?) {
     FileUtil.delete(dir!!)
     // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
     // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
     if (dir.exists()) {
       System.err.println("Cannot delete $dir")
       //printDirectoryContent(myDir);
-      dir.deleteOnExit()
+      dir.toFile().deleteOnExit()
     }
   }
 
-  private fun printDirectoryContent(dir: File) {
-    val files = dir.listFiles()
-    if (files == null) return
-
-    for (file in files) {
-      println(file.absolutePath)
-
-      if (file.isDirectory) {
-        printDirectoryContent(file)
+  private fun printDirectoryContent(dir: Path) {
+    dir.listDirectoryEntries()
+      .forEach { file ->
+        println(file.toAbsolutePath())
+        if (file.isDirectory()) {
+          printDirectoryContent(file)
+        }
       }
-    }
   }
 
   protected val root: String
@@ -609,7 +666,6 @@ abstract class MavenTestCase : UsefulTestCase() {
       if (SystemInfo.isWindows) {
         return "TEMP"
       }
-      else if (SystemInfo.isLinux) return "HOME"
       return "TMPDIR"
     }
 
@@ -669,7 +725,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun setFileContent(file: Path, content: String) {
-    val relativePath = dir.toPath().relativize(file)
+    val relativePath = dir.relativize(file)
     MavenLog.LOG.warn("Writing content to $relativePath")
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
   }
@@ -755,11 +811,25 @@ abstract class MavenTestCase : UsefulTestCase() {
   private val testMavenHome: String?
     get() = System.getProperty("idea.maven.test.home")
 
-  protected fun fileContentEqual(file1: File, file2: File): Boolean {
+  protected fun fileContentEqual(file1: Path, file2: Path): Boolean {
     val file1Bytes = file1.readBytes()
     val file2Bytes = file2.readBytes()
-
     return file1Bytes.contentEquals(file2Bytes)
+  }
+
+  private fun Path.ensureExists() {
+    if (!exists()) {
+      try {
+        createDirectories()
+      }
+      catch (e: Exception) {
+        throw IOException(UtilBundle.message("exception.directory.can.not.create", this), e)
+      }
+    }
+  }
+
+  protected fun getRelativePath(base: Path, path: String) : String {
+    return base.relativize(Path.of(path)).toCanonicalPath().toString()
   }
 
   companion object {
@@ -776,23 +846,5 @@ abstract class MavenTestCase : UsefulTestCase() {
              
              """.trimIndent() + xml + "</project>"
     }
-
-    fun assumeTestCanBeReusedForPreimport(aClass: Class<*>, testName: String) {
-      if (!preimportTestMode) return
-      try {
-        var annotation = aClass.getDeclaredAnnotation(InstantImportCompatible::class.java)
-        if (annotation == null) {
-          val testMethod = aClass.getMethod(testName)
-          annotation = testMethod.getDeclaredAnnotation(InstantImportCompatible::class.java)
-          if (annotation == null) {
-            throw AssumptionViolatedException(
-              "No InstantImportCompatible annotation present on class and method in pre-import testing mode, skipping test")
-          }
-        }
-      }
-      catch (ignore: NoSuchMethodException) {
-      }
-    }
-
   }
 }

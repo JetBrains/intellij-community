@@ -8,4 +8,4 @@ interface H
 fun f(h: H?) {
     <caret>-h
 }
-/* IGNORE_K2 */
+// IGNORE_K2

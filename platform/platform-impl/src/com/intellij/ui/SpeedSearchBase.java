@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -548,9 +548,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return isPopupActive();
   }
 
-  @Nullable
   @Override
-  public JComponent getTextField() {
+  public @Nullable JComponent getTextField() {
     return getSearchField();
   }
 

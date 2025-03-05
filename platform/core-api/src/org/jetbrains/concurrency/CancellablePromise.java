@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 /**
  * <h3>Obsolescence notice</h3>
  * <p>
- * Please use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-3/Kotlin-Coroutines">Kotlin coroutines</a> instead
+ * Please use <a href="https://plugins.jetbrains.com/docs/intellij/kotlin-coroutines.html">Kotlin coroutines</a> instead
  * </p>
  */
 @ApiStatus.Obsolete

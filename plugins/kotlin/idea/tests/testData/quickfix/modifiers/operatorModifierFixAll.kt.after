@@ -1,0 +1,13 @@
+// "Apply all 'Add modifier' fixes in file" "true"
+class A {
+    operator fun plus(a: A): A = A()
+    operator fun minus(a: A): A = A()
+}
+
+fun foo() {
+    A() <caret>+ A()
+    A() - A()
+}
+
+// FUS_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems
+// FUS_K2_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems

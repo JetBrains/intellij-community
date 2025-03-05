@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
@@ -24,9 +24,8 @@ import static com.intellij.codeInspection.options.OptPane.stringList;
 public final class NewExceptionWithoutArgumentsInspection extends BaseInspection {
   public final List<String> exceptions = new ArrayList<>();
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     //noinspection DialogTitleCapitalization
     return InspectionGadgetsBundle.message("new.exception.without.arguments.problem.descriptor");
   }

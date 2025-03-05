@@ -26,7 +26,7 @@ class TreeWalker<T> {
         // K2 reports it (which looks correct), and this causes the warning suppression
         while (current != null) {
             // Difference from K1: error messages is spelled differently
-            if (current.type is <error descr="[CANNOT_CHECK_FOR_ERASED] Cannot check for instance of erased type 'T'.">T</error>)
+            if (current.type is <error descr="[CANNOT_CHECK_FOR_ERASED] Cannot check for instance of erased type 'T (of class TreeWalker<T>)'.">T</error>)
             return true
             current = current.parent()
         }

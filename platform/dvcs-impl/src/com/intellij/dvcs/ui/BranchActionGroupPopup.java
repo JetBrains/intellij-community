@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.icons.AllIcons;
@@ -56,8 +56,8 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private boolean myUserSizeChanged;
   private boolean myInternalSizeChanged;
   private int myMeanRowHeight;
-  @Nullable private final String myKey;
-  @NotNull private Dimension myPrevSize = JBUI.emptySize();
+  private final @Nullable String myKey;
+  private @NotNull Dimension myPrevSize = JBUI.emptySize();
 
   private final List<AnAction> mySettingsActions = new ArrayList<>();
   private final List<AnAction> myToolbarActions = new ArrayList<>();
@@ -87,8 +87,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     getList().setVisibleRowCount(BRANCH_POPUP_ROW_COUNT);
   }
 
-  @Nullable
-  private static String buildDimensionKey(@Nullable final String initialDimensionKey) {
+  private static @Nullable String buildDimensionKey(final @Nullable String initialDimensionKey) {
     if (initialDimensionKey == null) return null;
     return ExperimentalUI.isNewUI() ? initialDimensionKey + EXPERIMENTAL_UI_DIMENSION_KEY_SUFFIX : initialDimensionKey;
   }
@@ -136,9 +135,8 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setOpaque(false);
     getTitle().setButtonComponent(new ActiveComponent.Adapter() {
-      @NotNull
       @Override
-      public JComponent getComponent() {
+      public @NotNull JComponent getComponent() {
         return toolbar.getComponent();
       }
     }, JBUI.Borders.emptyRight(2));
@@ -200,8 +198,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     myInternalSizeChanged = false;
   }
 
-  @NotNull
-  private List<MoreAction> getMoreActions() {
+  private @NotNull List<MoreAction> getMoreActions() {
     List<MoreAction> result = new ArrayList<>();
     ListPopupModel model = getListModel();
     for (int i = 0; i < model.getSize(); i++) {
@@ -227,8 +224,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     getContent().repaint();
   }
 
-  @NotNull
-  private static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actions) {
+  private static @NotNull ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actions) {
     LightActionGroup group = new LightActionGroup();
     group.add(actions);
     group.addAll(createSpeedSearchActions(actions, true));
@@ -310,8 +306,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
   }
 
-  @Nullable
-  private BranchActionGroup getSelectedBranchGroup() {
+  private @Nullable BranchActionGroup getSelectedBranchGroup() {
     return getSpecificAction(getList().getSelectedValue(), BranchActionGroup.class);
   }
 
@@ -430,12 +425,12 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   private static class MoreAction extends DumbAwareAction {
 
-    @NotNull private final Project myProject;
-    @Nullable private final @NonNls String mySettingName;
+    private final @NotNull Project myProject;
+    private final @Nullable @NonNls String mySettingName;
     private final boolean myDefaultExpandValue;
     private boolean myIsExpanded;
-    @NotNull private final @Nls String myToCollapseText;
-    @NotNull private final @Nls String myToExpandText;
+    private final @NotNull @Nls String myToCollapseText;
+    private final @NotNull @Nls String myToExpandText;
 
     MoreAction(@NotNull Project project,
                int numberOfHiddenNodes,
@@ -501,7 +496,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private static final class HideableActionGroup extends ActionGroupWrapper implements MoreHideableActionGroup, DumbAware {
-    @NotNull private final MoreAction myMoreAction;
+    private final @NotNull MoreAction myMoreAction;
 
     private HideableActionGroup(@NotNull ActionGroup actionGroup, @NotNull MoreAction moreAction) {
       super(actionGroup);

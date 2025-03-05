@@ -13,6 +13,7 @@ import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.Collections;
@@ -109,7 +110,7 @@ public abstract class CloudServerRuntimeInstance
     }, callback);
   }
 
-  protected List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
+  protected @Unmodifiable List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
     return getAgentTaskExecutor().execute(() -> {
       CloudRemoteApplication[] applications = getAgent().getApplications();
       if (applications == null) {

@@ -39,8 +39,7 @@ public abstract class EditorNotifications {
    * @return intention actions which were registered via {@link IntentionActionProvider#getIntentionAction()} in this {@link EditorNotificationPanel}
    * @see com.intellij.ui.EditorNotificationsImpl#collectIntentionActions(FileEditor, Project)
    */
-  @NotNull
-  public List<IntentionActionWithOptions> getStoredFileLevelIntentions(@NotNull FileEditor fileEditor) {
+  public @NotNull List<IntentionActionWithOptions> getStoredFileLevelIntentions(@NotNull FileEditor fileEditor) {
     return Collections.emptyList();
   }
 
@@ -85,7 +84,19 @@ public abstract class EditorNotifications {
 
   public abstract void updateNotifications(@NotNull VirtualFile file);
 
+  /**
+   * This method is broken and should have been named {@link #removeNotificationsForProvider}.
+   * It DOES NOT RUN {@link EditorNotificationProvider#collectNotificationData} to check if there are any new notifications.
+   * Use {@link #updateAllNotifications} instead.
+   *
+   * @deprecated until its implementation matches expectations from its name
+   */
+  @Deprecated
   public abstract void updateNotifications(@NotNull EditorNotificationProvider provider);
+
+  public void removeNotificationsForProvider(@NotNull EditorNotificationProvider provider) {
+    updateNotifications(provider);
+  }
 
   public abstract void updateAllNotifications();
 

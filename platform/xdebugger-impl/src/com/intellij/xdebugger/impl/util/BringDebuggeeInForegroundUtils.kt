@@ -15,15 +15,16 @@ private val LOG = logger<XDebugProcessDebuggeeInForeground>()
 
 @ApiStatus.Internal
 fun XDebugProcessDebuggeeInForeground.start(session: XDebugSession, bringAfterMs: Int = 1_000) {
-  if (!isEnabled())
-    return
-
   var job: Job? = null
 
   val support = this
   session.addSessionListener(object : XDebugSessionListener {
     override fun sessionResumed() {
       job?.cancel()
+
+      if (!isEnabled())
+        return
+
       job = EdtScheduler.getInstance().schedule(bringAfterMs) {
           LOG.trace { "Bringing debuggee into foreground" }
           support.bringToForeground()

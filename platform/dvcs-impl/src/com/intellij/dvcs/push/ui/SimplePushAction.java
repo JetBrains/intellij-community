@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.ui.DvcsBundle;
@@ -24,9 +24,8 @@ public final class SimplePushAction extends PushActionBase {
     return dialog.canPush();
   }
 
-  @Nls
   @Override
-  protected @NotNull String getText(@NotNull VcsPushUi dialog, boolean enabled) {
+  protected @Nls @NotNull String getText(@NotNull VcsPushUi dialog, boolean enabled) {
     if (dialog.hasWarnings()) {
       return DvcsBundle.message("action.push.anyway");
     }

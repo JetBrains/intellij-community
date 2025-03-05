@@ -196,7 +196,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   private static List<Integer> castToIntList(@Nullable Object value) {
-    if (value instanceof List && ((List<?>)value).size() > 0 && ((List<?>)value).get(0) instanceof Integer) {
+    if (value instanceof List && !((List<?>)value).isEmpty() && ((List<?>)value).get(0) instanceof Integer) {
       //noinspection unchecked
       return (List<Integer>)value;
     }
@@ -237,7 +237,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   private @NotNull @NlsContexts.Label String getSoftMarginsString(@NotNull List<Integer> intList) {
-    if (intList.size() > 0) {
+    if (!intList.isEmpty()) {
       return CommaSeparatedIntegersValueEditor.intListToString(intList);
     }
     return MarginOptionsUtil.getDefaultVisualGuidesText(getSettings());

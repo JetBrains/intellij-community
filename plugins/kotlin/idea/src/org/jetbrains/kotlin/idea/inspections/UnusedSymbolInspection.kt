@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.options.JavaInspectionButtons
 import com.intellij.codeInsight.options.JavaInspectionControls
@@ -29,6 +28,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import com.intellij.util.Processor
+import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -230,7 +230,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             } else {
                 ownerObject.toLightClass()
             } ?: return false
-            return lightClass.fields.any { it.name == name && HighlightUtil.isSerializationImplicitlyUsedField(it) }
+            return lightClass.fields.any { it.name == name && SerializationUtils.isSerializationImplicitlyUsedField(it) }
         }
 
         private fun KtNamedFunction.isSerializationImplicitlyUsedMethod(): Boolean =
@@ -383,7 +383,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
                 val containingClassSearchScope = GlobalSearchScope.projectScope(project)
                 val isRequiredToCallFunction =
-                    ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, containingClassSearchScope)).any { ref ->
+                    ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, containingClassSearchScope)).asIterable().any { ref ->
                         val userType = ref.element.parent as? KtUserType ?: return@any false
                         val typeArguments = userType.typeArguments
                         if (typeArguments.isEmpty()) return@any false
@@ -396,7 +396,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                         if (typeParameters.isEmpty()) return@any false
                         if (typeArguments.none { it.text in typeParameters }) return@any false
 
-                        ReferencesSearch.search(KotlinReferencesSearchParameters(callableDeclaration, containingClassSearchScope)).any {
+                        ReferencesSearch.search(KotlinReferencesSearchParameters(callableDeclaration, containingClassSearchScope)).asIterable().any {
                             val callElement = it.element.parent as? KtCallElement
                             callElement != null && callElement.typeArgumentList == null
                         }
@@ -484,7 +484,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
         if (declaration is KtSecondaryConstructor) {
             val containingClass = declaration.containingClass()
-            if (containingClass != null && ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, useScope)).any {
+            if (containingClass != null && ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, useScope)).asIterable().any {
                     it.element.getStrictParentOfType<KtTypeAlias>() != null ||
                             it.element.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.resultingDescriptor == descriptor
                 }) return true
@@ -512,6 +512,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
     private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
         if (enumClass == null) return false
         val isFoundEnumFunctionReferenceViaSearch = ReferencesSearch.search(KotlinReferencesSearchParameters(enumClass, useScope))
+            .asIterable()
             .any { hasBuiltInEnumFunctionReference(it, enumClass) }
 
         return isFoundEnumFunctionReferenceViaSearch || hasEnumFunctionReferenceInEnumClass(enumClass)
@@ -644,7 +645,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         val descriptor = declaration.toDescriptor() as? CallableMemberDescriptor ?: return false
         if (descriptor.modality == Modality.ABSTRACT) return false
         val lightMethods = declaration.toLightMethods()
-        return DefinitionsScopedSearch.search(ownerClass, useScope).any { element: PsiElement ->
+        return DefinitionsScopedSearch.search(ownerClass, useScope).asIterable().any { element: PsiElement ->
 
             when (element) {
                 is KtLightClass -> {

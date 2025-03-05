@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -47,8 +47,8 @@ public final class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbMode
     return new QueuedDumbModeTask(task, indicator);
   }
 
-  final class QueuedDumbModeTask extends MergingTaskQueue.QueuedTask<DumbModeTask> {
-
+  @ApiStatus.Internal
+  public final class QueuedDumbModeTask extends MergingTaskQueue.QueuedTask<DumbModeTask> {
     QueuedDumbModeTask(@NotNull DumbModeTask task,
                        @NotNull ProgressIndicatorEx progress) {
       super(task, progress);

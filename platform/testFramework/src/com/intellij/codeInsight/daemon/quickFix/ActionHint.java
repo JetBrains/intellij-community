@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.intention.CommonIntentionAction;
@@ -32,18 +32,17 @@ import static org.junit.Assert.fail;
  * @author Tagir Valeev
  */
 public final class ActionHint {
-  @NotNull
-  private final String myExpectedText;
+  private final @NotNull String myExpectedText;
   private final boolean myShouldPresent;
   private final ProblemHighlightType myHighlightType;
   private final boolean myExactMatch;
   private final boolean myCheckPreview;
 
-  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType severity, boolean exactMatch,
+  private ActionHint(@NotNull String expectedText, boolean shouldPresent, ProblemHighlightType highlightType, boolean exactMatch,
                      boolean preview) {
     myExpectedText = expectedText;
     myShouldPresent = shouldPresent;
-    myHighlightType = severity;
+    myHighlightType = highlightType;
     myExactMatch = exactMatch;
     myCheckPreview = preview;
   }
@@ -57,8 +56,7 @@ public final class ActionHint {
    * @return an expected action text. May throw an {@link IllegalStateException} if this ActionHint expects something else
    * (e.g. quick-fix of specific type, etc.)
    */
-  @NotNull
-  public String getExpectedText() {
+  public @NotNull String getExpectedText() {
     return myExpectedText;
   }
 
@@ -89,8 +87,7 @@ public final class ActionHint {
    * @return the action or null
    * @throws AssertionError if no action is found, but it should present, or if action is found, but it should not present.
    */
-  @Nullable
-  public IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions, @NotNull Supplier<String> infoSupplier) {
+  public @Nullable IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions, @NotNull Supplier<String> infoSupplier) {
     return findAndCheck(actions, null, infoSupplier);
   }
 
@@ -104,8 +101,7 @@ public final class ActionHint {
    * @return the action or null
    * @throws AssertionError if no action is found, but it should present, or if action is found, but it should not present.
    */
-  @Nullable
-  public IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions,
+  public @Nullable IntentionAction findAndCheck(@NotNull Collection<? extends IntentionAction> actions,
                                       @Nullable ActionContext context,
                                       @NotNull Supplier<String> infoSupplier) {
     String[] steps = myExpectedText.split("\\|->");
@@ -142,8 +138,10 @@ public final class ActionHint {
     if(myShouldPresent) {
       if(result == null) {
         fail(exceptionHeader(lastStep) + " not found\nAvailable actions: " +
-             commonActions.stream().map(ca -> {
-               return ca instanceof ModCommandAction mca && context != null ? Objects.requireNonNull(mca.getPresentation(context)).name() :
+             commonActions.stream()
+               .filter(ca -> !(ca instanceof ModCommandAction mca) || context != null && mca.getPresentation(context) != null)
+               .map(ca -> {
+               return ca instanceof ModCommandAction mca ? Objects.requireNonNull(mca.getPresentation(context)).name() :
                       ca.asIntention().getText();
              }).collect(Collectors.joining(", ", "[", "]\n")) +
              infoSupplier.get());
@@ -182,13 +180,11 @@ public final class ActionHint {
     return presentation == null ? "(unavailable) " + action.getFamilyName() : presentation.name();
   }
 
-  @NotNull
-  private String exceptionHeader(String text) {
+  private @NotNull String exceptionHeader(String text) {
     return "Action with " + (myExactMatch ? "text" : "prefix") + " '" + text + "'";
   }
 
-  @NotNull
-  public static ActionHint parse(@NotNull PsiFile file, @NotNull String contents) {
+  public static @NotNull ActionHint parse(@NotNull PsiFile file, @NotNull String contents) {
     return parse(file, contents, true);
   }
 
@@ -211,8 +207,7 @@ public final class ActionHint {
    * @return ActionHint object
    * @throws AssertionError if action hint is absent or has invalid format
    */
-  @NotNull
-  public static ActionHint parse(@NotNull PsiFile file, @NotNull String contents, boolean exactMatch) {
+  public static @NotNull ActionHint parse(@NotNull PsiFile file, @NotNull String contents, boolean exactMatch) {
     PsiFile hostFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
 
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(hostFile.getLanguage());
@@ -244,8 +239,7 @@ public final class ActionHint {
    * @return ActionHint object
    * @throws AssertionError if action hint is absent or has invalid format
    */
-  @NotNull
-  public static ActionHint parse(@NotNull PsiFile file, @NotNull String contents, @NotNull String commentPrefix, boolean exactMatch) {
+  public static @NotNull ActionHint parse(@NotNull PsiFile file, @NotNull String contents, @NotNull String commentPrefix, boolean exactMatch) {
     // $commentPrefix "quick fix action text to perform" "should be available"
     Pattern pattern = Pattern.compile("^" + commentPrefix + " \"([^\n]*)\" \"(\\w+)(?:-(\\w+))?\".*", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);

@@ -18,9 +18,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
-import com.intellij.platform.testFramework.treeAssertion.SimpleTree
-import com.intellij.platform.testFramework.treeAssertion.SimpleTreeAssertion
-import com.intellij.platform.testFramework.treeAssertion.buildTree
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTree
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
 
@@ -120,7 +120,7 @@ class GradleExecutionViewFixture(
     val roots = resultsViewer.root.children
     val tree = buildTree(roots, { name }, { children })
     runReadAction { // all navigation tests requires read action
-      SimpleTreeAssertion.assertTree(tree, isUnordered = true, assert)
+      SimpleTreeAssertion.assertUnorderedTree(tree, assert)
     }
   }
 

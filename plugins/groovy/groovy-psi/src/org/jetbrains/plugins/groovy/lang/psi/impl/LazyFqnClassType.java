@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -21,9 +21,8 @@ public final class LazyFqnClassType extends GrLiteralClassType {
     myFqn = fqn;
   }
 
-  @NotNull
   @Override
-  protected String getJavaClassName() {
+  protected @NotNull String getJavaClassName() {
     return myFqn;
   }
 
@@ -32,15 +31,13 @@ public final class LazyFqnClassType extends GrLiteralClassType {
     return PsiType.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
+  public @NotNull PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     return new LazyFqnClassType(myFqn, languageLevel, getResolveScope(), myFacade);
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return getJavaClassName();
   }
 
@@ -49,17 +46,15 @@ public final class LazyFqnClassType extends GrLiteralClassType {
     return !myFacade.getProject().isDisposed();
   }
 
-  @NotNull
   @Override
-  public PsiClassType rawType() {
+  public @NotNull PsiClassType rawType() {
     return this;
   }
 
-  @NotNull
-  public static PsiClassType getLazyType(@NotNull String fqn,
-                                         LanguageLevel languageLevel,
-                                         @NotNull GlobalSearchScope scope,
-                                         @NotNull JavaPsiFacade facade) {
+  public static @NotNull PsiClassType getLazyType(@NotNull String fqn,
+                                                  LanguageLevel languageLevel,
+                                                  @NotNull GlobalSearchScope scope,
+                                                  @NotNull JavaPsiFacade facade) {
     return new LazyFqnClassType(fqn, languageLevel, scope, facade);
   }
 

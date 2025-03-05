@@ -2,14 +2,12 @@
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.ClassifierNamePolicyEx
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.renderer.*
+import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isDefinitelyNotNullType
-import kotlin.properties.Delegates
-import kotlin.properties.ReadWriteProperty
 
 interface HintsClassifierNamePolicy {
     fun renderClassifier(classifier: ClassifierDescriptor, renderer: HintsTypeRenderer): String

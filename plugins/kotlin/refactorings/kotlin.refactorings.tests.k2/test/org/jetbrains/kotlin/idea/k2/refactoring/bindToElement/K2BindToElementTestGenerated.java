@@ -270,6 +270,35 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision")
+        public static class PackageVsDeclarationCollision extends AbstractK2BindToElementTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("PackageVsPropertyOnCallableReference.kt")
+            public void testPackageVsPropertyOnCallableReference() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnCallableReference.kt");
+            }
+
+            @TestMetadata("PackageVsPropertyOnFunctionCall.kt")
+            public void testPackageVsPropertyOnFunctionCall() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnFunctionCall.kt");
+            }
+
+            @TestMetadata("PackageVsPropertyOnNameReference.kt")
+            public void testPackageVsPropertyOnNameReference() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnNameReference.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/refactoring/bindToFqn/propertyTypeReference")
         public static class PropertyTypeReference extends AbstractK2BindToElementTest {
             @java.lang.Override

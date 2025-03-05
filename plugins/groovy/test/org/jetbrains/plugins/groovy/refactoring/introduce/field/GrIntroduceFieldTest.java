@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.LightGroovyTestCase;
@@ -763,13 +762,13 @@ public class GrIntroduceFieldTest extends LightGroovyTestCase {
     GrVariable variable = IntroduceConstantTest.findVariable(myFixture);
     StringPartInfo stringPart = IntroduceConstantTest.findStringPart(myFixture);
     PsiClass[] scopes = handler.findPossibleScopes(expression, variable, stringPart, getEditor());
-    assert scopes.length == 1;
+    assertSize(1, scopes);
     PsiClass scope = scopes[0];
 
     GrIntroduceContext context = handler.getContext(getProject(), myFixture.getEditor(), expression, variable, stringPart, scope);
     EnumSet<GrIntroduceFieldSettings.Init> initPlaces =
       GrInplaceFieldIntroducer.getApplicableInitPlaces(context, replaceChoice.equals(ALL));
-    assert DefaultGroovyMethods.equals(initPlaces, expected);
+    assertEquals(expected, initPlaces);
   }
 
   private void doTestInitInTarget(String text, EnumSet<GrIntroduceFieldSettings.Init> expected) {

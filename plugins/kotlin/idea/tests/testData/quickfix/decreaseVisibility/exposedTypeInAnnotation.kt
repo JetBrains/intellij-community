@@ -1,5 +1,5 @@
 // "Make '<init>' internal" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce import alias
 // ACTION: Make 'My' public

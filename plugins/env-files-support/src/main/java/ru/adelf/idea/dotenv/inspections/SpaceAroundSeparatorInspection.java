@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvBundle;
 import ru.adelf.idea.dotenv.DotEnvFactory;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
@@ -20,15 +21,13 @@ import java.util.regex.Pattern;
 public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
     // Change the display name within the plugin.xml
     // This needs to be here as otherwise the tests will throw errors.
-    @NotNull
     @Override
-    public String getDisplayName() {
-        return "Extra spaces surrounding '='";
+    public @NotNull String getDisplayName() {
+        return DotEnvBundle.message("inspection.name.extra.spaces.surrounding");
     }
 
-    @Nullable
     @Override
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         if (!(file instanceof DotEnvFile)) {
             return null;
         }
@@ -36,8 +35,7 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
         return analyzeFile(file, manager, isOnTheFly).getResultsArray();
     }
 
-    @NotNull
-    private ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    private static @NotNull ProblemsHolder analyzeFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
         ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, isOnTheFly);
 
         PsiTreeUtil.findChildrenOfType(file, DotEnvProperty.class).forEach(dotEnvProperty -> {
@@ -49,14 +47,11 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
                     .replaceFirst(Pattern.quote(value) + "$", "");
 
             if (separator.matches("([ \t]+=.*)|(.*=[ \t]+)")) {
-                problemsHolder.registerProblem(dotEnvProperty,
-                        new TextRange(
-                                dotEnvProperty.getKey().getText().length(), 
-                                dotEnvProperty.getKey().getText().length() + separator.length()
-                        ),
-                        "Extra spaces surrounding '='",
-                        new RemoveSpaceAroundSeparatorQuickFix()
-                );
+                problemsHolder.registerProblem(dotEnvProperty, new TextRange(dotEnvProperty.getKey().getText().length(),
+                                                                             dotEnvProperty.getKey().getText().length() +
+                                                                             separator.length()),
+                                               DotEnvBundle.message("inspection.message.extra.spaces.surrounding"),
+                                               new RemoveSpaceAroundSeparatorQuickFix());
             }
         });
 
@@ -65,12 +60,12 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
 
     private static class RemoveSpaceAroundSeparatorQuickFix implements LocalQuickFix {
 
-        @NotNull
         @Override
-        public String getName() {
-            return "Remove spaces surrounding '='";
+        public @NotNull String getName() {
+            return DotEnvBundle.message("intention.name.remove.spaces.surrounding");
         }
 
+        @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
             try {
                 DotEnvProperty dotEnvProperty = (DotEnvProperty) descriptor.getPsiElement();
@@ -90,8 +85,8 @@ public class SpaceAroundSeparatorInspection extends LocalInspectionTool {
             }
         }
 
-        @NotNull
-        public String getFamilyName() {
+        @Override
+        public @NotNull String getFamilyName() {
             return getName();
         }
     }

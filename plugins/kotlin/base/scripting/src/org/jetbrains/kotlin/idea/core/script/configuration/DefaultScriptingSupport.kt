@@ -419,6 +419,10 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
         val cached = getAppliedConfiguration(virtualFile)
         if (cached != null) return cached.configuration
 
+        // It is known that write access results to the
+        // ERROR: A write action should never be executed inside an analysis context (i.e. an `analyze` call).
+        if (ApplicationManager.getApplication().isWriteAccessAllowed) return null
+
         val ktFile = project.getKtFile(virtualFile, preloadedKtFile) ?: return null
         manager.updater.update {
             reloadOutOfDateConfiguration(ktFile, isFirstLoad = true)

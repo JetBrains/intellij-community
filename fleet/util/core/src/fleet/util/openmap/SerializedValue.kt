@@ -49,4 +49,7 @@ class SerializedValue private constructor(private var state: State) {
 
   override fun hashCode(): Int =
     json.hashCode()
+
+  override fun toString(): String =
+    "SerializedValue($json)"
 }

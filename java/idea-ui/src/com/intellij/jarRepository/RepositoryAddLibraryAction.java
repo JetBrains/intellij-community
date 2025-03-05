@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
@@ -22,22 +22,20 @@ import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibrary
 
 public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
   private final Module module;
-  @NotNull private final RepositoryLibraryDescription libraryDescription;
+  private final @NotNull RepositoryLibraryDescription libraryDescription;
 
   public RepositoryAddLibraryAction(Module module, @NotNull RepositoryLibraryDescription libraryDescription) {
     this.module = module;
     this.libraryDescription = libraryDescription;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return JavaUiBundle.message("intention.text.add.0.library.to.module.dependencies", libraryDescription.getDisplayName());
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaUiBundle.message("intention.family.maven.libraries");
   }
 

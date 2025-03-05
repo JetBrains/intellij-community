@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.compose.preview
+package com.intellij.markdown.compose.preview
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,7 +32,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 
 @Suppress("FunctionName")
-fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): MarkdownStyling {
+internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextUnit): MarkdownStyling {
   val fontSizeDp = fontSize.value.dp
   val defaultTextStyle = TextStyle(
     fontSize = fontSize,
@@ -91,11 +91,9 @@ private fun createInlinesStyling(
   linkHovered = link.copy(color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor()),
   linkFocused = link.copy(
     color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor(),
-    background = JBUI.CurrentTheme.ActionButton.hoverBackground().toComposeColor(),
   ),
   linkPressed = link.copy(
     color = JBUI.CurrentTheme.Link.Foreground.PRESSED.toComposeColor(),
-    background = JBUI.CurrentTheme.ActionButton.pressedBackground().toComposeColor(),
   ),
   linkVisited = link.copy(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor()),
   renderInlineHtml = false,

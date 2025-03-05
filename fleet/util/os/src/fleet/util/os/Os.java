@@ -3,6 +3,10 @@ package fleet.util.os;
 
 import java.util.Locale;
 
+/**
+ * @deprecated Use {@link fleet.util.Os} instead.
+ */
+@Deprecated
 public final class Os {
   // all these fields are for compatibility, we may replace them with something more manageable
   public static final Os INSTANCE = new Os();

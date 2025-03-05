@@ -1,48 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
+import java.io.IOException
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelSendChannel
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
 
 /**
- * Represents some process which was launched via [EelExecApi.executeProcess].
+ * Represents some process that was launched via [EelExecApi.executeProcess].
  *
  */
 interface EelProcess: KillableProcess {
-  val pid: EelApiBase.Pid
+  val pid: EelApi.Pid
 
   /**
    * Although data transmission via this channel could potentially stall due to overflow of [kotlinx.coroutines.channels.Channel],
-   * this method does not allow to ensure that a data chunk was actually delivered to the remote process.
-   * For synchronous delivery that reports about delivery result, please use [sendStdinWithConfirmation].
+   * this method does not allow ensuring that a data chunk was actually delivered to the remote process.
    *
    * Note that each chunk of data is individually and immediately flushed into the process without any intermediate buffer storage.
    */
-  val stdin: SendChannel<ByteArray>
-
-  val stdout: ReceiveChannel<ByteArray>
-  val stderr: ReceiveChannel<ByteArray>
+  val stdin: EelSendChannel<IOException>
+  val stdout: EelReceiveChannel<IOException>
+  val stderr: EelReceiveChannel<IOException>
   val exitCode: Deferred<Int>
 
-  /**
-   * Sends [data] into the process stdin and waits until the data is received by the process.
-   *
-   * Notice that every data chunk is flushed into the process separately. There's no buffering.
-   */
-  @Throws(SendStdinError::class)
-  suspend fun sendStdinWithConfirmation(data: ByteArray)
-
-  sealed class SendStdinError(msg: String) : Exception(msg) {
-    class ProcessExited : SendStdinError("Process exited")
-
-    /**
-     * This error doesn't imply that the process has already exited. It is possible to close the stdin of the process, and the process
-     * may live quite a long time after that. However, usually processes exit immediately right after their stdin are closed.
-     * Therefore, it may turn out that the process exits at the moment when this error is being observed by the API user.
-     */
-    class StdinClosed : SendStdinError("Stdin closed")
-  }
 
   /**
    * Converts to the JVM [Process] which can be used instead of [EelProcess] for compatibility reasons.

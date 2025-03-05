@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeInspection.*;
@@ -32,14 +32,12 @@ import static com.intellij.util.containers.ContainerUtil.findInstance;
 public final class MavenPropertyInParentInspection extends XmlSuppressableInspectionTool {
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return MavenDomBundle.message("inspection.group");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "MavenPropertyInParent";
   }
 
@@ -119,8 +117,7 @@ public final class MavenPropertyInParentInspection extends XmlSuppressableInspec
     }
   }
 
-  @Nullable
-  private static String resolveXmlElement(@Nullable XmlElement xmlElement) {
+  private static @Nullable String resolveXmlElement(@Nullable XmlElement xmlElement) {
     if (xmlElement == null) return null;
 
     MavenPropertyPsiReference psiReference = findInstance(xmlElement.getReferences(), MavenPropertyPsiReference.class);

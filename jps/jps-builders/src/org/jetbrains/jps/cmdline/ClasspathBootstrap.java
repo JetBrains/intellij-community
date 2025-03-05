@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.dynatrace.hash4j.hashing.Hashing;
@@ -16,14 +16,16 @@ import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.lang.HashMapZipFile;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
-import kotlinx.metadata.jvm.JvmMetadataUtil;
+import kotlin.metadata.jvm.JvmMetadataUtil;
 import net.n3.nanoxml.IXMLBuilder;
 import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
@@ -81,7 +83,8 @@ public final class ClasspathBootstrap {
   };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
-  private static final String NETTY_JPS_VERSION = "4.1.115.Final";
+  @VisibleForTesting
+  public static final String NETTY_JPS_VERSION = "4.1.117.Final";
   private static final String NETTY_JPS_DISTRIBUTION_JAR_NAME = "netty-jps.jar";
   private static final String[] NETTY_ARTIFACT_NAMES = {
     "netty-buffer", "netty-codec-http", "netty-codec-http2", "netty-codec", "netty-common", "netty-handler", "netty-resolver", "netty-transport"
@@ -117,9 +120,14 @@ public final class ClasspathBootstrap {
 
     final String pathString = path.toString();
 
-    if (result.add(pathString) && pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
-      if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
-        LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
+    if (result.add(pathString)) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(pathString + " added to classpath to include " + aClass.getName());
+      }
+      if (pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
+        if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
+          LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
+        }
       }
     }
   }
@@ -140,6 +148,7 @@ public final class ClasspathBootstrap {
 
     // intellij.platform.util
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
+    addToClassPath(cp, HashMapZipFile.class); // intellij.platform.util.zip
 
     ClassPathUtil.addKotlinStdlib(cp);
     addToClassPath(cp, JvmMetadataUtil.class);  // kotlin metadata parsing
@@ -252,13 +261,13 @@ public final class ClasspathBootstrap {
     return new ArrayList<>(cp);
   }
 
-  public static @Nullable String getResourcePath(Class<?> aClass) {
-    return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+  public static @Nullable String getResourcePath(@NotNull Class<?> aClass) {
+    return PathManager.getJarPathForClass(aClass);
   }
 
-  public static @Nullable File getResourceFile(Class<?> aClass) {
-    final String resourcePath = getResourcePath(aClass);
-    return resourcePath != null? new File(resourcePath) : null;
+  public static @Nullable File getResourceFile(@NotNull Class<?> aClass) {
+    final @Nullable Path resourcePath = PathManager.getJarForClass(aClass);
+    return resourcePath != null ? resourcePath.toFile() : null;
   }
 
   public static void configureReflectionOpenPackages(Consumer<? super String> paramConsumer) {
@@ -270,15 +279,20 @@ public final class ClasspathBootstrap {
 
   private static List<String> getInstrumentationUtilRoots() {
     String instrumentationUtilPath = getResourcePath(NotNullVerifyingInstrumenter.class);
+    assert instrumentationUtilPath != null;
     File instrumentationUtil = new File(instrumentationUtilPath);
     if (instrumentationUtil.isDirectory()) {
       //running from sources: load classes from .../out/production/intellij.java.compiler.instrumentationUtil.java8
       return Arrays.asList(instrumentationUtilPath, new File(instrumentationUtil.getParentFile(), "intellij.java.compiler.instrumentationUtil.java8").getAbsolutePath());
     }
     else {
+      var relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+      Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
+      if (relevantJarsRoot != null && mapping != null && instrumentationUtilPath.startsWith(relevantJarsRoot)) {
+        return Arrays.asList(instrumentationUtilPath, mapping.get("production/intellij.java.compiler.instrumentationUtil.java8"));
+      }
       //running from jars: intellij.java.compiler.instrumentationUtil.java8 is located in the same jar
       return Collections.singletonList(instrumentationUtilPath);
     }
   }
-
 }

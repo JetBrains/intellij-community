@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.dvcs.branch.DvcsCompareSettings;
@@ -18,27 +18,22 @@ public class HgCompareBranchesHelper implements CompareBranchesHelper {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  public RepositoryManager getRepositoryManager() {
+  public @NotNull RepositoryManager getRepositoryManager() {
     return HgUtil.getRepositoryManager(myProject);
   }
 
   @Override
-  @NotNull
-  public DvcsCompareSettings getDvcsCompareSettings() {
+  public @NotNull DvcsCompareSettings getDvcsCompareSettings() {
     return HgProjectSettings.getInstance(myProject);
   }
 
-  @NlsSafe
   @Override
-  @NotNull
-  public String formatLogCommand(@NotNull String firstBranch, @NotNull String secondBranch) {
+  public @NlsSafe @NotNull String formatLogCommand(@NotNull String firstBranch, @NotNull String secondBranch) {
     return String.format("hg log -r \"reverse(%s%%%s)\"", secondBranch, firstBranch);
   }
 }

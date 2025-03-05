@@ -1,5 +1,5 @@
 // "Create expected class in common module testModule_Common" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Apply all 'Remove modifier' fixes in file
 // ACTION: Remove 'actual' modifier
 // IGNORE_K2

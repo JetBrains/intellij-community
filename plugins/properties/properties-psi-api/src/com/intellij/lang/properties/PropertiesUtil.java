@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -54,8 +54,7 @@ public class PropertiesUtil {
     return false;
   }
 
-  @NotNull
-  public static String getDefaultBaseName(final Collection<? extends PropertiesFile> files) {
+  public static @NotNull String getDefaultBaseName(final Collection<? extends PropertiesFile> files) {
     String commonPrefix = null;
     for (PropertiesFile file : files) {
       final String baseName = file.getVirtualFile().getNameWithoutExtension();
@@ -75,12 +74,10 @@ public class PropertiesUtil {
     return commonPrefix;
   }
 
-  @NotNull
-  static String getDefaultBaseName(@NotNull final PsiFile file) {
+  static @NotNull String getDefaultBaseName(final @NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, new CachedValueProvider<>() {
-      @NotNull
       @Override
-      public Result<String> compute() {
+      public @NotNull Result<String> compute() {
         return Result.create(computeBaseName(), file);
       }
 
@@ -114,8 +111,7 @@ public class PropertiesUtil {
     });
   }
 
-  @NotNull
-  public static Locale getLocale(@NotNull final PropertiesFile propertiesFile) {
+  public static @NotNull Locale getLocale(final @NotNull PropertiesFile propertiesFile) {
     String name = propertiesFile.getName();
     if (!StringUtil.containsChar(name, '_')) return DEFAULT_LOCALE;
     final String containingResourceBundleBaseName = propertiesFile.getResourceBundle().getBaseName();
@@ -123,13 +119,11 @@ public class PropertiesUtil {
     return getLocale(name.substring(containingResourceBundleBaseName.length()));
   }
 
-  @NotNull
-  public static Locale getLocale(String suffix) {
+  public static @NotNull Locale getLocale(String suffix) {
     return getLocaleAndTrimmedSuffix(suffix).getFirst();
   }
 
-  @NotNull
-  public static Pair<Locale, String> getLocaleAndTrimmedSuffix(String suffix) {
+  public static @NotNull Pair<Locale, String> getLocaleAndTrimmedSuffix(String suffix) {
     final Matcher matcher = LOCALE_PATTERN.matcher(suffix);
     if (matcher.find()) {
       final String rawLocale = matcher.group(1);
@@ -156,8 +150,7 @@ public class PropertiesUtil {
   /**
    * messages_en.properties is a parent of the messages_en_US.properties
    */
-  @Nullable
-  public static PropertiesFile getParent(@NotNull PropertiesFile file, @NotNull Collection<? extends PropertiesFile> candidates) {
+  public static @Nullable PropertiesFile getParent(@NotNull PropertiesFile file, @NotNull Collection<? extends PropertiesFile> candidates) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
     String name = virtualFile.getNameWithoutExtension();
@@ -195,13 +188,11 @@ public class PropertiesUtil {
     return result;
   }
 
-  @Nullable
-  static String getPackageQualifiedName(@NotNull PsiDirectory directory) {
+  static @Nullable String getPackageQualifiedName(@NotNull PsiDirectory directory) {
     return ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile());
   }
 
-  @NotNull
-  public static @Nls String getPresentableLocale(@NotNull Locale locale) {
+  public static @NotNull @Nls String getPresentableLocale(@NotNull Locale locale) {
     List<String> names = new ArrayList<>();
     if (StringUtil.isNotEmpty(locale.getDisplayLanguage())) {
       names.add(locale.getDisplayLanguage());
@@ -219,8 +210,7 @@ public class PropertiesUtil {
     return LOCALES_LANGUAGE_CODES.get().contains(locale.getLanguage());
   }
 
-  @NotNull
-  public static String getSuffix(@NotNull PropertiesFile propertiesFile) {
+  public static @NotNull String getSuffix(@NotNull PropertiesFile propertiesFile) {
     final String baseName = propertiesFile.getResourceBundle().getBaseName();
     final String propertiesFileName = propertiesFile.getName();
     if (baseName.equals(FileUtilRt.getNameWithoutExtension(propertiesFileName))) return "";

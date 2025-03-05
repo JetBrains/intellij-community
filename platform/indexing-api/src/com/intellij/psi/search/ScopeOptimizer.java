@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -32,20 +32,17 @@ public interface ScopeOptimizer {
    * @deprecated use {@link ScopeOptimizer#getRestrictedUseScope(PsiElement)} instead.
    */
   @Deprecated
-  @Nullable("is null when given optimizer can't provide a scope to exclude")
-  default GlobalSearchScope getScopeToExclude(@NotNull PsiElement element) {
+  default @Nullable("is null when given optimizer can't provide a scope to exclude") GlobalSearchScope getScopeToExclude(@NotNull PsiElement element) {
     return null;
   }
 
-  @Nullable("is null when given optimizer can't provide a scope to restrict")
-  default SearchScope getRestrictedUseScope(@NotNull PsiElement element) {
+  default @Nullable("is null when given optimizer can't provide a scope to restrict") SearchScope getRestrictedUseScope(@NotNull PsiElement element) {
     GlobalSearchScope scopeToExclude = getScopeToExclude(element);
 
     return scopeToExclude == null ? null : GlobalSearchScope.notScope(scopeToExclude);
   }
 
-  @Nullable
-  static SearchScope calculateOverallRestrictedUseScope(@NotNull List<? extends ScopeOptimizer> optimizers, @NotNull PsiElement element) {
+  static @Nullable SearchScope calculateOverallRestrictedUseScope(@NotNull List<? extends ScopeOptimizer> optimizers, @NotNull PsiElement element) {
     boolean seen = false;
     SearchScope acc = null;
     for (ScopeOptimizer optimizer : optimizers) {

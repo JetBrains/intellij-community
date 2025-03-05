@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.editor;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
@@ -15,12 +15,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertNotEquals;
@@ -29,10 +30,9 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
 
   private static List<AttributesDescriptor> getDescriptors() {
     JavaColorSettingsPage page = new JavaColorSettingsPage();
-    List<AttributesDescriptor> result = Arrays.asList(page.getAttributeDescriptors());
-    Collections.sort(result,
-                     (o1, o2) -> o1.getKey().getExternalName().compareToIgnoreCase(o2.getKey().getExternalName()));
-    return result;
+    List<AttributesDescriptor> result = new ArrayList<>(Arrays.asList(page.getAttributeDescriptors()));
+    return ContainerUtil.sorted(result,
+                         (o1, o2) -> o1.getKey().getExternalName().compareToIgnoreCase(o2.getKey().getExternalName()));
   }
 
   private static void appendAttributes(@NotNull String name,
@@ -148,6 +148,8 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         PUBLIC_REFERENCE { color: #000000;  font-style: normal; }
         REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
         REASSIGNED_PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
+        RECORD_COMPONENT_ATTRIBUTES { color: #660e7a;  font-style: normal;  font-weight: bold; }
+        RECORD_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
         STATIC_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic; }
         STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #660e7a;  font-style: italic; }
         STATIC_FINAL_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic;  font-weight: bold; }
@@ -206,6 +208,8 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         PUBLIC_REFERENCE { color: #a9b7c6;  font-style: normal; }
         REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
         REASSIGNED_PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
+        RECORD_COMPONENT_ATTRIBUTES { color: #9876aa;  font-style: normal; }
+        RECORD_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
         STATIC_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }
         STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #9876aa;  font-style: italic; }
         STATIC_FINAL_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }

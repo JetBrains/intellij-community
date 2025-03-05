@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -55,21 +41,18 @@ public final class GroovyGotoSuperHandler extends GotoTargetHandler implements L
     return new GotoData(e, findTargets(e), Collections.emptyList());
   }
 
-  @NotNull
   @Override
-  protected String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
+  protected @NotNull String getChooserTitle(@NotNull PsiElement sourceElement, String name, int length, boolean finished) {
     return CodeInsightBundle.message("goto.super.method.chooser.title");
   }
 
-  @NotNull
   @Override
-  protected String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
+  protected @NotNull String getFindUsagesTitle(@NotNull PsiElement sourceElement, String name, int length) {
     return CodeInsightBundle.message("goto.super.method.findUsages.title", name);
   }
 
-  @NotNull
   @Override
-  protected String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  protected @NotNull String getNotFoundMessage(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     final PsiMember source = findSource(editor, file);
     if (source instanceof PsiClass) {
       return GroovyBundle.message("no.super.classes.found");
@@ -82,8 +65,7 @@ public final class GroovyGotoSuperHandler extends GotoTargetHandler implements L
     }
   }
 
-  @Nullable
-  private static PsiMember findSource(Editor editor, PsiFile file) {
+  private static @Nullable PsiMember findSource(Editor editor, PsiFile file) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element == null) return null;
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, GrField.class, PsiClass.class);

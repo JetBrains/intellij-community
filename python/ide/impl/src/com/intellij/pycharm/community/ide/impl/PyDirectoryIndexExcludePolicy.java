@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 public final class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolicy {
-  private final static String[] SITE_PACKAGES = new String[]{PyNames.SITE_PACKAGES, PyNames.DIST_PACKAGES};
+  private static final String[] SITE_PACKAGES = new String[]{PyNames.SITE_PACKAGES, PyNames.DIST_PACKAGES};
 
   private final Project myProject;
 
@@ -41,9 +41,8 @@ public final class PyDirectoryIndexExcludePolicy implements DirectoryIndexExclud
     return ArrayUtilRt.toStringArray(result);
   }
 
-  @Nullable
   @Override
-  public Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
+  public @Nullable Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
     return sdk -> {
       List<VirtualFile> result = new LinkedList<>();
 

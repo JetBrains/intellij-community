@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
@@ -21,8 +21,7 @@ public final class LoopWithImplicitTerminationConditionInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     if (Boolean.TRUE.equals(infos[0])) {
       return InspectionGadgetsBundle.message(
         "loop.with.implicit.termination.condition.dowhile.problem.descriptor");
@@ -32,8 +31,7 @@ public final class LoopWithImplicitTerminationConditionInspection
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new LoopWithImplicitTerminationConditionFix();
   }
 
@@ -41,8 +39,7 @@ public final class LoopWithImplicitTerminationConditionInspection
     extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "loop.with.implicit.termination.condition.quickfix");
     }

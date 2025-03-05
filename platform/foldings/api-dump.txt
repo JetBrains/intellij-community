@@ -1,0 +1,56 @@
+Fa:com.intellij.codeInsight.folding.CodeFoldingManager
+- <init>():V
+- a:buildInitialFoldings(com.intellij.openapi.editor.Document):com.intellij.openapi.fileEditor.impl.text.CodeFoldingState
+- a:buildInitialFoldings(com.intellij.openapi.editor.Editor):V
+- a:findFoldRegion(com.intellij.openapi.editor.Editor,I,I):com.intellij.openapi.editor.FoldRegion
+- a:getFoldRegionsAtOffset(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.FoldRegion[]
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.folding.CodeFoldingManager
+- a:isCollapsedByDefault(com.intellij.openapi.editor.FoldRegion):java.lang.Boolean
+- a:readFoldingState(org.jdom.Element,com.intellij.openapi.editor.Document):com.intellij.openapi.fileEditor.impl.text.CodeFoldingState
+- a:releaseFoldings(com.intellij.openapi.editor.Editor):V
+- a:restoreFoldingState(com.intellij.openapi.editor.Editor,com.intellij.openapi.fileEditor.impl.text.CodeFoldingState):V
+- a:saveFoldingState(com.intellij.openapi.editor.Editor):com.intellij.openapi.fileEditor.impl.text.CodeFoldingState
+- a:scheduleAsyncFoldingUpdate(com.intellij.openapi.editor.Editor):V
+- a:updateFoldRegions(com.intellij.openapi.editor.Editor):V
+- a:updateFoldRegionsAsync(com.intellij.openapi.editor.Editor,Z):java.lang.Runnable
+- a:writeFoldingState(com.intellij.openapi.fileEditor.impl.text.CodeFoldingState,org.jdom.Element):V
+a:com.intellij.codeInsight.folding.impl.AbstractElementSignatureProvider
+- com.intellij.codeInsight.folding.impl.ElementSignatureProvider
+- psf:ELEMENTS_SEPARATOR:java.lang.String
+- psf:ELEMENT_TOKENS_SEPARATOR:java.lang.String
+- <init>():V
+- ps:escape(java.lang.String):java.lang.String
+- ps:getChildIndex(com.intellij.psi.PsiNamedElement,com.intellij.psi.PsiElement,java.lang.String,java.lang.Class):I
+- restoreBySignature(com.intellij.psi.PsiFile,java.lang.String,java.lang.StringBuilder):com.intellij.psi.PsiElement
+- pa:restoreBySignatureTokens(com.intellij.psi.PsiFile,com.intellij.psi.PsiElement,java.lang.String,java.util.StringTokenizer,java.lang.StringBuilder):com.intellij.psi.PsiElement
+- ps:restoreElementInternal(com.intellij.psi.PsiElement,java.lang.String,I,java.lang.Class):com.intellij.psi.PsiNamedElement
+- ps:unescape(java.lang.String):java.lang.String
+a:com.intellij.codeInsight.folding.impl.CollapseBlockHandlerImpl
+- com.intellij.codeInsight.folding.CollapseBlockHandler
+- <init>():V
+- pa:findParentBlock(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- p:getFoldingRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
+- p:getPlaceholderText():java.lang.String
+- invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+- pa:isEndBlockToken(com.intellij.psi.PsiElement):Z
+c:com.intellij.codeInsight.folding.impl.EditorFoldingInfo
+- <init>():V
+- s:get(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.folding.impl.EditorFoldingInfo
+- getPsiElement(com.intellij.openapi.editor.FoldRegion):com.intellij.psi.PsiElement
+- removeRegion(com.intellij.openapi.editor.FoldRegion):V
+com.intellij.codeInsight.folding.impl.ElementSignatureProvider
+- a:getSignature(com.intellij.psi.PsiElement):java.lang.String
+- a:restoreBySignature(com.intellij.psi.PsiFile,java.lang.String,java.lang.StringBuilder):com.intellij.psi.PsiElement
+f:com.intellij.codeInsight.folding.impl.FoldingUpdate
+- sf:INJECTED_CODE_FOLDING_ENABLED:com.intellij.openapi.util.Key
+c:com.intellij.codeInsight.folding.impl.OffsetsElementSignatureProvider
+- com.intellij.codeInsight.folding.impl.AbstractElementSignatureProvider
+- <init>():V
+- getSignature(com.intellij.psi.PsiElement):java.lang.String
+- p:restoreBySignatureTokens(com.intellij.psi.PsiFile,com.intellij.psi.PsiElement,java.lang.String,java.util.StringTokenizer,java.lang.StringBuilder):com.intellij.psi.PsiElement
+a:com.intellij.codeInsight.folding.impl.actions.BaseFoldingHandler
+- com.intellij.openapi.editor.actionSystem.EditorActionHandler
+- <init>():V
+- p:getFoldRegionsForCaret(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,Z):java.util.List
+- p:getFoldRegionsForSelection(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret):java.util.List
+- p:isEnabledForCaret(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):Z

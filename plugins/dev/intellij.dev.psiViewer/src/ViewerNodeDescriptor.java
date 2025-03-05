@@ -6,8 +6,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class ViewerNodeDescriptor extends NodeDescriptor<Object> {
-  @NotNull
-  private final Object myElement;
+  private final @NotNull Object myElement;
 
   ViewerNodeDescriptor(@NotNull Project project, @NotNull Object element, NodeDescriptor<?> parentDescriptor) {
     super(project, parentDescriptor);

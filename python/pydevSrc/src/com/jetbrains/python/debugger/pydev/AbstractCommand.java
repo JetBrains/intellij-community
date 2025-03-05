@@ -1,3 +1,5 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.debugger.pydev;
 
@@ -86,13 +88,13 @@ public abstract class AbstractCommand<T> {
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
 
-  @NotNull private final RemoteDebugger myDebugger;
+  private final @NotNull RemoteDebugger myDebugger;
   private final int myCommandCode;
 
   private final ResponseProcessor<T> myResponseProcessor;
 
 
-  protected AbstractCommand(@NotNull final RemoteDebugger debugger, final int commandCode) {
+  protected AbstractCommand(final @NotNull RemoteDebugger debugger, final int commandCode) {
     myDebugger = debugger;
     myCommandCode = commandCode;
     myResponseProcessor = createResponseProcessor();
@@ -106,8 +108,7 @@ public abstract class AbstractCommand<T> {
     return myResponseProcessor;
   }
 
-  @NotNull
-  public final String getPayload() {
+  public final @NotNull String getPayload() {
     Payload payload = new Payload();
     buildPayload(payload);
     return payload.getText();
@@ -116,8 +117,7 @@ public abstract class AbstractCommand<T> {
   protected abstract void buildPayload(Payload payload);
 
 
-  @NotNull
-  public static String buildCondition(String expression) {
+  public static @NotNull String buildCondition(String expression) {
     String condition;
 
     if (expression != null) {
@@ -230,7 +230,7 @@ public abstract class AbstractCommand<T> {
     return command >= 900 && command < 1000;
   }
 
-  protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
+  protected void processResponse(final @NotNull ProtocolFrame response) throws PyDebuggerException {
     if (isErrorCommand(response.getCommand())) {
       throw new PyDebuggerException(response.getPayload());
     }
@@ -247,8 +247,7 @@ public abstract class AbstractCommand<T> {
 
     protected abstract T parseResponse(ProtocolFrame response) throws PyDebuggerException;
 
-    @Nullable
-    protected T parseException(ProtocolFrame frame) throws PyDebuggerException {
+    protected @Nullable T parseException(ProtocolFrame frame) throws PyDebuggerException {
       return null;
     }
   }
@@ -281,8 +280,7 @@ public abstract class AbstractCommand<T> {
     return command == ERROR;
   }
 
-  @NotNull
-  public RemoteDebugger getDebugger() {
+  public @NotNull RemoteDebugger getDebugger() {
     return myDebugger;
   }
 

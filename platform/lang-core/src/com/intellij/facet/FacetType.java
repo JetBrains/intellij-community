@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet;
 
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
@@ -28,8 +28,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
 
   private final @NotNull FacetTypeId<F> myId;
   private final @NotNull String myStringId;
-  @Nls(capitalization = Nls.Capitalization.Title)
-  private final @NotNull String myPresentableName;
+  private final @Nls(capitalization = Nls.Capitalization.Title) @NotNull String myPresentableName;
   private final @Nullable FacetTypeId myUnderlyingFacetType;
   private PluginDescriptor myPluginDescriptor;
 
@@ -69,33 +68,27 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
     this(id, stringId, presentableName, null);
   }
 
-  @NotNull
-  public final FacetTypeId<F> getId() {
+  public final @NotNull FacetTypeId<F> getId() {
     return myId;
   }
 
-  @NotNull
-  public final String getStringId() {
+  public final @NotNull String getStringId() {
     return myStringId;
   }
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  public String getPresentableName() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName() {
     return myPresentableName;
   }
 
   /**
    * Default name which will be used then user creates a facet of this type.
    */
-  @NotNull
-  public @NlsSafe String getDefaultFacetName() {
+  public @NotNull @NlsSafe String getDefaultFacetName() {
     return myPresentableName;
   }
 
-  @Nullable
   @ApiStatus.NonExtendable
-  public FacetTypeId<?> getUnderlyingFacetType() {
+  public @Nullable FacetTypeId<?> getUnderlyingFacetType() {
     return myUnderlyingFacetType;
   }
 
@@ -141,8 +134,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
    */
   public abstract boolean isSuitableModuleType(ModuleType moduleType);
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
@@ -151,14 +143,11 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
    *
    * @return the help topic, or null if no help is available.
    */
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return null;
   }
 
-  @Nullable
-  public DefaultFacetSettingsEditor createDefaultConfigurationEditor(@NotNull Project project, @NotNull C configuration) {
+  public @Nullable DefaultFacetSettingsEditor createDefaultConfigurationEditor(@NotNull Project project, @NotNull C configuration) {
     return null;
   }
 
@@ -169,8 +158,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> i
    * @param editors editors of selected facets
    * @return editor
    */
-  @Nullable
-  public MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, FacetEditor @NotNull [] editors) {
+  public @Nullable MultipleFacetSettingsEditor createMultipleConfigurationsEditor(@NotNull Project project, FacetEditor @NotNull [] editors) {
     return null;
   }
 }

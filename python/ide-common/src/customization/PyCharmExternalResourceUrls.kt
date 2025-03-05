@@ -32,5 +32,5 @@ class PyCharmExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
     get() = "PY"
 
   override val youTubeChannelUrl: Url
-    get() = Urls.newFromEncoded("https://www.youtube.com/playlist?list=PLCTHcU1KoD99eyuXqUJHZy90-9jU2H2Y2")
+    get() = Urls.newFromEncoded("https://www.youtube.com/@PyCharmIDE")
 }

@@ -36,6 +36,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNa
       if (!stubIndex.processAllKeys(PyFunctionNameIndex.KEY, processor, scope, filter)) return;
       if (!stubIndex.processAllKeys(PyVariableNameIndex.KEY, processor, scope, filter)) return;
       if (!stubIndex.processAllKeys(PyClassAttributesIndex.KEY, processor, scope, filter)) return;
+      if (!stubIndex.processAllKeys(PyTypeAliasNameIndex.KEY, processor, scope, filter)) return;
     });
   }
 
@@ -58,6 +59,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNa
       if (!stubIndex.processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
       if (!stubIndex.processElements(PyFunctionNameIndex.KEY, name, project, scope, filter, PyFunction.class, processor)) return;
       if (!stubIndex.processElements(PyVariableNameIndex.KEY, name, project, scope, filter, PyTargetExpression.class, processor)) return;
+      if (!stubIndex.processElements(PyTypeAliasNameIndex.KEY, name, project, scope, filter, PyTypeAliasStatement.class, processor)) return;
       PyClassAttributesIndex.findClassAndInstanceAttributes(name, project, scope).forEach(processor::process);
     });
   }

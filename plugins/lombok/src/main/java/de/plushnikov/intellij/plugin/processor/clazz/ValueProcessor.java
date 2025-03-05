@@ -117,8 +117,7 @@ public final class ValueProcessor extends AbstractClassProcessor {
     if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR,
                                                    LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
                                                    LombokClassNames.BUILDER)) {
-      final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-      filterToleratedElements(definedConstructors);
+      PsiClassUtil.collectClassConstructorIntern(psiClass);
 
       final String staticName = getStaticConstructorNameValue(psiAnnotation);
       final Collection<PsiField> requiredFields = AbstractConstructorClassProcessor.getAllFields(psiClass);
@@ -136,9 +135,8 @@ public final class ValueProcessor extends AbstractClassProcessor {
     }
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
     addClassAnnotation(result, psiClass, LombokClassNames.NON_FINAL, LombokClassNames.PACKAGE_PRIVATE);
     addFieldsAnnotation(result, psiClass, LombokClassNames.NON_FINAL, LombokClassNames.PACKAGE_PRIVATE);

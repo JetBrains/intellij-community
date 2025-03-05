@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.j2k.copyPaste.K1J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
@@ -39,13 +40,14 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
     ): WithProgressProcessor =
         NewJ2kWithProgressProcessor(progress, files, phasesCount)
 
-    override fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
+    override fun getConversions(context: ConverterContext): List<Conversion> =
         getNewJ2KConversions(context)
 
     override fun createPlainTextPasteImportResolver(
         conversionData: ConversionData,
         targetKotlinFile: KtFile
     ): PlainTextPasteImportResolver {
+        ThreadingAssertions.assertBackgroundThread()
         return K1PlainTextPasteImportResolver(conversionData, targetKotlinFile)
     }
 

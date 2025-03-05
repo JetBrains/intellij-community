@@ -1,10 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
-import com.intellij.diff.*
+import com.intellij.diff.DiffContentFactory
+import com.intellij.diff.DiffContentFactoryEx
+import com.intellij.diff.DiffRequestFactory
+import com.intellij.diff.DiffVcsDataKeys
 import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.contents.DocumentContent
+import com.intellij.diff.impl.DiffEditorTitleDetails
+import com.intellij.diff.impl.getCustomizers
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.util.DiffUserDataKeys
@@ -28,12 +33,10 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.impl.ContentRevisionCache
 import com.intellij.openapi.vcs.merge.MergeUtils.putRevisionInfos
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.JBLabel
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
@@ -50,7 +53,6 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.Nls
 import java.io.IOException
-import kotlin.Throws
 
 fun createTwoSidesDiffRequestProducer(project: Project,
                                       statusNode: GitFileStatusNode,
@@ -177,7 +179,7 @@ private fun headContentBytes(project: Project, root: VirtualFile, status: GitFil
 @Throws(VcsException::class)
 private fun stagedContentFile(project: Project, root: VirtualFile, status: GitFileStatus): VirtualFile {
   val filePath = status.path(ContentVersion.STAGED)
-  return GitIndexFileSystemRefresher.getInstance(project).getFile(root, filePath)
+  return GitIndexFileSystemRefresher.getInstance(project).createFile(root, filePath)
          ?: throw VcsException(GitBundle.message("stage.diff.staged.content.exception.message", status.path))
 }
 
@@ -193,9 +195,9 @@ fun compareHeadWithStaged(project: Project, root: VirtualFile, status: GitFileSt
     putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_ACTION_TEXT, GitBundle.message("action.label.reset.staged.range"))
     DiffUtil.addTitleCustomizers(this, buildList {
       val headPath = status.path(ContentVersion.HEAD)
-      add(getTitleCustomizer(project, headPath, headTitle))
-      add(getTitleCustomizer(project, status.path(ContentVersion.STAGED).takeIf<FilePath> { it != headPath }, stagedTitle))
-    })
+      add(DiffEditorTitleDetails.create(project, headPath, headTitle))
+      add(DiffEditorTitleDetails.create(project, status.path(ContentVersion.STAGED).takeIf<FilePath> { it != headPath }, stagedTitle))
+    }.getCustomizers())
   }
 }
 
@@ -211,9 +213,9 @@ fun compareStagedWithLocal(project: Project, root: VirtualFile, status: GitFileS
 
     DiffUtil.addTitleCustomizers(this, buildList {
       val stagedPath = status.path(ContentVersion.STAGED)
-      add(getTitleCustomizer(project, stagedPath, stagedTitle))
-      add(getTitleCustomizer(project, status.path(ContentVersion.LOCAL).takeIf<FilePath> { it != stagedPath }, localTitle))
-    })
+      add(DiffEditorTitleDetails.create(project, stagedPath, stagedTitle))
+      add(DiffEditorTitleDetails.create(project, status.path(ContentVersion.LOCAL).takeIf<FilePath> { it != stagedPath }, localTitle))
+    }.getCustomizers())
   }
 }
 
@@ -236,17 +238,12 @@ fun compareThreeVersions(project: Project, root: VirtualFile, status: GitFileSta
     putUserData(DiffUserDataKeysEx.VCS_DIFF_ACCEPT_LEFT_TO_BASE_ACTION_TEXT, GitBundle.message("action.label.reset.staged.range"))
 
     val stagedPath = status.path(ContentVersion.STAGED)
-    DiffUtil.addTitleCustomizers(this, buildList {
-      add(getTitleCustomizer(project, status.path(ContentVersion.HEAD).takeIf { it != stagedPath }, headTitle))
-      add(getTitleCustomizer(project, stagedPath, stagedTitle))
-      add(getTitleCustomizer(project, status.path(ContentVersion.LOCAL).takeIf { it != stagedPath }, localTitle))
-    })
+    DiffUtil.addTitleCustomizers(this, listOf(
+      DiffEditorTitleDetails.create(project, status.path(ContentVersion.HEAD).takeIf { it != stagedPath }, headTitle),
+      DiffEditorTitleDetails.create(project, stagedPath, stagedTitle),
+      DiffEditorTitleDetails.create(project, status.path(ContentVersion.LOCAL).takeIf { it != stagedPath }, localTitle),
+    ).getCustomizers())
   }
-}
-
-private fun getTitleCustomizer(project: Project, path: FilePath?, title: @Nls String): DiffEditorTitleCustomizer {
-  return if (path != null) DiffTitleFilePathCustomizer.getTitleCustomizer(project, path, title)
-  else DiffEditorTitleCustomizer { JBLabel(title) }
 }
 
 private class UnStagedProducer(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {

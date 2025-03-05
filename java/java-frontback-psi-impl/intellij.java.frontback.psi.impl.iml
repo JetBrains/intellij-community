@@ -35,6 +35,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" exported="" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />

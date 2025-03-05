@@ -24,7 +24,7 @@ import javax.swing.JComponent
 
 internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.VcsLogComplexPath,
                                  private var filters: VcsLogFilterCollection? = null) :
-  VcsLogFile(VcsLogTabsManager.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
+  VcsLogFile(VcsLogTabsUtil.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
 
   private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.Holder.getInstance()
   internal val tabId get() = pathId.logId
@@ -46,9 +46,9 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
       try {
         val factory = tabsManager.getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.EDITOR, filters)
         val ui = logManager.createLogUi(factory, VcsLogTabLocation.EDITOR)
-        tabName = VcsLogTabsManager.generateDisplayName(ui)
+        tabName = VcsLogTabsUtil.generateDisplayName(ui)
         ui.onDisplayNameChange {
-          tabName = VcsLogTabsManager.generateDisplayName(ui)
+          tabName = VcsLogTabsUtil.generateDisplayName(ui)
           VcsLogEditorUtil.updateTabName(project, ui)
         }
         if (filters != null) filters = null

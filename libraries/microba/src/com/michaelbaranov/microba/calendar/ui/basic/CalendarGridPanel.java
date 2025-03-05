@@ -15,7 +15,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
-class CalendarGridPanel extends JPanel implements FocusListener,
+public final class CalendarGridPanel extends JPanel implements FocusListener,
     PolicyListener, PropertyChangeListener, MouseListener, KeyListener {
 
   public static final String PROPERTY_NAME_DATE = "date";
@@ -192,16 +192,6 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
     reflectFocusedDate();
 
-  }
-
-  private void setSelectedByIndex(int i) {
-    DateLabel label = labels[i];
-    if (label.isVisible()) {
-      int day = Integer.parseInt(label.getText());
-      Calendar c = getCalendar(baseDate);
-      c.set(Calendar.DAY_OF_MONTH, day);
-      setDate(c.getTime());
-    }
   }
 
   private Calendar getCalendar(Date date) {
@@ -603,10 +593,6 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     focusDate = bc.getTime();
 
     reflectData();
-  }
-
-  private Date getFocusDate() {
-    return focusDate;
   }
 
   private void setFocusDate(Date focusDate) {

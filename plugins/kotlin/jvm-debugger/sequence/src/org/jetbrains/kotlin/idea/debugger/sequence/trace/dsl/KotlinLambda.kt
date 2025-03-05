@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.CodeBlock
-import com.intellij.debugger.streams.trace.dsl.Expression
-import com.intellij.debugger.streams.trace.dsl.Lambda
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.Lambda
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
 
 class KotlinLambda(override val variableName: String, override val body: CodeBlock) : Lambda {
     override fun call(callName: String, vararg args: Expression): Expression = TextExpression("(${toCode()})").call(callName, *args)

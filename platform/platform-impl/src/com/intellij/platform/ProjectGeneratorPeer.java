@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -22,8 +22,7 @@ public interface ProjectGeneratorPeer<T> {
    * @deprecated implement {@link #getComponent(TextFieldWithBrowseButton, Runnable)} instead
    */
   @Deprecated
-  @NotNull
-  default JComponent getComponent() {
+  default @NotNull JComponent getComponent() {
     throw new RuntimeException("Do not use this method, use the one above instead");
   }
 

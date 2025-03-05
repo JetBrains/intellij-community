@@ -8,6 +8,7 @@ interface StepFactory {
   fun reorderElements(): EvaluationStep
   fun generateReportStep(): EvaluationStep
   fun setupStatsCollectorStep(): EvaluationStep?
+  fun setupRegistryStep(): EvaluationStep
   fun setupSdkStep(): EvaluationStep?
   fun checkSdkConfiguredStep(): EvaluationStep?
   fun finishEvaluationStep(): FinishEvaluationStep

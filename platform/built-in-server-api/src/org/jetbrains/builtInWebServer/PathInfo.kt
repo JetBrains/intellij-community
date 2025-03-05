@@ -14,7 +14,14 @@ import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 
-class PathInfo(val ioFile: Path?, file: VirtualFile?, val root: VirtualFile, moduleName: String? = null, val isLibrary: Boolean = false, val isRootNameOptionalInPath: Boolean = false) {
+class PathInfo(
+  val ioFile: Path?,
+  file: VirtualFile?,
+  val root: VirtualFile,
+  moduleName: String? = null,
+  val isLibrary: Boolean = false,
+  val isRootNameOptionalInPath: Boolean = false,
+) {
   var file: VirtualFile? = file
     private set
 

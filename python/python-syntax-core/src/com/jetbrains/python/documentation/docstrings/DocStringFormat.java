@@ -31,20 +31,17 @@ public enum DocStringFormat {
 
   public static final List<String> ALL_NAMES = getAllNames();
 
-  @NotNull
-  private static List<String> getAllNames() {
+  private static @NotNull List<String> getAllNames() {
     return ContainerUtil.map(values(), format -> format.getName());
   }
 
   public static final List<String> ALL_NAMES_BUT_PLAIN = getAllNamesButPlain();
 
-  @NotNull
-  private static List<String> getAllNamesButPlain() {
+  private static @NotNull List<String> getAllNamesButPlain() {
     return ContainerUtil.mapNotNull(values(), format -> format == PLAIN ? null : format.getName());
   }
 
-  @Nullable
-  public static DocStringFormat fromName(@NotNull String name) {
+  public static @Nullable DocStringFormat fromName(@NotNull String name) {
     for (DocStringFormat format : values()) {
       if (format.getName().equalsIgnoreCase(name)) {
         return format;
@@ -53,8 +50,7 @@ public enum DocStringFormat {
     return null;
   }
 
-  @NotNull
-  public static DocStringFormat fromNameOrPlain(@NotNull String name) {
+  public static @NotNull DocStringFormat fromNameOrPlain(@NotNull String name) {
     return ObjectUtils.notNull(fromName(name), PLAIN);
   }
 
@@ -66,13 +62,11 @@ public enum DocStringFormat {
     myFormatterCommand = formatterCommand;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
-  public String getFormatterCommand() {
+  public @NotNull String getFormatterCommand() {
     return myFormatterCommand;
   }
 }

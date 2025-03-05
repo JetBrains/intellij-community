@@ -5,7 +5,6 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.RefGroup
 import com.intellij.vcs.log.VcsRef
 import com.intellij.vcs.log.VcsRefType
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 

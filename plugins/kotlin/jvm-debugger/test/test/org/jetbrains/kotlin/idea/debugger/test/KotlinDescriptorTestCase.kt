@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -110,16 +110,15 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
             return
         }
 
-        when (pluginMode) {
-            KotlinPluginMode.K2 -> IgnoreTests.runTestIfNotDisabledByFileDirective(
-                dataFile().toPath(),
-                getK2IgnoreDirective(),
-                directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
-            ) {
-                super.runBare(testRunnable)
-            }
-
-            KotlinPluginMode.K1 -> super.runBare(testRunnable)
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            dataFile().toPath(),
+            when (pluginMode) {
+                KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
+                KotlinPluginMode.K2 -> getK2IgnoreDirective()
+            },
+            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+        ) {
+            super.runBare(testRunnable)
         }
     }
 
@@ -145,6 +144,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         vmAttacher.setUp()
         atDebuggerTearDown { vmAttacher.tearDown() }
     }
+
+    override fun logAllCommands(): Boolean = false
 
     protected fun dataFile(fileName: String): File = File(getTestDataPath(), fileName)
 
@@ -188,8 +189,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         val enabledLanguageFeatures = preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]
             .map { LanguageFeature.fromString(it) ?: error("Not found language feature $it") }
 
-        updateIdeCompilerSettingsForEvaluator(languageVersion, enabledLanguageFeatures)
-
         val compilerFacility = createDebuggerTestCompilerFacility(
             testFiles, jvmTarget,
             TestCompileConfiguration(
@@ -199,6 +198,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
                 useInlineScopes
             )
         )
+
+        updateIdeCompilerSettingsForEvaluator(languageVersion, enabledLanguageFeatures, compilerFacility.getCompilerPlugins())
 
         compileLibrariesAndTestSources(preferences, compilerFacility)
 
@@ -410,11 +411,18 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
         }
     }
 
-    private fun updateIdeCompilerSettingsForEvaluator(languageVersion: LanguageVersion?, enabledLanguageFeatures: List<LanguageFeature>) {
+    private fun updateIdeCompilerSettingsForEvaluator(
+        languageVersion: LanguageVersion?,
+        enabledLanguageFeatures: List<LanguageFeature>,
+        compilerPlugins: List<String>,
+    ) {
         if (languageVersion != null) {
             KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
                 this.languageVersion = languageVersion.versionString
             }
+        }
+        KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+            this.pluginClasspaths = compilerPlugins.toTypedArray()
         }
         KotlinCompilerSettings.getInstance(project).update {
             this.additionalArguments = enabledLanguageFeatures.joinToString(" ") { "-XXLanguage:+${it.name}" }

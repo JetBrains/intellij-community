@@ -15,10 +15,11 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.plugins.gradle.toml.getTomlParentSectionName
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 
-class KotlinGradleTomlVersionCatalogReferencesSearcher :
+internal class KotlinGradleTomlVersionCatalogReferencesSearcher :
     QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(false) {
 
     override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
@@ -63,7 +64,11 @@ class KotlinGradleTomlVersionCatalogReferencesSearcher :
         override fun handleElementRename(newElementName: String): PsiElement {
             val newElementParts = newElementName.getVersionCatalogParts()
             val versionCatalogName = element.text.substringBefore(".")
-            val newElementText = versionCatalogName + newElementParts.joinToString(".", ".")
+
+            val section = getTomlParentSectionName(searchedElement) // versions, bundles, plugins, libraries
+            val sectionPart = if (section == null || section == "libraries") "" else ".$section"
+
+            val newElementText = versionCatalogName + sectionPart + newElementParts.joinToString(".", ".")
             val newElement = KtPsiFactory(element.project).createExpression(newElementText)
             return element.replace(newElement)
         }

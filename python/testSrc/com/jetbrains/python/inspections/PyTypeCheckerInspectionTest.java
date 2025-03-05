@@ -1001,6 +1001,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                    Movie = TypedDict('Movie', {'name': str, 'year': int}, total=False)
                    movie = {'name': 'Blade Runner', <warning descr="Extra key 'director' for TypedDict 'Movie'">'director': 'Ridley Scott'</warning>} # type: Movie
                    """);
+    doTestByText("""
+                   from typing import TypedDict
+                   BadTD = TypedDict('BadTD', unknown_param=True)
+                   td = {<warning descr="Extra key 'v' for TypedDict 'BadTD'">'v': 1</warning>} # type: BadTD
+                   """);
   }
 
   // PY-36008
@@ -1106,8 +1111,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       LanguageLevel.PYTHON36,
       () -> doTestByText("""
                            from typing import TypedDict
-                           Movie = TypedDict(<warning descr="Expected type 'str', got 'int' instead">3</warning>, <warning descr="Expected type 'Dict[str, Any]', got 'List[int]' instead">[1, 2, 3]</warning>)
-                           Movie = TypedDict('Movie', {})"""));
+                           Movie = TypedDict(<warning descr="Expected type 'str', got 'int' instead">3</warning>, <warning descr="Expected type 'Dict[str, type]', got 'List[int]' instead">[1, 2, 3]</warning>)
+                           Movie = TypedDict('Movie', {})
+                           Movie = TypedDict('Movie', {'name': str})"""));
   }
 
   // PY-36008
@@ -1396,7 +1402,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            record_movie(movie={'name': <warning descr="Expected type 'str', got 'int' instead">1984</warning>, 'year': 1984})
                            record_movie(movie=<warning descr="TypedDict 'Movie' has missing keys: 'name', 'year'">{}</warning>)
                            record_movie(movie={'name': '1984', 'year': 1984, <warning descr="Extra key 'director' for TypedDict 'Movie'">'director': 'Michael Radford'</warning>})
-                           record_movie(movie=<warning descr="Expected type 'Movie', got 'Point' instead">Point(x=123, y=321)</warning>)""")
+                           record_movie(<warning descr="Expected type 'Movie', got 'Point' instead">movie=Point(x=123, y=321)</warning>)""")
     );
   }
 
@@ -1414,14 +1420,15 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            z = {'foo': 'bar'}
                            n = {"foo": "", "quux": 3}
                            f(<warning descr="Expected type 'C', got 'dict' instead">y</warning>)
-                           f(<warning descr="Expected type 'C', got 'dict[str, int | str]' instead">n</warning>)
-                           f(z)
-                           f(x=<warning descr="Expected type 'C', got 'dict' instead">y</warning>)
-                           f(x=<warning descr="Expected type 'C', got 'dict[str, int | str]' instead">n</warning>)
-                           f(x=z)
+                           f(<warning descr="Expected type 'C', got 'dict[str, str | int]' instead">n</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[str, str]' instead">z</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict' instead">x=y</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[str, str | int]' instead">x=n</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[str, str]' instead">x=z</warning>)
                            z2: C = <warning descr="Expected type 'C', got 'dict' instead">y</warning>
-                           z2: C = <warning descr="Expected type 'C', got 'dict[str, int | str]' instead">n</warning>
-                           z2: C = z""")
+                           z2: C = <warning descr="Expected type 'C', got 'dict[str, str | int]' instead">n</warning>
+                           z2: C = <warning descr="Expected type 'C', got 'dict[str, str]' instead">z</warning>
+                           """)
     );
   }
 
@@ -1442,23 +1449,23 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("""
-                           from typing_extensions import TypedDict
+                           from typing_extensions import TypedDict, Literal
                            class EasyDict(TypedDict):
                                a: str
                                b: str
                                c: str
-
-
+                           
+                           
                            class NotSoHardDict(TypedDict):
                                a: str
                                b: EasyDict
-
-
+                           
+                           
                            class HardDict(TypedDict):
                                a: str
                                d: NotSoHardDict
-
-
+                           
+                           
                            q: HardDict = {
                                'a': <warning descr="Expected type 'str', got 'int' instead">42</warning>,
                                'd': {
@@ -1473,8 +1480,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                    0: 'zero',
                                }
                            }
-                           s: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, dict[int, str] | str]' instead">t</warning>}
-                           s1: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, dict[int, str] | str]' instead">t</warning>
+                           s: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, str | dict[int, str]]' instead">t</warning>}
+                           s1: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, str | dict[int, str]]' instead">t</warning>
                            t1 = {
                                'a': 'xx',
                                'd': {
@@ -1482,14 +1489,34 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                    'd': {}
                                }
                            }
-                           s2: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, dict[str, dict | int] | str]' instead">t1</warning>}
-                           s3: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, dict[str, dict | int] | str]' instead">t1</warning>
+                           s2: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, str | dict[str, int | dict]]' instead">t1</warning>}
+                           s3: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, str | dict[str, int | dict]]' instead">t1</warning>
                            s4: HardDict = <warning descr="TypedDict 'HardDict' has missing key: 'a'">{
                                'd': {
                                    'a': 'a',
                                    'b': {'a': 'a', 'b': 'b', 'c': 'c'}
                                }
                            }</warning>
+                           
+                           
+                           class TDWithUnionField(TypedDict):
+                               i: int
+                               d: Literal[""] | EasyDict
+                           s5: TDWithUnionField = {'i': -1, 'd': <warning descr="Expected type 'Literal[\\"\\"] | EasyDict', got 'dict[str, str]' instead">{'a': 'a'}</warning>}
+                           s6: TDWithUnionField = {'i': 7, 'd': {'a': 'a', 'b': 'b', 'c': 'c'}}
+                           
+                           
+                           class Movie(TypedDict):
+                               title: str
+                               year: int
+                           
+                           movies1: list[Movie] = [
+                               {"title": "Blade Runner", "year": 1982}, # OK
+                               {"title": "The Matrix"},
+                           ]
+                           movies2: list[Movie] = <warning descr="Expected type 'list[Movie]', got 'list[dict[str, str]]' instead">[
+                               {"title": "The Matrix"},
+                           ]</warning>
                            """
       )
     );
@@ -1567,11 +1594,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
                        if narrower(x):
-                           assert_type(x, int)
-                           #           └─ should be of `int` type
+                           expr1: int = x
+                           #            └─ should be of `int` type
                        else:
-                           assert_type(x, str)
-                           #           └─ should be of `str` type
+                           expr2: str = x
+                           #            └─ should be of `str` type
                    
                    def is_bool(x: object) -> TypeIs[bool]:
                        return isinstance(x, bool)

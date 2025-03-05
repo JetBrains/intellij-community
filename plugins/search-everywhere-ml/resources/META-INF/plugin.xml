@@ -49,6 +49,9 @@
     <registryKey defaultValue="false"
                  description="When enabled ML experiments to order All tab items won't be performed"
                  key="search.everywhere.force.disable.experiment.all.ml"/>
+    <registryKey defaultValue="false"
+                 description="When true, ML experiments with predicting essential contributors won't be performed"
+                 key="search.everywhere.force.disable.experiment.essential.contributors.ml"/>
 
 
     <advancedSetting default="true" id="searcheverywhere.ml.sort.action"

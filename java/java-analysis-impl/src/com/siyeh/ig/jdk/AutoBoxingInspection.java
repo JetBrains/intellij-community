@@ -44,7 +44,7 @@ public final class AutoBoxingInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreAddedToCollection = false;
 
-  @NonNls static final Map<String, String> s_boxingClasses = Map.of(
+  static final @NonNls Map<String, String> s_boxingClasses = Map.of(
     "byte", CommonClassNames.JAVA_LANG_BYTE,
     "short", CommonClassNames.JAVA_LANG_SHORT,
     "int", CommonClassNames.JAVA_LANG_INTEGER,
@@ -61,8 +61,7 @@ public final class AutoBoxingInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("auto.boxing.problem.descriptor");
   }
 
@@ -119,8 +118,8 @@ public final class AutoBoxingInspection extends BaseInspection {
       return;
     }
     CommentTracker commentTracker = new CommentTracker();
-    @NonNls final String expressionText = strippedExpression.getText();
-    @NonNls final String newExpression;
+    final @NonNls String expressionText = strippedExpression.getText();
+    final @NonNls String newExpression;
     if ("true".equals(expressionText)) {
       newExpression = "java.lang.Boolean.TRUE";
     }
@@ -175,8 +174,7 @@ public final class AutoBoxingInspection extends BaseInspection {
 
   private static class AutoBoxingFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("auto.boxing.make.boxing.explicit.quickfix");
     }
 
@@ -311,7 +309,7 @@ public final class AutoBoxingInspection extends BaseInspection {
         return false;
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if (!"put".equals(methodName) && !"set".equals(methodName) && !"add".equals(methodName)) {
         return false;
       }

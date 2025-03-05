@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DuplicatedCode", "DEPRECATION")
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFakeFieldData
@@ -57,6 +58,7 @@ import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessin
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
@@ -84,7 +86,7 @@ internal class K1ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         )
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
+    override fun runProcessing(elements: List<PsiElement>, converterContext: ConverterContext) {
         val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return }
         val psiFactory = KtPsiFactory(converterContext.project)
         val searcher = JKInMemoryFilesSearcher.create(ktElements)
@@ -119,8 +121,7 @@ internal class K1ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPos
         }
     }
 
-    context(KaSession)
-    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+    override fun computeApplier(elements: List<PsiElement>, converterContext: ConverterContext): PostProcessingApplier {
         error("Not supported in K1 J2K")
     }
 
@@ -366,6 +367,7 @@ private class PropertiesDataFilter(
             for ((functionDescriptor, requiredTarget) in descriptorToTargetPairs) {
                 val hasInapplicableAnnotation = functionDescriptor?.annotations?.any { annotationDescriptor ->
                     val annotationClassDescriptor = annotationDescriptor.annotationClass ?: return@any false
+                    if (junitTestAnnotations.contains(annotationClassDescriptor.fqNameSafe)) return@any true
                     val existingTargets = getExistingAnnotationTargets(annotationClassDescriptor)
                     existingTargets.contains("FUNCTION") && !existingTargets.contains(requiredTarget)
                 } == true
@@ -470,10 +472,15 @@ private class PropertiesDataFilter(
     }
 
     private fun KtElement.hasUsagesOutsideOf(inElement: KtElement, outsideElements: List<KtElement>): Boolean =
-        ReferencesSearch.search(this, LocalSearchScope(inElement)).any { reference ->
+        ReferencesSearch.search(this, LocalSearchScope(inElement)).asIterable().any { reference ->
             outsideElements.none { it.isAncestor(reference.element) }
         }
 }
+
+private val junitTestAnnotations: Set<FqName> = setOf(
+    FqName("org.junit.Test"),
+    FqName("org.junit.jupiter.api.Test")
+)
 
 private val redundantSetterModifiers: Set<KtModifierKeywordToken> = setOf(
     OVERRIDE_KEYWORD, FINAL_KEYWORD, OPEN_KEYWORD

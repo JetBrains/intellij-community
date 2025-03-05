@@ -19,18 +19,13 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinRuntimeTypeEvaluator
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
-
-class KotlinRuntimeTypeCastSurrounder : Surrounder {
-
+internal class KotlinRuntimeTypeCastSurrounder : Surrounder {
     override fun isApplicable(elements: Array<PsiElement>): Boolean {
         if (elements.size != 1 || elements[0] !is KtExpression) {
             return false
@@ -57,7 +52,7 @@ class KotlinRuntimeTypeCastSurrounder : Surrounder {
             val progressWindow = ProgressWindow(true, expression.project)
             val worker = SurroundWithCastWorker(editor, expression, debuggerContext, progressWindow)
             progressWindow.title = JavaDebuggerBundle.message("title.evaluating")
-            debuggerContext.debugProcess?.managerThread?.startProgress(worker, progressWindow)
+            debuggerContext.managerThread?.startProgress(worker, progressWindow)
         }
         return null
     }

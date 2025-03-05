@@ -6,7 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.Companion.gotoDeclaration
 import com.intellij.codeInsight.navigation.impl.*
-import com.intellij.find.FindSettings
+import com.intellij.find.FindUsagesSettings
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
 import com.intellij.find.findUsages.FindUsagesOptions
@@ -115,7 +115,7 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
                  searchTargets,
                  JBPopupFactory.getInstance().guessBestPopupLocation(editor),
                  editor,
-                 FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName()))
+                 FindUsagesOptions.findScopeByName(project, dataContext, FindUsagesSettings.getInstance().getDefaultScopeName()))
     }
     catch (_: IndexNotReadyException) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(

@@ -36,6 +36,7 @@ public interface LibrariesContainer {
   Project getProject();
 
   enum LibraryLevel {GLOBAL, PROJECT, MODULE;
+    @Override
     public String toString() {
       return StringUtil.capitalize(StringUtil.toLowerCase(name()));
     }

@@ -10,25 +10,27 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.PlatformUtils
 import com.intellij.util.PlatformUtils.isIdeaUltimate
 
-private const val IGNORE_ULTIMATE_EDITION = "promo.ignore.ultimate.edition"
+private const val IGNORE_ULTIMATE_EDITION = "promo.ignore.suggested.ide"
 
-@get:JvmName("getLog")
-internal val LOG: Logger = Logger.getInstance("#PluginsAdvertiser")
-
-var isIgnoreIdeSuggestion: Boolean
-  get() = PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION)
+internal var isIgnoreIdeSuggestion: Boolean
+  get() = PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION) || PlatformUtils.isJetBrainsClient()
   set(value) = PropertiesComponent.getInstance().setValue(IGNORE_ULTIMATE_EDITION, value)
 
+@Deprecated("Use `getPluginSuggestionNotificationGroup()`")
 val notificationGroup: NotificationGroup
-  get() = NotificationGroupManager.getInstance().getNotificationGroup("Plugins Suggestion")
+  get() = getPluginSuggestionNotificationGroup()
 
-@Suppress("DeprecatedCallableAddReplaceWith")
+fun getPluginSuggestionNotificationGroup(): NotificationGroup {
+  return NotificationGroupManager.getInstance().getNotificationGroup("Plugins Suggestion")
+}
+
+@Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
 @Deprecated("Use `installAndEnable(Project, Set, Boolean, Runnable)`")
 fun installAndEnablePlugins(
   pluginIds: Set<String>,

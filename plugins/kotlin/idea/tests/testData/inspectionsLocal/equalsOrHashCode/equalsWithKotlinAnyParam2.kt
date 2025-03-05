@@ -1,5 +1,4 @@
-// ERROR: Unresolved reference: javaClass
-// ERROR: Unresolved reference: javaClass
+// WITH_STDLIB
 
 class Any
 

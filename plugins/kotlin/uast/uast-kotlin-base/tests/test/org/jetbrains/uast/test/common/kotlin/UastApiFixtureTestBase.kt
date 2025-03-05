@@ -4,8 +4,10 @@ package org.jetbrains.uast.test.common.kotlin
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.PsiArrayInitializerMemberValue
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameter
@@ -1129,6 +1131,246 @@ interface UastApiFixtureTestBase {
         TestCase.assertEquals(unusedLambda!!.asRecursiveLogString(), invokedLambda!!.asRecursiveLogString())
     }
 
+    fun checkImplicitReceiver(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface BiggerIntent {
+                  fun overall()
+                }
+
+                interface MyIntent {
+                  fun foo()
+                }
+                
+                class Test {
+                  fun MyIntent.bar() {}
+                  
+                  fun baz() {}
+
+                  fun test(bigger: BiggerIntent, intent: MyIntent) {
+                    bigger.apply { // <this>: BiggerIntent
+                      overall() // BiggerIntent#overall
+                      intent.apply { // <this>: MyIntent
+                        overall() // BiggerIntent#overall
+                        foo() // MyIntent#foo
+                        bar() // MyIntent#bar
+                        baz() // Test#baz
+                      }
+                    }
+                    baz() // Test#baz
+                  }
+                }
+            """.trimIndent()
+        )
+        val names = listOf("overall", "foo", "bar", "baz")
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.methodName !in names)
+                    return super.visitCallExpression(node)
+
+                val rcvType = node.receiverType
+                TestCase.assertEquals(
+                    node.sourcePsi?.text,
+                    when (node.methodName) {
+                        "overall" -> "BiggerIntent"
+                        "baz" -> "Test"
+                        else -> "MyIntent"
+                    },
+                    rcvType?.canonicalText
+                )
+
+                val rcv = node.receiver
+                TestCase.assertNotNull(node.sourcePsi?.text, rcv)
+
+                TestCase.assertEquals(
+                    node.sourcePsi?.text,
+                    rcvType?.canonicalText,
+                    rcv?.getExpressionType()?.canonicalText
+                )
+
+                val resolvedRcv = (rcv as? UResolvable)?.resolve()
+                TestCase.assertNotNull(node.sourcePsi?.text, resolvedRcv)
+                TestCase.assertTrue(
+                    node.sourcePsi?.text,
+                    if (node.methodName == "baz") {
+                        resolvedRcv is PsiClass
+                    } else {
+                        resolvedRcv is PsiParameter
+                    }
+                )
+
+                count++
+                return super.visitCallExpression(node)
+            }
+        })
+        TestCase.assertEquals(6, count)
+    }
+
+    fun checkImplicitReceiver_extensionFunction(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface MyIntent {
+                  fun foo()
+                }
+
+                fun MyIntent.abc() {
+                  foo() // MyIntent#foo
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.methodName != "foo") {
+                    return super.visitCallExpression(node)
+                }
+                val rcv = node.receiver
+                TestCase.assertNotNull(node.sourcePsi?.text, rcv)
+                val resolvedRcv = (rcv as? UResolvable)?.resolve()
+                TestCase.assertNotNull(node.sourcePsi?.text, resolvedRcv)
+                TestCase.assertTrue(node.sourcePsi?.text, resolvedRcv is PsiParameter)
+
+                count++
+                return super.visitCallExpression(node)
+            }
+        })
+        TestCase.assertEquals(1, count)
+    }
+
+    fun checkImplicitReceiver_insideInterface(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface MyIntent {
+                  fun foo()
+                  
+                  fun bar(intent: MyIntent) {
+                    intent.apply { // <this>: MyIntent
+                      foo() // MyIntent#foo
+                    }
+                  }
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.methodName != "foo") {
+                    return super.visitCallExpression(node)
+                }
+                val rcv = node.receiver
+                TestCase.assertNotNull(node.sourcePsi?.text, rcv)
+                val resolvedRcv = (rcv as? UResolvable)?.resolve()
+                TestCase.assertNotNull(node.sourcePsi?.text, resolvedRcv)
+                TestCase.assertTrue(node.sourcePsi?.text, resolvedRcv is PsiParameter)
+
+                count++
+                return super.visitCallExpression(node)
+            }
+        })
+        TestCase.assertEquals(1, count)
+    }
+
+    fun checkImplicitReceiver_interfaceHierarchy(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface A {
+                  fun aaa()
+                }
+
+                interface B : A {
+                  fun bbb()
+                }
+
+                fun foo(b: B) {
+                  b.apply { // <this>: B
+                    aaa() // B#aaa
+                  }
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.methodName != "aaa") {
+                    return super.visitCallExpression(node)
+                }
+                val rcv = node.receiver
+                TestCase.assertNotNull(node.sourcePsi?.text, rcv)
+                val resolvedRcv = (rcv as? UResolvable)?.resolve()
+                TestCase.assertNotNull(node.sourcePsi?.text, resolvedRcv)
+                TestCase.assertTrue(node.sourcePsi?.text, resolvedRcv is PsiParameter)
+
+                count++
+                return super.visitCallExpression(node)
+            }
+        })
+        TestCase.assertEquals(1, count)
+    }
+
+    fun checkImplicitReceiver_interfaceHierarchy_smartcast(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface A {
+                  fun aaa()
+                }
+
+                interface B : A {
+                  fun bbb()
+                }
+
+                fun foo(a: A, b: B) {
+                  b.apply { // <this>: B
+                    a.apply { // <this>: A
+                      if (this is B) { // still <this>: A
+                        bbb() // <this>.A#bbb
+                      }
+                    }
+                  }
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        uFile.accept(object : AbstractUastVisitor() {
+            val lambdas: MutableList<ULambdaExpression> = mutableListOf()
+
+            override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+                lambdas.add(node)
+                return super.visitLambdaExpression(node)
+            }
+
+            override fun afterVisitLambdaExpression(node: ULambdaExpression) {
+                lambdas.remove(node)
+                super.afterVisitLambdaExpression(node)
+            }
+
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.methodName != "bbb") {
+                    return super.visitCallExpression(node)
+                }
+                val rcv = node.receiver
+                TestCase.assertNotNull(node.sourcePsi?.text, rcv)
+                val resolvedRcv = (rcv as? UResolvable)?.resolve()
+                TestCase.assertNotNull(node.sourcePsi?.text, resolvedRcv)
+                TestCase.assertTrue(node.sourcePsi?.text, resolvedRcv is PsiParameter)
+                // Not outer, inner; hence pick the last one in the stack.
+                val lambda = lambdas.lastOrNull()
+                TestCase.assertNotNull(lambda)
+                // TODO: KTIJ-32596
+                // TestCase.assertEquals(node.sourcePsi?.text, lambda!!.parameters.firstOrNull()?.javaPsi, resolvedRcv)
+
+                count++
+                return super.visitCallExpression(node)
+            }
+        })
+        TestCase.assertEquals(1, count)
+    }
+
     fun checkLambdaImplicitParameters(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -1307,6 +1549,25 @@ interface UastApiFixtureTestBase {
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("Foo", uCallExpression.receiverType?.canonicalText)
+    }
+
+    fun checkReceiverTypeOfExtensionFunction_superType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                open class Foo
+
+                fun Foo.ext() {}
+
+                class Bar : Foo() {
+                  fun test(b: Bar) {
+                    b.ex<caret>t()
+                  }
+                }
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("Bar", uCallExpression.receiverType?.canonicalText)
     }
 
     fun checkSourcePsiOfLazyPropertyAccessor(myFixture: JavaCodeInsightTestFixture) {
@@ -1710,6 +1971,46 @@ interface UastApiFixtureTestBase {
                     }
 
                     return super.visitClass(node)
+                }
+            }
+        )
+    }
+
+    fun checkJavaConstantEvaluation(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                package test.pkg;
+                
+                public class Context {
+                  public static final String CLIPBOARD = "clipboard";
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "test.kt",
+            """
+                import test.pkg.Context
+                import test.pkg.Context.CLIPBOARD
+                
+                fun foo(p: String) {}
+
+                fun test() {
+                  foo(Context.CLIPBOARD)
+                  foo(CLIPBOARD)
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val arg = node.valueArguments.getOrNull(0) ?: return super.visitCallExpression(node)
+                    val r = (arg as? USimpleNameReferenceExpression)?.resolve()
+                        ?: (arg as? UQualifiedReferenceExpression)?.resolve()
+                    TestCase.assertTrue(node.sourcePsi?.text, r is PsiField)
+                    val e = arg.evaluate()
+                    TestCase.assertEquals(node.sourcePsi?.text, "clipboard", e)
+                    return super.visitCallExpression(node)
                 }
             }
         )

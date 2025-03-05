@@ -33,7 +33,7 @@ import java.util.List;
 
 public class PyDocstringLanguageInjector implements LanguageInjector {
   @Override
-  public void getLanguagesToInject(@NotNull final PsiLanguageInjectionHost host, @NotNull final InjectedLanguagePlaces injectionPlacesRegistrar) {
+  public void getLanguagesToInject(final @NotNull PsiLanguageInjectionHost host, final @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
     if (!(host instanceof PyStringLiteralExpression)) {
       return;
     }

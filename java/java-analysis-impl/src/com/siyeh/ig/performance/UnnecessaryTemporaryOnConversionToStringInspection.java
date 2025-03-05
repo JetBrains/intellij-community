@@ -18,9 +18,9 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -46,15 +46,12 @@ public final class UnnecessaryTemporaryOnConversionToStringInspection extends Ba
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final String replacementString = calculateReplacementExpression((PsiNewExpression)infos[0], new CommentTracker());
     return InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.to.string.display.name", replacementString);
   }
 
-  @Nullable
-  @NonNls
-  static String calculateReplacementExpression(@NotNull PsiNewExpression expression, @NotNull CommentTracker commentTracker) {
+  static @Nullable @NonNls String calculateReplacementExpression(@NotNull PsiNewExpression expression, @NotNull CommentTracker commentTracker) {
     final PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList == null) return null;
     final PsiExpression[] arguments = argumentList.getExpressions();
@@ -82,14 +79,12 @@ public final class UnnecessaryTemporaryOnConversionToStringInspection extends Ba
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return m_name;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.simplify");
     }
 
@@ -129,7 +124,7 @@ public final class UnnecessaryTemporaryOnConversionToStringInspection extends Ba
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
         return;
       }

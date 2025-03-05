@@ -19,7 +19,10 @@ import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
@@ -56,26 +59,22 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
     }
 
     @Override
-    @Nullable
-    public JComponent getSearchComponent() {
+    public @Nullable JComponent getSearchComponent() {
         return null;
     }
 
     @Override
-    @Nullable
-    public ActionGroup getToolbarActions() {
+    public @Nullable ActionGroup getToolbarActions() {
         return null;
     }
 
     @Override
-    @Nullable
-    public JComponent getToolbarContextComponent() {
+    public @Nullable JComponent getToolbarContextComponent() {
         return null;
     }
 
     @Override
-    @Nullable
-    public String getToolbarPlace() {
+    public @Nullable String getToolbarPlace() {
         return null;
     }
 
@@ -84,8 +83,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         return true;
     }
 
-    @Nullable
-    private EditorEx getEditor() {
+    private @Nullable EditorEx getEditor() {
       return (EditorEx)((ConsoleViewImpl)myConsole).getEditor();
     }
 
@@ -108,8 +106,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
     }
 
     @Override
-    @NotNull
-    public String getTabTitle() {
+    public @NotNull String getTabTitle() {
         return XPathBundle.message("tab.title.xslt.output");
     }
 

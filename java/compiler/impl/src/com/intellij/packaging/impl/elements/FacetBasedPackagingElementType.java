@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.facet.Facet;
@@ -44,9 +44,8 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
     return FacetTypeRegistry.getInstance().findFacetType(myFacetType).getIcon();
   }
 
-  @NotNull
   @Override
-  public List<? extends E> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact, @NotNull CompositePackagingElement<?> parent) {
+  public @NotNull List<? extends E> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact, @NotNull CompositePackagingElement<?> parent) {
     final List<F> facets = getFacets(context);
     ChooseFacetsDialog dialog = new ChooseFacetsDialog(context.getProject(), facets, getDialogTitle(), getDialogDescription());
     if (dialog.showAndGet()) {

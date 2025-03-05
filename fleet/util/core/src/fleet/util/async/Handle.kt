@@ -2,7 +2,7 @@
 package fleet.util.async
 
 import fleet.util.AtomicRef
-import fleet.util.BifurcanSet
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
@@ -77,7 +77,7 @@ suspend fun handleScopeNonSupervising(body: suspend HandleScope.() -> Unit) {
 }
 
 private suspend fun<T> handleScopeImpl(outerScope: CoroutineScope, body: suspend HandleScope.() -> T): T {
-  val handles = AtomicRef(BifurcanSet<Handle<*>>())
+  val handles = AtomicRef(persistentSetOf<Handle<*>>())
   return try {
     coroutineScope {
       val context = coroutineContext

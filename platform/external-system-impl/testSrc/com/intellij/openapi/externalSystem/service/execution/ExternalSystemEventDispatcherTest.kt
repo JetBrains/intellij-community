@@ -47,16 +47,16 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
       it.onEvent(1, StartBuildEventImpl(DefaultBuildDescriptor(taskId, "test task", "/path", System.currentTimeMillis()), "Build started"))
       it.invokeOnCompletion { eventMessages += "completion message 1" }
       it.onEvent(1, StartEventImpl(2, 1, System.currentTimeMillis(), "sub task1 started"))
-      it.appendln("Task output line 1")
+      it.appendLine("Task output line 1")
       it.onEvent(1, StartEventImpl(3, 1, System.currentTimeMillis(), "sub task2 started"))
-      it.appendln("Task output line 2")
+      it.appendLine("Task output line 2")
       it.onEvent(1, FinishEventImpl(3, 1, System.currentTimeMillis(), "sub task2 finished", SuccessResultImpl()))
       it.onEvent(1, FinishEventImpl(2, 1, System.currentTimeMillis(), "sub task1 finished", SuccessResultImpl()))
       it.onEvent(1, FinishBuildEventImpl(taskId, null, System.currentTimeMillis(), "Build finished", SuccessResultImpl()))
       it.invokeOnCompletion { throw RuntimeException("Bad happens") }
       it.invokeOnCompletion { eventMessages += "completion message 2" }
       it.invokeOnCompletion { semaphore.up() }
-      it.appendln("Task output line 3")
+      it.appendLine("Task output line 3")
     }
     dispatcher.invokeOnCompletion { eventMessages += "Late completion message" }
 

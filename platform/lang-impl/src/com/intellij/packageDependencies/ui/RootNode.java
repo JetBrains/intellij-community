@@ -13,14 +13,17 @@ public class RootNode extends PackageDependenciesNode {
     super(project);
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof RootNode;
   }
 
+  @Override
   public int hashCode() {
     return 0;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     return "Root";

@@ -74,7 +74,7 @@ public class TableView<Item> extends BaseTableView implements SelectionProvider 
     super.tableChanged(e);
   }
 
-  public void setSelection(Collection<Item> selection) {
+  public void setSelection(Collection<? extends Item> selection) {
     clearSelection();
     for (Object aSelection : selection) {
       addSelection(aSelection);

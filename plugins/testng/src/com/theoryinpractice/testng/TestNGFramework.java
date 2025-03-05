@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -28,21 +28,19 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TestNGFramework extends JavaTestFramework implements DumbAware {
-  private final static List<String> SECONDARY_BEFORE_ANNOTATIONS = Arrays.asList("org.testng.annotations.BeforeTest",
+  private static final List<String> SECONDARY_BEFORE_ANNOTATIONS = Arrays.asList("org.testng.annotations.BeforeTest",
                                                                                  "org.testng.annotations.BeforeClass",
                                                                                  "org.testng.annotations.BeforeSuite",
                                                                                  "org.testng.annotations.BeforeGroups"
   );
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "TestNG";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TestngIcons.TestNG;
   }
 
@@ -57,8 +55,7 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
   }
 
   @Override
-  @Nullable
-  public String getDefaultSuperClass() {
+  public @Nullable String getDefaultSuperClass() {
     return null;
   }
 
@@ -71,9 +68,8 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
     }, false);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.BeforeMethod", 0)) return each;
@@ -82,9 +78,8 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
     }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.BeforeClass", 0)) return each;
@@ -93,9 +88,8 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
     }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterMethod", 0)) return each;
@@ -104,9 +98,8 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
     }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
     return callWithAlternateResolver(clazz.getProject(), () -> {
       for (PsiMethod each : clazz.getMethods()) {
         if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterClass", 0)) return each;
@@ -226,14 +219,12 @@ public class TestNGFramework extends JavaTestFramework implements DumbAware {
   }
 
   @Override
-  @NotNull
-  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+  public @NotNull FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG Test Method.java");
   }
 
-  @Nullable
   @Override
-  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
+  public @Nullable FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG Parameters Method.java");
   }
 

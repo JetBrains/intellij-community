@@ -4,7 +4,7 @@ import com.intellij.platform.runtime.product.ProductMode
 import java.net.InetAddress
 
 interface LauncherOptions {
-  val platformPrefix: String?
+  val platformPrefix: String
   val xmx: Int get() = 800
   val debugPort: Int? get() = null
   val debugSuspendOnStart: Boolean get() = false

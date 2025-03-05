@@ -22,7 +22,7 @@ class Test {
   enum E{A}
   public void test4() {
     switch (null) {
-      case <error descr="Incompatible types. Found: 'Test.E', required: 'null'">E.A</error> -> System.out.println("2");  //error
+      case E.<error descr="Incompatible types. Found: 'Test.E', required: 'null'">A</error> -> System.out.println("2");  //error
     }
   }
   public void test5() {

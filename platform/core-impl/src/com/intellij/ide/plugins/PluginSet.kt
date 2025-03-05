@@ -6,11 +6,13 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.*
+import kotlin.collections.LinkedHashSet
 
 // if otherwise not specified, `module` in terms of v2 plugin model
 @ApiStatus.Internal
 class PluginSet internal constructor(
-  @JvmField val moduleGraph: ModuleGraph,
+  private val sortedModulesWithDependencies: ModulesWithDependencies,
   @JvmField val allPlugins: Set<IdeaPluginDescriptorImpl>,
   @JvmField val enabledPlugins: List<IdeaPluginDescriptorImpl>,
   private val enabledModuleMap: Map<String, IdeaPluginDescriptorImpl>,
@@ -21,6 +23,13 @@ class PluginSet internal constructor(
    * You must not use this method before [ClassLoaderConfigurator.configure].
    */
   fun getEnabledModules(): List<IdeaPluginDescriptorImpl> = enabledModules
+
+  val allModulesSorted: List<IdeaPluginDescriptorImpl>
+    get() = sortedModulesWithDependencies.modules
+
+  internal fun getSortedDependencies(moduleDescriptor: IdeaPluginDescriptorImpl): List<IdeaPluginDescriptorImpl> {
+    return sortedModulesWithDependencies.directDependencies.getOrDefault(moduleDescriptor, Collections.emptyList())
+  }
 
   @TestOnly
   fun getUnsortedEnabledModules(): Collection<IdeaPluginDescriptorImpl> = Java11Shim.INSTANCE.copyOf(enabledModuleMap.values)

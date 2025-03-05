@@ -346,7 +346,14 @@ internal class ShellCommandSpecSuggestionsTest {
   }
 
   @Test
-  fun `suggest filenames for path in quotes`() {
+  fun `suggest filenames for path in single quotes`() {
+    val separator = File.separatorChar
+    mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
+    assertSameElements(getSuggestions(listOf("cd"), "'someDir$separator"), listOf("dir$separator", "folder$separator"))
+  }
+
+  @Test
+  fun `suggest filenames for path in double quotes`() {
     val separator = File.separatorChar
     mockFilePathsSuggestions("file.txt", "dir$separator", "folder$separator")
     assertSameElements(getSuggestions(listOf("cd"), "\"someDir$separator"), listOf("dir$separator", "folder$separator"))

@@ -82,11 +82,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
   }
 
-  private static CompletableFuture<SourcePosition> getSourcePositionAsync(@NotNull StackFrameProxyImpl frame) {
+  private static CompletableFuture<SourcePosition> getSourcePositionAsync(@NotNull Location location, @NotNull StackFrameProxyImpl frame) {
     try {
-      Location location = frame.location();
       CompoundPositionManager positionManager = frame.getVirtualMachine().getDebugProcess().getPositionManager();
-      return positionManager.getSourcePositionAsync(location);
+      return positionManager.getSourcePositionFuture(location);
     }
     catch (Exception e) {
       return CompletableFuture.failedFuture(e);
@@ -95,9 +94,12 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public static CompletableFuture<StackFrameDescriptorImpl> createAsync(@NotNull StackFrameProxyImpl frame,
                                                                         @NotNull MethodsTracker tracker) {
-    return frame.locationAsync()
+    CompletableFuture<Location> locationAsync = frame.locationAsync();
+    CompletableFuture<SourcePosition> positionAsync =
+      locationAsync.thenCompose(location -> DebuggerUtilsAsync.reschedule(getSourcePositionAsync(location, frame)));
+    return locationAsync
       .thenCompose(DebuggerUtilsAsync::method)
-      .thenCombine(DebuggerUtilsAsync.reschedule(getSourcePositionAsync(frame)), (method, position) -> {
+      .thenCombine(positionAsync, (method, position) -> {
         DebuggerManagerThreadImpl.assertIsManagerThread();
         return new StackFrameDescriptorImpl(frame, true, method, tracker, position);
       })
@@ -120,19 +122,16 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   }
 
   @Override
-  @NotNull
-  public StackFrameProxyImpl getFrameProxy() {
+  public @NotNull StackFrameProxyImpl getFrameProxy() {
     return myFrame;
   }
 
-  @NotNull
   @Override
-  public DebugProcess getDebugProcess() {
+  public @NotNull DebugProcess getDebugProcess() {
     return myFrame.getVirtualMachine().getDebugProcess();
   }
 
-  @Nullable
-  public Method getMethod() {
+  public @Nullable Method getMethod() {
     return myMethodOccurrence.getMethod();
   }
 
@@ -148,8 +147,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return !myFrame.isBottom() && myMethodOccurrence.canDrop();
   }
 
-  @Nullable
-  public ValueMarkup getValueMarkup() {
+  public @Nullable ValueMarkup getValueMarkup() {
     Map<?, ValueMarkup> markers = getValueMarkers();
     if (!markers.isEmpty() && myThisObject != null) {
       return markers.get(myThisObject);
@@ -248,8 +246,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
            (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(getLocation()));
   }
 
-  @Nullable
-  public Location getLocation() {
+  public @Nullable Location getLocation() {
     return myLocation;
   }
 
@@ -276,8 +273,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myIcon;
   }
 
-  @Nullable
-  public ObjectReference getThisObject() {
+  public @Nullable ObjectReference getThisObject() {
     if (myThisObject == null) {
       try {
         myThisObject = myFrame.thisObject();

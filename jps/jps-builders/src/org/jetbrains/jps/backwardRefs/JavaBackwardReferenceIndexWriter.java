@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,8 +22,8 @@ import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import javax.lang.model.element.Modifier;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<CompiledFileData> {
   public static final String PROP_KEY = "jps.backward.ref.index.builder";
@@ -34,78 +34,6 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
 
   private JavaBackwardReferenceIndexWriter(JavaCompilerBackwardReferenceIndex index) {
     super(index);
-  }
-
-  public static synchronized void closeIfNeeded(boolean clearIndex) {
-    if (ourInstance != null) {
-      File dir = clearIndex ? ourInstance.myIndex.getIndicesDir() : null;
-      try {
-        ourInstance.close();
-      }
-      finally {
-        ourInstance = null;
-        if (dir != null) {
-          FileUtil.delete(dir);
-        }
-      }
-    }
-  }
-
-  static JavaBackwardReferenceIndexWriter getInstance() {
-    return ourInstance;
-  }
-
-  public static void initialize(final @NotNull CompileContext context) {
-    if (ourInstance != null) {
-      return;
-    }
-
-    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-    final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
-    if (isEnabled()) {
-      boolean isRebuild = isRebuildInAllJavaModules(context);
-
-      if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context)) || !JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
-        CompilerReferenceIndex.removeIndexFiles(buildDir);
-        return;
-      }
-
-      boolean cleanupOk = true;
-      if (isRebuild) {
-        CompilerReferenceIndex.removeIndexFiles(buildDir);
-        cleanupOk = !CompilerReferenceIndex.exists(buildDir);
-      }
-      else if (CompilerReferenceIndex.versionDiffers(buildDir, JavaCompilerIndices.VERSION)) {
-        CompilerReferenceIndex.removeIndexFiles(buildDir);
-        if ((ourInitAttempt++ == 0 && areAllJavaModulesAffected(context))) {
-          throw new BuildDataCorruptedException("backward reference index will be updated to actual version");
-        }
-        // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
-        return;
-      }
-
-      if (cleanupOk) {
-        JavaCompilerBackwardReferenceIndex index = new JavaCompilerBackwardReferenceIndex(buildDir, dataManager.getRelativizer(), false, isCompilerReferenceFSCaseSensitive());
-        ourInstance = new JavaBackwardReferenceIndexWriter(index);
-        ShutDownTracker.getInstance().registerShutdownTask(() -> closeIfNeeded(false));
-      }
-    }
-    else {
-      CompilerReferenceIndex.removeIndexFiles(buildDir);
-    }
-  }
-
-  public static boolean isEnabled() {
-    return SystemProperties.getBooleanProperty(PROP_KEY, false);
-  }
-
-  @ApiStatus.Experimental
-  public static boolean isCompilerReferenceFSCaseSensitive() {
-    String value = System.getProperty(FS_KEY);
-    if (value == null) {
-      return SystemInfo.isFileSystemCaseSensitive;
-    }
-    return Boolean.parseBoolean(value);
   }
 
   synchronized @NotNull CompilerRef.JavaCompilerClassRef asClassUsage(JavacRef aClass) throws IOException {
@@ -127,17 +55,96 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
       String ownerName = ref.getOwnerName();
       final Integer ownerPrecalculatedId = ownerIdReplacer.fun(ownerName);
       if (ref instanceof JavacRef.JavacField) {
-        return new CompilerRef.JavaCompilerFieldRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator));
+        return new CompilerRef.JavaCompilerFieldRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator),
+                                                    id(ref, nameEnumerator));
       }
       else if (ref instanceof JavacRef.JavacMethod) {
-        int paramCount = ((JavacRef.JavacMethod) ref).getParamCount();
-        return new CompilerRef.JavaCompilerMethodRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator), paramCount);
+        int paramCount = ((JavacRef.JavacMethod)ref).getParamCount();
+        return new CompilerRef.JavaCompilerMethodRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator),
+                                                     id(ref, nameEnumerator), paramCount);
       }
       else {
         throw new AssertionError("unexpected symbol: " + ref + " class: " + ref.getClass());
       }
     }
     return null;
+  }
+
+  public static synchronized void closeIfNeeded(boolean clearIndex) {
+    if (ourInstance != null) {
+      Path dir = clearIndex ? ourInstance.myIndex.getIndexDir() : null;
+      try {
+        ourInstance.close();
+      }
+      finally {
+        ourInstance = null;
+        if (dir != null) {
+          try {
+            FileUtilRt.deleteRecursively(dir);
+          }
+          catch (IOException ignored) {
+          }
+        }
+      }
+    }
+  }
+
+  static JavaBackwardReferenceIndexWriter getInstance() {
+    return ourInstance;
+  }
+
+  public static void initialize(final @NotNull CompileContext context) {
+    if (ourInstance != null) {
+      return;
+    }
+
+    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+    Path buildDir = dataManager.getDataPaths().getDataStorageDir();
+    if (!isEnabled()) {
+      CompilerReferenceIndex.removeIndexFiles(buildDir);
+      return;
+    }
+    boolean isRebuild = isRebuildInAllJavaModules(context);
+
+    if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context)) || !JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
+      CompilerReferenceIndex.removeIndexFiles(buildDir);
+      return;
+    }
+
+    boolean cleanupOk = true;
+    if (isRebuild) {
+      CompilerReferenceIndex.removeIndexFiles(buildDir);
+      cleanupOk = !CompilerReferenceIndex.exists(buildDir);
+    }
+    else if (CompilerReferenceIndex.versionDiffers(buildDir, JavaCompilerIndices.VERSION)) {
+      CompilerReferenceIndex.removeIndexFiles(buildDir);
+      if ((ourInitAttempt++ == 0 && areAllJavaModulesAffected(context))) {
+        throw new BuildDataCorruptedException("backward reference index will be updated to actual version");
+      }
+      // do not request a rebuild if a project is affected incompletely and a version is changed, disable indices
+      return;
+    }
+
+    if (cleanupOk) {
+      JavaCompilerBackwardReferenceIndex index =
+        new JavaCompilerBackwardReferenceIndex(buildDir, dataManager.getRelativizer(), false,
+                                               isCompilerReferenceFSCaseSensitive());
+      ourInstance = new JavaBackwardReferenceIndexWriter(index);
+      ShutDownTracker.getInstance().registerShutdownTask(() -> closeIfNeeded(false));
+    }
+  }
+
+  public static boolean isEnabled() {
+    return SystemProperties.getBooleanProperty(PROP_KEY, false);
+  }
+
+  @ApiStatus.Experimental
+  public static boolean isCompilerReferenceFSCaseSensitive() {
+    String value = System.getProperty(FS_KEY);
+    if (value == null) {
+      return SystemInfoRt.isFileSystemCaseSensitive;
+    }
+    return Boolean.parseBoolean(value);
   }
 
   private static boolean isPrivate(JavacRef ref) {

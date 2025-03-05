@@ -8,6 +8,7 @@ import com.intellij.debugger.impl.EditorTextProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -94,14 +95,18 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
         }
 
         val isAllowed = when (target) {
-            is KtBinaryExpressionWithTypeRHS, is KtIsExpression -> true
-            is KtOperationExpression -> isReferenceAllowed(target.operationReference, allowMethodCalls)
+            is KtBinaryExpressionWithTypeRHS, is KtIsExpression, is KtDoubleColonExpression, is KtThisExpression -> true
+            is LeafPsiElement -> target.elementType == KtTokens.IDENTIFIER
             is KtReferenceExpression -> isReferenceAllowed(target, allowMethodCalls)
+            is KtOperationExpression -> {
+                isReferenceAllowed(target.operationReference, allowMethodCalls) &&
+                        allowMethodCalls // TODO: check operation arguments: allowMethodCalls || arguments.all { it.isSafe }
+            }
             is KtQualifiedExpression -> {
                 val selector = target.selectorExpression
                 selector is KtReferenceExpression && isReferenceAllowed(selector, allowMethodCalls)
             }
-            else -> true
+            else -> allowMethodCalls
         }
 
         return if (isAllowed) target else findEvaluationTarget(target.parent, allowMethodCalls)

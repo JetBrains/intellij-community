@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,8 +14,7 @@ import java.util.List;
  */
 public class RecordVarExprent extends VarExprent {
 
-  @NotNull
-  private final List<RecordVarExprent> components = new ArrayList<>();
+  private final @NotNull List<RecordVarExprent> components = new ArrayList<>();
 
   public RecordVarExprent(VarExprent v) {
     super(v.getIndex(), v.getVarType(), v.getProcessor());
@@ -95,8 +94,7 @@ public class RecordVarExprent extends VarExprent {
    * @param exprent the Exprent to match
    * @return the direct component of the RecordVarExprent that matches the provided Exprent, or null if no match is found
    */
-  @Nullable
-  public RecordVarExprent getDirectComponent(@Nullable Exprent exprent) {
+  public @Nullable RecordVarExprent getDirectComponent(@Nullable Exprent exprent) {
     for (RecordVarExprent component : components) {
       if (component.equals(exprent)) {
         return component;

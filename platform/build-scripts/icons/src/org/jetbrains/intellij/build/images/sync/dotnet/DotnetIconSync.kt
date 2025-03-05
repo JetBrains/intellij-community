@@ -6,9 +6,7 @@ import org.jetbrains.intellij.build.images.generateIconClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
-import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.io.path.writeText
@@ -46,14 +44,6 @@ object DotnetIconSync {
   private val branchForMerge by lazy {
     val randomPart = UUID.randomUUID().toString().substring(1..4)
     "net$targetWaveNumber-icons-sync-$randomPart"
-  }
-  private val mergeRobotBuildConfiguration by lazy {
-    val prop = "icons.sync.dotnet.merge.robot.build.conf"
-    System.getProperty(prop) ?: error("Specify property $prop")
-  }
-  private val skipTriggerMerge by lazy {
-    val prop = "icons.sync.skip.trigger.merge"
-    System.getProperty(prop)?.toBoolean() ?: false
   }
   private val customToolPath: String? by lazy {
     val prop = "icons.sync.custom.tool.path"
@@ -104,9 +94,6 @@ object DotnetIconSync {
         createBranchForMerge()
         commitChanges()
         pushBranchForMerge()
-        if (!skipTriggerMerge) {
-          triggerMerge()
-        }
       }
       println("Done.")
     }
@@ -185,12 +172,7 @@ object DotnetIconSync {
   private fun pushBranchForMerge() {
     step("Pushing $branchForMerge..")
     push(context.devRepoRoot, branchForMerge)
-  }
-
-  private fun triggerMerge() {
-    step("Triggering merge with $mergeRobotBuildConfiguration..")
-    val response = triggerBuild(mergeRobotBuildConfiguration, branchForMerge)
-    println("Response is $response")
+    println("##teamcity[setParameter name='icons.sync.dotnet.pushed.branch' value='$branchForMerge']")
   }
 
   private fun writeRevisionFile() {

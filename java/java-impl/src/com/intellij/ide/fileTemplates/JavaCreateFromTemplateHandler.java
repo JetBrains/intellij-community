@@ -72,7 +72,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     if (!template.isTemplateOfType(JavaFileType.INSTANCE)) return;
 
     String packageName = (String)props.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-    if(packageName == null || packageName.length() == 0 || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
+    if(packageName == null || packageName.isEmpty() || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
       PsiPackageStatement packageStatement = file.getPackageStatement();
       if (packageStatement != null) {
         packageStatement.delete();
@@ -120,7 +120,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   @Override
   public void prepareProperties(@NotNull Map<String, Object> props) {
     String packageName = (String)props.get(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-    if (packageName == null || packageName.length() == 0) {
+    if (packageName == null || packageName.isEmpty()) {
       props.put(FileTemplate.ATTRIBUTE_PACKAGE_NAME, FileTemplate.ATTRIBUTE_PACKAGE_NAME);
     }
   }

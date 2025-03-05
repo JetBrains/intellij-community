@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
@@ -23,10 +25,8 @@ import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubBase;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.stubs.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -125,8 +125,10 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
         element.isPhysical() &&
         (element instanceof PsiCompiledElement || canHaveStub(containingFile))) {
       StubBasedPsiElement<?> elt = (StubBasedPsiElement<?>)element;
-      IStubElementType<?,?> elementType = elt.getElementType();
-      if (elt.getStub() != null || elementType.shouldCreateStub(element.getNode())) {
+      IElementType elementType = elt.getIElementType();
+      StubElementFactory<?, ?> factory = StubElementRegistryService.getInstance().getStubFactory(elementType);
+      if (factory == null) return null;
+      if (elt.getStub() != null || StubElementUtil.shouldCreateStubForPsi(factory, element)) {
         int index = calcStubIndex((StubBasedPsiElement<?>)element);
         if (index != -1) {
           return new StubIndexReference(containingFile, index, containingFile.getLanguage(), elementType);
@@ -141,8 +143,8 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
     VirtualFile vFile = file.getVirtualFile();
 
-    IStubFileElementType<?> elementType = ((PsiFileImpl)file).getElementTypeForStubBuilder();
-    return elementType != null && vFile != null && elementType.shouldBuildStubFor(vFile);
+    LanguageStubDescriptor stubDescriptor = ((PsiFileImpl)file).getStubDescriptor();
+    return stubDescriptor != null && vFile != null && stubDescriptor.getStubDefinition().shouldBuildStubFor(vFile);
   }
 
   public static int calcStubIndex(@NotNull StubBasedPsiElement<?> psi) {
@@ -179,6 +181,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
   private static final class TreeRangeReference extends PsiAnchor {
     private final VirtualFile myVirtualFile;
+    private final @NotNull CodeInsightContext myContext; // todo ijpl-339 object layout got bigger +8 bytes
     private final Project myProject;
     private final Identikit myInfo;
     private final int myStartOffset;
@@ -190,6 +193,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
                                @NotNull Identikit info,
                                @NotNull VirtualFile virtualFile) {
       myVirtualFile = virtualFile;
+      myContext = FileViewProviderUtil.getCodeInsightContext(file);
       myProject = file.getProject();
       myStartOffset = startOffset;
       myEndOffset = endOffset;
@@ -208,7 +212,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
     public @Nullable PsiFile getFile() {
       Language language = myInfo.getFileLanguage();
       if (language == null) return null;
-      return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, language);
+      return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myContext, myProject, language);
     }
 
     @Override
@@ -221,6 +225,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return myEndOffset;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof TreeRangeReference)) return false;
@@ -233,6 +238,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
              myVirtualFile.equals(that.myVirtualFile);
     }
 
+    @Override
     public int hashCode() {
       int result = myInfo.hashCode();
       result = 31 * result + myStartOffset;
@@ -277,6 +283,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
     }
 
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof HardReference)) return false;
@@ -286,6 +293,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return myElement.equals(that.myElement);
     }
 
+    @Override
     public int hashCode() {
       return myElement.hashCode();
     }
@@ -293,11 +301,13 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
   private static final class PsiFileReference extends PsiAnchor {
     private final VirtualFile myFile;
+    private final CodeInsightContext myContext;
     private final Project myProject;
     private final @NotNull Language myLanguage;
 
     private PsiFileReference(@NotNull VirtualFile file, @NotNull PsiFile psiFile) {
       myFile = file;
+      myContext = FileViewProviderUtil.getCodeInsightContext(psiFile);
       myProject = psiFile.getProject();
       myLanguage = findLanguage(psiFile);
     }
@@ -320,7 +330,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
     @Override
     public @Nullable PsiFile getFile() {
-      return SelfElementInfo.restoreFileFromVirtual(myFile, myProject, myLanguage);
+      return SelfElementInfo.restoreFileFromVirtual(myFile, myContext, myProject, myLanguage);
     }
 
     @Override
@@ -404,7 +414,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
   public static @Nullable PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
                                                           int index,
-                                                          @NotNull IStubElementType<?,?> elementType,
+                                                          @NotNull IElementType elementType,
                                                           boolean throwIfNull) {
     if (fileImpl == null) {
       if (throwIfNull) throw new AssertionError("Null file");
@@ -420,8 +430,8 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       return null;
     }
 
-    if (psi.getElementType() != elementType) {
-      if (throwIfNull) throw new AssertionError("Element type mismatch: " + psi.getElementType() + "!=" + elementType);
+    if (psi.getIElementType() != elementType) {
+      if (throwIfNull) throw new AssertionError("Element type mismatch: " + psi.getIElementType() + "!=" + elementType);
       return null;
     }
 
@@ -430,15 +440,20 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
   public static final class StubIndexReference extends PsiAnchor {
     private final @NotNull VirtualFile myVirtualFile;
+    private final @NotNull CodeInsightContext myContext;
     private final @NotNull Project myProject;
     private final int myIndex;
     private final @NotNull Language myLanguage;
-    private final @NotNull IStubElementType<?,?> myElementType;
+    private final @NotNull IElementType myElementType;
 
-    private StubIndexReference(@NotNull PsiFile file, int index, @NotNull Language language, @NotNull IStubElementType<?,?> elementType) {
+    private StubIndexReference(@NotNull PsiFile file,
+                               int index,
+                               @NotNull Language language,
+                               @NotNull IElementType elementType) {
       myLanguage = language;
       myElementType = elementType;
       myVirtualFile = file.getVirtualFile();
+      myContext = FileViewProviderUtil.getCodeInsightContext(file);
       if (file.getViewProvider() instanceof FreeThreadedFileViewProvider) {
         throw new IllegalArgumentException("Must not use StubIndexReference for injected file; take a closer look at HardReference instead");
       }
@@ -451,7 +466,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       if (myProject.isDisposed() || !myVirtualFile.isValid()) {
         return null;
       }
-      FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(myVirtualFile);
+      FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(myVirtualFile, myContext);
       PsiFile file = viewProvider == null ? null : viewProvider.getPsi(myLanguage);
       return file instanceof PsiFileWithStubSupport ? file : null;
     }

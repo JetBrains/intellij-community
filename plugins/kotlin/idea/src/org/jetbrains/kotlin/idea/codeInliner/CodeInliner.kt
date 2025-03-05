@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
@@ -14,10 +14,11 @@ import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelp
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.core.OptionalParametersHelper
+import org.jetbrains.kotlin.idea.core.asExpression
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.LambdaToAnonymousFunctionIntention
-import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.NEW_DECLARATION_KEY
@@ -35,7 +36,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.model.*
+import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument
+import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
@@ -216,7 +220,7 @@ class CodeInliner (
             val oldName = declaration.name
             if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope, languageVersionSettings)) {
                 val newName = KotlinNameSuggester.suggestNameByName(oldName, validator)
-                for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
+                for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent)).asIterable()) {
                     if (reference.element.startOffset < endOfScope) {
                         reference.handleElementRename(newName)
                     }
@@ -308,10 +312,11 @@ class CodeInliner (
                     usages.forEach { it.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, param.name) }
                 }
 
-                val defaultValueCopy = defaultValue.copied()
+                var defaultValueCopy = defaultValue.copied()
 
                 // clean up user data in original
                 defaultValue.forEachDescendantOfType<KtExpression> { it.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, null) }
+                defaultValueCopy = expandTypeArgumentsInParameterDefault(defaultValue) ?: defaultValueCopy
 
                 return Argument(defaultValueCopy, null/*TODO*/, isDefaultValue = true)
             }

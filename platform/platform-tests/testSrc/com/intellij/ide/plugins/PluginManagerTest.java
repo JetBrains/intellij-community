@@ -333,7 +333,7 @@ public class PluginManagerTest {
           var element = moduleMap.get(path);
           if (element != null) {
             try {
-              return XmlReader.readModuleDescriptorForTest(elementAsBytes(element));
+              return PluginBuilderKt.readModuleDescriptorForTest(elementAsBytes(element));
             }
             catch (XMLStreamException e) {
               throw new RuntimeException(e);
@@ -342,7 +342,7 @@ public class PluginManagerTest {
 
           assert readInto == null;
           // auto-generate empty descriptor
-          return XmlReader.readModuleDescriptorForTest(("<idea-plugin package=\"" + path + "\"></idea-plugin>").getBytes(StandardCharsets.UTF_8));
+          return PluginBuilderKt.readModuleDescriptorForTest(("<idea-plugin package=\"" + path + "\"></idea-plugin>").getBytes(StandardCharsets.UTF_8));
         }
         return resolvePath(readContext, dataLoader, path, readInto);
       }

@@ -5,6 +5,12 @@ const prefix = "ep@"
 const LC_KEYS = {
   delimiter: prefix + "delimiter"
 };
+const EXTERNAL_VARIABLES = {}
+
+const ERROR_HIGHLIGHT = " <<<----<<< ";
+const WARNING_HIGHLIGHT = " <<<~~~~<<< ";
+const SUCCESS_HIGHLIGHT = " <<<++++<<< ";
+const HIGHLIGHTS = [ERROR_HIGHLIGHT, WARNING_HIGHLIGHT, SUCCESS_HIGHLIGHT];
 
 
 document.addEventListener("click", function (e) {
@@ -45,7 +51,6 @@ function updateBackgrounds(e, elementClasses, bgClass) {
   addClassForElements(selected, bgClass, true)
 }
 
-document.getElementById("wrong-filters").onchange = (e) => updateBackgrounds(e,  ["raw-filter", "analyzed-filter"], "bg-filters-skipped")
 document.getElementById("model-skipped").onchange = (e) => updateBackgrounds(e, ["trigger-skipped", "filter-skipped"], "bg-model-skipped")
 
 function removeClassForElements(elementsClassName, classToAdd) {
@@ -150,26 +155,27 @@ function updatePopup(sessionDiv) {
       addSuggestions(sessionDiv, popup, lookup);
     }
   }
-  sessionDiv.appendChild(popup)
+  appendPopup(sessionDiv, popup)
 }
 
 // Add the `addDiffView` function
 function addDiffView(sessionDiv, popup, lookup, originalText) {
-  const lineDiff = new Diff();
+  const lineDiff = new HighlightResistantDiff(HIGHLIGHTS);
 
   sessionDiv.classList.add("diffView")
   sessionDiv.classList.remove("features", "contexts","suggestions")
   const diffDiv = document.createElement("DIV");
   diffDiv.setAttribute("class", "diffView");
 
-  const suggestionsText = lookup["suggestions"].map(s => s.presentationText).join("\n");
+  const suggestionsText = lookup["suggestions"][lookup["suggestions"].length - 1].presentationText;
 
   const unifiedDiff = lineDiff.unifiedSlideDiff(originalText, suggestionsText, 1);
 
   unifiedDiff.forEach(line => {
     const lineDiv = document.createElement("DIV");
-    lineDiv.textContent = line.content;
-    lineDiv.style.whiteSpace = "pre"; // Ensure indentation is preserved
+    const text = highlightedText(line.content);
+    text.style.display = "inline";
+    lineDiv.appendChild(text);
 
     const oldLineNumberSpan = document.createElement("span");
     oldLineNumberSpan.textContent = line.oldLineNumber !== '' ? line.oldLineNumber : ' ';
@@ -219,13 +225,19 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
       }
     }
   }
+  else popup.appendChild(document.createElement("DIV"))
+
   addRelevanceModelBlock(popup, lookup, "trigger")
   addRelevanceModelBlock(popup, lookup, "filter")
+  addAiaDiagnosticsBlock("Failed file validations:", "aia_failed_file_validations", popup, lookup)
   addAiaDiagnosticsBlock("Response", "aia_response", popup, lookup)
   addAiaDiagnosticsBlock("Context", "aia_context", popup, lookup)
   addAiaDiagnosticsBlock("Code snippets from response", "extracted_code_snippets", popup, lookup)
   addAiaDiagnosticsBlock("Internal api calls from original code snippet", "ground_truth_internal_api_calls", popup, lookup)
   addAiaDiagnosticsBlock("Extracted api calls from generated code snippet", "predicted_api_calls", popup, lookup)
+  // TODO better to add a separate popup view?
+  addAiaDiagnosticsBlock("Appeared highlights", "appeared_highlights", popup, lookup)
+  addAiaDiagnosticsBlock("Erased APIs", "erased_apis", popup, lookup)
   addDiagnosticsBlock("RAW SUGGESTIONS", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED SUGGESTIONS", "analyzed_proposals", popup, lookup)
@@ -265,6 +277,11 @@ function createCodeElement(context) {
   return code
 }
 
+function appendPopup(session, popup) {
+  const target = session.querySelector(".autocomplete-items-position") ?? session
+  target.appendChild(popup)
+}
+
 function addButtonToCopyCompletionContext(context, sessionDiv, popup, lookup) {
   let buttonDiv = document.createElement("DIV")
   let button = document.createElement("BUTTON")
@@ -292,7 +309,8 @@ function addSuggestions(sessionDiv, popup, lookup) {
       p.setAttribute("style", "font-weight: bold;")
     }
     const presentationText = suggestions[i].presentationText.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    p.innerHTML = removeCommonIndentFromCodeSnippet(presentationText)
+    p.innerHTML = EXTERNAL_VARIABLES["suggestion.indent.preserve"] === "true" ?
+      presentationText : removeCommonIndentFromCodeSnippet(presentationText)
     suggestionDiv.appendChild(p)
     popup.appendChild(suggestionDiv)
   }
@@ -311,10 +329,7 @@ function addAiaDiagnosticsBlock(description, field, popup, lookup) {
   if (!(field in lookup["additionalInfo"])) return
   let contextBlock = document.createElement("DIV")
   contextBlock.style.whiteSpace = "inherit"
-  let code = document.createElement("code")
-  code.textContent = `${description}:\n\n${lookup["additionalInfo"][field]}`
-  contextBlock.appendChild(code)
-  code.style.whiteSpace = "inherit"
+  contextBlock.appendChild(highlightedText(`${description}:\n\n${lookup["additionalInfo"][field]}`))
   popup.appendChild(contextBlock)
 }
 
@@ -532,7 +547,7 @@ function invertRows(event, key) {
 
 function updateMultilinePopup(event) {
   if (event.altKey) {
-    showMultilinePrefixAndSuffix(event)
+    showMultilineIsolatedSession(event)
     return
   }
   const target = event.target
@@ -556,8 +571,7 @@ function updateMultilinePopup(event) {
   popup.setAttribute("class", "autocomplete-items")
 
   addMultilineHeaders(popup, showSuggestion)
-  let context = getMultilineContext(sessionDiv)
-  let indent = "prefix" in context ? context.prefix.match(/ *$/)[0].length : 0
+  let indent = 0
   let expectedText = sessions[sessionDiv.id.split(" ")[0]]["expectedText"].replace(new RegExp(`^ {${indent}}`, 'gm'), '')
   if (showSuggestion) {
     addMultilineSuggestion(sessionDiv, popup, lookup)
@@ -567,7 +581,7 @@ function updateMultilinePopup(event) {
   else {
     addMultilineAttachments(sessionDiv, popup, expectedText)
   }
-  sessionDiv.appendChild(popup)
+  appendPopup(sessionDiv, popup)
 }
 
 function addMultilineHeaders(popup, showSuggestion) {
@@ -599,11 +613,9 @@ function addMultilineSuggestion(sessionDiv, popup, lookup) {
 }
 
 function addMultilineAttachments(sessionDiv, popup, expectedText) {
-  const context = getMultilineContext(sessionDiv)
   let attachmentsDiv = document.createElement("DIV")
   attachmentsDiv.setAttribute("class", "attachments")
   let p = document.createElement("pre")
-  p.innerHTML = context.attachments
   attachmentsDiv.appendChild(p)
   popup.appendChild(attachmentsDiv)
 
@@ -612,23 +624,9 @@ function addMultilineAttachments(sessionDiv, popup, expectedText) {
   const pExp = document.createElement("pre")
   pExp.innerHTML = expectedText
 
-  let contextTokens = (context.attachments + "\n" + context.prefix + "\n" + context.suffix).split((/\W+/))
   let expectedTokens = expectedText.split((/\W+/))
-  expectedTokens.forEach((token) => {
-    if (contextTokens.indexOf(token) === -1) {
-      pExp.innerHTML = pExp.innerHTML.replace(new RegExp('\\b' + token + '\\b'), '<span class="missing-context">$&</span>')
-    }
-  })
   expected.appendChild(pExp)
   popup.appendChild(expected)
-}
-
-function getMultilineContext(sessionDiv) {
-  const parts = sessionDiv.id.split(" ")
-  const sessionId = parts[0]
-  const lookupOrder = parts[1]
-  const featuresJson = JSON.parse(pako.ungzip(atob(features[sessionId]), {to: 'string'}))
-  return featuresJson[lookupOrder]["common"].context
 }
 
 function addMultilineExpectedText(popup, expectedText) {
@@ -640,16 +638,13 @@ function addMultilineExpectedText(popup, expectedText) {
   popup.appendChild(expected)
 }
 
-function showMultilinePrefixAndSuffix(event) {
+function showMultilineIsolatedSession(event) {
   if (event.target.classList.contains("session")) {
     const sessionDiv = event.target
     sessionDiv.parentNode.style.display = "none"
     const newCode = document.createElement("pre")
     newCode.setAttribute("class", "code context multiline")
     newCode.style.backgroundColor = "bisque"
-    let context = getMultilineContext(sessionDiv)
-    let prefix = context.prefix
-    let suffix = context.suffix
 
     let prev = sessionDiv.previousSibling
     let offset = ""
@@ -657,9 +652,9 @@ function showMultilinePrefixAndSuffix(event) {
       offset = prev.textContent + offset
       prev = prev.previousSibling
     }
-    let begin = "\n".repeat(offset.split('\n').length - prefix.split('\n').length)
+    let begin = "\n".repeat(offset.split('\n').length)
     let expectedText = sessions[sessionDiv.id.split(" ")[0]]["expectedText"]
-    newCode.innerHTML = begin + prefix + "<span style='background-color: white'>" + expectedText +"</span>" + suffix
+    newCode.innerHTML = begin + "<span style='background-color: white'>" + expectedText +"</span>"
     sessionDiv.parentNode.parentNode.prepend(newCode)
   }
   else if (event.target.closest(".code.context") != null) {
@@ -672,6 +667,91 @@ function showMultilinePrefixAndSuffix(event) {
 function showMetrics() {
   let metricsDiv = document.getElementById("metrics-column")
   metricsDiv.style.display = metricsDiv.style.display === "none" ? "" : "none"
+}
+
+function highlightedText(text) {
+  const container = [];
+  let previousText = undefined;
+
+  function addText(text, inlineComment) {
+    let textElement;
+    let resultElement;
+
+    if (inlineComment !== undefined) {
+      textElement = document.createElement("span");
+      textElement.innerText = text;
+
+      const commentComponent = document.createElement("span");
+      commentComponent.style.marginLeft = "10px";
+      commentComponent.innerText = inlineComment;
+      commentComponent.style.textDecoration = "";
+      commentComponent.style.color = "grey";
+
+      resultElement = document.createElement("pre");
+      resultElement.appendChild(textElement);
+      resultElement.appendChild(commentComponent);
+    }
+    else {
+      textElement = document.createElement("pre");
+      textElement.innerText = text;
+      resultElement = textElement;
+    }
+
+    const leadingNewLineCount = text.match(/^\n+/)?.[0]?.length || 0
+    for (let i = 0; i < leadingNewLineCount; i++) {
+      container.push(document.createElement("br"));
+    }
+
+    container.push(resultElement);
+
+    const trailingNewLineCount = text.match(/\n+$/)?.[0]?.length || 0;
+    for (let i = 0; i < trailingNewLineCount; i++) {
+      container.push(document.createElement("br"));
+    }
+
+    return textElement;
+  }
+
+  for (const line of text.split('\n')) {
+    const highlight = HIGHLIGHTS.find(highlight => line.includes(highlight));
+    if (highlight !== undefined) {
+      if (previousText !== undefined) {
+        addText(previousText);
+        previousText = undefined;
+      }
+
+      const [text, message] = line.split(highlight);
+
+      const lineElement = addText(text, message);
+      lineElement.style.textDecoration = "underline";
+      lineElement.style.textDecorationThickness = "2px";
+      if (highlight === ERROR_HIGHLIGHT) {
+        lineElement.style.textDecorationColor = "red";
+      }
+      else if (highlight === WARNING_HIGHLIGHT) {
+        lineElement.style.textDecorationColor = "orange";
+      }
+      else if (highlight === SUCCESS_HIGHLIGHT) {
+        lineElement.style.textDecorationColor = "green";
+      }
+    }
+    else {
+      previousText = previousText === undefined ? line : `${previousText}\n${line}`;
+    }
+  }
+
+  if (previousText !== undefined) {
+    addText(previousText)
+  }
+
+  if (container.length === 1) {
+    return container[0];
+  }
+  else {
+    const div = document.createElement("div");
+    div.append(...container);
+    return div;
+  }
 }
 
 document.getElementById("defaultTabOpen")?.click()

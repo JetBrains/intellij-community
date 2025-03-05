@@ -20,9 +20,8 @@ public final class JavaSuperClassNameOccurenceIndex extends StringStubIndexExten
     return ourInstance;
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PsiReferenceList> getKey() {
+  public @NotNull StubIndexKey<String, PsiReferenceList> getKey() {
     return JavaStubIndexKeys.SUPER_CLASSES;
   }
 

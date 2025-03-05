@@ -17,6 +17,7 @@ import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
+import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -54,7 +55,7 @@ class RescanIndexesAction : RecoveryAction {
         return false;
       }
       val fileId = (it.file as VirtualFileWithId).id
-      if (fileBasedIndex.getIndexingState(it, stubIndex, indexingStamp) == FileIndexingState.UP_TO_DATE &&
+      if (fileBasedIndex.getIndexingState(it, stubIndex, indexingStamp).isUpToDate &&
           stubIndex.getIndexedFileData(fileId).isEmpty() &&
           isAbleToBuildStub(it.file)) {
         stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
@@ -74,10 +75,14 @@ class RescanIndexesAction : RecoveryAction {
     }
     application.service<AppIndexingDependenciesService>().invalidateAllStamps("Rescanning indexes recovery action")
     val trigger = ForceReindexingTrigger()
-    val historyFuture = UnindexedFilesScanner(project, false, false,
-                                              predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
-                                              if (predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED, null,
-                                              false, trigger).queue()
+    val parameters = CompletableDeferred(ScanningIterators(
+      "Rescanning indexes recovery action",
+      predefinedIndexableFilesIterators,
+      null,
+      if (predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED
+    ))
+    val historyFuture = UnindexedFilesScanner(project, false, false, null,
+                                              false, trigger, false, scanningParameters = parameters).queue()
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +
              trigger.stubAndIndexingStampInconsistencies

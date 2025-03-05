@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,13 +28,13 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
-  @Nullable protected final ProgressTracker myHandler;
+  protected final @Nullable ProgressTracker myHandler;
   private final ProgressIndicator myProgressIndicator;
   protected final Url myCurrentBranchUrl;
-  private final @Nls @NotNull StringBuilder myCommitMessage = new StringBuilder();
+  private @Nls @NotNull String myCommitMessage = "";
   protected final SvnConfiguration mySvnConfig;
   private final Project myProject;
-  @NotNull protected final SvnVcs myVcs;
+  protected final @NotNull SvnVcs myVcs;
   private final String myBranchName;
   private final boolean myRecordOnly;
   private final boolean myInvertRange;
@@ -99,8 +100,7 @@ public class Merger implements IMerger {
     return myMergeChunk == null ? 0 : myMergeChunk.nextChunkStart();
   }
 
-  @Nullable
-  private MergeChunk getNextChunk() {
+  private @Nullable MergeChunk getNextChunk() {
     int start = getNextChunkStart();
     int size = 0;
 
@@ -124,26 +124,21 @@ public class Merger implements IMerger {
   }
 
   private void appendComment() {
-    if (myCommitMessage.length() == 0) {
-      myCommitMessage.append(message("label.merged.from.branch", myBranchName));
-    }
-    for (CommittedChangeList list : myMergeChunk.changeLists()) {
-      myCommitMessage.append('\n');
-      myCommitMessage.append(message("merge.chunk.changelist.description", list.getComment().trim(), list.getNumber()));
-    }
+    myCommitMessage = StringUtil.notNullize(
+      MergerCommitMessage.EP_NAME.computeSafeIfAny(myProject, it -> it.getCommitMessage(this, myMergeChunk.changeLists()))
+    );
   }
 
   protected void doMerge() throws VcsException {
     Target source = Target.on(myCurrentBranchUrl);
-    MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
+    MergeClient client = getClientFactory().createMergeClient();
 
     client.merge(source, myMergeChunk.revisionRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), myRecordOnly, true,
                  mySvnConfig.getMergeOptions(), myHandler);
   }
 
   @Override
-  @Nullable
-  public String getInfo() {
+  public @Nullable String getInfo() {
     if (myMergeChunk == null) return null;
 
     return message("label.changelists.merging.faced.problems",
@@ -151,8 +146,7 @@ public class Merger implements IMerger {
   }
 
   @Override
-  @Nullable
-  public String getSkipped() {
+  public @Nullable String getSkipped() {
     List<? extends CommittedChangeList> changeLists = myMergeChunk != null ? myMergeChunk.chunkAndAfterLists() : ContainerUtil.emptyList();
     if (changeLists.isEmpty()) return null;
 
@@ -165,12 +159,11 @@ public class Merger implements IMerger {
 
   @Override
   public @NotNull String getComment() {
-    return myCommitMessage.toString();
+    return myCommitMessage;
   }
 
   @Override
-  @Nullable
-  public File getMergeInfoHolder() {
+  public @Nullable File getMergeInfoHolder() {
     return myTarget;
   }
 
@@ -189,6 +182,14 @@ public class Merger implements IMerger {
     }
   }
 
+  public @NotNull ClientFactory getClientFactory() {
+    return myVcs.getFactory(myTarget);
+  }
+
+  public @NotNull String getBranchName() {
+    return myBranchName;
+  }
+
   @Topic.ProjectLevel
   public static final Topic<CommittedChangesMergedStateChanged> COMMITTED_CHANGES_MERGED_STATE =
     new Topic<>("COMMITTED_CHANGES_MERGED_STATE", CommittedChangesMergedStateChanged.class);
@@ -197,8 +198,7 @@ public class Merger implements IMerger {
     void event(final List<CommittedChangeList> list);
   }
 
-  @NotNull
-  private CommittedChangeList listAt(int index) {
+  private @NotNull CommittedChangeList listAt(int index) {
     return myChangeLists.get(index);
   }
 
@@ -244,23 +244,19 @@ public class Merger implements IMerger {
       return myChangeLists.get(end()).getNumber();
     }
 
-    @NotNull
-    public List<CommittedChangeList> changeLists() {
+    public @NotNull List<CommittedChangeList> changeLists() {
       return myChangeLists.subList(start(), nextChunkStart());
     }
 
-    @NotNull
-    public List<CommittedChangeList> chunkAndBeforeLists() {
+    public @NotNull List<CommittedChangeList> chunkAndBeforeLists() {
       return myChangeLists.subList(0, nextChunkStart());
     }
 
-    @NotNull
-    public List<CommittedChangeList> chunkAndAfterLists() {
+    public @NotNull List<CommittedChangeList> chunkAndAfterLists() {
       return ContainerUtil.subList(myChangeLists, start());
     }
 
-    @NotNull
-    public RevisionRange revisionRange() {
+    public @NotNull RevisionRange revisionRange() {
       Revision startRevision = Revision.of(lowestNumber() - 1);
       Revision endRevision = Revision.of(highestNumber());
 

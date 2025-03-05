@@ -19,6 +19,7 @@ public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
     return new ThreadDescriptorImpl(myThread);
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof ThreadData)) {
       return false;
@@ -26,6 +27,7 @@ public class ThreadData extends DescriptorData<ThreadDescriptorImpl> {
     return myThread.equals(((ThreadData)object).myThread);
   }
 
+  @Override
   public int hashCode() {
     return myThread.hashCode();
   }

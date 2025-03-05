@@ -34,12 +34,12 @@ public interface HolderFactory {
   @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context);
   @NotNull
-  DummyHolder createHolder(@NotNull PsiManager manager, Language language, PsiElement context);
+  DummyHolder createHolder(@NotNull PsiManager manager, @NotNull Language language, PsiElement context);
   @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table);
   @NotNull
   DummyHolder createHolder(@NotNull PsiManager manager, PsiElement context, CharTable table);
   @NotNull
-  DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, Language language);
+  DummyHolder createHolder(@NotNull PsiManager manager, CharTable table, @NotNull Language language);
   
 }

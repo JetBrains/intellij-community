@@ -141,7 +141,7 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
           if (element instanceof PsiExpression expression) {
             Object o = JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper()
               .computeConstantExpression(expression, false);
-            if (o instanceof Boolean b && b == Boolean.FALSE) {
+            if (o instanceof Boolean b && !b) {
               defaultBranch = branch;
               break;
             }

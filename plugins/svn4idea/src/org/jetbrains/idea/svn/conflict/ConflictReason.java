@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.conflict;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ public enum ConflictReason {
   @XmlEnumValue("moved-away") MOVED_AWAY("moved-away"),
   @XmlEnumValue("moved-here") MOVED_HERE("moved-here");
 
-  @NotNull private static final Map<String, ConflictReason> ourAllReasons = new HashMap<>();
+  private static final @NotNull Map<String, ConflictReason> ourAllReasons = new HashMap<>();
 
   static {
     for (ConflictReason reason : ConflictReason.values()) {
@@ -30,7 +30,7 @@ public enum ConflictReason {
     }
   }
 
-  @NotNull private final String myKey;
+  private final @NotNull String myKey;
   private final String @NotNull [] myOtherKeys;
 
   ConflictReason(@NotNull String key, String @NotNull ... otherKeys) {
@@ -51,8 +51,7 @@ public enum ConflictReason {
     }
   }
 
-  @NotNull
-  public static ConflictReason from(@NotNull String reasonName) {
+  public static @NotNull ConflictReason from(@NotNull String reasonName) {
     ConflictReason result = ourAllReasons.get(reasonName);
 
     if (result == null) {

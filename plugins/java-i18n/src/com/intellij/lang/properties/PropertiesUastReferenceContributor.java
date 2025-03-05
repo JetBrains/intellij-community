@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,7 +22,7 @@ public final class PropertiesUastReferenceContributor extends PsiReferenceContri
   private static final Logger LOG = Logger.getInstance(PropertiesUastReferenceContributor.class);
 
   @Override
-  public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(final @NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar.registerUastReferenceProvider(registrar, injectionHostUExpression(),
                                                          new UastPropertiesReferenceProvider(true), PsiReferenceRegistrar.LOWER_PRIORITY);
 

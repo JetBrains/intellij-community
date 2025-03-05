@@ -4,6 +4,8 @@ package com.intellij.webSymbols.query
 import com.intellij.model.Pointer
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
+import com.intellij.webSymbols.testFramework.query.doTest
+import com.intellij.webSymbols.testFramework.query.printMatches
 import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 
 class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
@@ -370,6 +372,18 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
   fun testBasicCustomElementsManifest2() {
     doTest("html/elements/my-EleMeNt/attributes/disabled", customElementsManifests = listOf("basic"))
+  }
+
+  fun testCssClassListSingleClass() {
+    doTest("css/class-list/foo", null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses1() {
+    doTest("css/class-list/foo bar", null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses2() {
+    doTest("css/class-list/foo-bar bar foo foo", null, "css-class-list")
   }
 
   fun testNestedPattern1() {

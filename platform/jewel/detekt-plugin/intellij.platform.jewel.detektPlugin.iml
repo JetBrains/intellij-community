@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/kotlin" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/kotlin" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="io.gitlab.arturbosch.detekt.api" type="repository">
+        <properties maven-id="io.gitlab.arturbosch.detekt:detekt-api:1.23.7">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.7/detekt-api-1.23.7.jar">
+              <sha256sum>93fd0c9cdb22dd97ecfc843d55abfc52c9d9c6a0db32abdf9c85735e1bc8047d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.10/kotlin-compiler-embeddable-2.0.10.jar">
+              <sha256sum>ea76850ffe3b84c92654a73f8e366964857f7e95687ca158882241cebef591e8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.10/kotlin-script-runtime-2.0.10.jar">
+              <sha256sum>58f4f7ad99a4a045964b44fe55f0b2604d2c5f51ff4d97c7e6817983fdf92ea7</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.6.10/kotlin-reflect-1.6.10.jar">
+              <sha256sum>3277ac102ae17aad10a55abec75ff5696c8d109790396434b496e75087854203</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.10/kotlin-daemon-embeddable-2.0.10.jar">
+              <sha256sum>a500d6f7bb2152a8387a9e24b886d0654fdbdb6662ec264c544ce9346f186141</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar">
+              <sha256sum>c5fd725bffab51846bf3c77db1383c60aaaebfe1b7fe2f00d23fe1b7df0a439d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.7/detekt-psi-utils-1.23.7.jar">
+              <sha256sum>6a054c91da27aac77db3ed509ff9f408c45410e1a5e989dc380aae3c09d7fb6e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.7/detekt-utils-1.23.7.jar">
+              <sha256sum>0b5c211c72f63985a3e2e0f12f9a7733c7b3411b983a1c7f3175f3bd68d72194</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.16.0/poko-annotations-jvm-0.16.0.jar">
+              <sha256sum>940e6d50445bc6b0ae26ad414ec7b953a3e4e802dc7756cc14d56958bc97cc31</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.7/detekt-api-1.23.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.10/kotlin-compiler-embeddable-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.10/kotlin-script-runtime-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.6.10/kotlin-reflect-1.6.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.10/kotlin-daemon-embeddable-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.7/detekt-psi-utils-1.23.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.7/detekt-utils-1.23.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.16.0/poko-annotations-jvm-0.16.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.7/detekt-api-1.23.7-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.10/kotlin-compiler-embeddable-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.10/kotlin-script-runtime-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.6.10/kotlin-reflect-1.6.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.10/kotlin-daemon-embeddable-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.7/detekt-psi-utils-1.23.7-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.7/detekt-utils-1.23.7-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.16.0/poko-annotations-jvm-0.16.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.7/detekt-api-1.23.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.10/kotlin-compiler-embeddable-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.10/kotlin-script-runtime-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.6.10/kotlin-reflect-1.6.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.10/kotlin-daemon-embeddable-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.7/detekt-psi-utils-1.23.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.7/detekt-utils-1.23.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.16.0/poko-annotations-jvm-0.16.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module-library" scope="TEST">
+      <library name="io.gitlab.arturbosch.detekt.test" type="repository">
+        <properties maven-id="io.gitlab.arturbosch.detekt:detekt-test:1.23.7">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-test/1.23.7/detekt-test-1.23.7.jar">
+              <sha256sum>fdceebdaead6217fbe6292c15ac93c7712f460458977201a0bb695ae847e3749</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.7/detekt-api-1.23.7.jar">
+              <sha256sum>93fd0c9cdb22dd97ecfc843d55abfc52c9d9c6a0db32abdf9c85735e1bc8047d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.10/kotlin-compiler-embeddable-2.0.10.jar">
+              <sha256sum>ea76850ffe3b84c92654a73f8e366964857f7e95687ca158882241cebef591e8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.10/kotlin-script-runtime-2.0.10.jar">
+              <sha256sum>58f4f7ad99a4a045964b44fe55f0b2604d2c5f51ff4d97c7e6817983fdf92ea7</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.10/kotlin-daemon-embeddable-2.0.10.jar">
+              <sha256sum>a500d6f7bb2152a8387a9e24b886d0654fdbdb6662ec264c544ce9346f186141</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar">
+              <sha256sum>c5fd725bffab51846bf3c77db1383c60aaaebfe1b7fe2f00d23fe1b7df0a439d</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.7/detekt-psi-utils-1.23.7.jar">
+              <sha256sum>6a054c91da27aac77db3ed509ff9f408c45410e1a5e989dc380aae3c09d7fb6e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.16.0/poko-annotations-jvm-0.16.0.jar">
+              <sha256sum>940e6d50445bc6b0ae26ad414ec7b953a3e4e802dc7756cc14d56958bc97cc31</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-test-utils/1.23.7/detekt-test-utils-1.23.7.jar">
+              <sha256sum>33d970cc98c59e5d9d0b01ba7b525a76d363443a6a463f8cb869e08677e37ca3</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.10.2/junit-jupiter-api-5.10.2.jar">
+              <sha256sum>afff77c186cd317275803872fa5133aa801fd6ac40bd91c78a6cf8009b4b17cc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar">
+              <sha256sum>48e2df636cab6563ced64dcdff8abb2355627cb236ef0bf37598682ddf742f1b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.10.2/junit-platform-commons-1.10.2.jar">
+              <sha256sum>b56a5ec000a479df4973b18bba24c98fe0db8faa14c8907d3ef451d8c71fd8ae</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar">
+              <sha256sum>b509448ac506d607319f182537f0b35d71007582ec741832a1f111e5b5b70b38</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-parser/1.23.7/detekt-parser-1.23.7.jar">
+              <sha256sum>e217ab883e2e0f0e8a69b1fce7a131ff93a8bf2e06bd5fd395b38cde6b9c9504</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/github/davidburstrom/contester/contester-breakpoint/0.2.0/contester-breakpoint-0.2.0.jar">
+              <sha256sum>672cbebb5d45a72b35dd81fd6127e187451bb6fb7fba35315bbdf2f57cfce835</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.0.10/kotlin-main-kts-2.0.10.jar">
+              <sha256sum>1ae40572a7b9cc19dde70e88dae3dd7fa9db642578b5fbfaabca4dfc22e76b60</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-embeddable/2.0.10/kotlin-scripting-compiler-embeddable-2.0.10.jar">
+              <sha256sum>6c83faccacfc9ed71ade5e5ad1f22202a6b5be37deea10d2bc7df4dc3abdab3a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl-embeddable/2.0.10/kotlin-scripting-compiler-impl-embeddable-2.0.10.jar">
+              <sha256sum>97749ff32fce25ac35b2fd333080d34b6fc4d7a6b6ffb0499ece09ffebd123c8</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.0.10/kotlin-scripting-common-2.0.10.jar">
+              <sha256sum>37d4671e73ca6599f597aba464577ebb3b8771a31ee9d7dcb52d916762d16871</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.10/kotlin-scripting-jvm-2.0.10.jar">
+              <sha256sum>5259a5173e2ea1b0256fb5ab994be50c18fdc15ed4f5b62edcf7e2579ecc9a7a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.7/detekt-utils-1.23.7.jar">
+              <sha256sum>0b5c211c72f63985a3e2e0f12f9a7733c7b3411b983a1c7f3175f3bd68d72194</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="io.gitlab.arturbosch.detekt:detekt-core" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-test/1.23.7/detekt-test-1.23.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.7/detekt-api-1.23.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.10/kotlin-compiler-embeddable-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.10/kotlin-script-runtime-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.10/kotlin-daemon-embeddable-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.7/detekt-psi-utils-1.23.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.16.0/poko-annotations-jvm-0.16.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-test-utils/1.23.7/detekt-test-utils-1.23.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.10.2/junit-jupiter-api-5.10.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.10.2/junit-platform-commons-1.10.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-parser/1.23.7/detekt-parser-1.23.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/davidburstrom/contester/contester-breakpoint/0.2.0/contester-breakpoint-0.2.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.0.10/kotlin-main-kts-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-embeddable/2.0.10/kotlin-scripting-compiler-embeddable-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl-embeddable/2.0.10/kotlin-scripting-compiler-impl-embeddable-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.0.10/kotlin-scripting-common-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.10/kotlin-scripting-jvm-2.0.10.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.7/detekt-utils-1.23.7.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-test/1.23.7/detekt-test-1.23.7-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.7/detekt-api-1.23.7-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.10/kotlin-compiler-embeddable-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.10/kotlin-script-runtime-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.10/kotlin-daemon-embeddable-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.7/detekt-psi-utils-1.23.7-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.16.0/poko-annotations-jvm-0.16.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-test-utils/1.23.7/detekt-test-utils-1.23.7-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.10.2/junit-jupiter-api-5.10.2-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.10.2/junit-platform-commons-1.10.2-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-parser/1.23.7/detekt-parser-1.23.7-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/davidburstrom/contester/contester-breakpoint/0.2.0/contester-breakpoint-0.2.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.0.10/kotlin-main-kts-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-embeddable/2.0.10/kotlin-scripting-compiler-embeddable-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl-embeddable/2.0.10/kotlin-scripting-compiler-impl-embeddable-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.0.10/kotlin-scripting-common-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.10/kotlin-scripting-jvm-2.0.10-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.7/detekt-utils-1.23.7-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-test/1.23.7/detekt-test-1.23.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-api/1.23.7/detekt-api-1.23.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.0.10/kotlin-compiler-embeddable-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.10/kotlin-script-runtime-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/2.0.10/kotlin-daemon-embeddable-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/trove4j/1.0.20200330/trove4j-1.0.20200330-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-psi-utils/1.23.7/detekt-psi-utils-1.23.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/dev/drewhamilton/poko/poko-annotations-jvm/0.16.0/poko-annotations-jvm-0.16.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-test-utils/1.23.7/detekt-test-utils-1.23.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.10.2/junit-jupiter-api-5.10.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.10.2/junit-platform-commons-1.10.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-parser/1.23.7/detekt-parser-1.23.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/github/davidburstrom/contester/contester-breakpoint/0.2.0/contester-breakpoint-0.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.0.10/kotlin-main-kts-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-embeddable/2.0.10/kotlin-scripting-compiler-embeddable-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl-embeddable/2.0.10/kotlin-scripting-compiler-impl-embeddable-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.0.10/kotlin-scripting-common-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.0.10/kotlin-scripting-jvm-2.0.10-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/gitlab/arturbosch/detekt/detekt-utils/1.23.7/detekt-utils-1.23.7-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

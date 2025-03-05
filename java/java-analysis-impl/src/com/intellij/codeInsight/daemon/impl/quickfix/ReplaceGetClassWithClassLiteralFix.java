@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -16,6 +16,8 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 public class ReplaceGetClassWithClassLiteralFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   public ReplaceGetClassWithClassLiteralFix(PsiMethodCallExpression expression) {
@@ -40,21 +42,16 @@ public class ReplaceGetClassWithClassLiteralFix extends PsiUpdateModCommandActio
       PriorityAction.Priority.HIGH);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("replace.get.class.with.class.literal");
   }
 
-  public static void registerFix(PsiMethodCallExpression callExpression, HighlightInfo.Builder errorResult) {
+  public static void registerFix(PsiMethodCallExpression callExpression, @NotNull Consumer<? super CommonIntentionAction> info) {
     if (callExpression.getMethodExpression().getQualifierExpression() == null) {
       PsiMethod method = callExpression.resolveMethod();
       if (method != null && PsiTypesUtil.isGetClass(method)) {
-        var action = new ReplaceGetClassWithClassLiteralFix(callExpression);
-        if (errorResult != null) {
-          errorResult.registerFix(action, null, null, null, null);
-        }
+        info.accept(new ReplaceGetClassWithClassLiteralFix(callExpression));
       }
     }
   }

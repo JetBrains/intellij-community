@@ -102,7 +102,7 @@ public class JBCefLoadHtmlTest {
     assertNotNull(browser);
 
 
-    invokeAndWaitForLatch(LATCH, () -> {
+    invokeAndWaitForLatch(LATCH, "loadHTML -> wait js callback", () -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);
       frame.setLocationRelativeTo(null);

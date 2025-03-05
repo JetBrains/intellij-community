@@ -235,30 +235,12 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-11208
   public void testMockPatchObject1() {
-    final String testName = getTestName(true);
-
-    runWithAdditionalClassEntryInSdkRoots(
-      testName + "/lib",
-      () -> {
-        myFixture.configureByFile(testName + "/a.py");
-        myFixture.completeBasic();
-        myFixture.checkResultByFile(testName + "/a.after.py");
-      }
-    );
+    doMultiFileTest();
   }
 
   // PY-11208
   public void testMockPatchObject2() {
-    final String testName = getTestName(true);
-
-    runWithAdditionalClassEntryInSdkRoots(
-      testName + "/lib",
-      () -> {
-        myFixture.configureByFile(testName + "/a.py");
-        myFixture.completeBasic();
-        myFixture.checkResultByFile(testName + "/a.after.py");
-      }
-    );
+    doMultiFileTest();
   }
 
   // PY-21060
@@ -329,6 +311,11 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-27398
   public void testDataclassWithInitVarPostInit() {
+    doMultiFileTest();
+  }
+
+  // PY-78008
+  public void testDataclassWithInheritedInitVarPostInit() {
     doMultiFileTest();
   }
 
@@ -751,6 +738,35 @@ public class Py3CompletionTest extends PyTestCase {
   // PY-73246
   public void testSquareBracketsNotInsertedAfterAlreadyParameterizedGenericInsideTypeHints() {
     doMultiFileTest();
+  }
+
+  // PY-74116
+  public void testParenthesesAreNotInsertedAfterNamesDefinedAsFunctionsInTypingPy() {
+    runWithAdditionalFileInLibDir("typing.py", """
+      def TypedDict(typename, fields=None, /, *, total=True, **kwargs):
+          ...
+      """, ignored -> {
+      doTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableFunctionsFromTypingSuggestedInsideTypeHints() {
+    runWithAdditionalFileInLibDir("typing.py", """
+      def Final(self, parameters):
+          ...
+      """, ignored -> {
+      doTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableVariablesFromTypingSuggestedInsideTypeHints() {
+    runWithAdditionalFileInLibDir("typing.py", """
+      Tuple = _TupleType(tuple, -1, inst=False, name='Tuple')
+      """, ignored -> {
+      doTest();
+    });
   }
 
   private void doTestVariants(String @NotNull ... expected) {

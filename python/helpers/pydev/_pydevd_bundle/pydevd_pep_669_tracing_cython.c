@@ -3,6 +3,12 @@
 /* BEGIN: Cython Metadata
 {
     "distutils": {
+        "extra_compile_args": [
+            "--target=arm64-apple-macos11"
+        ],
+        "extra_link_args": [
+            "--target=arm64-apple-macos11"
+        ],
         "name": "_pydevd_bundle.pydevd_pep_669_tracing_cython",
         "sources": [
             "_pydevd_bundle/pydevd_pep_669_tracing_cython.pyx"
@@ -1479,7 +1485,7 @@ static const char *__pyx_filename;
 /* #### Code section: filename_table ### */
 
 static const char *__pyx_f[] = {
-  "_pydevd_bundle\\\\pydevd_pep_669_tracing_cython.pyx",
+  "_pydevd_bundle/pydevd_pep_669_tracing_cython.pyx",
 };
 /* #### Code section: utility_code_proto_before_types ### */
 /* ForceInitThreads.proto */
@@ -2488,7 +2494,7 @@ static const char __pyx_k_pydevd_bundle_pydevd_trace_disp[] = "_pydevd_bundle.py
 static const char __pyx_k_should_enable_line_events_for_c[] = "_should_enable_line_events_for_code";
 static const char __pyx_k_Exception_while_handling_smart_s[] = "Exception while handling smart step into in frame tracer, step into will be performed instead.";
 static const char __pyx_k_get_abs_path_real_path_and_base_2[] = "_get_abs_path_real_path_and_base_from_frame";
-static const char __pyx_k_pydevd_bundle_pydevd_pep_669_tr_2[] = "_pydevd_bundle\\pydevd_pep_669_tracing_cython.pyx";
+static const char __pyx_k_pydevd_bundle_pydevd_pep_669_tr_2[] = "_pydevd_bundle/pydevd_pep_669_tracing_cython.pyx";
 /* #### Code section: decls ### */
 static PyObject *__pyx_lambda_funcdef_14_pydevd_bundle_29pydevd_pep_669_tracing_cython_lambda(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_x, PyObject *__pyx_v_y); /* proto */
 static PyObject *__pyx_lambda_funcdef_14_pydevd_bundle_29pydevd_pep_669_tracing_cython_lambda1(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_x, PyObject *__pyx_v_y); /* proto */

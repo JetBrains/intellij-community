@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages;
 
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.nio.file.Path;
  * which just opens the storage over given file.
  */
 @FunctionalInterface
+@ApiStatus.Internal
 public interface StorageFactory<A extends AutoCloseable> {
   @NotNull A open(@NotNull Path storagePath) throws IOException;
 
@@ -24,12 +26,12 @@ public interface StorageFactory<A extends AutoCloseable> {
    * If the wrapping function throws exception -- method closes the storage just opened before propagating
    * exception up the stack.
    */
-  default <S extends AutoCloseable, E extends Throwable> @NotNull S wrapStorageSafely(@NotNull Path storagePath,
-                                                                                      @NotNull ThrowableNotNullFunction<? super A, ? extends S, E> anotherStorageOpener)
+  default <S, E extends Throwable> @NotNull S wrapStorageSafely(@NotNull Path storagePath,
+                                                                @NotNull ThrowableNotNullFunction<? super A, ? extends S, E> anotherStorageOpener)
     throws IOException, E {
     return IOUtil.wrapSafely(
       open(storagePath),
-      storage -> anotherStorageOpener.fun(storage)
+      anotherStorageOpener::fun
     );
   }
 

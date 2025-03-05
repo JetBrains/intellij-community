@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import java.io.IOException
@@ -33,7 +32,6 @@ import java.io.IOException
  *
  * Implement [com.intellij.openapi.project.DumbAware] to allow running commit check in dumb mode.
  */
-@ApiStatus.Experimental
 interface CommitCheck : PossiblyDumbAware {
   fun getExecutionOrder(): ExecutionOrder
 
@@ -92,7 +90,6 @@ interface CommitCheck : PossiblyDumbAware {
  *
  * @see CommitProblemWithDetails
  */
-@ApiStatus.Experimental
 interface CommitProblem {
   /**
    * Short problem description to show to the user.
@@ -162,7 +159,6 @@ interface CommitProblem {
 /**
  * Allows to show a link near the error, that can be used to show more detailed explanation or propose a quick fix for the problem.
  */
-@ApiStatus.Experimental
 interface CommitProblemWithDetails : CommitProblem {
   /**
    * If null, the whole [CommitProblem.text] will become a link.

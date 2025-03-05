@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.openapi.vcs.merge.MergeSession
@@ -24,7 +24,7 @@ internal abstract class SettingsRepositoryGitTestBase : IcsTestCase() {
   }
 
   protected val repositoryManager: GitRepositoryManager
-    get() = icsManager.repositoryManager as GitRepositoryManager
+    get() = icsManager.repositoryManager
 
   protected val repository: Repository
     get() = repositoryManager.repository

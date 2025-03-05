@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
@@ -48,9 +48,8 @@ public final class CreateNewLibraryAction extends DumbAwareAction {
     myProject = project;
   }
 
-  @Nullable
-  public static Library createLibrary(@Nullable final LibraryType type, @NotNull final JComponent parentComponent,
-                                      @NotNull final Project project, @NotNull final LibrariesModifiableModel modifiableModel) {
+  public static @Nullable Library createLibrary(final @Nullable LibraryType type, final @NotNull JComponent parentComponent,
+                                                final @NotNull Project project, final @NotNull LibrariesModifiableModel modifiableModel) {
     final NewLibraryConfiguration configuration = createNewLibraryConfiguration(type, parentComponent, project);
     if (configuration == null) return null;
     final LibraryType<?> libraryType = configuration.getLibraryType();
@@ -66,8 +65,7 @@ public final class CreateNewLibraryAction extends DumbAwareAction {
     return library;
   }
 
-  @Nullable
-  public static NewLibraryConfiguration createNewLibraryConfiguration(@Nullable LibraryType type, @NotNull JComponent parentComponent, @NotNull Project project) {
+  public static @Nullable NewLibraryConfiguration createNewLibraryConfiguration(@Nullable LibraryType type, @NotNull JComponent parentComponent, @NotNull Project project) {
     final NewLibraryConfiguration configuration;
     final VirtualFile baseDir = project.getBaseDir();
     if (type != null) {

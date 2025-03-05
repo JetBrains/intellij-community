@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.coverage;
 
@@ -114,8 +114,7 @@ public abstract class CoverageDataManager {
    * @param computation {@link Computable to be run}
    * @return result of the computation or null if the project is already closing.
    */
-  @Nullable
-  public abstract <T> T doInReadActionIfProjectOpen(Computable<T> computation);
+  public abstract @Nullable <T> T doInReadActionIfProjectOpen(Computable<T> computation);
 
   @ApiStatus.Internal
   public boolean isSubCoverageActive() {
@@ -123,11 +122,11 @@ public abstract class CoverageDataManager {
   }
 
   @ApiStatus.Internal
-  public void selectSubCoverage(@NotNull final CoverageSuitesBundle suite, final List<String> methodNames) {
+  public void selectSubCoverage(final @NotNull CoverageSuitesBundle suite, final List<String> methodNames) {
   }
 
   @ApiStatus.Internal
-  public void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite) {
+  public void restoreMergedCoverage(final @NotNull CoverageSuitesBundle suite) {
   }
 
   public abstract void addSuiteListener(@NotNull CoverageSuiteListener listener, @NotNull Disposable parentDisposable);
@@ -137,8 +136,8 @@ public abstract class CoverageDataManager {
   /**
    * This method attach process listener to process handler. Listener will load coverage information after process termination
    */
-  public abstract void attachToProcess(@NotNull final ProcessHandler handler,
-                                       @NotNull final RunConfigurationBase<?> configuration, RunnerSettings runnerSettings);
+  public abstract void attachToProcess(final @NotNull ProcessHandler handler,
+                                       final @NotNull RunConfigurationBase<?> configuration, RunnerSettings runnerSettings);
 
   public abstract void processGatheredCoverage(@NotNull RunConfigurationBase<?> configuration, RunnerSettings runnerSettings);
 

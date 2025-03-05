@@ -19,6 +19,8 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.time.Clock;
 import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -31,7 +33,7 @@ import static java.util.stream.Collectors.toList;
  * <br/>
  * Create new file, while keeping total files number limited:
  * <pre>
- * final Path newlyCreatedFile = FileSetLimiter.inDirectory(dir)
+ * Path newlyCreatedFile = FileSetLimiter.inDirectory(dir)
  *                   .withBaseNameAndDateFormatSuffix("my-file.log", "yyyy-MM-dd-HH-mm-ss")
  *                   .withMaxFilesToKeep(10)
  *                   .createNewFile(); // _creates_ new file,
@@ -70,19 +72,34 @@ public final class FileSetLimiter {
     }
   };
 
-  public static final Consumer<Collection<? extends Path>> DELETE_ASYNC = paths -> {
-    if (!paths.isEmpty()) {
-      ExecutorsKt.asExecutor(Dispatchers.getIO()).execute(() -> {
-        final Thread currentThread = Thread.currentThread();
-        final int priority = currentThread.getPriority();
-        currentThread.setPriority(Thread.MIN_PRIORITY);
+  private static final Executor ASYNC_DELETE_POOL = ExecutorsKt.asExecutor(Dispatchers.getIO());
+  public static final Consumer<Collection<? extends Path>> DELETE_ASYNC = new Consumer<Collection<? extends Path>>() {
+    /**
+     * IJPL-167246: if the path list is very long, and/or IO is very slow, and/or IO pool is very busy -- async requests
+     * could be enqueued faster than processed, hence creating quite a memory pressure.
+     * So: number of async requests is limited by 4 (arbitrary number, just not too big), and the following requests become
+     * synchronous instead of async.
+     */
+    private final Semaphore concurrentRequestsLimiter = new Semaphore(4);
+
+    @Override
+    public void accept(Collection<? extends Path> paths) {
+      if (!paths.isEmpty()) {
         try {
-          DELETE_IMMEDIATELY.accept(paths);
+          concurrentRequestsLimiter.acquire();
+          ASYNC_DELETE_POOL.execute(() -> {
+            try {
+              DELETE_IMMEDIATELY.accept(paths);
+            }
+            finally {
+              concurrentRequestsLimiter.release();
+            }
+          });
         }
-        finally {
-          currentThread.setPriority(priority);
+        catch (InterruptedException e) {
+          LOG.warn("Delete request was interrupted", e);
         }
-      });
+      }
     }
   };
 
@@ -94,10 +111,10 @@ public final class FileSetLimiter {
   /** Strategy for older files deletion (plain .delete() could be too slow in some cases) */
   private final Consumer<Collection<? extends Path>> filesDeleter;
 
-  private FileSetLimiter(final @NotNull Path directory,
-                         final @NotNull MessageFormat fileNameFormat,
-                         final int maxFilesToKeep,
-                         final @NotNull Consumer<Collection<? extends Path>> deleter) {
+  private FileSetLimiter(@NotNull Path directory,
+                         @NotNull MessageFormat fileNameFormat,
+                         int maxFilesToKeep,
+                         @NotNull Consumer<Collection<? extends Path>> deleter) {
     filesDeleter = deleter;
     if (maxFilesToKeep <= 1) {
       throw new IllegalArgumentException("maxFilesToKeep(=" + maxFilesToKeep + ") should be >=1");
@@ -107,7 +124,7 @@ public final class FileSetLimiter {
     this.maxFilesToKeep = maxFilesToKeep;
   }
 
-  public static FileSetLimiter inDirectory(final Path directory) {
+  public static FileSetLimiter inDirectory(Path directory) {
     return new FileSetLimiter(
       directory,
       new MessageFormat(DEFAULT_DATETIME_FORMAT),
@@ -116,29 +133,29 @@ public final class FileSetLimiter {
     );
   }
 
-  public FileSetLimiter withFileNameFormat(final @NotNull String fileNameFormat) {
+  public FileSetLimiter withFileNameFormat(@NotNull String fileNameFormat) {
     return withFileNameFormat(new MessageFormat(fileNameFormat));
   }
 
-  public FileSetLimiter withFileNameFormat(final @NotNull MessageFormat fileNameFormat) {
+  public FileSetLimiter withFileNameFormat(@NotNull MessageFormat fileNameFormat) {
     return new FileSetLimiter(directory, fileNameFormat, maxFilesToKeep, filesDeleter);
   }
 
   /** (myfile.csv, 'yyyy-MM-dd-HH-mm-ss') -> 'myfile.{0,date,'yyyy-MM-dd-HH-mm-ss'}.csv' */
-  public FileSetLimiter withBaseNameAndDateFormatSuffix(final @NotNull String baseFileName,
-                                                        final @NotNull String suffixDateFormat) {
+  public FileSetLimiter withBaseNameAndDateFormatSuffix(@NotNull String baseFileName,
+                                                        @NotNull String suffixDateFormat) {
     return withFileNameFormat(fileNameFormatFromBaseFileNameAndDateFormat(baseFileName, suffixDateFormat));
   }
 
   /**
    * Does not remove any actual files -- just configures new {@link FileSetLimiter} instance
    */
-  public FileSetLimiter withMaxFilesToKeep(final int maxFilesToKeep) {
+  public FileSetLimiter withMaxFilesToKeep(int maxFilesToKeep) {
     return withMaxFilesToKeep(maxFilesToKeep, filesDeleter);
   }
 
-  public FileSetLimiter withMaxFilesToKeep(final int maxFilesToKeep,
-                                           final Consumer<Collection<? extends Path>> excessiveFilesDeleter) {
+  public FileSetLimiter withMaxFilesToKeep(int maxFilesToKeep,
+                                           Consumer<Collection<? extends Path>> excessiveFilesDeleter) {
     return new FileSetLimiter(directory, fileNameFormat, maxFilesToKeep, excessiveFilesDeleter);
   }
 
@@ -146,7 +163,7 @@ public final class FileSetLimiter {
    * Configures new {@link FileSetLimiter} instance AND actually looks up and removes excessive files
    * in the directory.
    */
-  public FileSetLimiter removeOldFilesBut(final int maxFilesToKeep) throws IOException {
+  public FileSetLimiter removeOldFilesBut(int maxFilesToKeep) throws IOException {
     return withMaxFilesToKeep(maxFilesToKeep, filesDeleter)
       .removeOlderFiles();
   }
@@ -155,8 +172,8 @@ public final class FileSetLimiter {
    * Configures new {@link FileSetLimiter} instance AND actually looks up and removes excessive files
    * in the directory.
    */
-  public FileSetLimiter removeOldFilesBut(final int maxFilesToKeep,
-                                          final Consumer<Collection<? extends Path>> excessiveFilesDeleter) throws IOException {
+  public FileSetLimiter removeOldFilesBut(int maxFilesToKeep,
+                                          Consumer<Collection<? extends Path>> excessiveFilesDeleter) throws IOException {
     return withMaxFilesToKeep(maxFilesToKeep, excessiveFilesDeleter)
       .removeOlderFiles();
   }
@@ -167,13 +184,15 @@ public final class FileSetLimiter {
    * for quite a while (e.g. until JVM exit). If immediate effect required, use {@link #DELETE_IMMEDIATELY}
    */
   public FileSetLimiter removeOlderFiles() throws IOException {
+    //FiXME RC: we call this every time new file is created, but we do not wait until removing completed, which may
+    //          cause a lot of queued removes (IJPL-167246)
     if (!Files.exists(directory) || !Files.isDirectory(directory)) {
       return this; //no house to keep
     }
     // find files matching fileNameFormat, extract dates of creation, and remove the oldest files
-    try (final Stream<Path> children = Files.list(directory)) {
-      final Comparator<Pair<Path, Date>> byDateOfCreation = comparing(pair -> pair.second);
-      final List<Path> excessiveFilesToRemove = children.map(this::tryParsePath)
+    try (Stream<Path> children = Files.list(directory)) {
+      Comparator<Pair<Path, Date>> byDateOfCreation = comparing(pair -> pair.second);
+      List<Path> excessiveFilesToRemove = children.map(this::tryParsePath)
         .filter(pair -> pair.second != null)
         .sorted(byDateOfCreation.reversed())
         .skip(maxFilesToKeep)
@@ -196,18 +215,18 @@ public final class FileSetLimiter {
     return createNewFile(Clock.systemDefaultZone());
   }
 
-  public Path createNewFile(final @NotNull Clock clock) throws IOException {
-    final int maxTries = 1024;
+  public Path createNewFile(@NotNull Clock clock) throws IOException {
+    int maxTries = 1024;
     try {
-      final Path basePath = generatePath(clock);
+      Path basePath = generatePath(clock);
       Path candidatePath = basePath;
       for (int tryNo = 0; tryNo < maxTries; tryNo++) {
         try {
           if (Files.exists(candidatePath)) {
-            final String numeratedFileName = basePath.getFileName() + "." + tryNo;
+            String numeratedFileName = basePath.getFileName() + "." + tryNo;
             candidatePath = basePath.resolveSibling(numeratedFileName);
           }
-          final Path createdPath = Files.createFile(candidatePath);
+          Path createdPath = Files.createFile(candidatePath);
           return createdPath;
         }
         catch (FileAlreadyExistsException e) {
@@ -234,7 +253,7 @@ public final class FileSetLimiter {
     return generatePath(Clock.systemDefaultZone());
   }
 
-  public Path generatePath(final @NotNull Clock clock) throws IOException {
+  public Path generatePath(@NotNull Clock clock) throws IOException {
     if (!Files.isDirectory(directory)) {
       //createDirectories() _does_ throw FileAlreadyExistsException if path is a _symlink_ to a directory,
       // not a directory itself (JDK-8130464). Check !isDirectory() above should work around that case: if
@@ -271,8 +290,8 @@ public final class FileSetLimiter {
       return Optional.empty();
     }
     // find files matching fileNameFormat, extract dates of creation, and remove the oldest files
-    final Comparator<Pair<Path, Date>> byDateOfCreation = comparing(pair -> pair.second);
-    try (final Stream<Path> children = Files.list(directory)) {
+    Comparator<Pair<Path, Date>> byDateOfCreation = comparing(pair -> pair.second);
+    try (Stream<Path> children = Files.list(directory)) {
       return children.map(this::tryParsePath)
         .filter(pair -> pair.second != null)
         .max(byDateOfCreation)
@@ -284,9 +303,9 @@ public final class FileSetLimiter {
    * Splits baseFileName into the name and the extension, and insert dateFormat between them.
    * E.g.: ('my-file.log','yyyy-MM-dd-HH-mm-ss') -> 'my-file.{0,date,yyyy-MM-dd-HH-mm-ss}.log'
    */
-  private static @NotNull String fileNameFormatFromBaseFileNameAndDateFormat(final @NotNull String baseFileName,
-                                                                    final @NotNull String dateFormat) {
-    final String extension = FileUtilRt.getExtension(baseFileName);
+  private static @NotNull String fileNameFormatFromBaseFileNameAndDateFormat(@NotNull String baseFileName,
+                                                                             @NotNull String dateFormat) {
+    String extension = FileUtilRt.getExtension(baseFileName);
     String unzippedExtension = "";
     String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(baseFileName);
 
@@ -300,12 +319,12 @@ public final class FileSetLimiter {
            : nameWithoutExtension + ".{0,date," + dateFormat + "}." + unzippedExtension + extension;
   }
 
-  private @NotNull Pair<Path, Date> tryParsePath(final Path path) {
+  private @NotNull Pair<Path, Date> tryParsePath(Path path) {
     //TODO RC: use FileRecord instead of Pair, and parse sub-millisecond suffix also
-    final String fileName = directory.relativize(path).toString();
+    String fileName = directory.relativize(path).toString();
     try {
-      final Object[] results = fileNameFormat.parse(fileName);
-      final Date fileCreatedAt = (Date)results[0];
+      Object[] results = fileNameFormat.parse(fileName);
+      Date fileCreatedAt = (Date)results[0];
       return new Pair<>(path, fileCreatedAt);
     }
     catch (ParseException e) {
@@ -320,9 +339,9 @@ public final class FileSetLimiter {
     public final @Nullable Date date;
     public final int subMillisecondId;
 
-    public FileRecord(final @NotNull Path path,
-                      final @Nullable Date date,
-                      final int subMillisecondId) {
+    public FileRecord(@NotNull Path path,
+                      @Nullable Date date,
+                      int subMillisecondId) {
       this.path = path;
       this.date = date;
       this.subMillisecondId = subMillisecondId;

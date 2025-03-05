@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package git4idea.remote
 
@@ -11,9 +11,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType.IDE
-import com.intellij.openapi.ui.DialogWrapper.IdeModalityType.PROJECT
 import com.intellij.openapi.ui.Messages.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SimpleTextAttributes
@@ -25,6 +23,7 @@ import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
+import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
@@ -39,7 +38,7 @@ import kotlin.math.min
 private val LOG = logger<GitConfigureRemotesDialog>()
 
 class GitConfigureRemotesDialog(val project: Project, val repositories: Collection<GitRepository>) :
-    DialogWrapper(project, true, getModalityType()) {
+    DialogWrapper(project, true, IDE) {
 
   private val git = Git.getInstance()
 
@@ -95,7 +94,8 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
       runInModalTask(message("remotes.dialog.adding.remote"),
                      message("remote.dialog.add.remote"),
                      message("remotes.dialog.cannot.add.remote.error.message", dialog.remoteName, dialog.remoteUrl),
-                     repository, rebuildTreeOnSuccess) {
+                     repository, { if (dialog.shouldFetch) doFetch(repository, dialog.remoteName, dialog.remoteUrl) },
+                     onSuccess = rebuildTreeOnSuccess) {
         arrayListOf<GitCommandResult>().apply {
           add(git.addRemote(repository, dialog.remoteName, dialog.remoteUrl))
         }
@@ -245,7 +245,7 @@ fun removeRemotes(git: Git, repository: GitRepository, remotes: Set<GitRemote>, 
     runInModalTask(message("remotes.dialog.removing.remote.progress", remotes.size),
                    message("remotes.dialog.removing.remote.error.title", remotes.size),
                    message("remotes.dialog.removing.remote.error.message", remotes.size, remotes.toStringRepresentation()),
-                   repository, onSuccess) {
+                   repository, onSuccess = onSuccess) {
       arrayListOf<GitCommandResult>().apply {
         for (remote in remotes) {
           add(git.removeRemote(repository, remote))
@@ -266,11 +266,20 @@ fun editRemote(git: Git, repository: GitRepository, remote: GitRemote, onSuccess
     runInModalTask(message("remotes.changing.remote.progress"),
                    message("remotes.changing.remote.error.title"),
                    message("remotes.changing.remote.error.message", oldName, newRemoteName, newRemoteUrl),
-                   repository, onSuccess) {
+                   repository, { if (dialog.shouldFetch) doFetch(repository, newRemoteName, newRemoteUrl) }, onSuccess) {
       arrayListOf<GitCommandResult>().apply {
         add(changeRemote(git, repository, oldName, oldUrl, newRemoteName, newRemoteUrl))
       }
     }
+  }
+}
+
+private fun doFetch(repository: GitRepository, remoteName: String, remoteUrl: String) {
+  val remoteToFetch = repository.remotes.find { remote -> remote.name == remoteName
+                                                          && remote.urls.any { url -> url == remoteUrl } }
+  if (remoteToFetch != null) {
+    GitFetchSupport.fetchSupport(repository.project)
+      .fetch(repository, remoteToFetch).showNotificationIfFailed()
   }
 }
 
@@ -295,6 +304,7 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
                            @Nls(capitalization = Nls.Capitalization.Title) errorTitle: String,
                            @Nls(capitalization = Nls.Capitalization.Sentence) errorMessage: String,
                            repository: GitRepository,
+                           afterRepoRefresh: () -> Unit = {},
                            onSuccess: () -> Unit,
                            operation: () -> List<GitCommandResult>?) {
   ProgressManager.getInstance().run(object : Task.Modal(repository.project, title, true) {
@@ -303,6 +313,7 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
     override fun run(indicator: ProgressIndicator) {
       results = operation()
       repository.update()
+      afterRepoRefresh()
     }
 
     override fun onSuccess() {
@@ -318,5 +329,3 @@ private fun runInModalTask(@Nls(capitalization = Nls.Capitalization.Title) title
     }
   })
 }
-
-private fun getModalityType() = if (Registry.`is`("ide.perProjectModality")) PROJECT else IDE

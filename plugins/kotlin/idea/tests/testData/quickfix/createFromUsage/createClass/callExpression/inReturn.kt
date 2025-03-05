@@ -1,5 +1,6 @@
 // "Create class 'BookKeeper'" "true"
 // ERROR: Type mismatch: inferred type is BookKeeper but Unit was expected
+// K2_AFTER_ERROR: Return type mismatch: expected 'Unit', actual 'BookKeeper'.
 package pack
 
 import pack.Currrency.EUR

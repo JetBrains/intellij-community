@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.application.options.CodeStyle;
@@ -104,7 +104,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   public boolean isLeaf() {
-    return myChildren.size() == 0;
+    return myChildren.isEmpty();
   }
 
   private boolean isBlockTag() {
@@ -162,7 +162,7 @@ public class GenerationNode extends UserDataHolderBase {
 
     LiveTemplateBuilder builder = new LiveTemplateBuilder(EmmetOptions.getInstance().isAddEditPointAtTheEndOfTemplate(), segmentsLimit);
     int end = -1;
-    boolean hasChildren = myChildren.size() > 0;
+    boolean hasChildren = !myChildren.isEmpty();
 
     TemplateImpl parentTemplate;
     Map<String, String> predefinedValues;
@@ -192,7 +192,7 @@ public class GenerationNode extends UserDataHolderBase {
       end = offset;
     }
     offset = newOffset;
-    if (end == -1 && offset < builder.length() && myChildren.size() == 0) {
+    if (end == -1 && offset < builder.length() && myChildren.isEmpty()) {
       end = offset;
     }
     LiveTemplateBuilder.Marker marker = offset < builder.length() ? builder.createMarker(offset) : null;
@@ -395,7 +395,7 @@ public class GenerationNode extends UserDataHolderBase {
     }
 
     String attributesString = generator.buildAttributesString(attributes, hasChildren, myNumberInIteration, myTotalIterations, mySurroundedText);
-    attributesString = attributesString.length() > 0 ? ' ' + attributesString : null;
+    attributesString = !attributesString.isEmpty() ? ' ' + attributesString : null;
     Map<String, String> predefinedValues = null;
     if (attributesString != null) {
       predefinedValues = new HashMap<>();

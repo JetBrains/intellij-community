@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.openapi.application.runReadAction
@@ -69,7 +69,7 @@ class MavenKotlinBuildSystemDependencyManagerTest : AbstractKotlinMavenImporterT
                 <module>submodule</module>
             </modules>
               """
-        );
+        )
         val submodulePom = createModulePom(
             "submodule", """
               <groupId>test</groupId>

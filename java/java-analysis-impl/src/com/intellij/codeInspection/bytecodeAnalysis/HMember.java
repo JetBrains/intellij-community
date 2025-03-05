@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.text.StringHash;
@@ -68,12 +68,12 @@ public final class HMember implements MemberDescriptor {
     return Long.hashCode(myClass) * 31 + myMethod;
   }
 
-  @NotNull
   @Override
-  public HMember hashed() {
+  public @NotNull HMember hashed() {
     return this;
   }
 
+  @Override
   public String toString() {
     return bytesToString(asBytes());
   }

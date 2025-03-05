@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.Range;
@@ -41,9 +27,8 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
     return transferLine(line, range);
   }
 
-  @NotNull
   @Override
-  public Range getRange(@NotNull Side baseSide, int line) {
+  public @NotNull Range getRange(@NotNull Side baseSide, int line) {
     if (line < 0) {
       LOG.error("Invalid line number: " + line);
       return idRange(line);
@@ -60,7 +45,7 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
   }
 
   protected static class ScrollHelper {
-    @NotNull private final Side mySide;
+    private final @NotNull Side mySide;
     private final int myLine;
 
     public ScrollHelper(@NotNull Side side, int line) {
@@ -111,8 +96,7 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
     return Math.min(range.start2 + (line - range.start1), range.end2);
   }
 
-  @NotNull
-  public static Range idRange(int line) {
+  public static @NotNull Range idRange(int line) {
     return new Range(line, line + 1, line, line + 1);
   }
 }

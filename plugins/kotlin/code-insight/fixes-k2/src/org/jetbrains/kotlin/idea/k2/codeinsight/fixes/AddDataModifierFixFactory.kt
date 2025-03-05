@@ -84,5 +84,5 @@ context(KaSession)
 @OptIn(KaExperimentalApi::class)
 fun KaDeclarationSymbol.isVisible(position: PsiElement): Boolean {
     val file = (position.containingFile as? KtFile)?.symbol ?: return false
-    return isVisible(this, file, position = position)
+    return createUseSiteVisibilityChecker(file, receiverExpression = null, position).isVisible(this)
 }

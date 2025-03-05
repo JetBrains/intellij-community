@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
+import java.nio.file.Path
 
 @ApiStatus.Internal
 class MavenRemoteRepositoriesConfigurator : MavenWorkspaceConfigurator {
@@ -48,7 +48,7 @@ class MavenRemoteRepositoriesConfigurator : MavenWorkspaceConfigurator {
     repoConfig.repositories = mavenRepositories.toList()
   }
 
-  private fun mirror(id: String, url: String, settingsFile: File?): String {
+  private fun mirror(id: String, url: String, settingsFile: Path?): String {
     return MavenUtil.getMirroredUrl(settingsFile, url, id)
   }
 

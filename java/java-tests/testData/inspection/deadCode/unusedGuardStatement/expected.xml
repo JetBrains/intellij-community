@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Main.java</file>
+    <line>3</line>
+    <offset>6</offset>
+    <length>4</length>
+    <highlighted_element>Test</highlighted_element>
+    <description>Class is not instantiated.</description>
+  </problem>
+</problems>

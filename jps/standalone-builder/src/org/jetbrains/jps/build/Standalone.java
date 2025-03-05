@@ -33,7 +33,7 @@ public final class Standalone {
   @Argument(value = "config", prefix = "--", description = "Path to directory containing global options (idea.config.path)")
   public String configPath;
 
-  @Argument(value = "script", prefix = "--", description = "Path to Groovy script which will be used to initialize global options")
+  @Argument(value = "script", prefix = "--", description = "Path to Groovy script which will be used to initialize global options (deprecated)")
   public String initializationScriptPath;
 
   @Argument(value = "cache-dir", prefix = "--", description = "Path to directory to store build caches")
@@ -102,6 +102,7 @@ public final class Standalone {
     ParameterizedRunnable<JpsModel> initializer = null;
     String scriptPath = initializationScriptPath;
     if (scriptPath != null) {
+      System.err.println("--script argument is deprecated, use --config instead or configure options in code and call Standalone.runBuild method");
       File scriptFile = new File(scriptPath);
       if (!scriptFile.isFile()) {
         System.err.println("Script '" + scriptPath + "' not found");

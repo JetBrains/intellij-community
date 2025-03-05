@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.anonymousToInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -66,7 +66,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, Editor editor, final PsiFile file, DataContext dataContext) {
     myProject = project;
     final int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -251,8 +251,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     newExpr.replace(newClassExpression);
   }
 
-  @Nullable
-  private static PsiClass findClassToMove(PsiFile file, int offset) {
+  private static @Nullable PsiClass findClassToMove(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     while (element != null) {
       if (element instanceof PsiAnonymousClass anonymousClass) {
@@ -392,8 +391,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     return aClass;
   }
 
-  @NotNull
-  private PsiClass createInnerFromLocal(String name, PsiElementFactory factory) {
+  private @NotNull PsiClass createInnerFromLocal(String name, PsiElementFactory factory) {
     PsiClass aClass = (PsiClass)myAnonOrLocalClass.copy();
     PsiIdentifier identifier = factory.createIdentifier(name);
     Objects.requireNonNull(aClass.getNameIdentifier()).replace(identifier);
@@ -408,8 +406,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     return aClass;
   }
 
-  @NotNull
-  private PsiClass createInnerFromAnonymous(String name, PsiAnonymousClass anonymousClass, PsiElementFactory factory) {
+  private @NotNull PsiClass createInnerFromAnonymous(String name, PsiAnonymousClass anonymousClass, PsiElementFactory factory) {
     PsiClass aClass = factory.createClass(name);
     PsiJavaCodeReferenceElement baseClassRef = anonymousClass.getBaseClassReference();
     final PsiReferenceParameterList parameterList = baseClassRef.getParameterList();
@@ -662,7 +659,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   private void renameReferences(PsiElement scope) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
     for (VariableInfo info : myVariableInfos) {
-      for (PsiReference reference : ReferencesSearch.search(info.variable, new LocalSearchScope(scope))) {
+      for (PsiReference reference : ReferencesSearch.search(info.variable, new LocalSearchScope(scope)).asIterable()) {
         PsiElement ref = reference.getElement();
         PsiIdentifier identifier = (PsiIdentifier)((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
         assert identifier != null;

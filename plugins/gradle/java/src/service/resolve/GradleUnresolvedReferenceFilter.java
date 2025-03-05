@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve;
 
 import com.intellij.psi.PsiElement;
@@ -19,7 +19,7 @@ import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassName
  */
 public final class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFilter {
 
-  private final static Set<String> IGNORE_SET = ContainerUtil.newHashSet(
+  private static final Set<String> IGNORE_SET = ContainerUtil.newHashSet(
     GradleCommonClassNames.GRADLE_API_TASK,
     GradleCommonClassNames.GRADLE_API_SOURCE_SET,
     GradleCommonClassNames.GRADLE_API_CONFIGURATION,

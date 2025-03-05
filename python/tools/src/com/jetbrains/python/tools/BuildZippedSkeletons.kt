@@ -4,8 +4,7 @@ package com.jetbrains.python.tools
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.io.Compressor
-import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher
 import com.jetbrains.python.tools.sdkTools.PySdkTools

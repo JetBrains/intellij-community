@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildFileBase;
@@ -27,8 +27,8 @@ public final class AntWorkspaceConfiguration implements PersistentStateComponent
   private static final Logger LOG = Logger.getInstance(AntWorkspaceConfiguration.class);
 
   private final Project myProject;
-  @NonNls private static final String BUILD_FILE = "buildFile";
-  @NonNls private static final String URL = "url";
+  private static final @NonNls String BUILD_FILE = "buildFile";
+  private static final @NonNls String URL = "url";
   private final AtomicReference<Element> myProperties = new AtomicReference<>(null);
 
   public boolean IS_AUTOSCROLL_TO_SOURCE;
@@ -88,8 +88,7 @@ public final class AntWorkspaceConfiguration implements PersistentStateComponent
     }
   }
 
-  @Nullable
-  private static Element findChildByUrl(Element parentNode, String url) {
+  private static @Nullable Element findChildByUrl(Element parentNode, String url) {
     for (Element element : parentNode.getChildren(BUILD_FILE)) {
       if (Objects.equals(element.getAttributeValue(URL), url)) {
         return element;

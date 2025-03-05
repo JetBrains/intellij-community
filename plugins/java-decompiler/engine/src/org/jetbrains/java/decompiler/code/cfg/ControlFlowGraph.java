@@ -54,6 +54,7 @@ public class ControlFlowGraph {
     }
   }
 
+  @Override
   public String toString() {
     if (blocks == null) return "Empty";
 

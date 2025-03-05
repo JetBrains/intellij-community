@@ -3,10 +3,12 @@ package fleet.kernel.rete
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
+import fleet.kernel.rete.impl.*
 import fleet.tracing.spannedScope
 import fleet.util.async.conflateReduce
 import fleet.util.async.use
 import fleet.util.channels.channels
+import fleet.util.logging.KLogger
 import fleet.util.logging.logger
 import fleet.util.openmap.merge
 import fleet.util.singleOrNullOrThrow
@@ -19,20 +21,38 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.whileSelect
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
-data class Rete internal constructor(internal val commands: SendChannel<Command>,
-                                     val lastKnownDb: StateFlow<DB>) : CoroutineContext.Element {
+sealed interface ReteState {
+  data class Db(val db: DB) : ReteState
+  data class Poison(val poison: Throwable) : ReteState
+}
+
+fun ReteState.dbOrThrow(): DB =
+  when (this) {
+    is ReteState.Db -> db
+    is ReteState.Poison -> throw poison
+  }
+
+data class Rete internal constructor(
+  internal val failFast: Boolean,
+  internal val commands: SendChannel<Command>,
+  internal val reteState: StateFlow<ReteState>,
+  internal val dbSource: ReteDbSource,
+) : CoroutineContext.Element {
 
   class ObserverId
 
   internal sealed interface Command {
-    data class AddObserver<T>(val dbTimestamp: Long,
-                              val dependencies: Collection<ObservableMatch<*>>,
-                              val query: Query<T>,
-                              val tracingKey: QueryTracingKey?,
-                              val observerId: ObserverId,
-                              val observer: QueryObserver<T>) : Command
+    data class AddObserver<T>(
+      val dbTimestamp: Long,
+      val dependencies: Collection<ObservableMatch<*>>,
+      val query: Query<T>,
+      val tracingKey: QueryTracingKey?,
+      val observerId: ObserverId,
+      val observer: QueryObserver<T>,
+    ) : Command
 
     data class RemoveObserver(val observerId: ObserverId) : Command
   }
@@ -44,75 +64,93 @@ data class Rete internal constructor(internal val commands: SendChannel<Command>
   override val key: CoroutineContext.Key<*> = Rete
 }
 
-class ReteEntity(override val eid: EID): Entity {
-  companion object: EntityType<ReteEntity>(ReteEntity::class, ::ReteEntity) {
+class ReteEntity(override val eid: EID) : Entity {
+  companion object : EntityType<ReteEntity>(ReteEntity::class, ::ReteEntity) {
     internal val ReteAttr = requiredTransient<Rete>("rete")
     internal val TransactorAttr = requiredTransient<Transactor>("kernel", Indexing.UNIQUE)
     fun forKernel(transactor: Transactor): Rete? = entity(TransactorAttr, transactor)?.get(ReteAttr)
   }
 }
 
+
+/**
+ * Enables debug logging of everything what happens to all the queries collected in [body].
+ * It logs with debug level to [logger]
+ * [key] is a human-readable value, which will prepend all log messages in this block
+ * */
+suspend fun <T> withQueriesTracing(logger: KLogger, key: Any, body: suspend CoroutineScope.() -> T): T =
+  withContext(QueryTracingKey(key, logger), body)
+
 /**
  * Sets up [Rete] for use inside [body]
  * Runs a coroutine which consumes changes made in db and commands to add or remove [QueryObserver]s
+ *
+ * [failFast] disables exception handling for testing purposes.
  * */
-suspend fun<T> withRete(failWhenPropagationFailed: Boolean = false, body: suspend CoroutineScope.() -> T): T {
+suspend fun <T> withRete(failFast: Boolean = false, body: suspend CoroutineScope.() -> T): T {
   val (commandsSender, commandsReceiver) = channels<Rete.Command>(Channel.UNLIMITED)
   return spannedScope("withRete") {
     val kernel = transactor()
     kernel.subscribe(Channel.UNLIMITED) { db, changes ->
-      val lastKnownDb = MutableStateFlow(db)
-      launch {
-        spannedScope("rete event loop") {
-          // todo: implement a proper reconnect, this could still fail because of thread starvation
-          changes.consumeAsFlow()
-            .conflateReduce { c1, c2 ->
-              Change(dbBefore = c1.dbBefore,
-                     dbAfter = c2.dbAfter,
-                     novelty = c1.novelty + c2.novelty,
-                     meta = c1.meta.merge(c2.meta))
-            }
-            .produceIn(this)
-            .consume {
-              val changesConflated = this
-              val rete = postponedVars(lastKnownDb, ReteNetwork.new(lastKnownDb, failWhenPropagationFailed))
-              whileSelect {
-                //
-                commandsReceiver.onReceive { cmd ->
-                  rete.command(cmd)
-                  true
+      val lastKnownDb = MutableStateFlow<ReteState>(ReteState.Db(db))
+      val result = runCatching {
+        coroutineScope {
+          launch {
+            spannedScope("rete event loop") {
+              // todo: implement a proper reconnect, this could still fail because of thread starvation
+              changes.consumeAsFlow()
+                .conflateReduce { c1, c2 ->
+                  Change(dbBefore = c1.dbBefore,
+                         dbAfter = c2.dbAfter,
+                         novelty = c1.novelty + c2.novelty,
+                         meta = c1.meta.merge(c2.meta))
                 }
-                changesConflated.onReceiveCatching { changeResult ->
-                  when {
-                    changeResult.isSuccess -> {
-                      val change = changeResult.getOrNull()!!
-                      rete.propagateChange(change)
+                .produceIn(this)
+                .consume {
+                  val changesConflated = this
+                  val rete = postponedVars(lastKnownDb, ReteNetwork.new(lastKnownDb, failFast))
+                  whileSelect {
+                    commandsReceiver.onReceive { cmd ->
+                      rete.command(cmd)
                       true
                     }
-                    else -> false
+                    changesConflated.onReceiveCatching { changeResult ->
+                      when {
+                        changeResult.isSuccess -> {
+                          val change = changeResult.getOrNull()!!
+                          rete.propagateChange(change)
+                          true
+                        }
+                        else -> false
+                      }
+                    }
                   }
                 }
+            }
+          }.use {
+            val rete = Rete(commands = commandsSender,
+                            reteState = lastKnownDb,
+                            failFast = failFast,
+                            dbSource = ReteDbSource(lastKnownDb))
+            val reteEntity = change {
+              register(ReteEntity)
+              ReteEntity.new {
+                it[ReteEntity.ReteAttr] = rete
+                it[ReteEntity.TransactorAttr] = kernel
               }
             }
-        }
-      }.use {
-        val rete = Rete(commands = commandsSender,
-                        lastKnownDb = lastKnownDb)
-        val reteEntity = change {
-          register(ReteEntity)
-          ReteEntity.new {
-            it[ReteEntity.ReteAttr] = rete
-            it[ReteEntity.TransactorAttr] = kernel
-          }
-        }
-        withContext(rete) {
-          body()
-        }.also {
-          change {
-            reteEntity.delete()
+            withContext(rete) {
+              body()
+            }.also {
+              change {
+                reteEntity.delete()
+              }
+            }
           }
         }
       }
+      lastKnownDb.value = ReteState.Poison(result.exceptionOrNull() ?: RuntimeException("rete is terminated"))
+      result.getOrThrow()
     }
   }
 }
@@ -123,7 +161,7 @@ suspend fun<T> withRete(failWhenPropagationFailed: Boolean = false, body: suspen
  * runs [body] on [Rete] [fleet.kernel.DbSource]
  * */
 suspend fun <T, U> Match<T>.withMatch(body: suspend CoroutineScope.(T) -> U): WithMatchResult<U> = let { self ->
-  withObservableMatches((observableSubmatches() as Sequence<ObservableMatch<*>>).toHashSet()) { body(self.value) }
+  withObservableMatches((observableSubmatches() as Sequence<ObservableMatch<*>>)) { body(self.value) }
 }
 
 /**
@@ -131,10 +169,19 @@ suspend fun <T, U> Match<T>.withMatch(body: suspend CoroutineScope.(T) -> U): Wi
  * if not given, until the timestamp of the currently bound db.
  * It rarely makes sense to use this, see [Match.withMatch] instead
  * */
-suspend fun waitForReteToCatchUp(targetDb: Q) {
+suspend fun waitForReteToCatchUp(targetDb: Q, cancellable: Boolean = true) {
   val targetTimestamp = targetDb.timestamp
-  val reteDb = requireNotNull(coroutineContext[Rete]) { "Rete is not found on the context" }
-    .lastKnownDb.first { reteDb -> reteDb.timestamp >= targetTimestamp }
+  withContext(if (cancellable) EmptyCoroutineContext else NonCancellable) {
+    requireNotNull(coroutineContext[Rete]) { "Rete is not found on the context" }
+      .reteState.first { reteDb -> reteDb.dbOrThrow().timestamp >= targetTimestamp }
+  }
+
+  // now that rete has caught up with targetDb, we can go and check if our context matches are still valid
+  val invalidation = coroutineContext[ContextMatches]?.matches
+    ?.firstOrNull { it.validity.isCompleted }
+    ?.let { invalidatedMatch ->
+      UnsatisfiedMatchException(CancellationReason("match invalidated by rete", invalidatedMatch.match))
+    }
 
   // bug in kotlin coroutines:
   // the suspend call is in tail position of a function returning Unit,
@@ -142,7 +189,13 @@ suspend fun waitForReteToCatchUp(targetDb: Q) {
   // resulting in a db leak if the calling code suspends right after this.
 
   // since now, suspend call is not in tail position, we're safe.
-  DbContext.threadBound.set(reteDb)
+  when (invalidation) {
+    null -> DbContext.threadBound.set(targetDb)
+    else -> {
+      Rete.logger.trace { "Caught up to rete, but context matches are invalidated: $invalidation" }
+      DbContext.threadBound.setPoison(invalidation)
+    }
+  }
 }
 
 /**
@@ -150,7 +203,7 @@ suspend fun waitForReteToCatchUp(targetDb: Q) {
  * It is populated by [Match.withMatch]
  * */
 data class ContextMatches internal constructor(
-  internal val matches: PersistentSet<ObservableMatch<*>>
+  internal val matches: PersistentList<ObservableMatch<*>>,
 ) : CoroutineContext.Element {
   companion object : CoroutineContext.Key<ContextMatches>
 
@@ -179,9 +232,9 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
       val change = next {
         val validation = matchInfos.fold<ObservableMatch<*>, ValidationResult>(ValidationResult.Valid) { r, match ->
           r.and {
-            val reteTimestamp = rete.lastKnownDb.value.timestamp
+            val reteTimestamp = rete.reteState.value.dbOrThrow().timestamp
             when {
-              match.job.isCompleted -> ValidationResult.Invalid(match)
+              match.validity.isCompleted -> ValidationResult.Invalid(match)
               dbBefore.timestamp == reteTimestamp -> ValidationResult.Valid
               else -> when (match.validate()) {
                 ValidationResultEnum.Inconclusive -> ValidationResult.Inconclusive
@@ -208,7 +261,10 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
     }
 
     val change = spin()
-    waitForReteToCatchUp(change.dbAfter)
+    /**
+     * see `change suspend is atomic case 2` in [fleet.test.frontend.kernel.TransactorTest]
+     * */
+    waitForReteToCatchUp(change.dbAfter, cancellable = false)
     change
   }
 
@@ -216,11 +272,13 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
  * asynchronously adds [QueryObserver] to the [Query], returns a handle to asynchronously unsubscribe
  * [observer] should be as fast as possible or it will inhibit general throughput of the rete network
  */
-fun <T> Query<T>.observe(rete: Rete,
-                         dbTimestamp: Long,
-                         contextMatches: ContextMatches?,
-                         queryTracingKey: QueryTracingKey?,
-                         observer: QueryObserver<T>): DisposableHandle = let { query ->
+fun <T> Query<T>.observe(
+  rete: Rete,
+  dbTimestamp: Long,
+  contextMatches: ContextMatches?,
+  queryTracingKey: QueryTracingKey?,
+  observer: QueryObserver<T>,
+): DisposableHandle = let { query ->
   val terminalId = Rete.ObserverId()
   check(rete.commands.trySend(Rete.Command.AddObserver(dbTimestamp = dbTimestamp,
                                                        dependencies = contextMatches?.matches ?: emptyList(),
@@ -239,19 +297,34 @@ fun <T> Query<T>.observe(rete: Rete,
  * */
 internal suspend fun <T> withReteDbSource(body: suspend () -> T): T =
   requireNotNull(coroutineContext[Rete]) { "no rete on context" }.let { rete ->
-    if ((coroutineContext[DbSource.ContextElement]?.dbSource as? FlowDbSource)?.stateFlow === rete.lastKnownDb) {
+    if (coroutineContext[DbSource.ContextElement]?.dbSource == rete.dbSource) {
       body()
     }
     else {
       waitForReteToCatchUp(coroutineContext.transactor.dbState.value)
-      val dbSourceContextElement = DbSource.ContextElement(
-        FlowDbSource(stateFlow = rete.lastKnownDb, debugName = "rete $rete")
-      )
-      withContext(dbSourceContextElement + ReteSpinChangeInterceptor) {
-        body()
+      val dbSourceContextElement = DbSource.ContextElement(rete.dbSource)
+      val (res, dbTimestamp) = withContext(dbSourceContextElement + ReteSpinChangeInterceptor) {
+        val res = body()
+        res to db().timestamp
       }
+      // we're switching db source here:
+      // in general we don't know how this db source is ordered to Rete, 
+      // it might not necessary be a transactor source, 
+      // it might be noria, or other Rete,
+      // so let's ensure happens before here by catching up with what we've seen:
+      waitForDbSourceToCatchUpWithTimestamp(dbTimestamp)
+      res
     }
   }
+
+internal data class ReteDbSource(val reteState: StateFlow<ReteState>) : DbSource {
+  override val flow: Flow<DB>
+    get() = reteState.map { it.dbOrThrow() }
+  override val latest: DB
+    get() = reteState.value.dbOrThrow()
+
+  override val debugName: String get() = "rete $reteState"
+}
 
 private inline fun <T> DisposableHandle.useInline(function: () -> T): T =
   try {
@@ -268,19 +341,24 @@ private inline fun <T> DisposableHandle.useInline(function: () -> T): T =
  * Cancelled coroutines are being joined, before starting a new ones.
  * */
 suspend fun <T> Query<T>.launchOnEach(body: suspend CoroutineScope.(T) -> Unit) {
-  supervisorScope {
+  val rete = currentCoroutineContext().rete
+  suspend fun impl(scope: CoroutineScope) {
     val jobs = adaptiveMapOf<Match<*>, Job>()
     tokenSetsFlow().collect { tokenSet ->
       tokenSet.retracted.forEach { m ->
         jobs.remove(m)?.cancelAndJoin()
       }
       tokenSet.asserted.forEach { m ->
-        jobs.put(m, launch { m.withMatch(body) })?.let { previous ->
+        jobs.put(m, scope.launch { m.withMatch(body) })?.let { previous ->
           previous.cancel()
           Rete.logger.warn { "launchOnEach replaced existing job for a match, this should not happen. match: $m" }
         }
       }
     }
+  }
+  when {
+    rete.failFast -> coroutineScope { impl(this) }
+    else -> supervisorScope { impl(this) }
   }
 }
 
@@ -309,7 +387,7 @@ fun <T> Query<T>.tokenSetsFlow(): Flow<TokenSet<T>> = let { query ->
         // DbSource will not be invoked to update the db on thread local context.
         // this trick partially mitigates this problem, but it does not always work,
         // because the real collector might be actually running on a different thread
-        DbContext.threadBound.set(rete.lastKnownDb.value)
+        DbContext.threadBound.set(rete.reteState.value.dbOrThrow())
         emit(ts)
       }
     }

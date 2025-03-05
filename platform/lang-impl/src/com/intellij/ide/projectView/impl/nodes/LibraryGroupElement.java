@@ -26,16 +26,17 @@ import org.jetbrains.annotations.NotNull;
 public final class LibraryGroupElement {
   public static final DataKey<LibraryGroupElement[]> ARRAY_DATA_KEY = DataKey.create("libraryGroup.array");
   
-  private final Module myModule;
+  private final @NotNull Module myModule;
 
   public LibraryGroupElement(@NotNull Module module) {
     myModule = module;
   }
 
-  public Module getModule() {
+  public @NotNull Module getModule() {
     return myModule;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof LibraryGroupElement libraryGroupElement)) return false;
@@ -45,6 +46,7 @@ public final class LibraryGroupElement {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myModule.hashCode();
   }

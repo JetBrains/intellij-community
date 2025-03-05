@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -41,12 +41,17 @@ public final class HashMapZipFile implements ZipFile {
     return (HashMapZipFile)ImmutableZipFile.load(file, true);
   }
 
-  @NotNull
-  static HashMapZipFile createHashMapZipFile(@NotNull ByteBuffer buffer,
-                                             int fileSize,
-                                             int entryCount,
-                                             int centralDirSize,
-                                             int centralDirPosition) throws EOFException {
+  public static @Nullable HashMapZipFile loadIfNotEmpty(@NotNull Path file) throws IOException {
+    @SuppressWarnings("resource")
+    ZipFile result = ImmutableZipFile.load(file, true);
+    return result instanceof EmptyZipFile ? null : (HashMapZipFile)result;
+  }
+
+  static @NotNull HashMapZipFile createHashMapZipFile(@NotNull ByteBuffer buffer,
+                                                      int fileSize,
+                                                      int entryCount,
+                                                      int centralDirSize,
+                                                      int centralDirPosition) throws EOFException {
     // ensure the table is even length
     if (entryCount == 65535) {
       // it means that more than 65k entries - estimate the number of entries
@@ -140,7 +145,7 @@ public final class HashMapZipFile implements ZipFile {
   }
 
   public @Nullable ImmutableZipEntry getRawEntry(String name) {
-    int index = probe(name, Xxh3.hash(name), nameMap);
+    int index = probe(name, Xxh3.hash(name.getBytes(StandardCharsets.UTF_8)), nameMap);
     return index < 0 ? null : nameMap[index];
   }
 

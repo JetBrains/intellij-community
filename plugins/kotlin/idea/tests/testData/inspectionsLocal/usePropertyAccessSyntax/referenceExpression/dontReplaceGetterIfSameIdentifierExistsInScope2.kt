@@ -1,4 +1,8 @@
-// PROBLEM: none
+// PROBLEM: Use of getter method instead of property access syntax
+// FIX: Use property access syntax
+// WITH_STDLIB
+// IGNORE_K2
+// See KTIJ-32893 K2: Support missed use-case in UsePropertyAccessSyntax inspection
 import java.io.File
 
 fun test(file: File) {

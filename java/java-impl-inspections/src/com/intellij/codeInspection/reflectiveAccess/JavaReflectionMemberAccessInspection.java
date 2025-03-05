@@ -1,8 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -77,9 +80,8 @@ public final class JavaReflectionMemberAccessInspection extends AbstractBaseJava
     ignoredClassNamesString = String.join(",", ignoredClassNames);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
@@ -211,21 +213,18 @@ public final class JavaReflectionMemberAccessInspection extends AbstractBaseJava
   }
 
   @Contract("null->null")
-  @Nullable
-  private static String getMemberName(@Nullable PsiExpression memberNameArgument) {
+  private static @Nullable String getMemberName(@Nullable PsiExpression memberNameArgument) {
     return computeConstantExpression(memberNameArgument, String.class);
   }
 
-  @Nullable
-  private static ReflectiveClass getOwnerClass(@NotNull PsiMethodCallExpression callExpression) {
+  private static @Nullable ReflectiveClass getOwnerClass(@NotNull PsiMethodCallExpression callExpression) {
     return getReflectiveClass(callExpression.getMethodExpression().getQualifierExpression());
   }
 
-  @Nullable
-  private static PsiMethod matchMethod(@NotNull PsiMethodCallExpression callExpression,
-                                       PsiMethod[] methods,
-                                       PsiExpression[] arguments,
-                                       int argumentOffset) {
+  private static @Nullable PsiMethod matchMethod(@NotNull PsiMethodCallExpression callExpression,
+                                                 PsiMethod[] methods,
+                                                 PsiExpression[] arguments,
+                                                 int argumentOffset) {
     final JavaReflectionInvocationInspection.Arguments methodArguments =
       JavaReflectionInvocationInspection.getActualMethodArguments(arguments, argumentOffset, MethodCallUtils.isVarArgCall(callExpression));
     if (methodArguments == null) {
@@ -244,17 +243,13 @@ public final class JavaReflectionMemberAccessInspection extends AbstractBaseJava
       myProperMethod = method;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.use", myProperMethod + "()");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.reflection.member.access.fix.family.name");
     }
 

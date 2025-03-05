@@ -4,6 +4,7 @@
                     interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.typeHintProvider" interface="com.jetbrains.python.codeInsight.typing.PyTypeHintProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyClassMembersProvider"
                     interface="com.jetbrains.python.psi.types.PyClassMembersProvider"

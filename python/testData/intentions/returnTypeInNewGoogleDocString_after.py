@@ -2,6 +2,6 @@ def f(x):
     """
 
     Returns:
-        object: 
+        int: 
     """
     return 42

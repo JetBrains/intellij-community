@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
@@ -95,6 +96,9 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
       }
 
       return builder.buildFoldRegions(astNode, document);
+    }
+    catch (IndexNotReadyException e) {
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
     catch (ProcessCanceledException e) {
       throw e;

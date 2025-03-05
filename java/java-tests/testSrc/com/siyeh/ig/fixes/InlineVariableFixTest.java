@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.dataflow.UnnecessaryLocalVariableInspection;
@@ -14,6 +16,11 @@ public class InlineVariableFixTest extends IGQuickFixesTestCase {
     myDefaultHint = InspectionGadgetsBundle.message("inline.variable.quickfix");
   }
 
+  @Override
+  protected void tuneFixture(final JavaModuleFixtureBuilder builder) throws Exception {
+    builder.setLanguageLevel(LanguageLevel.JDK_21);
+  }
+
   public void testResourceVar() { doTest(); }
   public void testResourceVarInMiddle() { doTest(); }
   public void testSingleResourceVar() { doTest(); }
@@ -22,4 +29,5 @@ public class InlineVariableFixTest extends IGQuickFixesTestCase {
   public void testCastForOverloads() { assertQuickfixNotAvailable(); }
   public void testComment() { doTest(); }
   public void testNewLineInInitializer() { doTest(); }
+  public void testInlineInsideSwitchExpression() { doTest(); }
 }

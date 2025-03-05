@@ -8,8 +8,8 @@ class X {
 
       try (Reader r = new FileReader("")) {
           r.read();
+      } catch (Exception e) {/*2*/
       }
       // 1
-      /*2*/
   }
 }

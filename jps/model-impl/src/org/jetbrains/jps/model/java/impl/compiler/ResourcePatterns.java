@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ import java.util.regex.Pattern;
  * @author Eugene Zhuravlev
  */
 @ApiStatus.Internal
-public class ResourcePatterns {
+public final class ResourcePatterns {
   private static final Logger LOG = Logger.getInstance(ResourcePatterns.class);
 
   private final List<CompiledPattern> myCompiledPatterns = new ArrayList<>();
@@ -39,12 +40,12 @@ public class ResourcePatterns {
     }
   }
 
-  public boolean isResourceFile(File file, @NotNull final File srcRoot) {
+  public boolean isResourceFile(File file, final @NotNull File srcRoot) {
     final String name = file.getName();
     final String relativePathToParent;
     final String parentPath = file.getParent();
     if (parentPath != null) {
-      relativePathToParent = "/" + FileUtilRt.getRelativePath(FileUtilRt.toSystemIndependentName(srcRoot.getAbsolutePath()), FileUtilRt.toSystemIndependentName(parentPath), '/', SystemInfo.isFileSystemCaseSensitive);
+      relativePathToParent = "/" + FileUtilRt.getRelativePath(FileUtilRt.toSystemIndependentName(srcRoot.getAbsolutePath()), FileUtilRt.toSystemIndependentName(parentPath), '/', SystemInfoRt.isFileSystemCaseSensitive);
     }
     else {
       relativePathToParent = null;
@@ -131,8 +132,8 @@ public class ResourcePatterns {
 
     dirPattern = normalizeWildcards(dirPattern);
 
-    dirPattern = StringUtil.replace(dirPattern, "/.*.*/", "(/.*)?/");
-    dirPattern = StringUtil.trimEnd(dirPattern, "/");
+    dirPattern = StringUtil.replace(dirPattern, "/.*.*/", "(/.*)?/", false);
+    dirPattern = Strings.trimEnd(dirPattern, "/");
 
     dirPattern = optimize(dirPattern);
     return dirPattern;
@@ -157,13 +158,13 @@ public class ResourcePatterns {
   }
 
   private static Pattern compilePattern(@NonNls String s) {
-    return Pattern.compile(s, SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE);
+    return Pattern.compile(s, SystemInfoRt.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE);
   }
   
   private static class CompiledPattern {
-    @NotNull final Pattern fileName;
-    @Nullable final Pattern dir;
-    @Nullable final Pattern srcRoot;
+    final @NotNull Pattern fileName;
+    final @Nullable Pattern dir;
+    final @Nullable Pattern srcRoot;
 
     CompiledPattern(@NotNull Pattern fileName, @Nullable Pattern dir, @Nullable Pattern srcRoot) {
       this.fileName = fileName;

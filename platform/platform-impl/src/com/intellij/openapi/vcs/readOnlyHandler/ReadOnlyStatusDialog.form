@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myTopPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="443" height="400"/>
+      <xy x="20" y="20" width="531" height="400"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -21,7 +21,7 @@
           </component>
         </children>
       </scrollpane>
-      <grid id="6f039" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="6f039" layout-manager="GridLayoutManager" row-count="2" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -65,6 +65,14 @@
               <horizontalAlignment value="11"/>
               <labelFor value="440b"/>
               <text resource-bundle="messages/IdeBundle" key="label.change.list.for.unlocked.files"/>
+            </properties>
+          </component>
+          <component id="9ea20" class="javax.swing.JCheckBox" binding="myMakeChangeListActive">
+            <constraints>
+              <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/IdeBundle" key="new.changelist.make.active.checkbox"/>
             </properties>
           </component>
         </children>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.actions.CreateDirectoryCompletionContributor;
@@ -16,15 +16,13 @@ import java.util.Collections;
 import java.util.List;
 
 public final class MavenDirectoryCompletionContributor implements CreateDirectoryCompletionContributor {
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return MavenProjectBundle.message("maven.directory.contribution.description");
   }
 
-  @NotNull
   @Override
-  public Collection<Variant> getVariants(@NotNull PsiDirectory directory) {
+  public @NotNull Collection<Variant> getVariants(@NotNull PsiDirectory directory) {
     Project project = directory.getProject();
 
     Module module = ProjectFileIndex.getInstance(project).getModuleForFile(directory.getVirtualFile());

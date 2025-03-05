@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -17,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -64,7 +64,7 @@ public final class ReassignVariableUtil {
           PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
           if (outerCodeBlock == null) continue;
           if (ReferencesSearch.search(variable, new LocalSearchScope(outerCodeBlock))
-            .allMatch(reference -> HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, reference.getElement()) == null)) {
+            .allMatch(reference -> ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, reference.getElement()) == null)) {
             vars.add(variable);
           }
         }
@@ -104,8 +104,7 @@ public final class ReassignVariableUtil {
     return false;
   }
 
-  @Nullable
-  static PsiType getVariableType(@Nullable PsiDeclarationStatement declaration) {
+  static @Nullable PsiType getVariableType(@Nullable PsiDeclarationStatement declaration) {
     if (declaration != null) {
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       if (declaredElements.length > 0 && declaredElements[0] instanceof PsiVariable) {

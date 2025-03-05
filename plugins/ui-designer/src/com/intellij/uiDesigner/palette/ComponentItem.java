@@ -293,6 +293,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     myIsContainer = isContainer;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof ComponentItem componentItem)) return false;
@@ -314,6 +315,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myClassName != null ? myClassName.hashCode() : 0);

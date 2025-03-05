@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import icons.GradleIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptionsExtension;
 import org.jetbrains.plugins.gradle.config.GradleFileType;
@@ -24,9 +25,10 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class AddGradleDslPluginAction extends CodeInsightAction {
+@ApiStatus.Internal
+public final class AddGradleDslPluginAction extends CodeInsightAction {
   public static final String ID = "AddGradleDslPluginAction";
-  static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
+  public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
   private final List<PluginDescriptor> myPlugins;
 
   public AddGradleDslPluginAction() {
@@ -43,9 +45,8 @@ public class AddGradleDslPluginAction extends CodeInsightAction {
     myPlugins.sort(Comparator.comparing(p -> p.name()));
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new AddGradleDslPluginActionHandler(myPlugins);
   }
 

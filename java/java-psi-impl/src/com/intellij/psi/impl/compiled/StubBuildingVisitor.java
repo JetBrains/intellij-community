@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,14 +20,12 @@ import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -95,7 +93,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isRecord = isSet(flags, Opcodes.ACC_RECORD);
     short stubFlags = PsiClassStubImpl.packFlags(
       isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false,
-      isRecord, false);
+      isRecord, false, false/*asm doesn't know about value classes yet*/);
     myResult =
       new PsiClassStubImpl<>(JavaStubElementTypes.CLASS, myParent, fqn == null ? TypeInfo.SimpleTypeInfo.NULL : fqn, shortName, null,
                              stubFlags);
@@ -125,7 +123,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     if (myResult.isInterface()) {
       if (myClassInfo.interfaces != null && myResult.isAnnotationType()) {
-        myClassInfo.interfaces.removeIf(info -> info.getKind() == TypeInfo.TypeKind.JAVA_LANG_ANNOTATION_ANNOTATION);
+        myClassInfo.interfaces = ContainerUtil.filter(myClassInfo.interfaces, info -> info.getKind() != TypeInfo.TypeKind.JAVA_LANG_ANNOTATION_ANNOTATION);
       }
       newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, myClassInfo.interfaces);
       newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, Collections.emptyList());
@@ -156,16 +154,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     SignatureParsing.CharIterator iterator = new SignatureParsing.CharIterator(signature);
     result.typeParameters = SignatureParsing.parseTypeParametersDeclaration(iterator, myFirstPassData);
     result.superType = SignatureParsing.parseTopLevelClassRefSignatureToTypeInfo(iterator, myFirstPassData);
+    List<TypeInfo> interfaces = new ArrayList<>();
     while (iterator.current() != CharacterIterator.DONE) {
       TypeInfo anInterface = SignatureParsing.parseTopLevelClassRefSignatureToTypeInfo(iterator, myFirstPassData);
       if (anInterface == null) throw new ClsFormatException();
-      if (result.interfaces == null) result.interfaces = new SmartList<>();
-      result.interfaces.add(anInterface);
+      interfaces.add(anInterface);
     }
+    result.interfaces = interfaces;
     return result;
   }
 
-  private ClassInfo parseClassDescription(String superClass, String[] superInterfaces) {
+  private @NotNull ClassInfo parseClassDescription(String superClass, String[] superInterfaces) {
     ClassInfo result = new ClassInfo();
     result.typeParameters = TypeParametersDeclaration.EMPTY;
     if (superClass != null) {
@@ -178,7 +177,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return result;
   }
 
-  private static void newReferenceList(@NotNull JavaClassReferenceListElementType type, StubElement<?> parent, @Nullable List<TypeInfo> types) {
+  private static void newReferenceList(@NotNull JavaClassReferenceListElementType type, StubElement<?> parent, @Nullable List<? extends TypeInfo> types) {
     new PsiClassReferenceListStubImpl(type, parent, types == null ? TypeInfo.EMPTY_ARRAY : types.toArray(TypeInfo.EMPTY_ARRAY));
   }
 
@@ -512,7 +511,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static class ClassInfo {
     private TypeParametersDeclaration typeParameters;
     private TypeInfo superType;
-    private List<TypeInfo> interfaces;
+    private @Unmodifiable List<TypeInfo> interfaces;
   }
 
   private static class MethodInfo {

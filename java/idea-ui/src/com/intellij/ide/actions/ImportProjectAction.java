@@ -25,9 +25,8 @@ public final class ImportProjectAction extends ImportModuleAction {
     NewProjectAction.Companion.updateActionText$intellij_java_ui(this, e);
   }
 
-  @NotNull
   @Override
-  public String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
+  public @NotNull String getActionText(boolean isInNewSubmenu, boolean isInJavaIde) {
     return JavaUiBundle.message("import.project.action.text", isInNewSubmenu ? 1 : 0, isInJavaIde ? 1 : 0);
   }
 }

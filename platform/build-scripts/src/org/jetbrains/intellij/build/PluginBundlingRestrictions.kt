@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
@@ -26,8 +26,8 @@ class PluginBundlingRestrictions(
 
   /**
    * Set to required [PluginDistribution] value depending on the distribution zone
-   *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
-   *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (non Release).
+   *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (not EAP or Release).
+   *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (not Release).
    *  - Use [PluginDistribution.ALL] if the plugin should be included all distribution for EAP, Nightly and Release.
    */
   @JvmField
@@ -35,7 +35,7 @@ class PluginBundlingRestrictions(
 ) {
   companion object {
     @JvmField
-    val NONE = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, PluginDistribution.ALL)
+    val NONE: PluginBundlingRestrictions = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, PluginDistribution.ALL)
 
     /**
      * Use for the plugin version which is uploaded to the Marketplace, since the latter does not support per-OS/ARCH plugins.
@@ -44,7 +44,7 @@ class PluginBundlingRestrictions(
      * If bundled and marketplace-uploaded versions of the plugin are identical, use [NONE] instead.
      */
     @JvmField
-    val MARKETPLACE = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.ALL)
+    val MARKETPLACE: PluginBundlingRestrictions = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.ALL)
   }
 
   class Builder {
@@ -61,8 +61,8 @@ class PluginBundlingRestrictions(
 
     /**
      * Set to required [PluginDistribution] value depending on the distribution zone
-     *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
-     *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (non Release).
+     *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (not EAP or Release).
+     *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (not Release).
      *  - Use [PluginDistribution.ALL] if the plugin should be included all distribution for EAP, Nightly and Release.
      */
     var includeInDistribution: PluginDistribution = PluginDistribution.ALL

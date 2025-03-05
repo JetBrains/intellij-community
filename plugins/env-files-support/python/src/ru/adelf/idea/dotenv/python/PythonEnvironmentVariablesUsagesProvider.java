@@ -11,15 +11,14 @@ import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import java.util.Collection;
 import java.util.Collections;
 
-public class PythonEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
+final class PythonEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
     @Override
     public boolean acceptFile(VirtualFile file) {
         return file.getFileType().equals(PythonFileType.INSTANCE);
     }
 
-    @NotNull
     @Override
-    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
+    public @NotNull Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if(psiFile instanceof PyFile) {
             PythonEnvironmentCallsVisitor visitor = new PythonEnvironmentCallsVisitor();
             psiFile.acceptChildren(visitor);

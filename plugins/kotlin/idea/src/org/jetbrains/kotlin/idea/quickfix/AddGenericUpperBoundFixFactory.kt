@@ -73,7 +73,8 @@ internal object AddGenericUpperBoundFixFactory : KotlinIntentionActionsFactory()
 
         return AddGenericUpperBoundFix(
             element = typeParameterDeclaration,
-            renderedUpperBound = IdeDescriptorRenderers.SOURCE_CODE.renderType(upperBound),
+            fqName = IdeDescriptorRenderers.SOURCE_CODE.renderType(upperBound),
+            shortName = IdeDescriptorRenderers.SOURCE_CODE_TYPES_WITH_SHORT_NAMES.renderType(upperBound),
         ).asIntention()
     }
 }

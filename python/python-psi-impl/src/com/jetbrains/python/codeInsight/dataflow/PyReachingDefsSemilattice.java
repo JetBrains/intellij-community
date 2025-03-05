@@ -61,8 +61,7 @@ public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> 
     return result;
   }
 
-  @Nullable
-  private static Set<String> getResultNames(final List<DFAMap<ScopeVariable>> ins) {
+  private static @Nullable Set<String> getResultNames(final List<DFAMap<ScopeVariable>> ins) {
     // Compute intersection of all the names
     Set<String> names2Include = null;
     for (DFAMap<ScopeVariable> map : ins) {

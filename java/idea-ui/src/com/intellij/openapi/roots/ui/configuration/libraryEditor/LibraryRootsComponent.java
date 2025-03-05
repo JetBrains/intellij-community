@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.CommonBundle;
@@ -55,8 +55,8 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -75,7 +75,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private VirtualFile myLastChosen;
 
   private final Collection<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  @Nullable private final Project myProject;
+  private final @Nullable Project myProject;
 
   private final Computable<? extends LibraryEditor> myLibraryEditorComputable;
   private LibraryRootsComponentDescriptor myDescriptor;
@@ -108,9 +108,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     updatePropertiesLabel();
   }
 
-  @NotNull
   @Override
-  public LibraryProperties getProperties() {
+  public @NotNull LibraryProperties getProperties() {
     return getLibraryEditor().getProperties();
   }
 
@@ -126,12 +125,12 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       type != null ? Collections.singleton(type.getKind()) : Collections.emptySet();
     for (@Nls String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
                                                                                             excluded)) {
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.append("\n");
       }
       sb.append(description);
     }
-    @NlsSafe final String text = sb.toString();
+    final @NlsSafe String text = sb.toString();
     myPropertiesLabel.setText(text);
   }
 
@@ -256,8 +255,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   @Override
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
@@ -266,8 +264,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   @Override
-  @Nullable
-  public VirtualFile getExistingRootDirectory() {
+  public @Nullable VirtualFile getExistingRootDirectory() {
     for (OrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
       final VirtualFile[] existingRoots = getLibraryEditor().getFiles(orderRootType);
       if (existingRoots.length > 0) {
@@ -289,8 +286,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   @Override
-  @Nullable
-  public VirtualFile getBaseDirectory() {
+  public @Nullable VirtualFile getBaseDirectory() {
     if (myProject != null) {
       //todo perhaps we shouldn't select project base dir if global library is edited
       return myProject.getBaseDir();
@@ -310,8 +306,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return getLibraryEditor().hasChanges();
   }
 
-  @NotNull
-  private List<Object> getSelectedElements() {
+  private @NotNull List<Object> getSelectedElements() {
     final TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) {
       return Collections.emptyList();
@@ -336,8 +331,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myBottomLabel = myModificationOfImportedModelWarningComponent.getLabel();
   }
 
-  @Nullable
-  private static Object getPathElement(final TreePath selectionPath) {
+  private static @Nullable Object getPathElement(final TreePath selectionPath) {
     if (selectionPath == null) {
       return null;
     }
@@ -387,8 +381,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTreeModel.invalidateAsync();
   }
 
-  @Nullable
-  private VirtualFile getFileToSelect() {
+  private @Nullable VirtualFile getFileToSelect() {
     if (myLastChosen != null) {
       return myLastChosen;
     }

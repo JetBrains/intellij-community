@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -28,6 +28,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.dsl.gridLayout.GridLayout;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -37,6 +38,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -44,8 +46,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -54,11 +56,24 @@ import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 @ApiStatus.Internal
 public class CustomizableActionsPanel {
-  private final JPanel myPanel = new BorderLayoutPanel(5, 5);
+  private static final DataKey<TreePath[]> SELECTION = DataKey.create("CUSTOMIZABLE_ACTIONS_PANEL_SELECTION");
+  private static final DataKey<TreePath> LEAD_SELECTION = DataKey.create("CUSTOMIZABLE_ACTIONS_PANEL_LEAD_SELECTION");
+  private final JPanel myPanel = new MyPanel();
   protected JTree myActionsTree;
-  private final JPanel myTopPanel = new JPanel(new GridLayout());
   protected CustomActionsSchema mySelectedSchema;
   private final Computable<Integer> myPreferredHeightProvider;
+
+  private class MyPanel extends BorderLayoutPanel implements UiDataProvider {
+    private MyPanel() {
+      super(5, 5);
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(SELECTION, myActionsTree.getSelectionPaths());
+      sink.set(LEAD_SELECTION, myActionsTree.getLeadSelectionPath());
+    }
+  }
 
   public CustomizableActionsPanel() {
     //noinspection HardCodedStringLiteral
@@ -82,9 +97,10 @@ public class CustomizableActionsPanel {
       }
     };
 
-    CustomizationActionPanelLayoutUtilsKt.setupTopPanelLayout(myTopPanel, createToolbar(), filter);
+    JPanel topPanel = new JPanel(new GridLayout());
+    CustomizationActionPanelLayoutUtilsKt.setupTopPanelLayout(topPanel, createToolbar(), filter);
 
-    myPanel.add(myTopPanel, BorderLayout.NORTH);
+    myPanel.add(topPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myActionsTree), BorderLayout.CENTER);
   }
 
@@ -108,7 +124,7 @@ public class CustomizableActionsPanel {
                                                   new RemoveAction(), getRestoreGroup()), true);
     toolbar.setForceMinimumSize(true);
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
-    toolbar.setTargetComponent(myTopPanel);
+    toolbar.setTargetComponent(myPanel);
     container.add(toolbar, BorderLayout.CENTER);
 
     return container;
@@ -175,8 +191,8 @@ public class CustomizableActionsPanel {
     onModified();
   }
 
-  private static boolean isMoveSupported(JTree tree, int dir) {
-    final TreePath[] selectionPaths = tree.getSelectionPaths();
+  private static boolean isMoveSupported(@NotNull AnActionEvent e, int dir) {
+    final TreePath[] selectionPaths = e.getData(SELECTION);
     if (selectionPaths != null) {
       DefaultMutableTreeNode parent = null;
       for (TreePath treePath : selectionPaths)
@@ -204,6 +220,40 @@ public class CustomizableActionsPanel {
     return false;
   }
 
+  @RequiresBackgroundThread // loading extensions might be required here
+  private static CustomizationRoots getCustomizationRoots() {
+    return new CustomizationRoots(ActionGroupCustomizationService.getInstance().getReadOnlyActionGroupIds());
+  }
+
+  private static class CustomizationRoots {
+    private final @NotNull Set<String> myReadOnlyActionGroupIds;
+
+    CustomizationRoots(@NotNull Set<String> readOnlyActionGroupIds) {
+      myReadOnlyActionGroupIds = readOnlyActionGroupIds;
+    }
+
+    private boolean isUnderCustomizationRoot(@Nullable TreePath path) {
+      if (path == null) return false;
+      var parent = path.getParentPath();
+      return isCustomizationRoot(parent) || isUnderCustomizationRoot(parent);
+    }
+
+    private boolean isCustomizationRoot(@Nullable TreePath path) {
+      if (path == null) return false;
+      if (isReadOnlyGroup(path)) return false; // can't customize read-only groups, only their children
+      var parent = path.getParentPath();
+      if (parent == null) return false; // we have an invisible root in the tree, so all top-level groups have a parent
+      return isReadOnlyGroup(parent);
+    }
+
+    private boolean isReadOnlyGroup(@Nullable TreePath path) {
+      if (path == null) return false;
+      var group = CustomizationUtil.getGroupForNode((DefaultMutableTreeNode)path.getLastPathComponent());
+      if (group == null) return false;
+      if (myReadOnlyActionGroupIds.contains(group.getId())) return true;
+      return path.getPathCount() == 1; // by default, only the invisible root is read-only
+    }
+  }
 
   public JPanel getPanel() {
     return myPanel;
@@ -272,7 +322,7 @@ public class CustomizableActionsPanel {
 
   protected void onModified() { }
 
-  private static List<String> toActionIDs(List<? extends TreePath> paths) {
+  private static @Unmodifiable List<String> toActionIDs(List<? extends TreePath> paths) {
     return ContainerUtil.map(paths, path -> getActionId((DefaultMutableTreeNode)path.getLastPathComponent()));
   }
 
@@ -598,7 +648,7 @@ public class CustomizableActionsPanel {
   }
 
 
-  private abstract class TreeSelectionAction extends DumbAwareAction {
+  private abstract static class TreeSelectionAction extends DumbAwareAction {
     private TreeSelectionAction(@NotNull Supplier<String> text) {
       super(text);
     }
@@ -614,30 +664,30 @@ public class CustomizableActionsPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(true);
-      TreePath[] selectionPaths = myActionsTree.getSelectionPaths();
+      TreePath[] selectionPaths = e.getData(SELECTION);
       if (selectionPaths == null) {
         e.getPresentation().setEnabled(false);
         return;
       }
       for (TreePath path : selectionPaths) {
-        if (path.getPath().length <= minSelectionPathLength()) {
+        if (isNotApplicableForPath(path)) {
           e.getPresentation().setEnabled(false);
           return;
         }
       }
     }
 
+    protected boolean isNotApplicableForPath(@NotNull TreePath path) {
+      return !getCustomizationRoots().isUnderCustomizationRoot(path);
+    }
+
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
 
-    protected int minSelectionPathLength() {
-      return 2;
-    }
-
-    protected final boolean isSingleSelection() {
-      final TreePath[] selectionPaths = myActionsTree.getSelectionPaths();
+    protected static boolean isSingleSelection(@NotNull AnActionEvent e) {
+      final TreePath[] selectionPaths = e.getData(SELECTION);
       return selectionPaths != null && selectionPaths.length == 1;
     }
   }
@@ -654,7 +704,7 @@ public class CustomizableActionsPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
-      TreePath selectionPath = myActionsTree.getLeadSelectionPath();
+      TreePath selectionPath = e.getData(LEAD_SELECTION);
       int row = myActionsTree.getRowForPath(selectionPath);
       if (selectionPath != null) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
@@ -696,13 +746,13 @@ public class CustomizableActionsPanel {
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isEnabled()) {
-        e.getPresentation().setEnabled(isSingleSelection());
+        e.getPresentation().setEnabled(isSingleSelection(e));
       }
     }
 
     @Override
-    protected int minSelectionPathLength() {
-      return 1;
+    protected boolean isNotApplicableForPath(@NotNull TreePath path) {
+      return getCustomizationRoots().isReadOnlyGroup(path);
     }
   }
 
@@ -755,7 +805,12 @@ public class CustomizableActionsPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)myActionsTree.getLeadSelectionPath().getLastPathComponent();
+      var leadSelection = e.getData(LEAD_SELECTION);
+      if (leadSelection == null) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelection.getLastPathComponent();
       boolean isGroup = CustomizationUtil.getGroupForNode(node) != null;
 
       if (isGroup) {
@@ -786,7 +841,7 @@ public class CustomizableActionsPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
-      final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
+      final TreePath selectionPath = e.getData(LEAD_SELECTION);
       if (selectionPath != null) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
         final ActionUrl url = new ActionUrl(getGroupPath(selectionPath, false), Separator.getInstance(), ADDED,
@@ -803,7 +858,7 @@ public class CustomizableActionsPanel {
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isEnabled()) {
-        e.getPresentation().setEnabled(isSingleSelection());
+        e.getPresentation().setEnabled(isSingleSelection(e));
       }
     }
   }
@@ -910,7 +965,7 @@ public class CustomizableActionsPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
-      removePaths(myActionsTree.getSelectionPaths());
+      removePaths(e.getData(SELECTION));
       TreeUtil.restoreExpandedPaths(myActionsTree, expandedPaths);
     }
   }
@@ -934,7 +989,7 @@ public class CustomizableActionsPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
-      final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
+      final TreePath selectionPath = e.getData(LEAD_SELECTION);
       if (selectionPath != null) {
         EditIconDialog dlg = new EditIconDialog(selectionPath);
         if (dlg.showAndGet()) {
@@ -949,7 +1004,12 @@ public class CustomizableActionsPanel {
       super.update(e);
       if (e.getPresentation().isEnabled()) {
         final ActionManager actionManager = ActionManager.getInstance();
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myActionsTree.getLeadSelectionPath().getLastPathComponent();
+        var leadSelection = e.getData(LEAD_SELECTION);
+        if (leadSelection == null) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelection.getLastPathComponent();
         String actionId = getActionId(node);
         if (actionId != null) {
           final AnAction action = actionManager.getAction(actionId);
@@ -972,7 +1032,7 @@ public class CustomizableActionsPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
-      final TreePath[] selectionPath = myActionsTree.getSelectionPaths();
+      final TreePath[] selectionPath = e.getData(SELECTION);
       if (selectionPath != null) {
         for (TreePath treePath : selectionPath) {
           final ActionUrl url = CustomizationUtil.getActionUrl(treePath, MOVE);
@@ -993,7 +1053,7 @@ public class CustomizableActionsPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(e.getPresentation().isEnabled() && isMoveSupported(myActionsTree, -1));
+      e.getPresentation().setEnabled(e.getPresentation().isEnabled() && isMoveSupported(e, -1));
     }
   }
 
@@ -1006,7 +1066,7 @@ public class CustomizableActionsPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
-      final TreePath[] selectionPath = myActionsTree.getSelectionPaths();
+      final TreePath[] selectionPath = e.getData(SELECTION);
       if (selectionPath != null) {
         for (int i = selectionPath.length - 1; i >= 0; i--) {
           TreePath treePath = selectionPath[i];
@@ -1028,7 +1088,7 @@ public class CustomizableActionsPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(e.getPresentation().isEnabled() && isMoveSupported(myActionsTree, 1));
+      e.getPresentation().setEnabled(e.getPresentation().isEnabled() && isMoveSupported(e, 1));
     }
   }
 
@@ -1037,10 +1097,10 @@ public class CustomizableActionsPanel {
       super(IdeBundle.messagePointer("button.restore.selected.groups"));
     }
 
-    private Pair<TreeSet<String>, List<ActionUrl>> findActionsUnderSelection() {
+    private Pair<TreeSet<String>, List<ActionUrl>> findActionsUnderSelection(@NotNull AnActionEvent e) {
       ArrayList<ActionUrl> actions = new ArrayList<>();
       TreeSet<String> selectedNames = new TreeSet<>();
-      TreePath[] selectionPaths = myActionsTree.getSelectionPaths();
+      TreePath[] selectionPaths = e.getData(SELECTION);
       if (selectionPaths != null) {
         for (TreePath path : selectionPaths) {
           ActionUrl selectedUrl = CustomizationUtil.getActionUrl(path, MOVE);
@@ -1066,7 +1126,7 @@ public class CustomizableActionsPanel {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final List<ActionUrl> otherActions = new ArrayList<>(mySelectedSchema.getActions());
-      otherActions.removeAll(findActionsUnderSelection().second);
+      otherActions.removeAll(findActionsUnderSelection(e).second);
       mySelectedSchema.copyFrom(new CustomActionsSchema(null));
       for (ActionUrl otherAction : otherActions) {
         mySelectedSchema.addAction(otherAction);
@@ -1079,7 +1139,7 @@ public class CustomizableActionsPanel {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Pair<TreeSet<String>, List<ActionUrl>> selection = findActionsUnderSelection();
+      Pair<TreeSet<String>, List<ActionUrl>> selection = findActionsUnderSelection(e);
       e.getPresentation().setEnabled(!selection.second.isEmpty());
       if (selection.first.size() != 1) {
         e.getPresentation().setText(IdeBundle.messagePointer("button.restore.selected.groups"));

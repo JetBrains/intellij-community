@@ -45,15 +45,14 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return contentPane;
   }
 
   private void createUIComponents() {
     moduleChooser = new ElementsChooser<>(true) {
       @Override
-      protected String getItemText(@NotNull final Module module) {
+      protected String getItemText(final @NotNull Module module) {
         return module.getName();
       }
     };
@@ -67,8 +66,7 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
     return moduleChooser.getMarkedElements();
   }
 
-  @Nullable
-  public File getUserLibrariesFile() {
+  public @Nullable File getUserLibrariesFile() {
     return myExportProjectLibrariesCb.isSelected() ? new File(myUserLibrariesTF.getText()) : null;
   }
 }

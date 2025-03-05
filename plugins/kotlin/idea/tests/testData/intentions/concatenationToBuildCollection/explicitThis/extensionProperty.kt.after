@@ -1,0 +1,11 @@
+val MutableList<Int>.bbb: Int
+    get() {
+        buildList {
+            addAll(this@bbb)
+            mapTo(this) { it }
+            add(this@bbb.size)
+            add(this@bbb.get(1))
+            addAll(this@bbb.mapTo(this@bbb) { it })
+        }
+        return 1
+    }

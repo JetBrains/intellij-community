@@ -1,13 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet
 
-import com.intellij.facet.FacetTestCase
-import com.intellij.facet.ProjectFacetManager
 import com.intellij.facet.mock.MockFacetType
-import com.intellij.facet.mock.MockFacet
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.EmptyModuleType
-import com.intellij.facet.FacetManager
 import com.intellij.facet.mock.MockFacetConfiguration
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.testFramework.ApplicationRule
@@ -18,7 +12,6 @@ import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 
 class ProjectFacetManagerTest {
   companion object {

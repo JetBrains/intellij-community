@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.options;
 
 import com.intellij.codeInspection.ui.StringValidatorWithSwingSelector;
@@ -88,8 +88,7 @@ public class JavaClassValidator implements StringValidatorWithSwingSelector {
     return checkClass(psiClass);
   }
 
-  @Nullable
-  private @Nls String checkClass(PsiClass psiClass) {
+  private @Nullable @Nls String checkClass(PsiClass psiClass) {
     if (myAnnotationOnly && !psiClass.isAnnotationType()) {
       return JavaBundle.message("validator.text.no.annotation");
     }

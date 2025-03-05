@@ -40,8 +40,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
         .withNavigationElement(info.getVariable()));
   }
 
-  @NotNull
-  protected PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
+  protected @NotNull PsiType getBuilderFieldType(@NotNull PsiType psiFieldType, @NotNull Project project) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiType elementType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager);
 
@@ -131,8 +130,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     return methods;
   }
 
-  @NotNull
-  private static String createSingularClearMethodName(String fieldName, CapitalizationStrategy capitalizationStrategy) {
+  private static @NotNull String createSingularClearMethodName(String fieldName, CapitalizationStrategy capitalizationStrategy) {
     return LombokUtils.buildAccessorName("clear", fieldName, capitalizationStrategy);
   }
 

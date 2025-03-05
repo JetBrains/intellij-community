@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.structureView.impl;
 
@@ -55,8 +55,7 @@ public class StructureViewComposite implements StructureView {
     return false;
   }
 
-  @Nullable
-  public StructureView getSelectedStructureView() {
+  public @Nullable StructureView getSelectedStructureView() {
     StructureViewDescriptor descriptor = ArrayUtil.getFirstElement(myStructureViews);
     return descriptor == null ? null : descriptor.structureView;
   }
@@ -109,19 +108,22 @@ public class StructureViewComposite implements StructureView {
   }
 
   @Override
-  @NotNull
-  public StructureViewModel getTreeModel() {
+  public @NotNull StructureViewModel getTreeModel() {
     StructureView view = getSelectedStructureView();
     if (view != null) return view.getTreeModel();
     class M extends TextEditorBasedStructureViewModel implements StructureViewTreeElement, ItemPresentation {
       M() { super(null, null);}
 
-      @NotNull @Override public StructureViewTreeElement getRoot() { return this;} 
+      @Override
+      public @NotNull StructureViewTreeElement getRoot() { return this;}
       @Override public Object getValue() { return null;} 
-      @NotNull @Override public ItemPresentation getPresentation() { return this;} 
+      @Override
+      public @NotNull ItemPresentation getPresentation() { return this;}
       @Override public TreeElement @NotNull [] getChildren() { return EMPTY_ARRAY;} 
-      @Nullable @Override public String getPresentableText() { return null;} 
-      @Nullable @Override public Icon getIcon(boolean unused) { return null;}
+      @Override
+      public @Nullable String getPresentableText() { return null;}
+      @Override
+      public @Nullable Icon getIcon(boolean unused) { return null;}
     }
     return new M();
   }

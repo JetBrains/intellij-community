@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -38,7 +37,6 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.*;
 import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
-import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isNamespacePackage;
 
 /**
  * @author Mikhail Golubev

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -35,8 +35,7 @@ public final class GradleRunnerUtil {
     return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
   }
 
-  @Nullable
-  public static Location<PsiMethod> getMethodLocation(@NotNull Location contextLocation) {
+  public static @Nullable Location<PsiMethod> getMethodLocation(@NotNull Location contextLocation) {
     Location<PsiMethod> methodLocation = getTestMethod(contextLocation);
     if (methodLocation == null) return null;
 
@@ -49,8 +48,7 @@ public final class GradleRunnerUtil {
     return methodLocation;
   }
 
-  @Nullable
-  public static Location<PsiMethod> getTestMethod(final Location<?> location) {
+  public static @Nullable Location<PsiMethod> getTestMethod(final Location<?> location) {
     for (Iterator<Location<PsiMethod>> iterator = location.getAncestors(PsiMethod.class, false); iterator.hasNext(); ) {
       final Location<PsiMethod> methodLocation = iterator.next();
       if (TestFrameworks.getInstance().isTestMethod(methodLocation.getPsiElement(), false)) return methodLocation;
@@ -58,8 +56,7 @@ public final class GradleRunnerUtil {
     return null;
   }
 
-  @Nullable
-  public static String resolveProjectPath(@NotNull Module module) {
+  public static @Nullable String resolveProjectPath(@NotNull Module module) {
     final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
     final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
     if (rootProjectPath == null || projectPath == null) return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.project.Project;
@@ -22,9 +22,8 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
   @Override
   public abstract JavaRenameRefactoring createRename(@NotNull PsiElement element, String newName);
 
-  @Nullable("in case the source file is not located under any source root")
-  public abstract MoveInnerRefactoring createMoveInner(PsiClass innerClass, String newName,
-                                                       boolean passOuterClass, String parameterName);
+  public abstract @Nullable("in case the source file is not located under any source root") MoveInnerRefactoring createMoveInner(PsiClass innerClass, String newName,
+                                                                                                                                 boolean passOuterClass, String parameterName);
 
   /**
    * Creates move destination for a specified package that preserves source folders for moved items.

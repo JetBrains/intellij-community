@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,7 +73,7 @@ public abstract class ComponentsListFocusTraversalPolicy extends LayoutFocusTrav
     return components.isEmpty() ? null : searchShowing(components, 0, FORWARD);
   }
 
-  protected abstract @NotNull List<Component> getOrderedComponents();
+  protected abstract @Unmodifiable @NotNull List<Component> getOrderedComponents();
 
   private static Component searchShowing(@NotNull List<? extends Component> components, int start, int direction) {
     for (int i = start; i >= 0 && i < components.size(); i += direction) {

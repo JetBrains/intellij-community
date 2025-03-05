@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: setparam
-// IS_APPLICABLE: false
+// NO_OPTION: SETTER_PARAMETER|Add use-site target 'setparam'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
 
 annotation class A
 

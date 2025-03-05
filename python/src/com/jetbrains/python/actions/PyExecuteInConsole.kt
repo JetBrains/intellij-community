@@ -24,6 +24,25 @@ import java.util.function.Consumer
 import java.util.function.Function
 
 fun executeCodeInConsole(project: Project,
+                         commandText: List<String>,
+                         editor: Editor?,
+                         canUseExistingConsole: Boolean,
+                         canUseDebugConsole: Boolean,
+                         requestFocusToConsole: Boolean,
+                         config: PythonRunConfiguration?) {
+  val executeCodeInConsole = commandText.foldRight(null) { commandText: String, acc: Consumer<ExecutionConsole>? ->
+    var consumer = Consumer<ExecutionConsole> { (it as PyCodeExecutor).executeCode(commandText, editor) }
+    if (acc != null) {
+      consumer = consumer.andThen(acc)
+    }
+    consumer
+  }
+  val executeInStartingConsole = Function<VirtualFile?, Boolean> { PyExecuteConsoleCustomizer.instance.isConsoleStarting(it, null) }
+  executeCodeInConsole(project, executeCodeInConsole, executeInStartingConsole, editor, canUseExistingConsole, canUseDebugConsole,
+                       requestFocusToConsole, config)
+}
+
+fun executeCodeInConsole(project: Project,
                          commandText: String?,
                          editor: Editor?,
                          canUseExistingConsole: Boolean,

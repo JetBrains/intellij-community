@@ -36,7 +36,8 @@ internal class BuildManagerVersionChecker(val project: Project, val scope: Corou
 
       val jdkArch = versionInfo.arch ?: return@launch
 
-      if (jdkArch != CpuArch.CURRENT) {
+      if (jdkArch in listOf(CpuArch.X86, CpuArch.X86_64) && CpuArch.CURRENT in listOf(CpuArch.ARM32, CpuArch.ARM64)
+          || jdkArch in listOf(CpuArch.ARM32, CpuArch.ARM64) && CpuArch.CURRENT in listOf(CpuArch.X86, CpuArch.X86_64)) {
         NotificationGroupManager.getInstance()
           .getNotificationGroup("JDK Arch Check")
           .createNotification(

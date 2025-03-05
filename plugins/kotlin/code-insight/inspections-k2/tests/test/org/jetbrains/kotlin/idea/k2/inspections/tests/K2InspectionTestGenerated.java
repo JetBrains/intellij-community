@@ -419,4 +419,50 @@ public abstract class K2InspectionTestGenerated extends AbstractK2InspectionTest
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspections/replaceArrayEqualityOpWithArraysEquals")
+    public abstract static class ReplaceArrayEqualityOpWithArraysEquals extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspections/replaceArrayEqualityOpWithArraysEquals/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/inspections/replaceArrayEqualityOpWithArraysEquals/inspectionData/inspections.test");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments")
+    public abstract static class RemoveExplicitTypeArguments extends AbstractK2InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/inspectionData")
+        public static class InspectionData extends AbstractK2InspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/inspectionData/inspections.test");
+            }
+        }
+    }
 }

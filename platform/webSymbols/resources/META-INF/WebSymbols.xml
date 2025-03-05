@@ -3,7 +3,9 @@
     <projectService serviceInterface="com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory"
                     serviceImplementation="com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl"/>
 
-    <highlightingPassFactory implementation="com.intellij.webSymbols.inspections.WebSymbolsPassFactory$Registrar"/>
+    <metaLanguage implementation="com.intellij.webSymbols.WebSymbolsEnabledLanguage"/>
+    <annotator language="WebSymbolsEnabledLanguage"
+               implementationClass="com.intellij.webSymbols.highlighting.impl.WebSymbolsHighlightingAnnotator"/>
 
     <webSymbols.webTypes.filter
       name="match-prefix"
@@ -15,6 +17,13 @@
     <platform.backend.documentation.targetProvider
       implementation="com.intellij.webSymbols.documentation.WebSymbolDocumentationTargetProvider"/>
     <psi.declarationProvider implementation="com.intellij.webSymbols.declarations.impl.WebSymbolDeclarationProviderDelegate"/>
+
+    <!--suppress PluginXmlRegistrationCheck -->
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
+                                 hostLanguage="WebSymbolsEnabledLanguage"
+                                 implementationClass="com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderImpl"
+                                 targetClass="com.intellij.webSymbols.WebSymbol"
+                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"/>
 
     <referencesSearch implementation="com.intellij.webSymbols.search.PsiSourcedWebSymbolReferenceSearcher"/>
     <refactoring.helper implementation="com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRefactoringHelper"/>

@@ -31,9 +31,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
-  @Nullable
   @Override
-  public String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
+  public @Nullable String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
     CharSequence result = "";
 
     Editor editor = callback.getEditor();
@@ -48,9 +47,8 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     return !availableSnippets.isEmpty() ? result.toString() : null;
   }
 
-  @Nullable
   @Override
-  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+  public @Nullable String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     int offset = callback.getEditor().getCaretModel().getOffset();
     CharSequence charsSequence = callback.getEditor().getDocument().getImmutableCharSequence();
     for (TextMateSnippet snippet : getAvailableSnippets(callback.getEditor())) {
@@ -96,11 +94,10 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     // todo
   }
 
-  @NotNull
   @Override
-  public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file,
-                                                                                 @NotNull Editor editor,
-                                                                                 int offset) {
+  public @NotNull Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file,
+                                                                                          @NotNull Editor editor,
+                                                                                          int offset) {
     TextMateService service = TextMateService.getInstance();
     if (service == null) {
       return super.getLookupElements(file, editor, offset);
@@ -145,14 +142,12 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return TextMateBundle.message("textmate.live.template.name");
   }
 
-  @NotNull
-  private static Collection<TextMateSnippet> getAvailableSnippets(@NotNull Editor editor) {
+  private static @NotNull Collection<TextMateSnippet> getAvailableSnippets(@NotNull Editor editor) {
     TextMateService service = TextMateService.getInstance();
     if (service != null) {
       SnippetsRegistry snippetsRegistry = service.getSnippetRegistry();
@@ -162,8 +157,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static CharSequence getPrefixForSnippet(@NotNull CharSequence sequence, int offset, @NotNull TextMateSnippet snippet) {
+  private static @Nullable CharSequence getPrefixForSnippet(@NotNull CharSequence sequence, int offset, @NotNull TextMateSnippet snippet) {
     int startOffset = Math.max(offset - snippet.getKey().length(), 0);
     for (int i = startOffset; i <= offset; i++) {
       if (i == 0 || StringUtil.isWhiteSpace(sequence.charAt(i - 1))) {
@@ -197,7 +191,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     }
 
     @Override
-    public void itemSelected(@NotNull final LookupEvent event) {
+    public void itemSelected(final @NotNull LookupEvent event) {
       final LookupElement item = event.getItem();
       assert item instanceof CustomLiveTemplateLookupElement;
       if (myFile != null) {

@@ -19,8 +19,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 
 internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidget) : SearchSession {
-  private val searchComponent: SearchReplaceComponent = createSearchComponent()
   private val findModel: FindModel = createFindModel()
+  private val searchComponent: SearchReplaceComponent = createSearchComponent()
   private var hasMatches: Boolean = false
   private val terminalSearchComponent: MySearchComponent = MySearchComponent()
 

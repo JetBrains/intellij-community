@@ -70,9 +70,8 @@ public final class XsltCommandLineState extends CommandLineState {
     return myIsDebugger;
   }
 
-  @NotNull
   @Override
-  protected OSProcessHandler startProcess() throws ExecutionException {
+  protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
     final OSProcessHandler osProcessHandler = createJavaParameters().createOSProcessHandler();
     osProcessHandler.putUserData(STATE, this);
 

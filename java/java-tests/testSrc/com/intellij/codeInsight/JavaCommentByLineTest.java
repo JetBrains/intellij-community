@@ -6,7 +6,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaCommentByLineTest extends CommentByLineTestBase {
@@ -121,18 +120,5 @@ public class JavaCommentByLineTest extends CommentByLineTestBase {
     settings.getIndentOptions().USE_TAB_CHARACTER = true;
     settings.getIndentOptions().SMART_TABS = true;
     doTest();
-  }
-
-  public void testUncommentLargeFilePerformance() {
-    StringBuilder source = new StringBuilder("class C {\n");
-    for (int i = 0; i < 5000; i++) {
-      source.append("    int value").append(i).append(";\n");
-    }
-    source.append("}");
-    configureFromFileText(getTestName(false) + ".java", source.toString());
-    executeAction(IdeActions.ACTION_SELECT_ALL);
-    Benchmark.newBenchmark("Uncommenting large file", CommentByLineTestBase::performAction)
-      .setup(CommentByLineTestBase::performAction)
-      .start();
   }
 }

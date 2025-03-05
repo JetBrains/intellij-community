@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -20,8 +20,7 @@ public interface VcsFileContent {
   /**
    * @return the default charset to be used if detection by content fails. If null, the encoding from project settings will be used.
    */
-  @Nullable
-  default Charset getDefaultCharset() {
+  default @Nullable Charset getDefaultCharset() {
     return null;
   }
 }

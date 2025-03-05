@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.ComparisonFailureData;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class ExpectedPatterns extends AbstractExpectedPatterns {
+public final class ExpectedPatterns extends AbstractExpectedPatterns {
   private static final List<Pattern> PATTERNS = new ArrayList<>();
 
   private static final String[] PATTERN_STRINGS = new String[]{

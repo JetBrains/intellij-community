@@ -54,12 +54,14 @@ public final class FilterInfo implements JDOMExternalizable {
     myRegExp = regExp;
   }
 
+  @Override
   public int hashCode() {
     return Comparing.hashcode(myName) +
            Comparing.hashcode(myDescription) +
            Comparing.hashcode(myRegExp);
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof FilterInfo other)) return false;
     return Objects.equals(myName, other.myName) &&

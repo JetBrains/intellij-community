@@ -100,13 +100,12 @@ f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - a:goPrevDiff():V
 *f:com.intellij.diff.tools.combined.CombinedDiffRegistry
 - sf:INSTANCE:com.intellij.diff.tools.combined.CombinedDiffRegistry
+- f:addStateListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
 - f:getFilesLimit():I
 - f:getMaxBlockCountInMemory():I
 - f:getPreloadedBlocksCount():I
 - f:isEnabled():Z
-- f:resetBadge():V
 - f:setCombinedDiffEnabled(Z):V
-- f:showBadge():Z
 *f:com.intellij.diff.tools.combined.CombinedDiffUIState
 - <init>():V
 - f:getDiffInfoStateFlow():kotlinx.coroutines.flow.StateFlow

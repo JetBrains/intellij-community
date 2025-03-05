@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -60,8 +60,7 @@ public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
   }
 
   @Override
-  @NotNull
-  public XDebuggerDataViewSettings getDataViewSettings() {
+  public @NotNull XDebuggerDataViewSettings getDataViewSettings() {
     return myDataViewSettings;
   }
 
@@ -70,7 +69,7 @@ public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
   }
 
   @Override
-  public void loadState(@NotNull final SettingsState state) {
+  public void loadState(final @NotNull SettingsState state) {
     myDataViewSettings = state.getDataViewSettings();
     myGeneralSettings = state.getGeneralSettings();
     for (SpecificSettingsState settingsState : state.specificStates) {
@@ -94,13 +93,11 @@ public final class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager
     SETTINGS_EP.forEachExtensionSafe(consumer);
   }
 
-  @Nullable
-  public <T extends XDebuggerSettings<?>> T getSettings(Class<T> aClass) {
+  public @Nullable <T extends XDebuggerSettings<?>> T getSettings(Class<T> aClass) {
     return SETTINGS_EP.findExtension(aClass);
   }
 
-  @Nullable
-  public XDebuggerSettings<?> findFirstSettings(Predicate<XDebuggerSettings> predicate) {
+  public @Nullable XDebuggerSettings<?> findFirstSettings(Predicate<XDebuggerSettings> predicate) {
     return SETTINGS_EP.findFirstSafe(predicate);
   }
 

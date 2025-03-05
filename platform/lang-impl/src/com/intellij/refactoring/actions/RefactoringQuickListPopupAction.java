@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.ide.actions.CopyElementAction;
@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,8 +123,8 @@ public final class RefactoringQuickListPopupAction extends QuickSwitchSchemeActi
     }
 
     @Override
-    public @NotNull List<@NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
-                                                                       @NotNull List<? extends @NotNull AnAction> visibleChildren) {
+    public @Unmodifiable @NotNull List<@NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                                     @NotNull List<? extends @NotNull AnAction> visibleChildren) {
       boolean isRootGroup = getClass() == MyGroup.class;
       return ContainerUtil.filter(visibleChildren, o ->
         o instanceof Separator && (isRootGroup || ((Separator)o).getText() != null) ||

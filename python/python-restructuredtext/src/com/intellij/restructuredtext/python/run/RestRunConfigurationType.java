@@ -6,11 +6,11 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.restructuredtext.RestBundle;
+import com.intellij.restructuredtext.RestFileType;
 import com.intellij.restructuredtext.python.run.docutils.DocutilsRunConfiguration;
 import com.intellij.restructuredtext.python.run.sphinx.SphinxRunConfiguration;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
-import com.intellij.restructuredtext.RestBundle;
-import com.intellij.restructuredtext.RestFileType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +24,8 @@ public final class RestRunConfigurationType implements ConfigurationType {
   public final ConfigurationFactory DOCUTILS_FACTORY = new DocutilsRunConfigurationFactory(this);
   public final ConfigurationFactory SPHINX_FACTORY = new SphinxRunConfigurationFactory(this);
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return RestBundle.message("runcfg.docutils.display_name");
   }
 
@@ -45,8 +44,7 @@ public final class RestRunConfigurationType implements ConfigurationType {
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     String id = "docs";
     return id;
   }
@@ -66,19 +64,18 @@ public final class RestRunConfigurationType implements ConfigurationType {
     return true;
   }
 
-  private static abstract class RestConfigurationFactory extends PythonConfigurationFactoryBase {
+  private abstract static class RestConfigurationFactory extends PythonConfigurationFactoryBase {
     private final @Nls String myName;
     private final String myId;
 
-    RestConfigurationFactory(@NotNull final ConfigurationType type, @NotNull @Nls String name, @NotNull @NonNls String id) {
+    RestConfigurationFactory(final @NotNull ConfigurationType type, @NotNull @Nls String name, @NotNull @NonNls String id) {
       super(type);
       myName = name;
       myId = id;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
@@ -94,8 +91,7 @@ public final class RestRunConfigurationType implements ConfigurationType {
     }
 
     @Override
-    @NotNull
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new DocutilsRunConfiguration(project, this);
     }
   }
@@ -106,8 +102,7 @@ public final class RestRunConfigurationType implements ConfigurationType {
     }
 
     @Override
-    @NotNull
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new SphinxRunConfiguration(project, this);
     }
   }

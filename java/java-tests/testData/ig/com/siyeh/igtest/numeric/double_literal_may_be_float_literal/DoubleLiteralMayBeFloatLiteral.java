@@ -7,7 +7,7 @@ class DoubleLiteralMayBeFloatLiteral {
   }
 
   void error() {
-    <error descr="Incompatible types. Found: 'float', required: 'int'">int i = (float)6.66;</error>
+    int i = <error descr="Incompatible types. Found: 'float', required: 'int'">(float)6.66;</error>
   }
 
   Float boxed() {

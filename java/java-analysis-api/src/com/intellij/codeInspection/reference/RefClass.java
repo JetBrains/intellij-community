@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.UClass;
 
 import java.util.Collection;
@@ -29,7 +30,7 @@ public interface RefClass extends RefJavaElement, RefOverridable {
   List<RefMethod> getConstructors();
 
   /** @return the fields of this class */
-  default List<RefField> getFields() {
+  default @Unmodifiable List<RefField> getFields() {
     return Collections.emptyList();
   }
 
@@ -37,8 +38,7 @@ public interface RefClass extends RefJavaElement, RefOverridable {
   Set<RefElement> getInTypeReferences();
 
   @Deprecated(forRemoval = true)
-  @NotNull
-  default Set<RefElement> getInstanceReferences() {
+  default @NotNull Set<RefElement> getInstanceReferences() {
     throw new UnsupportedOperationException();
   }
 

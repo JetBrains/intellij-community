@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import com.intellij.openapi.util.ThrowableNotNullFunction;
@@ -16,7 +16,7 @@ public final class RWLockProtectedPageImpl extends PageImpl {
   private static final long EMPTY_MODIFIED_REGION = 0;
 
   /** Guards access to .data buffer */
-  private transient final ReentrantReadWriteLock contentProtectingLock;
+  private final transient ReentrantReadWriteLock contentProtectingLock;
 
   /**
    * Modified region [minOffsetModified, maxOffsetModified) of {@linkplain #data}, packed into a

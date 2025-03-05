@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.resolve.lazy
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -450,7 +451,7 @@ class PartialBodyResolveFilter(
     /**
      * Recursively visits code but does not enter constructs that may not affect smart casts/control flow
      */
-    private abstract class ControlFlowVisitor : KtVisitorVoid() {
+    private abstract class ControlFlowVisitor : KtVisitorVoid(),PsiRecursiveVisitor {
         override fun visitKtElement(element: KtElement) {
             if (element.noControlFlowInside()) return
             element.acceptChildren(this)

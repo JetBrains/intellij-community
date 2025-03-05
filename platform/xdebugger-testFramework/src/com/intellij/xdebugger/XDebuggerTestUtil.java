@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
@@ -31,13 +32,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.Promise;
+import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-
-import static com.intellij.openapi.util.Predicates.nonNull;
-import static org.junit.Assert.assertNotNull;
 
 @TestOnly
 public class XDebuggerTestUtil {
@@ -61,8 +60,7 @@ public class XDebuggerTestUtil {
     });
   }
 
-  @Nullable
-  public static XLineBreakpoint toggleBreakpoint(Project project, VirtualFile file, int line) {
+  public static @Nullable XLineBreakpoint toggleBreakpoint(Project project, VirtualFile file, int line) {
     final XDebuggerUtilImpl debuggerUtil = (XDebuggerUtilImpl)XDebuggerUtil.getInstance();
     final Promise<XLineBreakpoint> breakpointPromise = WriteAction.computeAndWait(
       () -> debuggerUtil.toggleAndReturnLineBreakpoint(project, file, line, false));
@@ -84,16 +82,16 @@ public class XDebuggerTestUtil {
       .addBreakpoint(XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties);
   }
 
-  public static void removeBreakpoint(@NotNull final Project project,
-                                      @NotNull final VirtualFile file,
+  public static void removeBreakpoint(final @NotNull Project project,
+                                      final @NotNull VirtualFile file,
                                       final int line) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     WriteAction.runAndWait(() -> {
       XLineBreakpoint<?> breakpoint = Arrays.stream(XDebuggerUtil.getInstance().getLineBreakpointTypes())
         .map(t -> breakpointManager.findBreakpointAtLine(t, file, line))
-        .filter(nonNull())
+        .filter(Predicates.nonNull())
         .findFirst().orElse(null);
-      assertNotNull(breakpoint);
+      Assert.assertNotNull(breakpoint);
       breakpointManager.removeBreakpoint(breakpoint);
     });
   }
@@ -167,13 +165,11 @@ public class XDebuggerTestUtil {
     return frameIndex == 0 ? thread.getTopFrame() : collectFrames(thread).get(frameIndex);
   }
 
-  @NotNull
-  public static List<XValue> collectChildren(XValueContainer value) {
+  public static @NotNull List<XValue> collectChildren(XValueContainer value) {
     return new XTestCompositeNode(value).collectChildren();
   }
 
-  @NotNull
-  public static Pair<List<XValue>, String> collectChildrenWithError(XValueContainer value) {
+  public static @NotNull Pair<List<XValue>, String> collectChildrenWithError(XValueContainer value) {
     return new XTestCompositeNode(value).collectChildrenWithError();
   }
 
@@ -191,9 +187,9 @@ public class XDebuggerTestUtil {
 
   private static Pair<XValue, String> evaluate(XDebugSession session, XExpression expression, long timeout) {
     XStackFrame frame = session.getCurrentStackFrame();
-    assertNotNull(frame);
+    Assert.assertNotNull(frame);
     XDebuggerEvaluator evaluator = frame.getEvaluator();
-    assertNotNull(evaluator);
+    Assert.assertNotNull(evaluator);
     XTestEvaluationCallback callback = new XTestEvaluationCallback();
     evaluator.evaluate(expression, callback, session.getCurrentPosition());
     return callback.waitFor(timeout);
@@ -207,8 +203,7 @@ public class XDebuggerTestUtil {
     UIUtil.invokeAndWaitIfNeeded(() -> {});
   }
 
-  @NotNull
-  public static XValue findVar(Collection<? extends XValue> vars, String name) {
+  public static @NotNull XValue findVar(Collection<? extends XValue> vars, String name) {
     StringBuilder names = new StringBuilder();
     for (XValue each : vars) {
       if (each instanceof XNamedValue) {
@@ -300,16 +295,15 @@ public class XDebuggerTestUtil {
     }
   }
 
-  @NotNull
-  public static String getConsoleText(final @NotNull ConsoleViewImpl consoleView) {
+  public static @NotNull String getConsoleText(final @NotNull ConsoleViewImpl consoleView) {
     WriteAction.runAndWait(() -> consoleView.flushDeferredText());
 
     return consoleView.getEditor().getDocument().getText();
   }
 
-  public static <T extends XBreakpointType> XBreakpoint addBreakpoint(@NotNull final Project project,
-                                                                      @NotNull final Class<T> exceptionType,
-                                                                      @NotNull final XBreakpointProperties properties) {
+  public static <T extends XBreakpointType> XBreakpoint addBreakpoint(final @NotNull Project project,
+                                                                      final @NotNull Class<T> exceptionType,
+                                                                      final @NotNull XBreakpointProperties properties) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     Ref<XBreakpoint> breakpoint = Ref.create(null);
     XBreakpointUtil.breakpointTypes()
@@ -328,7 +322,7 @@ public class XDebuggerTestUtil {
   }
 
   public static <B extends XBreakpoint<?>>
-  void setDefaultBreakpointEnabled(@NotNull final Project project, Class<? extends XBreakpointType<B, ?>> bpTypeClass, boolean enabled) {
+  void setDefaultBreakpointEnabled(final @NotNull Project project, Class<? extends XBreakpointType<B, ?>> bpTypeClass, boolean enabled) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XBreakpointType<B, ?> bpType = XDebuggerUtil.getInstance().findBreakpointType(bpTypeClass);
     Set<B> defaultBreakpoints = breakpointManager.getDefaultBreakpoints(bpType);

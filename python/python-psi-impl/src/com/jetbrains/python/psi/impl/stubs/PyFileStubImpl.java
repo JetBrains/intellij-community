@@ -71,9 +71,8 @@ public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStu
     return myDeprecationMessage == null ? null : myDeprecationMessage.getString();
   }
 
-  @NotNull
   @Override
-  public IStubFileElementType<?> getType() {
+  public @NotNull IStubFileElementType<?> getType() {
     return (IStubFileElementType<?>) LanguageParserDefinitions.INSTANCE.forLanguage(PythonLanguage.getInstance()).getFileNodeType();
   }
 }

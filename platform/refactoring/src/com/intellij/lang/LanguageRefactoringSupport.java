@@ -23,8 +23,7 @@ public final class LanguageRefactoringSupport extends LanguageExtension<Refactor
     super("com.intellij.lang.refactoringSupport", new RefactoringSupportProvider() {});
   }
 
-  @Nullable
-  public RefactoringSupportProvider forContext(@NotNull PsiElement element) {
+  public @Nullable RefactoringSupportProvider forContext(@NotNull PsiElement element) {
     List<RefactoringSupportProvider> providers = allForLanguage(element.getLanguage());
     for (RefactoringSupportProvider provider : providers) {
       if (provider.isAvailable(element)) {

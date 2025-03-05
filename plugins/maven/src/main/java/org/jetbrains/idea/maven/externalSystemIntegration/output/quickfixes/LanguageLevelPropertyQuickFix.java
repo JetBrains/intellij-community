@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes;
 
 import com.intellij.codeInsight.template.Template;
@@ -41,8 +41,7 @@ public class LanguageLevelPropertyQuickFix extends LanguageLevelQuickFix {
     runTemplate(template, tag);
   }
 
-  @Nullable
-  private static Template getTemplate(XmlTag tagProperty, String prevSource, String prevTarget, String option) {
+  private static @Nullable Template getTemplate(XmlTag tagProperty, String prevSource, String prevTarget, String option) {
     XmlTag tagSource = tagProperty.findFirstSubTag(MAVEN_COMPILER_SOURCE);
     XmlTag tagTarget = tagProperty.findFirstSubTag(MAVEN_COMPILER_TARGET);
     PsiElement psiSource = getXmlTagPsiValue(tagSource);

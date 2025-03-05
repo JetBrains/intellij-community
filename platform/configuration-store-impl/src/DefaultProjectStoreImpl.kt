@@ -33,6 +33,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
     val file = ApplicationManager.getApplication().stateStore.storageManager.expandMacro(PROJECT_DEFAULT_FILE_SPEC)
     DefaultProjectStorage(file, PROJECT_DEFAULT_FILE_SPEC, PathMacroManager.getInstance(project), compoundStreamProvider)
   }
+  override val isStoreInitialized: Boolean = true
 
   override val serviceContainer: ComponentManagerImpl
     get() = project as ComponentManagerImpl

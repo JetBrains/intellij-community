@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -91,13 +91,13 @@ class CanBeValInspection : AbstractKotlinInspection() {
             ignoreNotUsedVals: Boolean,
             pseudocodeCache: MutableMap<KtDeclaration, Pseudocode>
         ): Boolean {
-            if (ignoreNotUsedVals && allDeclarations.all { ReferencesSearch.search(it, it.useScope).none() }) {
+            if (ignoreNotUsedVals && allDeclarations.all { ReferencesSearch.search(it, it.useScope).asIterable().none() }) {
                 // do not report for unused var's (otherwise we'll get it highlighted immediately after typing the declaration
                 return false
             }
 
             return if (hasInitializerOrDelegate) {
-                val hasWriteUsages = ReferencesSearch.search(declaration, declaration.useScope).any {
+                val hasWriteUsages = ReferencesSearch.search(declaration, declaration.useScope).asIterable().any {
                     (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
                 }
                 !hasWriteUsages

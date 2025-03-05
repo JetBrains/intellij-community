@@ -51,10 +51,10 @@ public final class PyTypeParser {
                                                                   Collections.emptyMap());
 
   public static class ParseResult {
-    @Nullable private final PyType myType;
-    @NotNull private final Map<TextRange, ? extends PyType> myTypes;
-    @NotNull private final Map<? extends PyType, TextRange> myFullRanges;
-    @NotNull private final Map<? extends PyType, PyImportElement> myImports;
+    private final @Nullable PyType myType;
+    private final @NotNull Map<TextRange, ? extends PyType> myTypes;
+    private final @NotNull Map<? extends PyType, TextRange> myFullRanges;
+    private final @NotNull Map<? extends PyType, PyImportElement> myImports;
 
     ParseResult(@Nullable PyType type, @NotNull Map<TextRange, ? extends PyType> types,
                 @NotNull Map<? extends PyType, TextRange> fullRanges,
@@ -69,23 +69,19 @@ public final class PyTypeParser {
       this(type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.of());
     }
 
-    @Nullable
-    public PyType getType() {
+    public @Nullable PyType getType() {
       return myType;
     }
 
-    @NotNull
-    public Map<TextRange, ? extends PyType> getTypes() {
+    public @NotNull Map<TextRange, ? extends PyType> getTypes() {
       return myTypes;
     }
 
-    @NotNull
-    public Map<? extends PyType, TextRange> getFullRanges() {
+    public @NotNull Map<? extends PyType, TextRange> getFullRanges() {
       return myFullRanges;
     }
 
-    @NotNull
-    public Map<? extends PyType, PyImportElement> getImports() {
+    public @NotNull Map<? extends PyType, PyImportElement> getImports() {
       return myImports;
     }
 
@@ -111,9 +107,8 @@ public final class PyTypeParser {
    * @param anchor should never be null or null will be returned
    * @return null either if there was an error during parsing or if extracted type is equivalent to <tt>Any</tt> or <tt>undefined</tt>
    */
-  @Nullable
   @Contract("null, _ -> null")
-  public static PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type) {
+  public static @Nullable PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type) {
     if (anchor == null) return EMPTY_RESULT.getType();
     return parse(anchor, type).getType();
   }
@@ -123,9 +118,8 @@ public final class PyTypeParser {
    * @param context type evaluation context
    * @return null either if there was an error during parsing or if extracted type is equivalent to <tt>Any</tt> or <tt>undefined</tt>
    */
-  @Nullable
   @Contract("null, _, _ -> null")
-  public static PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context) {
+  public static @Nullable PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context) {
     if (anchor == null) return EMPTY_RESULT.getType();
     return parse(anchor, type, context).getType();
   }
@@ -134,8 +128,7 @@ public final class PyTypeParser {
    * @param anchor should never be null or {@link PyTypeParser#EMPTY_RESULT} will be returned
    * @param type   representation of the type to parse
    */
-  @NotNull
-  public static ParseResult parse(@NotNull PsiElement anchor, @NotNull String type) {
+  public static @NotNull ParseResult parse(@NotNull PsiElement anchor, @NotNull String type) {
     return parse(anchor, type, TypeEvalContext.codeInsightFallback(anchor.getProject()));
   }
 
@@ -144,8 +137,7 @@ public final class PyTypeParser {
    * @param type    representation of the type to parse
    * @param context type evaluation context
    */
-  @NotNull
-  public static ParseResult parse(@NotNull PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context) {
+  public static @NotNull ParseResult parse(@NotNull PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context) {
     PyPsiUtils.assertValid(anchor);
 
     final ForwardDeclaration<ParseResult, PyElementType> typeExpr = ForwardDeclaration.create();
@@ -321,17 +313,16 @@ public final class PyTypeParser {
   }
 
   private static class MakeSimpleType implements Function<Pair<Token<PyElementType>, List<Token<PyElementType>>>, ParseResult> {
-    @NotNull private final PsiElement myAnchor;
-    @NotNull private final TypeEvalContext myContext;
+    private final @NotNull PsiElement myAnchor;
+    private final @NotNull TypeEvalContext myContext;
 
     MakeSimpleType(@NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
       myAnchor = anchor;
       myContext = context;
     }
 
-    @Nullable
     @Override
-    public ParseResult fun(@NotNull Pair<Token<PyElementType>, List<Token<PyElementType>>> value) {
+    public @Nullable ParseResult fun(@NotNull Pair<Token<PyElementType>, List<Token<PyElementType>>> value) {
       final Token<PyElementType> first = value.getFirst();
       final List<Token<PyElementType>> rest = value.getSecond();
       final TextRange firstRange = first.getRange();
@@ -393,13 +384,12 @@ public final class PyTypeParser {
       return EMPTY_RESULT;
     }
 
-    @Nullable
-    private PyType resolveQualifierType(@NotNull List<Token<PyElementType>> tokens,
-                                        @NotNull PyFile file,
-                                        @NotNull TypeEvalContext context,
-                                        @NotNull Map<TextRange, PyType> types,
-                                        @NotNull Map<PyType, TextRange> fullRanges,
-                                        @NotNull Map<PyType, PyImportElement> imports) {
+    private @Nullable PyType resolveQualifierType(@NotNull List<Token<PyElementType>> tokens,
+                                                  @NotNull PyFile file,
+                                                  @NotNull TypeEvalContext context,
+                                                  @NotNull Map<TextRange, PyType> types,
+                                                  @NotNull Map<PyType, TextRange> fullRanges,
+                                                  @NotNull Map<PyType, PyImportElement> imports) {
       if (tokens.isEmpty()) {
         return null;
       }
@@ -447,12 +437,11 @@ public final class PyTypeParser {
       return PyUnionType.union(members);
     }
 
-    @Nullable
-    private PyType getImplicitlyResolvedType(@NotNull List<Token<PyElementType>> tokens,
-                                             @NotNull TypeEvalContext context,
-                                             @NotNull Map<TextRange, PyType> types,
-                                             @NotNull Map<PyType, TextRange> fullRanges,
-                                             TextRange firstRange) {
+    private @Nullable PyType getImplicitlyResolvedType(@NotNull List<Token<PyElementType>> tokens,
+                                                       @NotNull TypeEvalContext context,
+                                                       @NotNull Map<TextRange, PyType> types,
+                                                       @NotNull Map<PyType, TextRange> fullRanges,
+                                                       TextRange firstRange) {
       PyType type = null;
       QualifiedName qName = null;
       while (!tokens.isEmpty()) {
@@ -485,8 +474,7 @@ public final class PyTypeParser {
              type instanceof PyTypeVarType;
     }
 
-    @Nullable
-    private ParseResult parseBuiltinType(@NotNull Token<PyElementType> token) {
+    private @Nullable ParseResult parseBuiltinType(@NotNull Token<PyElementType> token) {
       final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(myAnchor);
       final String name = token.getText().toString();
       final TextRange range = token.getRange();

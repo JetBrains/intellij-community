@@ -29,7 +29,7 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(),
                          () -> doTestByText("""
                                               from typing import ClassVar
-                                              x = 1  <warning descr="'ClassVar' can only be used for assignments in class body"># type: ClassVar[int]</warning>
+                                              x = 1  <warning descr="'ClassVar' can only be used in class body"># type: ClassVar[int]</warning>
                                               """));
   }
 
@@ -37,7 +37,7 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(),
                          () -> doTestByText("""
                                               from typing import ClassVar
-                                              x: <warning descr="'ClassVar' can only be used for assignments in class body">ClassVar[int]</warning> = 1
+                                              x: <warning descr="'ClassVar' can only be used in class body">ClassVar[int]</warning> = 1
                                               """));
   }
 
@@ -100,7 +100,7 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                               class A:
                                                   x = 1  # type: ClassVar[int]
                                               class B(A):
-                                                  <warning descr="Cannot override class variable 'x' (previously declared on base class 'A') with instance variable">x</warning> = 2  # type: int"""));
+                                                  <warning descr="Cannot override class variable 'x' (previously declared in base class 'A') with instance variable">x</warning> = 2  # type: int"""));
   }
 
   public void testCanNotOverrideNormalAttributeWithClassVar() {
@@ -110,7 +110,7 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                               class A:
                                                   x = 1  # type: int
                                               class B(A):
-                                                  <warning descr="Cannot override instance variable 'x' (previously declared on base class 'A') with class variable">x</warning> = 2  # type: ClassVar[int]"""));
+                                                  <warning descr="Cannot override instance variable 'x' (previously declared in base class 'A') with class variable">x</warning> = 2  # type: ClassVar[int]"""));
   }
 
   public void testOverrideClassVarWithImplicitThenExplicitMultiFile() {
@@ -127,7 +127,7 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                               class B:
                                                   x = 2  # type: int
                                               class C(A, B):
-                                                  <warning descr="Cannot override instance variable 'x' (previously declared on base class 'B') with class variable">x</warning> = 3  # type: ClassVar[int]"""));
+                                                  <warning descr="Cannot override instance variable 'x' (previously declared in base class 'B') with class variable">x</warning> = 3  # type: ClassVar[int]"""));
   }
 
   public void testCanOverrideClassVarWithImplicitClassVar() {
@@ -178,7 +178,7 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                               from typing import ClassVar
                                               class Cls:
                                                   def foo(self):
-                                                      x: <warning descr="'ClassVar' cannot be used in annotations for local variables">ClassVar</warning> = "str\""""));
+                                                      x: <warning descr="'ClassVar' can only be used in class body">ClassVar</warning> = "str\""""));
   }
 
   // PY-54540
@@ -203,8 +203,8 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                               T = TypeVar("T")
 
                                               class A(Generic[T]):
-                                                  a = None <warning descr="'ClassVar' parameter cannot include type variables"># type: ClassVar[T]</warning>
-                                                  b = None <warning descr="'ClassVar' parameter cannot include type variables"># type: ClassVar[List[Set[T]]]</warning>"""));
+                                                  a = None # type: ClassVar[<warning descr="'ClassVar' parameter cannot include type variables">T</warning>]
+                                                  b = None # type: ClassVar[List[Set[<warning descr="'ClassVar' parameter cannot include type variables">T</warning>]]]"""));
   }
 
   // PY-54540
@@ -217,7 +217,7 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
 
                                               class A(Generic[T]):
                                                   a: ClassVar[Tuple[int, <warning descr="'ClassVar' parameter cannot include type variables">T</warning>]]
-                                                  b = None <warning descr="'ClassVar' parameter cannot include type variables"># type: ClassVar[Tuple[int, T]]</warning>"""));
+                                                  b = None # type: ClassVar[Tuple[int, <warning descr="'ClassVar' parameter cannot include type variables">T</warning>]]"""));
   }
 
   // PY-54540
@@ -235,7 +235,102 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
 
                                               class A:
                                                   a: ClassVar[tuple[MyType[int, <warning descr="'ClassVar' parameter cannot include type variables">T3</warning>], <warning descr="'ClassVar' parameter cannot include type variables">T2</warning>]]
-                                                  b = None  <warning descr="'ClassVar' parameter cannot include type variables"># type: ClassVar[tuple[MyType[int, T3], T2]]</warning>"""));
+                                                  b = None  # type: ClassVar[tuple[MyType[int, <warning descr="'ClassVar' parameter cannot include type variables">T3</warning>], <warning descr="'ClassVar' parameter cannot include type variables">T2</warning>]]"""));
+  }
+
+  // PY-76913
+  public void testClassVarAcceptsOnlyOneArgument() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar
+                                              
+                                              class Clazz:
+                                                  x: ClassVar[<warning descr="'ClassVar' can only be parameterized with one type">int, int</warning>]
+                                              """));
+  }
+
+  // PY-76913
+  public void testClassVarParameterizationIllegalType() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar
+                                              
+                                              class Clazz:
+                                                  x: ClassVar[<warning descr="Not a valid type">3</warning>]
+                                                  y: ClassVar[<warning descr="Not a valid type">"abc"</warning>]
+                                              """));
+  }
+
+  // PY-76913
+  public void testClassVarContainsParamSpec() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar, ParamSpec, Callable, Any
+                                              P = ParamSpec("P")
+                                              class Clazz:
+                                                  x: ClassVar[Callable[<warning descr="'ClassVar' parameter cannot include type variables">P</warning>, Any]]
+                                              """));
+  }
+
+  // PY-76913
+  public void testClassVarCannotBeNested() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar, Final
+                                              
+                                              class Clazz:
+                                                  x: Final[<warning descr="'ClassVar' cannot be nested">ClassVar[int]</warning>]
+                                                  y: list[<warning descr="'ClassVar' cannot be nested">ClassVar[int]</warning>]
+                                                  z: list[<warning descr="'ClassVar' cannot be nested">ClassVar</warning>]
+                                                  a # type: Final[<warning descr="'ClassVar' cannot be nested">ClassVar[int]</warning>]
+                                                  b: dict[int, list[<warning descr="'ClassVar' cannot be nested">ClassVar[int]</warning>]]
+                                              """));
+  }
+
+  // PY-76913
+  public void testClassVarCannotBeNestedNotReportedInsideTypingAnnotated() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import Annotated, ClassVar
+                                              
+                                              class Clazz:
+                                                  x: Annotated[ClassVar[list[int]], ""]
+                                              """));
+  }
+
+  // PY-76913
+  public void testSelfAnnotatedWithClassVar() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar
+                                              
+                                              class Clazz:
+                                                  def __init__(self) -> None:
+                                                      self.x: <warning descr="'ClassVar' can only be used in class body">ClassVar[int]</warning> = 1
+                                              """));
+  }
+
+  // PY-76913
+  public void testClassVarParameterizedWithSelfTypeNotReported() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar, Self
+                                              
+                                              class Clazz:
+                                                  x: ClassVar[Self]
+                                                  y: ClassVar[dict[str, Self]]
+                                              """));
+  }
+
+  // PY-76913
+  public void testClassVarIsNotAllowedInTypeAlias() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar, TypeAlias
+                                              
+                                              class Clazz:
+                                                  x: TypeAlias = <warning descr="'ClassVar' is not allowed here">ClassVar[int]</warning>
+                                              """));
   }
 
   @Override

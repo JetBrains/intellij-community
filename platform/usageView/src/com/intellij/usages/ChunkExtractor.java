@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -73,8 +73,7 @@ public final class ChunkExtractor {
     return getExtractor(file).extractChunks(usageAdapter, file);
   }
 
-  @NotNull
-  public static ChunkExtractor getExtractor(@NotNull PsiFile file) {
+  public static @NotNull ChunkExtractor getExtractor(@NotNull PsiFile file) {
     return ourExtractors.get().getValue().get(file);
   }
 
@@ -333,8 +332,7 @@ public final class ChunkExtractor {
            || s1 == s2 && e1 == e2;
   }
 
-  @NotNull
-  private TextAttributes convertAttributes(TextAttributesKey @NotNull [] keys) {
+  private @NotNull TextAttributes convertAttributes(TextAttributesKey @NotNull [] keys) {
     TextAttributes attrs = myColorsScheme.getAttributes(HighlighterColors.TEXT);
 
     for (TextAttributesKey key : keys) {

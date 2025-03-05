@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.ex;
 
-import com.intellij.util.containers.CollectionFactory;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
+public final class JpsElementContainerImpl extends JpsElementContainerEx implements JpsElementContainer {
   private final Object myDataLock = new Object();
-  private final Map<JpsElementChildRole<?>, JpsElement> myElements = CollectionFactory.createSmallMemoryFootprintMap(1);
+  private final Map<JpsElementChildRole<?>, JpsElement> myElements = new Object2ObjectOpenHashMap<>(1);
   private final @NotNull JpsCompositeElementBase<?> myParent;
 
   public JpsElementContainerImpl(@NotNull JpsCompositeElementBase<?> parent) {
@@ -39,23 +39,20 @@ public class JpsElementContainerImpl extends JpsElementContainerEx implements Jp
     }
   }
 
-  @NotNull
   @Override
-  public <T extends JpsElement, P, K extends JpsElementChildRole<T> & JpsElementParameterizedCreator<T, P>> T setChild(@NotNull K role, @NotNull P param) {
+  public @NotNull <T extends JpsElement, P, K extends JpsElementChildRole<T> & JpsElementParameterizedCreator<T, P>> T setChild(@NotNull K role, @NotNull P param) {
     final T child = role.create(param);
     return setChild(role, child);
   }
 
-  @NotNull
   @Override
-  public <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T setChild(@NotNull K role) {
+  public @NotNull <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T setChild(@NotNull K role) {
     final T child = role.create();
     return setChild(role, child);
   }
 
-  @NotNull
   @Override
-  public <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T getOrSetChild(@NotNull K role) {
+  public @NotNull <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T getOrSetChild(@NotNull K role) {
     synchronized (myDataLock) {
       final T cached = (T)myElements.get(role);
       if (cached != null) {
@@ -83,8 +80,7 @@ public class JpsElementContainerImpl extends JpsElementContainerEx implements Jp
     }
   }
 
-  @NotNull
-  private <T extends JpsElement> T putChild(JpsElementChildRole<T> role, T child) {
+  private @NotNull <T extends JpsElement> T putChild(JpsElementChildRole<T> role, T child) {
     JpsElementBase.setParent(child, myParent);
     myElements.put(role, child);
     return child;
@@ -102,12 +98,12 @@ public class JpsElementContainerImpl extends JpsElementContainerEx implements Jp
   }
 
   @Override
-  protected final Object getDataLock() {
+  protected Object getDataLock() {
     return myDataLock;
   }
 
   @Override
-  protected final Map<JpsElementChildRole<?>, JpsElement> getElementsMap() {
+  protected Map<JpsElementChildRole<?>, JpsElement> getElementsMap() {
     return myElements;
   }
 }

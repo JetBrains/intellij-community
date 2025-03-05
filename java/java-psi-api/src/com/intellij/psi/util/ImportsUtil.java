@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.project.Project;
@@ -18,7 +18,7 @@ public final class ImportsUtil {
   }
 
   public static List<PsiJavaCodeReferenceElement> collectReferencesThrough(PsiFile file,
-                                                                           @Nullable final PsiJavaCodeReferenceElement refExpr,
+                                                                           final @Nullable PsiJavaCodeReferenceElement refExpr,
                                                                            final PsiImportStaticStatement staticImport) {
     final List<PsiJavaCodeReferenceElement> expressionToExpand = new ArrayList<>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {

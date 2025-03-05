@@ -12,6 +12,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputTokenTypes
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.toTextAttributes
 
 @ApiStatus.Internal
@@ -39,10 +40,44 @@ internal object EmptyTextAttributesProvider : TextAttributesProvider {
 internal class TextStyleAdapter(private val style: TextStyle,
                        private val colorPalette: TerminalColorPalette): TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = style.toTextAttributes(colorPalette)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TextStyleAdapter
+
+    return style == other.style
+  }
+
+  override fun hashCode(): Int {
+    return style.hashCode()
+  }
+
+  override fun toString(): String {
+    return "TextStyleAdapter(style=$style)"
+  }
 }
 
 internal class TextAttributesKeyAdapter(private val editor: Editor, private val textAttributesKey: TextAttributesKey) : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = editor.colorsScheme.getAttributes(textAttributesKey)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TextAttributesKeyAdapter
+
+    return textAttributesKey == other.textAttributesKey
+  }
+
+  override fun hashCode(): Int {
+    return textAttributesKey.hashCode()
+  }
+
+  override fun toString(): String {
+    return "TextAttributesKeyAdapter(textAttributesKey=$textAttributesKey)"
+  }
 }
 
 internal fun List<TextWithAttributes>.toTextWithHighlightings(): TextWithHighlightings {
@@ -61,13 +96,14 @@ internal fun List<HighlightingInfo>.rebase(adjustmentValue: Int): List<Highlight
   return map { HighlightingInfo(adjustmentValue + it.startOffset, adjustmentValue + it.endOffset, it.textAttributesProvider) }
 }
 
-internal class TerminalTextHighlighter private constructor(
-  private val highlightingsSnapshotProvider: () -> TerminalOutputHighlightingsSnapshot
+@ApiStatus.Internal
+class TerminalTextHighlighter(
+  private val highlightingsSnapshotProvider: () -> TerminalOutputHighlightingsSnapshot,
 ) : EditorHighlighter {
   private var editor: HighlighterClient? = null
 
   constructor(model: TerminalOutputModel) : this({ model.getHighlightingsSnapshot() })
-  internal constructor(highlightingsSnapshot: TerminalOutputHighlightingsSnapshot) : this({ highlightingsSnapshot })
+  constructor(highlightingsSnapshot: TerminalOutputHighlightingsSnapshot) : this({ highlightingsSnapshot })
 
   override fun createIterator(startOffset: Int): HighlighterIterator {
     val highlightingsSnapshot = highlightingsSnapshotProvider()
@@ -91,7 +127,7 @@ internal class TerminalTextHighlighter private constructor(
       return highlightings[curInd].textAttributesProvider.getTextAttributes()
     }
 
-    override fun getTokenType(): IElementType? = null
+    override fun getTokenType(): IElementType = TerminalOutputTokenTypes.TEXT
 
     override fun advance() {
       if (curInd < highlightings.size) curInd++

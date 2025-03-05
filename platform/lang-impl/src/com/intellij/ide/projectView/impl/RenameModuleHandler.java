@@ -66,7 +66,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
 
     @Override
     public boolean checkInput(String inputString) {
-      return inputString != null && inputString.length() > 0;
+      return inputString != null && !inputString.isEmpty();
     }
 
     @Override

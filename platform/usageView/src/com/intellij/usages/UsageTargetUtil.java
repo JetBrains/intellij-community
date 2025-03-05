@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -61,8 +61,7 @@ public final class UsageTargetUtil {
     return result.isEmpty() ? UsageTarget.EMPTY_ARRAY : result.toArray(UsageTarget.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static List<UsageTargetProvider> getProviders(@NotNull Project project) {
+  private static @NotNull List<UsageTargetProvider> getProviders(@NotNull Project project) {
     return DumbService.getDumbAwareExtensions(project, EP_NAME);
   }
 }

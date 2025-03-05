@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -80,10 +80,12 @@ public final class TextWithImportsImpl implements TextWithImports {
     return myImports;
   }
 
+  @Override
   public boolean equals(Object object) {
     return object instanceof TextWithImportsImpl item && Objects.equals(item.myText, myText) && Objects.equals(item.myImports, myImports);
   }
 
+  @Override
   public String toString() {
     return getText();
   }
@@ -100,6 +102,7 @@ public final class TextWithImportsImpl implements TextWithImports {
     return result;
   }
 
+  @Override
   public int hashCode() {
     return myText.hashCode();
   }
@@ -119,8 +122,7 @@ public final class TextWithImportsImpl implements TextWithImports {
     return myFileType;
   }
 
-  @Nullable
-  public static XExpression toXExpression(@Nullable TextWithImports text) {
+  public static @Nullable XExpression toXExpression(@Nullable TextWithImports text) {
     if (text != null && !text.getText().isEmpty()) {
       FileType fileType = text.getFileType();
       return new XExpressionImpl(text.getText(),
@@ -131,16 +133,14 @@ public final class TextWithImportsImpl implements TextWithImports {
     return null;
   }
 
-  @NotNull
-  private static EvaluationMode getMode(@NotNull CodeFragmentKind kind) {
+  private static @NotNull EvaluationMode getMode(@NotNull CodeFragmentKind kind) {
     return switch (kind) {
       case EXPRESSION -> EvaluationMode.EXPRESSION;
       case CODE_BLOCK -> EvaluationMode.CODE_FRAGMENT;
     };
   }
 
-  @NotNull
-  private static CodeFragmentKind getKind(@NotNull EvaluationMode mode) {
+  private static @NotNull CodeFragmentKind getKind(@NotNull EvaluationMode mode) {
     return switch (mode) {
       case EXPRESSION -> CodeFragmentKind.EXPRESSION;
       case CODE_FRAGMENT -> CodeFragmentKind.CODE_BLOCK;

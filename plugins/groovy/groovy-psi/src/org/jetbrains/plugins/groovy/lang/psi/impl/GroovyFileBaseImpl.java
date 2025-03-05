@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -74,8 +74,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
 
@@ -131,8 +130,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  @NotNull
-  public GrStatement addStatementBefore(@NotNull GrStatement statement, @Nullable GrStatement anchor) throws IncorrectOperationException {
+  public @NotNull GrStatement addStatementBefore(@NotNull GrStatement statement, @Nullable GrStatement anchor) throws IncorrectOperationException {
     final PsiElement result = addBefore(statement, anchor);
     if (anchor != null) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
@@ -225,8 +223,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return true;
   }
 
-  @NotNull
-  private DeclarationHolder getAppropriateHolder(@Nullable AnnotationHint hint) {
+  private @NotNull DeclarationHolder getAppropriateHolder(@Nullable AnnotationHint hint) {
     boolean mayUseCache = useCache();
     if (hint == null) {
       if (mayUseCache || myAnnotationsCache.hasUpToDateValue() && myDeclarationsCache.hasUpToDateValue()) {
@@ -249,11 +246,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   private boolean useCache() {
     if (!isPhysical()) return false;
     if (ApplicationManager.getApplication().isDispatchThread()) return false;
-    return getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE;
+    return PsiFileEx.isBatchReferenceProcessingEnabled(this);
   }
 
-  @NotNull
-  private DeclarationHolder buildCache(boolean annotationCache) {
+  private @NotNull DeclarationHolder buildCache(boolean annotationCache) {
     FileCacheBuilderProcessor processor = new FileCacheBuilderProcessor(annotationCache);
     processDeclarationsNoCache(processor, ResolveState.initial(), this);
     return processor.buildCache();

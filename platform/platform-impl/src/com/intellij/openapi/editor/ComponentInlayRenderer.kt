@@ -16,7 +16,7 @@ import java.awt.Rectangle
 @Experimental
 open class ComponentInlayRenderer<out T : Component>(val component: T,
                                                      val alignment: ComponentInlayAlignment? = null) : EditorCustomElementRenderer {
-  internal var inlaySize: Dimension = Dimension(0, 0)
+  internal var inlaySize: Dimension = component.preferredSize
 
   final override fun calcWidthInPixels(inlay: Inlay<*>): Int = inlaySize.width
 

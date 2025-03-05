@@ -90,10 +90,12 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       return psiMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
+    @Override
     public int hashCode() {
       return myName.hashCode();
     }
 
+    @Override
     public boolean equals(Object object) {
       if (!(object instanceof MethodUsageGroup group)) {
         return false;

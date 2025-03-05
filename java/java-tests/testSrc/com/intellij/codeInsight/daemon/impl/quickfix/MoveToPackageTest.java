@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.psi.PsiClass;
@@ -9,20 +9,20 @@ import org.jetbrains.annotations.NotNull;
 public class MoveToPackageTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   public void testSimple() {
     PsiClass bClass = myFixture.addClass("package foo;\nimport bar.A;\npublic final class B extends A {}");
     myFixture.configureByText("A.java", "package bar;\n import foo.B;\npublic sealed class A permits <caret>B {}");
-    invokeFix("Move to package 'bar'");
+    invokeFix("Move class 'B' to package 'bar'");
     assertEquals("package bar;\n\npublic final class B extends A {}", bClass.getContainingFile().getText());
   }
 
   public void testNestedClass() {
     PsiClass bClass = myFixture.addClass("package foo;\nimport bar.A;\npublic class B { public static final class C extends A {} }");
     myFixture.configureByText("A.java", "package bar;\n import foo.B;\npublic sealed class A permits <caret>B.C {}");
-    invokeFix("Move to package 'bar'");
+    invokeFix("Move class 'C' to package 'bar'");
     assertEquals("package bar;\n\npublic class B { public static final class C extends A {} }",
                  bClass.getContainingFile().getText());
   }

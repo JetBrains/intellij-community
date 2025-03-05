@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -99,9 +99,8 @@ public abstract class AbstractShowDiffAction extends DumbAwareAction {
     getExecutor(provider, file, project, editor).showDiff();
   }
 
-  @NotNull
-  protected abstract DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
-                                                    @NotNull VirtualFile selectedFile,
-                                                    @NotNull Project project,
-                                                    @Nullable Editor editor);
+  protected abstract @NotNull DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
+                                                             @NotNull VirtualFile selectedFile,
+                                                             @NotNull Project project,
+                                                             @Nullable Editor editor);
 }

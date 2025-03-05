@@ -26,8 +26,7 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
     pyVisitor.visitPyWithStatement(this);
   }
 
-  @Nullable
-  public PsiNamedElement getNamedElement(@NotNull final String the_name) {
+  public @Nullable PsiNamedElement getNamedElement(final @NotNull String the_name) {
     return PyUtil.IterHelper.findName(getNamedElements(), the_name);
   }
 

@@ -17,10 +17,10 @@ public class GetterSetterClassTest {
     test.setIntProperty(1);
     test.getDoubleProperty();
     test.setDoubleProperty(0.0);
-    test.isBooleanProperty();
-    test.setBooleanProperty(true);
-    test.getAStringProperty();
-    test.setAStringProperty("");
+    //test.isBooleanProperty();
+    //test.setBooleanProperty(true);
+    //test.getAStringProperty();
+    //test.setAStringProperty("");
 
     System.out.println(test);
   }

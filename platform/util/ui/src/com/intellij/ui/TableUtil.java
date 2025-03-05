@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.SmartList;
@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ItemRemovable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -21,7 +22,7 @@ public final class TableUtil {
     boolean isOperationApplyable(@NotNull TableModel model, int row);
   }
 
-  public static @NotNull List<Object[]> removeSelectedItems(@NotNull JTable table) {
+  public static @Unmodifiable @NotNull List<Object[]> removeSelectedItems(@NotNull JTable table) {
     return removeSelectedItems(table, null);
   }
 
@@ -53,7 +54,7 @@ public final class TableUtil {
     table.scrollRectToVisible(new Rectangle(selectPoint, new Dimension(minCellRect.width / 2,allHeight)));
   }
 
-  public static @NotNull List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
+  public static @Unmodifiable @NotNull List<Object[]> removeSelectedItems(@NotNull JTable table, @Nullable ItemChecker applyable) {
     final TableModel model = table.getModel();
     if (!(model instanceof ItemRemovable itemRemovable)) {
       throw new RuntimeException("model must be instance of ItemRemovable");

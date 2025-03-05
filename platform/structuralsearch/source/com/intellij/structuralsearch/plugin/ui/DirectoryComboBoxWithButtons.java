@@ -39,7 +39,7 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class DirectoryComboBoxWithButtons extends JPanel {
-  @NotNull private final ComponentWithBrowseButton<ComboBox<String>> myDirectoryComboBox =
+  private final @NotNull ComponentWithBrowseButton<ComboBox<String>> myDirectoryComboBox =
     new ComponentWithBrowseButton<>(new ComboBox<>(200), null);
   private volatile boolean myUpdating = false;
 
@@ -131,8 +131,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     myDirectoryComboBox.getChildComponent().setSelectedItem(url);
   }
 
-  @Nullable
-  public VirtualFile getDirectory() {
+  public @Nullable VirtualFile getDirectory() {
     final ComboBox<String> comboBox = myDirectoryComboBox.getChildComponent();
     final String directoryName = (String)comboBox.getSelectedItem();
     if (StringUtil.isEmptyOrSpaces(directoryName)) {

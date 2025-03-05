@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.indices
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCaseLegacy
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 
 class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?>() {
   override fun runInDispatchThread() = false
@@ -66,9 +67,9 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
 
   private fun createPomXml(dir: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile? {
     val projectDir = myDir!!.resolve(dir)
-    projectDir.toFile().mkdirs()
+    projectDir.createDirectories()
     val pom = projectDir.resolve("pom.xml")
-    pom.write(MavenTestCase.createPomXml(xml))
+    pom.write(MavenTestCaseLegacy.createPomXml(xml))
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom)
   }
 

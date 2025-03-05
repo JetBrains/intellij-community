@@ -29,7 +29,7 @@ public final class TestSuiteNamingConvention extends NamingConvention<PsiClass> 
 
   private static final int DEFAULT_MIN_LENGTH = 8;
   private static final int DEFAULT_MAX_LENGTH = 64;
-  @NonNls public static final String TEST_SUITE_NAMING_CONVENTION_SHORT_NAME = "TestSuiteNamingConvention";
+  public static final @NonNls String TEST_SUITE_NAMING_CONVENTION_SHORT_NAME = "TestSuiteNamingConvention";
 
   @Override
   public NamingConventionBean createDefaultBean() {

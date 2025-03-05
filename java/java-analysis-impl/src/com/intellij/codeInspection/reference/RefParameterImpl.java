@@ -81,7 +81,7 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
   }
 
   @Override
-  public void accept(@NotNull final RefVisitor visitor) {
+  public void accept(final @NotNull RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor javaVisitor) {
       ReadAction.run(() -> javaVisitor.visitParameter(this));
     }
@@ -124,9 +124,8 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
     }
   }
 
-  @Nullable
   @Override
-  public synchronized Object getActualConstValue() {
+  public synchronized @Nullable Object getActualConstValue() {
     return myActualValueTemplate;
   }
 
@@ -154,8 +153,7 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
     return parameters.get(getIndex());
   }
 
-  @Nullable
-  public static Object getAccessibleExpressionValue(@Nullable UExpression expression, @NotNull Supplier<? extends PsiElement> accessPlace) {
+  public static @Nullable Object getAccessibleExpressionValue(@Nullable UExpression expression, @NotNull Supplier<? extends PsiElement> accessPlace) {
     if (expression == null) return VALUE_IS_NOT_CONST;
     if (expression instanceof UExpressionList expressionList) {
       List<Object> exprValues = ContainerUtil.map(expressionList.getExpressions(), expr -> getAccessibleExpressionValue(expr, accessPlace));
@@ -197,8 +195,7 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
     return value == null ? VALUE_IS_NOT_CONST : convertToStringRepresentation(value);
   }
 
-  @Nullable
-  private static Object convertToStringRepresentation(Object value) {
+  private static @Nullable Object convertToStringRepresentation(Object value) {
     if (value instanceof Long) {
       return value + "L";
     }
@@ -229,8 +226,7 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
     return PsiResolveHelper.getInstance(place.getProject()).resolveReferencedVariable(fieldQName, place) != null;
   }
 
-  @Nullable
-  static RefElement parameterFromExternalName(final RefManager manager, final String fqName) {
+  static @Nullable RefElement parameterFromExternalName(final RefManager manager, final String fqName) {
     final int idx = fqName.lastIndexOf(' ');
     if (idx > 0) {
       final String method = fqName.substring(0, idx);

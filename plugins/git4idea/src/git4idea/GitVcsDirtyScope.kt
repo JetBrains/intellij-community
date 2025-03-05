@@ -55,6 +55,10 @@ class GitVcsDirtyScope(private val project: Project) : VcsModifiableDirtyScope()
     return result
   }
 
+  override fun markRootDirty(vcsRoot: VirtualFile) {
+    addDirtyPathFast(vcsRoot, VcsUtil.getFilePath(vcsRoot), false)
+  }
+
   override fun addDirtyPathFast(vcsRoot: VirtualFile, filePath: FilePath, recursively: Boolean) {
     val rootSet = dirtyDirectories.computeIfAbsent(vcsRoot, ::createDirtySetForRoot)
     rootSet.markDirty(filePath)

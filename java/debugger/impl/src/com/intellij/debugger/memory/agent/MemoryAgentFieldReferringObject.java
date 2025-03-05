@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MemoryAgentFieldReferringObject extends MemoryAgentReferringObject {
-  @NotNull private final Field myField;
+  private final @NotNull Field myField;
 
   public MemoryAgentFieldReferringObject(@NotNull ObjectReference reference,
                                          boolean isWeakSoftReachable,
@@ -21,9 +21,8 @@ public class MemoryAgentFieldReferringObject extends MemoryAgentReferringObject 
     this.myField = field;
   }
 
-  @NotNull
   @Override
-  public ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
+  public @NotNull ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
     return new FieldDescriptorImpl(project, myReference, myField) {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
@@ -32,13 +31,11 @@ public class MemoryAgentFieldReferringObject extends MemoryAgentReferringObject 
     };
   }
 
-  @NotNull
   @Override
-  public String getSeparator() { return " in "; }
+  public @NotNull String getSeparator() { return " in "; }
 
-  @Nullable
   @Override
-  public String getNodeName(int order) {
+  public @Nullable String getNodeName(int order) {
     return null;
   }
 }

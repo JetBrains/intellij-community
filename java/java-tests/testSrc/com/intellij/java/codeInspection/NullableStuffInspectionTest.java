@@ -421,6 +421,10 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     DataFlowInspectionTestCase.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+  
+  public void testNullableParameterOverride() {
+    doTest();
+  }
 
   public void testDisableOnClass() {
     doTest();
@@ -428,6 +432,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testParameterUnderDefaultNotNull() {
     DataFlowInspectionTestCase.addJetBrainsNotNullByDefault(myFixture);
+    doTest();
+  }
+  
+  public void testNoNotNullWarningIfIndirectSuperMethodIsAnnotated() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
     doTest();
   }
 }

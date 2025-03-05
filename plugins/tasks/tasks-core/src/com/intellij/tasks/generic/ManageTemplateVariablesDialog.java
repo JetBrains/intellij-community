@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.execution.util.ListTableWithButtons;
@@ -20,7 +21,7 @@ import java.util.List;
 public class ManageTemplateVariablesDialog extends DialogWrapper {
   private final TemplateVariablesTable myTemplateVariableTable;
 
-  protected ManageTemplateVariablesDialog(@NotNull final Component parent) {
+  protected ManageTemplateVariablesDialog(final @NotNull Component parent) {
     super(parent, true);
     myTemplateVariableTable = new TemplateVariablesTable();
     setTitle(TaskBundle.message("dialog.title.template.variables"));
@@ -35,9 +36,8 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
     return myTemplateVariableTable.getTemplateVariables();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myTemplateVariableTable.getComponent();
   }
 
@@ -102,9 +102,8 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
           return super.getRenderer(variable);
         }
 
-        @Nullable
         @Override
-        public TableCellEditor getEditor(final TemplateVariable variable) {
+        public @Nullable TableCellEditor getEditor(final TemplateVariable variable) {
           if (variable.isHidden()) {
             return new AbstractTableCellEditor() {
               private JPasswordField myPasswordField;

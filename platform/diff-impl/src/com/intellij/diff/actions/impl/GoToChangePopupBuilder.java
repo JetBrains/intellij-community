@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.chains.DiffRequestChain;
@@ -25,8 +25,7 @@ public final class GoToChangePopupBuilder {
     AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection);
   }
 
-  @NotNull
-  public static AnAction create(@NotNull DiffRequestChain chain, @NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
+  public static @NotNull AnAction create(@NotNull DiffRequestChain chain, @NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
     if (chain instanceof Chain) {
       AnAction action = ((Chain)chain).createGoToChangeAction(onSelected, defaultSelection);
       if (action != null) return action;
@@ -34,7 +33,7 @@ public final class GoToChangePopupBuilder {
     return new SimpleGoToChangePopupAction(chain, onSelected, defaultSelection);
   }
 
-  public static abstract class BaseGoToChangePopupAction extends GoToChangePopupAction {
+  public abstract static class BaseGoToChangePopupAction extends GoToChangePopupAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
@@ -60,8 +59,7 @@ public final class GoToChangePopupBuilder {
       }
     }
 
-    @NotNull
-    protected abstract JBPopup createPopup(@NotNull AnActionEvent e);
+    protected abstract @NotNull JBPopup createPopup(@NotNull AnActionEvent e);
   }
 
   private static class SimpleGoToChangePopupAction extends BaseGoToChangePopupAction {
@@ -80,9 +78,8 @@ public final class GoToChangePopupBuilder {
       return myChain.getRequests().size() > 1;
     }
 
-    @NotNull
     @Override
-    protected JBPopup createPopup(@NotNull AnActionEvent e) {
+    protected @NotNull JBPopup createPopup(@NotNull AnActionEvent e) {
       return JBPopupFactory.getInstance().createListPopup(new MyListPopupStep());
     }
 
@@ -92,9 +89,8 @@ public final class GoToChangePopupBuilder {
         setDefaultOptionIndex(myDefaultSelection);
       }
 
-      @NotNull
       @Override
-      public String getTextFor(DiffRequestProducer value) {
+      public @NotNull String getTextFor(DiffRequestProducer value) {
         return value.getName();
       }
 

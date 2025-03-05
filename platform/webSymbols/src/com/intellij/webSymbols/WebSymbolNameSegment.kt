@@ -55,10 +55,10 @@ interface WebSymbolNameSegment {
       symbolKinds: Set<WebSymbolQualifiedKind>? = null,
       explicitApiStatus: WebSymbolApiStatus? = null,
       explicitPriority: WebSymbol.Priority? = null,
-      explicitProximity: Int? = null
+      explicitProximity: Int? = null,
     ): WebSymbolNameSegment =
       WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName, matchScore,
-                           symbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
+                               symbolKinds, explicitApiStatus, explicitPriority, explicitProximity, null)
   }
 
   enum class MatchProblem {

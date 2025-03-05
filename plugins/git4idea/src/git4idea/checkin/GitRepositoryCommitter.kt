@@ -3,6 +3,7 @@ package git4idea.checkin
 
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
@@ -75,7 +76,8 @@ internal class GitRepositoryCommitter(val repository: GitRepository, private val
     }
     catch (e: VcsException) {
       if (pinentryProblemDetector.isDetected) {
-        project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = false)
+        project.service<GpgAgentConfigurationNotificator>()
+          .proposeCustomPinentryAgentConfiguration(isSuggestion = false, type = NotificationType.WARNING)
       }
       if (gpgProblemDetector.isDetected) {
         throw GitGpgCommitException(e)
@@ -153,7 +155,8 @@ private class GitEmptyCommitProblemDetector : GitLineEventDetector {
   }
 }
 
-private class GitGpgCommitException(cause: VcsException) : VcsException(cause), CommitExceptionWithActions {
+private class GitGpgCommitException(cause: VcsException) :
+  VcsException(GitBundle.message("gpg.error.text"), cause), CommitExceptionWithActions {
   override val actions: List<NotificationAction>
     get() = listOf(NotificationAction.createSimple(GitBundle.message("gpg.error.see.documentation.link.text")) {
       HelpManager.getInstance().invokeHelp(GitBundle.message("gpg.jb.manual.link"))

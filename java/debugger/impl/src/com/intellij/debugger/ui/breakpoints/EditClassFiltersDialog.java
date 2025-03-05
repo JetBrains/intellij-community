@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.classFilter.ClassFilterEditor;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -43,7 +44,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JPanel contentPanel = new JPanel(new BorderLayout());
 
-    Box mainPanel = Box.createHorizontalBox();
+    JBBox mainPanel = JBBox.createHorizontalBox();
 
     myClassFilterEditor = createClassFilterEditor(myProject);
     myClassFilterEditor.setPreferredSize(JBUI.size(400, 200));

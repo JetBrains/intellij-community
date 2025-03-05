@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.safeDelete;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,7 +57,7 @@ public final class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDele
       }
     }
     else if (element instanceof GrDocMethodReference) {
-      @NonNls final StringBuilder newText = new StringBuilder();
+      final @NonNls StringBuilder newText = new StringBuilder();
       newText.append("/** @see ");
       GrDocReferenceElement holder = ((GrDocMethodReference)element).getReferenceHolder();
       if (holder != null) {

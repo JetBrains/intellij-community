@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
@@ -68,13 +68,13 @@ public class StringUtilTest {
 
   @Test
   public void doTestTrimCharSequence() {
-    assertEquals(StringUtil.trim((CharSequence)"").toString(), "");
-    assertEquals(StringUtil.trim((CharSequence)" ").toString(), "");
-    assertEquals(StringUtil.trim((CharSequence)" \n\t\r").toString(), "");
-    assertEquals(StringUtil.trim((CharSequence)"a").toString(), "a");
-    assertEquals(StringUtil.trim((CharSequence)" a").toString(), "a");
-    assertEquals(StringUtil.trim((CharSequence)"bc ").toString(), "bc");
-    assertEquals(StringUtil.trim((CharSequence)" b a c   ").toString(), "b a c");
+    assertEquals("", StringUtil.trim((CharSequence)"").toString());
+    assertEquals("", StringUtil.trim((CharSequence)" ").toString());
+    assertEquals("", StringUtil.trim((CharSequence)" \n\t\r").toString());
+    assertEquals("a", StringUtil.trim((CharSequence)"a").toString());
+    assertEquals("a", StringUtil.trim((CharSequence)" a").toString());
+    assertEquals("bc", StringUtil.trim((CharSequence)"bc ").toString());
+    assertEquals("b a c", StringUtil.trim((CharSequence)" b a c   ").toString());
   }
 
   @Test
@@ -892,6 +892,21 @@ public class StringUtilTest {
   @Test
   public void testCollapseWhiteSpace() {
     assertEquals("one two three four five", StringUtil.collapseWhiteSpace("\t one\ttwo     three\nfour five   "));
+  }
+
+  @Test
+  public void testReplaceUnicodeEscapeSequences() {
+    assertEquals("Z", StringUtil.replaceUnicodeEscapeSequences("\\uuu005a"));
+    assertEquals("ZZ", StringUtil.replaceUnicodeEscapeSequences("\\uuu005aZ"));
+    assertEquals("ZZZ", StringUtil.replaceUnicodeEscapeSequences("Z\\uuu005aZ"));
+    assertEquals("Z\\\\uuu005aZ", StringUtil.replaceUnicodeEscapeSequences("Z\\\\uuu005aZ"));
+    assertEquals("\\uuu005\\a\\u1\\u22\\u333", StringUtil.replaceUnicodeEscapeSequences("\\uuu005\\a\\u1\\u22\\u333"));
+    assertEquals("\\uA\\u1Z", StringUtil.replaceUnicodeEscapeSequences("\\u\\u0041\\u1\\u005a"));
+    assertEquals("\\u004", StringUtil.replaceUnicodeEscapeSequences("\\u004"));
+    assertEquals("\\", StringUtil.replaceUnicodeEscapeSequences("\\"));
+    assertEquals("\\u", StringUtil.replaceUnicodeEscapeSequences("\\u"));
+    assertEquals("\\uu", StringUtil.replaceUnicodeEscapeSequences("\\uu"));
+    assertEquals("\\uu1", StringUtil.replaceUnicodeEscapeSequences("\\uu1"));
   }
 
   @Test

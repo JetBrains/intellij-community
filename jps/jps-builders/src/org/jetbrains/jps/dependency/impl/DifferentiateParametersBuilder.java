@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +12,7 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
   private final String mySessionName;
   private boolean calculateAffected = true;
   private boolean processConstantsIncrementally = true;
+  private boolean compiledWithErrors = false;
   private Predicate<? super NodeSource> myAffectionFilter = s -> true;
   private Predicate<? super NodeSource> myCurrentChunkFilter = s -> true;
 
@@ -32,6 +33,11 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
   @Override
   public boolean isProcessConstantsIncrementally() {
     return processConstantsIncrementally;
+  }
+
+  @Override
+  public boolean isCompiledWithErrors() {
+    return compiledWithErrors;
   }
 
   @Override
@@ -56,10 +62,19 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
     return new DifferentiateParametersBuilder(sessionName);
   }
 
+  public static DifferentiateParametersBuilder create(DifferentiateParameters params) {
+    return new DifferentiateParametersBuilder(params.getSessionName())
+      .compiledWithErrors(params.isCompiledWithErrors())
+      .processConstantsIncrementally(params.isProcessConstantsIncrementally())
+      .calculateAffected(params.isCalculateAffected())
+      .withAffectionFilter(params.affectionFilter())
+      .withChunkStructureFilter(params.belongsToCurrentCompilationChunk());
+  }
+
   public static DifferentiateParameters withDefaultSettings() {
     return withDefaultSettings("");
   }
-  
+
   public static DifferentiateParameters withDefaultSettings(String sessionName) {
     return create(sessionName).get();
   }
@@ -71,6 +86,11 @@ public final class DifferentiateParametersBuilder implements DifferentiateParame
 
   public DifferentiateParametersBuilder processConstantsIncrementally(boolean value) {
     processConstantsIncrementally = value;
+    return this;
+  }
+
+  public DifferentiateParametersBuilder compiledWithErrors(boolean value) {
+    compiledWithErrors = value;
     return this;
   }
 

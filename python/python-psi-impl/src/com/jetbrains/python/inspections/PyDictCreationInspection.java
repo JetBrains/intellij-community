@@ -34,11 +34,10 @@ import java.util.List;
 
 public final class PyDictCreationInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -76,10 +75,9 @@ public final class PyDictCreationInspection extends PyInspection {
     }
   }
 
-  @Nullable
-  public static List<Pair<PyExpression, PyExpression>> getDictTargets(@NotNull final PyExpression target,
-                                                                      @NotNull final String name,
-                                                                      @NotNull final PyAssignmentStatement assignmentStatement) {
+  public static @Nullable List<Pair<PyExpression, PyExpression>> getDictTargets(final @NotNull PyExpression target,
+                                                                                final @NotNull String name,
+                                                                                final @NotNull PyAssignmentStatement assignmentStatement) {
     final List<Pair<PyExpression, PyExpression>> targets = new ArrayList<>();
     for (Pair<PyExpression, PyExpression> targetToValue : assignmentStatement.getTargetsToValuesMapping()) {
       if (targetToValue.first instanceof PySubscriptionExpression subscriptionExpression) {
@@ -95,7 +93,7 @@ public final class PyDictCreationInspection extends PyInspection {
     return targets;
   }
 
-  private static boolean referencesTarget(@NotNull final PyExpression expression, @NotNull final PsiElement target) {
+  private static boolean referencesTarget(final @NotNull PyExpression expression, final @NotNull PsiElement target) {
     final List<PsiElement> refs = new ArrayList<>();
     expression.accept(new PyRecursiveElementVisitor() {
       @Override

@@ -2,6 +2,7 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.*
+import com.intellij.cce.evaluable.AIA_HAS_SYNTAX_ERRORS
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
@@ -72,10 +73,8 @@ class CodeGenerationMetricsTest {
       features = null,
       selectedPosition = 0,
       isNew = true,
-      additionalInfo = mapOf(HasSyntaxErrorsProperty to withSyntaxErrors)
+      additionalInfo = mapOf(AIA_HAS_SYNTAX_ERRORS to withSyntaxErrors)
     ))
     return session
   }
 }
-
-private const val HasSyntaxErrorsProperty = "has_syntax_errors"

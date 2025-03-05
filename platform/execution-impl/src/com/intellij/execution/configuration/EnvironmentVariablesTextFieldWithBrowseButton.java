@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
@@ -16,6 +16,7 @@ import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -33,6 +34,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private @NotNull List<String> myEnvFilePaths = new ArrayList<>();
   private ExtendableTextComponent.Extension myEnvFilesExtension;
+  private final List<ChangeListener> myEnvFilePathsChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public EnvironmentVariablesTextFieldWithBrowseButton() {
     super();
@@ -70,6 +72,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       EnvFilesDialogKt.addEnvFile(getTextField(), null, s -> {
         myEnvFilePaths.add(s);
         updateText();
+        fireEnvFilePathsChanged();
         return null;
       });
     }
@@ -79,6 +82,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       if (dialog.isOK()) {
         myEnvFilePaths = new ArrayList<>(dialog.getPaths());
         updateText();
+        fireEnvFilePathsChanged();
       }
     }
   }
@@ -173,6 +177,14 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     myListeners.add(changeListener);
   }
 
+  public void addEnvFilePathsChangeListener(@NotNull ChangeListener changeListener) {
+    myListeners.add(changeListener);
+  }
+
+  public void removeEnvFilePathsChangeListener(@NotNull ChangeListener changeListener) {
+    myListeners.remove(changeListener);
+  }
+
   @Override
   public void removeChangeListener(@NotNull ChangeListener changeListener) {
     myListeners.remove(changeListener);
@@ -184,10 +196,17 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     }
   }
 
+  private void fireEnvFilePathsChanged() {
+    for (ChangeListener listener : myEnvFilePathsChangeListeners) {
+      listener.stateChanged(new ChangeEvent(this));
+    }
+  }
+
   void setEnvFilePaths(@NotNull List<String> paths) {
     myEnvFilePaths = new ArrayList<>(paths);
     setData(myData);
     addEnvFilesExtension();
+    fireEnvFilePathsChanged();
   }
 
   @NotNull List<String> getEnvFilePaths() {
@@ -201,9 +220,10 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     for (int i = 0; i < Math.min(myEnvFilePaths.size(), paths.size()); i++) {
       myEnvFilePaths.set(i, paths.get(i));
     }
+    fireEnvFilePathsChanged();
   }
 
-  protected static List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {
+  protected static @Unmodifiable List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {
     return ContainerUtil.map(map.entrySet(), entry -> new EnvironmentVariable(entry.getKey(), entry.getValue(), readOnly) {
       @Override
       public boolean getNameIsWriteable() {

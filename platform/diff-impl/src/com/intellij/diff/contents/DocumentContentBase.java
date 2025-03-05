@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.contents;
 
 import com.intellij.diff.util.DiffUtil;
@@ -30,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class DocumentContentBase extends DiffContentBase implements DocumentContent {
-  @Nullable private final Project myProject;
-  @NotNull private final Document myDocument;
+  private final @Nullable Project myProject;
+  private final @NotNull Document myDocument;
 
   public DocumentContentBase(@Nullable Project project,
                              @NotNull Document document) {
@@ -39,27 +25,23 @@ public abstract class DocumentContentBase extends DiffContentBase implements Doc
     myDocument = document;
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
-  @NotNull
   @Override
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable(@NotNull LineCol position) {
+  public @Nullable Navigatable getNavigatable(@NotNull LineCol position) {
     if (!DiffUtil.canNavigateToFile(myProject, getHighlightFile())) return null;
     return new MyNavigatable(myProject, getHighlightFile(), getDocument(), position);
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getNavigatable(new LineCol(0));
   }
 
@@ -69,10 +51,10 @@ public abstract class DocumentContentBase extends DiffContentBase implements Doc
   }
 
   private static class MyNavigatable implements Navigatable {
-    @NotNull private final Project myProject;
-    @NotNull private final VirtualFile myTargetFile;
-    @NotNull private final Document myDocument;
-    @NotNull private final LineCol myPosition;
+    private final @NotNull Project myProject;
+    private final @NotNull VirtualFile myTargetFile;
+    private final @NotNull Document myDocument;
+    private final @NotNull LineCol myPosition;
 
     MyNavigatable(@NotNull Project project, @NotNull VirtualFile targetFile, @NotNull Document document, @NotNull LineCol position) {
       myProject = project;
@@ -98,8 +80,7 @@ public abstract class DocumentContentBase extends DiffContentBase implements Doc
       return myTargetFile.isValid();
     }
 
-    @NotNull
-    private static LineCol translatePosition(@NotNull Document fromDocument, @Nullable Document toDocument, @NotNull LineCol position) {
+    private static @NotNull LineCol translatePosition(@NotNull Document fromDocument, @Nullable Document toDocument, @NotNull LineCol position) {
       try {
         if (toDocument == null) return position;
         int targetLine = Diff.translateLine(fromDocument.getCharsSequence(), toDocument.getCharsSequence(), position.line, true);

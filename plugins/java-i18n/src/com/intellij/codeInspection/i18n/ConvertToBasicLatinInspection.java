@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -32,9 +32,8 @@ import java.util.regex.Pattern;
 
 public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       private void handle(@NotNull PsiElement element) {
         if (IOUtil.isAscii(element.getText())) return;
@@ -94,8 +93,7 @@ public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalIn
 
     protected abstract void convert(@NotNull StringBuilder sb, char ch);
 
-    @NotNull
-    protected abstract PsiElement buildReplacement(@NotNull PsiElementFactory factory, @NotNull PsiElement element, @NotNull String newText);
+    protected abstract @NotNull PsiElement buildReplacement(@NotNull PsiElementFactory factory, @NotNull PsiElement element, @NotNull String newText);
   }
 
   private static class LiteralHandler extends Handler {
@@ -199,10 +197,8 @@ public final class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalIn
   }
 
   private static class ConvertToBasicLatinFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaI18nBundle.message("inspection.non.basic.latin.character.quickfix");
     }
 

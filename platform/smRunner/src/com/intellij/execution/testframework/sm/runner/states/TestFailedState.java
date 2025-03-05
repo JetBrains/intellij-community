@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.states;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -16,15 +16,14 @@ public class TestFailedState extends AbstractState implements Disposable{
   private final String myErrorMsgPresentation;
   private final String myStacktracePresentation;
 
-  public TestFailedState(@Nullable final String localizedMessage,
-                         @Nullable final String stackTrace) {
+  public TestFailedState(final @Nullable String localizedMessage,
+                         final @Nullable String stackTrace) {
     myErrorMsgPresentation = StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : localizedMessage;
     myStacktracePresentation = StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace;
   }
 
-  @Nullable
-  public static String buildErrorPresentationText(@Nullable final String localizedMessage,
-                                                  @Nullable final String stackTrace)
+  public static @Nullable String buildErrorPresentationText(final @Nullable String localizedMessage,
+                                                            final @Nullable String stackTrace)
   {
     final String text = (StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : localizedMessage + CompositePrintable.NEW_LINE) +
                         (StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace + CompositePrintable.NEW_LINE);

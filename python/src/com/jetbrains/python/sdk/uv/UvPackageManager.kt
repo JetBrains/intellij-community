@@ -14,42 +14,53 @@ import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
 
-internal class UvPackageManager(project: Project, sdk: Sdk, val uv: UvLowLevel) : PythonPackageManager(project, sdk) {
+internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLowLevel) : PythonPackageManager(project, sdk) {
   override var installedPackages: List<PythonPackage> = emptyList()
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project, sdk)
 
   @Volatile
   var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> {
-    uv.installPackage(specification, options, (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.usePip ?: false).getOrElse {
+  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
+    val result = if (sdk.uvUsePackageManagement) {
+      uv.installPackage(specification, emptyList())
+    }
+    else {
+      uv.addDependency(specification, emptyList())
+    }
+
+    result.getOrElse {
       return Result.failure(it)
     }
 
-    // FIXME: refactor command return value, it's not used
-    return Result.success("")
+    return Result.success(Unit)
   }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> {
-    uv.installPackage(specification, emptyList(), (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.usePip ?: false).getOrElse {
+  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
+    installPackageCommand(specification, emptyList()).getOrElse {
       return Result.failure(it)
     }
 
-    // FIXME: refactor command return value, it's not used
-    return Result.success("")
+    return Result.success(Unit)
   }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> {
-    uv.uninstallPackage(pkg, (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.usePip ?: false).getOrElse {
+  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
+    val result = if (sdk.uvUsePackageManagement) {
+      uv.uninstallPackage(pkg)
+    }
+    else {
+      uv.removeDependency(pkg)
+    }
+
+    result.getOrElse {
       return Result.failure(it)
     }
 
-    // FIXME: refactor command return value, it's not used
-    return Result.success("")
+    return Result.success(Unit)
   }
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    // ignoring errors as handling outdated packages is pretty new option
+    // ignoring errors as handling outdated packages is a pretty new option
     uv.listOutdatedPackages().onSuccess {
       outdatedPackages = it.associateBy { it.name }
     }
@@ -64,7 +75,7 @@ class UvPackageManagerProvider : PythonPackageManagerProvider {
       return null
     }
 
-    val uvWorkingDirectory = (sdk.sdkAdditionalData as? UvSdkAdditionalData)?.uvWorkingDirectory ?: Path.of(project.basePath!!)
+    val uvWorkingDirectory = (sdk.sdkAdditionalData as UvSdkAdditionalData).uvWorkingDirectory ?: Path.of(project.basePath!!)
     val uv = createUvLowLevel(uvWorkingDirectory, createUvCli())
     return UvPackageManager(project, sdk, uv)
   }

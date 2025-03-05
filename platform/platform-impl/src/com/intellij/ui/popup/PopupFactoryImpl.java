@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -9,10 +9,7 @@ import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
-import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.actionSystem.impl.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +44,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -60,6 +58,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+
+import static java.lang.Math.abs;
+import static java.lang.Math.min;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -264,6 +265,18 @@ public class PopupFactoryImpl extends JBPopupFactory {
            disposeCallback, dataContext, options.getMaxRowCount());
       UiInspectorUtil.registerProvider(getList(), () -> UiInspectorActionUtil.collectActionGroupInfo(
         "Menu", actionGroup, actionPlace, ((ActionPopupStep)getStep()).getPresentationFactory()));
+
+      addListener(new JBPopupListener() {
+        @Override
+        public void beforeShown(@NotNull LightweightWindowEvent event) {
+          ActionGroupPopupActivity.start(ActionGroupPopup.this, actionGroup, actionPlace);
+        }
+
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          ActionGroupPopupActivity.stop(ActionGroupPopup.this, event.isOk());
+        }
+      });
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,
@@ -314,6 +327,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     @Override
     public void handleSelect(boolean handleFinalChoices, InputEvent e) {
       ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
+      var fusActivity = ActionGroupPopupActivity.getCurrentActivity(this);
+      if (fusActivity != null && item != null) {
+        fusActivity.itemSelected(item.myAction, null);
+      }
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
       if (step != null && item != null && step.isSelectable(item) &&
           Utils.isKeepPopupOpen(item.getKeepPopupOnPerform(), e)) {
@@ -483,12 +500,16 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   public @NotNull RelativePoint guessBestPopupLocation(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    ActionUiKind uiKind = event.getUiKind();
+    ActionToolbar toolbar = uiKind instanceof ActualActionUiKind.Toolbar o ? o.getToolbar() :
+                            event.getInputEvent() != null &&
+                            event.getInputEvent().getSource() instanceof JComponent oo ? ActionToolbar.findToolbarBy(oo) : null;
     Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (!(component instanceof JComponent)) {
       throw new AssertionError("Component is null for " + action.getClass().getName() + "@" + event.getPlace() +
                                "(" + event.getPresentation().getText() + "): " + component);
     }
-    var point = CommonActionsPanel.getPreferredPopupPoint(action, component);
+    var point = CommonActionsPanel.getPreferredPopupPoint(action, toolbar != null ? toolbar.getComponent() : component);
     if (point != null) return point;
     if (event.getInputEvent() instanceof MouseEvent me &&
         me.getComponent() instanceof JComponent button) {
@@ -551,7 +572,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         for (TreePath path : paths) {
           Rectangle bounds = tree.getPathBounds(path);
           if (bounds != null) {
-            int distance = Math.abs(bounds.y + bounds.height / 2 - center);
+            int distance = abs(bounds.y + bounds.height / 2 - center);
             if (distance < distanceFound) {
               popupMenuPoint = new Point(bounds.x + 2, bounds.y + bounds.height - 1);
               distanceFound = distance;
@@ -634,7 +655,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @Override
-  public @NotNull List<JBPopup> getChildPopups(@NotNull Component component) {
+  public @Unmodifiable @NotNull List<JBPopup> getChildPopups(@NotNull Component component) {
     return AbstractPopup.getChildPopups(component);
   }
 
@@ -956,7 +977,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
              : EmptyIcon.create(maxIconWidth, maxIconHeight);
     }
 
-    float scale = (float)Math.min(maxIconWidth, maxIconHeight) / Math.min(icon.getIconWidth(), icon.getIconHeight());
-    return scale == 1 ? icon : CustomIconUtilKt.scaleIconOrLoadCustomVersion(icon, scale);
+    float currentScale = icon instanceof ScalableIcon scalableIcon ? scalableIcon.getScale() : 1.0f;
+    float neededScale = (float)min(maxIconWidth, maxIconHeight) / min(icon.getIconWidth(), icon.getIconHeight()) * currentScale;
+    return abs(currentScale - neededScale) < 0.01f ? icon : CustomIconUtilKt.scaleIconOrLoadCustomVersion(icon, neededScale);
   }
 }

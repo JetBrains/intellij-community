@@ -18,9 +18,9 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -41,8 +41,7 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("manual.array.copy.problem.descriptor");
   }
 
@@ -59,8 +58,7 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
   private static class ManualArrayCopyFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "System.arraycopy()");
     }
 
@@ -117,8 +115,7 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
              "System.arraycopy(" + fromArrayText + "," + fromOffsetText + "," + toArrayText + "," + toOffsetText + "," + lengthText + ");";
     }
 
-    @Nullable
-    private static PsiArrayAccessExpression getLhsArrayAccessExpression(PsiForStatement forStatement) {
+    private static @Nullable PsiArrayAccessExpression getLhsArrayAccessExpression(PsiForStatement forStatement) {
       PsiStatement body = forStatement.getBody();
       while (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
@@ -148,8 +145,7 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
       return (PsiArrayAccessExpression)deparenthesizedExpression;
     }
 
-    @Nullable
-    private static PsiArrayAccessExpression getRhsArrayAccessExpression(PsiForStatement forStatement) {
+    private static @Nullable PsiArrayAccessExpression getRhsArrayAccessExpression(PsiForStatement forStatement) {
       PsiStatement body = forStatement.getBody();
       while (body instanceof PsiBlockStatement blockStatement) {
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
@@ -190,9 +186,7 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
       return (PsiArrayAccessExpression)unparenthesizedExpression;
     }
 
-    @NonNls
-    @Nullable
-    private static String buildLengthText(PsiExpression max, PsiExpression min, boolean plusOne, CommentTracker commentTracker) {
+    private static @NonNls @Nullable String buildLengthText(PsiExpression max, PsiExpression min, boolean plusOne, CommentTracker commentTracker) {
       max = PsiUtil.skipParenthesizedExprDown(max);
       if (max == null) {
         return null;
@@ -230,13 +224,11 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
              : commentTracker.text(expression, ParenthesesUtils.ADDITIVE_PRECEDENCE);
     }
 
-    @NonNls
-    @Nullable
-    private static String buildOffsetText(PsiExpression expression,
-                                          PsiLocalVariable variable,
-                                          PsiExpression limitExpression,
-                                          boolean plusOne,
-                                          CommentTracker commentTracker) {
+    private static @NonNls @Nullable String buildOffsetText(PsiExpression expression,
+                                                            PsiLocalVariable variable,
+                                                            PsiExpression limitExpression,
+                                                            boolean plusOne,
+                                                            CommentTracker commentTracker) {
       if (expression == null) {
         return null;
       }

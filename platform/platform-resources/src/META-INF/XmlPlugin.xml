@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.xml"/>
 
@@ -120,6 +121,13 @@
     <fileType name="XML" implementationClass="com.intellij.ide.highlighter.XmlFileType" fieldName="INSTANCE" language="XML" extensions="ant;fxml;jhm;jnlp;jrxml;rng;tld;wsdl;xml;xsd;xsl;xslt;xul"/>
 
     <bidiRegionsSeparator language="XML" implementationClass="com.intellij.openapi.editor.bidi.XmlBidiRegionsSeparator"/>
+
+    <applicationService serviceInterface="com.intellij.lang.xml.BasicXmlElementFactory"
+                        serviceImplementation="com.intellij.lang.xml.BackendXmlElementFactory"/>
+    <applicationService serviceInterface="com.intellij.lang.html.BasicHtmlElementFactory"
+                        serviceImplementation="com.intellij.lang.html.BackendHtmlElementFactory"/>
+    <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
+                        serviceImplementation="com.intellij.lang.html.BackendHtmlElementFactory"/>
 
     <lang.syntaxHighlighterFactory language="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="HTML" implementationClass="com.intellij.lang.html.HtmlSyntaxHighlighterFactory"/>
@@ -281,8 +289,6 @@
     <lang.foldingBuilder language="XHTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
 
     <codeInsight.parameterInfo language="XML" implementationClass="com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler"/>
-    <codeInsight.parameterInfo language="HTML" implementationClass="com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler"/>
-    <codeInsight.parameterInfo language="XHTML" implementationClass="com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler"/>
 
     <codeInsight.wordCompletionFilter language="XML" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
     <codeInsight.wordCompletionFilter language="HTML" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
@@ -324,7 +330,6 @@
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlElementSelectioner"/>
     <extendWordSelectionHandler id="xmlTokenSelectioner" implementation="com.intellij.codeInsight.editorActions.XmlTokenSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.XmlLineSelectioner"/>
-
 
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlSlashTypedHandler" id="xmlSlash"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlEqTypedHandler" id="xmlEq"/>
@@ -657,7 +662,7 @@
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
                        id="WebSymbolsHtmlText"/>
 
-    <webSymbols.highlightInLanguage language="HtmlCompatible"/>
+    <webSymbols.enableInLanguage language="HtmlCompatible"/>
 
     <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="UnknownSymbol"
                                       toolShortName="HtmlUnknownAttribute"/>
@@ -669,6 +674,9 @@
     <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
                                       toolShortName="HtmlDeprecatedTag"/>
 
+    <webSymbols.highlightingCustomizer
+      id="html"
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlHighlightingCustomizer"/>
     <webSymbols.queryConfigurator
       implementation="com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator"/>
     <webSymbols.codeCompletionItemCustomizer
@@ -681,25 +689,24 @@
     <completion.contributor language="HtmlCompatible"
                             implementationClass="com.intellij.html.webSymbols.WebSymbolsHtmlCompletionContributor"/>
 
-    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
-                                 hostLanguage="HtmlCompatible"
-                                 implementationClass="com.intellij.html.webSymbols.elements.WebSymbolInTagNameRefProvider"
-                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
-                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
-    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
-                                 hostLanguage="HtmlCompatible"
-                                 implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"
-                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
-                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
-    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
-                                 hostLanguage="HtmlCompatible"
-                                 implementationClass="com.intellij.html.webSymbols.attributeValues.WebSymbolHtmlAttributeValueReferenceProvider"
-                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
-                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
+    <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
+                                  hostLanguage="HtmlCompatible"
+                                  implementationClass="com.intellij.html.webSymbols.elements.WebSymbolInTagNameRefProvider"/>
+    <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
+                                  hostLanguage="HtmlCompatible"
+                                  implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"/>
+    <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
+                                  hostLanguage="HtmlCompatible"
+                                  implementationClass="com.intellij.html.webSymbols.attributeValues.WebSymbolHtmlAttributeValueReferenceProvider"/>
     <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
     <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"
                       order="before html, after react"/>
 
-    <postStartupActivity implementation="com.intellij.javaee.PsiExternalResourceNotifier" />
+    <xml.autoPopupEnabler implementation="com.intellij.xml.microservices.UrlReferencesXmlAutoPopupEnabler"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.xml.impl.PsiExternalResourceChangeListener"
+              topic="com.intellij.javaee.ExternalResourceListener"/>
+  </projectListeners>
 </idea-plugin>

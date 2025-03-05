@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 
@@ -90,6 +91,8 @@ public final class Cancellation {
     if (isInNonCancelableSectionInternal()) return true;
     // Avoid thread-local access when the debugger is not enabled.
     if (!DebugNonCancellableState.isDebugEnabled) return false;
+    // Check whether is still attached in case debugger connection is lost before cleanup
+    if (!DebugNonCancellableState.isAttached()) return false;
     DebugNonCancellableState state = debugIsInNonCancelableSection.get();
     return state != null && state.inNonCancelableSection;
   }
@@ -183,8 +186,7 @@ public final class Cancellation {
    * @return cancellability state of the current thread which can be adjusted by the debugger
    */
   @SuppressWarnings("unused")
-  @NotNull
-  private static DebugNonCancellableState initThreadNonCancellableState() {
+  private static @NotNull DebugNonCancellableState initThreadNonCancellableState() {
     DebugNonCancellableState state = debugIsInNonCancelableSection.get();
     if (state != null) return state;
     state = new DebugNonCancellableState();
@@ -197,12 +199,24 @@ public final class Cancellation {
    * Do not modify the names without the corresponding updates in the devkit plugin.
    */
   private static class DebugNonCancellableState {
+    private static final int ATTACH_CHECK_TIMEOUT_S = 2;
     private static final boolean isDebugEnabled = DebugAttachDetectorArgs.isDebugEnabled();
+    private static volatile long lastUpdateNs = System.nanoTime();
+    private static volatile boolean isDebugAttached = DebugAttachDetectorArgs.isAttached();
 
     /**
      * This field is set to true only via debugger.
      */
     @SuppressWarnings("FieldMayBeFinal")
     private volatile boolean inNonCancelableSection = false;
+
+    private static boolean isAttached() {
+      long current = System.nanoTime();
+      if (TimeUnit.NANOSECONDS.toSeconds(current - lastUpdateNs) > ATTACH_CHECK_TIMEOUT_S) {
+        lastUpdateNs = current;
+        isDebugAttached = DebugAttachDetectorArgs.isAttached();
+      }
+      return isDebugAttached;
+    }
   }
 }

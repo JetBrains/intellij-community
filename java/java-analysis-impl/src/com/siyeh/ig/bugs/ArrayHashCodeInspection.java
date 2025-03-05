@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -23,9 +23,8 @@ public final class ArrayHashCodeInspection extends BaseInspection {
     OBJECTS_HASH
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return switch ((Kind)infos[1]) {
       case ARRAY_HASH_CODE -> InspectionGadgetsBundle.message("array.hash.code.problem.descriptor");
       case OBJECTS_HASH -> InspectionGadgetsBundle.message("objects.hash.problem.descriptor");
@@ -56,14 +55,12 @@ public final class ArrayHashCodeInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x.call", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("array.hash.code.fix.family.name");
     }
 
@@ -79,7 +76,7 @@ public final class ArrayHashCodeInspection extends BaseInspection {
       if (qualifier == null) {
         return;
       }
-      @NonNls final StringBuilder newExpressionText = new StringBuilder();
+      final @NonNls StringBuilder newExpressionText = new StringBuilder();
       if (deepHashCode) {
         newExpressionText.append("java.util.Arrays.deepHashCode(");
       }
@@ -101,14 +98,12 @@ public final class ArrayHashCodeInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("wrap.with.arrays.hash.code.quickfix", deepHashCode ? "Arrays.deepHashCode()" : "Arrays.hashCode()");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("objects.hash.fix.family.name");
     }
 

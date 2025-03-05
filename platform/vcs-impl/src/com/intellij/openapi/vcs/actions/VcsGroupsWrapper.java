@@ -51,8 +51,7 @@ final class VcsGroupsWrapper extends ActionGroup implements DumbAware {
     }
   }
 
-  @NotNull
-  private static Set<String> collectVcses(@NotNull Project project, @NotNull DataContext dataContext) {
+  private static @NotNull Set<String> collectVcses(@NotNull Project project, @NotNull DataContext dataContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
 
     return VcsContextUtil.selectedFilePathsIterable(dataContext)
@@ -63,8 +62,7 @@ final class VcsGroupsWrapper extends ActionGroup implements DumbAware {
       .toSet();
   }
 
-  @Nullable
-  private static DefaultActionGroup mergeVcsGroups(@NotNull AnActionEvent e) {
+  private static @Nullable DefaultActionGroup mergeVcsGroups(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
@@ -66,7 +66,7 @@ public class TestMethod extends TestObject {
       if (!method.getContainingClass().equals(configuration.myClass.getPsiElement())) return null;
       class Listener extends RefactoringElementAdapter implements UndoRefactoringElementListener {
         @Override
-        public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
+        public void elementRenamedOrMoved(final @NotNull PsiElement newElement) {
           final boolean generatedName = configuration.isGeneratedName();
           configuration.getPersistentData().setTestMethod(PsiLocation.fromPsiElement((PsiMethod)UastContextKt.toUElement(newElement)));
           if (generatedName) configuration.setGeneratedName();
@@ -136,8 +136,7 @@ public class TestMethod extends TestObject {
     }
   }
 
-    @NotNull
-  public PsiClass checkClass() throws RuntimeConfigurationException {
+    public @NotNull PsiClass checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String testClass = data.getMainClassName();

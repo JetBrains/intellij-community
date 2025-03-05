@@ -41,7 +41,7 @@ public final class MavenApiConverterUtil {
     throw new IllegalArgumentException(version.toString());
   }
 
-  static private ModelProblem.Severity convertFromApiSeverity(BuilderProblem.Severity severity) {
+  private static ModelProblem.Severity convertFromApiSeverity(BuilderProblem.Severity severity) {
     switch (severity) {
       case FATAL:
         return ModelProblem.Severity.FATAL;

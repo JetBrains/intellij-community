@@ -7,7 +7,7 @@ import com.intellij.ide.lightEdit.menuBar.getLightEditMainMenuActionGroup
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
@@ -17,7 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
-import com.intellij.openapi.project.impl.createNewProjectFrameProducer
+import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
@@ -32,6 +32,7 @@ import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.MacMainFrameDecorator.FSAdapter
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,13 +40,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.JFrame
 
 @RequiresEdt
 internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): LightEditFrameWrapper {
   return runWithModalProgressBlocking(project, "") {
     withContext(Dispatchers.EDT) {
       val wrapper = allocateLightEditFrame(project) { frame ->
-        LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create())
+        LightEditFrameWrapper(project = project, frame = frame ?: createIdeFrame(frameInfo ?: FrameInfo()))
       } as LightEditFrameWrapper
       (project.serviceAsync<FileEditorManager>() as LightEditFileEditorManagerImpl).internalInit()
       wrapper
@@ -60,8 +62,8 @@ internal class LightEditFrameWrapper(
   private var editPanel: LightEditPanel? = null
   private var frameTitleUpdateEnabled = true
 
-  override val isLightEdit: Boolean = true
-  override val mainMenuActionGroup: ActionGroup? = getLightEditMainMenuActionGroup()
+  override fun CoroutineScope.createFrameHeaderHelper(frame: JFrame, frameDecorator: IdeFrameDecorator?, rootPane: IdeRootPane): ProjectFrameCustomHeaderHelper =
+    ProjectFrameCustomHeaderHelper(ApplicationManager.getApplication(), this, frame, frameDecorator, rootPane, true, getLightEditMainMenuActionGroup())
 
   override fun getProject(): Project = project
 
@@ -183,7 +185,7 @@ private suspend fun allocateLightEditFrame(project: Project,
       windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
     }
     frameInfo.bounds?.let {
-      applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
+      applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it))
     }
   }
 

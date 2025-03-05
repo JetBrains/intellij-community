@@ -46,11 +46,11 @@
     <!-- getDisplayName is overridden in GrazieInspection itself! Placeholder is required to suppress validation. -->
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection"
-                     level="GRAMMAR_ERROR" key="grazie.grammar.inspection.grammar.text"/>
+                     level="GRAMMAR_ERROR" key="grazie.grammar.inspection.grammar.text" language=""/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="LanguageDetectionInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
-                     level="WARNING" key="grazie.detection.inspection.text"/>
+                     level="WEAK WARNING" key="grazie.detection.inspection.text" language=""/>
 
     <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"
                              key="configurable.group.proofread.settings.display.name" bundle="messages.OptionsBundle"/>
@@ -80,6 +80,8 @@
 
     <severitiesProvider implementation="com.intellij.grazie.ide.TextProblemSeverities"/>
     <daemon.statusItemMerger implementation="com.intellij.grazie.ide.TextSeverityMerger"/>
+
+    <spellchecker.lifecycle implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckerLifecycle"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

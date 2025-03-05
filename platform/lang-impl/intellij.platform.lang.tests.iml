@@ -13,11 +13,15 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.usageView" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="library" name="gson" level="project" />
@@ -52,5 +56,8 @@
     <orderEntry type="library" scope="TEST" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
   </component>
 </module>

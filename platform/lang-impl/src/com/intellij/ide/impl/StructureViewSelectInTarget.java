@@ -31,6 +31,7 @@ public final class StructureViewSelectInTarget implements SelectInTarget, DumbAw
     }
   }
 
+  @Override
   public String toString() {
     return IdeBundle.message("select.in.file.structure");
   }

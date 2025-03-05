@@ -2,17 +2,22 @@
 
 package org.jetbrains.kotlin.parcelize.ide.test
 
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.quickfix.AbstractK1QuickFixTest
 
 abstract class AbstractParcelizeK1QuickFixTest : AbstractK1QuickFixTest() {
     override fun setUp() {
         super.setUp()
-        addParcelizeLibraries(module)
+        runInEdtAndWait {
+            addParcelizeLibraries(module)
+        }
     }
 
     override fun tearDown() {
         try {
-            removeParcelizeLibraries(module)
+            runInEdtAndWait {
+                removeParcelizeLibraries(module)
+            }
         } catch (e: Throwable) {
             addSuppressedException(e)
         } finally {

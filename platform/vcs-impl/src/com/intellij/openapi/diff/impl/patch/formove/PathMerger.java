@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -20,38 +20,31 @@ public final class PathMerger {
   private PathMerger() {
   }
 
-  @Nullable
-  public static VirtualFile getFile(final VirtualFile base, final String path) {
+  public static @Nullable VirtualFile getFile(final VirtualFile base, final String path) {
     return getFile(new VirtualFilePathMerger(base), path);
   }
 
-  @Nullable
-  public static VirtualFile getFile(final VirtualFile base, final String path, final List<? super String> tail) {
+  public static @Nullable VirtualFile getFile(final VirtualFile base, final String path, final List<? super String> tail) {
     return getFile(new VirtualFilePathMerger(base), path, tail);
   }
 
-  @Nullable
-  public static File getFile(final File base, final String path) {
+  public static @Nullable File getFile(final File base, final String path) {
     return getFile(new IoFilePathMerger(base), path);
   }
 
-  @Nullable
-  public static File getFile(final File base, final String path, final List<? super String> tail) {
+  public static @Nullable File getFile(final File base, final String path, final List<? super String> tail) {
     return getFile(new IoFilePathMerger(base), path, tail);
   }
 
-  @Nullable
-  public static FilePath getFile(final FilePath base, final String path) {
+  public static @Nullable FilePath getFile(final FilePath base, final String path) {
     return getFile(new FilePathPathMerger(base), path);
   }
 
-  @Nullable
-  public static FilePath getFile(final FilePath base, final String path, final List<? super String> tail) {
+  public static @Nullable FilePath getFile(final FilePath base, final String path, final List<? super String> tail) {
     return getFile(new FilePathPathMerger(base), path, tail);
   }
 
-  @Nullable
-  public static <T> T getFile(final FilePathMerger<T> merger, final String path) {
+  public static @Nullable <T> T getFile(final FilePathMerger<T> merger, final String path) {
     if (path == null) {
       return null;
     }
@@ -63,8 +56,7 @@ public final class PathMerger {
     return null;
   }
 
-  @Nullable
-  public static <T> T getFile(final FilePathMerger<T> merger, final String path, final List<? super String> tail) {
+  public static @Nullable <T> T getFile(final FilePathMerger<T> merger, final String path, final List<? super String> tail) {
     final String[] pieces = RelativePathCalculator.split(path);
 
     for (int i = 0; i < pieces.length; i++) {
@@ -90,13 +82,11 @@ public final class PathMerger {
     return merger.getResult();
   }
 
-  @Nullable
-  public static VirtualFile getBase(final VirtualFile base, final String path) {
+  public static @Nullable VirtualFile getBase(final VirtualFile base, final String path) {
     return getBase(new VirtualFilePathMerger(base), path);
   }
 
-  @Nullable
-  public static <T> T getBase(final FilePathMerger<T> merger, final String path) {
+  public static @Nullable <T> T getBase(final FilePathMerger<T> merger, final String path) {
     final boolean caseSensitive = SystemInfo.isFileSystemCaseSensitive;
     final String[] parts = path.replace("\\", "/").split("/");
     for (int i = parts.length - 1; i >=0; --i) {
@@ -185,7 +175,7 @@ public final class PathMerger {
     public File getResult() {
       final StringBuilder sb = new StringBuilder();
       for (String element : myChildPathElements) {
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append(File.separatorChar);
         }
         sb.append(element);
@@ -194,8 +184,7 @@ public final class PathMerger {
     }
 
     @Override
-    @Nullable
-    public String getCurrentName() {
+    public @Nullable String getCurrentName() {
       if (! myChildPathElements.isEmpty()) {
         return myChildPathElements.get(myChildPathElements.size() - 1);
       }

@@ -12,7 +12,7 @@ public class LombokGoToDeclarationTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
   }
 
   public void testExtensionMethod() {

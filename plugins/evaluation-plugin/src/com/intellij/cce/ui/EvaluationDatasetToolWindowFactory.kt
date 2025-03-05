@@ -8,9 +8,10 @@ import com.intellij.cce.actions.FileActions
 import com.intellij.cce.core.SimpleTokenProperties
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TypeProperty
-import com.intellij.cce.evaluable.chat.PROMPT_PROPERTY
+import com.intellij.cce.evaluable.PROMPT_PROPERTY
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FilesHelper
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -19,13 +20,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.ContentFactory
 import java.awt.BorderLayout
 import java.awt.GridLayout
+import java.nio.file.Path
 import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.JTextArea
+import kotlin.io.path.pathString
+import kotlin.io.path.relativeToOrNull
 
 @Suppress("HardCodedStringLiteral")
 class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
@@ -66,6 +71,7 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
         fileActions = createFileActions()
         newFileActionsPage()
       })
+      repaintButtons()
       displayDataset()
     }
 
@@ -84,6 +90,7 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
         actions.add(fileActions)
         startPage()
       })
+      repaintButtons()
       displayFileActions()
     }
 
@@ -106,6 +113,14 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
       leftButtonPanel.add(createActionButton("Rename") {
         session.rename(getCurrentOffset(), "_PLACEHOLDER_")
       })
+      leftButtonPanel.add(createActionButton("Add all opened files") {
+        getOpenedFilePaths().forEach { session.openFileInBackground(it) }
+      })
+      DatasetActionProvider.getActions().forEach {
+        leftButtonPanel.add(createActionButton(it.getActionName()) {
+          it.callFeature(project, session)
+        })
+      }
       leftButtonPanel.add(createActionButton("Call feature") {
         session.callFeature(
           getCurrentSelectionText(),
@@ -119,11 +134,19 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
         newFileActionsPage()
       })
       rightButtonPanel.add(createButton("Save") {
+        loadSession()
         val resultActions = fileActions.actions + session.build()
         fileActions = FileActions(fileActions.path, fileActions.checksum, resultActions.count { it is CallFeature }, resultActions)
         newFileActionsPage()
       })
+      repaintButtons()
       displaySession()
+    }
+
+    private fun getOpenedFilePaths(): List<String> {
+      return FileEditorManager.getInstance(project).openFiles
+        .filter { !ScratchUtil.isScratch(it) && it !is LightVirtualFile }
+        .mapNotNull { it.toNioPath().relativeToOrNull(Path.of(project.basePath!!))?.pathString }
     }
 
     private fun createActionButton(text: String, action: () -> Unit): JButton {
@@ -150,6 +173,13 @@ class EvaluationDatasetToolWindowFactory : ToolWindowFactory {
     private fun clearButtons() {
       leftButtonPanel.removeAll()
       rightButtonPanel.removeAll()
+    }
+
+    private fun repaintButtons() {
+      leftButtonPanel.revalidate()
+      leftButtonPanel.repaint()
+      rightButtonPanel.revalidate()
+      rightButtonPanel.repaint()
     }
 
     private fun displayDataset() {

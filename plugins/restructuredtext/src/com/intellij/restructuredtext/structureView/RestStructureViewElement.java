@@ -27,9 +27,8 @@ public class RestStructureViewElement extends PsiTreeElementBase<NavigatablePsiE
   public RestStructureViewElement(NavigatablePsiElement element) {
     super(element);
   }
-  @NotNull
   @Override
-  public Collection<StructureViewTreeElement> getChildrenBase() {
+  public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     Collection<StructureViewTreeElement> result = new LinkedList<>();
 
     final NavigatablePsiElement element = getElement();
@@ -79,9 +78,8 @@ public class RestStructureViewElement extends PsiTreeElementBase<NavigatablePsiE
     return result;
   }
 
-  @Nullable
   @Override
-  public String getPresentableText() {
+  public @Nullable String getPresentableText() {
     final NavigatablePsiElement element = getElement();
     return element != null ? element.getName() : "";
   }

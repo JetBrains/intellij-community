@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.zip;
 
 import com.intellij.util.ArrayUtilRt;
@@ -7,13 +7,21 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipException;
+
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * <h3>Overview</h3>
@@ -26,10 +34,18 @@ import java.util.zip.ZipException;
  * <p>As a pure-Java implementation, the class is noticeably slower (up to 2x, depending on a configuration).
  * On a positive side, the class doesn't crash a JVM when an archive is overwritten externally while open.</p>
  *
+ * <h3>IntelliJ-specific changes</h3>
+ * We added synchronization to this class, so now reading a single {@code JBZipFile} from several threads is safe.
+ * <p>
+ * {@link JBZipFile} is adapted for the scenario where the archive is physically located on a remote file system.
+ * In particular, during the initialization it reads the entire central directory in one request to IO.
+ * In general, this class tries to reduce the number of IO calls, hence avoiding communication over a potentially expensive channel
+ * to the remote file system.
+ *
  * <h3>Implementation notes</h3>
  *
- * <p>It doesn't extend {@code java.util.zip.ZipFile} as it would have to re-implement all methods anyway. Like
- * {@link java.util.zip.ZipFile}, it uses RandomAccessFile under the hood, and supports compressed and uncompressed entries.</p>
+ * <p>It doesn't extend {@code java.util.zip.ZipFile} as it would have to re-implement all methods anyway. Unike
+ * {@link java.util.zip.ZipFile}, it uses {@link SeekableByteChannel} under the hood, and supports compressed and uncompressed entries.</p>
  *
  * <p>The method signatures mimic the ones of {@link java.util.zip.ZipFile}, with a couple of exceptions:
  * <ul>
@@ -58,7 +74,7 @@ public class JBZipFile implements Closeable {
   /**
    * A map of entry names.
    */
-  private final Map<String, JBZipEntry> nameMap = new HashMap<>(HASH_SIZE);
+  private final Map<String, JBZipEntry> nameMap = new ConcurrentHashMap<>(HASH_SIZE);
 
   /**
    * The encoding to use for filenames and the file comment
@@ -70,13 +86,14 @@ public class JBZipFile implements Closeable {
   /**
    * The actual data source.
    */
-  final RandomAccessFile myArchive;
+  final SeekableByteChannel myArchive;
 
   private boolean myIsZip64;
 
   private JBZipOutputStream myOutputStream;
   private long currentCfdOffset;
-  private final boolean myIsReadonly;
+  final boolean myIsReadonly;
+  private final long mySize;
 
 
   /**
@@ -162,21 +179,36 @@ public class JBZipFile implements Closeable {
    * @param readonly true to open file as readonly
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(@NotNull File f,
-                   @NotNull Charset encoding,
-                   boolean readonly) throws IOException {
+  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly) throws IOException {
     this(f, encoding, readonly, ThreeState.NO);
   }
 
-  public JBZipFile(@NotNull File f,
-                   @NotNull Charset encoding,
-                   boolean readonly,
-                   @NotNull ThreeState isZip64) throws IOException {
+  public JBZipFile(@NotNull File f, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
+    this(getFileChannel(f, readonly), encoding, readonly, isZip64);
+  }
+
+  /**
+   * Interprets a given channel as a zip file.
+   *
+   * @param channel  the channel.
+   * @param encoding the encoding to use for file names
+   * @param readonly true to open file as readonly
+   * @throws IOException if an error occurs while reading the file.
+   */
+  public JBZipFile(@NotNull SeekableByteChannel channel, @NotNull Charset encoding, boolean readonly, @NotNull ThreeState isZip64) throws IOException {
     myEncoding = encoding;
     myIsReadonly = readonly;
-    myArchive = new RandomAccessFile(f, readonly ? "r" : "rw");
+    long channelSize = channel.size();
+    if (readonly) {
+      mySize = channelSize;
+    }
+    else {
+      mySize = -1;
+    }
+    myArchive = channel;
+
     try {
-      if (myArchive.length() > 0) {
+      if (channelSize > 0) {
         populateFromCentralDirectory(isZip64);
       }
       else {
@@ -189,17 +221,20 @@ public class JBZipFile implements Closeable {
         myArchive.close();
       }
       catch (IOException e2) {
-        // swallow, throw the original exception instead
+        e.addSuppressed(e2);
       }
       throw e;
     }
   }
 
+  private static FileChannel getFileChannel(final File file, boolean isReadonly) throws IOException {
+    Path path = Paths.get(file.getPath());
+    return path.getFileSystem().provider().newFileChannel(path, isReadonly ? EnumSet.of(READ) : EnumSet.of(READ, WRITE, CREATE));
+  }
+
   @Override
   public String toString() {
-    return "JBZipFile{" +
-           "readonly=" + myIsReadonly +
-           '}';
+    return "JBZipFile{readonly=" + myIsReadonly + '}';
   }
 
   /**
@@ -225,7 +260,7 @@ public class JBZipFile implements Closeable {
       }
 
       myOutputStream.finish();
-      myArchive.setLength(myOutputStream.getWritten());
+      myArchive.truncate(myOutputStream.getWritten());
     }
     myArchive.close();
   }
@@ -290,14 +325,31 @@ public class JBZipFile implements Closeable {
   private void populateFromCentralDirectory(@NotNull ThreeState isZip64) throws IOException {
     positionAtCentralDirectory(isZip64);
 
+    /*
+      Apache ZipFile reads central directory in very small chunks -- by 4 and 40 bytes.
+      This is unacceptable in situations with non-local IO, where there is no caching, and each call takes several milliseconds to finish.
+      To mitigate it, we try to read and cache the entire central directory, so that the parsing of the central directory happens in-memory.
+
+      However, the directory is anyway stored within the IDE after that, so we are willing to accept this temporary increase in memory,
+      instead gaining a performance boost.
+     */
+    ByteBuffer centralDirectoryCached = ByteBuffer.allocate(
+      Math.min((int)(getSize() - myArchive.position()),
+               // Sometimes the size of the central directory may be significant -- up to 3 megabytes.
+               64 * 1024) // seems enough
+    );
+    // we must fill the buffer before the loop starts
+    centralDirectoryCached.position(centralDirectoryCached.limit());
+
+
     byte[] cfh = new byte[CFH_LEN];
 
     byte[] signatureBytes = new byte[WORD];
-    myArchive.readFully(signatureBytes);
+    readCachedCentralDirectory(centralDirectoryCached, signatureBytes);
     long sig = ZipLong.getValue(signatureBytes);
     long cfhSig = ZipLong.getValue(JBZipOutputStream.CFH_SIG);
     while (sig == cfhSig) {
-      myArchive.readFully(cfh);
+      readCachedCentralDirectory(centralDirectoryCached, cfh);
       int off = 0;
 
       int versionMadeBy = ZipShort.getValue(cfh, off);
@@ -340,9 +392,9 @@ public class JBZipFile implements Closeable {
 
       long localHeaderOffset = ZipLong.getValue(cfh, off);
 
-      String name = getString(readBytes(fileNameLen));
-      byte[] extra = readBytes(extraLen);
-      String comment = getString(readBytes(commentLen));
+      String name = getString(readBytesFromBuf(centralDirectoryCached, fileNameLen));
+      byte[] extra = readBytesFromBuf(centralDirectoryCached, extraLen);
+      String comment = getString(readBytesFromBuf(centralDirectoryCached, commentLen));
 
       JBZipEntry ze = new JBZipEntry(this);
       ze.setName(name);
@@ -366,15 +418,98 @@ public class JBZipFile implements Closeable {
       nameMap.put(ze.getName(), ze);
       entries.add(ze);
 
-      myArchive.readFully(signatureBytes);
+      readCachedCentralDirectory(centralDirectoryCached, signatureBytes);
       sig = ZipLong.getValue(signatureBytes);
+    }
+  }
+
+
+  private void readCachedCentralDirectory(ByteBuffer cache, byte[] target) throws IOException {
+    if (cache.remaining() < target.length) {
+      cache.compact();
+      while (cache.hasRemaining()) {
+        int rd = myArchive.read(cache);
+        if (rd == -1) {
+          if (cache.position() < target.length) {
+            throw new EOFException("unexpected EOF");
+          }
+          else {
+            break;
+          }
+        }
+      }
+      cache.flip();
+    }
+    cache.get(target);
+  }
+
+  private byte[] readBytesFromBuf(ByteBuffer buffer, int howMany) throws IOException {
+    byte[] res = new byte[howMany];
+    readCachedCentralDirectory(buffer, res);
+    return res;
+  }
+
+  void readFully(byte[] b) throws IOException {
+    ByteBuffer buffer = ByteBuffer.wrap(b);
+    while (buffer.hasRemaining()) {
+      if (myArchive.read(buffer) < 0) {
+        throw new EOFException("unexpected EOF");
+      }
+    }
+  }
+
+  // tries to read content at a specific position atomically.
+  // the position of the channel after this operation completes is undefined
+  void readFullyFromPosition(byte[] b, long position) throws IOException {
+    if (myArchive instanceof FileChannel) {
+      ByteBuffer buffer = ByteBuffer.wrap(b);
+      int totalRead = 0;
+      while (totalRead < b.length) {
+        int currentlyRead = ((FileChannel)myArchive).read(buffer, position + totalRead);
+        if (currentlyRead == 0) {
+          throw new EOFException("unexpected EOF");
+        }
+        totalRead += currentlyRead;
+      }
+    }
+    else {
+      synchronized (myArchive) {
+        myArchive.position(position);
+        readFully(b);
+      }
+    }
+  }
+
+  // tries to read content at a specific position atomically.
+  // the position of the channel after this operation completes is undefined
+  int readFromPosition(byte[] b, int offset, int length, long position) throws IOException {
+    ByteBuffer buf = ByteBuffer.wrap(b, offset, length);
+    if (myArchive instanceof FileChannel) {
+      return ((FileChannel)myArchive).read(buf, position);
+    }
+    else {
+      synchronized (myArchive) {
+        myArchive.position(position);
+        return myArchive.read(buf);
+      }
+    }
+  }
+
+  int readByte() throws IOException {
+    ByteBuffer buffer = ByteBuffer.allocate(1);
+    if (myArchive.read(buffer) < 0) {
+      return -1;
+    }
+    else {
+      buffer.flip();
+      return buffer.get(0) & 0xff;
     }
   }
 
   private byte[] readBytes(int count) throws IOException {
     if (count > 0) {
       byte[] bytes = new byte[count];
-      myArchive.readFully(bytes);
+      readFully(bytes);
       return bytes;
     }
     else {
@@ -439,6 +574,8 @@ public class JBZipFile implements Closeable {
     /* central directory               */ + DWORD
     /* size of the central directory   */ + DWORD;
 
+  private static final int EOCD_OPTIMIZATION_BUFFER_SIZE = 64 * 1024;
+
   /**
    * Searches for the &quot;End of central dir record&quot;, parses
    * it and positions the stream at the first central directory
@@ -446,36 +583,49 @@ public class JBZipFile implements Closeable {
    */
   private void positionAtCentralDirectory(@NotNull ThreeState isZip64) throws IOException {
     boolean found = false;
-    long off = myArchive.length() - MIN_EOCD_SIZE;
+    long off = getSize() - MIN_EOCD_SIZE;
     if (off >= 0) {
-      myArchive.seek(off);
-      byte[] sig = JBZipOutputStream.EOCD_SIG;
-      int curr = myArchive.read();
-      while (curr != -1) {
-        if (curr == sig[0]) {
-          curr = myArchive.read();
-          if (curr == sig[1]) {
-            curr = myArchive.read();
-            if (curr == sig[2]) {
-              curr = myArchive.read();
-              if (curr == sig[3]) {
-                found = true;
-                break;
-              }
+      myArchive.position(off);
+      byte[] attempt = new byte[WORD];
+      myArchive.read(ByteBuffer.wrap(attempt));
+      found = Arrays.equals(attempt, JBZipOutputStream.EOCD_SIG);
+      if (!found) {
+
+        int limit = Math.min(EOCD_OPTIMIZATION_BUFFER_SIZE, (int)off);
+
+        ByteBuffer buffer = ByteBuffer.allocate(limit);
+        off -= limit - WORD;
+        outer:
+        while (true) {
+          buffer.clear();
+          myArchive.position(off);
+          myArchive.read(buffer);
+          int bufferLocalPosition = limit - WORD; // position just before possible central directory
+          while (bufferLocalPosition >= 0) {
+            buffer.position(bufferLocalPosition);
+            buffer.get(attempt);
+            if (Arrays.equals(attempt, JBZipOutputStream.EOCD_SIG)) {
+              off += bufferLocalPosition;
+              myArchive.position(off);
+              found = true;
+              break outer;
             }
+            bufferLocalPosition -= 1;
           }
+          if (off <= 0) {
+            break;
+          }
+          off -= Math.min(EOCD_OPTIMIZATION_BUFFER_SIZE - WORD, off);
         }
-        myArchive.seek(--off);
-        curr = myArchive.read();
       }
     }
     if (!found) {
       throw new ZipException("archive is not a ZIP archive");
     }
 
-    boolean searchForZip64EOCD = myArchive.getFilePointer() > ZIP64_EOCDL_LENGTH;
+    boolean searchForZip64EOCD = myArchive.position() > ZIP64_EOCDL_LENGTH;
     if (searchForZip64EOCD) {
-      myArchive.seek(myArchive.getFilePointer() - ZIP64_EOCDL_LENGTH - WORD);
+      myArchive.position(myArchive.position() - ZIP64_EOCDL_LENGTH - WORD);
       myIsZip64 = Arrays.equals(readBytes(WORD), JBZipOutputStream.ZIP64_EOCD_LOC_SIG);
     }
 
@@ -484,29 +634,39 @@ public class JBZipFile implements Closeable {
         throw new IOException("Non ZIP64 archive was requested but it is a ZIP64 archive");
       }
 
-      myArchive.skipBytes(ZIP64_EOCDL_LOCATOR_OFFSET - WORD);
-      myArchive.seek(ZipUInt64.getLongValue(readBytes(DWORD)));
+      myArchive.position(myArchive.position() + ZIP64_EOCDL_LOCATOR_OFFSET - WORD);
+      myArchive.position(ZipUInt64.getLongValue(readBytes(DWORD)));
       if (!Arrays.equals(readBytes(WORD), JBZipOutputStream.ZIP64_EOCD_SIG)) {
         throw new IOException("archive is not a ZIP64 archive");
       }
 
-      myArchive.skipBytes(ZIP64_EOCD_CFD_LOCATOR_OFFSET
+      myArchive.position(myArchive.position() + ZIP64_EOCD_CFD_LOCATOR_OFFSET
                           - WORD /* signature has already been read */);
       long value = ZipUInt64.getLongValue(readBytes(DWORD));
       currentCfdOffset = value;
-      myArchive.seek(value);
+      myArchive.position(value);
     }
     else {
       if (isZip64.equals(ThreeState.YES)) {
         throw new IOException("ZIP64 archive was requested but it is not a ZIP64 archive");
       }
 
-      myArchive.seek(off + CFD_LOCATOR_OFFSET);
+      myArchive.position(off + CFD_LOCATOR_OFFSET);
       byte[] cfdOffset = new byte[WORD];
-      myArchive.readFully(cfdOffset);
+      readFully(cfdOffset);
       currentCfdOffset = ZipLong.getValue(cfdOffset);
-      myArchive.seek(currentCfdOffset);
+      myArchive.position(currentCfdOffset);
     }
+  }
+
+  private boolean hasMatchForEocd(SeekableByteChannel channel) throws IOException {
+    byte[] byteArray = new byte[MIN_EOCD_SIZE];
+    int read = channel.read(ByteBuffer.wrap(byteArray));
+    if (read < 0) {
+      return false;
+    }
+    return byteArray[0] == JBZipOutputStream.EOCD_SIG[0] && byteArray[1] == JBZipOutputStream.EOCD_SIG[1] &&
+           byteArray[2] == JBZipOutputStream.EOCD_SIG[2] && byteArray[3] == JBZipOutputStream.EOCD_SIG[3];
   }
 
   /**
@@ -592,5 +752,14 @@ public class JBZipFile implements Closeable {
 
   void ensureFlushed(long end) throws IOException {
     if (myOutputStream != null) myOutputStream.ensureFlushed(end);
+  }
+
+  long getSize() throws IOException {
+    if (mySize == -1) {
+      return myArchive.size();
+    }
+    else {
+      return mySize;
+    }
   }
 }

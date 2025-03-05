@@ -186,10 +186,6 @@ internal abstract class ExtractorGraphics2d(private val g: Graphics2D) : Graphic
     g.fillRect(x, y, width, height)
   }
 
-  override fun drawGlyphVector(g: GlyphVector?, x: Float, y: Float) {
-    this.g.drawGlyphVector(g, x, y)
-  }
-
   override fun drawRoundRect(x: Int, y: Int, width: Int, height: Int, arcWidth: Int, arcHeight: Int) {
     g.drawRoundRect(x, y, width, height, arcWidth, arcHeight)
   }
@@ -272,7 +268,7 @@ internal abstract class ExtractorGraphics2d(private val g: Graphics2D) : Graphic
     sy1: Int,
     sx2: Int,
     sy2: Int,
-    observer: ImageObserver?
+    observer: ImageObserver?,
   ): Boolean {
     return g.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer)
   }
@@ -291,5 +287,15 @@ internal abstract class ExtractorGraphics2d(private val g: Graphics2D) : Graphic
     observer: ImageObserver?
   ): Boolean {
     return g.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, bgcolor, observer)
+  }
+
+  protected fun getTextByGlyphVector(g: GlyphVector): String {
+    return buildString {
+      (0 until g.numGlyphs).forEach {
+        CharByGlyphFinder.findCharByGlyph(g.font, g.fontRenderContext, g.getGlyphCode(it))?.let { char ->
+          append(char)
+        }
+      }
+    }
   }
 }

@@ -3,8 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.command
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.execution.filters.TextConsoleBuilderFactory
@@ -14,16 +13,17 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CompleteCoroutineInfoData
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.toCompleteCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineDumpPanel
@@ -34,31 +34,28 @@ class CoroutineDumpAction : AnAction() {
         val project = e.project ?: return
         val context = DebuggerManagerEx.getInstanceEx(project).context
         val session = context.debuggerSession
-        if (session != null && session.isAttached) {
-            val process = context.debugProcess ?: return
-            process.managerThread.schedule(object : SuspendContextCommandImpl(context.suspendContext) {
-                override fun contextAction(suspendContext: SuspendContextImpl) {
-                    val states = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
-                    if (states.isOk()) {
-                        val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
-                        val f = fun() {
-                            val ui = session.xDebugSession?.ui ?: return
-                            addCoroutineDump(project, coroutines, ui, session.searchScope)
-                        }
-                        ApplicationManager.getApplication().invokeLater(f, ModalityState.nonModal())
-                    } else {
-                        val message = KotlinDebuggerCoroutinesBundle.message("coroutine.dump.failed")
-                        XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.ERROR).notify(project)
-                    }
+        if (session == null || !session.isAttached) return
+        val suspendContext = context.suspendContext ?: return
+        executeOnDMT(suspendContext) {
+            val states = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
+            if (states.isOk()) {
+                // WA: pass complete coroutine info data to CoroutineDumpPanel to avoid computation of stacktraces on the UI thread.
+                val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
+                withContext(Dispatchers.EDT) {
+                    val ui = session.xDebugSession?.ui ?: return@withContext
+                    addCoroutineDump(project, coroutines, ui, session.searchScope)
                 }
-            })
+            } else {
+                val message = KotlinDebuggerCoroutinesBundle.message("coroutine.dump.failed")
+                XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.ERROR).notify(project)
+            }
         }
     }
 
     /**
      * Analog of [DebuggerUtilsEx.addThreadDump].
      */
-    fun addCoroutineDump(project: Project, coroutines: List<CompleteCoroutineInfoData>, ui: RunnerLayoutUi, searchScope: GlobalSearchScope) {
+    fun addCoroutineDump(project: Project, coroutines: List<CoroutineInfoData>, ui: RunnerLayoutUi, searchScope: GlobalSearchScope) {
         val consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
         consoleBuilder.filters(ExceptionFilters.getFilters(searchScope))
         val consoleView = consoleBuilder.console

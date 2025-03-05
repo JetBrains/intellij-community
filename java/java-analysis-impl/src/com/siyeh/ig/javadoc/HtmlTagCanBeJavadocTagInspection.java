@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -30,9 +30,8 @@ import java.util.regex.Pattern;
 
 public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.problem.descriptor");
   }
 
@@ -44,8 +43,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
   private static class HtmlTagCanBeJavaDocTagFix extends ModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "{@code ...}");
     }
 
@@ -64,7 +62,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
       if (!"<code>".equalsIgnoreCase(text.substring(startOffset, startTag))) {
         return;
       }
-      @NonNls final StringBuilder newCommentText = new StringBuilder("{@code");
+      final @NonNls StringBuilder newCommentText = new StringBuilder("{@code");
       int endTag = StringUtil.indexOfIgnoreCase(text, "</code>", startTag);
       while (endTag < 0) {
         appendElementText(text, startTag, text.length(), newCommentText);
@@ -111,7 +109,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
       if (!JavaDocTokenType.DOC_COMMENT_DATA.equals(tokenType) || !JavaDocUtil.shouldRunInspectionOnOldMarkdownComment(token)) {
         return;
       }
-      @NonNls final String text = token.getText();
+      final @NonNls String text = token.getText();
       int startIndex = 0;
       while (true) {
         startIndex = StringUtil.indexOfIgnoreCase(text, "<code>", startIndex);
@@ -128,7 +126,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
     private static boolean hasMatchingCloseTag(PsiElement element, int offset) {
       int balance = 0;
       while (element != null) {
-        @NonNls final String text = element.getText();
+        final @NonNls String text = element.getText();
         final int endIndex = StringUtil.indexOfIgnoreCase(text, "</code>", offset);
         final int end = endIndex >= 0 ? endIndex : text.length();
         if (text.equals("{")) {

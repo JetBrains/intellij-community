@@ -25,7 +25,7 @@ object CreateFromUsageUtil {
     fun <D : KtNamedDeclaration> placeDeclarationInContainer(
       declaration: D,
       container: PsiElement,
-      anchor: PsiElement,
+      anchor: PsiElement?,
       fileToEdit: PsiFile = container.containingFile
     ): D {
         val psiFactory = KtPsiFactory(container.project)
@@ -35,7 +35,8 @@ object CreateFromUsageUtil {
 
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
-                (container as? KtClass)?.createPrimaryConstructorIfAbsent()?.replaced(declaration) ?: declaration
+                val primaryConstructor = (container as? KtClass)?.createPrimaryConstructorIfAbsent()
+                primaryConstructor?.replaced(declaration) ?: declaration
             }
 
             declaration is KtProperty && container !is KtBlockExpression -> {
@@ -46,8 +47,17 @@ object CreateFromUsageUtil {
                 }
                 sibling?.let { actualContainer.addBefore(declaration, it) as D } ?: fileToEdit.add(declaration) as D
             }
+            declaration is KtParameter -> {
+                val sibling = when (actualContainer) {
+                    is KtParameterList -> actualContainer.rightParenthesis
+                    else -> error("Invalid container: $actualContainer for parameter $declaration\n${actualContainer.text}")
+                }
+                sibling?.let {
+                    actualContainer.addBefore(declaration, it) as D
+                } ?: fileToEdit.add(declaration) as D
+            }
 
-            actualContainer.isAncestor(anchor, true) -> {
+            anchor != null && actualContainer.isAncestor(anchor, true) -> {
                 val insertToBlock = container is KtBlockExpression
                 if (insertToBlock) {
                     val parent = container.parent
@@ -106,11 +116,13 @@ object CreateFromUsageUtil {
             }
             !is KtPrimaryConstructor -> {
                 val parent = declarationInPlace.parent
-                calcNecessaryEmptyLines(declarationInPlace, false).let {
-                    if (it > 0) parent.addBefore(psiFactory.createNewLine(it), declarationInPlace)
-                }
-                calcNecessaryEmptyLines(declarationInPlace, true).let {
-                    if (it > 0) parent.addAfter(psiFactory.createNewLine(it), declarationInPlace)
+                if (parent !is KtParameterList) {
+                    calcNecessaryEmptyLines(declarationInPlace, false).let {
+                        if (it > 0) parent.addBefore(psiFactory.createNewLine(it), declarationInPlace)
+                    }
+                    calcNecessaryEmptyLines(declarationInPlace, true).let {
+                        if (it > 0) parent.addAfter(psiFactory.createNewLine(it), declarationInPlace)
+                    }
                 }
             }
         }

@@ -9,4 +9,4 @@ fun foo() {
 
 fun verifyData(a: Int, b: Int) = (a > 10 && b > 10)
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix
-/* IGNORE_K2 */
+// IGNORE_K2

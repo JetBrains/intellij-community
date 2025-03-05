@@ -19,6 +19,7 @@ import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import com.jetbrains.python.sdk.persist
 import kotlinx.coroutines.Dispatchers
 
 @RequiresEdt
@@ -26,7 +27,7 @@ internal fun PythonAddInterpreterModel.createCondaCommand(): PyCondaCommand =
   PyCondaCommand(state.condaExecutable.get().convertToPathOnTarget(targetEnvironmentConfiguration),
                  targetConfig = targetEnvironmentConfiguration)
 
-suspend fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Result<Sdk> {
+internal suspend fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEnvRequest): Result<Sdk> {
   val project = ProjectManager.getInstance().defaultProject
 
   val sdk = withModalProgress(ModalTaskOwner.guess(),
@@ -40,7 +41,7 @@ suspend fun PythonAddInterpreterModel.createCondaEnvironment(request: NewCondaEn
   }.getOrElse { return Result.failure(it) }
 
   (sdk.sdkType as PythonSdkType).setupSdkPaths(sdk)
-  addSdk(sdk)
+  sdk.persist()
   return Result.success(sdk)
 }
 

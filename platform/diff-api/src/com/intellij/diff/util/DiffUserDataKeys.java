@@ -116,6 +116,14 @@ public interface DiffUserDataKeys {
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
   Key<Boolean> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");
 
+  /**
+   * Force aligning changes in side-by-side viewer.<br/>
+   * This can be used in viewers, where aligning is critical (e.g. {@link com.intellij.diff.tools.combined.CombinedDiffViewer}).
+   *
+   * @see com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings#isEnableAligningChangesMode
+   */
+  Key<Boolean> ALIGNED_TWO_SIDED_DIFF = Key.create("Diff.AlignTwoSidedDiff");
+
   //
   // DiffContext / DiffRequest / DiffContent
   //
@@ -132,12 +140,4 @@ public interface DiffUserDataKeys {
    * @see com.intellij.openapi.editor.EditorKind#DIFF
    */
   Key<Boolean> MERGE_EDITOR_FLAG = Key.create("Diff.mergeEditor");
-
-  /**
-   * Force aligning changes in side-by-side viewer.<br/>
-   * This can be used in viewers, where aligning is critical (e.g. {@link com.intellij.diff.tools.combined.CombinedDiffViewer}).
-   *
-   * @see com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings#isEnableAligningChangesMode
-   */
-  Key<Boolean> ALIGNED_TWO_SIDED_DIFF = Key.create("Diff.AlignTwoSidedDiff");
 }

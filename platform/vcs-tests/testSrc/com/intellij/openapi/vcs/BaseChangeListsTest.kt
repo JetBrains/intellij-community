@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.*
@@ -201,12 +200,12 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   fun runBatchFileChangeOperation(task: () -> Unit) {
-    BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onFreeze()
+    project.messageBus.syncPublisher(VcsFreezingProcess.Listener.TOPIC).onFreeze()
     try {
       task()
     }
     finally {
-      BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
+      project.messageBus.syncPublisher(VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
     }
   }
 

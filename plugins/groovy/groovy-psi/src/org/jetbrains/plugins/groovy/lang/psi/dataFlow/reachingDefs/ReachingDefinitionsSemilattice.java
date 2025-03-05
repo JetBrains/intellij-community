@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,10 +10,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.Defini
 
 public class ReachingDefinitionsSemilattice implements Semilattice<DefinitionMap> {
 
-  @NotNull
   @Override
-  public DefinitionMap join(@NotNull List<? extends DefinitionMap> ins) {
-    if (ins.size() == 0) {
+  public @NotNull DefinitionMap join(@NotNull List<? extends DefinitionMap> ins) {
+    if (ins.isEmpty()) {
       return NEUTRAL;
     }
     DefinitionMap result = ins.get(0);

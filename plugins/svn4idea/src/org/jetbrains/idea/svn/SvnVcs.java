@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.application.Topics;
@@ -118,7 +118,7 @@ public final class SvnVcs extends AbstractVcs {
   private SvnBranchPointsCalculator mySvnBranchPointsCalculator;
   private SvnCheckoutProvider myCheckoutProvider;
 
-  @NotNull private final ClientFactory cmdClientFactory;
+  private final @NotNull ClientFactory cmdClientFactory;
 
   private final boolean myLogExceptions;
 
@@ -284,8 +284,7 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   @Override
-  @NotNull
-  public ChangeProvider getChangeProvider() {
+  public @NotNull ChangeProvider getChangeProvider() {
     if (myChangeProvider == null) {
       myChangeProvider = new SvnChangeProvider(this);
     }
@@ -308,27 +307,22 @@ public final class SvnVcs extends AbstractVcs {
     return mySvnUpdateEnvironment;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return VCS_DISPLAY_NAME;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return VCS_SHORT_DISPLAY_NAME;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getShortNameWithMnemonic() {
+  public @Nls @NotNull String getShortNameWithMnemonic() {
     return SvnBundle.message("svn.short.name.with.mnemonic");
   }
 
-  @NotNull
-  public SvnConfiguration getSvnConfiguration() {
+  public @NotNull SvnConfiguration getSvnConfiguration() {
     return SvnConfiguration.getInstance(myProject);
   }
 
@@ -337,8 +331,7 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   @Override
-  @NotNull
-  public CheckinEnvironment createCheckinEnvironment() {
+  public @NotNull CheckinEnvironment createCheckinEnvironment() {
     if (myCheckinEnvironment == null) {
       myCheckinEnvironment = new SvnCheckinEnvironment(this);
     }
@@ -346,8 +339,7 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   @Override
-  @NotNull
-  public RollbackEnvironment createRollbackEnvironment() {
+  public @NotNull RollbackEnvironment createRollbackEnvironment() {
     if (myRollbackEnvironment == null) {
       myRollbackEnvironment = new SvnRollbackEnvironment(this);
     }
@@ -355,8 +347,7 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   @Override
-  @NotNull
-  public SvnHistoryProvider getVcsHistoryProvider() {
+  public @NotNull SvnHistoryProvider getVcsHistoryProvider() {
     // no heavy state, but it would be useful to have place to keep state in -> do not reuse instance
     return new SvnHistoryProvider(this);
   }
@@ -392,8 +383,7 @@ public final class SvnVcs extends AbstractVcs {
     vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
   }
 
-  @Nullable
-  public PropertyValue getPropertyWithCaching(@NotNull VirtualFile file, @NotNull String propName) throws VcsException {
+  public @Nullable PropertyValue getPropertyWithCaching(@NotNull VirtualFile file, @NotNull String propName) throws VcsException {
     // TODO Method is called in EDT - fix
     File ioFile = virtualToIoFile(file);
     PropertyClient client = getFactory(ioFile).createPropertyClient();
@@ -424,28 +414,23 @@ public final class SvnVcs extends AbstractVcs {
     return file != null && SvnStatusUtil.isUnderControl(this, file);
   }
 
-  @Nullable
-  public Info getInfo(@NotNull Url url, Revision pegRevision, Revision revision) throws SvnBindException {
+  public @Nullable Info getInfo(@NotNull Url url, Revision pegRevision, Revision revision) throws SvnBindException {
     return getFactory().createInfoClient().doInfo(Target.on(url, pegRevision), revision);
   }
 
-  @Nullable
-  public Info getInfo(@NotNull Url url, Revision revision) throws SvnBindException {
+  public @Nullable Info getInfo(@NotNull Url url, Revision revision) throws SvnBindException {
     return getInfo(url, Revision.UNDEFINED, revision);
   }
 
-  @Nullable
-  public Info getInfo(@NotNull final VirtualFile file) {
+  public @Nullable Info getInfo(final @NotNull VirtualFile file) {
     return getInfo(virtualToIoFile(file));
   }
 
-  @Nullable
-  public Info getInfo(@NotNull String path) {
+  public @Nullable Info getInfo(@NotNull String path) {
     return getInfo(new File(path));
   }
 
-  @Nullable
-  public Info getInfo(@NotNull File ioFile) {
+  public @Nullable Info getInfo(@NotNull File ioFile) {
     return getInfo(ioFile, Revision.UNDEFINED);
   }
 
@@ -462,8 +447,7 @@ public final class SvnVcs extends AbstractVcs {
     }
   }
 
-  @Nullable
-  public Info getInfo(@NotNull File ioFile, @NotNull Revision revision) {
+  public @Nullable Info getInfo(@NotNull File ioFile, @NotNull Revision revision) {
     Info result = null;
 
     try {
@@ -489,13 +473,11 @@ public final class SvnVcs extends AbstractVcs {
     }
   }
 
-  @NotNull
-  public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile) {
+  public @NotNull WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile) {
     return getWorkingCopyFormat(ioFile, true);
   }
 
-  @NotNull
-  public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile, boolean useMapping) {
+  public @NotNull WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile, boolean useMapping) {
     WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
 
     if (useMapping) {
@@ -525,17 +507,15 @@ public final class SvnVcs extends AbstractVcs {
 
 
   @Override
-  @NotNull
-  public CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> getCommittedChangesProvider() {
+  public @NotNull CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> getCommittedChangesProvider() {
     if (myCommittedChangesProvider == null) {
       myCommittedChangesProvider = new SvnCommittedChangesProvider(this);
     }
     return myCommittedChangesProvider;
   }
 
-  @Nullable
   @Override
-  public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
+  public @Nullable VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
     final Revision revision = Revision.parse(revisionNumberString);
     if (revision.equals(Revision.UNDEFINED)) {
       return null;
@@ -553,8 +533,7 @@ public final class SvnVcs extends AbstractVcs {
     return SvnUtil.seemsLikeVersionedDir(dir);
   }
 
-  @NotNull
-  public SvnFileUrlMapping getSvnFileUrlMapping() {
+  public @NotNull SvnFileUrlMapping getSvnFileUrlMapping() {
     return myProject.getService(SvnFileUrlMapping.class);
   }
 
@@ -614,16 +593,14 @@ public final class SvnVcs extends AbstractVcs {
     return true;
   }
 
-  @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+  public @NotNull <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     if (in.size() <= 1) return in;
 
     return Registry.is("svn.filter.unique.roots.by.url") ? filterUniqueByUrl(in, convertor) : filterUniqueByWorkingCopy(in, convertor);
   }
 
-  @NotNull
-  private <S> List<S> filterUniqueByUrl(@NotNull List<? extends S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+  private @NotNull <S> List<S> filterUniqueByUrl(@NotNull List<? extends S> in, @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     List<MyPair<S>> infos = new ArrayList<>();
     List<S> notMatched = new ArrayList<>();
     for (S s : in) {
@@ -648,9 +625,8 @@ public final class SvnVcs extends AbstractVcs {
     return concat(converted, notMatched);
   }
 
-  @NotNull
-  private <S> List<S> filterUniqueByWorkingCopy(@NotNull List<? extends S> in,
-                                                @NotNull Function<? super S, ? extends VirtualFile> convertor) {
+  private @NotNull <S> List<S> filterUniqueByWorkingCopy(@NotNull List<? extends S> in,
+                                                         @NotNull Function<? super S, ? extends VirtualFile> convertor) {
     Map<VirtualFile, S> filesMap = StreamEx.of(in).<VirtualFile, S>mapToEntry(convertor, identity()).distinctKeys().toMap();
     Map<VirtualFile, List<VirtualFile>> byWorkingCopy =
       StreamEx.of(filesMap.keySet())
@@ -674,8 +650,8 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   private static final class MyPair<T> implements RootUrlPair {
-    @NotNull private final VirtualFile myFile;
-    @NotNull private final Url myUrl;
+    private final @NotNull VirtualFile myFile;
+    private final @NotNull Url myUrl;
     private final T mySrc;
 
     private MyPair(@NotNull VirtualFile file, @NotNull Url url, T src) {
@@ -688,15 +664,13 @@ public final class SvnVcs extends AbstractVcs {
       return mySrc;
     }
 
-    @NotNull
     @Override
-    public VirtualFile getVirtualFile() {
+    public @NotNull VirtualFile getVirtualFile() {
       return myFile;
     }
 
-    @NotNull
     @Override
-    public Url getUrl() {
+    public @NotNull Url getUrl() {
       return myUrl;
     }
   }
@@ -758,46 +732,38 @@ public final class SvnVcs extends AbstractVcs {
    * For instance, when working copies of several formats are presented in project
    * (though it seems to be rather unlikely case).
    */
-  @NotNull
-  public ClientFactory getFactory() {
+  public @NotNull ClientFactory getFactory() {
     return cmdClientFactory;
   }
 
   @SuppressWarnings("unused")
-  @NotNull
-  public ClientFactory getFactory(@NotNull WorkingCopyFormat format) {
+  public @NotNull ClientFactory getFactory(@NotNull WorkingCopyFormat format) {
     return cmdClientFactory;
   }
 
   @SuppressWarnings("unused")
-  @NotNull
-  public ClientFactory getFactory(@NotNull File file) {
+  public @NotNull ClientFactory getFactory(@NotNull File file) {
     return cmdClientFactory;
   }
 
   @SuppressWarnings("unused")
-  @NotNull
-  public ClientFactory getFactory(@NotNull File file, boolean useMapping) {
+  public @NotNull ClientFactory getFactory(@NotNull File file, boolean useMapping) {
     return cmdClientFactory;
   }
 
-  @NotNull
-  public ClientFactory getFactory(@NotNull Target target) {
+  public @NotNull ClientFactory getFactory(@NotNull Target target) {
     return target.isFile() ? getFactory(target.getFile()) : getFactory();
   }
 
-  @NotNull
-  public ClientFactory getFactoryFromSettings() {
+  public @NotNull ClientFactory getFactoryFromSettings() {
     return cmdClientFactory;
   }
 
-  @NotNull
-  public ClientFactory getCommandLineFactory() {
+  public @NotNull ClientFactory getCommandLineFactory() {
     return cmdClientFactory;
   }
 
-  @NotNull
-  public WorkingCopyFormat getLowestSupportedFormatForCommandLine() {
+  public @NotNull WorkingCopyFormat getLowestSupportedFormatForCommandLine() {
     WorkingCopyFormat result;
 
     try {

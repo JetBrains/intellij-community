@@ -1,12 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.URLUtil
 import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Rule
 import org.junit.Test
 
 class JUnitRunConfigurationPropertiesTest {
+  @JvmField
+  @Rule
+  val tempDir = TempDirectory()
+
   @Test
   fun `load test class`() {
     val properties = loadRunConfiguration("test_class.xml")
@@ -52,6 +59,13 @@ class JUnitRunConfigurationPropertiesTest {
 
   private fun loadRunConfiguration(fileName: String): JUnitRunConfigurationProperties {
     val url = JUnitRunConfigurationPropertiesTest::class.java.getResource("runConfigurations/$fileName")
-    return JUnitRunConfigurationProperties.loadRunConfiguration(URLUtil.urlToFile(url!!).toPath())
+    assertNotNull(url)
+    val file = if (url!!.protocol == URLUtil.JAR_PROTOCOL) {
+      tempDir.newFile(fileName, url.openStream().use { it.readBytes() })
+    }
+    else {
+      URLUtil.urlToFile(url)
+    }
+    return JUnitRunConfigurationProperties.loadRunConfiguration(file.toPath())
   }
 }

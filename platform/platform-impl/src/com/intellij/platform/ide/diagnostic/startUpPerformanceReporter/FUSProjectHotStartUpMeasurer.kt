@@ -4,7 +4,7 @@ package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.createDurationField
@@ -29,8 +29,10 @@ import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.containers.ContainerUtil
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -177,7 +179,7 @@ object FUSProjectHotStartUpMeasurer {
    */
   suspend fun reportProjectPath(projectFile: Path) {
     if (!isProperContext()) return
-    val hasSettings = withContext(Dispatchers.IO) { ProjectUtilCore.isValidProjectPath(projectFile) }
+    val hasSettings = ProjectUtil.isValidProjectPath(projectFile)
     channel.trySend(Event.ProjectPathReportEvent(hasSettings))
   }
 

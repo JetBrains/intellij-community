@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea.customization.base
 
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.ide.impl.customization.BaseJetBrainsExternalProductResourceUrls
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -30,7 +30,7 @@ class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrl
 
   override val keyboardShortcutsPdfUrl: Url
     get() {
-      val suffix = if (SystemInfo.isMac) "_Mac" else ""
+      val suffix = if (SystemInfoRt.isMac) "_Mac" else ""
       return Urls.newFromEncoded("https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard$suffix.pdf")
     }
 

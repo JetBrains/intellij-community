@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.Collection;
@@ -32,13 +33,13 @@ class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   @Override
-  protected List<LibraryDescriptor> getEntries() {
+  protected @Unmodifiable List<LibraryDescriptor> getEntries() {
     final List<LibraryDescriptor> libs = getInsight().getSuggestedLibraries();
     return libs != null? libs : Collections.emptyList();
   }
 
   @Override
-  protected Collection<? extends Dependency> getDependencies(final LibraryDescriptor entry) {
+  protected @Unmodifiable Collection<? extends Dependency> getDependencies(final LibraryDescriptor entry) {
     return ContainerUtil.map(entry.getJars(), FileDescriptor::new);
   }
 

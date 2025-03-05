@@ -59,12 +59,12 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
   }
 
   protected open fun createIndicesFixture(): MavenIndicesTestFixture {
-    return MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
+    return MavenIndicesTestFixture(dir, project, testRootDisposable)
   }
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
     super.importProjectsAsync(files)
-    MavenIndicesManager.getInstance(project).waitForGavUpdateCompleted();
+    MavenIndicesManager.getInstance(project).waitForGavUpdateCompleted()
   }
 
   override fun tearDown() {

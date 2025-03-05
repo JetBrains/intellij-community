@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Key
@@ -14,11 +13,14 @@ import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
 import com.jediterm.terminal.model.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.output.TerminalAlarmManager
 import org.jetbrains.plugins.terminal.block.session.util.FutureTerminalOutputStream
 import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
+import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.ShellIntegration
+import org.jetbrains.plugins.terminal.util.waitFor
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -28,10 +30,11 @@ import java.util.concurrent.CopyOnWriteArrayList
  *
  * Disposed on terminal UI component disposing, not on the shell session termination.
  */
-internal class BlockTerminalSession(
+@ApiStatus.Internal
+class BlockTerminalSession(
   val settings: JBTerminalSystemSettingsProviderBase,
   val colorPalette: TerminalColorPalette,
-  val shellIntegration: ShellIntegration
+  val shellIntegration: ShellIntegration,
 ) : Disposable {
 
   val model: TerminalModel
@@ -48,7 +51,7 @@ internal class BlockTerminalSession(
    * handled even if the terminal's output stream
    * isn't immediately available at the time of the request.
    */
-  internal val terminalOutputStream: TerminalOutputStream = FutureTerminalOutputStream(terminalStarterFuture)
+  val terminalOutputStream: TerminalOutputStream = FutureTerminalOutputStream(terminalStarterFuture)
 
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
@@ -62,7 +65,7 @@ internal class BlockTerminalSession(
 
   init {
     val styleState = StyleState()
-    textBuffer = TerminalTextBuffer(80, 24, styleState, AdvancedSettings.getInt("terminal.buffer.max.lines.count"), null)
+    textBuffer = TerminalTextBuffer(80, 24, styleState, AdvancedSettings.getInt("terminal.buffer.max.lines.count"))
     model = TerminalModel(textBuffer)
     val alarmManager = TerminalAlarmManager(settings)
     controller = JediTerminal(ModelUpdatingTerminalDisplay(alarmManager, model, settings), textBuffer, styleState)
@@ -134,12 +137,9 @@ internal class BlockTerminalSession(
     // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
     terminalStarterFuture.complete(null)
     terminalStarterFuture.getNow(null)?.let {
-      it.requestEmulatorStop()
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        it.ttyConnector.closeSafely() // close synchronously
-      }
-      else {
-        it.close() // close in background thread
+      it.close() // close in background
+      it.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
+        it.requestEmulatorStop()
       }
     }
     executorServiceManager.shutdownWhenAllExecuted()

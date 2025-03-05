@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity
 
-import com.intellij.icons.AllIcons.Actions.Run_anything
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject
 import com.intellij.ide.actions.runAnything.activity.RunAnythingNotifiableProvider.ExecutionStatus.ERROR
@@ -71,7 +71,7 @@ abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<
     }
 
     fun build(): Notification {
-      val notification = runAnythingGroup.createNotification(content, INFORMATION).setIcon(Run_anything).setTitle(title, subtitle)
+      val notification = runAnythingGroup.createNotification(content, INFORMATION).setIcon(AllIcons.Actions.RunAnything).setTitle(title, subtitle)
       for (actionData in actions) {
         val action = object : AnAction(actionData.name) {
           override fun actionPerformed(e: AnActionEvent) {

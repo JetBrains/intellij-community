@@ -38,10 +38,18 @@ public abstract class OrderEnumerationHandler {
     return false;
   }
 
+  /**
+   * By default, if a module 'A' depends on a module 'B', the test classpath of 'A' will include tests of 'B'.
+   * Override this method and return {@code false} to disable this behavior.
+   */
   public boolean shouldIncludeTestsFromDependentModulesToTestClasspath() {
     return true;
   }
 
+  /**
+   * Override this method and return {@code false} if all transitive dependencies are added as direct dependencies, and therefore
+   * {@link OrderEnumerator#recursively()} option should take no effect. 
+   */
   public boolean shouldProcessDependenciesRecursively() {
     return true;
   }

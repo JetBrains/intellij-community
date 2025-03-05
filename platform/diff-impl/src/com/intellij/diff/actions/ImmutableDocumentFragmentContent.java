@@ -23,8 +23,8 @@ import java.util.function.IntUnaryOperator;
  */
 @ApiStatus.Internal
 public final class ImmutableDocumentFragmentContent extends DiffContentBase implements DocumentContent {
-  @NotNull private final DocumentContent myOriginal;
-  @NotNull private final Document myDocument;
+  private final @NotNull DocumentContent myOriginal;
+  private final @NotNull Document myDocument;
 
   private final int myStartLine;
 
@@ -45,34 +45,29 @@ public final class ImmutableDocumentFragmentContent extends DiffContentBase impl
     });
   }
 
-  @NotNull
   @Override
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getHighlightFile() {
+  public @Nullable VirtualFile getHighlightFile() {
     return myOriginal.getHighlightFile();
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable(@NotNull LineCol position) {
+  public @Nullable Navigatable getNavigatable(@NotNull LineCol position) {
     LineCol originalPosition = new LineCol(myStartLine + position.line, position.column);
     return myOriginal.getNavigatable(originalPosition);
   }
 
-  @Nullable
   @Override
-  public FileType getContentType() {
+  public @Nullable FileType getContentType() {
     return myOriginal.getContentType();
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getNavigatable(new LineCol(0));
   }
 }

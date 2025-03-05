@@ -27,9 +27,8 @@ public enum GradleLocationSettingType {
 
   EXPLICIT_CORRECT("setting.type.location.explicit.correct");
 
-  @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE)
-  @NotNull private final String myDescriptionKey;
-  @NotNull private final Color myColor;
+  private final @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) @NotNull String myDescriptionKey;
+  private final @NotNull Color myColor;
 
   GradleLocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String descriptionKey) {
     this(descriptionKey, "TextField.foreground");
@@ -49,8 +48,7 @@ public enum GradleLocationSettingType {
     return ExternalSystemBundle.message(myDescriptionKey, externalSystemId.getReadableName());
   }
 
-  @NotNull
-  public Color getColor() {
+  public @NotNull Color getColor() {
     return myColor;
   }
 }

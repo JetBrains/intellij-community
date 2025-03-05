@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.elements;
 
 import com.intellij.java.workspace.entities.CustomPackagingElementEntity;
@@ -42,18 +42,15 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
     myType = type;
   }
 
-  @NotNull
-  public abstract PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context);
+  public abstract @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context);
 
-  @NotNull
-  public final PackagingElementType getType() {
+  public final @NotNull PackagingElementType getType() {
     return myType;
   }
 
   public abstract boolean isEqualTo(@NotNull PackagingElement<?> element);
 
-  @NotNull
-  public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
+  public @NotNull PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
     return PackagingElementOutputKind.OTHER;
   }
 

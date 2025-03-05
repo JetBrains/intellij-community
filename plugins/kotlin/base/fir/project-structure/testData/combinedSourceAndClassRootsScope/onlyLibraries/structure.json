@@ -1,0 +1,28 @@
+{
+    "libraries": [
+        {
+            "name": "libraryA",
+            "roots": ["libraryRoot1", "libraryRoot2"]
+        },
+        {
+            "name": "libraryB",
+            "roots": ["libraryRoot3"]
+        },
+        {
+            "name": "unrelatedLibrary",
+            "roots": ["unrelatedLibraryRoot"]
+        }
+    ],
+    "excluded_libraries": ["unrelatedLibrary"],
+
+    "modules": [
+        {
+            "name": "dependentModule",
+            "dependencies": ["libraryA", "libraryB", "unrelatedLibrary"],
+            "content_roots": [
+                { "path": "src", "kind": "PRODUCTION" }
+            ]
+        }
+    ],
+    "excluded_modules": ["dependentModule"]
+}

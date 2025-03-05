@@ -44,6 +44,12 @@ dependencies {
         exclude(group = "org.jetbrains.compose.material")
         exclude(group = "org.jetbrains.kotlinx")
     }
+    implementation(project(":samples:showcase")) { exclude(group = "org.jetbrains.kotlinx") }
+
+    // TODO remove once https://youtrack.jetbrains.com/issue/IJPL-166436 is fixed
+    implementation("androidx.lifecycle:lifecycle-common-jvm:2.8.5") { exclude(group = "org.jetbrains.kotlinx") }
+    implementation("androidx.lifecycle:lifecycle-runtime-desktop:2.8.5") { exclude(group = "org.jetbrains.kotlinx") }
+    // END TODO
 }
 
 intellijPlatform {

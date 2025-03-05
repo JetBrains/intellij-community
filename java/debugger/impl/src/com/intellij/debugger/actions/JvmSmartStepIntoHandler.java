@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -22,18 +22,15 @@ import java.util.List;
 public abstract class JvmSmartStepIntoHandler {
   public static final ExtensionPointName<JvmSmartStepIntoHandler> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmSmartStepIntoHandler");
 
-  @NotNull
-  public List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
+  public @NotNull List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
     throw new AbstractMethodError();
   }
 
-  @NotNull
-  public Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
     return Promises.resolvedPromise(findSmartStepTargets(position));
   }
 
-  @NotNull
-  public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
     return Promises.rejectedPromise();
   }
 
@@ -44,8 +41,7 @@ public abstract class JvmSmartStepIntoHandler {
    *
    * @return SmartStepFilter
    */
-  @Nullable
-  protected MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
+  protected @Nullable MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
     if (stepTarget instanceof MethodSmartStepTarget methodSmartStepTarget) {
       final PsiMethod method = methodSmartStepTarget.getMethod();
       if (stepTarget.needsBreakpointRequest()) {

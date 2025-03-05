@@ -16,8 +16,7 @@ public final class ParamHelperCore {
   private ParamHelperCore() {
   }
 
-  @NotNull
-  public static String getNameInSignature(@NotNull PyAstNamedParameter parameter) {
+  public static @NotNull String getNameInSignature(@NotNull PyAstNamedParameter parameter) {
     final StringBuilder sb = new StringBuilder();
 
     if (parameter.isPositionalContainer()) sb.append("*");
@@ -35,9 +34,8 @@ public final class ParamHelperCore {
    * @return equal sign (surrounded with spaces if {@code parameterRenderedAsTyped}) +
    * {@code defaultValue} (with body escaped if it is a string literal)
    */
-  @Nullable
   @Contract("null, _->null")
-  public static String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
+  public static @Nullable String getDefaultValuePartInSignature(@Nullable String defaultValue, boolean parameterRenderedAsTyped) {
     if (defaultValue == null) return null;
 
     final StringBuilder sb = new StringBuilder();
@@ -63,8 +61,7 @@ public final class ParamHelperCore {
    * @param defaultValue expression returned by {@link PyCallableParameter#getDefaultValue()} or {@link PyParameter#getDefaultValue()}.
    * @return {@code defaultValue} value surrounded by quotes if it is a multi-line string literal, {@code defaultValue} text otherwise.
    */
-  @Nullable
-  public static String getDefaultValueText(@Nullable PyAstExpression defaultValue) {
+  public static @Nullable String getDefaultValueText(@Nullable PyAstExpression defaultValue) {
     if (defaultValue instanceof PyAstStringLiteralExpression) {
       final Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(defaultValue.getText());
       if (quotes != null) {

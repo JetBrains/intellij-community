@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.assignment;
 
 import com.intellij.psi.*;
@@ -79,8 +79,7 @@ public abstract class BaseAssignmentToParameterInspection extends BaseInspection
       registerError(operand);
     }
 
-    @Nullable
-    private PsiParameter getParameter(PsiExpression expression) {
+    private @Nullable PsiParameter getParameter(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiReferenceExpression referenceExpression)) {
         return null;

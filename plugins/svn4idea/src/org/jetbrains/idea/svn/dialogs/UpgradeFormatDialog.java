@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -56,12 +56,11 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "svn.upgradeDialog";
   }
 
-  public void setData(@NotNull final WorkingCopyFormat selectedFormat) {
+  public void setData(final @NotNull WorkingCopyFormat selectedFormat) {
     for (JRadioButton button : formatButtons) {
       if (selectedFormat == getFormat(button)) {
         button.setSelected(true);
@@ -109,8 +108,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
 
@@ -160,8 +158,7 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     formatButtons.add(button);
   }
 
-  @Nullable
-  protected JPanel getBottomAuxiliaryPanel() {
+  protected @Nullable JPanel getBottomAuxiliaryPanel() {
     return null;
   }
 
@@ -169,15 +166,13 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     return true;
   }
 
-  @NotNull
-  private static WorkingCopyFormat getFormat(@NotNull JRadioButton button) {
+  private static @NotNull WorkingCopyFormat getFormat(@NotNull JRadioButton button) {
     Object format = button.getClientProperty("format");
 
     return format instanceof WorkingCopyFormat ? (WorkingCopyFormat)format : WorkingCopyFormat.UNKNOWN;
   }
 
-  @NotNull
-  public WorkingCopyFormat getUpgradeMode() {
+  public @NotNull WorkingCopyFormat getUpgradeMode() {
     WorkingCopyFormat result = WorkingCopyFormat.UNKNOWN;
 
     for (JRadioButton button : formatButtons) {

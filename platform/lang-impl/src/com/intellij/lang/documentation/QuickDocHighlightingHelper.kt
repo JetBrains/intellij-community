@@ -29,11 +29,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 object QuickDocHighlightingHelper {
 
-  const val CODE_BLOCK_PREFIX = "<pre><code>"
-  const val CODE_BLOCK_SUFFIX = "</code></pre>"
+  const val CODE_BLOCK_PREFIX: String = "<pre><code>"
+  const val CODE_BLOCK_SUFFIX: String = "</code></pre>"
 
-  const val INLINE_CODE_PREFIX = "<code>"
-  const val INLINE_CODE_SUFFIX = "</code>"
+  const val INLINE_CODE_PREFIX: String = "<code>"
+  const val INLINE_CODE_SUFFIX: String = "</code>"
 
   /**
    * The returned code block HTML (prefixed with [CODE_BLOCK_PREFIX] and suffixed with [CODE_BLOCK_SUFFIX])
@@ -268,9 +268,9 @@ object QuickDocHighlightingHelper {
 
   @Internal
   @JvmStatic
-  fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleConfiguration =
+  fun getDefaultDocStyleOptions(colorSchemeProvider: () -> EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleConfiguration =
     JBHtmlPaneStyleConfiguration {
-      this.colorScheme = colorScheme
+      this.colorSchemeProvider = colorSchemeProvider
       this.editorInlineContext = editorInlineContext
       inlineCodeParentSelectors(".$CLASS_CONTENT", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
                                 ".$CLASS_CONTENT div:not(.$CLASS_TOP)", ".$CLASS_SECTIONS")

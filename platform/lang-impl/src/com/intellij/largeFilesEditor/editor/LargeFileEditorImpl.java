@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.largeFilesEditor.PlatformActionsReplacer;
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -161,7 +162,7 @@ public final class LargeFileEditorImpl extends UserDataHolderBase implements Lar
     }
     editorModel.dispose();
 
-    vFile.putUserData(FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY, null);
+    vFile.putUserData(FileDocumentManagerBase.HARD_REF_TO_DOCUMENT_KEY, null);
   }
 
   @RequiresEdt

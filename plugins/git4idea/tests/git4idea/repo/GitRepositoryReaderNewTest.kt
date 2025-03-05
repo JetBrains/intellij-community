@@ -18,8 +18,7 @@ package git4idea.repo
 import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.Executor.rm
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.vcs.log.impl.HashImpl
@@ -245,6 +244,42 @@ abstract class GitRepositoryReaderNewTest(val usingReftable: Boolean) : GitPlatf
   fun `test fresh repository`() {
     assertTrue(repo.isFresh)
     assertNull(repo.currentRevision)
+    assertEquals("master", repo.currentBranch?.name)
+  }
+
+  fun `test cherry-pick state without CHERRY_PICK_HEAD`() {
+    val file = "file.txt"
+    prepareStateForApplyChangesTest("cherry-pick", file)
+
+    val stateWithConflict = readState()
+    assertEquals(State.GRAFTING, stateWithConflict.state)
+
+    makeCommit(file)
+
+    val stateAfterConflict = readState()
+    assertEquals(State.GRAFTING, stateAfterConflict.state)
+  }
+
+  fun `test revert state without REVERT_HEAD`() {
+    val file = "file.txt"
+    prepareStateForApplyChangesTest("revert", file)
+
+    val stateWithConflict = readState()
+    assertEquals(State.REVERTING, stateWithConflict.state)
+
+    makeCommit(file)
+
+    val stateAfterConflict = readState()
+    assertEquals(State.REVERTING, stateAfterConflict.state)
+  }
+
+  private fun prepareStateForApplyChangesTest(command: String, file: String) {
+    makeCommit(file)
+    overwrite(file, "new content")
+    val commit = addCommit("modified $file 1")
+    overwrite(file, "newer content")
+    val commit2 = addCommit("modified $file 2")
+    git("$command $commit $commit2", ignoreNonZeroExitCode = true)
   }
 
   private fun moveToDetachedHead(): String {

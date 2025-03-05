@@ -19,20 +19,23 @@ public class SingleClassesTest extends SingleClassesTestBase {
   public Timeout globalTimeout = Timeout.seconds(60);
 
   @Override
-  protected Map<String, String> getDecompilerOptions() {
-    return Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
-                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
-                  IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
-                  IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
-                  IFernflowerPreferences.CONVERT_PATTERN_SWITCH, "1",
-                  IFernflowerPreferences.CONVERT_RECORD_PATTERN, "1",
-                  IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS, "1",
-                  IFernflowerPreferences.CHECK_CLOSABLE_INTERFACE, "0",
-                  IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS, "0"
-                  //IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
+  protected Map<String, Object> getDecompilerOptions() {
+    return Map.ofEntries(
+        Map.entry(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1"),
+        Map.entry(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1"),
+        Map.entry(IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1"),
+        Map.entry(IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1"),
+        Map.entry(IFernflowerPreferences.CONVERT_PATTERN_SWITCH, "1"),
+        Map.entry(IFernflowerPreferences.CONVERT_RECORD_PATTERN, "1"),
+        Map.entry(IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS, "1"),
+        Map.entry(IFernflowerPreferences.CHECK_CLOSABLE_INTERFACE, "0"),
+        Map.entry(IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS, "0"),
+        Map.entry(IFernflowerPreferences.MAX_DIRECT_NODES_COUNT, 20000),
+        Map.entry(IFernflowerPreferences.MAX_DIRECT_VARIABLE_NODE_COUNT, 30000)
     );
   }
 
+  @Test public void testHelloWorld() { doTest("pkg/TestHelloWorld"); }
   @Test public void testGenerics() { doTest("pkg/TestGenerics"); }
   @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
   @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
@@ -254,4 +257,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
   @Test public void testNestedInheritor() { doTest("pkg/TestNestedInheritor"); }
   @Test public void testTryCatchFinallyMismatched() { doTest("pkg/TestTryCatchFinallyMismatched"); }
   @Test public void testNestedCalls() { doTest("pkg/TestNestedCalls"); }
+  @Test public void testBreakpointsContextProvider() { doTest("com/intellij/tasks/context/java/BreakpointsContextProvider"); }
 }

@@ -28,14 +28,12 @@ import org.jetbrains.annotations.NotNull;
 public final class HardcodedLineSeparatorsInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "HardcodedLineSeparator";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("hardcoded.line.separator.problem.descriptor");
   }
 

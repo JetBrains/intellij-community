@@ -143,9 +143,8 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   @Override
   public @NotNull Iterable<JsonSchemaValidation> getValidations(@Nullable JsonSchemaType type, @NotNull JsonValueAdapter value) {
     return new Iterable<>() {
-      @NotNull
       @Override
-      public Iterator<JsonSchemaValidation> iterator() {
+      public @NotNull Iterator<JsonSchemaValidation> iterator() {
         return getSchema7AndEarlierValidations(JsonSchemaObjectImpl.this, type, value).iterator();
       }
     };
@@ -283,6 +282,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     };
   }
 
+  @Override
   public @Nullable JsonSchemaType mergeTypes(@Nullable JsonSchemaType selfType,
                                              @Nullable JsonSchemaType otherType,
                                              @Nullable Set<JsonSchemaType> otherTypeVariants) {
@@ -294,7 +294,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
           JsonSchemaType subtype = getSubtypeOfBoth(selfType, variant);
           if (subtype != null) filteredVariants.add(subtype);
         }
-        if (filteredVariants.size() == 0) {
+        if (filteredVariants.isEmpty()) {
           myIsValidByExclusion = false;
           return selfType;
         }
@@ -314,6 +314,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     return subtypeOfBoth;
   }
 
+  @Override
   public Set<JsonSchemaType> mergeTypeVariantSets(@Nullable Set<JsonSchemaType> self, @Nullable Set<JsonSchemaType> other) {
     if (self == null) return other;
     if (other == null) return self;
@@ -377,7 +378,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
     if (other.myPattern != null) myPattern = other.myPattern;
     if (other.myAdditionalPropertiesAllowed != null) {
       myAdditionalPropertiesAllowed = other.myAdditionalPropertiesAllowed;
-      if (other.myAdditionalPropertiesAllowed == Boolean.FALSE) {
+      if (!other.myAdditionalPropertiesAllowed) {
         addAdditionalPropsNotAllowedFor(other.myFileUrl, other.myPointer);
       }
     }
@@ -607,7 +608,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   // or if it inherits this prohibition flag from the merge result, as the behavior differs in these cases
   @Override
   public boolean hasOwnExtraPropertyProhibition() {
-    return getAdditionalPropertiesAllowed() == Boolean.FALSE &&
+    return !getAdditionalPropertiesAllowed() &&
            (myAdditionalPropertiesNotAllowedFor == null ||
             myAdditionalPropertiesNotAllowedFor.contains(myFileUrl + myPointer));
   }

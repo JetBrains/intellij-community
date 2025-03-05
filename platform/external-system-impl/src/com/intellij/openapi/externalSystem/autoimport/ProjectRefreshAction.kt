@@ -77,10 +77,9 @@ class ProjectRefreshAction : DumbAwareAction() {
     fun refreshProject(project: Project) {
       val projectNotificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
       val systemIds = projectNotificationAware.getSystemIds()
-      if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)) {
-        val projectTracker = ExternalSystemProjectTracker.getInstance(project)
-        projectTracker.scheduleProjectRefresh()
-      }
+      ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)
+      val projectTracker = ExternalSystemProjectTracker.getInstance(project)
+      projectTracker.scheduleProjectRefresh()
     }
   }
 }

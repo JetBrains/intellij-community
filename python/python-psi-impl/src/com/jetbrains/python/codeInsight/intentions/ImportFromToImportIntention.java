@@ -44,8 +44,7 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
     String myModuleName = null;
     int myRelativeLevel = 0;
 
-    @NotNull
-    public @IntentionName String getText() {
+    public @NotNull @IntentionName String getText() {
       String name = myModuleName != null ? myModuleName : "...";
       if (myRelativeLevel > 0) {
         String[] relative_names = getRelativeNames(false, this);
@@ -72,8 +71,7 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
     }
   }
 
-  @Nullable
-  private static PsiElement getElementFromEditor(Editor editor, PsiFile file) {
+  private static @Nullable PsiElement getElementFromEditor(Editor editor, PsiFile file) {
     PsiElement element = null;
     Document doc = editor.getDocument();
     PsiFile a_file = file;
@@ -114,8 +112,7 @@ public final class ImportFromToImportIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.convert.import.qualify");
   }
 

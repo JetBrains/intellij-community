@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.pydev.transport;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,15 +54,15 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
    */
   private static final int HANDSHAKE_TIMEOUT_IN_MILLIS = 5000;
 
-  @NotNull private final String myHost;
+  private final @NotNull String myHost;
   private final int myPort;
   private final Duration myRetryTimeout;
   private final int myMaxRetries;
 
-  @NotNull private volatile State myState = State.INIT;
+  private volatile @NotNull State myState = State.INIT;
 
-  @Nullable private Socket mySocket;
-  @Nullable private volatile DebuggerReader myDebuggerReader;
+  private @Nullable Socket mySocket;
+  private volatile @Nullable DebuggerReader myDebuggerReader;
 
   public ClientModeDebuggerTransport(@NotNull RemoteDebugger debugger,
                                      @NotNull String host,

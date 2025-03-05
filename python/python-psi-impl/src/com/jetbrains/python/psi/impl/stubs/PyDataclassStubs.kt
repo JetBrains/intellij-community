@@ -91,4 +91,18 @@ class PyDataclassStubImpl(
   override fun unsafeHashValue(): Boolean? = unsafeHash
   override fun frozenValue(): Boolean? = frozen
   override fun kwOnly(): Boolean? = kwOnly
+  
+  override fun toString(): String {
+    return "PyDataclassStub(" +
+           "type='$type', " +
+           "decoratorName=$decoratorName, " +
+           "init=$init, " +
+           "repr=$repr, " +
+           "eq=$eq, " +
+           "order=$order, " +
+           "unsafeHash=$unsafeHash, " +
+           "frozen=$frozen, " +
+           "kwOnly=$kwOnly" +
+           ")"
+  }
 }

@@ -1,5 +1,7 @@
 // "Change to constructor invocation" "true"
+// PRIORITY: HIGH
 // ERROR: No value passed for parameter 'x'
+// K2_AFTER_ERROR: No value passed for parameter 'x'.
 open class A(x : Int) {}
 class B : A<caret> {}
 

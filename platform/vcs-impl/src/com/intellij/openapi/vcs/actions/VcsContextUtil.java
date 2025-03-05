@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,23 +13,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class VcsContextUtil {
-  @Nullable
-  public static VirtualFile selectedFile(@NotNull DataContext context) {
+  public static @Nullable VirtualFile selectedFile(@NotNull DataContext context) {
     return selectedFilesIterable(context).first();
   }
 
-  @NotNull
-  public static List<VirtualFile> selectedFiles(@NotNull DataContext context) {
+  public static @NotNull List<VirtualFile> selectedFiles(@NotNull DataContext context) {
     return selectedFilesIterable(context).toList();
   }
 
-  @NotNull
-  public static List<FilePath> selectedFilePaths(@NotNull DataContext context) {
+  public static @NotNull List<FilePath> selectedFilePaths(@NotNull DataContext context) {
     return selectedFilePathsIterable(context).toList();
   }
 
-  @NotNull
-  public static JBIterable<VirtualFile> selectedFilesIterable(@NotNull DataContext context) {
+  public static @NotNull JBIterable<VirtualFile> selectedFilesIterable(@NotNull DataContext context) {
     Iterable<VirtualFile> files = VcsDataKeys.VIRTUAL_FILES.getData(context);
     if (files != null) {
       return JBIterable.from(files).filter(VirtualFile::isInLocalFileSystem);
@@ -38,8 +34,7 @@ public final class VcsContextUtil {
     return JBIterable.empty();
   }
 
-  @NotNull
-  public static JBIterable<FilePath> selectedFilePathsIterable(@NotNull DataContext context) {
+  public static @NotNull JBIterable<FilePath> selectedFilePathsIterable(@NotNull DataContext context) {
     Iterable<FilePath> paths = VcsDataKeys.FILE_PATHS.getData(context);
     if (paths != null) {
       return JBIterable.from(paths);

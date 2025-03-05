@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
@@ -11,7 +12,7 @@ import org.jetbrains.kotlin.parsing.KotlinExpressionParsing
  * Analogous to `RemoveUnnecessaryParenthesesIntention`.
  * Removes parentheses (conservatively) added by other steps.
  */
-class RemoveUnnecessaryParenthesesConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+class RemoveUnnecessaryParenthesesConversion(context: ConverterContext) : RecursiveConversion(context) {
 
     context(KaSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

@@ -62,7 +62,9 @@
                     serviceImplementation="com.jetbrains.performancePlugin.ProjectInitializationDiagnosticServiceImpl"/>
 
     <ide.dynamicPluginVetoer implementation="com.jetbrains.performancePlugin.PlaybackRunnerExtended$PlaybackRunnerExtendedPluginUnloadVetoer"/>
+    <ApplicationLoadListener implementation="com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener" id="testApplicationLoadListener"/>
   </extensions>
+
   <extensions defaultExtensionNs="com.jetbrains">
     <performancePlugin.snapshotOpener implementation="com.jetbrains.performancePlugin.profilers.LocalFileManagerSnapshotOpener"/>
   </extensions>
@@ -72,6 +74,7 @@
     <listener class="com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysisFileEditorListener"
               topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener" activeInHeadlessMode="false"/>
   </applicationListeners>
+
   <projectListeners>
     <listener class="com.jetbrains.performancePlugin.ProjectIndexingComponent"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>

@@ -18,6 +18,9 @@ public final class TeamCityLogger {
 
   public static final boolean isUnderTC = System.getenv("TEAMCITY_VERSION") != null;
 
+  @Nullable
+  public static final String currentBuildUrl = System.getenv("BUILD_URL");
+
   private TeamCityLogger() {}
 
   private static File reportFile() {

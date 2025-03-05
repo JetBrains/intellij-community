@@ -20,11 +20,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor {
+@ApiStatus.Internal
+public final class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private final Map<PsiClass, Integer> m_accessCounts =
     new HashMap<>(2);

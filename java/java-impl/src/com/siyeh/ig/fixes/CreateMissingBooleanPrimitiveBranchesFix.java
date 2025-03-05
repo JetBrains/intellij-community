@@ -10,6 +10,7 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -21,8 +22,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
     super(block, names);
   }
 
-  @Nullable
-  public static CreateMissingBooleanPrimitiveBranchesFix createFix(@NotNull PsiSwitchBlock block) {
+  public static @Nullable CreateMissingBooleanPrimitiveBranchesFix createFix(@NotNull PsiSwitchBlock block) {
     PsiExpression selectorExpression = block.getExpression();
     if (selectorExpression == null) return null;
     PsiType selectorExpressionType = selectorExpression.getType();
@@ -56,8 +56,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
     return new CreateMissingBooleanPrimitiveBranchesFix(block, new LinkedHashSet<>(missed));
   }
 
-  @Nullable
-  public static PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block) {
+  public static @Nullable PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block) {
     return createWithNull(block, () -> createFix(block));
   }
 
@@ -72,7 +71,7 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
   }
 
   @Override
-  protected @NotNull Function<PsiSwitchLabelStatementBase, List<String>> getCaseExtractor() {
+  protected @NotNull Function<PsiSwitchLabelStatementBase, @Unmodifiable List<String>> getCaseExtractor() {
     return label -> {
       PsiCaseLabelElementList list = label.getCaseLabelElementList();
       if (list == null) return Collections.emptyList();

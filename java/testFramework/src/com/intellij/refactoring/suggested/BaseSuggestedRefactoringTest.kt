@@ -57,7 +57,7 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
   ) {
     doTest(
       initialText,
-      RefactoringBundle.message("suggested.refactoring.rename.intention.text", oldName, newName),
+      RefactoringBundle.message("suggested.refactoring.rename.intention.text", oldName),
       textAfterRefactoring,
       {},
       editingActions

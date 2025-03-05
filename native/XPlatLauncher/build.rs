@@ -1,5 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+// technically we shouldn't use #cfg in build.rs due to cross-compilation,
+// but the only we do is windows x64 -> arm64, so it's fine for our purposes
+
+#[cfg(target_os = "windows")]
 use {
     anyhow::{bail, Context, Result},
     std::env,
@@ -7,22 +11,23 @@ use {
     winresource::WindowsResource,
 };
 
-#[cfg(all(feature = "cef"))]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 use {
-    reqwest::blocking::Client,
+    curl::easy::Easy,
     sha1::{Digest, Sha1},
     std::fs::File,
-    std::io::Read,
+    std::io::{Read, Write},
     std::process::Command,
 };
 
-#[cfg(feature = "cef")]
+#[cfg(target_os = "windows")]
 macro_rules! trace {
     ($($arg:tt)*) => {
         println!("TRACE: {}", format_args!($($arg)*));
     };
 }
 
+#[cfg(target_os = "windows")]
 macro_rules! cargo {
     ($($arg:tt)*) => {
         println!("cargo:{}", format_args!($($arg)*));
@@ -30,8 +35,10 @@ macro_rules! cargo {
 }
 
 fn main() {
-    cargo!("rerun-if-changed=build.rs");
-    if std::env::var("CARGO_CFG_TARGET_OS").unwrap() == "windows" {
+    #[cfg(target_os = "windows")]
+    {
+        cargo!("rerun-if-changed=build.rs");
+
         #[cfg(feature = "cef")]
         link_cef().expect("Failed to link with CEF");
 
@@ -39,7 +46,7 @@ fn main() {
     }
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn link_cef() -> Result<()> {
     let cef_version = "122.1.9+gd14e051+chromium-122.0.6261.94";
 
@@ -58,7 +65,7 @@ fn link_cef() -> Result<()> {
     Ok(())
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result<PathBuf> {
     let cef_distribution = &format!("cef_binary_{version}_{platform}_minimal");
 
@@ -71,18 +78,15 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
     fs_remove(&extract_dir)?;
     std::fs::create_dir_all(working_dir)?;
 
-    let client = Client::new();
-
     let archive_url = format!("https://cache-redirector.jetbrains.com/cef-builds.spotifycdn.com/{cef_distribution}.tar.bz2");
     let archive_file = working_dir.join(format!("{cef_distribution}.tar.bz2"));
-    download_to_file(&client, &archive_url, &archive_file)?;
+    download_file(&archive_url, &archive_file)?;
 
     let checksum_url = format!("{archive_url}.sha1");
     let checksum_file = working_dir.join(format!("{cef_distribution}.tar.bz2.sha1"));
-    download_to_file(&client, &checksum_url, &checksum_file)?;
+    download_file(&checksum_url, &checksum_file)?;
 
     let checksum = std::fs::read_to_string(&checksum_file)?;
-
     verify_sha1_checksum(&archive_file, &checksum)?;
 
     extract_tar_bz2(&archive_file, &extract_dir, &extract_marker)?;
@@ -93,28 +97,22 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
     Ok(extract_dir)
 }
 
-#[cfg(feature = "cef")]
-fn download_to_file(client: &Client, src: &str, dest: &Path) -> Result<()> {
-    fs_remove(dest)?;
-
-    trace!("Downloading {src} to {dest:?}");
-    let mut response = client.get(src).send()?.error_for_status()?;
-
-    let code = response.status();
-    trace!("Got response from {src}, code {code}");
-
-    let mut file = File::create(dest)
-        .context(format!("Failed to create file at {dest:?}"))?;
-
-    trace!("Writing response from {src} to {dest:?}");
-    std::io::copy(&mut response, &mut file)
-        .context(format!("Failed to copy response from {src} to {dest:?}"))?;
-    trace!("Written response from {src} to {dest:?}");
-
+#[cfg(all(target_os = "windows", feature = "cef"))]
+fn download_file(url: &str, file: &Path) -> Result<()> {
+    trace!("Downloading {url} to {file:?}");
+    let mut out = File::create(&file)?;
+    let mut easy = Easy::new();
+    easy.url(&url)?;
+    easy.follow_location(true)?;
+    easy.write_function(move |data| {
+        out.write_all(data).unwrap();
+        Ok(data.len())
+    })?;
+    easy.perform()?;
     Ok(())
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn verify_sha1_checksum(file: &Path, expected: &str) -> Result<()> {
     trace!("Verifying checksum of {file:?}");
 
@@ -135,7 +133,7 @@ fn verify_sha1_checksum(file: &Path, expected: &str) -> Result<()> {
     Ok(())
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result<()> {
     trace!("Will extract {archive:?} to {dest:?}");
 
@@ -204,7 +202,7 @@ fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result
     Ok(())
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn is_7z_available_in_path() -> bool {
     let status = Command::new("7z")
         .arg("--help")
@@ -213,7 +211,7 @@ fn is_7z_available_in_path() -> bool {
     status.is_ok()
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
     let cef_lib_search_path = &cef_dir.join("Release").canonicalize()?;
     let cef_lib_search_path_string = get_non_unc_string(cef_lib_search_path)?;
@@ -259,7 +257,7 @@ fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
     Ok(())
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn get_file_name(path: &Path) -> Result<String> {
     let result = path.file_name()
         .context(format!("Failed to get filename from {path:?}"))?
@@ -270,6 +268,7 @@ fn get_file_name(path: &Path) -> Result<String> {
     Ok(result)
 }
 
+#[cfg(target_os = "windows")]
 fn embed_metadata() -> Result<()> {
     let cargo_root_env_var = env::var("CARGO_MANIFEST_DIR")?;
     let cargo_root = PathBuf::from(cargo_root_env_var);
@@ -287,7 +286,7 @@ fn embed_metadata() -> Result<()> {
     res.compile().context("Failed to embed resources")
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn get_non_unc_string(path: &Path) -> Result<String> {
     let result = path
         .to_str()
@@ -298,7 +297,7 @@ fn get_non_unc_string(path: &Path) -> Result<String> {
     Ok(result)
 }
 
-#[cfg(feature = "cef")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn fs_remove(path: &Path) -> Result<()> {
     trace!("Will remove {path:?}");
 
@@ -316,6 +315,7 @@ fn fs_remove(path: &Path) -> Result<()> {
     Ok(())
 }
 
+#[cfg(target_os = "windows")]
 fn assert_exists_and_file(path: &Path) -> Result<()> {
     if !path.exists() {
         bail!("File '{path:?}' does not exist")

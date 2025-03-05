@@ -6,20 +6,17 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.platform.experiment.ab.impl.bundle.ABExperimentBundle
+import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentImpl
-import com.intellij.platform.experiment.ab.impl.experiment.getABExperimentInstance
 
-internal class ABExperimentDemoAction : AnAction(ABExperimentBundle.message("experiment.ab.demo.action.name")) {
+internal class ABExperimentDemoAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val service = ApplicationManager.getApplication().service<ABExperimentImpl>()
+    val service = ApplicationManager.getApplication().service<ABExperiment>() as ABExperimentImpl
 
     println("User experiment option is: " + service.getUserExperimentOption())
     println("User experiment option id is: " + service.getUserExperimentOptionId())
     println("Is control experiment option enabled: " + service.isControlExperimentOptionEnabled())
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

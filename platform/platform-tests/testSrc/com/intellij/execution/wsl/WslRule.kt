@@ -27,6 +27,13 @@ class WslRule(private val assume: Boolean = true) : ExternalResource() {
   override fun before() {
     delegate = WslFixture.create(assume)
   }
+
+  override fun after() {
+    val service = WslIjentManager.getInstance()
+    if (service is ProductionWslIjentManager) {
+      service.dropCache()
+    }
+  }
 }
 
 class WslFixture private constructor(val vms: List<WSLDistribution>) {

@@ -32,9 +32,9 @@ data class BuildOptions(
    * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.
    * In the development mode, build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
    *
-   * By default, the development mode is enabled if the build is not running on a continuous integration server (TeamCity).
+   * By default, the development mode is enabled if the build is not running on a continuous integration server (TeamCity or GitHub Actions).
    */
-  var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null),
+  var isInDevelopmentMode: Boolean = getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null && System.getenv("GITHUB_ACTIONS") == null),
   var useCompiledClassesFromProjectOutput: Boolean = getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
 
   val cleanOutDir: Boolean = getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
@@ -43,11 +43,11 @@ data class BuildOptions(
 
   var forceRebuild: Boolean = getBooleanProperty(FORCE_REBUILD_PROPERTY),
   /**
-   * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
+   * If `true` and [ProductProperties.embeddedFrontendRootModule] is not null, the JAR files in the distribution will be adjusted
    * to allow starting JetBrains Client directly from the IDE's distribution.
    */
   @ApiStatus.Experimental
-  var enableEmbeddedJetBrainsClient: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
+  var enableEmbeddedFrontend: Boolean = getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
 
   /**
    * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
@@ -246,7 +246,7 @@ data class BuildOptions(
     const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY: String = "intellij.build.incremental.compilation.fallback.rebuild"
 
     /**
-     * If `true` then [org.jetbrains.intellij.build.impl.compilation.CompiledClasses] will be rebuilt from scratch
+     * If `true` then the compiled classes will be rebuilt from scratch
      */
     const val FORCE_REBUILD_PROPERTY: String = "intellij.jps.cache.rebuild.force"
 
@@ -381,8 +381,13 @@ data class BuildOptions(
   var useLocalLauncher: Boolean = false
 
   /**
+   * When `true`, cross-platform distribution will be packed using zip64 in AlwaysWithCompatibility mode
+   */
+  var useZip64ForCrossPlatformDistribution: Boolean = getBooleanProperty("intellij.build.cross.platform.dist.zip64", false)
+
+  /**
    * Pass `true` to this system property to produce .snap packages.
-   * A build configuration should have "docker.version >= 17" in requirements.
+   * Requires Docker.
    */
   var buildUnixSnaps: Boolean = getBooleanProperty("intellij.build.unix.snaps", false)
 
@@ -391,6 +396,12 @@ data class BuildOptions(
    */
   var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image") ?: DEPENDENCIES_PROPERTIES["snapDockerImage"]
   var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin")?.toLong() ?: 20
+
+  /**
+   * When `true`, `.resx` files are generated and bundled in the localization plugins.
+   * Requires Docker.
+   */
+  var bundleLocalizationPluginResources: Boolean = getBooleanProperty("intellij.build.localization.plugin.resources", false)
 
   /**
    * If `true`, and the incremental compilation fails, fallback to downloading Portable Compilation Cache and full rebuild.
@@ -478,7 +489,15 @@ data class BuildOptions(
 
   var randomSeedNumber: Long = 0
 
-  var isNightlyBuild: Boolean = getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, (buildNumber?.count { it == '.' } ?: 1) <= 1)
+  /**
+   * Use [BuildContext.isNightlyBuild] to get the actual nightly flag in build scripts.
+   */
+  var isNightlyBuild: Boolean = getBooleanProperty(INTELLIJ_BUILD_IS_NIGHTLY, false)
+
+  /**
+   * By default, the current Git revision is stored as a custom property in the product-info.json file. Set this property to `false` to disable this. 
+   */
+  var storeGitRevision: Boolean = getBooleanProperty("intellij.build.store.git.revision", true)
 
   /**
    * Specifies an additional list of compatible plugin names which should not be built, see [ProductModulesLayout.compatiblePluginsToIgnore]

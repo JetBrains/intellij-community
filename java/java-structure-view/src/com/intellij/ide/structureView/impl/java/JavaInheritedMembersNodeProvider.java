@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.InheritedMembersNodeProvider;
@@ -12,10 +12,9 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaInheritedMembersNodeProvider extends InheritedMembersNodeProvider {
-  @NotNull
+public final class JavaInheritedMembersNodeProvider extends InheritedMembersNodeProvider {
   @Override
-  public Collection<TreeElement> provideNodes(@NotNull TreeElement node) {
+  public @NotNull Collection<TreeElement> provideNodes(@NotNull TreeElement node) {
     if (!(node instanceof JavaClassTreeElement classNode)) return Collections.emptyList();
 
     final PsiClass aClass = classNode.getElement();

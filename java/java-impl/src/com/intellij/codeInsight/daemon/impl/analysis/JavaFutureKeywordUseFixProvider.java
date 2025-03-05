@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
@@ -13,9 +13,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
@@ -51,10 +48,8 @@ public final class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQu
   private static void registerIncreaseLevelFixes(@NotNull PsiJavaCodeReferenceElement ref,
                                                  @NotNull JavaFeature feature,
                                                  @NotNull QuickFixActionRegistrar registrar) {
-    List<IntentionAction> fixes = new ArrayList<>();
-    HighlightUtil.registerIncreaseLanguageLevelFixes(ref, feature, fixes);
-    for (IntentionAction fix : fixes) {
-      registrar.register(fix);
+    for (CommonIntentionAction fix : HighlightFixUtil.getIncreaseLanguageLevelFixes(ref, feature)) {
+      registrar.register(fix.asIntention());
     }
   }
 

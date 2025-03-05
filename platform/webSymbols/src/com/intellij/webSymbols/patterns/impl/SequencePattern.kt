@@ -16,6 +16,7 @@ import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.coalesceWith
 import com.intellij.webSymbols.utils.nameSegments
+import com.intellij.webSymbols.utils.qualifiedKind
 import com.intellij.webSymbols.utils.withOffset
 
 internal class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern>) : WebSymbolsPattern() {
@@ -396,10 +397,10 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
 
     val mainSymbol = second ?: first ?: return null
 
-    return WebSymbolMatch.create(name,
-                                 first.toNameSegments(0, firstNameLength) + second.toNameSegments(firstNameLength, name.length),
-                                 mainSymbol.namespace, mainSymbol.kind, mainSymbol.origin)
-
+    return WebSymbolMatch.create(name, mainSymbol.qualifiedKind, mainSymbol.origin) {
+      addNameSegments(first.toNameSegments(0, firstNameLength))
+      addNameSegments(second.toNameSegments(firstNameLength, name.length))
+    }
   }
 
   private fun <T> process(initialMatches: List<T>,
@@ -441,7 +442,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
           it.minus(patternPrefixes)
         else it
       }
-      .minOf { if (it.isBlank()) end else toMatch.indexOf(it, searchStart).let { ind -> if (ind < 0) end else start + ind } }
+      .minOf { if (it.isEmpty()) end else toMatch.indexOf(it, searchStart).let { ind -> if (ind < 0) end else start + ind } }
       .coerceAtLeast(start + searchStart)
   }
 

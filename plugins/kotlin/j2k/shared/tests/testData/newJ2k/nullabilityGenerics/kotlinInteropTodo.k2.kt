@@ -1,11 +1,11 @@
-// ERROR: Return type mismatch: expected 'java.util.ArrayList<kotlin.String?>', actual 'java.util.ArrayList<kotlin.String>'.
-// ERROR: Return type mismatch: expected 'java.util.ArrayList<kotlin.String?>?', actual 'java.util.ArrayList<kotlin.String>?'.
-// ERROR: Argument type mismatch: actual type is 'java.util.ArrayList<kotlin.String?>?', but 'java.util.ArrayList<kotlin.String>?' was expected.
-// ERROR: Argument type mismatch: actual type is 'java.util.ArrayList<kotlin.String?>', but 'java.util.ArrayList<kotlin.String>' was expected.
-// ERROR: Initializer type mismatch: expected 'java.util.ArrayList<kotlin.String?>?', actual 'java.util.ArrayList<kotlin.String>?'.
-// ERROR: Type mismatch: inferred type is 'java.util.ArrayList<kotlin.String>?', but 'java.util.ArrayList<kotlin.String?>?' was expected.
-// ERROR: Initializer type mismatch: expected 'java.util.ArrayList<kotlin.String?>', actual 'java.util.ArrayList<kotlin.String>'.
-// ERROR: Type mismatch: inferred type is 'java.util.ArrayList<kotlin.String>', but 'java.util.ArrayList<kotlin.String?>' was expected.
+// ERROR: Return type mismatch: expected 'ArrayList<String?>', actual 'ArrayList<String>'.
+// ERROR: Return type mismatch: expected 'ArrayList<String?>?', actual 'ArrayList<String>?'.
+// ERROR: Argument type mismatch: actual type is 'ArrayList<String?>?', but 'ArrayList<String>?' was expected.
+// ERROR: Argument type mismatch: actual type is 'ArrayList<String?>', but 'ArrayList<String>' was expected.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>?', actual 'ArrayList<String>?'.
+// ERROR: Type mismatch: inferred type is 'ArrayList<String>?', but 'ArrayList<String?>?' was expected.
+// ERROR: Initializer type mismatch: expected 'ArrayList<String?>', actual 'ArrayList<String>'.
+// ERROR: Type mismatch: inferred type is 'ArrayList<String>', but 'ArrayList<String?>' was expected.
 class Foo {
     fun testAssignment(k: K) {
         val l1 = k.return1()

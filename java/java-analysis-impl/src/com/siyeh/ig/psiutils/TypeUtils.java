@@ -247,9 +247,8 @@ public final class TypeUtils {
     return type;
   }
 
-  @Nullable
   @Contract("null -> null")
-  public static String resolvedClassName(@Nullable PsiType type) {
+  public static @Nullable String resolvedClassName(@Nullable PsiType type) {
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return aClass == null ? null : aClass.getQualifiedName();
   }
@@ -301,8 +300,7 @@ public final class TypeUtils {
    * @param type type to get the default value for
    * @return the textual representation of default value
    */
-  @NonNls
-  public static @NotNull String getDefaultValue(PsiType type) {
+  public static @NonNls @NotNull String getDefaultValue(PsiType type) {
     if (PsiTypes.intType().equals(type)) {
       return "0";
     }

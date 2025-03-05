@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.diagnostic.StartUpPerformanceService;
@@ -26,6 +26,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
@@ -54,8 +55,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   }
 
   @Override
-  @NotNull
-  public List<WorkspaceDataService<?>> findWorkspaceService(@NotNull Key<?> key) {
+  public @NotNull List<WorkspaceDataService<?>> findWorkspaceService(@NotNull Key<?> key) {
     List<WorkspaceDataService<?>> result = new ArrayList<>(
       WorkspaceDataService.EP_NAME.getByGroupingKey(key, ProjectDataManagerImpl.class, WorkspaceDataService::getTargetDataKey));
     ExternalSystemApiUtil.orderAwareSort(result);
@@ -63,8 +63,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   }
 
   @Override
-  @NotNull
-  public List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key) {
+  public @NotNull List<ProjectDataService<?, ?>> findService(@NotNull Key<?> key) {
     List<ProjectDataService<?, ?>> result = new ArrayList<>(ProjectDataService.EP_NAME
                                                               .getByGroupingKey(key, ProjectDataManagerImpl.class, KEY_MAPPER));
     ExternalSystemApiUtil.orderAwareSort(result);
@@ -74,12 +73,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   @Override
   public <T> void importData(@NotNull DataNode<T> node, @NotNull Project project) {
     Application app = ApplicationManager.getApplication();
-    if (!app.isWriteIntentLockAcquired() && app.isReadAccessAllowed()) {
+    if (!EDT.isCurrentThreadEdt() && app.holdsReadLock()) {
       throw new IllegalStateException("importData() must not be called with a global read lock on a background thread. " +
                                       "It will deadlock committing project model changes in write action");
     }
 
-    if (app.isWriteIntentLockAcquired()) {
+    if (EDT.isCurrentThreadEdt()) {
       if (!myLock.tryLock()) {
         throw new IllegalStateException("importData() can not wait on write thread for imports on background threads." +
                                         " Consider running importData() on background thread.");
@@ -248,8 +247,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     }
   }
 
-  @NotNull
-  private static String getReadableText(@NotNull Key<?> key) {
+  private static @NotNull String getReadableText(@NotNull Key<?> key) {
     StringBuilder buffer = new StringBuilder();
     String s = key.toString();
     for (int i = 0; i < s.length(); i++) {
@@ -271,12 +269,12 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   private <T> void doImportData(@NotNull Key<T> key,
                                 @NotNull Collection<? extends DataNode<?>> nodes,
                                 @Nullable ProjectSystemId projectSystemId,
-                                @Nullable final ProjectData projectData,
-                                @NotNull final Project project,
-                                @NotNull final IdeModifiableModelsProvider modifiableModelsProvider,
-                                @NotNull final List<Runnable> postImportTasks,
-                                @NotNull final List<Runnable> onSuccessImportTasks,
-                                @NotNull final List<Runnable> onFailureImportTasks) {
+                                final @Nullable ProjectData projectData,
+                                final @NotNull Project project,
+                                final @NotNull IdeModifiableModelsProvider modifiableModelsProvider,
+                                final @NotNull List<Runnable> postImportTasks,
+                                final @NotNull List<Runnable> onSuccessImportTasks,
+                                final @NotNull List<Runnable> onFailureImportTasks) {
     if (project.isDisposed()) {
       return;
     }
@@ -395,10 +393,10 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   @SuppressWarnings("unchecked")
   public <E, I> void removeData(@NotNull Key<E> key,
                                 @NotNull Collection<I> toRemove,
-                                @NotNull final Collection<DataNode<E>> toIgnore,
-                                @NotNull final ProjectData projectData,
+                                final @NotNull Collection<DataNode<E>> toIgnore,
+                                final @NotNull ProjectData projectData,
                                 @NotNull Project project,
-                                @NotNull final IdeModifiableModelsProvider modelsProvider,
+                                final @NotNull IdeModifiableModelsProvider modelsProvider,
                                 boolean synchronous) {
     try {
       List<ProjectDataService<?, ?>> services = findService(key);
@@ -421,8 +419,8 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
   public <E, I> void removeData(@NotNull Key<E> key,
                                 @NotNull Collection<I> toRemove,
-                                @NotNull final Collection<DataNode<E>> toIgnore,
-                                @NotNull final ProjectData projectData,
+                                final @NotNull Collection<DataNode<E>> toIgnore,
+                                final @NotNull ProjectData projectData,
                                 @NotNull Project project,
                                 boolean synchronous) {
     removeData(key, toRemove, toIgnore, projectData, project, createModifiableModelsProvider(project), synchronous);
@@ -434,17 +432,15 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     }
   }
 
-  @Nullable
   @Override
-  public ExternalProjectInfo getExternalProjectData(@NotNull Project project,
-                                                    @NotNull ProjectSystemId projectSystemId,
-                                                    @NotNull String externalProjectPath) {
+  public @Nullable ExternalProjectInfo getExternalProjectData(@NotNull Project project,
+                                                              @NotNull ProjectSystemId projectSystemId,
+                                                              @NotNull String externalProjectPath) {
     return !project.isDisposed() ? ExternalProjectsDataStorage.getInstance(project).get(projectSystemId, externalProjectPath) : null;
   }
 
-  @NotNull
   @Override
-  public Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId) {
+  public @NotNull Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId) {
     if (!project.isDisposed()) {
       return ExternalProjectsDataStorage.getInstance(project).list(projectSystemId);
     }
@@ -464,10 +460,10 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     }
   }
 
-  private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,
+  private static void commit(final @NotNull IdeModifiableModelsProvider modelsProvider,
                              @NotNull Project project,
                              boolean synchronous,
-                             @NotNull final String commitDesc,
+                             final @NotNull String commitDesc,
                              @Nullable Long activityId,
                              @Nullable ProjectSystemId projectSystemId) {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, project, Context.current().wrap(() -> {
@@ -486,7 +482,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     }));
   }
 
-  private static void dispose(@NotNull final IdeModifiableModelsProvider modelsProvider,
+  private static void dispose(final @NotNull IdeModifiableModelsProvider modelsProvider,
                               @NotNull Project project,
                               boolean synchronous) {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, project, () -> modelsProvider.dispose());

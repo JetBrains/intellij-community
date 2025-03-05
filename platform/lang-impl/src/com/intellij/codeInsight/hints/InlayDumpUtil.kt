@@ -1,65 +1,108 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.hints.presentation.PresentationRenderer
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
-import com.intellij.psi.PsiFile
+import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.regex.Pattern
 
+/**
+ * Note that while functions here are marked as internal, the dump format they define is part of **public APIs** built on top of them
+ * (e.g. previews for declarative `InlayHintProvider`s and base tests for code vision and inlay hints).
+ * @see com.intellij.codeInsight.hints.declarative.impl.DeclarativeHintsProviderSettingsModel
+ */
 @Internal
 object InlayDumpUtil {
-  val inlayPattern: Pattern = Pattern.compile("/\\*<# block ([^#]*)#>\\*/(\r\n|\r|\n)|/\\*<#([^#]*)#>\\*/")
+  val inlayPattern: Pattern =
+    Pattern.compile("""^\h*/\*<# (block) (.*?)#>\*/\h*(?:\r\n|\r|\n)|/\*<#(.*?)#>\*/""", Pattern.MULTILINE or Pattern.DOTALL)
 
-  fun removeHints(text: String) : String {
+  fun removeInlays(text: String): String {
     return inlayPattern.matcher(text).replaceAll("")
   }
 
-  @Internal
-  fun dumpHintsInternal(
+  fun dumpInlays(
     sourceText: String,
+    editor: Editor,
     filter: ((Inlay<*>) -> Boolean)? = null,
     renderer: (EditorCustomElementRenderer, Inlay<*>) -> String = { r, _ -> r.toString() },
-    file: PsiFile,
-    editor: Editor,
-    document: Document,
     // if document has multiple injected files, a proper host offset should be passed
-    offsetShift: Int = 0
+    offsetShift: Int = 0,
+    indentBlockInlays: Boolean = false,
   ): String {
+    val document = editor.document
     val model = editor.inlayModel
-    val range = file.textRange
-    val inlineElements = model.getInlineElementsInRange(range.startOffset, range.endOffset)
-    val afterLineElements = model.getAfterLineEndElementsInRange(range.startOffset, range.endOffset)
-    val blockElements = model.getBlockElementsInRange(range.startOffset, range.endOffset)
-    val inlays = mutableListOf<InlayData>()
-    inlineElements.mapTo(inlays) { InlayData(it, InlayType.Inline) }
-    afterLineElements.mapTo(inlays) { InlayData(it, InlayType.Inline) }
-    blockElements.mapTo(inlays) { InlayData(it, InlayType.Block) }
-    inlays.sortBy { it.effectiveOffset(document) }
-    return buildString {
-      var currentOffset = 0
-      for (inlay in inlays) {
-        if (filter != null) {
-          if (!filter(inlay.inlay)) {
-            continue
-          }
-        }
-        val nextOffset = inlay.effectiveOffset(document) + offsetShift
-        append(sourceText.subSequence(currentOffset, nextOffset))
-        append(inlay.render(renderer))
-        currentOffset = nextOffset
+
+    fun List<Inlay<*>>.doFilter() = if (filter == null) this else filter { filter(it) }
+
+    val inlineElements = model.getInlineElementsInRange(0, document.textLength).doFilter()
+    val afterLineElements = model.getAfterLineEndElementsInRange(0, document.textLength).doFilter()
+    val blockElements = model.getBlockElementsInRange(0, document.textLength).doFilter()
+    val inlayData = mutableListOf<InlayData>()
+    inlineElements.mapTo(inlayData) { InlayData(it.offset, InlayDumpPlacement.Inline, renderer(it.renderer, it)) }
+    afterLineElements.mapTo(inlayData) {
+      InlayData(
+        // Visually, in the dump, we want it be rendered at the end of the line, as in the editor;
+        // however, we'd lose the ability to test precise offsets using dumps.
+        it.offset,
+        InlayDumpPlacement.Inline,
+        renderer(it.renderer, it)
+      )
+    }
+    blockElements.mapTo(inlayData) {
+      InlayData(
+        // Here we choose the visually consistent way and so lose precise offsets in inlay dumps.
+        // This is inconsistent with after-line-end inlays (see comment above),
+        // but I keep it this way so that we don't break existing tests.
+        with(document) { getLineStartOffset(getLineNumber(it.offset)) },
+        InlayDumpPlacement.BlockAbove,
+        renderer(it.renderer, it)
+      )
+    }
+    inlayData.sortBy { it.anchorOffset }
+    return dumpInlays(sourceText, inlayData, offsetShift, indentBlockInlays)
+  }
+
+  fun dumpInlays(
+    sourceText: String,
+    inlayData: List<InlayData>,
+    offsetShift: Int = 0,
+    indentBlockInlays: Boolean = false,
+  ): String = buildString {
+    var currentOffset = 0
+    for ((anchorOffset, placement, text) in inlayData) {
+      val renderOffset = anchorOffset + offsetShift
+      append(sourceText.subSequence(currentOffset, renderOffset))
+      if (placement == InlayDumpPlacement.BlockAbove && indentBlockInlays) {
+        val indentStartOffset = CharArrayUtil.shiftBackwardUntil(sourceText, renderOffset, "\n") + 1
+        val indentEndOffset = CharArrayUtil.shiftForward(sourceText, renderOffset, " \t")
+        append(sourceText.subSequence(indentStartOffset, indentEndOffset))
       }
-      append(sourceText.substring(currentOffset, sourceText.length))
+      appendInlay(text, placement)
+      currentOffset = renderOffset
+    }
+    append(sourceText.substring(currentOffset, sourceText.length))
+  }
+
+  private fun StringBuilder.appendInlay(content: String, placement: InlayDumpPlacement) {
+    append("/*<# ")
+    if (placement == InlayDumpPlacement.BlockAbove) {
+      append("block ")
+    }
+    append(content)
+    append(" #>*/")
+    if (placement == InlayDumpPlacement.BlockAbove) {
+      append('\n')
     }
   }
 
-  @Internal
-  fun extractEntries(text: String) : List<Pair<Int, String>> {
+  /**
+   * [InlayData.anchorOffset] for block inlays will be any from the related line.
+   */
+  fun extractInlays(text: String): List<InlayData> {
     val matcher = inlayPattern.matcher(text)
-    val offsetToContent = ArrayList<Pair<Int, String>>()
+    val extracted = mutableListOf<InlayData>()
     var previousOffsetWithoutInlays = 0
     var previousOffsetWithInlays = 0
     while (matcher.find()) {
@@ -67,61 +110,22 @@ object InlayDumpUtil {
       val endOffset = matcher.end()
       previousOffsetWithoutInlays += startOffset - previousOffsetWithInlays
       previousOffsetWithInlays = endOffset
-      val content = text.subSequence(startOffset, endOffset)
-      if (content.startsWith("/*<# block")) {
-        throw NotImplementedError("Block inlays are not yet supported")
+      val inlayPlacement = when (matcher.group(1)) {
+        "block" -> InlayDumpPlacement.BlockAbove
+        else -> InlayDumpPlacement.Inline
       }
-      val strippedContent = content.substring(5, content.length - 5)
-      offsetToContent.add(previousOffsetWithoutInlays to strippedContent)
+      val inlayOffset = previousOffsetWithoutInlays
+      val content = (matcher.group(2) ?: matcher.group(3) ?: "")
+      extracted.add(InlayData(inlayOffset, inlayPlacement, content))
     }
-    return offsetToContent
+    return extracted
   }
 
-  internal data class InlayData(val inlay: Inlay<*>, val type: InlayType) {
-    fun effectiveOffset(document: Document): Int {
-      return when (type) {
-        InlayType.Inline -> inlay.offset
-        InlayType.Block -> {
-          val offset = inlay.offset
-          val lineNumber = document.getLineNumber(offset)
-          document.getLineStartOffset(lineNumber)
-        }
-      }
-    }
+  data class InlayData(val anchorOffset: Int, val placement: InlayDumpPlacement, val content: String)
 
-    fun render(r: (EditorCustomElementRenderer, Inlay<*>) -> String): String {
-      return buildString {
-        append("/*<# ")
-        if (type == InlayType.Block) {
-          append("block ")
-        }
-        append(r(inlay.renderer, inlay))
-        append(" #>*/")
-        if (type == InlayType.Block) {
-          append('\n')
-        }
-      }
-    }
-
-    override fun toString(): String {
-      val renderer = inlay.renderer
-      if (renderer !is PresentationRenderer && renderer !is LinearOrderInlayRenderer<*>) error("renderer not supported")
-      return buildString {
-        append("/*<# ")
-        if (type == InlayType.Block) {
-          append("block ")
-        }
-        append(renderer.toString())
-        append(" #>*/")
-        if (type == InlayType.Block) {
-          append('\n')
-        }
-      }
-    }
-  }
-
-  enum class InlayType {
+  enum class InlayDumpPlacement {
+    // Note that in an inlay dump, inline inlay at lineEndOffset is the same as after-line-end inlay
     Inline,
-    Block
+    BlockAbove
   }
 }

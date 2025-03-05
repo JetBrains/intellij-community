@@ -19,7 +19,7 @@ public final class SimpleTextAttributes {
   @MagicConstant(flags = {
     STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE,
     STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE,
-    STYLE_CLICKABLE, STYLE_HOVERED, STYLE_NO_BORDER, STYLE_BOLD_UNDERLINE, STYLE_USE_EFFECT_COLOR})
+    STYLE_CLICKABLE, STYLE_HOVERED, STYLE_NO_BORDER, STYLE_BOLD_UNDERLINE, STYLE_USE_EFFECT_COLOR, STYLE_FADED})
   public @interface StyleAttributeConstant { }
 
   public static final int STYLE_PLAIN = Font.PLAIN;
@@ -38,6 +38,7 @@ public final class SimpleTextAttributes {
   public static final int STYLE_NO_BORDER = STYLE_HOVERED << 1;
   public static final int STYLE_BOLD_UNDERLINE = STYLE_NO_BORDER << 1;
   public static final int STYLE_USE_EFFECT_COLOR = STYLE_BOLD_UNDERLINE << 1;
+  public static final int STYLE_FADED = STYLE_USE_EFFECT_COLOR << 1;
 
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
@@ -105,7 +106,8 @@ public final class SimpleTextAttributes {
            STYLE_HOVERED |
            STYLE_NO_BORDER |
            STYLE_BOLD_UNDERLINE |
-           STYLE_USE_EFFECT_COLOR) & style) != 0) {
+           STYLE_USE_EFFECT_COLOR |
+           STYLE_FADED) & style) != 0) {
       throw new IllegalArgumentException("Wrong style: " + style);
     }
 
@@ -197,6 +199,10 @@ public final class SimpleTextAttributes {
     return BitUtil.isSet(myStyle, STYLE_USE_EFFECT_COLOR);
   }
 
+  public boolean useFaded() {
+    return BitUtil.isSet(myStyle, STYLE_FADED);
+  }
+
   public static @NotNull SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
     if (attributes == null) return REGULAR_ATTRIBUTES;
 
@@ -224,6 +230,9 @@ public final class SimpleTextAttributes {
       }
       else if (effectType == EffectType.SEARCH_MATCH) {
         style |= STYLE_SEARCH_MATCH;
+      }
+      else if (effectType == EffectType.FADED) {
+        style |= STYLE_FADED;
       }
       else {
         // not supported

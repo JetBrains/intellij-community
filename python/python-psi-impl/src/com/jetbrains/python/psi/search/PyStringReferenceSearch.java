@@ -22,8 +22,8 @@ public final class PyStringReferenceSearch extends QueryExecutorBase<PsiReferenc
   }
 
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters params,
-                           @NotNull final Processor<? super PsiReference> consumer) {
+  public void processQuery(final @NotNull ReferencesSearch.SearchParameters params,
+                           final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement element = params.getElementToSearch();
     if (!(element instanceof PyElement) && !(element instanceof PsiDirectory)) {
       return;

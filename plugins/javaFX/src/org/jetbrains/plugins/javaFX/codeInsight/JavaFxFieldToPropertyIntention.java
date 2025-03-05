@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.codeInsight;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil;
@@ -84,7 +85,7 @@ public final class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentio
   private static final class SearchUsagesTask extends Task.Modal {
     private final PropertyInfo myProperty;
     private Collection<PsiReference> myReferences;
-    private Set<PsiFile> myFiles;
+    private @Unmodifiable Set<PsiFile> myFiles;
 
     SearchUsagesTask(@NotNull Project project,
                             @NotNull PropertyInfo property) {

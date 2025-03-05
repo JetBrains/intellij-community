@@ -1,12 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
+import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.python.Result.Failure
 import com.jetbrains.python.Result.Success
 
 /**
  * Operation result to be used as `Maybe` instead of checked exceptions.
- * Unlike Kotlin `Result`, [ERR] could be anything (See [LocalizedErrorString]).
+ * Unlike Kotlin `Result`, [ERR] could be anything (i.e [String]).
  *
  * Typical usages:
  *
@@ -96,8 +97,8 @@ sealed class Result<out SUCC, out ERR> {
 
   // To be backward compatible with Kotlin result
   companion object {
-    fun <S> success(value: S) = Success(value)
-    fun <E> failure(error: E) = Failure(error)
+    fun <S> success(value: S): Success<S> = Success(value)
+    fun <E> failure(error: E): Failure<E> = Failure(error)
   }
 }
 
@@ -115,3 +116,47 @@ fun <SUCC, NEW_S, ERR> Result<SUCC, ERR>.mapResult(map: (SUCC) -> Result<NEW_S, 
     is Success -> map(result)
     is Failure -> this
   }
+
+fun <T> Result<T, *>.orLogException(logger: Logger): T? =
+  when (val r = this) {
+    is Failure -> {
+      when (val err = r.error) {
+        is Throwable -> {
+          logger.error(err)
+        }
+        else -> {
+          logger.error(err.toString())
+        }
+      }
+      null
+    }
+    is Success -> r.result
+  }
+
+inline fun <S, E> Result<S, E>.onSuccess(code: (S) -> Unit): Result<S, E> {
+  when (this) {
+    is Failure -> Unit
+    is Success -> {
+      code(this.result)
+    }
+  }
+  return this
+}
+
+inline fun <S, E> Result<S, E>.onFailure(code: (E) -> Unit): Result<S, E> {
+  when (this) {
+    is Success -> Unit
+    is Failure -> {
+      code(this.error)
+    }
+  }
+  return this
+}
+
+// aliases to drop-in replace for kotlin Result
+fun <S, E> Result<S, E>.getOrNull(): S? = this.successOrNull
+val <S, E> Result<S, E>.isFailure: Boolean get() = this is Failure
+val <S, E> Result<S, E>.isSuccess: Boolean get() = this is Success
+fun <S, E> Result<S, E>.exceptionOrNull(): S = this.orThrow()
+fun <S, E> Result<S, E>.getOrThrow(): S = orThrow()
+

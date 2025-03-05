@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
@@ -99,8 +99,7 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
     return true;
   }
 
-  @NotNull
-  private static Change createChange(@NotNull DiffRequest request) {
+  private static @NotNull Change createChange(@NotNull DiffRequest request) {
     Change change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY);
     if (change != null) return change;
 
@@ -114,8 +113,7 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
     return new Change(bRev, aRev);
   }
 
-  @Nullable
-  private static ContentRevision createRevision(@NotNull DiffContent content, @NotNull String title) {
+  private static @Nullable ContentRevision createRevision(@NotNull DiffContent content, @NotNull String title) {
     if (content instanceof EmptyContent) return null;
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
@@ -136,8 +134,7 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
     throw new IllegalStateException(content.toString());
   }
 
-  @NotNull
-  private static FilePath guessFilePath(@NotNull DiffContent content, @NotNull String title) {
+  private static @NotNull FilePath guessFilePath(@NotNull DiffContent content, @NotNull String title) {
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
       String path = OutsidersPsiFileSupport.getOriginalFilePath(file);

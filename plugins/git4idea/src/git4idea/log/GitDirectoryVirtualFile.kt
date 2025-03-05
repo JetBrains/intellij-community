@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
-import com.intellij.openapi.vcs.vfs.VcsFileSystem
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -14,9 +14,10 @@ import git4idea.repo.GitRepository
 class GitDirectoryVirtualFile(
   private val repo: GitRepository,
   parent: VirtualFile?,
-  name: String,
-  private val commit: VcsCommitMetadata
-) : AbstractVcsVirtualFile(parent, name, VcsFileSystem.getInstance()) {
+  filePath: FilePath,
+  private val commit: VcsCommitMetadata,
+) : AbstractVcsVirtualFile(parent, filePath) {
+
   override fun isDirectory(): Boolean = true
 
   override fun contentsToByteArray(): ByteArray {
@@ -30,10 +31,9 @@ class GitDirectoryVirtualFile(
     val tree = GitIndexUtil.listTreeForRawPaths(repo, listOf(dirPath), gitRevisionNumber)
     val result = tree.map {
       when (it) {
-        is GitIndexUtil.StagedDirectory -> GitDirectoryVirtualFile(repo, this, it.path.name, commit)
-        else -> VcsVirtualFile(this, it.path.name,
-                               GitFileRevision(repo.project, repo.root, it.path, gitRevisionNumber),
-                               VcsFileSystem.getInstance())
+        is GitIndexUtil.StagedDirectory -> GitDirectoryVirtualFile(repo, this, it.path, commit)
+        else -> VcsVirtualFile(this, it.path,
+                               GitFileRevision(repo.project, repo.root, it.path, gitRevisionNumber))
 
       }
     }

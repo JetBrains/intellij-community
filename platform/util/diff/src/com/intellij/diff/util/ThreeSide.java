@@ -20,8 +20,7 @@ public enum ThreeSide {
     myIndex = index;
   }
 
-  @NotNull
-  public static ThreeSide fromIndex(int index) {
+  public static @NotNull ThreeSide fromIndex(int index) {
     if (index == 0) return LEFT;
     if (index == 1) return BASE;
     if (index == 2) return RIGHT;
@@ -36,18 +35,16 @@ public enum ThreeSide {
   // Helpers
   //
 
-  @Nullable
   @Contract(value = "!null, !null, !null -> !null; null, null, null -> null", pure = true)
-  public <T> T select(@Nullable T left, @Nullable T base, @Nullable T right) {
+  public @Nullable <T> T select(@Nullable T left, @Nullable T base, @Nullable T right) {
     if (myIndex == 0) return left;
     if (myIndex == 1) return base;
     if (myIndex == 2) return right;
     throw new IllegalStateException();
   }
 
-  @NotNull
   @Contract(pure = true)
-  public <T> T selectNotNull(@NotNull T left, @NotNull T base, @NotNull T right) {
+  public @NotNull <T> T selectNotNull(@NotNull T left, @NotNull T base, @NotNull T right) {
     if (myIndex == 0) return left;
     if (myIndex == 1) return base;
     if (myIndex == 2) return right;
@@ -74,9 +71,8 @@ public enum ThreeSide {
     return array[myIndex];
   }
 
-  @NotNull
   @Contract(pure = true)
-  public <T> T selectNotNull(T @NotNull [] array) {
+  public @NotNull <T> T selectNotNull(T @NotNull [] array) {
     assert array.length == 3;
     return array[myIndex];
   }
@@ -87,23 +83,20 @@ public enum ThreeSide {
     return list.get(myIndex);
   }
 
-  @NotNull
   @Contract(pure = true)
-  public <T> T selectNotNull(@NotNull List<T> list) {
+  public @NotNull <T> T selectNotNull(@NotNull List<T> list) {
     assert list.size() == 3;
     return list.get(myIndex);
   }
 
-  @Nullable
   @Contract(pure = true)
-  public static <T> ThreeSide fromValue(@NotNull List<? extends T> list, @Nullable T value) {
+  public static @Nullable <T> ThreeSide fromValue(@NotNull List<? extends T> list, @Nullable T value) {
     assert list.size() == 3;
     int index = list.indexOf(value);
     return index != -1 ? fromIndex(index) : null;
   }
 
-  @NotNull
-  public static <T> List<T> map(@NotNull Function<? super ThreeSide, ? extends T> function) {
+  public static @NotNull <T> List<T> map(@NotNull Function<? super ThreeSide, ? extends T> function) {
     return Arrays.asList(function.fun(LEFT), function.fun(BASE), function.fun(RIGHT));
   }
 }

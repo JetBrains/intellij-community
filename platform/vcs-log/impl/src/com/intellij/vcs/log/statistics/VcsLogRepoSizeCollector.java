@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics;
 
 import com.intellij.ide.impl.TrustedProjects;
@@ -80,8 +80,7 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
     return "third.party";
   }
 
-  @NotNull
-  static List<String> getVcsValidationRule() {
+  static @NotNull List<String> getVcsValidationRule() {
     return List.of("{enum#vcs}", "{enum:third.party}");
   }
 

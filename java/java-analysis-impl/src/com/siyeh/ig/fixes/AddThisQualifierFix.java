@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -19,8 +19,7 @@ public final class AddThisQualifierFix extends PsiUpdateModCommandQuickFix {
 
   private AddThisQualifierFix() {}
 
-  @Nullable
-  public static AddThisQualifierFix buildFix(PsiExpression expressionToQualify, PsiMember memberAccessed) {
+  public static @Nullable AddThisQualifierFix buildFix(PsiExpression expressionToQualify, PsiMember memberAccessed) {
     if (!isThisQualifierPossible(expressionToQualify, memberAccessed)) {
       return null;
     }
@@ -49,8 +48,7 @@ public final class AddThisQualifierFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("add.this.qualifier.quickfix");
   }
 
@@ -63,7 +61,7 @@ public final class AddThisQualifierFix extends PsiUpdateModCommandQuickFix {
     final PsiExpression thisQualifier = ExpressionUtils.getEffectiveQualifier(expression);
     if (!(thisQualifier instanceof PsiThisExpression)) return;
     CommentTracker commentTracker = new CommentTracker();
-    @NonNls final String newExpression = commentTracker.text(thisQualifier) + "." + commentTracker.text(expression);
+    final @NonNls String newExpression = commentTracker.text(thisQualifier) + "." + commentTracker.text(expression);
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression, commentTracker);
   }
 }

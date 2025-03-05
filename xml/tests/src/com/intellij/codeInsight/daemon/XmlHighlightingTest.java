@@ -11,7 +11,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.*;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.*;
-import com.intellij.idea.IJIgnore;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.javaee.UriUtil;
@@ -2073,7 +2072,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
                                               );
     assertEquals(2, list.size());
 
-    Collections.sort(list, Comparator.comparingInt(o -> o.getRangeInElement().getLength()));
+    list = ContainerUtil.sorted(list, Comparator.comparingInt(o -> o.getRangeInElement().getLength()));
 
     assertEquals("https://www.jetbrains.com/ruby/download", getReferenceText(list.get(0)));
     assertTrue(list.get(0).getElement() instanceof XmlAttributeValue);

@@ -64,11 +64,11 @@ context(KaSession)
 internal fun isNumberConversionAvailable(
     fromType: KaType,
     toType: KaType,
-): Boolean = fromType != toType && fromType.isNumberOrCharType() && toType.isNumberOrCharType()
+): Boolean = !fromType.semanticallyEquals(toType) && fromType.isNumberOrCharType() && toType.isNumberOrCharType()
 
 context(KaSession)
 internal fun KaType.isNumberOrCharType(): Boolean {
     return with(withNullability(KaTypeNullability.NON_NULLABLE)) {
-        isNumberOrUNumberType() || isCharType
+        isNumberOrUNumberType(this) || isCharType
     }
 }

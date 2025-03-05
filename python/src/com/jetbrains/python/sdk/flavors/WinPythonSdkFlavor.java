@@ -20,12 +20,13 @@ import com.jetbrains.python.PythonHelpersLocator;
 import kotlin.text.Regex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.jetbrains.python.sdk.PythonSdkUtilKtKt.tryResolvePath;
+import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
 import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxFiles;
 import static com.jetbrains.python.sdk.WinAppxToolsKt.getAppxProduct;
 
@@ -69,7 +70,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
   @Override
   public @NotNull Collection<@NotNull Path> suggestLocalHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     Set<String> candidates = new TreeSet<>();
-    findInCandidatePaths(candidates, "python.exe", "jython.bat", "pypy.exe");
+    findInCandidatePaths(candidates, "python.exe", "pypy.exe");
     findInstallations(candidates, "python.exe", PythonHelpersLocator.getCommunityHelpersRoot().getParent().toString());
     return ContainerUtil.map(candidates, Path::of);
   }
@@ -82,11 +83,6 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
 
     findInRegistry(candidates);
     candidates.addAll(myAppxCache.getValue());
-  }
-
-  @Override
-  public final void resetHomePathCache() {
-    myRegistryCache.drop();
   }
 
   @Override
@@ -158,7 +154,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
     }
   }
 
-  private static @NotNull Set<String> getPythonsFromStore() {
+  private static @Unmodifiable @NotNull Set<String> getPythonsFromStore() {
     return ContainerUtil.map2Set(getAppxFiles(APPX_PRODUCT, PYTHON_EXE), file -> file.toAbsolutePath().toString());
   }
 

@@ -49,16 +49,16 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class RepositoryAttachDialog extends DialogWrapper {
-  @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
-  @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH_ENABLED = "Downloaded.Files.Path.Enabled";
-  @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
-  @NonNls private static final String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
-  @NonNls private static final String PROPERTY_ATTACH_ANNOTATIONS = "Repository.Attach.Annotations";
-  @NotNull private final Mode myMode;
+  private static final @NonNls String PROPERTY_DOWNLOAD_TO_PATH = "Downloaded.Files.Path";
+  private static final @NonNls String PROPERTY_DOWNLOAD_TO_PATH_ENABLED = "Downloaded.Files.Path.Enabled";
+  private static final @NonNls String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
+  private static final @NonNls String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
+  private static final @NonNls String PROPERTY_ATTACH_ANNOTATIONS = "Repository.Attach.Annotations";
+  private final @NotNull Mode myMode;
 
   public enum Mode { SEARCH, DOWNLOAD }
   private final Project myProject;
@@ -172,7 +172,7 @@ public final class RepositoryAttachDialog extends DialogWrapper {
     init();
   }
 
-  private @NlsSafe String getDownloadPath(@NotNull final PropertiesComponent storage) {
+  private @NlsSafe String getDownloadPath(final @NotNull PropertiesComponent storage) {
     final String value = storage.getValue(PROPERTY_DOWNLOAD_TO_PATH);
     if (Strings.isNotEmpty(value)) return value;
     return myDefaultDownloadFolder;
@@ -212,8 +212,7 @@ public final class RepositoryAttachDialog extends DialogWrapper {
     return myMode == Mode.DOWNLOAD ? myIncludeTransitiveDepsCheckBox.isSelected() : myIncludeTransitiveDependenciesForSearchCheckBox.isSelected();
   }
 
-  @Nullable
-  public String getDirectoryPath() {
+  public @Nullable String getDirectoryPath() {
     return myDownloadToCheckBox.isSelected()? myDirectoryField.getText() : null;
   }
 
@@ -393,8 +392,7 @@ public final class RepositoryAttachDialog extends DialogWrapper {
     return parts.size() == 4 ? parts.get(0) + ":" + parts.get(1) + ":" + parts.get(3) : text;
   }
 
-  @NotNull
-  private String getPackaging() {
+  private @NotNull String getPackaging() {
     List<String> parts = StringUtil.split(getFullCoordinateText(), ":");
     return parts.size() == 4 ? parts.get(2) : JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING;
   }
@@ -403,8 +401,7 @@ public final class RepositoryAttachDialog extends DialogWrapper {
     return ((JTextField)myCombobox.getEditor().getEditorComponent()).getText().trim();
   }
 
-  @NotNull
-  public JpsMavenRepositoryLibraryDescriptor getSelectedLibraryDescriptor() {
+  public @NotNull JpsMavenRepositoryLibraryDescriptor getSelectedLibraryDescriptor() {
     return new JpsMavenRepositoryLibraryDescriptor(getCoordinateText(), getPackaging(),
                                                    getIncludeTransitiveDependencies(), Collections.emptyList());
   }
@@ -421,8 +418,7 @@ public final class RepositoryAttachDialog extends DialogWrapper {
     return false;
   }
 
-  @Nullable
-  private static String extractMavenCoordinates(Document document) {
+  private static @Nullable String extractMavenCoordinates(Document document) {
     String groupId = getGroupId(document);
     String artifactId = getArtifactId(document);
     if (groupId.isEmpty() && artifactId.isEmpty()) {

@@ -4,7 +4,6 @@
 use {
     std::ffi::CString,
     windows::core::PCSTR,
-    windows::Win32::Foundation::HWND,
     windows::Win32::UI::WindowsAndMessaging
 };
 
@@ -42,7 +41,7 @@ fn show_alert_impl(title: &str, text: &str) {
     let c_text = CString::new(text).unwrap();
     unsafe {
         WindowsAndMessaging::MessageBoxA(
-            HWND::default(),
+            None,
             PCSTR::from_raw(c_text.as_bytes_with_nul().as_ptr()),
             PCSTR::from_raw(c_caption.as_bytes_with_nul().as_ptr()),
             WindowsAndMessaging::MB_OK | WindowsAndMessaging::MB_ICONERROR | WindowsAndMessaging::MB_APPLMODAL);

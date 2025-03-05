@@ -2,13 +2,11 @@ package com.intellij.settingsSync.core
 
 import com.intellij.ide.ApplicationActivity
 import com.intellij.openapi.application.ApplicationActivationListener
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.registry.Registry
@@ -27,11 +25,6 @@ private val LOG = logger<SettingsSynchronizer>()
 private val MIGRATION_EP = ExtensionPointName<SettingsSyncMigration>("com.intellij.settingsSyncMigration")
 
 private class SettingsSynchronizerApplicationInitializedListener : ApplicationActivity {
-  init {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
 
   override suspend fun execute() {
     val settingsSyncEventListener = object : SettingsSyncEventListener {
@@ -125,7 +118,7 @@ private class SettingsSynchronizer : ApplicationActivationListener {
     get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
 
   override fun applicationActivated(ideFrame: IdeFrame) {
-    if (!isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
+    if (!true || !isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
       return
     }
 

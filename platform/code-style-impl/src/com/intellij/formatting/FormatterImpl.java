@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -6,7 +6,9 @@ import com.intellij.formatting.engine.ExpandableIndent;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -457,9 +459,9 @@ public final class FormatterImpl extends FormatterEx
   }
 
   @Override
-  public @Nullable List<String> getLineIndents(final FormattingModel model,
-                                               final CodeStyleSettings settings,
-                                               final CommonCodeStyleSettings.IndentOptions indentOptions) {
+  public @NotNull List<String> getLineIndents(final FormattingModel model,
+                                              final CodeStyleSettings settings,
+                                              final CommonCodeStyleSettings.IndentOptions indentOptions) {
     final FormattingDocumentModel documentModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
     if (block.getTextRange().isEmpty()) return Collections.emptyList(); // handing empty document case
@@ -541,7 +543,8 @@ public final class FormatterImpl extends FormatterEx
 
       if (text.charAt(lineStartOffset) == '\n'
           && wsStart <= (prevEnd = documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) &&
-          documentModel.getText(new TextRange(prevEnd, lineStartOffset)).toString().trim().length() == 0 // ws consists of space only, it is not true for <![CDATA[
+          documentModel.getText(new TextRange(prevEnd, lineStartOffset)).toString().trim()
+            .isEmpty() // ws consists of space only, it is not true for <![CDATA[
          ) {
         lineStartOffset--;
       }
@@ -707,23 +710,31 @@ public final class FormatterImpl extends FormatterEx
         throw new FormattingModelInconsistencyException("Uncommitted document");
       }
       if (document.getTextLength() != file.getTextLength()) {
+        Attachment documentAttachment = new Attachment("document.txt", document.getText());
+        Attachment fileAttachment = new Attachment("file.txt", file.getText());
+
         throw new FormattingModelInconsistencyException(
           "Document length " + document.getTextLength() +
-          " doesn't match PSI file length " + file.getTextLength() + ", language: " + file.getLanguage()
+          " doesn't match PSI file length " + file.getTextLength() + ", language: " + file.getLanguage(),
+          new Attachment[]{documentAttachment, fileAttachment}
         );
       }
     }
   }
 
-  private static final class FormattingModelInconsistencyException extends Exception {
+  private static final class FormattingModelInconsistencyException extends RuntimeExceptionWithAttachments {
     FormattingModelInconsistencyException(String message) {
       super(message);
+    }
+
+    FormattingModelInconsistencyException(String message, Attachment[] attachments) {
+      super(message, attachments);
     }
   }
 
   @Override
-  public @Nullable FormattingModelBuilder createExternalFormattingModelBuilder(@NotNull PsiFile psiFile,
-                                                                               @Nullable FormattingModelBuilder langBuilder) {
+  public @NotNull FormattingModelBuilder createExternalFormattingModelBuilder(@NotNull PsiFile psiFile,
+                                                                              @Nullable FormattingModelBuilder langBuilder) {
     return new ExternalFormattingModelBuilderImpl(langBuilder);
   }
 

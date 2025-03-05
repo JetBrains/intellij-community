@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
@@ -133,6 +134,7 @@ class LineStatusMarkerPopupService {
       trackScrolling(editor, popupDisposable)
       trackMouseClick(editor, popupDisposable)
       trackEditorLookup(editor, popupDisposable)
+      trackLafChanging(popupDisposable)
     }
 
     private fun trackFileEditorChange(popupDisposable: Disposable) {
@@ -208,6 +210,13 @@ class LineStatusMarkerPopupService {
               closeActivePopup()
             }
           }
+        })
+    }
+
+    private fun trackLafChanging(popupDisposable: Disposable) {
+      ApplicationManager.getApplication().messageBus.connect(popupDisposable)
+        .subscribe(LafManagerListener.TOPIC, LafManagerListener {
+          closeActivePopup()
         })
     }
 

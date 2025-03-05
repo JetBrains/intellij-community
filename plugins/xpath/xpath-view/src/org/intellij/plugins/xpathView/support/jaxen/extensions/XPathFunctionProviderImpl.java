@@ -53,8 +53,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
     }
 
     @Override
-    @NotNull
-    public Map<QName, ? extends Function> getFunctions(ContextType contextType) {
+    public @NotNull Map<QName, ? extends Function> getFunctions(ContextType contextType) {
         if (contextType == XPathSupport.TYPE) {
             return myFunctions;
         } else {

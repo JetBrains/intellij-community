@@ -1,18 +1,21 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace.impl.handler.unified
 
-import com.intellij.debugger.streams.trace.dsl.CodeBlock
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.trace.dsl.Expression
-import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl
-import com.intellij.debugger.streams.wrapper.CallArgument
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
-import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl
-import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl
-import com.intellij.debugger.streams.wrapper.impl.TerminatorStreamCallImpl
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ClassTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.HandlerBase
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.PeekTraceHandler
+import com.intellij.debugger.streams.core.wrapper.CallArgument
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
+import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
+import com.intellij.debugger.streams.core.wrapper.impl.IntermediateStreamCallImpl
+import com.intellij.debugger.streams.core.wrapper.impl.TerminatorStreamCallImpl
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
 import com.intellij.openapi.util.TextRange
 
 /**
@@ -63,11 +66,11 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
     val result = ArrayList(myPeekHandler.additionalCallsBefore())
     val filterPredicate = (if (call.name == "allMatch") myPredicateVariable.call("negate") else myPredicateVariable).toCode()
     val filterArg = CallArgumentImpl(myPredicateVariable.type.variableTypeName, filterPredicate)
-    result += IntermediateStreamCallImpl("filter", listOf(filterArg), call.typeBefore, call.typeBefore, TextRange.EMPTY_RANGE)
+    result += IntermediateStreamCallImpl("filter", "", listOf(filterArg), call.typeBefore, call.typeBefore, TextRange.EMPTY_RANGE)
     result.addAll(myPeekHandler.additionalCallsAfter())
     return result
   }
 
   private fun TerminatorStreamCall.transformArgs(args: List<CallArgument>): TerminatorStreamCall =
-    TerminatorStreamCallImpl(name, args, typeBefore, resultType, textRange)
+    TerminatorStreamCallImpl(name, genericArguments, args, typeBefore, resultType, textRange, resultType == JavaTypes.VOID)
 }

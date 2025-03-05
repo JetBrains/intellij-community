@@ -26,6 +26,7 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -118,7 +119,7 @@ public final class ClassInnerStuffCache {
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
-  private @NotNull <T extends PsiMember> List<T> internMembers(List<T> members) {
+  private @Unmodifiable @NotNull <T extends PsiMember> List<T> internMembers(List<T> members) {
     return ContainerUtil.map(members, this::internMember);
   }
 

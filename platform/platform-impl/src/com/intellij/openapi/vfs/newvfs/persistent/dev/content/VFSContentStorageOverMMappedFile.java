@@ -3,18 +3,21 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.content;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogOverMMappedFile;
-import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.*;
-import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
+import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.VFSContentStorage;
 import io.opentelemetry.api.metrics.BatchCallback;
@@ -33,8 +36,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 
 /**
  * {@link VFSContentStorage} implemented with memory-mapped files: uses {@link AppendOnlyLogOverMMappedFile} for
@@ -137,31 +140,62 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
     this.storagePath = storagePath;
     this.compressingAlgo = compressingAlgo;
 
+
     int storageFormatVersion = (((int)STORAGE_FORMAT_VERSION_BASE) << 24) + compressingAlgo.algoID();
 
-    contentStorage = AppendOnlyLogFactory.withDefaults()
-      .pageSize(pageSize)
-      .failIfFileIncompatible()
-      .failIfDataFormatVersionNotMatch(storageFormatVersion)
-      .open(storagePath);
+    AppendOnlyLogOverMMappedFile contentStorage = null;
+    ExtendibleHashMap hashToContentRecordIdMap = null;
+    try {
+      contentStorage = AppendOnlyLogFactory.withDefaults()
+        .pageSize(pageSize)
+        .failIfFileIncompatible()
+        .failIfDataFormatVersionNotMatch(storageFormatVersion)
+        .open(storagePath);
 
-    Path mapPath = storagePath.resolveSibling(storagePath.getFileName().toString() + ".hashToId");
-    if (contentStorage.isEmpty()) {
-      //ensure map is also empty
-      FileUtil.delete(mapPath);
+      Path mapPath = storagePath.resolveSibling(storagePath.getFileName().toString() + ".hashToId");
+      if (contentStorage.isEmpty()) {
+        //ensure map is also empty
+        FileUtil.delete(mapPath);
+      }
+
+      hashToContentRecordIdMap = ExtendibleMapFactory.mediumSize()
+        .ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP)
+        .cleanIfFileIncompatible()
+        .open(mapPath);
+
+      if (hashToContentRecordIdMap.isEmpty() && !contentStorage.isEmpty()) {
+        LOG.warn("Content map[" + mapPath + "] is empty while content storage is not: re-building map from the storage");
+        rebuildMap(contentStorage, hashToContentRecordIdMap);
+      }
+
+      this.contentStorage = contentStorage;
+      this.hashToContentRecordIdMap = hashToContentRecordIdMap;
+
+      this.otelCallback = setupOTelMonitoring(this, TelemetryManager.getInstance().getMeter(VFS));
     }
+    catch (Throwable th) {
+      //on any exception we _must_ close all the storages, since MMappedFileStorage keep track of opened storages, and doesn't
+      // allow to re-open storage not properly closed before
+      if (contentStorage != null) {
+        try {
+          contentStorage.close();
+        }
+        catch (Throwable closeEx) {
+          th.addSuppressed(closeEx);
+        }
+      }
 
-    hashToContentRecordIdMap = ExtendibleMapFactory.mediumSize()
-      .ifNotClosedProperly(DROP_AND_CREATE_EMPTY_MAP)
-      .cleanIfFileIncompatible()
-      .open(mapPath);
+      if (hashToContentRecordIdMap != null) {
+        try {
+          hashToContentRecordIdMap.close();
+        }
+        catch (Throwable closeEx) {
+          th.addSuppressed(closeEx);
+        }
+      }
 
-    if (hashToContentRecordIdMap.isEmpty() && !contentStorage.isEmpty()) {
-      LOG.warn("Content map[" + mapPath + "] is empty while content storage is not: re-building map from the storage");
-      rebuildMap(contentStorage, hashToContentRecordIdMap);
+      throw th;
     }
-
-    otelCallback = setupOTelMonitoring(this, TelemetryManager.getInstance().getMeter(VFS));
   }
 
   @Override

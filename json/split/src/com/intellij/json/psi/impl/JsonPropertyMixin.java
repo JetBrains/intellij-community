@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi.impl;
 
 import com.intellij.json.psi.JsonElementGenerator;
@@ -9,13 +10,12 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Mikhail Golubev
- */
-abstract class JsonPropertyMixin extends JsonElementImpl implements JsonProperty {
+@ApiStatus.Internal
+public abstract class JsonPropertyMixin extends JsonElementImpl implements JsonProperty {
   JsonPropertyMixin(@NotNull ASTNode node) {
     super(node);
   }

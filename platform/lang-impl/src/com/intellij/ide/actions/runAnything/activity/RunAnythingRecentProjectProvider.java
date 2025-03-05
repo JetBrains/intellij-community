@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -75,7 +76,7 @@ public final class RunAnythingRecentProjectProvider extends RunAnythingAnActionP
   }
 
   @Override
-  public @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
+  public @Unmodifiable @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
     return ContainerUtil.emptyList();
   }
 }

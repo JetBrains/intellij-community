@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.openapi.externalSystem.model.Key;
@@ -11,11 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public final class WebConfigurationModelData extends AbstractExternalEntityData implements ArtifactConfiguration {
-  @NotNull
-  public static final Key<WebConfigurationModelData> KEY = Key.create(WebConfigurationModelData.class, ExternalSystemConstants.UNORDERED);
+  public static final @NotNull Key<WebConfigurationModelData> KEY = Key.create(WebConfigurationModelData.class, ExternalSystemConstants.UNORDERED);
 
-  @NotNull
-  private final List<War> artifacts;
+  private final @NotNull List<War> artifacts;
 
   @PropertyMapping({"owner", "artifacts"})
   public WebConfigurationModelData(@NotNull ProjectSystemId owner, @NotNull List<War> artifacts) {
@@ -24,8 +22,7 @@ public final class WebConfigurationModelData extends AbstractExternalEntityData 
   }
 
   @Override
-  @NotNull
-  public List<War> getArtifacts() {
+  public @NotNull List<War> getArtifacts() {
     return artifacts;
   }
 

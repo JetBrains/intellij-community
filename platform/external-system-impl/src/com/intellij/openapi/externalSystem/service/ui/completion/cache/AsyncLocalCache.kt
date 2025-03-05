@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.ui.completion.cache
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.completeWith
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -17,6 +18,14 @@ class AsyncLocalCache<T> {
   }
 
   suspend fun getOrCreateValue(stamp: Long, createValue: suspend () -> T): T {
+    return getOrCreateValue(stamp, { createValue() }, { await() })
+  }
+
+  fun getOrCreateValueBlocking(stamp: Long, createValue: () -> T): T {
+    return getOrCreateValue(stamp, { createValue() }, { asCompletableFuture().get() })
+  }
+
+  private inline fun getOrCreateValue(stamp: Long, createValue: () -> T, getValue: Deferred<T>.() -> T): T {
     val deferred = CompletableDeferred<T>()
     val valueDeferred = valueDeferredCache.getOrCreateValue(stamp) { deferred }
     if (valueDeferred === deferred) {
@@ -24,7 +33,7 @@ class AsyncLocalCache<T> {
         createValue()
       })
     }
-    val value = valueDeferred.await()
+    val value = valueDeferred.getValue()
     return valueCache.getOrCreateValue(stamp) { value }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -19,8 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public class LambdaMethodFilter implements BreakpointStepMethodFilter {
   private final PsiLambdaExpression myLambda;
   private final int myLambdaOrdinal;
-  @Nullable
-  private final SourcePosition myFirstStatementPosition;
+  private final @Nullable SourcePosition myFirstStatementPosition;
   private final int myLastStatementLine;
   private final Range<Integer> myCallingExpressionLines;
 
@@ -55,8 +54,7 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
   }
 
   @Override
-  @Nullable
-  public SourcePosition getBreakpointPosition() {
+  public @Nullable SourcePosition getBreakpointPosition() {
     return myFirstStatementPosition;
   }
 
@@ -68,7 +66,7 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
   @Override
   public boolean locationMatches(DebugProcessImpl process, Location location) {
     Method method = location.method();
-    if (DebuggerUtilsEx.isLambda(method) && (!process.getVirtualMachineProxy().canGetSyntheticAttribute() || method.isSynthetic())) {
+    if (DebuggerUtilsEx.isLambda(method) && (!location.virtualMachine().canGetSyntheticAttribute() || method.isSynthetic())) {
       SourcePosition position = process.getPositionManager().getSourcePosition(location);
       if (position != null) {
         return ReadAction.compute(() -> DebuggerUtilsEx.inTheMethod(position, myLambda));
@@ -77,9 +75,8 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
     return false;
   }
 
-  @Nullable
   @Override
-  public Range<Integer> getCallingExpressionLines() {
+  public @Nullable Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;
   }
 }

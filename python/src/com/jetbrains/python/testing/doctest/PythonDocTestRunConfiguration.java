@@ -88,10 +88,9 @@ public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunCo
 
   @Override
   @ApiStatus.Internal
-  @Nullable
-  protected Function<@NotNull TargetEnvironment, @NotNull @Nls String> createTargetEnvFunction(@NotNull VirtualFile virtualFile,
-                                                                                               @Nullable String className,
-                                                                                               @Nullable String funName) {
+  protected @Nullable Function<@NotNull TargetEnvironment, @NotNull @Nls String> createTargetEnvFunction(@NotNull VirtualFile virtualFile,
+                                                                                                         @Nullable String className,
+                                                                                                         @Nullable String funName) {
     String localPath = virtualFile.getCanonicalPath();
     if (localPath == null) return null;
 

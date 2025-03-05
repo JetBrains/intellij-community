@@ -5,4 +5,4 @@ import editor.completion.apx.importedValA as valA
 fun context() {
     valA()
 }
-/* IGNORE_K2 */
+// IGNORE_K2

@@ -135,6 +135,7 @@ public final class ZipLong implements Cloneable {
    * @param o an object to compare
    * @return true if the objects are equal
    */
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof ZipLong)) {
       return false;
@@ -147,6 +148,7 @@ public final class ZipLong implements Cloneable {
    *
    * @return the value stored in the ZipLong
    */
+  @Override
   public int hashCode() {
     return (int)value;
   }

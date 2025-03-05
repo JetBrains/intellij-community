@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="devkit.runtime.module.repository.jps" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="intellij-dependencies" maven-id="com.jetbrains.intellij.devkit:devkit-runtime-module-repository-jps:241.12019">
+    <properties include-transitive-deps="false" jar-repository-id="intellij-dependencies" maven-id="com.jetbrains.intellij.devkit:devkit-runtime-module-repository-jps:251.16369">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/241.12019/devkit-runtime-module-repository-jps-241.12019.jar">
-          <sha256sum>9f4d52fc52b1e1505e44a427dbbbb7a010f7f1d8506c2fe2c3c8cc132eb87daa</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369.jar">
+          <sha256sum>bb46909020abfc29fb6480b261ab1a887d19d0af83777ac8fb0cb950f45e7005</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/241.12019/devkit-runtime-module-repository-jps-241.12019.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/241.12019/devkit-runtime-module-repository-jps-241.12019-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

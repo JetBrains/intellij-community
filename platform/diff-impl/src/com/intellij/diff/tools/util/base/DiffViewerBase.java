@@ -32,14 +32,14 @@ import java.util.List;
 public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
 
-  @NotNull private final List<DiffViewerListener> listeners = new SmartList<>();
+  private final @NotNull List<DiffViewerListener> listeners = new SmartList<>();
 
-  @Nullable protected final Project myProject;
-  @NotNull protected final DiffContext myContext;
-  @NotNull protected final ContentDiffRequest myRequest;
+  protected final @Nullable Project myProject;
+  protected final @NotNull DiffContext myContext;
+  protected final @NotNull ContentDiffRequest myRequest;
 
-  @NotNull private final DiffTaskQueue myTaskExecutor = new DiffTaskQueue();
-  @NotNull private final Alarm taskAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, null, null, null);
+  private final @NotNull DiffTaskQueue myTaskExecutor = new DiffTaskQueue();
+  private final @NotNull Alarm taskAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, null, null, null);
   private boolean pendingRediff = true;
   private volatile boolean isDisposed;
 
@@ -49,9 +49,8 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
     myRequest = request;
   }
 
-  @NotNull
   @Override
-  public final FrameDiffTool.ToolbarComponents init() {
+  public final @NotNull FrameDiffTool.ToolbarComponents init() {
     if (LOG.isDebugEnabled() && !ApplicationManager.getApplication().isHeadlessEnvironment() &&
         (getComponent().getWidth() <= 0 || getComponent().getHeight() <= 0)) {
       LOG.warn("Diff shown for a hidden component, initial scroll position might be invalid", new Throwable());
@@ -165,18 +164,15 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
   // Getters
   //
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public ContentDiffRequest getRequest() {
+  public @NotNull ContentDiffRequest getRequest() {
     return myRequest;
   }
 
-  @NotNull
-  public DiffContext getContext() {
+  public @NotNull DiffContext getContext() {
     return myContext;
   }
 
@@ -217,8 +213,7 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
     return group;
   }
 
-  @Nullable
-  protected JComponent getStatusPanel() {
+  protected @Nullable JComponent getStatusPanel() {
     return null;
   }
 
@@ -239,8 +234,7 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
   }
 
   @RequiresBackgroundThread
-  @NotNull
-  protected abstract Runnable performRediff(@NotNull ProgressIndicator indicator);
+  protected abstract @NotNull Runnable performRediff(@NotNull ProgressIndicator indicator);
 
   @RequiresEdt
   protected void onDispose() {
@@ -261,9 +255,8 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
     listeners.remove(listener);
   }
 
-  @NotNull
   @RequiresEdt
-  protected List<DiffViewerListener> getListeners() {
+  protected @NotNull List<DiffViewerListener> getListeners() {
     return listeners;
   }
 

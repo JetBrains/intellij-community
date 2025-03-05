@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.modules
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
@@ -64,7 +65,7 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
             return JavaModuleResolver.AccessError.ModuleDoesNotReadUnnamedModule
         }
 
-        if (ourModule != null && !JavaModuleGraphUtil.reads(ourModule, theirModule)) {
+        if (ourModule != null && !JavaPsiModuleUtil.reads(ourModule, theirModule)) {
             return JavaModuleResolver.AccessError.ModuleDoesNotReadModule(theirModule.name)
         }
 

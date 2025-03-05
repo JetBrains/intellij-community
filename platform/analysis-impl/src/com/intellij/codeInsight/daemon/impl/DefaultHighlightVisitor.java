@@ -77,11 +77,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     for (ErrorQuickFixProvider provider : providers) {
       provider.registerErrorQuickFix(element, builder);
     }
-    HighlightInfo info = builder.create();
-    if (info != null) {
-      info.toolId = DefaultHighlightVisitor.class;
-    }
-    return info;
+    return builder.create();
   }
 
   private static @NotNull HighlightInfo.Builder createErrorElementInfoWithoutFixes(@NotNull PsiErrorElement element) {

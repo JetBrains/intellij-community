@@ -27,7 +27,7 @@ import java.util.function.Predicate;
  */
 @Debug.Renderer(text = "\"size = \" + myList.size()", childrenArray = "toStrongList().toArray()", hasChildren = "!isEmpty()")
 public class UnsafeWeakList<T> extends AbstractCollection<T> {
-  protected final List<MyReference<T>> myList;
+  final List<MyReference<T>> myList;
   private final ReferenceQueue<T> myQueue = new ReferenceQueue<>();
   private int myAlive;
   private int modCount;
@@ -75,7 +75,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   private void nullizeAt(int index) {
     myList.set(index, null);
     myAlive--;
-    // do not incr modCount here because every iterator().remove() usages will throw
+    // do not increment modCount here because every iterator().remove() usages will throw
   }
 
   private void reduceCapacity() {

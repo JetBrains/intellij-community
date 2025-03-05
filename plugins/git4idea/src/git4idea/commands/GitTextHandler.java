@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -29,12 +29,16 @@ import java.util.List;
 public abstract class GitTextHandler extends GitHandler {
   private static final int WAIT_TIMEOUT_MS = 50;
   private static final int TERMINATION_TIMEOUT_MS = 1000 * 60;
+
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
   private volatile boolean myIsDestroyed;
   private final Object myProcessStateLock = new Object();
 
-  protected boolean myWithMediator = true;
+  /** @deprecated always {@code false} since a mediator is no longer used */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
+  protected boolean myWithMediator = false;
   private int myTerminationTimeoutMs = TERMINATION_TIMEOUT_MS;
 
   protected GitTextHandler(@Nullable Project project, @NotNull File directory, @NotNull GitCommand command) {
@@ -60,9 +64,10 @@ public abstract class GitTextHandler extends GitHandler {
     super(project, directory, executable, command, configParameters);
   }
 
-  public void setWithMediator(boolean value) {
-    myWithMediator = value;
-  }
+  /** @deprecated no-op since a mediator is no longer used */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  public void setWithMediator(boolean value) { }
 
   public void setTerminationTimeout(int timeoutMs) {
     myTerminationTimeoutMs = timeoutMs;
@@ -158,12 +163,19 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine, myWithMediator && myExecutable.isLocal() && Registry.is("git.execute.with.mediator"));
+    return new MyOSProcessHandler(commandLine);
   }
 
   protected static class MyOSProcessHandler extends KillableProcessHandler {
+    protected MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+      super(commandLine);
+    }
+
+    /** @deprecated a mediator is no longer used; replace with {@link #MyOSProcessHandler(GeneralCommandLine)} */
+    @Deprecated(forRemoval = true)
+    @SuppressWarnings("unused")
     protected MyOSProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
-      super(commandLine, withMediator);
+      this(commandLine);
     }
 
     @Override

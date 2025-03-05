@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -17,6 +17,7 @@ public final class WindowsDefenderStatisticsCollector extends CounterUsagesColle
 
   private enum Status {Skipped, Enabled, Disabled, Error}
   private enum Reaction {Auto, Manual, ProjectMute, GlobalMute}
+  private enum ExcludedScope {PROJECT_ONLY, PARENT_FOLDER}
 
   private static final EventId1<Status> PROTECTION_CHECK_EVENT = GROUP.registerEvent("protection", EventFields.Enum("status", Status.class));
   private static final EventId1<Reaction> NOTIFICATION_EVENT = GROUP.registerEvent("notification", EventFields.Enum("reaction", Reaction.class));
@@ -24,11 +25,6 @@ public final class WindowsDefenderStatisticsCollector extends CounterUsagesColle
   private static final EventId1<ExcludedScope> TRUST_DIALOG_EVENT =
     GROUP.registerEvent("excluded_from_trust_dialog", EventFields.Enum("excluded_folders", ExcludedScope.class));
   private static final EventId CHECKBOX_SHOWN_IN_TRUST_DIALOG = GROUP.registerEvent("checkbox_shown_in_trust_dialog");
-
-  private enum ExcludedScope {
-    PROJECT_ONLY,
-    PARENT_FOLDER
-  }
 
   static void protectionCheckSkipped(@NotNull Project project) {
     PROTECTION_CHECK_EVENT.log(project, Status.Skipped);
@@ -50,7 +46,7 @@ public final class WindowsDefenderStatisticsCollector extends CounterUsagesColle
     NOTIFICATION_EVENT.log(project, globally ? Reaction.GlobalMute : Reaction.ProjectMute);
   }
 
-  static void configured(@NotNull Project project, boolean success) {
+  static void configured(@Nullable Project project, boolean success) {
     AUTO_CONFIG_EVENT.log(project, success);
   }
 

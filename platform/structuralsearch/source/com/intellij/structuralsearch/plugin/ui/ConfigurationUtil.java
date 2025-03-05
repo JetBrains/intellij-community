@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -18,8 +18,7 @@ import static com.intellij.structuralsearch.MatchOptions.OLD_CASE_SENSITIVE_ATTR
 public final class ConfigurationUtil {
   private ConfigurationUtil() {}
 
-  @NotNull
-  public static String toXml(@NotNull Configuration configuration) {
+  public static @NotNull String toXml(@NotNull Configuration configuration) {
     configuration = configuration.copy();
     configuration.getMatchOptions().setScope(null); // don't export scope
     final String className = configuration.getClass().getSimpleName();

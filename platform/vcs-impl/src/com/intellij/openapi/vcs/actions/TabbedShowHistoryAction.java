@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.idea.ActionsBundle;
@@ -105,13 +105,11 @@ public class TabbedShowHistoryAction extends DumbAwareAction {
     return historyProvider != null && historyProvider.canShowFileHistory(paths, null);
   }
 
-  @Nullable
-  private static VirtualFile getExistingFileOrParent(@NotNull FilePath selectedPath) {
+  private static @Nullable VirtualFile getExistingFileOrParent(@NotNull FilePath selectedPath) {
     return ObjectUtils.chooseNotNull(selectedPath.getVirtualFile(), selectedPath.getVirtualFileParent());
   }
 
-  @Nullable
-  private static List<FilePath> getContextSymlinkedPaths(@NotNull Project project, @Nullable VirtualFile file) {
+  private static @Nullable List<FilePath> getContextSymlinkedPaths(@NotNull Project project, @Nullable VirtualFile file) {
     VirtualFile vcsFile = VcsUtil.resolveSymlink(project, file);
     return vcsFile != null ? Collections.singletonList(VcsUtil.getFilePath(vcsFile)) : null;
   }

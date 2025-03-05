@@ -80,6 +80,7 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
 
+  // PY-78185
   public void testHiddenPyiImports() {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }

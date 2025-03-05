@@ -1,3 +1,3 @@
-expect fun foo()
-expect fun bar(): Int
-expect fun baz(): String
+expect fun bar()
+expect fun baz(): Int
+expect fun bazzz(): String

@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 // AFTER-WARNING: Check for instance is always 'false'
 // AFTER-WARNING: Check for instance is always 'true'
 fun test(n: Int): String {

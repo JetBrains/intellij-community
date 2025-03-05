@@ -165,6 +165,7 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
     dimension.height += vGap + vGap;
   }
 
+  @Override
   public String toString() {
     String str = switch (getAlignment()) {
       case TOP -> ",align=top";

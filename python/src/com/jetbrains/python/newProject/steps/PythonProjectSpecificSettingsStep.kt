@@ -1,4 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 package com.jetbrains.python.newProject.steps
 
 import com.intellij.ide.IdeBundle
@@ -24,7 +25,6 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
@@ -43,7 +43,8 @@ import javax.swing.JPanel
 /**
  * @deprecated Use [com.jetbrains.python.newProjectWizard]
  */
-@Deprecated("use com.jetbrains.python.newProjectWizard")
+@java.lang.Deprecated(forRemoval = true)
+@Deprecated("use com.jetbrains.python.newProjectWizard", level = DeprecationLevel.WARNING)
 class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
   projectGenerator: DirectoryProjectGenerator<T>,
   callback: AbstractNewProjectStep.AbstractCallback<T>,
@@ -76,9 +77,6 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
     }
     return createContentPanelWithAdvancedSettingsPanel()
   }
-
-  @RequiresEdt
-  override fun createWelcomeScript(): Boolean = createScript.get()
 
   /**
    * Returns the project location that is either:
@@ -176,10 +174,6 @@ class PythonProjectSpecificSettingsStep<T : PyNewProjectSettings>(
       // todo add proper validation with custom component
       return true
     }
-  }
-
-  override fun installFramework(): Boolean {
-    return true
   }
 
   override fun onPanelSelected() {

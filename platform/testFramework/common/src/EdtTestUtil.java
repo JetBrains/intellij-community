@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.NakedRunnable;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -102,8 +103,8 @@ public final class EdtTestUtil {
     else {
       if (app != null) {
         Runnable pr = r;
-        // Wrap r to writeIntent unlock, or it will be passed through wrapping around IdeEventQueue.dispatchEvent():385
-        r = () -> app.runUnlockingIntendedWrite(() -> { pr.run(); return null; });
+        // Wrap r to writeIntent unlock and mark to avoid wrapping, or it will be passed through wrapping around IdeEventQueue.dispatchEvent():385
+        r = (NakedRunnable)() -> pr.run();
       }
       try {
         SwingUtilities.invokeAndWait(r);

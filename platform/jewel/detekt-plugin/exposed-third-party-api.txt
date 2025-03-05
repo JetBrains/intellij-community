@@ -1,0 +1,2 @@
+io/gitlab/arturbosch/detekt/**
+org/jetbrains/kotlin/psi/**

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -23,10 +23,10 @@ import static java.util.Arrays.asList;
 
 public abstract class BuilderAnnotationContributor implements AstTransformationSupport {
 
-  @NlsSafe public static final String BUILDER_PACKAGE = "groovy.transform.builder";
-  @NlsSafe public static final String BUILDER_FQN = BUILDER_PACKAGE + ".Builder";
-  @NonNls public static final String ORIGIN_INFO = "via @Builder";
-  @NlsSafe public static final String STRATEGY_ATTRIBUTE = "builderStrategy";
+  public static final @NlsSafe String BUILDER_PACKAGE = "groovy.transform.builder";
+  public static final @NlsSafe String BUILDER_FQN = BUILDER_PACKAGE + ".Builder";
+  public static final @NonNls String ORIGIN_INFO = "via @Builder";
+  public static final @NlsSafe String STRATEGY_ATTRIBUTE = "builderStrategy";
 
   @Contract("null, _ -> false")
   public static boolean isApplicable(@Nullable PsiAnnotation annotation, @NotNull String strategy) {

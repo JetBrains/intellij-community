@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.terminal.ui;
 
 import com.intellij.ide.IdeCoreBundle;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -17,6 +20,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +39,9 @@ import java.util.Objects;
 public final class TerminalContainer {
 
   private static final Logger LOG = Logger.getInstance(TerminalContainer.class);
+
+  @ApiStatus.Internal
+  public static final @NotNull DataKey<TerminalWidget> TERMINAL_WIDGET_DATA_KEY = DataKey.create("terminalWidget");
 
   private final Content myContent;
   private final TerminalWidget myTerminalWidget;
@@ -221,7 +228,7 @@ public final class TerminalContainer {
     return (TerminalWrapperPanel)splitter.getParent();
   }
 
-  private static final class TerminalWrapperPanel extends JPanel {
+  private static final class TerminalWrapperPanel extends JPanel implements UiDataProvider {
     private TerminalContainer myTerminal;
 
     private TerminalWrapperPanel(@NotNull TerminalContainer terminal) {
@@ -229,6 +236,13 @@ public final class TerminalContainer {
       setBorder(null);
       setFocusable(false);
       setChildTerminal(terminal);
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      if (myTerminal != null) {
+        sink.set(TERMINAL_WIDGET_DATA_KEY, myTerminal.getTerminalWidget());
+      }
     }
 
     private void setChildTerminal(@NotNull TerminalContainer terminal) {

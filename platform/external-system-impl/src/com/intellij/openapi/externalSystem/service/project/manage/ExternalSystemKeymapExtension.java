@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -226,14 +226,12 @@ public final class ExternalSystemKeymapExtension implements KeymapExtension {
     }
   }
 
-  @NotNull
-  public static String getActionPrefix(@NotNull Project project, @Nullable String path) {
+  public static @NotNull String getActionPrefix(@NotNull Project project, @Nullable String path) {
     ExternalSystemShortcutsManager externalSystemShortcutsManager = ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager();
     return getActionPrefix(externalSystemShortcutsManager, path);
   }
 
-  @NotNull
-  private static String getActionPrefix(@NotNull ExternalSystemShortcutsManager externalSystemShortcutsManager, @Nullable String path) {
+  private static @NotNull String getActionPrefix(@NotNull ExternalSystemShortcutsManager externalSystemShortcutsManager, @Nullable String path) {
     return externalSystemShortcutsManager.getActionId(path, null);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -76,8 +76,7 @@ internal class UseExpressionBodyInspection :
         element: KtDeclarationWithBody, context: Context
     ): ProblemHighlightType = context.highlightType
 
-    context(KaSession)
-    override fun prepareContext(element: KtDeclarationWithBody): Context? {
+    override fun KaSession.prepareContext(element: KtDeclarationWithBody): Context? {
         val valueStatement = element.findValueStatement() ?: return null
         val requireType = valueStatement.expressionType?.isNothingType == true
         return when {
@@ -136,7 +135,7 @@ internal class UseExpressionBodyInspection :
     override fun createQuickFix(
         element: KtDeclarationWithBody,
         context: Context,
-    ) = object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
+    ): KotlinModCommandQuickFix<KtDeclarationWithBody> = object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("convert.to.expression.body.fix.text")

@@ -5,5 +5,4 @@
 // ACTION: Implement members
 // ACTION: Make 'End' 'abstract'
 // ACTION: Rename file to End.kt
-// IGNORE_K2
 actual class <caret>End actual constructor(i: Int) : IFoo

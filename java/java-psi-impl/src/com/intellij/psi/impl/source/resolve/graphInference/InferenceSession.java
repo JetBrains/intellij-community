@@ -25,6 +25,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -1259,10 +1260,9 @@ public class InferenceSession {
   }
 
   private boolean isLowerBoundNotAssignable(InferenceVariable var, PsiType eqBound, boolean allowUncheckedConversion) {
-    return var
-      .getBounds(InferenceBound.LOWER)
-      .stream()
-      .anyMatch(lBound -> isProperType(lBound) && !TypeConversionUtil.isAssignable(eqBound, lBound, allowUncheckedConversion));
+    return ContainerUtil.exists(
+      var.getBounds(InferenceBound.LOWER),
+      lBound -> isProperType(lBound) && !TypeConversionUtil.isAssignable(eqBound, lBound, allowUncheckedConversion));
   }
 
   private static @Nls String getConjunctsConflict(PsiIntersectionType type) {
@@ -1291,10 +1291,9 @@ public class InferenceSession {
     return substituted != null ? substituted.getPresentableText() : null;
   }
 
-  public void registerIncompatibleErrorMessage(Collection<InferenceVariable> variables, @Nls String incompatibleTypesMessage) {
-    variables = new ArrayList<>(variables);
-    ((ArrayList<InferenceVariable>)variables).sort((v1, v2) -> Comparing.compare(v1.getName(), v2.getName()));
-    final String variablesEnumeration = StringUtil.join(variables, variable -> variable.getParameter().getName(), ", ");
+  public void registerIncompatibleErrorMessage(@Unmodifiable Collection<InferenceVariable> variables, @Nls String incompatibleTypesMessage) {
+    Collection<InferenceVariable> sorted = ContainerUtil.sorted(variables,(v1, v2) -> Comparing.compare(v1.getName(), v2.getName()));
+    final String variablesEnumeration = StringUtil.join(sorted, variable -> variable.getParameter().getName(), ", ");
     if (variablesEnumeration.isEmpty()) {
       registerIncompatibleErrorMessage(JavaPsiBundle.message("error.incompatible.type.no.type.variable", incompatibleTypesMessage));
     }
@@ -1880,8 +1879,9 @@ public class InferenceSession {
     }
 
     if (arg instanceof PsiSwitchExpression) {
-      return PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)arg).stream()
-        .allMatch(resultExpression -> argConstraints(resultExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor));
+      return ContainerUtil.and(
+        PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)arg), 
+        resultExpression -> argConstraints(resultExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor));
     }
     return false;
   }

@@ -54,7 +54,7 @@ public abstract class MavenExecutor {
     return myConsole;
   }
 
-  public void setAction(@Nullable final String action) {
+  public void setAction(final @Nullable String action) {
     myAction = action;
   }
 

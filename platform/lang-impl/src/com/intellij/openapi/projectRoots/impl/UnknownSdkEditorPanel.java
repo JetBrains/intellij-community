@@ -34,9 +34,10 @@ final class UnknownSdkEditorPanel extends EditorNotificationPanel {
     if (myAction != null) {
       final String actionText = myAction.supportsSdkChoice() ? myAction.getChoiceActionText() : myAction.getActionShortText();
       HyperlinkLabel label = createActionLabel(actionText, () -> {
-        if (!myIsRunning.compareAndSet(false, true)) return;
+        if (myIsRunning.get()) return;
         if (myAction instanceof FixWithConsent ucFix) ucFix.giveConsent();
         if (!myAction.supportsSdkChoice() || myAction.supportsSdkChoice() && myAction.chooseSdk()) {
+          if (!myIsRunning.compareAndSet(false, true)) return;
           myAction.applySuggestionAsync(project);
         }
       }, true);
@@ -50,13 +51,13 @@ final class UnknownSdkEditorPanel extends EditorNotificationPanel {
 
       @Override
       public void handlePanelActionClick(@NotNull EditorNotificationPanel panel, @NotNull HyperlinkEvent event) {
-        if (!myIsRunning.compareAndSet(false, true)) return;
+        if (myIsRunning.get()) return;
         handler.handlePanelActionClick(panel, event);
       }
 
       @Override
       public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile psiFile) {
-        if (!myIsRunning.compareAndSet(false, true)) return;
+        if (myIsRunning.get()) return;
         handler.handleQuickFixClick(editor, psiFile);
       }
     }, true);

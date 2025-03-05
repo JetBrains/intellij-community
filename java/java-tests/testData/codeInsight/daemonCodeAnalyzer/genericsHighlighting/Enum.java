@@ -105,7 +105,7 @@ enum TestEnum
 {
     A(<error descr="Cannot refer to enum constant 'B' before its definition">B</error>), B(A);
     TestEnum(TestEnum other) {
-      <error descr="Call to super is not allowed in enum constructor">super(null, 0)</error>;
+      <error descr="Call to 'super' is not allowed in enum constructor">super(null, 0)</error>;
     }
 }
 
@@ -207,7 +207,7 @@ class NestedEnums {
   enum E1 { }
 
   class C2 {
-    <error descr="Static declarations in inner classes are not supported at language level '5'">enum E2</error> { }
+    <error descr="Static declarations in inner classes are not supported at language level '5'">enum</error> E2 { }
   }
 
   static class C3 {
@@ -216,7 +216,7 @@ class NestedEnums {
 
   {
     new C3() {
-      <error descr="Static declarations in inner classes are not supported at language level '5'">enum E2</error> { }
+      <error descr="Static declarations in inner classes are not supported at language level '5'">enum</error> E2 { }
     };
   }
 }

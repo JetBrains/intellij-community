@@ -355,4 +355,13 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                            ...
                    """);
   }
+
+  public void testNewTypeCannotBeGeneric() {
+    doTestByText("""
+                 from typing import NewType
+                 
+                 A = NewType("A", list)
+                 a: A<warning>[</warning>int]
+                 """);
+  }
 }

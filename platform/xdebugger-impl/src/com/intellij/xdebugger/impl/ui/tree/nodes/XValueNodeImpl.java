@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.Document;
@@ -28,7 +28,9 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XRendererDecoratorPresentation;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,19 +42,18 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNode, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
+public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNodeEx, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
   public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
   private static final int MAX_NAME_LENGTH = 100;
 
-  @NlsSafe
-  private final String myName;
-  @Nullable
-  private String myRawValue;
+  private final @NlsSafe String myName;
+  private @Nullable String myRawValue;
   private XFullValueEvaluator myFullValueEvaluator;
   private final @NotNull List<@NotNull XDebuggerTreeNodeHyperlink> myAdditionalHyperLinks = new ArrayList<>();
   private boolean myChanged;
   private XValuePresentation myValuePresentation;
+  private @Nullable Icon myInlayIcon;
 
   //todo annotate 'name' with @NotNull
   public XValueNodeImpl(XDebuggerTree tree, @Nullable XDebuggerTreeNode parent, String name, @NotNull XValue value) {
@@ -105,6 +106,20 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     return XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowValuesInline();
   }
 
+  @ApiStatus.Internal
+  protected boolean isChanged() {
+    return myChanged;
+  }
+
+  public void setInlayIcon(@Nullable Icon icon) {
+    myInlayIcon = icon;
+  }
+
+  @Nullable
+  public Icon getInlayIcon() {
+    return myInlayIcon;
+  }
+
   private void updateInlineDebuggerData() {
     try {
       XDebugSession session = XDebugView.getSession(getTree());
@@ -153,7 +168,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   @Override
-  public void setFullValueEvaluator(@NotNull final XFullValueEvaluator fullValueEvaluator) {
+  public void setFullValueEvaluator(final @NotNull XFullValueEvaluator fullValueEvaluator) {
     invokeNodeUpdate(() -> {
       myFullValueEvaluator = fullValueEvaluator;
       fireNodeChanged();
@@ -162,6 +177,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   public void addAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link) {
     invokeNodeUpdate(() -> {
+      if (hasLinks()) {
+        return;
+      }
       myAdditionalHyperLinks.add(link);
       fireNodeChanged();
     });
@@ -173,6 +191,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     });
   }
 
+  public boolean hasLinks() {
+    return myFullValueEvaluator != null && myFullValueEvaluator.isEnabled() || !myAdditionalHyperLinks.isEmpty();
+  }
+
+  @Override
   public void clearFullValueEvaluator() {
     myFullValueEvaluator = null;
   }
@@ -183,7 +206,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     if (markers != null) {
       ValueMarkup markup = markers.getMarkup(getValueContainer());
       if (markup != null) {
-        myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+        XCustomizableTextRenderer renderer = createTextRenderer(myText, myValuePresentation);
+        SimpleTextAttributes attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor());
+        renderer.renderRaw("[" + markup.getText() + "] ", attributes);
       }
     }
     if (myValuePresentation.isShowName()) {
@@ -194,9 +219,24 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private void appendName() {
     if (!StringUtil.isEmpty(myName)) {
-      SimpleTextAttributes attributes = myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
-      XValuePresentationUtil.renderValue(myName, myText, attributes, MAX_NAME_LENGTH, null);
+      XCustomizableTextRenderer renderer = createTextRenderer(myText, myValuePresentation);
+      SimpleTextAttributes attributes = isChanged() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
+      XValuePresentationUtil.renderName(myName, MAX_NAME_LENGTH, s -> renderer.renderRaw(s, attributes));
     }
+  }
+
+  @Override
+  public @NotNull XValue getXValue() {
+    return getValueContainer();
+  }
+
+  private static @NotNull XCustomizableTextRenderer createTextRenderer(ColoredTextContainer text,
+                                                                       XValuePresentation valuePresentation) {
+    XCustomizableTextRenderer renderer = new XValueTextRendererImpl(text);
+    if (valuePresentation instanceof XRendererDecoratorPresentation decoratorPresentation) {
+      renderer = decoratorPresentation.decorate(renderer);
+    }
+    return renderer;
   }
 
   public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull ColoredTextContainer text) {
@@ -204,14 +244,18 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   public static void buildText(@NotNull XValuePresentation valuePresenter, @NotNull ColoredTextContainer text, boolean appendSeparator) {
+    XCustomizableTextRenderer renderer = createTextRenderer(text, valuePresenter);
     if (appendSeparator) {
-      XValuePresentationUtil.appendSeparator(text, valuePresenter.getSeparator());
+      String separator = valuePresenter.getSeparator();
+      if (StringUtil.isNotEmpty(separator)) {
+        renderer.renderRaw(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
     }
     String type = valuePresenter.getType();
     if (type != null) {
-      text.append("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
+      renderer.renderRaw("{" + type + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
-    valuePresenter.renderValue(new XValueTextRendererImpl(text));
+    valuePresenter.renderValue(renderer);
   }
 
   @Override
@@ -229,19 +273,16 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   /** always compute evaluate expression from the base value container to avoid recalculation for watches
    * @see WatchNodeImpl#getValueContainer()
    */
-  @NotNull
-  public final Promise<XExpression> calculateEvaluationExpression() {
+  public final @NotNull Promise<XExpression> calculateEvaluationExpression() {
     return myValueContainer.calculateEvaluationExpression();
   }
 
-  @Nullable
-  public XFullValueEvaluator getFullValueEvaluator() {
+  public @Nullable XFullValueEvaluator getFullValueEvaluator() {
     return myFullValueEvaluator;
   }
 
-  @Nullable
   @Override
-  public XDebuggerTreeNodeHyperlink getLink() {
+  public @Nullable XDebuggerTreeNodeHyperlink getLink() {
     if (myFullValueEvaluator != null && myFullValueEvaluator.isEnabled()) {
       return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText(), myFullValueEvaluator.getLinkAttributes()) {
         @Override
@@ -278,19 +319,16 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   @Override
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 
-  @Nullable
-  public XValuePresentation getValuePresentation() {
+  public @Nullable XValuePresentation getValuePresentation() {
     return myValuePresentation;
   }
 
   @Override
-  @Nullable
-  public String getRawValue() {
+  public @Nullable String getRawValue() {
     return myRawValue;
   }
 
@@ -315,9 +353,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     return getName();
   }
 
-  @Nullable
   @Override
-  public Object getIconTag() {
+  public @Nullable Object getIconTag() {
     if (!getTree().getPinToTopManager().isEnabled()) {
         return null;
     }

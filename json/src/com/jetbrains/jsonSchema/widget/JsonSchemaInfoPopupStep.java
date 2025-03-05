@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.icons.AllIcons;
@@ -184,7 +184,7 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
         if (Objects.equals(VfsUtil.findRelativeFile(projectBaseDir, pattern.getPathParts()), virtualFile)
               || virtualFile.getUrl().equals(UserDefinedJsonSchemaConfiguration.Item.neutralizePath(pattern.getPath()))) {
           mappingForFile.patterns.remove(pattern);
-          if (mappingForFile.patterns.size() == 0 && mappingForFile.isApplicationDefined()) {
+          if (mappingForFile.patterns.isEmpty() && mappingForFile.isApplicationDefined()) {
             configuration.removeConfiguration(mappingForFile);
           }
           else {

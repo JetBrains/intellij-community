@@ -19,22 +19,15 @@ open class TestGradleBuildScriptBuilder(
   override fun apply(action: TestGradleBuildScriptBuilder.() -> Unit) = applyKt(action)
 
   fun withTask(name: String) = withTask(name, null)
-  fun withTask(name: String, type: String?) = withTask(name, type, null)
-  fun withTask(name: String, type: String?, dependsOn: String?) = withTask(name, type, dependsOn) {}
+  fun withTask(name: String, type: String?) = withTask(name, type) {}
   fun withTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = withTask(name, null, configure)
-  fun withTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit) = withTask(name, type, null, configure)
-  fun withTask(name: String, type: String?, dependsOn: String?, configure: ScriptTreeBuilder.() -> Unit) =
+  fun withTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit) =
     withPostfix {
       val arguments = listOfNotNull(
         argument(name),
         type?.let { argument(code(it)) },
       )
-      call("tasks.create", arguments) {
-        if (dependsOn != null) {
-          call("dependsOn", dependsOn)
-        }
-        configure()
-      }
+      call("tasks.create", arguments, configure)
     }
 
   fun registerTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = apply {

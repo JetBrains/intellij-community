@@ -6,15 +6,15 @@ import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.ThreadUtil
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.WaitFor
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.jetbrains.idea.maven.server.MavenServerConnectorImpl
-import java.io.File
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -100,14 +100,14 @@ class MavenServerManagerTest : MavenTestCase() {
   }
 
   fun testShouldDropConnectorForMultiplyDirs() = runBlocking {
-    val topDir = projectRoot.toNioPath().toFile()
-    val first = File(topDir, "first/.mvn")
-    val second = File(topDir, "second/.mvn")
-    assertTrue(first.mkdirs())
-    assertTrue(second.mkdirs())
-    val connectorFirst = MavenServerManager.getInstance().getConnector(project, first.absolutePath)
+    val topDir = projectRoot.toNioPath()
+    val first = topDir.resolve("first/.mvn")
+    val second = topDir.resolve("second/.mvn")
+    first.createDirectories()
+    second.createDirectories()
+    val connectorFirst = MavenServerManager.getInstance().getConnector(project, first.toCanonicalPath())
     ensureConnected(connectorFirst)
-    val connectorSecond = MavenServerManager.getInstance().getConnector(project, second.absolutePath)
+    val connectorSecond = MavenServerManager.getInstance().getConnector(project, second.toCanonicalPath())
     assertSame(connectorFirst, connectorSecond)
     MavenServerManager.getInstance().shutdownConnector(connectorFirst, true)
     assertEmpty(MavenServerManager.getInstance().getAllConnectors())

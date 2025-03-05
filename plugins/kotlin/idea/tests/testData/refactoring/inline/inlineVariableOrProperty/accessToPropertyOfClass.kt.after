@@ -5,8 +5,7 @@ class Foo(val i: Int) {
                 if ((1..2).find {
                         println(i)
                         true
-                    } != 0) {
-                }
+                    } != 0) { }
             }
         }
     }

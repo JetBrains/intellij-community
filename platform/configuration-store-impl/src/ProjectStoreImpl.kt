@@ -74,6 +74,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   final override fun getStorageScheme() = if (isDirectoryBased) StorageScheme.DIRECTORY_BASED else StorageScheme.DEFAULT
 
   final override val storageManager: StateStorageManagerImpl = ProjectStateStorageManager(project)
+  @Volatile
+  final override var isStoreInitialized: Boolean = false
+    private set
 
   private val isDirectoryBased: Boolean
     get() = dotIdea != null
@@ -93,10 +96,11 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   final override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
 
   final override fun setPath(path: Path) {
-    setPath(file = path, isRefreshVfsNeeded = true, template = null)
+    setPath(file = path, template = null)
   }
 
-  final override fun setPath(file: Path, isRefreshVfsNeeded: Boolean, template: Project?) {
+  final override fun setPath(file: Path, template: Project?) {
+    LOG.info("Project store initialization started for path: $file and template: $template")
     dirOrFile = file
 
     val storageManager = storageManager
@@ -122,7 +126,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
     }
     else {
-      val dotIdea = file.resolve(Project.DIRECTORY_STORE_FOLDER)
+      val dotIdea = ProjectCoreUtil.getProjectStoreDirectory(file)
       this.dotIdea = dotIdea
 
       // PROJECT_CONFIG_DIR must be the first macro
@@ -157,13 +161,19 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       projectIdManager.id = projectWorkspaceId
     }
 
-    if (isUnitTestMode) {
-      return
+    if (!isUnitTestMode) {
+      // IJPL-166131
+      val basePath = if (Registry.`is`("rdct.persist.project.settings", false)) {
+        PathManager.getOriginalConfigDir()
+      } else {
+        PathManager.getConfigDir()
+      }
+      val productWorkspaceFile = basePath.resolve("workspace/$projectWorkspaceId.xml")
+      macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
+      storageManager.setMacros(macros)
     }
-
-    val productWorkspaceFile = PathManager.getConfigDir().resolve("workspace/$projectWorkspaceId.xml")
-    macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
-    storageManager.setMacros(macros)
+    isStoreInitialized = true
+    LOG.info("Project store initialized with paths: $macros")
   }
 
   private fun loadProjectFromTemplate(defaultProject: Project) {
@@ -307,14 +317,13 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       return storageManager.expandMacro(PROJECT_FILE).fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
 
-    val projectDir = directoryStorePath!!
-    val storedName = JpsPathUtil.readProjectName(projectDir)
+    val storedName = JpsPathUtil.readProjectName(directoryStorePath!!)
     if (storedName != null) {
       lastSavedProjectName = storedName
       return storedName
     }
 
-    return JpsPathUtil.getDefaultProjectName(projectDir)
+    return NioFiles.getFileName(projectBasePath)
   }
 
   private suspend fun saveProjectName() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,16 +30,16 @@ import java.util.*;
 public final class CompactVirtualFileSet extends AbstractSet<VirtualFile> implements VirtualFileSetEx {
   /** Max weirdFiles.size to convert storage to {@link IntSetStorage} */
   @VisibleForTesting
-  static final int INT_SET_LIMIT = 10;
+  public static final int INT_SET_LIMIT = 10;
   /**
    * Max storage.size to convert {@link IntSetStorage} impl to either {@link IdBitSetStorage} or {@link PartitionedBitSetStorage}
    * (depending on ids range)
    */
   @VisibleForTesting
-  static final int BIT_SET_LIMIT = 1000;
+  public static final int BIT_SET_LIMIT = 1000;
   /** max fileId range covered by {@link IdBitSetStorage}, to convert it to {@link PartitionedBitSetStorage} */
   @VisibleForTesting
-  static final int PARTITION_BIT_SET_LIMIT = 20000;
+  public static final int PARTITION_BIT_SET_LIMIT = 20000;
   /**
    * If {@link IdBitSetStorage} covers id range more than PARTITION_BIT_SET_LIMIT, and less than this % of {@link IdBitSetStorage}
    * bits are set -> convert it to {@link PartitionedBitSetStorage}

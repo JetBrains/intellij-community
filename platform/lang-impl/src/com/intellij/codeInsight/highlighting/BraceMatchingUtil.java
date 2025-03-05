@@ -66,7 +66,7 @@ public final class BraceMatchingUtil {
    * @param offset offset we are computing for. Some implementations may need to compute this not only for caret position, but for other offsets, e.g. skipping spaces behind or ahead.
    * @return a context should be used or null if there is no matching braces at offset
    * @apiNote this method contains a logic for selecting braces in different complicated situations, like {@code (<caret>(} and so on.
-   * It does not looks forward/behind skipping spaces, like highlighting does.
+   * It does not look forward/behind skipping spaces, like highlighting does.
    */
   static @Nullable BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
                                                                                        @NotNull PsiFile file,

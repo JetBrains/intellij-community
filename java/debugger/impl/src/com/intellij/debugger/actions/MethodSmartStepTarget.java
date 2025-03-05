@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -25,8 +25,7 @@ public class MethodSmartStepTarget extends SmartStepTarget {
     myMethod = method;
   }
 
-  @NotNull
-  public PsiMethod getMethod() {
+  public @NotNull PsiMethod getMethod() {
     return myMethod;
   }
 
@@ -35,9 +34,8 @@ public class MethodSmartStepTarget extends SmartStepTarget {
     return myMethod.getIcon(0);
   }
 
-  @NotNull
   @Override
-  public String getPresentation() {
+  public @NotNull String getPresentation() {
     String label = getLabel();
     String formatted = PsiFormatUtil.formatMethod(
       myMethod,

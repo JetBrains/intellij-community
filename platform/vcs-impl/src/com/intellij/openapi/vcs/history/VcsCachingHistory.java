@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,10 +31,10 @@ import static com.intellij.openapi.vcs.impl.BackgroundableActionLock.getLock;
 
 @ApiStatus.Internal
 public final class VcsCachingHistory {
-  @NotNull private final Project myProject;
-  @NotNull private final VcsHistoryCache myVcsHistoryCache;
-  @NotNull private final VcsHistoryProvider myHistoryProvider;
-  @NotNull private final VcsType myType;
+  private final @NotNull Project myProject;
+  private final @NotNull VcsHistoryCache myVcsHistoryCache;
+  private final @NotNull VcsHistoryProvider myHistoryProvider;
+  private final @NotNull VcsType myType;
   private final DiffProvider myDiffProvider;
 
   private VcsCachingHistory(@NotNull AbstractVcs vcs,
@@ -107,22 +107,19 @@ public final class VcsCachingHistory {
     }
   }
 
-  @Nullable
-  private VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> getCacheableFactory() {
+  private @Nullable VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> getCacheableFactory() {
     if (!(myHistoryProvider instanceof VcsCacheableHistorySessionFactory)) return null;
     //noinspection unchecked
     return (VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myHistoryProvider;
   }
 
-  @NotNull
-  private VcsHistoryCache getHistoryCache() {
+  private @NotNull VcsHistoryCache getHistoryCache() {
     return myVcsHistoryCache;
   }
 
-  @NotNull
-  private VcsHistorySessionConsumer wrapPartnerToCachingPartner(@NotNull VcsKey vcsKey,
-                                                                @NotNull FilePath filePath,
-                                                                @NotNull VcsHistorySessionConsumer partner) {
+  private @NotNull VcsHistorySessionConsumer wrapPartnerToCachingPartner(@NotNull VcsKey vcsKey,
+                                                                         @NotNull FilePath filePath,
+                                                                         @NotNull VcsHistorySessionConsumer partner) {
     // this is what needs to be done to put computed file history in cache
     // we can not retrieve a session from a partner in any other way
     VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory = getCacheableFactory();
@@ -136,10 +133,9 @@ public final class VcsCachingHistory {
     return partner;
   }
 
-  @Nullable
-  private VcsAbstractHistorySession getSessionFromCacheWithLastRevisionCheck(@NotNull FilePath filePath,
-                                                                             @NotNull VcsKey vcsKey,
-                                                                             @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
+  private @Nullable VcsAbstractHistorySession getSessionFromCacheWithLastRevisionCheck(@NotNull FilePath filePath,
+                                                                                       @NotNull VcsKey vcsKey,
+                                                                                       @NotNull VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession> cacheableFactory) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText2(VcsBundle.message("file.history.checking.last.revision.process"));
@@ -254,18 +250,16 @@ public final class VcsCachingHistory {
     return false;
   }
 
-  @NotNull
-  public static BackgroundableActionLock getHistorySessionLock(@NotNull AbstractVcs vcs,
-                                                               @NotNull FilePath filePath,
-                                                               @Nullable VcsRevisionNumber startRevisionNumber) {
+  public static @NotNull BackgroundableActionLock getHistorySessionLock(@NotNull AbstractVcs vcs,
+                                                                        @NotNull FilePath filePath,
+                                                                        @Nullable VcsRevisionNumber startRevisionNumber) {
     return getHistoryLock(vcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, filePath, startRevisionNumber);
   }
 
-  @NotNull
-  public static BackgroundableActionLock getHistoryLock(@NotNull AbstractVcs vcs,
-                                                        @NotNull VcsBackgroundableActions actionKey,
-                                                        @NotNull FilePath filePath,
-                                                        @Nullable VcsRevisionNumber startRevisionNumber) {
+  public static @NotNull BackgroundableActionLock getHistoryLock(@NotNull AbstractVcs vcs,
+                                                                 @NotNull VcsBackgroundableActions actionKey,
+                                                                 @NotNull FilePath filePath,
+                                                                 @Nullable VcsRevisionNumber startRevisionNumber) {
     if (startRevisionNumber != null) {
       return getLock(vcs.getProject(), actionKey, filePath.getPath(), startRevisionNumber.asString());
     }
@@ -273,9 +267,9 @@ public final class VcsCachingHistory {
   }
 
   private static final class CollectingHistoryPartner implements VcsHistorySessionConsumer {
-    @NotNull private final Project myProject;
-    @NotNull private final Consumer<? super VcsHistorySession> myContinuation;
-    @NotNull private final LimitHistoryCheck myCheck;
+    private final @NotNull Project myProject;
+    private final @NotNull Consumer<? super VcsHistorySession> myContinuation;
+    private final @NotNull LimitHistoryCheck myCheck;
 
     private VcsAbstractHistorySession mySession;
 
@@ -314,8 +308,8 @@ public final class VcsCachingHistory {
   }
 
   private static final class HistoryPartnerProxy implements VcsHistorySessionConsumer {
-    @NotNull private final VcsHistorySessionConsumer myPartner;
-    @NotNull private final Consumer<? super VcsAbstractHistorySession> myFinish;
+    private final @NotNull VcsHistorySessionConsumer myPartner;
+    private final @NotNull Consumer<? super VcsAbstractHistorySession> myFinish;
     private VcsAbstractHistorySession myCopy;
 
     private HistoryPartnerProxy(@NotNull VcsHistorySessionConsumer partner, @NotNull Consumer<? super VcsAbstractHistorySession> finish) {

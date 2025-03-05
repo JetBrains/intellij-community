@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
@@ -50,12 +50,12 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public class BreakpointsDialog extends DialogWrapper {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   private final Object myInitialBreakpoint;
   private final List<BreakpointPanelProvider<?>> myBreakpointsPanelProviders;
@@ -117,9 +117,8 @@ public class BreakpointsDialog extends DialogWrapper {
     return getDimensionServiceKey() + ".splitter";
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new BorderLayout());
 
     JBSplitter splitPane = new JBSplitter(0.3f);
@@ -192,9 +191,8 @@ public class BreakpointsDialog extends DialogWrapper {
     selectBreakpoint(myInitialBreakpoint, false);
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return getClass().getName();
   }
 
@@ -359,9 +357,8 @@ public class BreakpointsDialog extends DialogWrapper {
     myTreeController.getSelectedBreakpoints(false).stream().findFirst().ifPresent(b -> b.navigate(requestFocus));
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myTreeController.getTreeView();
   }
 
@@ -412,9 +409,8 @@ public class BreakpointsDialog extends DialogWrapper {
     myBreakpointItems.forEach(BreakpointItem::dispose);
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "reference.dialogs.breakpoints";
   }
 

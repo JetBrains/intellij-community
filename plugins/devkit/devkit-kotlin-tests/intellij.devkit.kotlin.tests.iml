@@ -11,12 +11,22 @@
     <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.testFramework" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.i18n" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.themes" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.dom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.devkit" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
-    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.core" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.devkit" />
 </module>

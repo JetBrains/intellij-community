@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.refactoring;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -88,7 +87,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
     }
   }
 
-  public static void invoke(@NotNull final XPathVariable variable, Editor editor) {
+  public static void invoke(final @NotNull XPathVariable variable, Editor editor) {
 
     final String type = LanguageFindUsages.getType(variable);
     final Project project = variable.getProject();
@@ -104,7 +103,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
 
     final Collection<PsiReference> references =
       ReferencesSearch.search(variable, new LocalSearchScope(tag.getParentTag()), false).findAll();
-    if (references.size() == 0) {
+    if (references.isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           XPathBundle.message("dialog.message.never.used", StringUtil.capitalize(type),variable.getName()),
                                           XPathBundle.message("dialog.title.xslt.inline"), null);
@@ -146,7 +145,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
       final TextAttributes textAttributes = EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes();
       final Color color = getScrollmarkColor(textAttributes);
       highlighter.addOccurrenceHighlight(e, range.getStartOffset(), range.getEndOffset(), textAttributes,
-                                         HighlightManagerImpl.HIDE_BY_ESCAPE, highlighters, color);
+                                         HighlightManager.HIDE_BY_ESCAPE, highlighters, color);
     }
 
     highlighter.addOccurrenceHighlights(e, new PsiElement[]{((XsltVariable)variable).getNameIdentifier()},
@@ -193,8 +192,7 @@ public final class VariableInlineHandler extends InlineActionHandler {
     });
   }
 
-  @Nullable
-  private static Color getScrollmarkColor(TextAttributes textAttributes) {
+  private static @Nullable Color getScrollmarkColor(TextAttributes textAttributes) {
     if (textAttributes.getErrorStripeColor() != null) {
       return textAttributes.getErrorStripeColor();
     } else if (textAttributes.getBackgroundColor() != null) {

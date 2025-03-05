@@ -14,6 +14,7 @@ import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -165,6 +166,10 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     val moduleEntity = diff.entities(ModuleEntity::class.java).firstOrNull { it.name == moduleName }
     if (moduleEntity == null) {
       throw IOException("Failed to load module from $filePath")
+    }
+
+    if (moduleEntity.entitySource is OrphanageWorkerEntitySource) {
+      throw IOException("The file only declares additional module components, but not the module itself: $filePath")
     }
 
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)!!

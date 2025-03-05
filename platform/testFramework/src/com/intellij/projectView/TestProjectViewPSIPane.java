@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView;
 
 import com.intellij.icons.AllIcons;
@@ -8,12 +8,14 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPaneWithAsyncSupport
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
-class TestProjectViewPSIPane extends AbstractProjectViewPaneWithAsyncSupport {
+@ApiStatus.Internal
+public final class TestProjectViewPSIPane extends AbstractProjectViewPaneWithAsyncSupport {
   private final TestProjectTreeStructure myTestTreeStructure;
   private final int myWeight;
 
@@ -23,9 +25,8 @@ class TestProjectViewPSIPane extends AbstractProjectViewPaneWithAsyncSupport {
     myWeight = weight;
   }
 
-  @NotNull
   @Override
-  public SelectInTarget createSelectInTarget() {
+  public @NotNull SelectInTarget createSelectInTarget() {
     return new SelectInTarget() {
       @Override
       public boolean canSelect(SelectInContext context) {
@@ -44,33 +45,28 @@ class TestProjectViewPSIPane extends AbstractProjectViewPaneWithAsyncSupport {
     };
   }
 
-  @NotNull
   @Override
-  protected ProjectAbstractTreeStructureBase createStructure() {
+  protected @NotNull ProjectAbstractTreeStructureBase createStructure() {
     return myTestTreeStructure;
   }
 
-  @NotNull
   @Override
-  protected ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
+  protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     return new MyProjectViewTree(treeModel);
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.General.ProjectTab;
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return "";
   }
 

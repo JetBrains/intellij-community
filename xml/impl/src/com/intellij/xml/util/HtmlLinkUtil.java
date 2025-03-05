@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -55,7 +55,7 @@ public final class HtmlLinkUtil {
             for (PsiElement element1 = rootTag; element1 != null; element1 = element1.getNextSibling()) {
               if (element1 instanceof XmlTag tag) {
                 String tagName = tag.getLocalName();
-                if (element1 instanceof HtmlTag || tag.getNamespacePrefix().length() > 0) tagName = StringUtil.toLowerCase(tagName);
+                if (element1 instanceof HtmlTag || !tag.getNamespacePrefix().isEmpty()) tagName = StringUtil.toLowerCase(tagName);
                 if (LINK.equalsIgnoreCase(tagName)) {
                   tagProcessor.process((XmlTag)element1);
                 }

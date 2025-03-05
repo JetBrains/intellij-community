@@ -140,6 +140,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
     return false;
   }
 
+  @Override
   public String toString() {
     if (myFQName != null) return myFQName;
     if (myCompactPackages) {
@@ -204,6 +205,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
     return 3;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()) {
       return super.equals(o);
@@ -218,6 +220,7 @@ public final class DirectoryNode extends PackageDependenciesNode {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return toString().hashCode();
   }

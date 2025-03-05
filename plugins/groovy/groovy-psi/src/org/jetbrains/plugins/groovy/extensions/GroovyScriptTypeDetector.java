@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,15 +20,13 @@ public abstract class GroovyScriptTypeDetector {
     myScriptType = scriptType;
   }
 
-  @NotNull
-  public final GroovyScriptType getScriptType() {
+  public final @NotNull GroovyScriptType getScriptType() {
     return myScriptType;
   }
 
   public abstract boolean isSpecificScriptFile(@NotNull GroovyFile script);
 
-  @Nullable
-  public static GroovyScriptType getScriptType(@NotNull GroovyFile file) {
+  public static @Nullable GroovyScriptType getScriptType(@NotNull GroovyFile file) {
     for (GroovyScriptTypeDetector detector : EP_NAME.getExtensions()) {
       if (detector.isSpecificScriptFile(file)) {
         return detector.getScriptType();
@@ -41,14 +39,12 @@ public abstract class GroovyScriptTypeDetector {
     return file.isScript() && getScriptType(file) != null;
   }
 
-  @NotNull
-  public static Icon getIcon(@NotNull GroovyFile file) {
+  public static @NotNull Icon getIcon(@NotNull GroovyFile file) {
     GroovyScriptType scriptType = getScriptType(file);
     return scriptType == null ? JetgroovyIcons.Groovy.GroovyFile : scriptType.getScriptIcon();
   }
 
-  @NotNull
-  public static GlobalSearchScope patchResolveScope(@NotNull GroovyFile script, @NotNull GlobalSearchScope scope) {
+  public static @NotNull GlobalSearchScope patchResolveScope(@NotNull GroovyFile script, @NotNull GlobalSearchScope scope) {
     GroovyScriptType scriptType = getScriptType(script);
     return scriptType == null ? scope : scriptType.patchResolveScope(script, scope);
   }

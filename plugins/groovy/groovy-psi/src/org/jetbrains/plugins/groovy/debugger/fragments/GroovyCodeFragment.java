@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.debugger.fragments;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,8 +61,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     if (myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
@@ -205,9 +204,8 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     myImportCollector.clear();
   }
 
-  @NotNull
   @Override
-  public GroovyFileImports getImports() {
+  public @NotNull GroovyFileImports getImports() {
     return myFileImports.getValue();
   }
 }

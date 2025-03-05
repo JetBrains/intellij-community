@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyle;
@@ -22,6 +22,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -36,8 +37,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
   protected FileType fileType;
   protected Language language;
 
-  @NotNull
-  protected CommonCodeStyleSettings getCommonSettings() {
+  protected @NotNull CommonCodeStyleSettings getCommonSettings() {
     return CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
   }
 
@@ -53,23 +53,19 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     return new StdArrangementRuleAliasToken(id, id, List.of(rules));
   }
 
-  @NotNull
-  protected static ArrangementGroupingRule group(@NotNull ArrangementSettingsToken type) {
+  protected static @NotNull ArrangementGroupingRule group(@NotNull ArrangementSettingsToken type) {
     return group(type, KEEP);
   }
 
-  @NotNull
-  protected static ArrangementGroupingRule group(@NotNull ArrangementSettingsToken type, @NotNull ArrangementSettingsToken order) {
+  protected static @NotNull ArrangementGroupingRule group(@NotNull ArrangementSettingsToken type, @NotNull ArrangementSettingsToken order) {
     return new ArrangementGroupingRule(type, order);
   }
 
-  @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull ArrangementSettingsToken token) {
+  protected static @NotNull StdArrangementMatchRule rule(@NotNull ArrangementSettingsToken token) {
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(atom(token)));
   }
 
-  @NotNull
-  protected static StdArrangementMatchRule nameRule(@NotNull String nameFilter, ArrangementSettingsToken @NotNull ... tokens) {
+  protected static @NotNull StdArrangementMatchRule nameRule(@NotNull String nameFilter, ArrangementSettingsToken @NotNull ... tokens) {
     if (tokens.length == 0) {
       return new StdArrangementMatchRule(new StdArrangementEntryMatcher(atom(nameFilter)));
     }
@@ -81,29 +77,24 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     }
   }
 
-  @NotNull
-  protected static StdArrangementMatchRule rule(ArrangementSettingsToken @NotNull ... conditions) {
+  protected static @NotNull StdArrangementMatchRule rule(ArrangementSettingsToken @NotNull ... conditions) {
     return rule(ContainerUtil.map(conditions, it -> atom(it)));
   }
 
-  @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull List<ArrangementAtomMatchCondition> conditions) {
+  protected static @NotNull StdArrangementMatchRule rule(@NotNull List<ArrangementAtomMatchCondition> conditions) {
     return rule(conditions.toArray(new ArrangementAtomMatchCondition[0]));
   }
 
-  @NotNull
-  protected static StdArrangementMatchRule rule(ArrangementAtomMatchCondition @NotNull ... conditions) {
+  protected static @NotNull StdArrangementMatchRule rule(ArrangementAtomMatchCondition @NotNull ... conditions) {
     ArrangementMatchCondition compositeCondition = ArrangementUtil.combine(conditions);
     return new StdArrangementMatchRule(new StdArrangementEntryMatcher(compositeCondition));
   }
 
-  @NotNull
-  protected static StdArrangementMatchRule ruleWithOrder(@NotNull ArrangementSettingsToken orderType, @NotNull StdArrangementMatchRule rule) {
+  protected static @NotNull StdArrangementMatchRule ruleWithOrder(@NotNull ArrangementSettingsToken orderType, @NotNull StdArrangementMatchRule rule) {
     return new StdArrangementMatchRule(rule.getMatcher(), orderType);
   }
 
-  @NotNull
-  protected static ArrangementAtomMatchCondition atom(@NotNull ArrangementSettingsToken token) {
+  protected static @NotNull ArrangementAtomMatchCondition atom(@NotNull ArrangementSettingsToken token) {
     return new ArrangementAtomMatchCondition(token);
   }
 
@@ -111,8 +102,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     return new ArrangementAtomMatchCondition(token, included);
   }
 
-  @NotNull
-  protected static ArrangementAtomMatchCondition atom(@NotNull String nameFilter) {
+  protected static @NotNull ArrangementAtomMatchCondition atom(@NotNull String nameFilter) {
     return new ArrangementAtomMatchCondition(StdArrangementTokens.Regexp.NAME, nameFilter);
   }
   
@@ -187,8 +177,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     }
   }
 
-  @NotNull
-  protected List<ArrangementSectionRule> getSectionRules(@Nullable List<?> rules) {
+  protected @NotNull @Unmodifiable List<ArrangementSectionRule> getSectionRules(@Nullable List<?> rules) {
     if (rules == null) {
       return ContainerUtil.emptyList();
     }
@@ -201,8 +190,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     return collection == null || collection.isEmpty();
   }
 
-  @NotNull
-  private static Info parse(@NotNull String text) {
+  private static @NotNull Info parse(@NotNull String text) {
     Info result = new Info();
     StringBuilder buffer = new StringBuilder(text);
 
@@ -239,8 +227,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
     return result;
   }
 
-  @NotNull
-  private static Map<String, String> parseAttributes(@NotNull String text) {
+  private static @NotNull Map<String, String> parseAttributes(@NotNull String text) {
     if (text.isEmpty()) return Collections.emptyMap();
     Matcher matcher = ATTRIBUTE_PATTERN.matcher(text);
     Map<String, String> result = new LinkedHashMap<>();

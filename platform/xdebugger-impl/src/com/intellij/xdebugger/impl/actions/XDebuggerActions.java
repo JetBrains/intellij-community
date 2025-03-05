@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -32,6 +32,7 @@ public interface XDebuggerActions {
   @NonNls String TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP = "XDebugger.ToolWindow.TopToolbar3.Extra";
   @NonNls String TOOL_WINDOW_LEFT_TOOLBAR_GROUP = "XDebugger.ToolWindow.LeftToolbar";
   @NonNls String EVALUATE_DIALOG_TREE_POPUP_GROUP = "XDebugger.Evaluation.Dialog.Tree.Popup";
+  @NonNls String INSPECT_TREE_POPUP_GROUP_FRONTEND = "XDebugger.Inspect.Tree.Popup.Frontend";
   @NonNls String INSPECT_TREE_POPUP_GROUP = "XDebugger.Inspect.Tree.Popup";
   @NonNls String VARIABLES_TREE_TOOLBAR_GROUP = "XDebugger.Variables.Tree.Toolbar";
   @NonNls String VARIABLES_TREE_POPUP_GROUP = "XDebugger.Variables.Tree.Popup";

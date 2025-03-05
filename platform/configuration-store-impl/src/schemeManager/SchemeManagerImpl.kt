@@ -15,8 +15,13 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.io.writeWithEnsureWritable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.openapi.vfs.VirtualFile
@@ -28,6 +33,8 @@ import com.intellij.util.*
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write
 import com.intellij.util.text.UniqueNameGenerator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jdom.Document
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -46,6 +53,7 @@ import kotlin.io.path.readBytes
 
 @ApiStatus.Internal
 class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
+  private val project: Project?,
   val fileSpec: String,
   processor: SchemeProcessor<T, MUTABLE_SCHEME>,
   private val provider: StreamProvider?,
@@ -55,6 +63,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
   private val fileChangeSubscriber: FileChangeSubscriber? = null,
   private val settingsCategory: SettingsCategory = SettingsCategory.OTHER,
+  cs: CoroutineScope? = null,
 ) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   private val isUpdateVfs: Boolean = fileChangeSubscriber != null
 
@@ -86,7 +95,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     if (isUpdateVfs) {
-      runCatching { refreshVirtualDirectory() }.getOrLogException(LOG)
+      cs!!.launch {  // tests should explicitly provide a scope when needed
+        runCatching { refreshVirtualDirectory() }.getOrLogException(LOG)
+      }
     }
   }
 
@@ -188,7 +199,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
           }
         }
         else -> {
-          val classLoader = if (requestor is ClassLoader) requestor else requestor!!.javaClass.classLoader
+          val classLoader = requestor as? ClassLoader ?: requestor!!.javaClass.classLoader
           bytes = ResourceUtil.getResourceAsBytes(resourceName.removePrefix("/"), classLoader)
           if (bytes == null) {
             LOG.error("Cannot read scheme from $resourceName")
@@ -280,7 +291,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun reload(retainFilter: ((scheme: T) -> Boolean)?) {
     processor.beforeReloaded(this)
-    // we must not remove non-persistent (e.g., predefined) schemes, because we cannot load it (obviously)
+    // we must not remove non-persistent (e.g., predefined) schemes, because we cannot load them
     // do not schedule the scheme file removing because we just need to update our runtime state, not state on disk
     removeExternalizableSchemesFromRuntimeState()
     processor.reloaded(this, loadSchemes())
@@ -326,13 +337,26 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
   override fun save() {
     val events = if (isUpdateVfs) mutableListOf<VFileEvent>() else Collections.emptyList()
-    saveImpl(events)
+    wrapWithIndicator(forceIndicator = application.isUnitTestMode) {
+      runBlockingCancellable {
+        saveImpl(events)
+      }
+    }
     if (events.isNotEmpty()) {
       RefreshQueue.getInstance().processEvents(false, events)
     }
   }
 
-  internal fun saveImpl(events: MutableList<VFileEvent>) {
+  private fun wrapWithIndicator(forceIndicator: Boolean, run: () -> Unit) {
+    if (forceIndicator) {
+      ProgressManager.getInstance().runProcess({ run() }, EmptyProgressIndicator())
+    }
+    else {
+      run()
+    }
+  }
+
+  internal suspend fun saveImpl(events: MutableList<VFileEvent>) {
     if (isLoadingSchemes.get()) {
       LOG.warn("Skip save - schemes are loading")
     }
@@ -361,16 +385,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     val filesToDelete = HashSet(filesToDelete)
-    for (scheme in changedSchemes) {
-      try {
-        saveScheme(scheme, nameGenerator, filesToDelete, events)
-      }
-      catch (e: CancellationException) { throw e }
-      catch (e: ProcessCanceledException) { throw e }
-      catch (e: Throwable) {
-        errorCollector.addError(RuntimeException("Cannot save scheme $fileSpec/$scheme", e))
-      }
-    }
+    writeWithEnsureWritable(project, changedSchemes,
+                            { scheme -> saveScheme(scheme, nameGenerator, filesToDelete, events) },
+                            { scheme, e -> errorCollector.addError(RuntimeException("Cannot save scheme $fileSpec/$scheme", e)) })
 
     if (filesToDelete.isNotEmpty()) {
       schemeListManager.data.schemeToInfo.values.removeIf { filesToDelete.contains(it.fileName) }
@@ -474,7 +491,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
                   nameGenerator.isUnique(currentFileNameWithoutExtension)
     if (providerPath == null) {
       if (renamed) {
-        externalInfo!!.scheduleDelete(filesToDelete, "renamed")
+        externalInfo.scheduleDelete(filesToDelete, "renamed")
       }
 
       var dir = if (isUpdateVfs) getVirtualDirectory() else null
@@ -501,7 +518,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
     else {
       if (renamed) {
-        externalInfo!!.scheduleDelete(filesToDelete, "renamed")
+        externalInfo.scheduleDelete(filesToDelete, "renamed")
       }
       provider!!.write(providerPath, byteOut.toByteArray(), roamingType)
     }

@@ -63,7 +63,9 @@ public enum LanguageLevel {
   JDK_22_PREVIEW(JavaPsiBundle.messagePointer("jdk.22.preview.language.level.description"), 22),
   JDK_23(JavaPsiBundle.messagePointer("jdk.23.language.level.description"), 23),
   JDK_23_PREVIEW(JavaPsiBundle.messagePointer("jdk.23.preview.language.level.description"), 23),
-  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 24),
+  JDK_24(JavaPsiBundle.messagePointer("jdk.24.language.level.description"), 24),
+  JDK_24_PREVIEW(JavaPsiBundle.messagePointer("jdk.24.preview.language.level.description"), 24),
+  JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 25),
   ;
 
   /**
@@ -140,9 +142,7 @@ public enum LanguageLevel {
     return Objects.requireNonNull(ourStandardVersions.get(myVersion.feature));
   }
 
-  @NotNull
-  @Nls
-  public String getPresentableText() {
+  public @NotNull @Nls String getPresentableText() {
     return myPresentableText.get();
   }
 
@@ -167,8 +167,7 @@ public enum LanguageLevel {
   /**
    * @return the {@link JavaVersion} object that corresponds to this language level 
    */
-  @NotNull
-  public JavaVersion toJavaVersion() {
+  public @NotNull JavaVersion toJavaVersion() {
     return myVersion;
   }
 
@@ -194,8 +193,7 @@ public enum LanguageLevel {
   }
 
   /** See {@link JavaVersion#parse(String)} for supported formats. */
-  @Nullable
-  public static LanguageLevel parse(@Nullable String compilerComplianceOption) {
+  public static @Nullable LanguageLevel parse(@Nullable String compilerComplianceOption) {
     if (compilerComplianceOption != null) {
       JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(compilerComplianceOption);
       if (sdkVersion != null) {

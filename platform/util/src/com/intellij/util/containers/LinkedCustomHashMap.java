@@ -1,16 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.containers.hash.EqualityPolicy;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.HashCommon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
 @SuppressWarnings("DuplicatedCode")
-final class LinkedCustomHashMap<K, V> {
+@ApiStatus.Internal
+public final class LinkedCustomHashMap<K, V> {
   private Entry<K, V>[] entries;
   private Entry<K, V> top;
   private Entry<K, V> back;
@@ -39,9 +41,10 @@ final class LinkedCustomHashMap<K, V> {
 
   private final EqualityPolicy<? super K> hashingStrategy;
 
-  @FunctionalInterface
-  interface RemoveCallback<K, V> {
-    boolean check(int size, Map.Entry<K, V> eldest, K key, V value);
+  @TestOnly
+  public LinkedCustomHashMap(@NotNull RemoveCallback<K, V> removeEldestEntry) {
+    //noinspection unchecked
+    this((EqualityPolicy<? super K>)EqualityPolicy.CANONICAL, removeEldestEntry);
   }
 
   @TestOnly
@@ -52,10 +55,10 @@ final class LinkedCustomHashMap<K, V> {
     });
   }
 
-  @TestOnly
-  LinkedCustomHashMap(@NotNull RemoveCallback<K, V> removeEldestEntry) {
-    //noinspection unchecked
-    this((EqualityPolicy<? super K>)EqualityPolicy.CANONICAL, removeEldestEntry);
+  @FunctionalInterface
+  @ApiStatus.Internal
+  public interface RemoveCallback<K, V> {
+    boolean check(int size, Map.Entry<K, V> eldest, K key, V value);
   }
 
   LinkedCustomHashMap(@NotNull EqualityPolicy<? super K> hashingStrategy, @NotNull RemoveCallback<K, V> removeEldestEntry) {

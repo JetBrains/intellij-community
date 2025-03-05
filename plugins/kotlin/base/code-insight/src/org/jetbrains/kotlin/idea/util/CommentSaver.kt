@@ -55,9 +55,6 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
         val nextSiblings: Sequence<TreeElement>
             get() = generateSequence({ next }, { it.next })
 
-        val parents: Sequence<TreeElement>
-            get() = generateSequence({ parent }, { it.parent })
-
         val parentsWithSelf: Sequence<TreeElement>
             get() = generateSequence(this) { it.parent }
 
@@ -92,9 +89,6 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
         val prevLeafs: Sequence<TreeElement>
             get() = generateSequence({ prevLeaf }, { it.prevLeaf })
 
-        val nextLeafs: Sequence<TreeElement>
-            get() = generateSequence({ nextLeaf }, { it.nextLeaf })
-
         fun withDescendants(leftToRight: Boolean): Sequence<TreeElement> {
             val children = if (leftToRight) children else reverseChildren
             return sequenceOf(this) + children.flatMap { it.withDescendants(leftToRight) }
@@ -105,8 +99,6 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
 
         val nextElements: Sequence<TreeElement>
             get() = nextSiblings.flatMap { it.withDescendants(leftToRight = true) }
-
-//        var debugText: String? = null
     }
 
     private class StandardTreeElement : TreeElement()
@@ -174,7 +166,6 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
         set(value) = putCopyableUserData(SAVED_TREE_KEY, value)
 
     private var isFinished = false
-        private set
 
     private fun deleteCommentsInside(element: PsiElement) {
         assert(!isFinished)
@@ -496,7 +487,7 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
     // don't put line break right before comma
     private fun shiftNewLineAnchor(putAfter: PsiElement): PsiElement {
         val next = putAfter.nextLeaf(nonSpaceAndNonEmptyFilter)
-        return if (next?.tokenType == KtTokens.COMMA) next!! else putAfter
+        return if (next?.tokenType == KtTokens.COMMA) next else putAfter
     }
 
     private val nonSpaceAndNonEmptyFilter = { element: PsiElement -> element !is PsiWhiteSpace && element.textLength > 0 }

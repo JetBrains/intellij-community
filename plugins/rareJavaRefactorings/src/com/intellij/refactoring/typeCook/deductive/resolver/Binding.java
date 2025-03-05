@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
 import com.intellij.psi.PsiType;
@@ -13,10 +13,10 @@ public abstract class Binding {
 
   abstract Binding compose(Binding b);
 
-  final static int BETTER = 0;
-  final static int WORSE = 1;
-  final static int SAME = 2;
-  final static int NONCOMPARABLE = 3;
+  static final int BETTER = 0;
+  static final int WORSE = 1;
+  static final int SAME = 2;
+  static final int NONCOMPARABLE = 3;
 
   abstract int compare(Binding b);
 

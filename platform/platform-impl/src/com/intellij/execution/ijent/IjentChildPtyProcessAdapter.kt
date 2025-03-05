@@ -28,7 +28,6 @@ class IjentChildPtyProcessAdapter(
   private val delegate = IjentChildProcessAdapterDelegate(
     coroutineScope,
     ijentChildProcess,
-    redirectStderr = false,  // There can't be the stderr in a PTY at all.
   )
 
   override fun toString(): String = "${javaClass.simpleName}($ijentChildProcess)"

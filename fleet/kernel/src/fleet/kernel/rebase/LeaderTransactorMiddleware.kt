@@ -3,11 +3,9 @@ package fleet.kernel.rebase
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
-import fleet.util.serialization.ISerialization
 import fleet.util.UID
 
 class LeaderTransactorMiddleware(
-  private val serialization: ISerialization,
   private val instructionEncoder: InstructionEncoder
 ) : TransactorMiddleware {
 
@@ -26,14 +24,11 @@ class LeaderTransactorMiddleware(
       }
     }
 
-    meta[SerializationKey] = serialization
-
     val sharedInstructions = ArrayList<SharedInstruction>()
     context.alter(
       context.impl
         .instructionsRecording(
           serContext = InstructionEncodingContext(
-            json = serialization,
             uidAttribute = uidAttribute(),
             encoder = instructionEncoder
           )

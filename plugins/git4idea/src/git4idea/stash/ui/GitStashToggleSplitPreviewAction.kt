@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.vcs.changes.shouldHaveSplitterDiffPreview
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.shouldHaveSplitterDiffPreview
 import git4idea.config.GitVcsApplicationSettings
 
 internal class GitStashToggleSplitPreviewAction : DumbAwareToggleAction() {

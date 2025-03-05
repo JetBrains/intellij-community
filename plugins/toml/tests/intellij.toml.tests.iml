@@ -9,7 +9,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.toml" />
+    <orderEntry type="module" module-name="intellij.toml.core" />
+    <orderEntry type="module" module-name="intellij.toml.json" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.tests" scope="TEST" />
   </component>
 </module>

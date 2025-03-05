@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.segments;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -11,8 +11,7 @@ import java.io.Reader;
 public final class PushReader {
   private final Reader mySource;
   private final IntList myReadAhead = new IntArrayList();
-  @NonNls
-  private static final String INTERNAL_ERROR_UNEXPECTED_END_OF_PIPE = "Unexpected end of pipe";
+  private static final @NonNls String INTERNAL_ERROR_UNEXPECTED_END_OF_PIPE = "Unexpected end of pipe";
 
   public PushReader(final Reader source) {
     mySource = source;
