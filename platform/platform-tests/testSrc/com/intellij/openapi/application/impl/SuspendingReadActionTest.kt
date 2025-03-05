@@ -10,19 +10,23 @@ import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 private const val REPETITIONS: Int = 100
 
 @ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 abstract class SuspendingReadActionTest : CancellableReadActionTests() {
+
 
   @RepeatedTest(REPETITIONS)
   fun context(): Unit = runWithImplicitBlockingContextEnabled {
@@ -424,6 +428,33 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       attempt = true
       waitForPendingWrite().up()
       testNoExceptions()
+    }
+  }
+
+  @Test
+  fun `pending read action do not cause thread starvation for default dispatcher`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    setCompensationTimeout(1.seconds)
+    val operationsCount = Runtime.getRuntime().availableProcessors() * 2
+    val writeActionMayFinish = Job(coroutineContext.job).asCompletableFuture()
+    val writeActionStarted = Job(coroutineContext.job)
+    launch {
+      writeAction {
+        writeActionStarted.complete()
+        writeActionMayFinish.join()
+      }
+    }
+    launch(Dispatchers.IO) {
+      delay(5.seconds)
+      withContext(Dispatchers.Default) {
+        writeActionMayFinish.complete(Unit)
+      }
+    }
+    repeat(operationsCount) { index ->
+      launch {
+        writeActionStarted.join()
+        ReadAction.run<Throwable> {
+        }
+      }
     }
   }
 }

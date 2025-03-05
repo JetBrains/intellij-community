@@ -964,7 +964,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   private fun getReadPermit(lock: RWMutexIdea): ReadPermit {
-    return runSuspend {
+    return acquireReadLockWithCompensation {
       lock.acquireReadPermit(false)
     }
   }
