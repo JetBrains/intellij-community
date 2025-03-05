@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.createDirectories
 import junit.framework.TestCase
@@ -10,7 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
-import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
@@ -271,7 +272,8 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     Registry.get("maven.server.debug").setValue(false)
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    val embedderWrapper = MavenServerManager.getInstance().createEmbedder(project, true, projectRoot.toNioPath().toString())
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+    val embedderWrapper = mavenEmbedderWrappers.getEmbedder(projectRoot.toNioPath())
     val embedder = embedderWrapper.getEmbedder()
     assertTrue("Embedder should be remote object: got class ${embedder.javaClass.name}", embedder.javaClass.name.contains("\$Proxy"))
     assertFalse(embedder.javaClass.isAssignableFrom(MisconfiguredPlexusDummyEmbedder::class.java))
