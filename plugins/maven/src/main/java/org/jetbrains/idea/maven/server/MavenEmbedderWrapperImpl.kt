@@ -12,6 +12,7 @@ import org.jetbrains.idea.maven.project.MavenInSpecificPath
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenEelUtil
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenUtil.getJdkForImporter
 import org.jetbrains.idea.maven.utils.MavenUtil.isCompatibleWith
@@ -23,9 +24,8 @@ internal class MavenEmbedderWrapperImpl(
   private val project: Project,
   private val alwaysOnline: Boolean,
   private val multiModuleProjectDirectory: String,
-  private val mavenServerManager: MavenServerManager,
+  private val myConnector: MavenServerConnector
 ) : MavenEmbedderWrapper(project) {
-  private var myConnector: MavenServerConnector? = null
 
   val createMutex = Mutex()
 
@@ -52,8 +52,7 @@ internal class MavenEmbedderWrapperImpl(
     val forceResolveDependenciesSequentially = Registry.Companion.`is`("maven.server.force.resolve.dependencies.sequentially")
     val useCustomDependenciesResolver = Registry.Companion.`is`("maven.server.use.custom.dependencies.resolver")
 
-    myConnector = mavenServerManager.getConnector(project, multiModuleProjectDirectory)
-    return myConnector!!.createEmbedder(MavenEmbedderSettings(
+    return myConnector.createEmbedder(MavenEmbedderSettings(
       settings,
       transformer.toRemotePath(multiModuleProjectDirectory),
       forceResolveDependenciesSequentially,
@@ -102,14 +101,12 @@ internal class MavenEmbedderWrapperImpl(
 
   override fun isCompatibleWith(project: Project, multiModuleDirectory: String): Boolean {
     val jdk = getJdkForImporter(project)
-    return myConnector?.isCompatibleWith(project, jdk, multiModuleDirectory) ?: true
+    return myConnector.isCompatibleWith(project, jdk, multiModuleDirectory)
   }
 
   @Synchronized
   override fun cleanup() {
+    MavenLog.LOG.debug("[connector] cleaning up $this")
     super.cleanup()
-    if (myConnector != null) {
-      mavenServerManager.shutdownConnector(myConnector!!, false)
-    }
   }
 }

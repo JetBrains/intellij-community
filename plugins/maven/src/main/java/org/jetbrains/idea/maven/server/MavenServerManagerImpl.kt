@@ -316,7 +316,8 @@ internal class MavenServerManagerImpl : MavenServerManager {
     alwaysOnline: Boolean,
     multiModuleProjectDirectory: String,
   ): MavenEmbedderWrapper {
-    return MavenEmbedderWrapperImpl(project, alwaysOnline, multiModuleProjectDirectory, this)
+    val connector = getConnectorBlocking(project, multiModuleProjectDirectory)
+    return MavenEmbedderWrapperImpl(project, alwaysOnline, multiModuleProjectDirectory, connector)
   }
 
   override fun createIndexer(): MavenIndexerWrapper {
