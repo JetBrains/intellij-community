@@ -13,6 +13,7 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebu
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.EventDispatcher
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XSourcePosition
@@ -37,6 +38,7 @@ internal class FrontendXDebuggerSession(
 ) : XDebugSessionProxy {
   private val cs = scope.childScope("Session ${sessionDto.id}")
   private val localEditorsProvider = sessionDto.editorsProviderDto.editorsProvider
+  private val eventsDispatcher = EventDispatcher.create(XDebugSessionListener::class.java)
   val id = sessionDto.id
   val evaluator: StateFlow<FrontendXDebuggerEvaluator?> =
     channelFlow {
@@ -99,6 +101,19 @@ internal class FrontendXDebuggerSession(
     get() = _sessionTab
 
   init {
+    cs.launch {
+      sessionDto.sessionEvents.toFlow().collect { event ->
+        when (event) {
+          is XDebuggerSessionEvent.BeforeSessionResume -> eventsDispatcher.multicaster.beforeSessionResume()
+          is XDebuggerSessionEvent.BreakpointsMuted -> eventsDispatcher.multicaster.breakpointsMuted(event.muted)
+          is XDebuggerSessionEvent.SessionPaused -> eventsDispatcher.multicaster.sessionPaused()
+          is XDebuggerSessionEvent.SessionResumed -> eventsDispatcher.multicaster.sessionResumed()
+          is XDebuggerSessionEvent.SessionStopped -> eventsDispatcher.multicaster.sessionStopped()
+          is XDebuggerSessionEvent.SettingsChanged -> eventsDispatcher.multicaster.settingsChanged()
+          is XDebuggerSessionEvent.StackFrameChanged -> eventsDispatcher.multicaster.stackFrameChanged()
+        }
+      }
+    }
     cs.launch {
       XDebugSessionApi.getInstance().sessionTabInfo(id).collectLatest { tabDto ->
         if (tabDto == null) return@collectLatest
@@ -190,7 +205,7 @@ internal class FrontendXDebuggerSession(
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {
-    TODO("Not yet implemented")
+    eventsDispatcher.addListener(listener, disposable)
   }
 
   override fun rebuildViews() {

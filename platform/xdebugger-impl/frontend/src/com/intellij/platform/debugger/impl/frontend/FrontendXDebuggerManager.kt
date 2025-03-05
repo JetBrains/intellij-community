@@ -9,7 +9,7 @@ import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.rpc.XDebugSessionDto
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
-import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
+import com.intellij.xdebugger.impl.rpc.XDebuggerManagerSessionEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -45,13 +45,13 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
       })
       eventFlow.toFlow().collect { event ->
         when (event) {
-          is XDebuggerSessionEvent.ProcessStarted -> {
+          is XDebuggerManagerSessionEvent.ProcessStarted -> {
             project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).processStarted(event.sessionId, event.sessionDto)
           }
-          is XDebuggerSessionEvent.ProcessStopped -> {
+          is XDebuggerManagerSessionEvent.ProcessStopped -> {
             project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).processStopped(event.sessionId)
           }
-          is XDebuggerSessionEvent.CurrentSessionChanged -> {
+          is XDebuggerManagerSessionEvent.CurrentSessionChanged -> {
             project.messageBus.syncPublisher(FrontendXDebuggerManagerListener.TOPIC).activeSessionChanged(event.previousSession, event.currentSession)
           }
         }

@@ -31,20 +31,45 @@ interface XDebuggerManagerApi : RemoteApi<Unit> {
 
 @ApiStatus.Internal
 @Serializable
+sealed interface XDebuggerManagerSessionEvent {
+  @Serializable
+  data class ProcessStarted(val sessionId: XDebugSessionId, val sessionDto: XDebugSessionDto) : XDebuggerManagerSessionEvent
+
+  @Serializable
+  data class ProcessStopped(val sessionId: XDebugSessionId) : XDebuggerManagerSessionEvent
+
+  @Serializable
+  data class CurrentSessionChanged(val previousSession: XDebugSessionId?, val currentSession: XDebugSessionId?) : XDebuggerManagerSessionEvent
+}
+
+@ApiStatus.Internal
+@Serializable
 sealed interface XDebuggerSessionEvent {
   @Serializable
-  data class ProcessStarted(val sessionId: XDebugSessionId, val sessionDto: XDebugSessionDto) : XDebuggerSessionEvent
+  class SessionPaused() : XDebuggerSessionEvent
 
   @Serializable
-  data class ProcessStopped(val sessionId: XDebugSessionId) : XDebuggerSessionEvent
+  class SessionResumed() : XDebuggerSessionEvent
 
   @Serializable
-  data class CurrentSessionChanged(val previousSession: XDebugSessionId?, val currentSession: XDebugSessionId?) : XDebuggerSessionEvent
+  class SessionStopped() : XDebuggerSessionEvent
+
+  @Serializable
+  class StackFrameChanged() : XDebuggerSessionEvent
+
+  @Serializable
+  class BeforeSessionResume() : XDebuggerSessionEvent
+
+  @Serializable
+  class SettingsChanged() : XDebuggerSessionEvent
+
+  @Serializable
+  class BreakpointsMuted(val muted: Boolean) : XDebuggerSessionEvent
 }
 
 @ApiStatus.Internal
 @Serializable
 data class XDebugSessionsList(
   val list: List<XDebugSessionDto>,
-  val eventFlow: RpcFlow<XDebuggerSessionEvent>,
+  val eventFlow: RpcFlow<XDebuggerManagerSessionEvent>,
 )

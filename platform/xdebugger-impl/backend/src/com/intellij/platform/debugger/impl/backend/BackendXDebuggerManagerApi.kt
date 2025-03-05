@@ -2,30 +2,28 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
+import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
-import com.intellij.xdebugger.XDebugProcess
-import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.util.asDisposable
+import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
 import com.intellij.xdebugger.impl.rpc.*
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -40,7 +38,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   override suspend fun sessions(projectId: ProjectId): XDebugSessionsList {
     val project = projectId.findProject()
     val sessions = XDebuggerManager.getInstance(project).debugSessions.map { createSessionDto(it as XDebugSessionImpl, it.debugProcess) }
-    return XDebugSessionsList(sessions, sessionEvents(projectId).toRpc())
+    return XDebugSessionsList(sessions, createSessionManagerEvents(projectId).toRpc())
   }
 
   private suspend fun createSessionDto(currentSession: XDebugSessionImpl, debugProcess: XDebugProcess): XDebugSessionDto {
@@ -54,11 +52,46 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       XDebuggerEditorsProviderDto(fileTypeId, editorsProvider),
       initialSessionState,
       currentSession.sessionName,
+      createSessionEvents(currentSession).toRpc(),
     )
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun sessionEvents(projectId: ProjectId): Flow<XDebuggerSessionEvent> {
+  private fun createSessionEvents(currentSession: XDebugSessionImpl): Flow<XDebuggerSessionEvent> = channelFlow {
+    currentSession.addSessionListener(object : XDebugSessionListener {
+      override fun sessionPaused() {
+        trySend(XDebuggerSessionEvent.SessionPaused())
+      }
+
+      override fun sessionResumed() {
+        trySend(XDebuggerSessionEvent.SessionResumed())
+      }
+
+      override fun sessionStopped() {
+        trySend(XDebuggerSessionEvent.SessionStopped())
+      }
+
+      override fun beforeSessionResume() {
+        trySend(XDebuggerSessionEvent.BeforeSessionResume())
+      }
+
+      override fun stackFrameChanged() {
+        trySend(XDebuggerSessionEvent.StackFrameChanged())
+      }
+
+      override fun settingsChanged() {
+        trySend(XDebuggerSessionEvent.SettingsChanged())
+      }
+
+      override fun breakpointsMuted(muted: Boolean) {
+        trySend(XDebuggerSessionEvent.BreakpointsMuted(muted))
+      }
+    }, this.asDisposable())
+    awaitClose()
+  }.buffer(Channel.UNLIMITED)
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun createSessionManagerEvents(projectId: ProjectId): Flow<XDebuggerManagerSessionEvent> {
     val project = projectId.findProject()
     val dispatcher = Dispatchers.Default.limitedParallelism(1)
     return channelFlow {
@@ -67,7 +100,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
           val session = debugProcess.session as? XDebugSessionImpl ?: return
           launch(dispatcher) {
             val sessionDto = createSessionDto(session, debugProcess)
-            send(XDebuggerSessionEvent.ProcessStarted(sessionDto.id, sessionDto))
+            send(XDebuggerManagerSessionEvent.ProcessStarted(sessionDto.id, sessionDto))
           }
         }
 
@@ -75,7 +108,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
           val session = debugProcess.session as? XDebugSessionImpl ?: return
           launch(dispatcher) {
             val sessionId = session.id()
-            send(XDebuggerSessionEvent.ProcessStopped(sessionId))
+            send(XDebuggerManagerSessionEvent.ProcessStopped(sessionId))
           }
         }
 
@@ -85,7 +118,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
           launch(dispatcher) {
             val previousSessionId = previousSession.id()
             val currentSessionId = currentSession.id()
-            send(XDebuggerSessionEvent.CurrentSessionChanged(previousSessionId, currentSessionId))
+            send(XDebuggerManagerSessionEvent.CurrentSessionChanged(previousSessionId, currentSessionId))
           }
         }
       })
