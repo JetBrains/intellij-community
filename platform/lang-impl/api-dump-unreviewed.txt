@@ -179,7 +179,7 @@ f:com.intellij.analysis.problemsView.toolWindow.ProblemNode
 - getLine():I
 - getName():java.lang.String
 - getNavigatable():com.intellij.pom.Navigatable
-- f:getProblem():com.intellij.analysis.problemsView.Problem
+- getProblem():com.intellij.analysis.problemsView.Problem
 - getSeverity():I
 - getText():java.lang.String
 - getVirtualFile():com.intellij.openapi.vfs.VirtualFile
