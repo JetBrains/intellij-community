@@ -77,6 +77,12 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   public void clear() {
     myDirtyFiles.clear();
     ReadAction.run(() -> {
+      if (ApplicationManager.getApplication() == null) {
+        // If the application is already disposed (ApplicationManager.getApplication() == null)
+        // it means that this method is invoked via ShutDownTracker and the process will be shut down
+        // so we don't need to clear collectors.
+        return;
+      }
       processFilesInReadAction(info -> {
         return true;
       });
