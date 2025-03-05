@@ -291,8 +291,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Throwable exception = null;
     int retries = 1000;
     for (int i = 0; i < retries; i++) {
+      int oldDelay = settings.getAutoReparseDelay();
       try {
-        settings.forceUseZeroAutoReparseDelay(true);
+        settings.setAutoReparseDelay(0);
         List<HighlightInfo> infos = new ArrayList<>();
         EdtTestUtil.runInEdtAndWait(() -> {
           PsiFile file = filePointer.getElement();
@@ -335,7 +336,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         exception = e;
       }
       finally {
-        settings.forceUseZeroAutoReparseDelay(false);
+        settings.setAutoReparseDelay(oldDelay);
       }
     }
     ExceptionUtil.rethrow(exception);

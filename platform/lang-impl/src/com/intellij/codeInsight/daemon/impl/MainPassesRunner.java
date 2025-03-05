@@ -206,9 +206,10 @@ public final class MainPassesRunner {
     // repeat several times when accidental background activity cancels highlighting
     int retries = 100;
     for (int i = 0; i < retries; i++) {
+      int oldDelay = settings.getAutoReparseDelay();
       try {
         InspectionProfile currentProfile = myInspectionProfile;
-        settings.forceUseZeroAutoReparseDelay(true);
+        settings.setAutoReparseDelay(0);
         Function<InspectionProfile, InspectionProfileWrapper> profileProvider =
           p -> currentProfile == null
                ? new InspectionProfileWrapper((InspectionProfileImpl)p)
@@ -229,7 +230,7 @@ public final class MainPassesRunner {
         exception = e;
       }
       finally {
-        settings.forceUseZeroAutoReparseDelay(false);
+        settings.setAutoReparseDelay(oldDelay);
       }
     }
     if (exception != null) {
