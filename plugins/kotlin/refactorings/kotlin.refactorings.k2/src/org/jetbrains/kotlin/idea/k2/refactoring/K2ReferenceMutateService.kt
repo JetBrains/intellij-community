@@ -105,6 +105,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             this.replace(selectorExpression)
         } else if (receiverExpression is KtDotQualifiedExpression) {
             receiverExpression.removeRootPrefix()
+            this
         } else {
             this
         }
@@ -115,12 +116,13 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
      */
     private fun KtUserType.removeRootPrefix(): PsiElement {
         val qualifier = qualifier
-        return if (qualifier != null && qualifier.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) {
+
+        if (qualifier != null && qualifier.qualifier == null && qualifier.text == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) {
             deleteQualifier()
-            this
         } else {
-            qualifier?.removeRootPrefix() ?: this
+            qualifier?.removeRootPrefix()
         }
+        return this
     }
 
     /**
