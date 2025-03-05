@@ -63,6 +63,22 @@ class MultiRoutingFileSystemProviderTest {
       }
     }
 
+    @Test
+    fun newDirectoryStreamWithFilter() {
+      provider.newDirectoryStream(rootDirectory, { path ->
+        withClue(path.toString()) {
+          path.shouldBeInstanceOf<MultiRoutingFsPath>()
+        }
+        true
+      }).use { pathIter ->
+        for (path in pathIter) {
+          withClue(path.toString()) {
+            path.shouldBeInstanceOf<MultiRoutingFsPath>()
+          }
+        }
+      }
+    }
+
     @OptIn(ExperimentalPathApi::class)
     @Test
     fun readSymbolicLink(): Unit = CloseableList().use { closeables ->

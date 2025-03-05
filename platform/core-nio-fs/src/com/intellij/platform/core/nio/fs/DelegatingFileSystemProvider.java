@@ -176,10 +176,10 @@ public abstract class DelegatingFileSystemProvider<
       return null;
     }
     if (BasicFileAttributesHolder2.FetchAttributesFilter.isFetchAttributesFilter(originalFilter)) {
-      return (BasicFileAttributesHolder2.FetchAttributesFilter)p -> originalFilter.accept(fromDelegatePath(p));
+      return (BasicFileAttributesHolder2.FetchAttributesFilter)p -> originalFilter.accept(toDelegatePath(p));
     }
     else {
-      return p -> originalFilter.accept(fromDelegatePath(p));
+      return p -> originalFilter.accept(toDelegatePath(p));
     }
   }
 
