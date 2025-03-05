@@ -1,14 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 
-package com.intellij.platform.plugins.parser
+package com.intellij.platform.plugins.parser.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.plugins.parser.XmlReadUtils.getNullifiedAttributeValue
-import com.intellij.platform.plugins.parser.XmlReadUtils.getNullifiedContent
-import com.intellij.platform.plugins.parser.elements.*
-import com.intellij.platform.plugins.parser.elements.ActionElement.*
+import com.intellij.platform.plugins.parser.impl.XmlReadUtils.getNullifiedAttributeValue
+import com.intellij.platform.plugins.parser.impl.XmlReadUtils.getNullifiedContent
+import com.intellij.platform.plugins.parser.impl.elements.ActionElement.*
+import com.intellij.platform.plugins.parser.impl.elements.ClientKind
+import com.intellij.platform.plugins.parser.impl.elements.ComponentElement
+import com.intellij.platform.plugins.parser.impl.elements.ContentElement
+import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
+import com.intellij.platform.plugins.parser.impl.elements.DependsElement
+import com.intellij.platform.plugins.parser.impl.elements.ExtensionPointElement
+import com.intellij.platform.plugins.parser.impl.elements.ListenerElement
+import com.intellij.platform.plugins.parser.impl.elements.MiscExtensionElement
+import com.intellij.platform.plugins.parser.impl.elements.OS
+import com.intellij.platform.plugins.parser.impl.elements.PreloadMode
+import com.intellij.platform.plugins.parser.impl.elements.ServiceElement
 import com.intellij.util.Java11Shim
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
@@ -26,7 +36,7 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
-import com.intellij.platform.plugins.parser.elements.ModuleLoadingRule as LoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule as LoadingRule
 
 internal fun readModuleDescriptor(
   consumer: PluginDescriptorFromXmlStreamConsumer,

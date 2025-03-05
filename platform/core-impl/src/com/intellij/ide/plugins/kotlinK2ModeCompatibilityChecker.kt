@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.parser.isKotlinPlugin
+import com.intellij.platform.plugins.parser.impl.isKotlinPlugin
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 

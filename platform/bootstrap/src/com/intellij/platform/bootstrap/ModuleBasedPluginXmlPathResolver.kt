@@ -5,7 +5,11 @@ import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.toXIncludeLoader
-import com.intellij.platform.plugins.parser.*
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.XIncludeLoader
+import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import java.nio.file.Path

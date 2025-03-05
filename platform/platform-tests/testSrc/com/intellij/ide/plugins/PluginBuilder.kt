@@ -2,8 +2,12 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.plugins.parser.*
-import com.intellij.platform.plugins.parser.elements.OS
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.PluginXmlConst
+import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write

@@ -7,13 +7,18 @@ import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
-import com.intellij.platform.plugins.parser.ScopedElementsContainer
-import com.intellij.platform.plugins.parser.elements.*
-import com.intellij.platform.plugins.parser.elements.OS.*
-import com.intellij.platform.plugins.parser.elements.PreloadMode.*
+import com.intellij.platform.plugins.parser.impl.ScopedElementsContainer
+import com.intellij.platform.plugins.parser.impl.elements.ComponentElement
+import com.intellij.platform.plugins.parser.impl.elements.ExtensionPointElement
+import com.intellij.platform.plugins.parser.impl.elements.ListenerElement
+import com.intellij.platform.plugins.parser.impl.elements.OS
+import com.intellij.platform.plugins.parser.impl.elements.OS.*
+import com.intellij.platform.plugins.parser.impl.elements.PreloadMode
+import com.intellij.platform.plugins.parser.impl.elements.PreloadMode.*
+import com.intellij.platform.plugins.parser.impl.elements.ServiceElement
 import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.platform.plugins.parser.elements.ClientKind as ClientKindElement
+import com.intellij.platform.plugins.parser.impl.elements.ClientKind as ClientKindElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(
   services = services.map { it.convert() },

@@ -3,10 +3,10 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
-import com.intellij.platform.plugins.parser.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.ReadModuleContext
-import com.intellij.platform.plugins.parser.consume
-import com.intellij.platform.plugins.parser.elements.OS
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
+import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import java.nio.file.Path
 
