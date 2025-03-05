@@ -28,16 +28,6 @@ interface MavenServerManager : Disposable {
 
   fun getMavenEventListener(): File
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use {@link MavenServerManager#createEmbedder(Project, boolean, String)}",
-              ReplaceWith("createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)"))
-  fun createEmbedder(project: Project,
-                     alwaysOnline: Boolean,
-                     ignoredWorkingDirectory: String?,
-                     multiModuleProjectDirectory: String): MavenEmbedderWrapper {
-    return createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)
-  }
-
   @ApiStatus.Internal
   fun createEmbedder(project: Project,
                      alwaysOnline: Boolean,
