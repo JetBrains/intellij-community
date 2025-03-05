@@ -3,8 +3,9 @@ package fleet.util
 
 import fleet.util.multiplatform.Actual
 
+// todo: define client's os
 @Actual("getName")
-internal fun getNameWasm(): String = ""
+internal fun getNameWasm(): String = "mac"
 
 @Actual("getVersion")
 internal fun getVersionWasm(): String = ""
