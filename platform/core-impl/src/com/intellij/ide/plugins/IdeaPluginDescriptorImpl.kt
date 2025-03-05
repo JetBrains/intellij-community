@@ -5,6 +5,7 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
 import com.intellij.ide.plugins.ModuleLoadingRule.Companion.fromElementValue
+import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.convert
 import com.intellij.ide.plugins.parser.elements.*
@@ -176,12 +177,13 @@ class IdeaPluginDescriptorImpl(
   override fun getPluginPath(): Path = path
 
   internal fun createSub(
-    raw: RawPluginDescriptor,
+    subBuilder: PluginDescriptorBuilder,
     descriptorPath: String,
     context: DescriptorListLoadingContext,
     module: PluginContentDescriptor.ModuleItem?,
   ): IdeaPluginDescriptorImpl {
-    raw.builder.name = name
+    subBuilder.name = name
+    val raw = subBuilder.build()
     val result = IdeaPluginDescriptorImpl(raw, path, isBundled, id, module?.name, module?.loadingRule, useCoreClassLoader, !raw.isIndependentFromCoreClassLoader)
     context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
     result.descriptorPath = descriptorPath
@@ -299,7 +301,7 @@ class IdeaPluginDescriptorImpl(
       }
 
       var resolveError: Exception? = null
-      val raw: RawPluginDescriptor? = try {
+      val raw: PluginDescriptorBuilder? = try {
         pathResolver.resolvePath(context, dataLoader, configFile)
       }
       catch (e: IOException) {

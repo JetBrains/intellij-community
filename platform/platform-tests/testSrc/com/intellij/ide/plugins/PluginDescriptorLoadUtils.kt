@@ -18,15 +18,16 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     override fun toString() = throw UnsupportedOperationException()
   }
 
-  val raw = PluginDescriptorFromXmlStreamConsumer(object : ReadModuleContext {
+  val rawBuilder = PluginDescriptorFromXmlStreamConsumer(object : ReadModuleContext {
     override val interner = NoOpXmlInterner
   }, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(input, path.toString())
-    it.build()
+    it.getBuilder()
   }
   if (id != null) {
-    raw.builder.id = id.idString
+    rawBuilder.id = id.idString
   }
+  val raw = rawBuilder.build()
   val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = id, moduleName = null)
   initMainDescriptorByRaw(
     descriptor = result,

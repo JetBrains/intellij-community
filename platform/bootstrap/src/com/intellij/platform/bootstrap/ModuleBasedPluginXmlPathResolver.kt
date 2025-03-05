@@ -2,8 +2,8 @@
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
 import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.ReadModuleContext
 import com.intellij.ide.plugins.parser.consume
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
@@ -24,7 +24,7 @@ internal class ModuleBasedPluginXmlPathResolver(
     readContext: ReadModuleContext,
     dataLoader: DataLoader,
     path: String,
-  ): RawPluginDescriptor {
+  ): PluginDescriptorBuilder {
     // if there are multiple JARs,
     // it may happen that module descriptor is located in other JARs (e.g., in case of 'com.intellij.java.frontend' plugin),
     // so try loading it from the root of the corresponding module
@@ -34,10 +34,10 @@ internal class ModuleBasedPluginXmlPathResolver(
       val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
       val reader = PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader))
       reader.consume(input, path)
-      return reader.build()
+      return reader.getBuilder()
     }
     else if (RuntimeModuleId.module(moduleName) in optionalModuleIds) {
-      return RawPluginDescriptor().apply { builder.`package` = "unresolved.$moduleName" }
+      return PluginDescriptorBuilder.builder().apply { `package` = "unresolved.$moduleName" }
     }
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path)
   }
@@ -61,7 +61,7 @@ internal class ModuleBasedPluginXmlPathResolver(
     readContext: ReadModuleContext,
     dataLoader: DataLoader,
     relativePath: String,
-  ): RawPluginDescriptor? {
+  ): PluginDescriptorBuilder? {
     return fallbackResolver.resolvePath(
       readContext = readContext,
       dataLoader = dataLoader,

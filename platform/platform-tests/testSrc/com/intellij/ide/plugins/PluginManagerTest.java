@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer;
-import com.intellij.ide.plugins.parser.PluginXmlStreamConsumerKt;
-import com.intellij.ide.plugins.parser.RawPluginDescriptor;
-import com.intellij.ide.plugins.parser.ReadModuleContext;
+import com.intellij.ide.plugins.parser.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Ref;
@@ -304,9 +301,9 @@ public class PluginManagerTest {
       }
 
       @Override
-      public @NotNull RawPluginDescriptor resolvePath(@NotNull ReadModuleContext readContext,
-                                                      @NotNull DataLoader dataLoader,
-                                                      @NotNull String relativePath) {
+      public PluginDescriptorBuilder resolvePath(@NotNull ReadModuleContext readContext,
+                                                 @NotNull DataLoader dataLoader,
+                                                 @NotNull String relativePath) {
         for (var child : root.children) {
           if (child.name.equals("config-file-idea-plugin")) {
             var url = Objects.requireNonNull(child.getAttributeValue("url"));
@@ -314,7 +311,7 @@ public class PluginManagerTest {
               try {
                 var reader = new PluginDescriptorFromXmlStreamConsumer(readContext, PathResolverKt.toXIncludeLoader(this, dataLoader));
                 PluginXmlStreamConsumerKt.consume(reader, elementAsBytes(child), null);
-                return reader.build();
+                return reader.getBuilder();
               }
               catch (XMLStreamException e) {
                 throw new RuntimeException(e);
@@ -326,9 +323,9 @@ public class PluginManagerTest {
       }
 
       @Override
-      public @NotNull RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
-                                                                              @NotNull DataLoader dataLoader,
-                                                                              @NotNull String path) {
+      public @NotNull PluginDescriptorBuilder resolveModuleFile(@NotNull ReadModuleContext readContext,
+                                                                @NotNull DataLoader dataLoader,
+                                                                @NotNull String path) {
         if (autoGenerateModuleDescriptor.get() && path.startsWith("intellij.")) {
           var element = moduleMap.get(path);
           if (element != null) {

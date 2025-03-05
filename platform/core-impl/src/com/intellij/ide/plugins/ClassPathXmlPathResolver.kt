@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
 import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.ReadModuleContext
 import com.intellij.ide.plugins.parser.consume
 import com.intellij.openapi.diagnostic.debug
@@ -36,7 +36,7 @@ class ClassPathXmlPathResolver(
     return XIncludeLoader.LoadedXIncludeReference(input, dataLoader.toString())
   }
 
-  override fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String): RawPluginDescriptor {
+  override fun resolveModuleFile(readContext: ReadModuleContext, dataLoader: DataLoader, path: String): PluginDescriptorBuilder {
     val resource: ByteArray?
     if (classLoader is UrlClassLoader) {
       resource = classLoader.getResourceAsBytes(path, true)
@@ -45,7 +45,7 @@ class ClassPathXmlPathResolver(
       classLoader.getResourceAsStream(path)?.let {
         val reader = PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader))
         reader.consume(it, dataLoader.toString())
-        return reader.build()
+        return reader.getBuilder()
       }
       resource = null
     }
@@ -56,14 +56,16 @@ class ClassPathXmlPathResolver(
       when {
         isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve -> {
           log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
-          val descriptor = RawPluginDescriptor()
-          descriptor.builder.`package` = "unresolved.$moduleName"
-          return descriptor
+          return PluginDescriptorBuilder.builder().apply {
+            `package` = "unresolved.$moduleName"
+          }
         }
         ProductLoadingStrategy.strategy.isOptionalProductModule(moduleName) -> {
           // this check won't be needed when we are able to load optional modules directly from product-modules.xml
           log.debug { "Skip module '$path' since its descriptor cannot be found and it's optional" }
-          return RawPluginDescriptor().apply { builder.`package` = "unresolved.$moduleName" }
+          return PluginDescriptorBuilder.builder().apply {
+            `package` = "unresolved.$moduleName"
+          }
         }
         else -> {
           throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
@@ -73,16 +75,16 @@ class ClassPathXmlPathResolver(
 
     return PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
       it.consume(resource, dataLoader.toString())
-      it.build()
+      it.getBuilder()
     }
   }
 
-  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): RawPluginDescriptor? {
+  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
     val path = PluginXmlPathResolver.toLoadPath(relativePath)
     val reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null
     return PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
       it.consume(reader)
-      it.build()
+      it.getBuilder()
     }
   }
 

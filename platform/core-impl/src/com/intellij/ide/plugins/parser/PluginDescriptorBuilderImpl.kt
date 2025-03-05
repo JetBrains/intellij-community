@@ -115,4 +115,41 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   }
   override val dependencies: List<DependenciesElement>
     get() = _dependencies ?: Java11Shim.INSTANCE.listOf()
+
+  override fun build(): RawPluginDescriptor = RawPluginDescriptor(
+    id = id,
+    name = name,
+    description = description,
+    category = category,
+    changeNotes = changeNotes,
+    version = version,
+    sinceBuild = sinceBuild,
+    untilBuild = untilBuild,
+    `package` = `package`,
+    isSeparateJar = isSeparateJar,
+    url = url,
+    vendor = vendor,
+    vendorEmail = vendorEmail,
+    vendorUrl = vendorUrl,
+    resourceBundleBaseName = resourceBundleBaseName,
+    isUseIdeaClassLoader = isUseIdeaClassLoader,
+    isBundledUpdateAllowed = isBundledUpdateAllowed,
+    implementationDetail = implementationDetail,
+    isRestartRequired = isRestartRequired,
+    isLicenseOptional = isLicenseOptional,
+    isIndependentFromCoreClassLoader = isIndependentFromCoreClassLoader,
+    productCode = productCode,
+    releaseDate = releaseDate,
+    releaseVersion = releaseVersion,
+    pluginAliases = pluginAliases,
+    depends = depends,
+    actions = actions,
+    incompatibleWith = incompatibleWith,
+    appElementsContainer = appContainerBuilder.build(),
+    projectElementsContainer = projectContainerBuilder.build(),
+    moduleElementsContainer = moduleContainerBuilder.build(),
+    miscExtensions = miscExtensions,
+    contentModules = contentModules,
+    dependencies = dependencies,
+  )
 }

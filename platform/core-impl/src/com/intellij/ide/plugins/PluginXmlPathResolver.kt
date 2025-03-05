@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
 import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.ReadModuleContext
 import com.intellij.ide.plugins.parser.consume
 import com.intellij.openapi.diagnostic.Logger
@@ -77,12 +77,12 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     return null
   }
 
-  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): RawPluginDescriptor? {
+  override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): PluginDescriptorBuilder? {
     val path = toLoadPath(relativePath)
     dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
       return PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
         it.consume(input, null)
-        it.build()
+        it.getBuilder()
       }
     }
 
@@ -92,7 +92,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
         return fromJar.inputStream.let { input ->
           PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
             it.consume(input, null)
-            it.build()
+            it.getBuilder()
           }
         }
       }
@@ -109,22 +109,22 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
     readContext: ReadModuleContext,
     dataLoader: DataLoader,
     path: String,
-  ): RawPluginDescriptor {
+  ): PluginDescriptorBuilder {
     val input = dataLoader.load(path, pluginDescriptorSourceOnly = true)
     if (input == null) {
       if (path == "intellij.profiler.clion") {
-        val descriptor = RawPluginDescriptor()
-        descriptor.builder.`package` = "com.intellij.profiler.clion"
-        return descriptor
+        return PluginDescriptorBuilder.builder().apply {
+          `package` = "com.intellij.profiler.clion"
+        }
       }
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
     }
 
-    val descriptor = PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
+    val builder = PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
       it.consume(input, null)
-      it.build()
+      it.getBuilder()
     }
-    return descriptor
+    return builder
   }
 
   private fun findInJarFiles(

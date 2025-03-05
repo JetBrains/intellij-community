@@ -63,4 +63,10 @@ interface PluginDescriptorBuilder {
 
   fun addDependency(dependency: DependenciesElement)
   val dependencies: List<DependenciesElement>
+
+  fun build(): RawPluginDescriptor
+
+  companion object {
+    fun builder(): PluginDescriptorBuilder = PluginDescriptorBuilderImpl()
+  }
 }

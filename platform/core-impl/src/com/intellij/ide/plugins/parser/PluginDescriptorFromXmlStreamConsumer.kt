@@ -16,7 +16,7 @@ class PluginDescriptorFromXmlStreamConsumer private constructor(
     xIncludeLoader: XIncludeLoader?,
   ) : this(readContext, xIncludeLoader, null)
 
-  internal val raw = RawPluginDescriptor()
+  private val builder: PluginDescriptorBuilder = PluginDescriptorBuilderImpl()
   private val includeBaseStack = mutableListOf<String?>()
 
   init {
@@ -25,11 +25,13 @@ class PluginDescriptorFromXmlStreamConsumer private constructor(
     }
   }
 
-  fun build(): RawPluginDescriptor = raw
+  fun build(): RawPluginDescriptor = builder.build()
+
+  fun getBuilder(): PluginDescriptorBuilder = builder
 
   override fun consume(reader: XMLStreamReader2) {
     readModuleDescriptor(
-      builder = this,
+      consumer = this,
       reader = reader,
     )
   }
