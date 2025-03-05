@@ -34,11 +34,15 @@ import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenPlugin
-import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.project.MavenProject.ProcMode
-import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenServerSettings
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
+import org.jetbrains.idea.maven.utils.MavenEelUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -47,6 +51,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Supplier
+import kotlin.io.path.absolutePathString
 
 @ApiStatus.Internal
 object MavenImportUtil {
@@ -697,4 +702,44 @@ object MavenImportUtil {
     }
     return path.toString()
   }
+
+  internal fun convertSettings(
+    project: Project,
+    settingsOptional: MavenGeneralSettings?,
+    multiModuleProjectDirectory: String,
+  ): MavenServerSettings {
+    val settings = settingsOptional ?: MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings
+    val transformer = RemotePathTransformerFactory.createForProject(project)
+    val result = MavenServerSettings()
+    result.loggingLevel = settings!!.outputLevel.level
+    result.isOffline = settings.isWorkOffline
+    result.isUpdateSnapshots = settings.isAlwaysUpdateSnapshots
+    val mavenDistribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multiModuleProjectDirectory)
+
+    val remotePath = transformer.toRemotePath(mavenDistribution.mavenHome.toString())
+    result.mavenHomePath = remotePath
+
+    val userSettings = MavenEelUtil.getUserSettings(project, settings.userSettingsFile, settings.mavenConfig)
+    val userSettingsPath = userSettings.toAbsolutePath().toString()
+    result.userSettingsPath = transformer.toRemotePath(userSettingsPath)
+
+    val localRepository = MavenEelUtil.getLocalRepo(project,
+                                                    settings.localRepository,
+                                                    MavenInSpecificPath(mavenDistribution.mavenHome),
+                                                    settings.userSettingsFile,
+                                                    settings.mavenConfig)
+      .toAbsolutePath().toString()
+
+    result.localRepositoryPath = transformer.toRemotePath(localRepository)
+    val file = getGlobalConfigFromMavenConfig(settings) ?: MavenUtil.resolveGlobalSettingsFile(mavenDistribution.mavenHome)
+    result.globalSettingsPath = transformer.toRemotePath(file.absolutePathString())
+    return result
+  }
+
+  private fun getGlobalConfigFromMavenConfig(settings: MavenGeneralSettings): Path? {
+    val mavenConfig = settings.mavenConfig ?: return null
+    val filePath = mavenConfig.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS) ?: return null
+    return Path.of(filePath)
+  }
+
 }

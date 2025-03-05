@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenImportUtil.guessExistingEmbedderDir
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapperLegacyImpl
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil.getBaseDir
@@ -46,7 +47,7 @@ class MavenEmbeddersManager(private val project: Project) {
     var result = myPool[key]
     val alwaysOnline = false
 
-    if (result != null && !result.isCompatibleWith(project, multiModuleProjectDirectory)) {
+    if (result != null && result is MavenEmbedderWrapperLegacyImpl && !result.isCompatibleWith(project, multiModuleProjectDirectory)) {
       myPool.remove(key)
       myEmbeddersInUse.remove(result)
       result = null

@@ -315,7 +315,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     multiModuleProjectDirectory: String,
   ): MavenEmbedderWrapper {
     val connector = getConnector(project, multiModuleProjectDirectory)
-    return MavenEmbedderWrapperImpl(project, alwaysOnline, multiModuleProjectDirectory, connector)
+    return MavenEmbedderWrapperLegacyImpl(project, alwaysOnline, multiModuleProjectDirectory, connector)
   }
 
   override fun createIndexer(): MavenIndexerWrapper {
