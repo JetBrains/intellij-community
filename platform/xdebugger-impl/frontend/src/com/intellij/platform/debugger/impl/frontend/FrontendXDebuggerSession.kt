@@ -21,12 +21,15 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.XValueMarkers
+import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
 import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
 import com.intellij.xdebugger.ui.XDebugTabLayouter
+import com.jetbrains.rhizomedb.entity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.swing.event.HyperlinkListener
@@ -134,9 +137,7 @@ internal class FrontendXDebuggerSession(
                                 tabInfo.forceNewDebuggerUi, tabInfo.withFramesCustomization).apply {
           _sessionTab = this
           proxy.onTabInitialized(this)
-          if (tabInfo.shouldShowTab) {
-            showTab()
-          }
+          showTab()
           pausedFlow.toFlow().collectLatest { paused ->
             if (paused == null) return@collectLatest
             withContext(Dispatchers.EDT) {
@@ -151,18 +152,15 @@ internal class FrontendXDebuggerSession(
   // TODO all of the methods below
   // TODO pass in DTO?
   override val sessionName: String = sessionDto.sessionName
-  override val sessionData: XDebugSessionData
-    get() = TODO("Not yet implemented")
-  override val consoleView: ConsoleView?
-    get() = TODO("Not yet implemented")
+  override val sessionData: XDebugSessionData = createFeSessionData(sessionDto)
+  override val consoleView: ConsoleView? get() = null // TODO
   override val restartActions: List<AnAction>
     get() = emptyList() // TODO
   override val extraActions: List<AnAction>
     get() = emptyList() // TODO
   override val extraStopActions: List<AnAction>
     get() = emptyList() // TODO
-  override val processHandler: ProcessHandler
-    get() = TODO("Not yet implemented")
+  override val processHandler: ProcessHandler? get() = null // TODO
   override val coroutineScope: CoroutineScope
     get() = cs
   override val currentStateMessage: String
@@ -240,3 +238,7 @@ internal class FrontendXDebuggerSession(
     cs.cancel()
   }
 }
+
+// TODO pass breakpoints muted flow
+private fun FrontendXDebuggerSession.createFeSessionData(sessionDto: XDebugSessionDto): XDebugSessionData =
+  XDebugSessionData(project, sessionDto.sessionDataDto.configurationName)

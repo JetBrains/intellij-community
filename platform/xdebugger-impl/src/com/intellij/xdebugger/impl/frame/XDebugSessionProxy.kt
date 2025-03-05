@@ -39,7 +39,7 @@ interface XDebugSessionProxy {
   val restartActions: List<AnAction>
   val extraActions: List<AnAction>
   val extraStopActions: List<AnAction>
-  val processHandler: ProcessHandler
+  val processHandler: ProcessHandler?
   val coroutineScope: CoroutineScope
   val editorsProvider: XDebuggerEditorsProvider
   val valueMarkers: XValueMarkers<*, *>?

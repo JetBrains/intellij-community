@@ -65,6 +65,13 @@ data class XDebugSessionDto(
   val initialSessionState: XDebugSessionState,
   val sessionName: String,
   val sessionEvents: RpcFlow<XDebuggerSessionEvent>,
+  val sessionDataDto: XDebugSessionDataDto,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XDebugSessionDataDto(
+  val configurationName: String,
 )
 
 @ApiStatus.Internal
@@ -107,7 +114,6 @@ data class XDebuggerSessionTabInfo(
   val icon: Icon?,
   val forceNewDebuggerUi: Boolean,
   val withFramesCustomization: Boolean,
-  val shouldShowTab: Boolean,
   // TODO pass to frontend
   @Transient val contentToReuse: RunContentDescriptor? = null,
   @Transient val executionEnvironment: ExecutionEnvironment? = null,

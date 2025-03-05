@@ -401,20 +401,22 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     XDebugTabLayouter layouter = session.createTabLayouter();
-    Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
-    attachNotificationTo(consoleContent);
-
     layouter.registerAdditionalContent(myUi);
-    RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
+    if (myConsole != null) { // TODO should be non-null
+      Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
+      attachNotificationTo(consoleContent);
+
+      RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
+      consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
+    }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
-    consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     initToolbars(session);
 
-    if (myEnvironment != null) {
+    if (myEnvironment != null && myConsole != null) { // TODO should be non-null
       initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
     }
   }
