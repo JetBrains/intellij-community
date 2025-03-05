@@ -665,7 +665,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         return true;
       }
       final SuspendContextImpl currentSuspendContext = getContextManager().getContext().getSuspendContext();
-      if (currentSuspendContext == null) {
+      if (currentSuspendContext == null || currentSuspendContext.isResumed()) {
         return mySteppingThroughThread.get() == null;
       }
       if (enableBreakpointsDuringEvaluation()) {
