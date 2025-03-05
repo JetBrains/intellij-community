@@ -3,10 +3,8 @@ package com.intellij.coverage
 
 import com.intellij.rt.coverage.data.ProjectData
 import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
-@ApiStatus.Internal
 interface CoverageLoadListener {
 
   companion object {
@@ -50,13 +48,17 @@ sealed class LoadCoverageResult(val projectData: ProjectData?)
 
 class SuccessLoadCoverageResult(projectData: ProjectData) : LoadCoverageResult(projectData)
 
-class FailedLoadCoverageResult @JvmOverloads constructor(
+class FailedLoadCoverageResult(
   val reason: String,
-  val exception: Exception? = null,
-  projectData: ProjectData? = null
+  val exception: Exception?,
+  projectData: ProjectData?
 ): LoadCoverageResult(projectData) {
-  @JvmOverloads constructor(e: Exception, recordException: Boolean, projectData: ProjectData? = null):
+  constructor(reason: String, exception: Exception?): this(reason, exception, null)
+  constructor(reason: String): this(reason, null, null)
+
+  constructor(e: Exception, recordException: Boolean, projectData: ProjectData?):
     this(e.toReason(), if (recordException) e else null, projectData)
+  constructor(e: Exception, recordException: Boolean): this(e, recordException, null)
 }
 
-fun Exception.toReason(): String = message ?: javaClass.name
+private fun Exception.toReason(): String = message ?: javaClass.name
