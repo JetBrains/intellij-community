@@ -15,7 +15,10 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -96,14 +99,22 @@ public final class JavaMethodContractUtil {
     boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
     String mutates = StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES));
     String resultValue = StreamEx.of(contracts).joining("; ");
-    String attributes = createAttributesText(pure, resultValue, mutates);
+    String attributes = createAttributesText(resultValue, pure, mutates);
     if (attributes.isEmpty()) return null;
     return JavaPsiFacade.getElementFactory(annotation.getProject())
       .createAnnotationFromText("@" + annotation.getQualifiedName() + "(" + attributes + ")", annotation);
   }
 
-  @ApiStatus.Internal
-  public static @NotNull String createAttributesText(boolean pure, String contracts, String mutates) {
+  /**
+   * Creates a string representing attributes for a method's contract annotation based on provided parameters.
+   *
+   * @param contracts a string describing the method's contracts using the contract syntax
+   * @param pure indicates whether the method is pure (does not modify any state)
+   * @param mutates specifier which describes which method parameters can be mutated during the method cal, if pure is passed as true, this
+   *                argument is ignored.
+   * @return contract arguments as a string, for example <code>value = "null, _ -> false", pure = true</code>
+   */
+  public static @NotNull String createAttributesText(String contracts, boolean pure, String mutates) {
     @NonNls Map<String, String> attrMap = new LinkedHashMap<>();
     if (!contracts.isEmpty()) {
       attrMap.put("value", StringUtil.wrapWithDoubleQuote(contracts));
