@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
@@ -66,7 +67,9 @@ class MavenEmbeddersManager(private val project: Project) {
   }
 
   private fun createEmbedder(multiModuleProjectDirectory: String, alwaysOnline: Boolean): MavenEmbedderWrapper {
-    return MavenServerManager.getInstance().createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)
+    return runBlockingMaybeCancellable {
+      MavenServerManager.getInstance().createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)
+    }
   }
 
   @Synchronized

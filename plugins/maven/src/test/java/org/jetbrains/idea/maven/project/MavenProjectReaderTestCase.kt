@@ -4,6 +4,8 @@ package org.jetbrains.idea.maven.project
 import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenModel
@@ -44,16 +46,27 @@ abstract class MavenProjectReaderTestCase : MavenTestCase() {
 }
 
 internal class MavenEmbedderWrappersTestImpl(private val myProject: Project) : MavenEmbedderWrappers {
+  private val mutex = Mutex()
   private val myEmbedders = ConcurrentHashMap<Path, MavenEmbedderWrapper>()
 
-  override fun getAlwaysOnlineEmbedder(baseDir: String) = getEmbedder(Path.of(baseDir), true)
+  override suspend fun getAlwaysOnlineEmbedder(baseDir: String) = getEmbedder(Path.of(baseDir), true)
 
-  override fun getEmbedder(baseDir: Path) = getEmbedder(baseDir, false)
+  override suspend fun getEmbedder(baseDir: Path) = getEmbedder(baseDir, false)
 
-  private fun getEmbedder(baseDir: Path, alwaysOnline: Boolean): MavenEmbedderWrapper {
+  private suspend fun getEmbedder(baseDir: Path, alwaysOnline: Boolean): MavenEmbedderWrapper {
     val embedderDir = baseDir.toString()
-    return myEmbedders.computeIfAbsent(baseDir) {
-      MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, embedderDir)
+    val existing = myEmbedders[baseDir]
+    if (null != existing) {
+      return existing
+    }
+    mutex.withLock {
+      val existing = myEmbedders[baseDir]
+      if (null != existing) {
+        return existing
+      }
+      val newEmbedder = MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, embedderDir)
+      myEmbedders[baseDir] = newEmbedder
+      return newEmbedder
     }
   }
 

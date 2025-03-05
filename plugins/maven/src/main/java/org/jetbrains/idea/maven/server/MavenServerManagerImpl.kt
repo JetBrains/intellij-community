@@ -311,12 +311,12 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return eventListenerJar
   }
 
-  override fun createEmbedder(
+  override suspend fun createEmbedder(
     project: Project,
     alwaysOnline: Boolean,
     multiModuleProjectDirectory: String,
   ): MavenEmbedderWrapper {
-    val connector = getConnectorBlocking(project, multiModuleProjectDirectory)
+    val connector = getConnector(project, multiModuleProjectDirectory)
     return MavenEmbedderWrapperImpl(project, alwaysOnline, multiModuleProjectDirectory, connector)
   }
 

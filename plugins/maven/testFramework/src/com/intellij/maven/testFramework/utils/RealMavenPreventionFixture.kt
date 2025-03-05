@@ -68,7 +68,7 @@ class NoRealMavenServerManager : MavenServerManager {
     noRealMavenAllowed()
   }
 
-  override fun createEmbedder(project: Project, alwaysOnline: Boolean, multiModuleProjectDirectory: String): MavenEmbedderWrapper {
+  override suspend fun createEmbedder(project: Project, alwaysOnline: Boolean, multiModuleProjectDirectory: String): MavenEmbedderWrapper {
     noRealMavenAllowed()
   }
 
