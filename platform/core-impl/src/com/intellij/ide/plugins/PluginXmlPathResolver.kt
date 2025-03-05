@@ -80,7 +80,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
   override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String): RawPluginDescriptor? {
     val path = toLoadPath(relativePath)
     dataLoader.load(path, pluginDescriptorSourceOnly = false)?.let { input ->
-      return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this).let {
+      return PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
         it.consume(input, null)
         it.build()
       }
@@ -90,7 +90,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       val fromJar = findInJarFiles(dataLoader = dataLoader, relativePath = path, pool = pool)
       if (fromJar != null) {
         return fromJar.inputStream.let { input ->
-          PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this).let {
+          PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
             it.consume(input, null)
             it.build()
           }
@@ -120,7 +120,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
     }
 
-    val descriptor = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this).let {
+    val descriptor = PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader)).let {
       it.consume(input, null)
       it.build()
     }

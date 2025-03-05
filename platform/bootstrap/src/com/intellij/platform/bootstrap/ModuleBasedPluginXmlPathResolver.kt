@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
-import com.intellij.ide.plugins.DataLoader
-import com.intellij.ide.plugins.PathResolver
-import com.intellij.ide.plugins.PluginXmlPathResolver
-import com.intellij.ide.plugins.XIncludeLoader
+import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.ide.plugins.parser.RawPluginDescriptor
 import com.intellij.ide.plugins.parser.ReadModuleContext
@@ -35,7 +32,7 @@ internal class ModuleBasedPluginXmlPathResolver(
     val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
     if (moduleDescriptor != null) {
       val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
-      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this)
+      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader))
       reader.consume(input, path)
       return reader.build()
     }

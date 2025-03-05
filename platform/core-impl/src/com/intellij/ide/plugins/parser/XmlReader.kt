@@ -405,7 +405,6 @@ private fun readExtensionPoints(
       if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
         val partial = PluginDescriptorFromXmlStreamConsumer(
           builder.readContext,
-          builder.dataLoader,
           builder.xIncludeLoader,
           builder.includeBase,
         )
@@ -782,7 +781,7 @@ private fun readInclude(
   var readError: IOException? = null
   val loadedXInclude = try {
     val targetPath = PluginXmlPathResolver.toLoadPath(relativePath = path, baseDir = builder.includeBase)
-    xIncludeLoader.loadXIncludeReference(dataLoader = builder.dataLoader, path = targetPath)
+    xIncludeLoader.loadXIncludeReference(path = targetPath)
   }
   catch (e: IOException) {
     readError = e
@@ -807,11 +806,11 @@ private fun readInclude(
   }
 
   if (builder.readContext.isMissingIncludeIgnored) {
-    LOG.info("$path include ignored (dataLoader=${builder.dataLoader})", readError)
+    LOG.info("$path include ignored (loader=${builder.xIncludeLoader})", readError)
     return
   }
   else {
-    throw RuntimeException("Cannot resolve $path (dataLoader=${builder.dataLoader})", readError)
+    throw RuntimeException("Cannot resolve $path (loader=${builder.xIncludeLoader})", readError)
   }
 }
 

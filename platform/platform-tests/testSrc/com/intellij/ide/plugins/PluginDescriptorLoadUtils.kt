@@ -20,7 +20,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
 
   val raw = PluginDescriptorFromXmlStreamConsumer(object : ReadModuleContext {
     override val interner = NoOpXmlInterner
-  }, dataLoader, pathResolver).let {
+  }, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(input, path.toString())
     it.build()
   }
@@ -46,7 +46,7 @@ fun createFromDescriptor(path: Path,
                          context: DescriptorListLoadingContext,
                          pathResolver: PathResolver,
                          dataLoader: DataLoader): IdeaPluginDescriptorImpl {
-  val raw = PluginDescriptorFromXmlStreamConsumer(context, dataLoader, pathResolver).let {
+  val raw = PluginDescriptorFromXmlStreamConsumer(context, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(data, path.toString())
     it.build()
   }

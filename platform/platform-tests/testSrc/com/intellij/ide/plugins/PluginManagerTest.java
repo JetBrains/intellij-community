@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.plugins.parser.*;
+import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer;
+import com.intellij.ide.plugins.parser.PluginXmlStreamConsumerKt;
+import com.intellij.ide.plugins.parser.RawPluginDescriptor;
+import com.intellij.ide.plugins.parser.ReadModuleContext;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Ref;
@@ -296,7 +299,7 @@ public class PluginManagerTest {
       }
 
       @Override
-      public @Nullable LoadedXIncludeReference loadXIncludeReference(@NotNull DataLoader dataLoader, @NotNull String path) {
+      public @Nullable XIncludeLoader.LoadedXIncludeReference loadXIncludeReference(@NotNull DataLoader dataLoader, @NotNull String path) {
         throw new UnsupportedOperationException();
       }
 
@@ -309,7 +312,7 @@ public class PluginManagerTest {
             var url = Objects.requireNonNull(child.getAttributeValue("url"));
             if (url.endsWith("/" + relativePath)) {
               try {
-                var reader = new PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this);
+                var reader = new PluginDescriptorFromXmlStreamConsumer(readContext, PathResolverKt.toXIncludeLoader(this, dataLoader));
                 PluginXmlStreamConsumerKt.consume(reader, elementAsBytes(child), null);
                 return reader.build();
               }

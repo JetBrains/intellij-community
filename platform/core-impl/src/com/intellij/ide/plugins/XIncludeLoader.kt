@@ -9,7 +9,7 @@ interface XIncludeLoader {
   /**
    * @param path absolute path from a resource root, without leading '/' (e.g., `META-INF/extensions.xml`)
    */
-  fun loadXIncludeReference(dataLoader: DataLoader, path: String): LoadedXIncludeReference?
+  fun loadXIncludeReference(path: String): LoadedXIncludeReference?
 
   /** @param inputStream lifetime is bound to lifetime of [XIncludeLoader] that produced it  */
   @ApiStatus.Internal

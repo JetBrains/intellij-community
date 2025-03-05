@@ -340,10 +340,10 @@ fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor {
   return PluginDescriptorFromXmlStreamConsumer(readContext = object : ReadModuleContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
-  }, dataLoader = object : DataLoader {
+  }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER.toXIncludeLoader(object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
     override fun toString() = ""
-  }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER).let {
+  })).let {
     it.consume(input, null)
     it.build()
   }
