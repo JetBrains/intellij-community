@@ -286,7 +286,7 @@ public final class X11UiUtil {
       }
     }
 
-    private Long findProcessWindow(long window, long pid, int recursionLevel) {
+    private Long findProcessWindow(long window, long pid, int recursionLevel) throws InvocationTargetException, IllegalAccessException {
       if (recursionLevel > 100) {
         LOG.warn("Recursion level exceeded. Deep lying windows will be skipped");
         return null;
@@ -309,9 +309,11 @@ public final class X11UiUtil {
       return null;
     }
 
-    private static Boolean isViewableWin(long window) {
+    private static Boolean isViewableWin(long window) throws InvocationTargetException, IllegalAccessException {
+      assert X11 != null;
       XWindowAttributesWrapper wrapper = null;
       try {
+        X11.awtLock.invoke(null);
         wrapper = new XWindowAttributesWrapper(window);
         return wrapper.getMapState() == XWindowAttributesWrapper.MapState.IsViewable;
       }
@@ -320,6 +322,7 @@ public final class X11UiUtil {
         return false;
       }
       finally {
+        X11.awtUnlock.invoke(null);
         if (wrapper != null)
           wrapper.dispose();
       }
