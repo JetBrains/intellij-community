@@ -6,7 +6,7 @@ import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PluginDescriptorFromXmlStreamConsumer internal constructor(
+class PluginDescriptorFromXmlStreamConsumer private constructor(
   val readContext: ReadModuleContext,
   val xIncludeLoader: XIncludeLoader?,
   includeBase: String?,
@@ -43,5 +43,13 @@ class PluginDescriptorFromXmlStreamConsumer internal constructor(
 
   internal fun popIncludeBase() {
     includeBaseStack.removeLast()
+  }
+
+  companion object {
+    internal fun withIncludeBase(
+      readContext: ReadModuleContext,
+      xIncludeLoader: XIncludeLoader?,
+      includeBase: String?,
+    ): PluginDescriptorFromXmlStreamConsumer = PluginDescriptorFromXmlStreamConsumer(readContext, xIncludeLoader, includeBase)
   }
 }

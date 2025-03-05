@@ -403,7 +403,7 @@ private fun readExtensionPoints(
   reader.consumeChildElements { elementName ->
     if (elementName != PluginXmlConst.EXTENSION_POINT_ELEM) {
       if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
-        val partial = PluginDescriptorFromXmlStreamConsumer(
+        val partial = PluginDescriptorFromXmlStreamConsumer.withIncludeBase(
           builder.readContext,
           builder.xIncludeLoader,
           builder.includeBase,

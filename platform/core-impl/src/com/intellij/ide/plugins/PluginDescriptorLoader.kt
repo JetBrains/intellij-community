@@ -234,7 +234,7 @@ fun initMainDescriptorByRaw(
       }
     }
     else {
-      val subRaw = PluginDescriptorFromXmlStreamConsumer(context, null, null).let {
+      val subRaw = PluginDescriptorFromXmlStreamConsumer(context, null).let {
         it.consume(createXmlStreamReader(module.descriptorContent))
         it.build()
       }
@@ -774,7 +774,7 @@ private fun loadPluginDescriptor(
     }
     else {
       // TODO isn't pluginPathResolver missing here?
-      val subRaw = PluginDescriptorFromXmlStreamConsumer(context, null, null).let {
+      val subRaw = PluginDescriptorFromXmlStreamConsumer(context, null).let {
         it.consume(createXmlStreamReader(module.descriptorContent))
         it.build()
       }
@@ -856,7 +856,7 @@ private fun loadModuleFromSeparateJar(
   try {
     val input = resolver.loadZipEntry(subDescriptorFile) ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
     // product module is always fully resolved and do not contain `xi:include`
-    return PluginDescriptorFromXmlStreamConsumer(context, null, null).let {
+    return PluginDescriptorFromXmlStreamConsumer(context, null).let {
       it.consume(input, jarFile.toString())
       it.build()
     }
