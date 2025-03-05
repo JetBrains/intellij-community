@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
-import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.parser.PluginDescriptorBuilder
-import com.intellij.ide.plugins.parser.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.ide.plugins.parser.ReadModuleContext
-import com.intellij.ide.plugins.parser.XIncludeLoader
-import com.intellij.ide.plugins.parser.consume
+import com.intellij.ide.plugins.DataLoader
+import com.intellij.ide.plugins.PathResolver
+import com.intellij.ide.plugins.PluginXmlPathResolver
+import com.intellij.ide.plugins.parser.*
+import com.intellij.ide.plugins.toXIncludeLoader
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import java.nio.file.Path
