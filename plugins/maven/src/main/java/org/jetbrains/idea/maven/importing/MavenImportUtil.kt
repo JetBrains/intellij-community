@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
@@ -731,6 +732,13 @@ object MavenImportUtil {
     result.localRepositoryPath = transformer.toRemotePath(localRepository)
     val file = getGlobalConfigFromMavenConfig(settings) ?: MavenUtil.resolveGlobalSettingsFile(mavenDistribution.mavenHome)
     result.globalSettingsPath = transformer.toRemotePath(file.absolutePathString())
+
+    var sdkPath = MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).projectSdk)
+    if (sdkPath != null) {
+      sdkPath = transformer.toRemotePath(sdkPath)
+    }
+    result.projectJdk = sdkPath
+
     return result
   }
 
