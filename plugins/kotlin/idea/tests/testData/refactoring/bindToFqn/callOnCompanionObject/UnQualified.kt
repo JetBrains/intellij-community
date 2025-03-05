@@ -1,4 +1,5 @@
 // BIND_TO test.B
+// BIND_RESULT B
 package test
 
 class A {

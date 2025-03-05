@@ -1,5 +1,6 @@
 // FILE: foo/Main.kt
 // BIND_TO test.MyClass
+// BIND_RESULT test.MyClass()
 package foo
 
 val test: Int = 10

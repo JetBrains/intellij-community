@@ -44,5 +44,6 @@ abstract class AbstractK2BindToTest : KotlinMultiFileLightCodeInsightFixtureTest
 
     protected companion object {
         const val BIND_TO = "BIND_TO"
+        const val BIND_RESULT = "BIND_RESULT"
     }
 }
