@@ -226,7 +226,6 @@ elements:
         - element:
             name: elementWithNotIncludedAttribute
             # should not be rendered as the parent is not included in doc_provider
-            renderContexts: [sdk_docs]
             attributes:
               - attribute:
                   # should not be included in doc_provider

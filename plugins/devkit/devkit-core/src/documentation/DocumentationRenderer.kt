@@ -325,6 +325,7 @@ internal class DocumentationRenderer(private val project: Project) {
     else {
       for (child in element.children) {
         val childElement = child.element?.takeIf { !it.isWildcard() } ?: continue
+        if (!childElement.shouldBeRenderedIn(RenderContext.DOC_PROVIDER)) continue
         val linkText = childElement.name
         val linkPath = childElement.path.toPathString()
         val linkUrl = "$ELEMENT_DOC_LINK_PREFIX$linkPath"

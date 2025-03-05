@@ -42,7 +42,6 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<li><a href=\"psi_element://#element:root__deprecatedElement\"><code>&lt;deprecatedElement&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithDeprecatedAttribute\"><code>&lt;elementWithDeprecatedAttribute&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithCallouts\"><code>&lt;elementWithCallouts&gt;</code></a></li>" +
-      "<li><a href=\"psi_element://#element:root__elementNotIncludedInDocumentationProvider\"><code>&lt;elementNotIncludedInDocumentationProvider&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithNotIncludedAttribute\"><code>&lt;elementWithNotIncludedAttribute&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithChildrenDescription\"><code>&lt;elementWithChildrenDescription&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__internalElement\"><code>&lt;internalElement&gt;</code></a> <i>internal</i></li>" +
