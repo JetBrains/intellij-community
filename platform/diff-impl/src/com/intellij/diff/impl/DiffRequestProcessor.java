@@ -20,9 +20,9 @@ import com.intellij.diff.tools.external.ExternalDiffSettings;
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool;
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup;
 import com.intellij.diff.tools.external.ExternalDiffTool;
+import com.intellij.diff.tools.util.CrossFilePrevNextDifferenceIterableSupport;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextFileIterable;
-import com.intellij.diff.tools.util.CrossFilePrevNextDifferenceIterableSupport;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
@@ -81,7 +81,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
@@ -646,14 +645,10 @@ public abstract class DiffRequestProcessor
 
     ((ActionToolbarImpl)myToolbar).reset(); // do not leak previous DiffViewer via caches
     myToolbar.setTargetComponent(myContentPanel.getTargetComponent());
-    myToolbar.updateActionsImmediately();
-    recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
 
     if (myIsNewToolbar) {
       myRightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
       ((ActionToolbarImpl)myRightToolbar).reset();
-      myRightToolbar.updateActionsImmediately();
-      recursiveRegisterShortcutSet(myRightToolbarGroup, myMainPanel, null);
     }
   }
 
