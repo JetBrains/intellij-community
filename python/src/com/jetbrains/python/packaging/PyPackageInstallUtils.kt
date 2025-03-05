@@ -19,6 +19,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
@@ -48,6 +49,10 @@ object PyPackageInstallUtils {
   fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
     val packageManager = PythonPackageManager.forSdk(project, sdk)
     val normalizedName = normalizePackageName(packageName)
+    val isStdLib = PyStdlibUtil.getPackages()?.any { normalizePackageName(it) == normalizedName } == true
+    if (isStdLib) {
+      return true
+    }
     return packageManager.installedPackages.any { normalizePackageName(it.name) == normalizedName }
   }
 
