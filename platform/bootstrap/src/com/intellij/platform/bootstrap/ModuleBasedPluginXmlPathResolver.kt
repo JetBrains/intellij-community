@@ -36,7 +36,7 @@ internal class ModuleBasedPluginXmlPathResolver(
     val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
     if (moduleDescriptor != null) {
       val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
-      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto)
+      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto)
       reader.consume(input, path)
       return reader.build()
     }

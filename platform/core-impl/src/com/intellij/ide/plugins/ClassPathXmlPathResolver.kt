@@ -43,7 +43,7 @@ class ClassPathXmlPathResolver(
     }
     else {
       classLoader.getResourceAsStream(path)?.let {
-        val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto)
+        val reader = PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto)
         reader.consume(it, dataLoader.toString())
         return reader.build()
       }
@@ -71,7 +71,7 @@ class ClassPathXmlPathResolver(
       }
     }
 
-    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto).let {
+    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto).let {
       it.consume(resource, dataLoader.toString())
       it.build()
     }
@@ -80,7 +80,7 @@ class ClassPathXmlPathResolver(
   override fun resolvePath(readContext: ReadModuleContext, dataLoader: DataLoader, relativePath: String, readInto: RawPluginDescriptor?): RawPluginDescriptor? {
     val path = PluginXmlPathResolver.toLoadPath(relativePath)
     val reader = getXmlReader(classLoader = classLoader, path = path, dataLoader = dataLoader) ?: return null
-    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, null, readInto).let {
+    return PluginDescriptorFromXmlStreamConsumer(readContext, dataLoader, this, readInto).let {
       it.consume(reader)
       it.build()
     }

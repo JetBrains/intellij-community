@@ -343,7 +343,7 @@ fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor {
   }, dataLoader = object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
     override fun toString() = ""
-  }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, includeBase = null, readInto = null).let {
+  }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER).let {
     it.consume(input, null)
     it.build()
   }

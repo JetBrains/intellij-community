@@ -7,13 +7,20 @@ import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PluginDescriptorFromXmlStreamConsumer(
+class PluginDescriptorFromXmlStreamConsumer internal constructor(
   val readContext: ReadModuleContext,
   val dataLoader: DataLoader,
   val xIncludeLoader: XIncludeLoader?,
   includeBase: String?,
   readInto: RawPluginDescriptor? = null,
 ) : PluginXmlStreamConsumer {
+  constructor(
+    readContext: ReadModuleContext,
+    dataLoader: DataLoader,
+    xIncludeLoader: XIncludeLoader?,
+    readInto: RawPluginDescriptor? = null,
+  ) : this(readContext, dataLoader, xIncludeLoader, null, readInto)
+
   internal val raw = readInto ?: RawPluginDescriptor()
   private val includeBaseStack = mutableListOf<String?>()
 
