@@ -176,7 +176,7 @@ internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffS
     }
 
     val isRightToolbarPlace = e != null && e.place.endsWith(ActionPlaces.DIFF_RIGHT_TOOLBAR)
-    val isGutterPlace = !isRightToolbarPlace
+    val isGutterPlace = e != null && !isRightToolbarPlace
 
     val actions = mutableListOf<AnAction>()
     if (isRightToolbarPlace) {
