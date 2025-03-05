@@ -145,7 +145,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     DocumentUtil.isInsideCharacterPair(document, getStartOffset()) ? -1 : 0,
     DocumentUtil.isInsideCharacterPair(document, getEndOffset()) ? -1 : 0);
     if (alignedRange != toScalarRange()) {
-      myEditor.getFoldingModel().myComplexDocumentChange = true;
+      myEditor.getFoldingModel().setComplexDocumentChange(true);
     }
     setRange(alignedRange);
   }

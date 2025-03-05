@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.FoldingGroup
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
-import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
+import com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY
 import com.intellij.openapi.editor.impl.zombie.Zombie
 import com.intellij.util.concurrency.annotations.RequiresEdt
 

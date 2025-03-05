@@ -37,7 +37,7 @@ public final class CustomFoldRegionImpl extends FoldRegionImpl implements Custom
     int endOffset = intervalEnd();
     if (startOffset == DocumentUtil.getLineStartOffset(startOffset, document) &&
         endOffset == DocumentUtil.getLineEndOffset(endOffset, document)) {
-      myEditor.getFoldingModel().myAffectedCustomRegions.add(this);
+      myEditor.getFoldingModel().addAffectedCustomRegions(this);
     }
     else {
       invalidate();
@@ -91,7 +91,7 @@ public final class CustomFoldRegionImpl extends FoldRegionImpl implements Custom
   public void repaint() {
     if (isValid() && !myEditor.isDisposed()) {
       if (myEditor.getFoldingModel().isInBatchFoldingOperation()) {
-        myEditor.getFoldingModel().myRepaintRequested = true;
+        myEditor.getFoldingModel().setRepaintRequested(true);
       }
       else {
         JComponent component = myEditor.getContentComponent();

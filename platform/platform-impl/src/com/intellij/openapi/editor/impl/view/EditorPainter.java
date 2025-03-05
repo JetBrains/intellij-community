@@ -1631,7 +1631,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private static TextAttributes debugZombieFoldRegion(@NotNull FoldRegion region, @NotNull TextAttributes foldAttributes) {
-      if (Registry.is("cache.markup.debug") && region.getUserData(FoldingModelImpl.ZOMBIE_REGION_KEY) != null) {
+      if (Registry.is("cache.markup.debug") && region.getUserData(FoldingKeys.ZOMBIE_REGION_KEY) != null) {
         TextAttributes zombieAttr = foldAttributes.clone();
         zombieAttr.copyFrom(foldAttributes);
         zombieAttr.setEffectType(EffectType.STRIKEOUT);
