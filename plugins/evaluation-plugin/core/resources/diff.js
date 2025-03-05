@@ -399,39 +399,128 @@ function highlightLine(text) {
 }
 
 function renderDiff(originalText, suggestedText) {
-  const diffDiv = document.createElement("DIV");
+  const diffDiv = document.createElement('DIV');
+  diffDiv.style.display = 'flex';
+  diffDiv.style.flexDirection = 'column';
+  diffDiv.style.position = 'relative';
 
   const unifiedDiff = lineDiff().unifiedSlideDiff(originalText, suggestedText, 1);
 
-  unifiedDiff.forEach(line => {
-    const lineDiv = document.createElement("DIV");
-    lineDiv.style.display = "block ruby";
-    const text = highlightLine(line.content);
-    text.style.display = "inline";
-    lineDiv.appendChild(text);
+  let minChangedIndex = Infinity;
+  let maxChangedIndex = -Infinity;
+  unifiedDiff.forEach((line, index) => {
+    if (line.type !== 'unchanged') {
+      if (index < minChangedIndex) minChangedIndex = index;
+      if (index > maxChangedIndex) maxChangedIndex = index;
+    }
+  });
 
-    const oldLineNumberSpan = document.createElement("pre");
+  if (minChangedIndex === Infinity) {
+    minChangedIndex = 0;
+    maxChangedIndex = unifiedDiff.length - 1;
+  }
+
+  const INITIAL_CONTEXT = 10;
+  let topIndex = Math.max(0, minChangedIndex - INITIAL_CONTEXT);
+  let bottomIndex = Math.min(unifiedDiff.length, maxChangedIndex + INITIAL_CONTEXT + 1);
+
+  const UNFOLD_STEP = 50;
+
+  function renderVisibleLines() {
+    diffDiv.innerHTML = '';
+
+    diffDiv.appendChild(createUnfoldButton('top'));
+
+    for (let i = topIndex; i < bottomIndex; i++) {
+      diffDiv.appendChild(createLineElement(unifiedDiff[i]));
+    }
+
+    diffDiv.appendChild(createUnfoldButton('bottom'));
+  }
+
+  function createLineElement(line) {
+    const lineDiv = document.createElement('DIV');
+    lineDiv.style.display = 'block ruby';
+    const text = highlightLine(line.content);
+    text.style.display = 'inline';
+
+    const oldLineNumberSpan = document.createElement('pre');
     oldLineNumberSpan.textContent = line.oldLineNumber !== '' ? line.oldLineNumber : ' ';
     oldLineNumberSpan.style.width = '3.5em';
     oldLineNumberSpan.style.display = 'inline-block';
 
-    const newLineNumberSpan = document.createElement("pre");
+    const newLineNumberSpan = document.createElement('pre');
     newLineNumberSpan.textContent = line.newLineNumber !== '' ? line.newLineNumber : ' ';
     newLineNumberSpan.style.width = '3.5em';
     newLineNumberSpan.style.display = 'inline-block';
 
-    if (line.type === "added") {
-      lineDiv.style.color = "green";
-    } else if (line.type === "removed") {
-      lineDiv.style.color = "red";
+    if (line.type === 'added') {
+      lineDiv.style.color = 'green';
+    } else if (line.type === 'removed') {
+      lineDiv.style.color = 'red';
     } else {
-      lineDiv.style.color = "black";
+      lineDiv.style.color = 'black';
     }
 
-    lineDiv.prepend(newLineNumberSpan);
-    lineDiv.prepend(oldLineNumberSpan);
-    diffDiv.appendChild(lineDiv);
-  });
+    lineDiv.appendChild(oldLineNumberSpan);
+    lineDiv.appendChild(newLineNumberSpan);
+    lineDiv.appendChild(text);
+
+    return lineDiv;
+  }
+
+  function createUnfoldButton(position) {
+    const buttonWrapper = document.createElement('div');
+    buttonWrapper.style.textAlign = 'center';
+    buttonWrapper.style.margin = '5px 0';
+
+    if (position === 'top') {
+      if (topIndex > 0) {
+        const btn = document.createElement('button');
+        btn.innerText = 'Unfold 50 lines ↑';
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          const newTopIndex = Math.max(0, topIndex - UNFOLD_STEP);
+          if (newTopIndex === topIndex) {
+            btn.innerText = 'All lines are unfolded';
+            btn.disabled = true;
+          } else {
+            topIndex = newTopIndex;
+            renderVisibleLines();
+          }
+        });
+        buttonWrapper.appendChild(btn);
+      } else {
+        const label = document.createElement('span');
+        label.innerText = 'All lines are unfolded (top)';
+        buttonWrapper.appendChild(label);
+      }
+    } else {
+      if (bottomIndex < unifiedDiff.length) {
+        const btn = document.createElement('button');
+        btn.innerText = 'Unfold 50 lines ↓';
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          const newBottomIndex = Math.min(unifiedDiff.length, bottomIndex + UNFOLD_STEP);
+          if (newBottomIndex === bottomIndex) {
+            btn.innerText = 'All lines are unfolded';
+            btn.disabled = true;
+          } else {
+            bottomIndex = newBottomIndex;
+            renderVisibleLines();
+          }
+        });
+        buttonWrapper.appendChild(btn);
+      } else {
+        const label = document.createElement('span');
+        label.innerText = 'All lines are unfolded (bottom)';
+        buttonWrapper.appendChild(label);
+      }
+    }
+
+    return buttonWrapper;
+  }
+  renderVisibleLines();
 
   return diffDiv;
 }
