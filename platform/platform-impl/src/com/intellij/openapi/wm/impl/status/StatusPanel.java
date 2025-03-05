@@ -78,7 +78,10 @@ final class StatusPanel extends JPanel {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (myCurrentNotification != null || myAfterClick) {
-          ActionCenter.toggleLog(getActiveProject());
+          Project project = getActiveProject();
+          if (project != null) {
+            ActionCenter.toggleLog(project);
+          }
           myAfterClick = true;
           myTextPanel.setExplicitSize(myTextPanel.getSize());
           UIUtil.setCursor(myTextPanel, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

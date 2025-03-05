@@ -23,6 +23,7 @@ public final class EventLog {
   }
 
   public static void toggleLog(final @Nullable Project project, final @Nullable Notification notification) {
+    if (project == null) return;
     ActionCenter.toggleLog(project);
   }
 }

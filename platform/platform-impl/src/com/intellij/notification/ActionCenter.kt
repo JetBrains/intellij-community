@@ -60,8 +60,7 @@ object ActionCenter {
   }
 
   @JvmStatic
-  fun toggleLog(project: Project?) {
-    if (project == null) return
+  fun toggleLog(project: Project) {
     val toolWindow = getToolWindow(project) ?: return
     if (toolWindow.isVisible) {
       toolWindow.hide()
