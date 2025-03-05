@@ -249,7 +249,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     filesToUpdate: List<VirtualFile>,
     filesToDelete: List<VirtualFile>,
   ): List<Module> {
-    val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(myProject)
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
       return doUpdateMavenProjects(spec, null, mavenEmbedderWrappers) { readMavenProjects(spec, filesToUpdate, filesToDelete, mavenEmbedderWrappers) }
     }
@@ -335,7 +335,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     tracer.spanBuilder("checkOrInstallMavenWrapper").useWithScope {
       checkOrInstallMavenWrapper(project)
     }
-    val mavenEmbedderWrappers = MavenEmbedderWrappersImpl(myProject)
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     mavenEmbedderWrappers.use {
       return doUpdateMavenProjects(spec, modelsProvider, mavenEmbedderWrappers) { readAllMavenProjects(spec, mavenEmbedderWrappers) }
     }

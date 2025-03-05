@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
@@ -21,7 +22,15 @@ interface MavenEmbedderWrappers : AutoCloseable {
   suspend fun getEmbedder(baseDir: Path): MavenEmbedderWrapper
 }
 
-internal class MavenEmbedderWrappersImpl(private val myProject: Project) : MavenEmbedderWrappers {
+@ApiStatus.Internal
+@Service(Service.Level.PROJECT)
+class MavenEmbedderWrappersManager(private val project: Project) {
+  fun createMavenEmbedderWrappers() : MavenEmbedderWrappers {
+    return MavenEmbedderWrappersImpl(project)
+  }
+}
+
+private class MavenEmbedderWrappersImpl(private val myProject: Project) : MavenEmbedderWrappers {
   private val mutex = Mutex()
   private val myEmbedders = ConcurrentHashMap<Path, MavenEmbedderWrapper>()
   private val jdk = getJdkForImporter(myProject)

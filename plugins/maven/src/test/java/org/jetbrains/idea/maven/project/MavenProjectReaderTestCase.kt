@@ -2,17 +2,11 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.maven.testFramework.MavenTestCase
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenModel
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.MavenServerManager
-import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 
 abstract class MavenProjectReaderTestCase : MavenTestCase() {
   protected suspend fun readProject(file: VirtualFile, vararg profiles: String): MavenModel {
@@ -24,7 +18,7 @@ abstract class MavenProjectReaderTestCase : MavenTestCase() {
   protected suspend fun readProject(file: VirtualFile,
                                     locator: MavenProjectReaderProjectLocator,
                                     vararg profiles: String): MavenProjectReaderResult {
-    val mavenEmbedderWrappers = MavenEmbedderWrappersTestImpl(project)
+    val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
     val reader = MavenProjectReader(project, mavenEmbedderWrappers, mavenGeneralSettings, MavenExplicitProfiles(listOf(*profiles)), locator)
     val result = mavenEmbedderWrappers.use { reader.readProjectAsync(file) }
     return result
@@ -42,36 +36,5 @@ abstract class MavenProjectReaderTestCase : MavenTestCase() {
       actualProblems.add(each.description)
     }
     assertOrderedElementsAreEqual(actualProblems, *expectedProblems)
-  }
-}
-
-internal class MavenEmbedderWrappersTestImpl(private val myProject: Project) : MavenEmbedderWrappers {
-  private val mutex = Mutex()
-  private val myEmbedders = ConcurrentHashMap<Path, MavenEmbedderWrapper>()
-
-  override suspend fun getAlwaysOnlineEmbedder(baseDir: String) = getEmbedder(Path.of(baseDir), true)
-
-  override suspend fun getEmbedder(baseDir: Path) = getEmbedder(baseDir, false)
-
-  private suspend fun getEmbedder(baseDir: Path, alwaysOnline: Boolean): MavenEmbedderWrapper {
-    val embedderDir = baseDir.toString()
-    val existing = myEmbedders[baseDir]
-    if (null != existing) {
-      return existing
-    }
-    mutex.withLock {
-      val existing = myEmbedders[baseDir]
-      if (null != existing) {
-        return existing
-      }
-      val newEmbedder = MavenServerManager.getInstance().createEmbedder(myProject, alwaysOnline, embedderDir)
-      myEmbedders[baseDir] = newEmbedder
-      return newEmbedder
-    }
-  }
-
-  override fun close() {
-    myEmbedders.values.forEach { it.release() }
-    myEmbedders.clear()
   }
 }
