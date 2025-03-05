@@ -5,14 +5,17 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+import sun.nio.fs.DefaultFileTypeDetector;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
+import java.nio.file.spi.FileTypeDetector;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
@@ -27,6 +30,7 @@ import java.util.function.BiFunction;
  * @see #computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)
  * @see RoutingAwareFileSystemProvider
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class MultiRoutingFileSystemProvider
   extends DelegatingFileSystemProvider<MultiRoutingFileSystemProvider, MultiRoutingFileSystem> {
 
@@ -252,6 +256,89 @@ public final class MultiRoutingFileSystemProvider
     else {
       return new MultiRoutingFsPath(myFileSystem, delegatePath);
     }
+  }
+
+  @NotNull
+  private static FileTypeDetector getDefaultFileTypeDetector() {
+    try {
+      return DefaultFileTypeDetector.create();
+    }
+    catch (Throwable e) {
+      e.printStackTrace(System.err);
+      return new FileTypeDetector() {
+        @Override
+        public String probeContentType(Path path) {
+          return null;
+        }
+      };
+    }
+  }
+
+  @NotNull
+  static FileTypeDetector getFileTypeDetector(FileSystemProvider multiRoutingFileSystemProvider) {
+    FileTypeDetector fileTypeDetector;
+    // For some not clear reason {@code multiRoutingFileSystemProvider} usually appears to be from a different classloader
+    if (multiRoutingFileSystemProvider instanceof MultiRoutingFileSystemProvider provider) {
+      try {
+        fileTypeDetector = provider.getFileTypeDetectorInternal();
+      }
+      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        e.printStackTrace(System.err);
+        fileTypeDetector = getDefaultFileTypeDetector();
+      }
+    }
+    else if (multiRoutingFileSystemProvider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
+      try {
+        Method method = multiRoutingFileSystemProvider.getClass().getDeclaredMethod("getFileTypeDetectorInternal");
+        method.setAccessible(true);
+        fileTypeDetector = (FileTypeDetector)method.invoke(multiRoutingFileSystemProvider);
+      }
+      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        e.printStackTrace(System.err);
+        fileTypeDetector = getDefaultFileTypeDetector();
+      }
+    }
+    else {
+      fileTypeDetector = getDefaultFileTypeDetector();
+    }
+    return fileTypeDetector;
+  }
+
+  @SuppressWarnings("unused")
+  private FileTypeDetector getFileTypeDetectorInternal() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    FileTypeDetector delegateDetector;
+    Class<? extends FileSystemProvider> unixFileSystemProviderClass = getUnixFileSystemProviderClass();
+    if (unixFileSystemProviderClass != null) {
+      Method getFileTypeDetectorMethod = unixFileSystemProviderClass.getDeclaredMethod("getFileTypeDetector");
+      getFileTypeDetectorMethod.setAccessible(true);
+      delegateDetector = (FileTypeDetector)getFileTypeDetectorMethod.invoke(myLocalProvider);
+    }
+    else {
+      // in windows, delegate detector is RegistryFileTypeDetector
+      delegateDetector = getDefaultFileTypeDetector();
+    }
+    return new FileTypeDetector() {
+      @Override
+      public String probeContentType(Path path) throws IOException {
+        return delegateDetector.probeContentType(toDelegatePath(path));
+      }
+    };
+  }
+
+  /**
+   * @return {@code sun.nio.fs.UnixFileSystemProvider.class} in unix, {@code null} in windows
+   */
+  private @Nullable Class<? extends FileSystemProvider> getUnixFileSystemProviderClass() {
+    Class<? extends FileSystemProvider> unixFileSystemProviderClass = myLocalProvider.getClass();
+    while (unixFileSystemProviderClass != null && !"sun.nio.fs.UnixFileSystemProvider".equals(unixFileSystemProviderClass.getName())) {
+      Class<?> superclass = unixFileSystemProviderClass.getSuperclass();
+      if (FileSystemProvider.class.isAssignableFrom(superclass)) {
+        unixFileSystemProviderClass = superclass.asSubclass(FileSystemProvider.class);
+      } else {
+        unixFileSystemProviderClass = null;
+      }
+    }
+    return unixFileSystemProviderClass;
   }
 
   @Contract("null -> null; !null -> !null")

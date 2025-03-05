@@ -6,6 +6,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldBeSingleton
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldNotBeInstanceOf
 import org.junit.jupiter.api.Assumptions
@@ -15,6 +16,7 @@ import java.math.BigInteger
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.ThreadLocalRandom
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.ExperimentalPathApi
@@ -25,6 +27,17 @@ import kotlin.io.path.outputStream
 
 class MultiRoutingFileSystemProviderTest {
 
+  private fun withEmptyZipFile(f: (Path) -> Unit) {
+    val emptyZip = createTempFile("empty-zip", ".zip")
+    ZipOutputStream(emptyZip.outputStream()).use { }
+    try {
+      f(emptyZip)
+    }
+    finally {
+      emptyZip.deleteIfExists()
+    }
+  }
+
   @Test
   fun `zip file system can be created`() {
     val provider = MultiRoutingFileSystemProvider(defaultSunNioFs.provider())
@@ -32,13 +45,19 @@ class MultiRoutingFileSystemProviderTest {
     shouldThrow<UnsupportedOperationException> {
       provider.getFileSystem(defaultSunNioFs.rootDirectories.first().toUri().resolve("file.zip"))
     }
-    val emptyZip = createTempFile("empty-zip", ".zip")
-    ZipOutputStream(emptyZip.outputStream()).use { }
-    try {
+    withEmptyZipFile { emptyZip ->
       FileSystems.newFileSystem(emptyZip).shouldNotBeInstanceOf<MultiRoutingFileSystem>()
       FileSystems.newFileSystem(emptyZip).rootDirectories.shouldBeSingleton().single().listDirectoryEntries().shouldBeEmpty()
-    } finally {
-      emptyZip.deleteIfExists()
+    }
+  }
+
+  @Test
+  fun `probe content type`() {
+    withEmptyZipFile { path ->
+      val provider = MultiRoutingFileSystemProvider(defaultSunNioFs.provider())
+      val wrappedPath = provider.getPath(path.toUri())
+      wrappedPath.shouldBeInstanceOf<MultiRoutingFsPath>()
+      Files.probeContentType(wrappedPath).shouldBe("application/zip")
     }
   }
 
