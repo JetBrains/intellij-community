@@ -187,7 +187,7 @@ private class ComputationState(
    */
   fun acquireReadPermit(): ReadPermit {
     // todo: acquire the whole chain? because EDT can try to upgrade a higher-level lock
-    val permit = runSuspend {
+    val permit = acquireReadLockWithCompensation {
       thisLevelLock.acquireReadPermit(false)
     }
     thisLevelPermit.set(permit)
