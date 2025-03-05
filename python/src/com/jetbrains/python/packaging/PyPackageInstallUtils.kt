@@ -47,7 +47,7 @@ object PyPackageInstallUtils {
   }
 
   fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
-    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
     val normalizedName = normalizePackageName(packageName)
     val isStdLib = PyStdlibUtil.getPackages()?.any { normalizePackageName(it) == normalizedName } == true
     if (isStdLib) {
@@ -60,7 +60,7 @@ object PyPackageInstallUtils {
     if (!PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
       return false
     }
-    val packageManager = PythonPackageManager.forSdk(project, sdk)
+    val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
     val repositoryManager = packageManager.repositoryManager
     val normalizedName = normalizePackageName(packageName)
     return repositoryManager.allPackages().any { normalizePackageName(it) == normalizedName }
@@ -99,25 +99,25 @@ object PyPackageInstallUtils {
   }
 
   suspend fun upgradePackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
+    val pythonPackageManager = getPackageManagerOrNull(project, sdk)
+    val packageSpecification = pythonPackageManager?.repositoryManager?.repositories?.firstOrNull()?.createPackageSpecification(packageName, version)
                                ?: return Result.failure(Exception("Could not find any repositories"))
 
     return pythonPackageManager.updatePackage(packageSpecification)
   }
 
   suspend fun initPackages(project: Project, sdk: Sdk) {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    if (pythonPackageManager.installedPackages.isEmpty()) {
+    val pythonPackageManager = getPackageManagerOrNull(project, sdk)
+    if (pythonPackageManager?.installedPackages.isNullOrEmpty()) {
       withContext(Dispatchers.IO) {
-        pythonPackageManager.reloadPackages()
+        pythonPackageManager?.reloadPackages()
       }
     }
   }
 
   suspend fun installPackage(project: Project, sdk: Sdk, packageName: String, version: String? = null): Result<List<PythonPackage>> {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val packageSpecification = pythonPackageManager.repositoryManager.repositories.firstOrNull()?.createPackageSpecification(packageName, version)
+    val pythonPackageManager = getPackageManagerOrNull(project, sdk)
+    val packageSpecification = pythonPackageManager?.repositoryManager?.repositories?.firstOrNull()?.createPackageSpecification(packageName, version)
                                ?: return Result.failure(Exception("Could not find any repositories"))
 
     return pythonPackageManager.installPackage(packageSpecification, emptyList())
@@ -137,26 +137,20 @@ object PyPackageInstallUtils {
     sdk: Sdk,
     packageName: String,
   ): PythonPackage? {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val installedPackages = pythonPackageManager.installedPackages
+    val pythonPackageManager = getPackageManagerOrNull(project, sdk)
+    val installedPackages = pythonPackageManager?.installedPackages ?: return null
 
     val pythonPackage = installedPackages.firstOrNull { it.name == packageName }
     return pythonPackage
   }
 
   suspend fun uninstall(project: Project, sdk: Sdk, libName: String) {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
+    val pythonPackageManager = getPackageManagerOrNull(project, sdk) ?: return
     val pythonPackage = getPackage(project, sdk, libName) ?: return
     pythonPackageManager.uninstallPackage(pythonPackage)
   }
 
-  private class ConfirmPackageInstallationDoNotAskOption : DoNotAskOption.Adapter() {
-    override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-      if (isSelected && exitCode == Messages.OK) {
-        PropertiesComponent.getInstance().setValue(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, false, true)
-      }
-    }
-  }
+
 
   fun invokeInstallPackage(project: Project, pythonSdk: Sdk, packageName: String, point: RelativePoint) {
     PyPackageCoroutine.launch(project) {
@@ -180,6 +174,22 @@ object PyPackageInstallUtils {
     }
   }
 
+  private fun getPackageManagerOrNull(
+    project: Project,
+    sdk: Sdk,
+  ): PythonPackageManager? = try {
+    PythonPackageManager.forSdk(project, sdk)
+  } catch (_: Throwable) {
+    null
+  }
+
+  private class ConfirmPackageInstallationDoNotAskOption : DoNotAskOption.Adapter() {
+    override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+      if (isSelected && exitCode == Messages.OK) {
+        PropertiesComponent.getInstance().setValue(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, false, true)
+      }
+    }
+  }
 
   private suspend fun showBalloon(point: RelativePoint, @NlsContexts.DialogMessage text: String, style: BalloonStyle): Balloon =
     withContext(Dispatchers.EDT) {
