@@ -192,7 +192,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
                 documentHistory.onSelectionChanged();
               }, "ConfigurableChange", null);
             }
-            myNavigatingNow = false;
           } else {
             myHistory.pushQueryPlace();
           }
@@ -204,6 +203,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           updateController(configurable);
           //requestFocusToEditor(); // TODO
           loadingDecorator.stopLoading();
+          myNavigatingNow = false;
         });
         return result;
       }
