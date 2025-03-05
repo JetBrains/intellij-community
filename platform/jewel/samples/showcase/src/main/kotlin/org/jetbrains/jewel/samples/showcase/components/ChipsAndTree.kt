@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,7 +74,6 @@ public fun SelectableLazyColumnSample() {
         launch(Dispatchers.Default) { listOfItems = List(5_000_000) { "Item $it" } }
     }
 
-    val interactionSource = remember { MutableInteractionSource() }
     val state = rememberSelectableLazyListState()
     Box(modifier = Modifier.size(200.dp, 200.dp)) {
         if (listOfItems.isEmpty()) {
