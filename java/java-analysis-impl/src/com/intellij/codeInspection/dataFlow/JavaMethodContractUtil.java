@@ -25,10 +25,6 @@ import java.util.*;
 public final class JavaMethodContractUtil {
   private JavaMethodContractUtil() {}
 
-  /**
-   * @deprecated To support contracts from different libraries please use {@link StaticAnalysisAnnotationManager#getKnownContractAnnotations}
-   */
-  @Deprecated
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
 
   /**
