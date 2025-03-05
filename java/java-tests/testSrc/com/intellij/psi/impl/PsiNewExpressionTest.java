@@ -10,6 +10,19 @@ import java.util.Map;
 import java.util.function.Function;
 
 public final class PsiNewExpressionTest extends LightJavaCodeInsightFixtureTestCase {
+  public void testErrorInNew() {
+    myFixture.configureByText("Foo.java", """
+      @interface A { }
+      class Foo {
+        int[] data = new <caret>@A;
+      }
+      """);
+    PsiFile file = myFixture.getFile();
+    PsiAnnotation annotation = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiAnnotation.class);
+    assertNotNull(annotation);
+    assertNull(annotation.getOwner());
+  }
+  
   public void testArrayAnnotations() {
     myFixture.configureByText("Foo.java", """
       @interface A { }
