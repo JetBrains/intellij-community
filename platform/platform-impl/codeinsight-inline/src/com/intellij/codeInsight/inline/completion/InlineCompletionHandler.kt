@@ -7,6 +7,7 @@ import com.intellij.codeInsight.inline.completion.listeners.typing.InlineComplet
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.UserFactorsListener
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionInvalidationListener
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -80,6 +81,8 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     val logsListener = InlineCompletionLogsListener(editor)
     addEventListener(logsListener)
     invalidationListeners.addListener(logsListener)
+    val userFactorsListener = UserFactorsListener()
+    addEventListener(userFactorsListener)
   }
 
   /**
