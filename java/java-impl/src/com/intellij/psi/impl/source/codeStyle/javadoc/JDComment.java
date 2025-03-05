@@ -156,6 +156,8 @@ public class JDComment {
   }
 
   private void addPrefixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String emptyLine, @NotNull String indent) {
+    if (!myFormatter.getSettings().JD_KEEP_EMPTY_LINES) return;
+
     StringBuilder emptyLinePrefixBuilder = new StringBuilder();
     addEmptyLinesIfNeeded(emptyLinePrefixBuilder, emptyLine, myPrefixEmptyLineCount);
 
@@ -169,13 +171,15 @@ public class JDComment {
   }
 
   private void addSuffixEmptyLinesIfNeeded(@NotNull StringBuilder sb, @NotNull String prefix) {
+    if (!myFormatter.getSettings().JD_KEEP_EMPTY_LINES) return;
+
     addEmptyLinesIfNeeded(sb, prefix, mySuffixEmptyLineCount);
     int lastSymbolIndex = sb.length() - 1;
     if (myMarkdown && !sb.isEmpty() && sb.charAt(lastSymbolIndex) == '\n') sb.deleteCharAt(lastSymbolIndex);
   }
 
-  private void addEmptyLinesIfNeeded(StringBuilder sb, String emptyLine, int lineCount) {
-    if (myFormatter.getSettings().JD_KEEP_EMPTY_LINES && lineCount > 0) {
+  private static void addEmptyLinesIfNeeded(StringBuilder sb, String emptyLine, int lineCount) {
+    if (lineCount > 0) {
       if (!sb.isEmpty() && sb.charAt(sb.length() - 1) != '\n') sb.append('\n');
       sb.append(String.valueOf(emptyLine).repeat(lineCount));
     }
