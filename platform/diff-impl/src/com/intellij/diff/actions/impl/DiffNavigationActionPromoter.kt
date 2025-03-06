@@ -11,11 +11,11 @@ import com.intellij.openapi.actionSystem.DataContext
  */
 internal class DiffNavigationActionPromoter : ActionPromoter {
   override fun suppress(actions: List<AnAction>, context: DataContext): List<AnAction> {
-    if (context.getData(DiffDataKeys.PREV_NEXT_FILE_ITERABLE) != null && actions.any(::isFileNavigationAction)) {
+    if (actions.any(::isFileNavigationAction) && DiffFileNavigationAction.isAvailable(context)) {
       return actions.filterNot(::isFileNavigationAction)
     }
 
-    if (context.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE) != null && actions.any(::isDifferenceNavigationAction)) {
+    if (actions.any(::isDifferenceNavigationAction) && DiffDifferenceNavigationAction.isAvailable(context)) {
       return actions.filterNot(::isDifferenceNavigationAction)
     }
 
@@ -26,8 +26,8 @@ internal class DiffNavigationActionPromoter : ActionPromoter {
   }
 }
 
-private fun isFileNavigationAction(action: AnAction) = action is DiffNextFileAction || action is DiffPreviousFileAction
+private fun isFileNavigationAction(action: AnAction) = action is DiffFileNavigationAction
 
-private fun isDifferenceNavigationAction(action: AnAction) = action is DiffNextDifferenceAction || action is DiffPreviousDifferenceAction
+private fun isDifferenceNavigationAction(action: AnAction) = action is DiffDifferenceNavigationAction
 
 private fun isSourceNavigationAction(action: AnAction) = action is OpenInEditorAction
