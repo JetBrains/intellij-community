@@ -60,6 +60,10 @@ object PyPackageInstallUtils {
     if (!PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
       return false
     }
+
+    if (ApplicationManager.getApplication().isUnitTestMode )
+      return PyPIPackageUtil.INSTANCE.isInPyPI(packageName)
+
     val packageManager = getPackageManagerOrNull(project, sdk) ?: return false
     val repositoryManager = packageManager.repositoryManager
     val normalizedName = normalizePackageName(packageName)
