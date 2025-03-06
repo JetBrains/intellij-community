@@ -296,7 +296,7 @@ private class GHServerVersionsCollector(
       accountsFlow.collect {
         for (account in it) {
           val server = account.server
-          if (server.isGithubDotCom) continue
+          if (server.isGithubDotCom || server.isGheDataResidency) continue
 
           //TODO: load with auth to avoid rate-limit
           try {
