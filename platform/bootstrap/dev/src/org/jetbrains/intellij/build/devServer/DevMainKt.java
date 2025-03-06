@@ -7,6 +7,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Path;
+import java.util.AbstractMap;
 import java.util.Collection;
 
 // in java - don't use kotlin to avoid loading non-JDK classes
@@ -30,10 +31,7 @@ public final class DevMainKt {
     }
 
     // separate method to not retain local variables like implClass
-    if (!build(lookup, classLoader)) {
-      // Unable to build the classpath: terminate.
-      return;
-    }
+    String mainClassName = build(lookup, classLoader);
 
     System.setProperty("idea.vendor.name", "JetBrains");
     System.setProperty("idea.use.dev.build.server", "true");
@@ -41,12 +39,12 @@ public final class DevMainKt {
     //noinspection UseOfSystemOutOrSystemErr
     System.out.println("build completed in " + (System.currentTimeMillis() - start) + "ms");
 
-    Class<?> mainClass = classLoader.loadClass("com.intellij.idea.Main");
+    Class<?> mainClass = classLoader.loadClass(mainClassName);
     //noinspection ConfusingArgumentToVarargsMethod
     lookup.findStatic(mainClass, "main", MethodType.methodType(void.class, String[].class)).invokeExact(rawArgs);
   }
 
-  private static boolean build(MethodHandles.Lookup lookup, PathClassLoader classLoader) throws Throwable {
+  private static String build(MethodHandles.Lookup lookup, PathClassLoader classLoader) throws Throwable {
     // do not use classLoader as a parent - make sure that we don't make the initial classloader dirty
     // (say, do not load kotlin coroutine classes)
     Class<?> implClass = new PathClassLoader(UrlClassLoader.build()
@@ -55,11 +53,13 @@ public final class DevMainKt {
       .loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
 
     @SuppressWarnings("unchecked")
-    Collection<Path> newClassPath = (Collection<Path>)lookup
-      .findStatic(implClass, "buildDevMain", MethodType.methodType(Collection.class))
-      .invokeExact();
+    AbstractMap.SimpleImmutableEntry<String, Collection<Path>> mainClassAndClassPath = 
+      (AbstractMap.SimpleImmutableEntry<String, Collection<Path>>)
+        lookup
+          .findStatic(implClass, "buildDevMain", MethodType.methodType(AbstractMap.SimpleImmutableEntry.class))
+          .invokeExact();
 
-    classLoader.reset(newClassPath);
-    return true;
+    classLoader.reset(mainClassAndClassPath.getValue());
+    return mainClassAndClassPath.getKey();
   }
 }

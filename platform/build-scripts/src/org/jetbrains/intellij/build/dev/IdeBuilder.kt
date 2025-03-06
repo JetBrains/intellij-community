@@ -53,7 +53,7 @@ data class BuildRequest(
   @JvmField val jarCacheDir: Path = devRootDir.resolve("jar-cache"),
   @JvmField val productionClassOutput: Path = System.getenv("CLASSES_DIR")?.let { Path.of(it).normalize().toAbsolutePath() } ?: projectDir.resolve("out/classes/production"),
   @JvmField val keepHttpClient: Boolean = true,
-  @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
+  @JvmField val platformClassPathConsumer: ((mainClass: String, classPath: Set<Path>, runDir: Path) -> Unit)? = null,
   /**
    * If `true`, the dev build will include a [runtime module repository](psi_element://com.intellij.platform.runtime.repository). 
    * It is currently used only to run an instance of JetBrains Client from IDE's installation,
@@ -171,7 +171,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         }
       }
 
-      request.platformClassPathConsumer?.invoke(classPath, runDir)
+      request.platformClassPathConsumer?.invoke(context.ideMainClassName, classPath, runDir)
       platformDistributionEntries
     }
 

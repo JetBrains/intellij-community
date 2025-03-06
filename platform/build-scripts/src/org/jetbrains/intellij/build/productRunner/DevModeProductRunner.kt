@@ -32,7 +32,7 @@ internal suspend fun createDevModeProductRunner(context: BuildContext, additiona
       devRootDir = context.paths.tempDir.resolve("dev-run"),
       jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
       productionClassOutput = context.classesOutputDirectory.resolve("production"),
-      platformClassPathConsumer = { classPath, _ ->
+      platformClassPathConsumer = { _, classPath, _ ->
         newClassPath = classPath
       },
       buildOptionsTemplate = context.options,
