@@ -13,16 +13,12 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlin.random.Random
-import org.jetbrains.jewel.ui.Outline
-import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.EditableComboBox
 import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.GroupHeader
@@ -31,163 +27,11 @@ import org.jetbrains.jewel.ui.component.PopupContainer
 import org.jetbrains.jewel.ui.component.PopupManager
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.separator
-import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
 public fun Dropdowns() {
-    Column {
-        OldDropdowns()
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        ComboBoxes()
-    }
+    ComboBoxes()
 }
-
-@Composable
-private fun OldDropdowns() {
-    GroupHeader("Dropdowns (deprecated)")
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-        val items = remember { listOf("Light", "Dark", "---", "High Contrast", "Darcula", "IntelliJ Light") }
-        var selected by remember { mutableStateOf(items.first()) }
-
-        Dropdown(enabled = false, menuContent = {}) { Text("Disabled") }
-        Dropdown(
-            menuContent = {
-                items.forEach {
-                    if (it == "---") {
-                        separator()
-                    } else {
-                        selectableItem(selected = selected == it, onClick = { selected = it }) { Text(it) }
-                    }
-                }
-                separator()
-                submenu(
-                    submenu = {
-                        items.forEach {
-                            if (it == "---") {
-                                separator()
-                            } else {
-                                selectableItem(selected = selected == it, onClick = { selected = it }) { Text(it) }
-                            }
-                        }
-                        separator()
-                        submenu(
-                            submenu = {
-                                items.forEach {
-                                    if (it == "---") {
-                                        separator()
-                                    } else {
-                                        selectableItem(selected = selected == it, onClick = { selected = it }) {
-                                            Text(it)
-                                        }
-                                    }
-                                }
-                            }
-                        ) {
-                            Text("Submenu2")
-                        }
-                    }
-                ) {
-                    Text("Submenu")
-                }
-            }
-        ) {
-            Text(selected)
-        }
-        Dropdown(
-            outline = Outline.Error,
-            menuContent = {
-                items.forEach {
-                    if (it == "---") {
-                        separator()
-                    } else {
-                        selectableItem(selected = selected == it, onClick = { selected = it }) { Text(it) }
-                    }
-                }
-            },
-        ) {
-            Text(selected)
-        }
-        Dropdown(
-            menuContent = {
-                items.forEach {
-                    if (it == "---") {
-                        separator()
-                    } else {
-                        selectableItem(
-                            iconKey = dropdownIconsSample.random(),
-                            keybinding =
-                                if (Random.nextBoolean()) {
-                                    null
-                                } else {
-                                    dropdownKeybindingsSample.shuffled().take(2).toSet()
-                                },
-                            selected = false,
-                            onClick = {},
-                        ) {
-                            Text(it)
-                        }
-                    }
-                }
-                submenu(
-                    submenu = {
-                        items.forEach {
-                            if (it == "---") {
-                                separator()
-                            } else {
-                                selectableItem(
-                                    iconKey = dropdownIconsSample.random(),
-                                    keybinding =
-                                        if (Random.nextBoolean()) {
-                                            null
-                                        } else {
-                                            dropdownKeybindingsSample.shuffled().take(2).toSet()
-                                        },
-                                    selected = false,
-                                    onClick = {},
-                                ) {
-                                    Text(it)
-                                }
-                            }
-                        }
-                        separator()
-                        submenu(
-                            submenu = {
-                                items.forEach {
-                                    if (it == "---") {
-                                        separator()
-                                    } else {
-                                        selectableItem(
-                                            iconKey = dropdownIconsSample.random(),
-                                            selected = false,
-                                            onClick = {},
-                                        ) {
-                                            Text(it)
-                                        }
-                                    }
-                                }
-                            }
-                        ) {
-                            Text("Submenu2")
-                        }
-                    }
-                ) {
-                    Text("Submenu")
-                }
-            }
-        ) {
-            Text("With icons")
-        }
-    }
-}
-
-private val dropdownIconsSample = listOf(AllIconsKeys.Actions.Find, AllIconsKeys.Actions.Close, null)
-private val dropdownKeybindingsSample = setOf("A", "B", "?", "?", "?")
 
 @Composable
 private fun ComboBoxes() {
@@ -339,7 +183,7 @@ private fun ListComboBoxes() {
         }
 
         Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Using composite key")
+            Text("Using fancy key")
             var selectedIndex by remember { mutableIntStateOf(3) }
             val selectedItemText = if (selectedIndex >= 0) duplicateItems[selectedIndex] else ""
             Text(
@@ -354,7 +198,7 @@ private fun ListComboBoxes() {
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
                 onItemSelected = { index, text -> selectedIndex = index },
-                // Create a composite key with both index and item value
+                // Create a fancy key with both index and item value
                 itemKeys = { index, item -> "$item-$index" },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
