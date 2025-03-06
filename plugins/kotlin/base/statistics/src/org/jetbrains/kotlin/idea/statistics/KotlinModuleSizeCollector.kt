@@ -36,6 +36,13 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
         return "bucket_${start}_${endInclusive}"
     }
 
+    private fun List<IntRange>.toBuckets() = map { range ->
+        StatisticsBucket(
+            eventField = EventFields.Int(range.toBucketName()),
+            range = range,
+        )
+    }
+
     // These are the ranges that define the buckets for line counts we use
     // Important: The ranges determine the names of the event's fields, so if the ranges are changed,
     // the version of the collector needs to be increased.
@@ -54,12 +61,7 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
         500001..1000000,
         1000001..Int.MAX_VALUE
     )
-    private val LINE_COUNT_BUCKETS = lineCountBucketRanges.map { range ->
-        StatisticsBucket(
-            eventField = EventFields.Int(range.toBucketName()),
-            range = range,
-        )
-    }
+    private val LINE_COUNT_BUCKETS = lineCountBucketRanges.toBuckets()
     private val LINE_COUNT_EVENT = GROUP.registerVarargEvent(
         eventId = "modules.sizes.line_count",
         *LINE_COUNT_BUCKETS.map { it.eventField }.toTypedArray(),
@@ -85,12 +87,7 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
         4001..Int.MAX_VALUE
     )
 
-    private val FILE_COUNT_BUCKETS = fileCountBucketRanges.map { range ->
-        StatisticsBucket(
-            eventField = EventFields.Int(range.toBucketName()),
-            range = range,
-        )
-    }
+    private val FILE_COUNT_BUCKETS = fileCountBucketRanges.toBuckets()
     private val FILE_COUNT_EVENT = GROUP.registerVarargEvent(
         eventId = "modules.sizes.file_count",
         *FILE_COUNT_BUCKETS.map { it.eventField }.toTypedArray(),
