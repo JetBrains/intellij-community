@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
+    <orderEntry type="module" module-name="intellij.java.syntax" />
   </component>
 </module>

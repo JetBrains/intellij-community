@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.java.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.performancePlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.syntax" scope="RUNTIME" />
   </component>
 </module>

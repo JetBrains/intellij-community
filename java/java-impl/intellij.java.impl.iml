@@ -89,6 +89,7 @@
     <orderEntry type="module" module-name="intellij.platform.todo" />
     <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" />
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />
+    <orderEntry type="module" module-name="intellij.java.syntax" />
   </component>
   <component name="copyright">
     <Base>

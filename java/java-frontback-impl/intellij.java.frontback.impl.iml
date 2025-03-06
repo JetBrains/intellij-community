@@ -19,5 +19,6 @@
     <orderEntry type="module" module-name="intellij.xml.parser" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.psi" />
   </component>
 </module>
