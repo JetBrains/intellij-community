@@ -999,6 +999,17 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
+  override fun allowTakingLocksInsideAndRun(action: java.lang.Runnable) {
+    val currentValue = myLockingProhibited.get()
+    myLockingProhibited.set(null)
+    try {
+      action.run()
+    }
+    finally {
+      myLockingProhibited.set(currentValue)
+    }
+  }
+
   override fun getLockingProhibitedAdvice(): String? {
     return myLockingProhibited.get()?.second
   }
