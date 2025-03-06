@@ -51,6 +51,11 @@ final class JvmClassNameReferenceInjector extends ReferenceInjector {
       public boolean isAllowDollarInNames() {
         return true;
       }
+
+      @Override
+      protected boolean isStaticSeparator(char c, boolean strict) {
+        return !strict && (c == DOT || c == DOLLAR);
+      }
     }.getReferences();
   }
 
