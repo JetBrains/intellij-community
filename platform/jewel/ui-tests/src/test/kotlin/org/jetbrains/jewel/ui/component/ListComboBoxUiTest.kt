@@ -90,16 +90,13 @@ class ListComboBoxUiTest {
         composeRule.setContent {
             IntUiTheme {
                 Box(
-                        modifier =
-                                Modifier.Companion.size(20.dp)
-                                        .focusRequester(focusRequester)
-                                        .testTag("Pre-Box")
-                                        .focusable(true)
+                    modifier =
+                        Modifier.Companion.size(20.dp).focusRequester(focusRequester).testTag("Pre-Box").focusable(true)
                 )
                 EditableComboBox(
-                        textFieldState = rememberTextFieldState("Item 1"),
-                        modifier = Modifier.Companion.width(140.dp).testTag("ComboBox"),
-                        popupContent = { /* ... */},
+                    textFieldState = rememberTextFieldState("Item 1"),
+                    modifier = Modifier.Companion.width(140.dp).testTag("ComboBox"),
+                    popupContent = { /* ... */ },
                 )
             }
         }
@@ -111,9 +108,7 @@ class ListComboBoxUiTest {
             keyUp(Key.Companion.Tab)
         }
 
-        composeRule
-                .onNodeWithTag("Jewel.ComboBox.TextField", useUnmergedTree = true)
-                .assertIsFocused()
+        composeRule.onNodeWithTag("Jewel.ComboBox.TextField", useUnmergedTree = true).assertIsFocused()
 
         textField.performKeyInput {
             keyDown(Key.Companion.Tab)
@@ -226,9 +221,7 @@ class ListComboBoxUiTest {
         injectListComboBox(FocusRequester(), isEnabled = true)
 
         comboBox.assertIsDisplayed()
-        composeRule
-                .onNodeWithTag("Jewel.ComboBox.NonEditableText", useUnmergedTree = true)
-                .assertIsDisplayed()
+        composeRule.onNodeWithTag("Jewel.ComboBox.NonEditableText", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -247,16 +240,14 @@ class ListComboBoxUiTest {
     fun `when editable divider is displayed`() {
         injectEditableListComboBox(FocusRequester(), isEnabled = true)
 
-        composeRule
-                .onNode(hasTestTag("Jewel.ComboBox.Divider"), useUnmergedTree = true)
-                .assertExists()
+        composeRule.onNode(hasTestTag("Jewel.ComboBox.Divider"), useUnmergedTree = true).assertExists()
 
         // We can't use assertIsDisplayed() on unmerged nodes, so let's check its bounds instead
         val bounds =
-                composeRule
-                        .onNode(hasTestTag("Jewel.ComboBox.Divider"), useUnmergedTree = true)
-                        .fetchSemanticsNode()
-                        .boundsInRoot
+            composeRule
+                .onNode(hasTestTag("Jewel.ComboBox.Divider"), useUnmergedTree = true)
+                .fetchSemanticsNode()
+                .boundsInRoot
 
         assert(bounds.width > 0f && bounds.height > 0f) {
             "Divider should have non-zero width and height, but was $bounds"
@@ -267,12 +258,11 @@ class ListComboBoxUiTest {
     fun `when not-editable divider is not displayed`() {
         injectListComboBox(FocusRequester(), isEnabled = true)
         composeRule
-                .onNode(
-                        hasTestTag("Jewel.ComboBox.Divider") and
-                                hasContentDescription("Jewel.ComboBox.Divider"),
-                        useUnmergedTree = true,
-                )
-                .assertDoesNotExist()
+            .onNode(
+                hasTestTag("Jewel.ComboBox.Divider") and hasContentDescription("Jewel.ComboBox.Divider"),
+                useUnmergedTree = true,
+            )
+            .assertDoesNotExist()
     }
 
     @Test
@@ -315,10 +305,7 @@ class ListComboBoxUiTest {
             keyUp(Key.Companion.DirectionDown)
         }
         popupMenu.assertIsDisplayed()
-        composeRule
-                .onAllNodesWithText("Item 2", useUnmergedTree = true)
-                .onLast()
-                .assertIsDisplayed()
+        composeRule.onAllNodesWithText("Item 2", useUnmergedTree = true).onLast().assertIsDisplayed()
     }
 
     @Test
@@ -410,24 +397,21 @@ class ListComboBoxUiTest {
         composeRule.setContent {
             IntUiTheme {
                 EditableListComboBox(
-                        items = comboBoxItems,
-                        selectedIndex = selectedIndex,
-                        onItemSelected = { index, _ -> selectedIndex = index },
-                        modifier =
-                                Modifier.testTag("ComboBox")
-                                        .width(200.dp)
-                                        .focusRequester(focusRequester),
-                        isEnabled = true,
-                        itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                        itemContent = { item, isSelected, isActive ->
-                            SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    modifier = Modifier.testTag(item),
-                                    iconContentDescription = item,
-                            )
-                        },
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onItemSelected = { index, _ -> selectedIndex = index },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    isEnabled = true,
+                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
                 )
             }
         }
@@ -440,10 +424,7 @@ class ListComboBoxUiTest {
         popupMenu.assertIsDisplayed()
 
         // Verify first item is selected both visually and in the model
-        composeRule
-                .onNodeWithTag("Item 1", useUnmergedTree = true)
-                .assertIsDisplayed()
-                .assertIsSelected()
+        composeRule.onNodeWithTag("Item 1", useUnmergedTree = true).assertIsDisplayed().assertIsSelected()
         assert(selectedIndex == 0) { "Expected selectedIndex to be 0, but was $selectedIndex" }
     }
 
@@ -456,24 +437,21 @@ class ListComboBoxUiTest {
         composeRule.setContent {
             IntUiTheme {
                 EditableListComboBox(
-                        items = comboBoxItems,
-                        selectedIndex = selectedIndex,
-                        onItemSelected = { index, _ -> selectedIndex = index },
-                        modifier =
-                                Modifier.testTag("ComboBox")
-                                        .width(200.dp)
-                                        .focusRequester(focusRequester),
-                        isEnabled = true,
-                        itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                        itemContent = { item, isSelected, isActive ->
-                            SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    modifier = Modifier.testTag(item),
-                                    iconContentDescription = item,
-                            )
-                        },
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onItemSelected = { index, _ -> selectedIndex = index },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    isEnabled = true,
+                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
                 )
             }
         }
@@ -491,9 +469,7 @@ class ListComboBoxUiTest {
 
         // Verify first item is selected
         composeRule.onNodeWithTag("Item 1", useUnmergedTree = true).assertIsDisplayed()
-        assert(selectedIndex == 0) {
-            "Expected selectedIndex to be 0 after first down key, but was $selectedIndex"
-        }
+        assert(selectedIndex == 0) { "Expected selectedIndex to be 0 after first down key, but was $selectedIndex" }
 
         // Press down the second time - should select the second item
         comboBox.performKeyInput { pressKey(Key.Companion.DirectionDown) }
@@ -502,9 +478,7 @@ class ListComboBoxUiTest {
         // Verify second item is selected both in the UI and in the model
         composeRule.onNodeWithTag("Item 2", useUnmergedTree = true).assertIsDisplayed()
         composeRule.waitForIdle() // Ensure all state changes have completed
-        assert(selectedIndex == 1) {
-            "Expected selectedIndex to be 1 after second down key, but was $selectedIndex"
-        }
+        assert(selectedIndex == 1) { "Expected selectedIndex to be 1 after second down key, but was $selectedIndex" }
 
         // Verify the text field shows the right item
         textField.assertTextEquals("Item 2")
@@ -516,19 +490,15 @@ class ListComboBoxUiTest {
         comboBox.performClick()
         popupMenu.assertIsDisplayed()
 
-        composeRule
-                .onNodeWithTag("Item 2", useUnmergedTree = true)
-                .assertIsDisplayed()
-                .performMouseInput {
-                    enter(Offset(2f, 0f))
-                    moveTo(Offset(10f, 2f))
-                    advanceEventTime()
-                }
+        composeRule.onNodeWithTag("Item 2", useUnmergedTree = true).assertIsDisplayed().performMouseInput {
+            enter(Offset(2f, 0f))
+            moveTo(Offset(10f, 2f))
+            advanceEventTime()
+        }
 
-        composeRule
-                .onNodeWithTag("Item 2", useUnmergedTree = true)
-                .assertIsSelected()
-                .performKeyInput { pressKey(Key.Companion.Enter) }
+        composeRule.onNodeWithTag("Item 2", useUnmergedTree = true).assertIsSelected().performKeyInput {
+            pressKey(Key.Companion.Enter)
+        }
 
         comboBox.assertTextEquals("Item 2", includeEditableText = false)
     }
@@ -541,38 +511,32 @@ class ListComboBoxUiTest {
         composeRule.setContent {
             IntUiTheme {
                 ListComboBox(
-                        items = comboBoxItems,
-                        selectedIndex = 2, // Start with "Item 3" selected
-                        onItemSelected = { index, text ->
-                            selectedIdx = index
-                            selectedText = text
-                        },
-                        modifier = Modifier.testTag("ComboBox").width(200.dp),
-                        itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                        itemContent = { item, isSelected, isActive ->
-                            SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    modifier = Modifier.testTag(item),
-                                    iconContentDescription = item,
-                            )
-                        },
+                    items = comboBoxItems,
+                    selectedIndex = 2, // Start with "Item 3" selected
+                    onItemSelected = { index, text ->
+                        selectedIdx = index
+                        selectedText = text
+                    },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
                 )
             }
         }
 
-        composeRule
-                .onNode(hasTestTag("ComboBox"))
-                .assertTextEquals("Item 3", includeEditableText = false)
-        composeRule
-                .onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true)
-                .performClick()
+        composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 3", includeEditableText = false)
+        composeRule.onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true).performClick()
         composeRule.onNodeWithTag("Item 1", useUnmergedTree = true).performClick()
         assert(selectedIdx == 0) { "Expected selectedIdx to be 0, but was $selectedIdx" }
-        assert(selectedText == "Item 1") {
-            "Expected selectedText to be 'Item 1', but was $selectedText"
-        }
+        assert(selectedText == "Item 1") { "Expected selectedText to be 'Item 1', but was $selectedText" }
     }
 
     @Test
@@ -582,32 +546,28 @@ class ListComboBoxUiTest {
         composeRule.setContent {
             IntUiTheme {
                 ListComboBox(
-                        items = comboBoxItems,
-                        selectedIndex = selectedIndex,
-                        onItemSelected = { index, _ -> selectedIndex = index },
-                        modifier = Modifier.testTag("ComboBox").width(200.dp),
-                        itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                        itemContent = { item, isSelected, isActive ->
-                            SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    modifier = Modifier.testTag(item),
-                                    iconContentDescription = item,
-                            )
-                        },
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onItemSelected = { index, _ -> selectedIndex = index },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
                 )
             }
         }
 
-        composeRule
-                .onNode(hasTestTag("ComboBox"))
-                .assertTextEquals("Item 1", includeEditableText = false)
+        composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 1", includeEditableText = false)
         selectedIndex = 3
         composeRule.waitForIdle()
-        composeRule
-                .onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true)
-                .performClick()
+        composeRule.onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true).performClick()
         composeRule.onNodeWithTag("Book", useUnmergedTree = true).assertIsSelected()
     }
 
@@ -619,21 +579,21 @@ class ListComboBoxUiTest {
             val textState = rememberTextFieldState("Item 2")
             IntUiTheme {
                 EditableListComboBox(
-                        items = comboBoxItems,
-                        selectedIndex = selectedIdx,
-                        onItemSelected = { index, _ -> selectedIdx = index },
-                        textFieldState = textState,
-                        modifier = Modifier.testTag("ComboBox").width(200.dp),
-                        itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                        itemContent = { item, isSelected, isActive ->
-                            SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    modifier = Modifier.testTag(item),
-                                    iconContentDescription = item,
-                            )
-                        },
+                    items = comboBoxItems,
+                    selectedIndex = selectedIdx,
+                    onItemSelected = { index, _ -> selectedIdx = index },
+                    textFieldState = textState,
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
                 )
             }
         }
@@ -657,27 +617,25 @@ class ListComboBoxUiTest {
             val textState = rememberTextFieldState(comboBoxItems[selectedIndex])
 
             // Update text state when selectedIndex changes
-            LaunchedEffect(selectedIndex) {
-                textState.edit { replace(0, length, comboBoxItems[selectedIndex]) }
-            }
+            LaunchedEffect(selectedIndex) { textState.edit { replace(0, length, comboBoxItems[selectedIndex]) } }
 
             IntUiTheme {
                 EditableListComboBox(
-                        items = comboBoxItems,
-                        selectedIndex = selectedIndex,
-                        onItemSelected = { index, _ -> selectedIndex = index },
-                        textFieldState = textState, // Pass the explicitly managed text state
-                        modifier = Modifier.testTag("ComboBox").width(200.dp),
-                        itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                        itemContent = { item, isSelected, isActive ->
-                            SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    modifier = Modifier.testTag(item),
-                                    iconContentDescription = item,
-                            )
-                        },
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onItemSelected = { index, _ -> selectedIndex = index },
+                    textFieldState = textState, // Pass the explicitly managed text state
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
                 )
             }
         }
@@ -697,24 +655,21 @@ class ListComboBoxUiTest {
         composeRule.setContent {
             IntUiTheme {
                 EditableListComboBox(
-                        items = comboBoxItems,
-                        selectedIndex = 0,
-                        onItemSelected = { _, _ -> },
-                        modifier =
-                                Modifier.testTag("ComboBox")
-                                        .width(200.dp)
-                                        .focusRequester(focusRequester),
-                        isEnabled = true,
-                        itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                        itemContent = { item, isSelected, isActive ->
-                            SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    modifier = Modifier.testTag(item),
-                                    iconContentDescription = item,
-                            )
-                        },
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onItemSelected = { _, _ -> },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    isEnabled = true,
+                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
                 )
             }
         }
@@ -737,8 +692,8 @@ class ListComboBoxUiTest {
     }
 
     private fun focusedListComboBox(
-            focusRequester: FocusRequester = FocusRequester(),
-            isEnabled: Boolean = true,
+        focusRequester: FocusRequester = FocusRequester(),
+        isEnabled: Boolean = true,
     ): SemanticsNodeInteraction {
         injectListComboBox(focusRequester, isEnabled)
         focusRequester.requestFocus()
@@ -751,24 +706,21 @@ class ListComboBoxUiTest {
         composeRule.setContent {
             IntUiTheme {
                 ListComboBox(
-                        items = comboBoxItems,
-                        selectedIndex = 0,
-                        onItemSelected = { _, _ -> },
-                        modifier =
-                                Modifier.testTag("ComboBox")
-                                        .width(200.dp)
-                                        .focusRequester(focusRequester),
-                        isEnabled = isEnabled,
-                        itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                        itemContent = { item, isSelected, isActive ->
-                            SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    modifier = Modifier.testTag(item),
-                                    iconContentDescription = item,
-                            )
-                        },
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onItemSelected = { _, _ -> },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    isEnabled = isEnabled,
+                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
                 )
             }
         }
@@ -778,24 +730,21 @@ class ListComboBoxUiTest {
         composeRule.setContent {
             IntUiTheme {
                 EditableListComboBox(
-                        items = comboBoxItems,
-                        selectedIndex = 0,
-                        onItemSelected = { _, _ -> },
-                        modifier =
-                                Modifier.testTag("ComboBox")
-                                        .width(200.dp)
-                                        .focusRequester(focusRequester),
-                        isEnabled = isEnabled,
-                        itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                        itemContent = { item, isSelected, isActive ->
-                            SimpleListItem(
-                                    text = item,
-                                    isSelected = isSelected,
-                                    isActive = isActive,
-                                    modifier = Modifier.testTag(item),
-                                    iconContentDescription = item,
-                            )
-                        },
+                    items = comboBoxItems,
+                    selectedIndex = 0,
+                    onItemSelected = { _, _ -> },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    isEnabled = isEnabled,
+                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
                 )
             }
         }
@@ -803,15 +752,15 @@ class ListComboBoxUiTest {
 }
 
 private val comboBoxItems =
-        listOf(
-                "Item 1",
-                "Item 2",
-                "Item 3",
-                "Book",
-                "Laughter",
-                "Whisper",
-                "Ocean",
-                "Serendipity lorem ipsum",
-                "Umbrella",
-                "Joy",
-        )
+    listOf(
+        "Item 1",
+        "Item 2",
+        "Item 3",
+        "Book",
+        "Laughter",
+        "Whisper",
+        "Ocean",
+        "Serendipity lorem ipsum",
+        "Umbrella",
+        "Joy",
+    )
