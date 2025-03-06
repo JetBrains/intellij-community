@@ -89,10 +89,16 @@ abstract class AbstractChangesBrowserFilePathNode<U>(
   override fun addCollapsedParent(parentNode: ChangesBrowserNode<*>) {
     val parentUserObject = parentNode.userObject
     if (parentUserObject !is FilePath) return
-    flattenedParents.add(SerializablePathElement(
-      parentUserObject.name,
-      TreeState.defaultPathElementType(parentNode)
-    ))
+    val parentsFromProvider = (parentNode as? PathElementIdProvider)?.flattenedElements
+    if (parentsFromProvider != null) {
+      flattenedParents.addAll(parentsFromProvider)
+    }
+    else {
+      flattenedParents.add(SerializablePathElement(
+        parentUserObject.name,
+        TreeState.defaultPathElementType(parentNode)
+      ))
+    }
   }
 
   override fun getPathElementId(): String = filePath.name
