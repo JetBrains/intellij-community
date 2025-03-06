@@ -73,13 +73,13 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
     return (T)this;
   }
 
-  public final T withPreferredWidth(int width) {
-    myPreferredWidth = width;
+  public final T withPreferredWidth(int unscaledWidth) {
+    myPreferredWidth = unscaledWidth;
     return (T)this;
   }
 
-  public final T withPreferredHeight(int height) {
-    myPreferredHeight = height;
+  public final T withPreferredHeight(int unscaledHeight) {
+    myPreferredHeight = unscaledHeight;
     return (T)this;
   }
 
@@ -88,35 +88,35 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
     return (T)this;
   }
 
-  public final T withPreferredSize(int width, int height) {
-    myPreferredWidth = width;
-    myPreferredHeight = height;
+  public final T withPreferredSize(int unscaledWidth, int unscaledHeight) {
+    myPreferredWidth = unscaledWidth;
+    myPreferredHeight = unscaledHeight;
     return (T)this;
   }
 
-  public final T withMaximumWidth(int width) {
-    myMaximumWidth = width;
+  public final T withMaximumWidth(int unscaledWidth) {
+    myMaximumWidth = unscaledWidth;
     return (T)this;
   }
 
-  public final T withMaximumHeight(int height) {
-    myMaximumHeight = height;
+  public final T withMaximumHeight(int unscaledHeight) {
+    myMaximumHeight = unscaledHeight;
     return (T)this;
   }
 
-  public final T withMaximumSize(int width, int height) {
-    myMaximumWidth = width;
-    myMaximumHeight = height;
+  public final T withMaximumSize(int unscaledWidth, int unscaledHeight) {
+    myMaximumWidth = unscaledWidth;
+    myMaximumHeight = unscaledHeight;
     return (T)this;
   }
 
-  public final T withMinimumWidth(int width) {
-    myMinimumWidth = width;
+  public final T withMinimumWidth(int unscaledWidth) {
+    myMinimumWidth = unscaledWidth;
     return (T)this;
   }
 
-  public final T withMinimumHeight(int height) {
-    myMinimumHeight = height;
+  public final T withMinimumHeight(int unscaledHeight) {
+    myMinimumHeight = unscaledHeight;
     return (T)this;
   }
 
@@ -135,10 +135,10 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
     return getSize(super.getMinimumSize(), myMinimumWidth, myMinimumHeight, isMinimumSizeSet());
   }
 
-  private static Dimension getSize(Dimension size, Integer width, Integer height, boolean isSet) {
+  private static Dimension getSize(Dimension size, Integer unscaledWidth, Integer unscaledHeight, boolean isSet) {
     if (!isSet && size != null) {
-      if (width != null) size.width = JBUIScale.scale(width);
-      if (height != null) size.height = JBUIScale.scale(height);
+      if (unscaledWidth != null) size.width = JBUIScale.scale(unscaledWidth);
+      if (unscaledHeight != null) size.height = JBUIScale.scale(unscaledHeight);
     }
     return size;
   }
