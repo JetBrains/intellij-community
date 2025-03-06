@@ -1,16 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.element.JavaSyntaxElementType;
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder;
+import com.intellij.platform.syntax.psi.ParsingDiagnostics;
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
 import com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService;
-import com.intellij.psi.ParsingDiagnostics;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.java.JavaFileElement;
 import com.intellij.psi.tree.IFileElementType;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,18 +38,21 @@ public class JavaFileElementType extends IFileElementType {
 
   @Override
   public ASTNode parseContents(@NotNull ASTNode chameleon) {
-    PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+    Pair<PsiSyntaxBuilder, LanguageLevel> builderAndLevel = JavaParserUtil.createSyntaxBuilder(chameleon);
+    PsiSyntaxBuilder psiSyntaxBuilder = builderAndLevel.getFirst();
+    SyntaxTreeBuilder builder = psiSyntaxBuilder.getSyntaxTreeBuilder();
     long startTime = System.nanoTime();
-    doParse(builder);
-    ASTNode result = builder.getTreeBuilt().getFirstChildNode();
+    doParse(builder, builderAndLevel.getSecond());
+    ASTNode result = psiSyntaxBuilder.getTreeBuilt().getFirstChildNode();
     ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
     return result;
   }
 
   @ApiStatus.Internal
-  public static void doParse(PsiBuilder builder) {
-    PsiBuilder.Marker root = builder.mark();
-    JavaParser.INSTANCE.getFileParser().parse(builder);
-    root.done(JavaParserDefinition.JAVA_FILE);
+  public static void doParse(@NotNull SyntaxTreeBuilder builder,
+                             @NotNull LanguageLevel languageLevel) {
+    SyntaxTreeBuilder.Marker root = builder.mark();
+    new JavaParser(languageLevel).getFileParser().parse(builder);
+    root.done(JavaSyntaxElementType.INSTANCE.getJAVA_FILE());
   }
 }

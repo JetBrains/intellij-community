@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -509,7 +509,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   private @NotNull PsiAnnotation createAnnotationFromText(final @NotNull String text) throws IncorrectOperationException {
-    final JavaParserUtil.ParserWrapper ANNOTATION = JavaParser.INSTANCE.getDeclarationParser()::parseAnnotation;
+    final JavaParserUtil.ParserWrapper ANNOTATION = (builder, level) -> {
+      new JavaParser(level).getDeclarationParser().parseAnnotation(builder);
+    };
     // synchronize during interning in charTable
     synchronized (charTable) {
       DummyHolder holder = DummyHolderFactory.createHolder(myPsiManager, new JavaDummyElement(text, ANNOTATION, LanguageLevel.HIGHEST), null, charTable);

@@ -2,6 +2,8 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.element.SyntaxElementTypes;
+import com.intellij.java.syntax.lexer.JavaLexer;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.lang.PsiBuilder;
@@ -9,14 +11,17 @@ import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.lang.impl.TokenSequence;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.lexer.BasicJavaLexer;
-import com.intellij.lang.java.lexer.JavaDocLexer;
-import com.intellij.lexer.TokenList;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.platform.syntax.SyntaxElementTypeSet;
+import com.intellij.platform.syntax.element.SyntaxTokenTypes;
+import com.intellij.platform.syntax.lexer.TokenList;
+import com.intellij.platform.syntax.lexer.TokenListKt;
+import com.intellij.platform.syntax.psi.PsiSyntaxBuilder;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValueProvider;
@@ -29,9 +34,18 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Predicate;
 
 public final class JavaParserUtil {
-  public static final TokenSet WS_COMMENTS = TokenSet.orSet(ElementType.JAVA_COMMENT_BIT_SET, TokenSet.WHITE_SPACE);
+  public static final SyntaxElementTypeSet WS_COMMENTS =
+    SyntaxElementTypes.INSTANCE.getJAVA_COMMENT_BIT_SET().plus(SyntaxTokenTypes.getWHITE_SPACE());
 
   public static @NotNull TokenList obtainTokens(@NotNull PsiFile file) {
+    return CachedValuesManager.getCachedValue(file, () ->
+      CachedValueProvider.Result.create(
+        TokenListKt.performLexing(file.getViewProvider().getContents(), new JavaLexer(PsiUtil.getLanguageLevel(file)),
+                                  ProgressManager::checkCanceled),
+        file));
+  }
+
+  public static @NotNull com.intellij.lexer.TokenList obtainTokensOutdated(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
         TokenSequence.performLexing(file.getViewProvider().getContents(), JavaParserDefinition.createLexer(PsiUtil.getLanguageLevel(file))),
@@ -80,34 +94,24 @@ public final class JavaParserUtil {
     return BasicJavaParserUtil.isParseStatementCodeBlocksDeep(builder);
   }
 
+  public static @NotNull Pair<PsiSyntaxBuilder, LanguageLevel> createSyntaxBuilder(final ASTNode chameleon) {
+    return BasicJavaParserUtil.createSyntaxBuilder(chameleon,
+                                             (psi) -> PsiUtil.getLanguageLevel(psi),
+                                             (psi) -> obtainTokens(psi));
+  }
+
+
   public static @NotNull PsiBuilder createBuilder(final ASTNode chameleon) {
     return BasicJavaParserUtil.createBuilder(chameleon,
                                              (psi) -> PsiUtil.getLanguageLevel(psi),
                                              (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level),
-                                             (psi) -> obtainTokens(psi));
+                                             (psi) -> obtainTokensOutdated(psi));
   }
 
   public static @NotNull PsiBuilder createBuilder(final LighterLazyParseableNode chameleon) {
     return BasicJavaParserUtil.createBuilder(chameleon,
                                              (psi) -> PsiUtil.getLanguageLevel(psi),
                                              (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level));
-  }
-
-  public static @Nullable ASTNode parseFragment(final ASTNode chameleon, final ParserWrapper wrapper) {
-    return BasicJavaParserUtil.parseFragment(chameleon, wrapper,
-                                             (level) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(level),
-                                             (level) -> (BasicJavaLexer)JavaParserDefinition.createLexer(level)
-    );
-  }
-
-  public static @Nullable ASTNode parseFragment(final ASTNode chameleon,
-                                                final BasicJavaParserUtil.ParserWrapper wrapper,
-                                                final boolean eatAll,
-                                                final LanguageLevel level) {
-    return BasicJavaParserUtil.parseFragment(chameleon, wrapper, eatAll, level,
-                                             (levelLanguage) -> (JavaDocLexer)JavaParserDefinition.createDocLexer(levelLanguage),
-                                             (levelLanguage) -> JavaParserDefinition.createLexer(levelLanguage)
-    );
   }
 
   /**
@@ -145,6 +149,7 @@ public final class JavaParserUtil {
     return BasicJavaParserUtil.expectOrError(builder, expected, key);
   }
 
+  @SuppressWarnings("unused") //used in plugins
   public static void emptyElement(final PsiBuilder builder, final IElementType type) {
     BasicJavaParserUtil.emptyElement(builder, type);
   }

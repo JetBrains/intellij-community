@@ -6,8 +6,8 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAccessorCandidate;
-import com.intellij.lang.java.parser.DeclarationParser;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.DeclarationParser;
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -88,8 +88,9 @@ class RecordBuilder {
   @NotNull
   PsiClass build() {
     JavaDummyElement dummyElement = new JavaDummyElement(
-      myRecordText.toString(), builder -> JavaParser.INSTANCE.getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
-      LanguageLevel.JDK_16);
+      myRecordText.toString(), (builder, languageLevel) -> {
+      new JavaParser(languageLevel).getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS);
+    }, LanguageLevel.JDK_16);
     DummyHolder holder = DummyHolderFactory.createHolder(myOriginClass.getManager(), dummyElement, myOriginClass);
     return (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
   }

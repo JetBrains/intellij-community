@@ -7,9 +7,9 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.DeclarationParser;
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.parser.DeclarationParser;
-import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -91,7 +91,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
 
     String recordClassText = generateText(recordClass);
     JavaDummyElement dummyElement = new JavaDummyElement(
-      recordClassText, builder -> JavaParser.INSTANCE.getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
+      recordClassText, (builder, languageLevel) -> new JavaParser(languageLevel).getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
       LanguageLevel.JDK_16);
     Project project = context.project();
     PsiFile file = startElement.getContainingFile();
