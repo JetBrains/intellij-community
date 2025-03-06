@@ -12,6 +12,7 @@ kt_jvm_library(
         "@lib//:fastutil-min",
         "//src/worker-util",
         "@lib//:hash4j",
+        "//:fury-core",
         "//:jps",
     ],
     visibility = ["//visibility:public"],

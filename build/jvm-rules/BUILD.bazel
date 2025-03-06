@@ -243,4 +243,11 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+jvm_import(
+    name = "fury-core",
+    jar = "@fury-core//file",
+    source_jar = "@fury-core-sources//file",
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `libraries` end

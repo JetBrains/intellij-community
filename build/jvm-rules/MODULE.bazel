@@ -339,6 +339,19 @@ http_file(
     downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.47.0-sources.jar",
 )
 
+http_file(
+    name = "fury-core",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/fury/fury-core/0.10.0/fury-core-0.10.0.jar",
+    sha256 = "3ad12c4356029ba4adddc2f95dc1dc99bc0603347f536992c73183c821268615",
+    downloaded_file_path = "fury-core-0.10.0.jar",
+)
+http_file(
+    name = "fury-core-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/fury/fury-core/0.10.0/fury-core-0.10.0-sources.jar",
+    sha256 = "0082671d3e190b25b720bbb783a0eb6d50d83048f008828b67aee30d05754b88",
+    downloaded_file_path = "fury-core-0.10.0-sources.jar",
+)
+
 ### auto-generated section `libraries` end
 
 # Test Libraries

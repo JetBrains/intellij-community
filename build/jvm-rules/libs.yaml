@@ -59,3 +59,5 @@
       version: 1.47.0
     - id: io.opentelemetry:opentelemetry-exporter-sender-jdk
       version: 1.47.0
+    - id: org.apache.fury:fury-core
+      version: 0.10.0

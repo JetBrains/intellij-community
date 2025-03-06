@@ -30,6 +30,7 @@ kt_jvm_library(
         "//:arrow-algorithm",
         "@lib//:jps-javac-extension",
         "@lib//:caffeine",
+        "//:fury-core"
     ],
     runtime_deps = [
         # arrow wants slf4j
