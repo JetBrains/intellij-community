@@ -14,11 +14,13 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -141,6 +143,17 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     // return elements if they are really first and last elements of statements
     if (element1 == PsiTreeUtil.getDeepestFirst(statement1) &&
         element2 == PyPsiUtils.getPrevSignificantLeaf(PsiTreeUtil.getDeepestLast(statement2), !(element2 instanceof PsiComment))) {
+      return Couple.of(statement1, statement2);
+    }
+
+    // multi-line function call
+    boolean isLeftParen = "(".equals(element2.getText());
+    PsiElement prevSignificantLeaf = PyPsiUtils.getPrevSignificantLeaf(
+      PsiTreeUtil.getDeepestLast(statement2),
+      !(statement2 instanceof PsiComment)
+    );
+    boolean isRightParen = prevSignificantLeaf != null && ")".equals(prevSignificantLeaf.getText());
+    if (isLeftParen && isRightParen) {
       return Couple.of(statement1, statement2);
     }
     return null;
