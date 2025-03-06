@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi
 
 import com.intellij.lang.Language
@@ -7,6 +7,9 @@ import com.intellij.lang.impl.PsiBuilderAdapter
 import com.intellij.lang.impl.PsiBuilderImpl
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.syntax.impl.builder.DiagnosticAwareBuilder
+import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+import com.intellij.platform.syntax.psi.ParsingDiagnosticsHandler
 import com.intellij.psi.ParsingDiagnostics.ParserDiagnosticsHandler
 import io.opentelemetry.api.metrics.LongCounter
 import org.jetbrains.annotations.ApiStatus
@@ -15,22 +18,36 @@ import java.util.concurrent.ConcurrentHashMap
 private val metricIdBadCharacters: Regex = Regex("[^\\w.-]+")
 
 @ApiStatus.Internal
-class ParsingDiagnosticsHandlerImpl : ParserDiagnosticsHandler {
+class ParsingDiagnosticsHandlerImpl : ParserDiagnosticsHandler, ParsingDiagnosticsHandler {
   private val meter = TelemetryManager.getInstance().getMeter(PlatformMetrics)
   private val diagnosticsEntries: MutableMap<String, DiagnosticsEntry> = ConcurrentHashMap()
 
   override fun registerParse(builder: PsiBuilder, language: Language, parsingTimeNs: Long) {
     var effectiveBuilder = builder
-    while(effectiveBuilder is PsiBuilderAdapter){
+    while (effectiveBuilder is PsiBuilderAdapter) {
       effectiveBuilder = effectiveBuilder.delegate
     }
 
-    val textLength = effectiveBuilder.originalText.length.toLong()
-
     diagnosticsEntries.computeIfAbsent(language.id) { DiagnosticsEntry(it) }.apply {
+      val textLength = effectiveBuilder.originalText.length.toLong()
+
       if (effectiveBuilder is PsiBuilderImpl && effectiveBuilder.lexingTimeNs > 0) {
         lexerSizeCounter.add(textLength)
         lexerTimeCounter.add(effectiveBuilder.lexingTimeNs)
+      }
+
+      parserSizeCounter.add(textLength)
+      parserTimeCounter.add(parsingTimeNs)
+    }
+  }
+
+  override fun registerParse(builder: SyntaxTreeBuilder, language: Language, parsingTimeNs: Long) {
+    diagnosticsEntries.computeIfAbsent(language.id) { DiagnosticsEntry(it) }.apply {
+      val textLength = builder.text.length.toLong()
+
+      if (builder is DiagnosticAwareBuilder && builder.lexingTimeNs > 0) {
+        lexerSizeCounter.add(textLength)
+        lexerTimeCounter.add(builder.lexingTimeNs)
       }
 
       parserSizeCounter.add(textLength)

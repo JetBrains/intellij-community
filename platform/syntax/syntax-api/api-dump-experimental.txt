@@ -16,6 +16,13 @@
 - sf:getBAD_CHARACTER():com.intellij.platform.syntax.SyntaxElementType
 - sf:getERROR_ELEMENT():com.intellij.platform.syntax.SyntaxElementType
 - sf:getWHITE_SPACE():com.intellij.platform.syntax.SyntaxElementType
+*:com.intellij.platform.syntax.impl.builder.DiagnosticAwareBuilder
+- a:getLexingTimeNs():J
+*:com.intellij.platform.syntax.impl.builder.SyntaxBuildingDiagnostics
+- a:registerPass(I,I):V
+- a:registerRollback(I):V
+*f:com.intellij.platform.syntax.impl.builder.SyntaxBuildingDiagnosticsKt
+- *sf:computeWithDiagnostics(com.intellij.platform.syntax.impl.builder.SyntaxBuildingDiagnostics,kotlin.jvm.functions.Function0):java.lang.Object
 *:com.intellij.platform.syntax.lexer.Lexer
 - a:advance():V
 - a:getBufferEnd():I

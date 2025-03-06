@@ -1,25 +1,40 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl
 
+import com.intellij.platform.syntax.impl.builder.SyntaxBuildingDiagnostics
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Supplier
 import java.util.regex.Pattern
 import kotlin.math.max
 import kotlin.streams.asSequence
 
-class PsiBuilderDiagnosticsImpl(private val collectTraces: Boolean = false, ignoreMatching: Set<String> = emptySet()) : PsiBuilderDiagnostics {
+class PsiBuilderDiagnosticsImpl(
+  private val collectTraces: Boolean = false,
+  ignoreMatching: Set<String> = emptySet()
+) : SyntaxBuildingDiagnostics {
   private val rollbacks: MutableMap<Int, AtomicInteger> = hashMapOf()
   private val passes: MutableList<Pair<Int, Int>> = mutableListOf()
   private val traces: MutableMap<StackTraceElement, StatEntry> = hashMapOf()
-  private val ignoreLines: Pattern = (ignoreMatching + listOf(
-    Thread::class,
-    PsiBuilderDiagnosticsImpl::class,
-    PsiBuilderImpl::class,
-  )
-    .mapNotNull { cls -> cls.qualifiedName })
-    .joinToString("|") { chunk -> Pattern.quote(chunk) }
-    .let { pattern -> Pattern.compile(pattern) }
+  private val ignoreLines: Pattern = run {
+    val knownClassesToIgnore = listOf(
+      Thread::class,
+      PsiBuilderDiagnosticsImpl::class,
+      PsiBuilderImpl::class,
+    )
+
+    val knownClassFQNsToIgnore = listOf(
+      "com.intellij.platform.syntax.impl.builder.ParsingTreeBuilder"
+    )
+
+    val linesToIgnore =
+      ignoreMatching +
+      knownClassesToIgnore.mapNotNull { cls -> cls.qualifiedName } +
+      knownClassFQNsToIgnore
+
+    val pattern = linesToIgnore.joinToString("|") { chunk -> Pattern.quote(chunk) }
+
+    Pattern.compile(pattern)
+  }
 
   override fun toString(): String {
     var totalRollbacks = 0
@@ -138,11 +153,11 @@ $rollbackSources
 
   companion object {
     @JvmStatic
-    fun <T> computeWithDiagnostics(diagnostics: PsiBuilderDiagnostics?, computable: Supplier<T>): T {
+    fun <T> computeWithDiagnostics(diagnostics: SyntaxBuildingDiagnostics?, computable: () -> T): T {
       val oldValue = PsiBuilderImpl.DIAGNOSTICS
       try {
         PsiBuilderImpl.DIAGNOSTICS = diagnostics
-        return computable.get()
+        return com.intellij.platform.syntax.impl.builder.computeWithDiagnostics(diagnostics, computable)
       }
       finally {
         PsiBuilderImpl.DIAGNOSTICS = oldValue
@@ -150,8 +165,8 @@ $rollbackSources
     }
 
     @JvmStatic
-    fun runWithDiagnostics(diagnostics: PsiBuilderDiagnostics?, runnable: Runnable) {
-      computeWithDiagnostics(diagnostics) { runnable.run(); null }
+    fun runWithDiagnostics(diagnostics: SyntaxBuildingDiagnostics?, runnable: Runnable) {
+      computeWithDiagnostics(diagnostics, runnable::run)
     }
   }
 }

@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.impl.builder
 
+import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.Logger
+import com.intellij.platform.syntax.Logger.Attachment
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.impl.fastutil.ints.isEmpty
 import com.intellij.platform.syntax.lexer.Lexer
@@ -9,10 +12,6 @@ import com.intellij.platform.syntax.lexer.TokenSequence
 import com.intellij.platform.syntax.lexer.performLexing
 import com.intellij.platform.syntax.parser.*
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder.Production
-import com.intellij.platform.syntax.CancellationProvider
-import com.intellij.platform.syntax.Logger
-import com.intellij.platform.syntax.Logger.Attachment
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import kotlin.math.abs
@@ -492,10 +491,6 @@ internal class ParsingTreeBuilder(
 
 private const val UNBALANCED_MESSAGE: @NonNls String = "Unbalanced tree. Most probably caused by unbalanced markers. " +
                                                        "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem"
-
-@get:ApiStatus.Internal
-@set:ApiStatus.Internal
-var DIAGNOSTICS: PsiBuilderDiagnostics? = null
 
 private fun performLexing(
   cachedLexemes: TokenList?,

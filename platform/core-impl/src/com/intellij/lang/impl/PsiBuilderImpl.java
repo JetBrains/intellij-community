@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.syntax.impl.builder.SyntaxBuildingDiagnostics;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -47,7 +48,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private long myLexingTimeNs = 0;
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
-  public static PsiBuilderDiagnostics DIAGNOSTICS;
+  public static SyntaxBuildingDiagnostics DIAGNOSTICS;
 
   // function stored in PsiBuilderImpl's user data that is called during reparse when the algorithm is not sure what to merge
   public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>
