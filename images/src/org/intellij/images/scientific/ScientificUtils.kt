@@ -2,10 +2,12 @@
 package org.intellij.images.scientific
 
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.Key
 import java.awt.image.BufferedImage
 import com.intellij.openapi.components.State
+import com.intellij.openapi.components.service
 
 
 object ScientificUtils {
@@ -14,19 +16,33 @@ object ScientificUtils {
   const val DEFAULT_IMAGE_FORMAT: String = "png"
 }
 
-
 @State(name = "BinarizationThresholdConfig", storages = [Storage("binarizationThresholdConfig.xml")])
-object BinarizationThresholdConfig : PersistentStateComponent<BinarizationThresholdConfig> {
+@Service(Service.Level.APP)
+class BinarizationThresholdConfig : PersistentStateComponent<BinarizationThresholdConfig.State> {
+  companion object {
+    private const val DEFAULT_THRESHOLD = 128
 
-  private const val DEFAULT_THRESHOLD = 128
-
-  var threshold: Int = DEFAULT_THRESHOLD
-
-  override fun getState(): BinarizationThresholdConfig {
-    return this
+    @JvmStatic
+    fun getInstance(): BinarizationThresholdConfig {
+      return service()
+    }
   }
 
-  override fun loadState(state: BinarizationThresholdConfig) {
-    this.threshold = state.threshold
+  data class State(var threshold: Int = DEFAULT_THRESHOLD)
+
+  private var state: State = State()
+
+  override fun getState(): State {
+    return state
   }
+
+  override fun loadState(state: State) {
+    this.state = state
+  }
+
+  var threshold: Int
+    get() = state.threshold
+    set(value) {
+      state.threshold = value
+    }
 }
