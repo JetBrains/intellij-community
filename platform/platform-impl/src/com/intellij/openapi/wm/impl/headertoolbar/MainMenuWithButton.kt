@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.ui.UiComponentsSearchUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
@@ -19,6 +18,7 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.util.width
 import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -119,15 +119,6 @@ class MainMenuWithButton(
     }
   }
 
-  fun recalculateWidth() {
-    val mainToolbar = UiComponentsSearchUtil.findUiComponent(frame) { _: MainToolbar -> true }
-    if (mainToolbar == null) {
-      LOG.info("Main toolbar not found for recalculation of the menu width")
-      return
-    }
-    recalculateWidth(mainToolbar)
-  }
-
   fun getButtonIcon(): Icon = if (isMergedMainMenu()) AllIcons.General.ChevronRight else AllIcons.General.WindowsMenu_20x20
 
 
@@ -179,14 +170,18 @@ class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame) : IdeJMenuBa
       } }
   }
 
-
-  fun clearInvisibleItems() {
-    invisibleItems.clear()
-  }
-
   fun addInvisibleItem(item: ActionMenu) {
     val name = item.text
-    val width = item.size.width
+    var width = item.size.width
+    if (width == 0) {
+      invisibleItems[name]?.second?.let {
+        width = it
+      }
+      if (width == 0) {
+        val fontMetrics = item.getFontMetrics(item.font)
+        width = fontMetrics.stringWidth(item.text) + item.insets.width
+      }
+    }
     invisibleItems.put(name, Pair(item, width))
   }
 
