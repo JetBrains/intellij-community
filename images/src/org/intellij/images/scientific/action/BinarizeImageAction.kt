@@ -21,7 +21,7 @@ class BinarizeImageAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val originalImage = imageFile.getUserData(ScientificUtils.ORIGINAL_IMAGE_KEY) ?: return
-    val thresholdConfig = ApplicationManager.getApplication().getService(BinarizationThresholdConfig::class.java) ?: return
+    val thresholdConfig = BinarizationThresholdConfig.getInstance()
     val byteArrayOutputStream = ByteArrayOutputStream()
     val binarizedImage = applyBinarization(originalImage, thresholdConfig.threshold)
     ImageIO.write(binarizedImage, ScientificUtils.DEFAULT_IMAGE_FORMAT, byteArrayOutputStream)
