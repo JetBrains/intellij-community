@@ -23,9 +23,6 @@ companion object {
 
 --- isFinal list L3
 }
-  /** the input device */
-  private lateinit var zzReader: kotlinx.io.Source
-
   /** the current state of the DFA */
   private var zzState = 0
 
@@ -82,10 +79,7 @@ companion object {
    * Refills the input buffer.
    *
    * @return      {@code false}, iff there was new input.
-   *
-   * @exception   kotlinx.io.IOException  if any I/O-Error occurs
    */
-  @Throws(kotlinx.io.IOException::class)
   private fun zzRefill(): Boolean {
     return true
   }
@@ -208,7 +202,6 @@ companion object {
    * the end of input is encountered or an I/O-Error occurs.
    *
    * @return      the next token
-   * @exception   kotlinx.io.IOException  if any I/O-Error occurs
    */
 --- yylex declaration L10
     var zzInput: Int = 0;
