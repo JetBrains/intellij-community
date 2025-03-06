@@ -5,6 +5,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.write
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.Test
@@ -200,6 +201,20 @@ class PluginSetLoadingTest {
     }
   }
 
+  @Test
+  fun `module package filter collision leads to a failure`() {
+    PluginBuilder.empty().id("foo")
+      .module("foo.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginsDirPath.resolve("foo"))
+    PluginBuilder.empty().id("bar")
+      .module("bar.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginsDirPath.resolve("bar"))
+    assertThatThrownBy {
+      val pluginSet = buildPluginSet()
+    }.hasStackTraceContaining("ClassLoaderConfigurator.checkPackagePrefixUniqueness")
+      .hasMessageContaining("Package prefix common.module is already used")
+  }
+
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
     pluginsDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)
@@ -207,7 +222,9 @@ class PluginSetLoadingTest {
   }
 
   private fun assertEnabledPluginsSetEquals(enabledIds: List<String>, builder: PluginSetTestBuilder.() -> Unit) {
-    val pluginSet = PluginSetTestBuilder(pluginsDirPath).apply(builder).build()
+    val pluginSet = buildPluginSet(builder)
     assertThat(pluginSet).hasExactlyEnabledPlugins(*enabledIds.toTypedArray())
   }
+
+  private fun buildPluginSet(builder: PluginSetTestBuilder.() -> Unit = {}): PluginSet = PluginSetTestBuilder(pluginsDirPath).apply(builder).build()
 }
