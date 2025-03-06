@@ -51,7 +51,7 @@ class BuiltInDecompilerTest : AbstractBuiltInDecompilerTest() {
 }
 
 @RunWith(JUnit38ClassRunner::class)
-class BuiltInDecompilerForWrongAbiVersionTest : AbstractBuiltInDecompilerTest() {
+class BuiltInDecompilerForWrongMetadataVersionTest : AbstractBuiltInDecompilerTest() {
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("decompiler/builtins")
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.analysis.decompiler.psi.text.INCOMPATIBLE_ABI_VERSION_GENERAL_COMMENT
+import org.jetbrains.kotlin.analysis.decompiler.psi.text.INCOMPATIBLE_METADATA_VERSION_GENERAL_COMMENT
 import org.jetbrains.kotlin.idea.decompiler.AbstractInternalCompiledClassesTest
 import org.jetbrains.kotlin.idea.decompiler.stubBuilder.findClassFileByName
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -17,26 +17,26 @@ import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
-class DecompiledTextForWrongAbiVersionTest : AbstractInternalCompiledClassesTest() {
+class DecompiledTextForWrongMetadataVersionTest : AbstractInternalCompiledClassesTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinJdkAndLibraryProjectDescriptor(File(IDEA_TEST_DATA_DIR.absolutePath + "/wrongAbiVersionLib/bin"))
+        return KotlinJdkAndLibraryProjectDescriptor(File(IDEA_TEST_DATA_DIR.absolutePath + "/wrongMetadataVersionLib/bin"))
     }
 
-    fun testSyntheticClassIsInvisibleWrongAbiVersion() = doTestNoPsiFilesAreBuiltForSyntheticClasses()
+    fun testSyntheticClassIsInvisibleWrongMetadataVersion() = doTestNoPsiFilesAreBuiltForSyntheticClasses()
 
-    fun testClassWithWrongAbiVersion() = doTest("ClassWithWrongAbiVersion")
+    fun testClassWithWrongMetadataVersion() = doTest("ClassWithWrongMetadataVersion")
 
-    fun testPackagePartWithWrongAbiVersion() = doTest("Wrong_packageKt")
+    fun testPackagePartWithWrongMetadataVersion() = doTest("Wrong_packageKt")
 
     fun doTest(name: String) {
         val root = findTestLibraryRoot(module!!)!!
-        checkFileWithWrongAbiVersion(root.findClassFileByName(name))
+        checkFileWithWrongMetadataVersion(root.findClassFileByName(name))
     }
 
-    private fun checkFileWithWrongAbiVersion(file: VirtualFile) {
+    private fun checkFileWithWrongMetadataVersion(file: VirtualFile) {
         val psiFile = PsiManager.getInstance(project).findFile(file)
         Assert.assertTrue(psiFile is KtClsFile)
         val decompiledText = psiFile!!.text!!
-        Assert.assertTrue(decompiledText.contains(INCOMPATIBLE_ABI_VERSION_GENERAL_COMMENT))
+        Assert.assertTrue(decompiledText.contains(INCOMPATIBLE_METADATA_VERSION_GENERAL_COMMENT))
     }
 }
