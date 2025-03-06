@@ -84,7 +84,7 @@ internal object CheckinActionUtil {
                                 pathsToCommit: List<FilePath>,
                                 executor: CommitExecutor?,
                                 forceUpdateCommitStateFromContext: Boolean) {
-    RefreshAction.saveAllAndInvokeCustomRefreshers(project)
+    RefreshAction.saveAllAndInvokeCustomRefreshersOnEdt(project)
 
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {

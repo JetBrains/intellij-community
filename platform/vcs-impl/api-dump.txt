@@ -1165,11 +1165,14 @@ f:com.intellij.openapi.vcs.changes.actions.OpenRepositoryVersionAction
 f:com.intellij.openapi.vcs.changes.actions.RefreshAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
+- sf:Companion:com.intellij.openapi.vcs.changes.actions.RefreshAction$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:doRefresh(com.intellij.openapi.project.Project):V
+- sf:doRefresh(com.intellij.openapi.project.Project):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.openapi.vcs.changes.actions.RefreshAction$Companion
+- f:doRefresh(com.intellij.openapi.project.Project):V
 f:com.intellij.openapi.vcs.changes.actions.RemoveChangeListAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
