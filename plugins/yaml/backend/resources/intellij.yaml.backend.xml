@@ -2,7 +2,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.json"/>
-    <plugin id="com.intellij.platform.experimental.backend"/>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.yaml"/>
   </dependencies>
   
