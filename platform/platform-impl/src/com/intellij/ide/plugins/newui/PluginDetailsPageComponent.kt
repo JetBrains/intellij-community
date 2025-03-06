@@ -1078,7 +1078,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     showLicensePanel()
 
     unavailableWithoutSubscriptionBanner?.isVisible = showComponent?.isNotFreeInFreeMode == true
-    partiallyAvailableBanner?.isVisible = showComponent?.isNotFreeInFreeMode != true  &&
+    partiallyAvailableBanner?.isVisible = showComponent?.isNotFreeInFreeMode != true &&
                                           PluginManagerCore.dependsOnUltimateOptionally(showComponent?.pluginDescriptor)
 
     val homepage = getPluginHomepage(plugin.pluginId)
@@ -1726,80 +1726,80 @@ private fun createBaseNotificationPanel(): BorderLayoutPanel {
 }
 
 private fun createMainBorder(): CustomLineBorder {
-      return object : CustomLineBorder(JBColor.border(), JBUI.insetsTop(1)) {
-        override fun getBorderInsets(c: Component): Insets = JBUI.insets(15, 20, 0, 20)
+  return object : CustomLineBorder(JBColor.border(), JBUI.insetsTop(1)) {
+    override fun getBorderInsets(c: Component): Insets = JBUI.insets(15, 20, 0, 20)
+  }
+}
+
+private fun createNameComponent(): JEditorPane {
+  val editorPane: JEditorPane = object : JEditorPane() {
+    var baselineComponent: JLabel? = null
+
+    override fun getBaseline(width: Int, height: Int): Int {
+      var baselineComponent = baselineComponent
+      if (baselineComponent == null) {
+        baselineComponent = JLabel()
+        this.baselineComponent = baselineComponent
+        baselineComponent.font = font
       }
+      baselineComponent.text = text
+      val size = baselineComponent.preferredSize
+      return baselineComponent.getBaseline(size.width, size.height)
     }
 
-    private fun createNameComponent(): JEditorPane {
-      val editorPane: JEditorPane = object : JEditorPane() {
-        var baselineComponent: JLabel? = null
-
-        override fun getBaseline(width: Int, height: Int): Int {
-          var baselineComponent = baselineComponent
-          if (baselineComponent == null) {
-            baselineComponent = JLabel()
-            this.baselineComponent = baselineComponent
-            baselineComponent.font = font
-          }
-          baselineComponent.text = text
-          val size = baselineComponent.preferredSize
-          return baselineComponent.getBaseline(size.width, size.height)
-        }
-
-        override fun getPreferredSize(): Dimension {
-          val size = super.getPreferredSize()
-          if (size.height == 0) {
-            size.height = minimumSize.height
-          }
-          return size
-        }
-
-        override fun updateUI() {
-          super.updateUI()
-          font = labelFont.deriveFont(Font.BOLD, 18f)
-        }
+    override fun getPreferredSize(): Dimension {
+      val size = super.getPreferredSize()
+      if (size.height == 0) {
+        size.height = minimumSize.height
       }
-
-      UIUtil.convertToLabel(editorPane)
-      editorPane.caret = EmptyCaret.INSTANCE
-
-      editorPane.font = JBFont.create(labelFont.deriveFont(Font.BOLD, 18f))
-
-      val text: @NlsSafe String = "<html><span>Foo</span></html>"
-      editorPane.text = text
-      editorPane.minimumSize = editorPane.preferredSize
-      editorPane.text = null
-
-      return editorPane
+      return size
     }
 
-    private fun setTabContainerBorder(pane: JComponent) {
-      val tabContainer = UIUtil.uiChildren(pane).find { it.javaClass.simpleName == "TabContainer" }
-      if (tabContainer is JComponent) {
-        tabContainer.border = SideBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, SideBorder.BOTTOM)
-      }
+    override fun updateUI() {
+      super.updateUI()
+      font = labelFont.deriveFont(Font.BOLD, 18f)
     }
+  }
 
-    private fun createRequiredPluginsComponent(): JEditorPane {
-      val editorPane = JEditorPane()
-      UIUtil.convertToLabel(editorPane)
-      editorPane.caret = EmptyCaret.INSTANCE
-      editorPane.foreground = ListPluginComponent.GRAY_COLOR
-      editorPane.contentType = "text/plain"
-      return editorPane
-    }
+  UIUtil.convertToLabel(editorPane)
+  editorPane.caret = EmptyCaret.INSTANCE
 
-    private fun addTabWithoutBorders(pane: JBTabbedPane, callback: Runnable) {
-      val insets = pane.tabComponentInsets
-      pane.tabComponentInsets = JBInsets.emptyInsets()
-      callback.run()
-      pane.tabComponentInsets = insets
-    }
+  editorPane.font = JBFont.create(labelFont.deriveFont(Font.BOLD, 18f))
 
-    private fun setFont(component: JComponent, tiny: Boolean) {
-      component.font = labelFont
-      if (tiny) {
-        PluginManagerConfigurable.setTinyFont(component)
-      }
-    }
+  val text: @NlsSafe String = "<html><span>Foo</span></html>"
+  editorPane.text = text
+  editorPane.minimumSize = editorPane.preferredSize
+  editorPane.text = null
+
+  return editorPane
+}
+
+private fun setTabContainerBorder(pane: JComponent) {
+  val tabContainer = UIUtil.uiChildren(pane).find { it.javaClass.simpleName == "TabContainer" }
+  if (tabContainer is JComponent) {
+    tabContainer.border = SideBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, SideBorder.BOTTOM)
+  }
+}
+
+private fun createRequiredPluginsComponent(): JEditorPane {
+  val editorPane = JEditorPane()
+  UIUtil.convertToLabel(editorPane)
+  editorPane.caret = EmptyCaret.INSTANCE
+  editorPane.foreground = ListPluginComponent.GRAY_COLOR
+  editorPane.contentType = "text/plain"
+  return editorPane
+}
+
+private fun addTabWithoutBorders(pane: JBTabbedPane, callback: Runnable) {
+  val insets = pane.tabComponentInsets
+  pane.tabComponentInsets = JBInsets.emptyInsets()
+  callback.run()
+  pane.tabComponentInsets = insets
+}
+
+private fun setFont(component: JComponent, tiny: Boolean) {
+  component.font = labelFont
+  if (tiny) {
+    PluginManagerConfigurable.setTinyFont(component)
+  }
+}
