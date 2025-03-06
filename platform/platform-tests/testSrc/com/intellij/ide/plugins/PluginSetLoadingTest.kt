@@ -16,7 +16,7 @@ class PluginSetLoadingTest {
   val inMemoryFs = InMemoryFsRule()
 
   private val rootPath get() = inMemoryFs.fs.getPath("/")
-  private val pluginDirPath get() = rootPath.resolve("plugin")
+  private val pluginsDirPath get() = rootPath.resolve("wd/plugins")
 
   @Test
   fun `use newer plugin`() {
@@ -33,7 +33,7 @@ class PluginSetLoadingTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val pluginSet = PluginSetTestBuilder(pluginDirPath).build()
+    val pluginSet = PluginSetTestBuilder(pluginsDirPath).build()
     val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -59,7 +59,7 @@ class PluginSetLoadingTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val result = PluginSetTestBuilder(pluginDirPath)
+    val result = PluginSetTestBuilder(pluginsDirPath)
       .withDisabledPlugins("foo")
       .buildLoadingResult()
 
@@ -88,7 +88,7 @@ class PluginSetLoadingTest {
         <idea-version until-build="4"/>
       </idea-plugin>""")
 
-    val result = PluginSetTestBuilder(pluginDirPath)
+    val result = PluginSetTestBuilder(pluginsDirPath)
       .withProductBuildNumber(BuildNumber.fromString("4.0")!!)
       .buildLoadingResult()
 
@@ -122,7 +122,7 @@ class PluginSetLoadingTest {
         <idea-version since-build="2.0" until-build="4.*"/>
       </idea-plugin>""")
 
-    val pluginSet = PluginSetTestBuilder(pluginDirPath)
+    val pluginSet = PluginSetTestBuilder(pluginsDirPath)
       .withProductBuildNumber(BuildNumber.fromString("3.12")!!)
       .build()
     val plugins = pluginSet.enabledPlugins
@@ -137,10 +137,10 @@ class PluginSetLoadingTest {
 
   @Test
   fun `use first plugin if both versions the same`() {
-    PluginBuilder.empty().id("foo").version("1.0").build(pluginDirPath.resolve("foo_1-0"))
-    PluginBuilder.empty().id("foo").version("1.0").build(pluginDirPath.resolve("foo_another"))
+    PluginBuilder.empty().id("foo").version("1.0").build(pluginsDirPath.resolve("foo_1-0"))
+    PluginBuilder.empty().id("foo").version("1.0").build(pluginsDirPath.resolve("foo_another"))
 
-    val pluginSet = PluginSetTestBuilder(pluginDirPath).build()
+    val pluginSet = PluginSetTestBuilder(pluginsDirPath).build()
     val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
@@ -201,13 +201,13 @@ class PluginSetLoadingTest {
   }
 
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
-    pluginDirPath.resolve(id)
+    pluginsDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)
       .write(data.trimIndent())
   }
 
   private fun assertEnabledPluginsSetEquals(enabledIds: List<String>, builder: PluginSetTestBuilder.() -> Unit) {
-    val pluginSet = PluginSetTestBuilder(pluginDirPath).apply(builder).build()
+    val pluginSet = PluginSetTestBuilder(pluginsDirPath).apply(builder).build()
     assertThat(pluginSet.enabledPlugins)
       .hasSize(enabledIds.size)
     assertThat(pluginSet.enabledPlugins.map { it.pluginId.idString })
