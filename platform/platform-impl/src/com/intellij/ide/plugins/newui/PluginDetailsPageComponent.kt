@@ -1726,7 +1726,7 @@ private fun createBaseNotificationPanel(): BorderLayoutPanel {
 }
 
 private fun createMainBorder(): CustomLineBorder {
-  return object : CustomLineBorder(JBColor.border(), JBUI.insetsTop(1)) {
+  return object : CustomLineBorder(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR, JBUI.insetsTop(1)) {
     override fun getBorderInsets(c: Component): Insets = JBUI.insets(15, 20, 0, 20)
   }
 }
