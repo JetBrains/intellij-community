@@ -224,6 +224,8 @@ public class JDParser {
 
       while (prefixLineCount < size && l.get(prefixLineCount).isEmpty()) prefixLineCount++;
       if (prefixLineCount == size) {
+        if (comment.getIsMarkdown()) prefixLineCount--;
+
         comment.setPrefixEmptyLineCount(prefixLineCount);
         comment.setSuffixEmptyLineCount(0);
       }

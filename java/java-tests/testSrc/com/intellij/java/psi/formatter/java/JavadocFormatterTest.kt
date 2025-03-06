@@ -1856,8 +1856,145 @@ public class Test {
     """.trimIndent())
   }
 
-  fun testJavadocEmptyLines() {
-    javaSettings.JD_KEEP_EMPTY_LINES = true
+  fun testJavaDocNoKeepEmptyLinesWithDescriptionAndParam() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+      /**
+       *
+       *
+       * description
+       *
+       *
+       * after blank line between
+       *
+       * @param a method param
+       *
+       *
+       */
+       void f(int a) {
+       }
+    """.trimIndent(), """
+      /**
+       * description
+       * after blank line between
+       *
+       * @param a method param
+       */
+      void f(int a) {
+      }
+    """.trimIndent())
+  }
+
+  fun testJavaDocKeepEmptyLinesWithDescriptionAndParam() {
+    doTextTest("""
+      /**
+       *
+       *
+       * description
+       *
+       *
+       * after blank line between
+       *
+       * @param a method param
+       *
+       *
+       */
+       void f(int a) {
+       }
+    """.trimIndent(), """
+      /**
+       *
+       *
+       * description
+       * <p>
+       * <p>
+       * after blank line between
+       *
+       * @param a method param
+       *
+       *
+       */
+      void f(int a) {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownNoKeepEmptyLinesWithDescriptionAndParam() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+       ///
+       ///
+       /// description
+       ///
+       ///
+       /// after blank line
+       ///
+       /// @param a
+       ///
+       ///
+       void f(int a) {
+       }
+    """.trimIndent(), """
+       /// description
+       /// after blank line
+       ///
+       /// @param a
+       void f(int a) {
+       }
+    """.trimIndent())
+  }
+
+
+  fun testMarkdownKeepEmptyLinesWithDescriptionAndParam() {
+    doTextTest("""
+       ///
+       ///
+       /// description
+       ///
+       ///
+       /// after blank line
+       ///
+       /// @param a
+       ///
+       ///
+       void f(int a) {
+       }
+    """.trimIndent(), """
+       ///
+       ///
+       /// description
+       ///
+       ///
+       /// after blank line
+       ///
+       /// @param a
+       ///
+       ///
+       void f(int a) {
+       }
+    """.trimIndent())
+  }
+
+  fun testJavadocNoKeepEmptyLinesOnlyEmptyLines() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
+    doTextTest("""
+      /**
+       * 
+       * 
+       * 
+       *
+       */
+      public class Main {}
+    """.trimIndent(), """
+      /**
+       *
+       */
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testJavadocKeepEmptyLinesOnlyEmptyLines() {
     doTextTest("""
       /**
        * 
@@ -1878,35 +2015,30 @@ public class Test {
     """.trimIndent())
   }
 
-  fun testMarkdownEmptyLines() {
+  fun testMarkdownNoKeepEmptyLinesOnlyEmptyLines() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
     doTextTest("""
       ///
-      /// line
-      /// 
+      ///
+      ///
       public class Main {}
     """.trimIndent(), """
-      ///
-      /// line
       ///
       public class Main {
       }
     """.trimIndent())
   }
 
-  fun testEmptyLinesOldJavadoc() {
+  fun testMarkdownKeepEmptyLinesOnlyEmptyLines() {
     doTextTest("""
-      /**
-       * ff
-       * ff
-       * ff
-       */
+      ///
+      ///
+      ///
       public class Main {}
     """.trimIndent(), """
-      /**
-       * ff
-       * ff
-       * ff
-       */
+      ///
+      ///
+      ///
       public class Main {
       }
     """.trimIndent())
