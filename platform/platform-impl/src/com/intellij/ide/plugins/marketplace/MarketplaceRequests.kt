@@ -17,6 +17,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -275,6 +276,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
      * @return null if failed to download brokenPlugins from the Marketplace
      */
     fun getBrokenPlugins(currentBuild: BuildNumber): Map<PluginId, Set<String>>? {
+      LOG.debug { "Fetching broken plugins for build $currentBuild" }
       val brokenPlugins = try {
         readOrUpdateFile(
           Paths.get(PathManager.getPluginTempPath(), "brokenPlugins.json"),
@@ -327,6 +329,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       parser: (InputStream) -> T,
     ): T {
       val eTag = if (file == null) null else loadETagForFile(file)
+      LOG.debug { "Cached response $file for $url has eTag=$eTag" }
       return HttpRequests
         .request(url)
         .tuner { connection ->
@@ -345,6 +348,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
             indicator?.checkCanceled()
             val connection = request.connection
             if (file != null && isNotModified(connection, file)) {
+              LOG.debug { "Response $file from Marketplace is not modified" }
               return@connect Files.newInputStream(file).use(parser)
             }
 
@@ -357,8 +361,13 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
             }
 
             synchronized(this) {
+              LOG.debug { "Downloading new $file from Marketplace for $url" }
               request.saveToFile(file, indicator)
-              connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
+              val newEtag = connection.getHeaderField("ETag")
+              LOG.debug { "Downloaded new $file from Marketplace for $url, new etag=$newEtag" }
+              if (newEtag != null) {
+                saveETagForFile(file, newEtag)
+              }
             }
             return@connect Files.newInputStream(file).use(parser)
           }
