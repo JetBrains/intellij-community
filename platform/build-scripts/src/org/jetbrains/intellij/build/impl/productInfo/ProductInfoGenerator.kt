@@ -92,7 +92,7 @@ private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? 
 }
 
 private fun findGitRoot(context: BuildContext): Path? {
-  var projectHome = context.paths.projectHome
+  var projectHome: Path? = context.paths.projectHome
   while (projectHome != null && !projectHome.resolve(".git").isDirectory) {
     projectHome = projectHome.parent
   }
