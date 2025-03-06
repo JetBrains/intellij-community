@@ -75,28 +75,6 @@ internal fun createTerminalOutputFlow(
     collectAndSendEvents(contentUpdateEvent = contentUpdate, otherEvent = null)
   }
 
-  shellIntegrationController.addListener(object : TerminalShellIntegrationEventsListener {
-    override fun initialized() {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalShellIntegrationInitializedEvent)
-    }
-
-    override fun commandStarted(command: String) {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalCommandStartedEvent(command))
-    }
-
-    override fun commandFinished(command: String, exitCode: Int) {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode))
-    }
-
-    override fun promptStarted() {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalPromptStartedEvent)
-    }
-
-    override fun promptFinished() {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalPromptFinishedEvent)
-    }
-  })
-
   var curState = TerminalState(
     isCursorVisible = terminalDisplay.isCursorVisible,
     cursorShape = terminalDisplay.cursorShape,
@@ -108,7 +86,8 @@ internal fun createTerminalOutputFlow(
     isAutoNewLine = controller.isAutoNewLine,
     isAltSendsEscape = controller.altSendsEscape,
     isBracketedPasteMode = terminalDisplay.isBracketedPasteMode,
-    windowTitle = terminalDisplay.windowTitleText
+    windowTitle = terminalDisplay.windowTitleText,
+    isShellIntegrationEnabled = false
   )
 
   controller.addListener(object : JediTerminalListener {
@@ -200,6 +179,31 @@ internal fun createTerminalOutputFlow(
       textBuffer.withLock {
         collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalBeepEvent)
       }
+    }
+  })
+
+  shellIntegrationController.addListener(object : TerminalShellIntegrationEventsListener {
+    override fun initialized() {
+      textBuffer.withLock {
+        curState = curState.copy(isShellIntegrationEnabled = true)
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
+      }
+    }
+
+    override fun commandStarted(command: String) {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalCommandStartedEvent(command))
+    }
+
+    override fun commandFinished(command: String, exitCode: Int) {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalCommandFinishedEvent(command, exitCode))
+    }
+
+    override fun promptStarted() {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalPromptStartedEvent)
+    }
+
+    override fun promptFinished() {
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalPromptFinishedEvent)
     }
   })
 

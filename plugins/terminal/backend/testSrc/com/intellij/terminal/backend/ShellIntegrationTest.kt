@@ -56,7 +56,6 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       TerminalCommandStartedEvent("pwd"),
@@ -78,7 +77,6 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       TerminalPromptStartedEvent,
@@ -108,7 +106,6 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       TerminalPromptStartedEvent,
@@ -139,7 +136,6 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
       // Initialization
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       // Bind command execution
@@ -164,7 +160,6 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       TerminalPromptStartedEvent,
