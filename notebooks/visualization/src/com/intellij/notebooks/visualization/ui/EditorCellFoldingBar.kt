@@ -85,7 +85,7 @@ class EditorCellFoldingBar(
   fun updateBounds() {
     val panel = panel ?: return
     val yAndHeight = yAndHeightSupplier.invoke()
-    panel.setBounds(editor.gutterComponentEx.annotationsAreaOffset, yAndHeight.first, 6, yAndHeight.second)
+    panel.setBounds(editor.gutterComponentEx.annotationsAreaOffset - 2, yAndHeight.first, 6, yAndHeight.second)
   }
 
   private fun createFoldingBar() = EditorCellFoldingBarComponent().apply {
