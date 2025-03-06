@@ -50,8 +50,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
-import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL;
-import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_FINAL_EXT;
+import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL;
+import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_FINAL_EXT;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
@@ -187,7 +187,7 @@ public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager"
    * some synthetic values.
    */
   public static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
-    .add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD.name())
+    .add(PyKnownDecorator.TYPING_OVERLOAD.getQualifiedName().toString())
     .add(ANY)
     .add(TYPE_VAR)
     .add(TYPE_VAR_EXT)
