@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.writeBytes
 import org.intellij.images.editor.ImageDocument
 import org.intellij.images.scientific.BinarizationThresholdConfig

@@ -62,6 +62,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
 
     val comboBox = ComboBox(comboBoxModel).apply {
       selectedItem = selectedMode
+      isOpaque = false
       renderer = object : DefaultListCellRenderer() {
         override fun getListCellRendererComponent(
           list: JList<out Any>?,
