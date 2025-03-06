@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,6 +15,7 @@ public final class MemoryUtil {
 
   @Nullable
   public static Long getUnusedMemory() {
+    if (!SystemInfo.isMac) return null;
     IntByReference pageSizeRef = new IntByReference();
     if (LibC.INSTANCE.host_page_size(LibC.INSTANCE.mach_host_self(), pageSizeRef) == -1) {
       return null;
