@@ -70,10 +70,10 @@ internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPrefer
 // from FontPreferences and AppFontOptions and PersistentFontPreferences.
 
 internal data class TerminalFontSettings(
-  var fontFamily: String,
-  var fontSize: Float,
-  var lineSpacing: Float,
-  var columnSpacing: Float,
+  val fontFamily: String,
+  val fontSize: Float,
+  val lineSpacing: Float,
+  val columnSpacing: Float,
 )
 
 internal class PersistentTerminalFontPreferences: AppEditorFontOptions.PersistentFontPreferences {
