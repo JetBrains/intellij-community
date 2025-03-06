@@ -3,12 +3,9 @@
 package org.jetbrains.jps.dependency.java
 
 import com.dynatrace.hash4j.hashing.Hashing
-import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
@@ -180,118 +177,6 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
       return metadataDiffCache.computeIfAbsent(metaClass) {
         deepDiff(past.filterMetadata(it as Class<MT>), filterMetadata(it))
       } as Specifier<MT, MD>
-    }
-  }
-}
-
-private object EmptyDiff : Specifier<Any, Difference> {
-  override fun unchanged(): Boolean = true
-}
-
-private fun <T : DiffCapable<T, D>, D : Difference> deepDiff(past: Set<T>?, now: Set<T>?): Specifier<T, D> {
-  if (past.isNullOrEmpty()) {
-    if (now.isNullOrEmpty()) {
-      @Suppress("UNCHECKED_CAST")
-      return EmptyDiff as Specifier<T, D>
-    }
-    else {
-      return object : Specifier<T, D> {
-        override fun added(): Iterable<T> = now
-
-        override fun unchanged(): Boolean = false
-      }
-    }
-  }
-  else if (now.isNullOrEmpty()) {
-    return object : Specifier<T, D> {
-      override fun removed(): Iterable<T> = past
-
-      override fun unchanged(): Boolean = false
-    }
-  }
-
-  val added = now.asSequence().filter { !past.contains(it) }.asIterable()
-  val removed = past.asSequence().filter { !now.contains(it) }.asIterable()
-
-  val nowMap = Object2ObjectOpenCustomHashMap<T, T>(DiffCapableHashStrategy)
-  for (s in now) {
-    if (past.contains(s)) {
-      nowMap.put(s, s)
-    }
-  }
-
-  val changed by lazy(LazyThreadSafetyMode.NONE) {
-    val changed = ArrayList<Difference.Change<T, D>>()
-    for (before in past) {
-      val after = nowMap.get(before) ?: continue
-      val diff = after.difference(before)!!
-      if (!diff.unchanged()) {
-        changed.add(Difference.Change.create(before, after, diff))
-      }
-    }
-    changed
-  }
-
-  return object : Specifier<T, D> {
-    override fun added(): Iterable<T> = added
-
-    override fun removed(): Iterable<T> = removed
-
-    override fun changed(): Iterable<Difference.Change<T, D>> = changed
-  }
-}
-
-private object DiffCapableHashStrategy : Strategy<DiffCapable<*, *>> {
-  override fun hashCode(o: DiffCapable<*, *>?): Int = o?.diffHashCode() ?: 0
-
-  override fun equals(a: DiffCapable<*, *>?, b: DiffCapable<*, *>?): Boolean {
-    return when {
-      a == null -> b == null
-      b == null -> false
-      else -> a.isSame(b)
-    }
-  }
-}
-
-private fun <T> diff(past: Collection<T>?, now: Collection<T>?): Specifier<T, Difference> {
-  if (past.isNullOrEmpty()) {
-    if (now.isNullOrEmpty()) {
-      @Suppress("UNCHECKED_CAST")
-      return EmptyDiff as Specifier<T, Difference>
-    }
-    return object : Specifier<T, Difference> {
-      override fun added() = now.asIterable()
-
-      override fun unchanged() = false
-    }
-  }
-  else if (now.isNullOrEmpty()) {
-    return object : Specifier<T, Difference> {
-      override fun removed() = past.asIterable()
-
-      override fun unchanged() = false
-    }
-  }
-
-  val pastSet = past.toCollection(ObjectOpenHashSet())
-  val nowSet = now.toCollection(ObjectOpenHashSet())
-
-  val added = nowSet.asSequence().filter { !pastSet.contains(it) }.asIterable()
-  val removed = pastSet.asSequence().filter { !nowSet.contains(it) }.asIterable()
-
-  return object : Specifier<T, Difference> {
-    private var isUnchanged: Boolean? = null
-    override fun added() = added
-
-    override fun removed(): Iterable<T> = removed
-
-    override fun unchanged(): Boolean {
-      var isUnchanged = isUnchanged
-      if (isUnchanged == null) {
-        isUnchanged = pastSet == nowSet
-        this.isUnchanged = isUnchanged
-      }
-      return isUnchanged
     }
   }
 }
