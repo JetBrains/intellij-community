@@ -2,6 +2,7 @@
 
 package org.jetbrains.jps.dependency.java
 
+import com.dynatrace.hash4j.hashing.Hashing
 import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
@@ -16,12 +17,14 @@ import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.diff.DiffCapable
 import org.jetbrains.jps.dependency.diff.Difference
 import org.jetbrains.jps.dependency.diff.Difference.Specifier
+import org.jetbrains.jps.dependency.impl.GraphDataInputImpl
+import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl
 
 private val emptyMetadata = emptyArray<JvmMetadata<*, *>>()
 
 abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Node<T, D> {
   private val id: JvmNodeReferenceID
-  private val outFilePath: String
+  private val outFilePathHash: Long
   private val usages: Collection<Usage>
   private val metadata: Array<JvmMetadata<*, *>>
 
@@ -35,14 +38,15 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
     metadata: Iterable<JvmMetadata<*, *>>
   ) : super(flags, signature, name, annotations) {
     id = JvmNodeReferenceID(name)
-    this.outFilePath = outFilePath
+    outFilePathHash = Hashing.xxh3_64().hashBytesToLong(outFilePath.toByteArray())
     this.usages = usages as Collection<Usage>
     this.metadata = (metadata as java.util.Collection<JvmMetadata<*, *>>).toArray(emptyMetadata)
   }
 
   constructor(`in`: GraphDataInput) : super(`in`) {
+    val input = `in` as GraphDataInputImpl
     id = JvmNodeReferenceID(name)
-    outFilePath = `in`.readUTF()
+    outFilePathHash = input.readRawLong()
 
     val usages = ArrayList<Usage>()
     var groupCount = `in`.readInt()
@@ -57,7 +61,7 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
 
   override fun write(out: GraphDataOutput) {
     super.write(out)
-    out.writeUTF(outFilePath)
+    (out as GraphDataOutputImpl).writeRawLong(outFilePathHash)
 
     val classToUsageList = Object2ObjectLinkedOpenHashMap<Class<out Usage>, MutableList<Usage>>()
     for (usage in usages) {
@@ -82,6 +86,7 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
   @Suppress("unused")
   fun getMetadata(): Iterable<JvmMetadata<*, *>> = Iterable { metadata.iterator() }
 
+  @Suppress("unused")
   fun <MT : JvmMetadata<MT, *>> getMetadata(metaClass: Class<MT>): Iterable<MT> {
     return metadata
       .asSequence()
@@ -90,29 +95,35 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
   }
 
   internal fun <MT : JvmMetadata<MT, *>> filterMetadata(metaClass: Class<MT>): Set<MT> {
-    if (metadata.size == 0) {
+    val size = metadata.size
+    if (size == 0) {
       return emptySet()
     }
-    else if (metadata.size == 1) {
-      if (metaClass.isInstance(metadata[0])) {
-        return ObjectOpenCustomHashSet<MT>(DiffCapableHashStrategy)
+    else if (size == 1) {
+      val m = metadata[0]
+      if (metaClass.isInstance(metadata)) {
+        val result = ObjectOpenCustomHashSet<MT>(1, DiffCapableHashStrategy)
+        @Suppress("UNCHECKED_CAST")
+        result.add(m as MT)
+        return result
       }
       else {
         return emptySet()
       }
     }
-
-    var result: ObjectOpenCustomHashSet<MT>? = null
-    for (m in metadata) {
-      if (metaClass.isInstance(m)) {
-        if (result == null) {
-          result = ObjectOpenCustomHashSet<MT>(DiffCapableHashStrategy)
+    else {
+      var result: ObjectOpenCustomHashSet<MT>? = null
+      for (m in metadata) {
+        if (metaClass.isInstance(m)) {
+          if (result == null) {
+            result = ObjectOpenCustomHashSet<MT>(DiffCapableHashStrategy)
+          }
+          @Suppress("UNCHECKED_CAST")
+          result.add(m as MT)
         }
-        @Suppress("UNCHECKED_CAST")
-        result.add(m as MT)
       }
+      return result ?: emptySet()
     }
-    return result ?: emptySet()
   }
 
   final override fun isSame(other: DiffCapable<*, *>?): Boolean {
@@ -124,11 +135,11 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
       return false
     }
     val that = other
-    return id == that.id && outFilePath == that.outFilePath
+    return outFilePathHash == that.outFilePathHash && id == that.id
   }
 
   final override fun diffHashCode(): Int {
-    return 31 * outFilePath.hashCode() + id.hashCode()
+    return 31 * outFilePathHash.toInt() + id.hashCode()
   }
 
   @Suppress("unused")

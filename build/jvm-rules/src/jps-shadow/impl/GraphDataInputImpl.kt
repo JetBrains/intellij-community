@@ -77,6 +77,10 @@ open class GraphDataInputImpl(
     return DataInputOutputUtil.readLONG(delegate)
   }
 
+  fun readRawLong(): Long {
+    return delegate.readLong()
+  }
+
   override fun readFloat(): Float {
     return delegate.readFloat()
   }

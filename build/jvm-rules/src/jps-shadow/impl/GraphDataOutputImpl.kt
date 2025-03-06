@@ -65,6 +65,10 @@ open class GraphDataOutputImpl(
     DataInputOutputUtil.writeLONG(delegate, v)
   }
 
+  fun writeRawLong(v: Long) {
+    delegate.writeLong(v)
+  }
+
   override fun writeFloat(v: Float) {
     delegate.writeFloat(v)
   }

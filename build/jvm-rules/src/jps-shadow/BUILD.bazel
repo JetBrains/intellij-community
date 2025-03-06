@@ -11,6 +11,7 @@ kt_jvm_library(
         "@lib//:kotlin-stdlib",
         "@lib//:fastutil-min",
         "//src/worker-util",
+        "@lib//:hash4j",
         "//:jps",
     ],
     visibility = ["//visibility:public"],

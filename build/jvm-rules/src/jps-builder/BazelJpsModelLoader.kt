@@ -70,7 +70,7 @@ internal fun loadJpsModel(
 
   val digests = TargetConfigurationDigestContainer()
   digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
-  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 11)
+  digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 12)
 
   // properties not needed for us (not implemented for java)
   // extension.loadModuleOptions not needed for us (not implemented for java)
