@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
@@ -53,7 +52,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     context: ProcessingContext,
     resultSet: CompletionResultSet,
   ) {
-    if (!Registry.`is`("ide.completion.command.enabled")) return
+    if (!commandCompletionEnabled()) return
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }

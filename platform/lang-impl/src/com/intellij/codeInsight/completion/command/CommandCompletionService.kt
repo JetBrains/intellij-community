@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -161,7 +160,7 @@ private const val PROMPT_LAYER = HighlighterLayer.ERROR + 10
 internal class CommandCompletionListener : LookupManagerListener {
 
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
-    if (!Registry.`is`("ide.completion.command.enabled")) return
+    if (!commandCompletionEnabled()) return
     var editor = newLookup?.editor ?: return
     val originalEditor = editor.getUserData(ORIGINAL_EDITOR)
     var psiFile = newLookup.psiFile ?: return
@@ -342,7 +341,7 @@ private class CommandCompletionHighlightingListener(
 @ApiStatus.Internal
 internal class CommandCompletionCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup?): Result? {
-    if (!Registry.`is`("ide.completion.command.enabled")) return null
+    if (!commandCompletionEnabled()) return null
     if (lookup !is LookupImpl) return null
     val completionService = lookup.project.service<CommandCompletionService>()
     val installedHint = lookup.removeUserData(INSTALLED_HINT)
@@ -381,7 +380,7 @@ internal class CommandCompletionCharFilter : CharFilter() {
 @ApiStatus.Internal
 internal class CommandCompletionLookupCustomizer : LookupCustomizer {
   override fun customizeLookup(lookupImpl: LookupImpl) {
-    if (!Registry.`is`("ide.completion.command.enabled")) return
+    if (!commandCompletionEnabled()) return
     val project = lookupImpl.project
     val service = project.service<CommandCompletionService>()
     val editor = lookupImpl.editor

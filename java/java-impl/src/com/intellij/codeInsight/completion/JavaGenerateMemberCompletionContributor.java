@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -38,6 +37,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.codeInsight.completion.command.CommandCompletionFactoryKt.commandCompletionEnabled;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public final class JavaGenerateMemberCompletionContributor {
@@ -177,7 +177,7 @@ public final class JavaGenerateMemberCompletionContributor {
       if (!baseMethod.isConstructor() && baseClass != null && addedSignatures.add(baseMethod.getSignature(substitutor))) {
         result.addElement(
           createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor, generateDefaultMethods, parent, null));
-        if (GenerateEqualsHandler.hasNonStaticFields(parent) && !Registry.is("ide.completion.command.enabled")) {
+        if (GenerateEqualsHandler.hasNonStaticFields(parent) && !commandCompletionEnabled()) {
           if (MethodUtils.isEquals(baseMethod) || MethodUtils.isHashCode(baseMethod)) {
             result.addElement(
               createOverridingLookupElement(implemented, baseMethod, baseClass, substitutor, generateDefaultMethods, parent, context -> {

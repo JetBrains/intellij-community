@@ -42,7 +42,6 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Iconable.ICON_FLAG_VISIBILITY
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
@@ -59,7 +58,7 @@ import java.util.function.Predicate
  */
 internal class DirectIntentionCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
-    if (!Registry.`is`("ide.completion.command.enabled")) return emptyList()
+    if (!commandCompletionEnabled()) return emptyList()
     val originalEditor = context.originalEditor
     val psiFile = context.psiFile
     val offset = context.offset

@@ -20,7 +20,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
@@ -41,7 +40,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTypedHandler {
   override fun isApplicable(editor: Editor, charTyped: Char, dataContext: DataContext): Boolean {
-    if (!Registry.`is`("ide.completion.command.enabled")) return false
+    if (!commandCompletionEnabled()) return false
     val project = editor.project ?: return false
     val commandCompletionService = project.getService(CommandCompletionService::class.java)
     if (commandCompletionService == null) return false
@@ -63,7 +62,7 @@ internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTyped
   }
 
   override fun handle(editor: Editor, charTyped: Char, dataContext: DataContext) {
-    if (!Registry.`is`("ide.completion.command.enabled")) return
+    if (!commandCompletionEnabled()) return
     val accessCommandCompletionService = editor.project?.getService(NonWriteAccessCommandCompletionService::class.java)
     if (accessCommandCompletionService == null) return
     accessCommandCompletionService.insertNewEditor(editor)
@@ -80,7 +79,7 @@ internal class NonWriteAccessCommandCompletionService(
 ) {
 
   fun insertNewEditor(editor: Editor) {
-    if (!Registry.`is`("ide.completion.command.enabled")) return
+    if (!commandCompletionEnabled()) return
     if (editor !is EditorImpl) return
     val project = editor.project ?: return
     val offset = editor.caretModel.offset
