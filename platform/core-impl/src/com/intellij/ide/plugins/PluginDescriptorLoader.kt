@@ -29,10 +29,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.*
 import java.net.URL
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.nio.file.*
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
@@ -378,6 +375,9 @@ private fun resolveArchives(path: Path): MutableList<Path>? {
         path.endsWith(".jar", ignoreCase = true) || path.endsWith(".zip", ignoreCase = true)
       }
     }
+  }
+  catch (_: NotDirectoryException) {
+    return null
   }
   catch (_: NoSuchFileException) {
     return null
