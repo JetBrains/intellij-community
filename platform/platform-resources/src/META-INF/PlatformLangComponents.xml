@@ -209,7 +209,7 @@
     <listener class="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
 
-    <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
+    <listener class="com.intellij.notification.impl.NotificationsModelConsumingListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsListener"
               topic="com.intellij.notification.Notifications"/>
@@ -270,7 +270,7 @@
     <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
 
-    <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
+    <listener class="com.intellij.notification.impl.NotificationsModelConsumingListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageServiceFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>

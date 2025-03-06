@@ -8,23 +8,22 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexander Lobas
- */
 @ApiStatus.Internal
-public final class NotificationsToolWindowNotificationListener implements Notifications {
+public final class NotificationsModelConsumingListener implements Notifications {
   private final Project myProject;
 
-  public NotificationsToolWindowNotificationListener() {
+  public NotificationsModelConsumingListener() {
     this(null);
   }
 
-  public NotificationsToolWindowNotificationListener(@Nullable Project project) {
+  public NotificationsModelConsumingListener(@Nullable Project project) {
     myProject = project;
   }
 
   @Override
   public void notify(@NotNull Notification notification) {
-    NotificationsToolWindowFactory.Companion.addNotification(myProject, notification);
+    if (notification.canShowFor(myProject) && NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
+      ApplicationNotificationsModel.addNotification(myProject, notification);
+    }
   }
 }

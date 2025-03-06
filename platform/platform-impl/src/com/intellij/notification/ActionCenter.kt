@@ -2,8 +2,8 @@
 package com.intellij.notification
 
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.impl.ApplicationNotificationsModel
 import com.intellij.notification.impl.NotificationsToolWindowFactory
-import com.intellij.notification.impl.StatusMessage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -27,16 +27,11 @@ object ActionCenter {
   }
 
   @JvmStatic
-  @Internal
-  fun getStatusMessage(project: Project?): StatusMessage? {
-    return NotificationsToolWindowFactory.getStatusMessage(project)
-  }
-
-  @JvmStatic
   fun getNotifications(project: Project?): List<Notification> {
-    return NotificationsToolWindowFactory.getNotifications(project)
+    return ApplicationNotificationsModel.getNotifications(project)
   }
 
+  @Internal
   @JvmStatic
   fun expireNotifications(project: Project) {
     for (notification in getNotifications(project)) {

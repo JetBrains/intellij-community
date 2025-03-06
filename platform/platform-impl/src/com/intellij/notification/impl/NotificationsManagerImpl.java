@@ -102,19 +102,15 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   @Override
   public void expire(@NotNull Notification notification) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      NotificationsToolWindowFactory.Companion.expire(notification);
+      ApplicationNotificationsModel.expire(notification);
     });
-  }
-
-  public void expireAll() {
-    NotificationsToolWindowFactory.Companion.expireAll();
   }
 
   @Override
   public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project) {
     List<T> result = new ArrayList<>();
     if (project == null || !project.isDefault() && !project.isDisposed()) {
-      for (Notification notification : ActionCenter.getNotifications(project)) {
+      for (Notification notification : ApplicationNotificationsModel.getNotifications(project)) {
         if (klass.isInstance(notification)) {
           @SuppressWarnings("unchecked") T t = (T)notification;
           result.add(t);

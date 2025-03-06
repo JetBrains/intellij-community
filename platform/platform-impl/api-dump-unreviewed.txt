@@ -5585,7 +5585,6 @@ f:com.intellij.notification.ActionCenter
 - sf:activateLog(com.intellij.openapi.project.Project):V
 - sf:activateLog(com.intellij.openapi.project.Project,Z):V
 - bs:activateLog$default(com.intellij.openapi.project.Project,Z,I,java.lang.Object):V
-- sf:expireNotifications(com.intellij.openapi.project.Project):V
 - sf:getNotifications(com.intellij.openapi.project.Project):java.util.List
 - sf:getToolwindowName():java.lang.String
 - sf:showLog(com.intellij.openapi.project.Project):V
@@ -5688,7 +5687,6 @@ f:com.intellij.notification.impl.NotificationsManagerImpl
 - s:createBalloon(javax.swing.JComponent,com.intellij.notification.Notification,Z,Z,com.intellij.openapi.util.Ref,com.intellij.openapi.Disposable):com.intellij.openapi.ui.popup.Balloon
 - s:createBalloonScrollPane(java.awt.Component,Z):javax.swing.JScrollPane
 - expire(com.intellij.notification.Notification):V
-- expireAll():V
 - s:findWindowForBalloon(com.intellij.openapi.project.Project):java.awt.Window
 - s:frameActivateBalloonListener(com.intellij.openapi.Disposable,java.lang.Runnable):V
 - getNotificationsOfType(java.lang.Class,com.intellij.openapi.project.Project):com.intellij.notification.Notification[]

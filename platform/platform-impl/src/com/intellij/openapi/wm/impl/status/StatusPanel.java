@@ -4,7 +4,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.notification.ActionCenter;
 import com.intellij.notification.Notification;
-import com.intellij.notification.impl.NotificationsToolWindowFactory;
+import com.intellij.notification.impl.ApplicationNotificationsModel;
 import com.intellij.notification.impl.StatusMessage;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -167,8 +167,14 @@ final class StatusPanel extends JPanel {
   public boolean updateText(@Nullable @NlsContexts.StatusBarText String nonLogText) {
     ThreadingAssertions.assertEventDispatchThread();
 
+    StatusMessage statusMessage;
     Project project = getActiveProject();
-    StatusMessage statusMessage = NotificationsToolWindowFactory.Companion.getStatusMessage(project);
+    if (project != null) {
+      statusMessage = ApplicationNotificationsModel.getStatusMessage(project);
+    }
+    else {
+      statusMessage = null;
+    }
     Alarm alarm = getAlarm();
     myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.notification() : null;
 

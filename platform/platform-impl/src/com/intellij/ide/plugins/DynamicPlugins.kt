@@ -25,8 +25,7 @@ import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.idea.IdeaLogger
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
-import com.intellij.notification.NotificationsManager
-import com.intellij.notification.impl.NotificationsManagerImpl
+import com.intellij.notification.impl.ApplicationNotificationsModel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -560,7 +559,7 @@ object DynamicPlugins {
           ActionToolbarImpl.resetAllToolbars()
           PresentationFactory.clearPresentationCaches()
           TouchbarSupport.reloadAllActions()
-          (serviceIfCreated<NotificationsManager>() as? NotificationsManagerImpl)?.expireAll()
+          ApplicationNotificationsModel.expireAll()
           MessagePool.getInstance().clearErrors()
           LaterInvocator.purgeExpiredItems()
           FileAttribute.resetRegisteredIds()
