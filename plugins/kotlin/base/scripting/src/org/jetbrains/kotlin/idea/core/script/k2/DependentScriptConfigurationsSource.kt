@@ -65,19 +65,15 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
                     handleNoDependencies(virtualFile)
                 }
             }
-
-            return data.get()[virtualFile]
         } else if (ktFile.dependenciesExistLocally()) {
             runBlockingMaybeCancellable {
                 DependencyResolutionService.getInstance(project).resolveInBackground {
                     updateDependenciesAndCreateModules(listOf(BaseScriptModel(virtualFile)))
                 }
             }
-
-            return data.get()[virtualFile]
         }
 
-        return null
+        return data.get()[virtualFile]
     }
 
     private suspend fun handleNoDependencies(script: VirtualFile) {
