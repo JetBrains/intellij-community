@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.terminal.frontend.TerminalInput
+import com.intellij.terminal.frontend.TerminalOutputScrollingModel
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import com.jediterm.terminal.TerminalOutputStream
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
@@ -41,7 +42,14 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
           pasteIntoPrompt(e, dataContext = null)
         }
       }
-      input != null -> pasteIntoInput(input)
+      input != null -> {
+        pasteIntoInput(input)
+
+        // Scroll to the cursor if the scrolling model is available in this editor.
+        // It can be absent if it is the alternate buffer editor.
+        val scrollingModel = editor.getUserData(TerminalOutputScrollingModel.KEY)
+        scrollingModel?.scrollToCursor(force = true)
+      }
     }
   }
 
