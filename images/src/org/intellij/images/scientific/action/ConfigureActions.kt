@@ -10,7 +10,11 @@ import org.intellij.images.scientific.BinarizationThresholdConfig
 import javax.swing.JOptionPane
 import javax.swing.JTextField
 
-class ConfigureActions : AnAction(ImagesBundle.message("image.color.mode.configure.actions"), null, AllIcons.General.Settings) {
+class ConfigureActions : AnAction(
+  ImagesBundle.message("image.color.mode.configure.actions"),
+  null,
+  AllIcons.General.Settings
+) {
   override fun actionPerformed(e: AnActionEvent) {
     openConfigurationDialog()
   }
