@@ -13,8 +13,10 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.*
 import kotlin.math.max
 
@@ -29,6 +31,7 @@ import kotlin.math.max
 internal class TerminalOutputScrollingModelImpl(
   private val editor: EditorEx,
   private val outputModel: TerminalOutputModel,
+  private val sessionModel: TerminalSessionModel,
   coroutineScope: CoroutineScope,
 ) : TerminalOutputScrollingModel {
   private var shouldScrollToCursor: Boolean = true
@@ -100,7 +103,7 @@ internal class TerminalOutputScrollingModelImpl(
     val screenBottomVisualLine = editor.offsetToVisualLine(editor.document.textLength, true)
     val screenTopVisualLine = max(0, screenBottomVisualLine - screenRows + 1)
 
-    val topInset = JBUI.scale(TerminalUi.blockTopInset)
+    val topInset = getTopInset()
     val bottomInset = JBUI.scale(TerminalUi.blockBottomInset)
 
     val lastNotBlankVisualLine = findLastNotBlankVisualLine(screenTopVisualLine)
@@ -137,5 +140,19 @@ internal class TerminalOutputScrollingModelImpl(
     }
 
     return lastNotBlankVisualLine
+  }
+
+  private fun getTopInset(): Int {
+    // It looks better when we place the scroll position a little bit above the text (by top inset).
+    // But in the case of Ctrl+L, the screen should be scrolled to hide the previous lines.
+    // When both shell integration and 'showSeparatorsBetweenBlocks' are enabled,
+    // it works fine because there is a small empty space above the block.
+    // But otherwise, there is a previous line.
+    // So, we need to use 0 inset in this case to not show the part of the previous line.
+    return if (sessionModel.terminalState.value.isShellIntegrationEnabled &&
+               BlockTerminalOptions.getInstance().showSeparatorsBetweenBlocks) {
+      JBUI.scale(TerminalUi.blockTopInset)
+    }
+    else 0
   }
 }
