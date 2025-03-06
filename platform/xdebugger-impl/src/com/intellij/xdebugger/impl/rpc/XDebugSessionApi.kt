@@ -5,6 +5,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
+import com.intellij.ide.ui.icons.IconId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -18,7 +19,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.Icon
 
 @ApiStatus.Internal
 @Rpc
@@ -111,7 +111,7 @@ data class XDebuggerSessionTabInfoCallback(
 @ApiStatus.Internal
 @Serializable
 data class XDebuggerSessionTabInfo(
-  val icon: Icon?,
+  val iconId: IconId?,
   val forceNewDebuggerUi: Boolean,
   val withFramesCustomization: Boolean,
   // TODO pass to frontend

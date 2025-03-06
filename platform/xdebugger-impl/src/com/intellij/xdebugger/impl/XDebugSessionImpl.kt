@@ -14,6 +14,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
@@ -389,7 +390,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
 
     if (useFeProxy()) {
-      val tabInfo = XDebuggerSessionTabInfo(myIcon, forceNewDebuggerUi, withFramesCustomization,
+      val tabInfo = XDebuggerSessionTabInfo(myIcon?.rpcId(), forceNewDebuggerUi, withFramesCustomization,
                                             contentToReuse, executionEnvironment)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
         myRunContentDescriptor = contentToReuse // This is a mock descriptor used in backend only
