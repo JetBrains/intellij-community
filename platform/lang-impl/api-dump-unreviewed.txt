@@ -8210,6 +8210,7 @@ a:com.intellij.ide.actions.CreateFromTemplateAction
 - p:getErrorTitle():java.lang.String
 - p:isAvailable(com.intellij.openapi.actionSystem.DataContext):Z
 - s:moveCaretAfterNameIdentifier(com.intellij.psi.PsiNameIdentifierOwner):V
+- p:postProcess(com.intellij.psi.PsiElement,com.intellij.openapi.actionSystem.DataContext,java.lang.String,java.util.Map):V
 - p:postProcess(com.intellij.psi.PsiElement,java.lang.String,java.util.Map):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.ide.actions.CreateTemplateInPackageAction
@@ -9379,6 +9380,10 @@ a:com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase
 - p:getReplacedAction(com.intellij.ide.fileTemplates.FileTemplate):com.intellij.openapi.actionSystem.AnAction
 - p:getTargetDirectory(com.intellij.openapi.actionSystem.DataContext,com.intellij.ide.IdeView):com.intellij.psi.PsiDirectory
 - pa:getTemplate(com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory):com.intellij.ide.fileTemplates.FileTemplate
+- s:startLiveTemplate(com.intellij.psi.PsiFile):V
+- s:startLiveTemplate(com.intellij.psi.PsiFile,java.util.Map):V
+f:com.intellij.ide.fileTemplates.actions.CreateFromTemplateManager
+- <init>():V
 - s:startLiveTemplate(com.intellij.psi.PsiFile):V
 - s:startLiveTemplate(com.intellij.psi.PsiFile,java.util.Map):V
 f:com.intellij.ide.fileTemplates.actions.FileTemplateSeparator
