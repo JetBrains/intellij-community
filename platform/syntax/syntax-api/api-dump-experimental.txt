@@ -35,20 +35,20 @@
 - a:getOffset():I
 - a:getState():I
 *:com.intellij.platform.syntax.lexer.TokenList
-- backWhile(I,java.util.Set):I
-- backWithBraceMatching(I,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):I
-- forwardWhile(I,java.util.Set):I
 - a:getTokenCount():I
 - a:getTokenEnd(I):I
 - a:getTokenStart(I):I
 - getTokenText(I):java.lang.CharSequence
 - a:getTokenType(I):com.intellij.platform.syntax.SyntaxElementType
 - a:getTokenizedText():java.lang.CharSequence
-- hasType(I,com.intellij.platform.syntax.SyntaxElementType):Z
-- hasType(I,java.util.Set):Z
-- hasType(I,com.intellij.platform.syntax.SyntaxElementType[]):Z
 *f:com.intellij.platform.syntax.lexer.TokenListKt
 - sf:TokenList(I[],com.intellij.platform.syntax.SyntaxElementType[],I,java.lang.CharSequence):com.intellij.platform.syntax.lexer.TokenList
+- sf:backWhile(com.intellij.platform.syntax.lexer.TokenList,I,java.util.Set):I
+- sf:backWithBraceMatching(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):I
+- sf:forwardWhile(com.intellij.platform.syntax.lexer.TokenList,I,java.util.Set):I
+- sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementType):Z
+- sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,java.util.Set):Z
+- sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider):com.intellij.platform.syntax.lexer.TokenList
 - bs:performLexing$default(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider,I,java.lang.Object):com.intellij.platform.syntax.lexer.TokenList
 - sf:tokenListLexer(com.intellij.platform.syntax.lexer.TokenList):com.intellij.platform.syntax.lexer.Lexer

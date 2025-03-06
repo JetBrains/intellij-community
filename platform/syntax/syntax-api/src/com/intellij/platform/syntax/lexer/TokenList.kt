@@ -3,8 +3,8 @@
 
 package com.intellij.platform.syntax.lexer
 
-import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.CancellationProvider
+import com.intellij.platform.syntax.SyntaxElementType
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -45,78 +45,6 @@ interface TokenList {
     if (index < 0 || index >= tokenCount) return null
     return tokenizedText.subSequence(getTokenStart(index), getTokenEnd(index))
   }
-
-  /**
-   * @return whether [.getTokenType](index) would return the given type
-   */
-  fun hasType(index: Int, type: SyntaxElementType): Boolean {
-    return getTokenType(index) == type
-  }
-
-  /**
-   * @return whether [.getTokenType](index) would return any of the given types (null acceptable, indicating start or end of the text)
-   */
-  fun hasType(index: Int, vararg types: SyntaxElementType): Boolean {
-    return getTokenType(index) in types
-  }
-
-  /**
-   * @return whether [.getTokenType](index) would return a type in the given set
-   */
-  fun hasType(index: Int, types: Set<SyntaxElementType>): Boolean {
-    return types.contains(getTokenType(index))
-  }
-
-  /**
-   * Moves back, potentially skipping tokens which represent a valid nesting sequence
-   * with the given types for opening and closing braces.
-   * @return an index `prev` of a token before `index` such that either:
-   *
-   *  1. `prev == index - 1`
-   *  1. `hasType(prev + 1, opening) && hasType(index, closing)` and every opening brace between those indices has its closing one before `index`
-   *
-   */
-  fun backWithBraceMatching(index: Int, opening: SyntaxElementType, closing: SyntaxElementType): Int {
-    var index = index
-    if (getTokenType(index) == closing) {
-      var nesting = 1
-      while (nesting > 0 && index > 0) {
-        index--
-        val type = getTokenType(index)
-        if (type == closing) {
-          nesting++
-        }
-        else if (type == opening) {
-          nesting--
-        }
-      }
-    }
-    return index - 1
-  }
-
-  /**
-   * Moves back from `index` while tokens belong to the given set
-   * @return the largest `prev <= index` whose token type doesn't belong to `toSkip`
-   */
-  fun backWhile(index: Int, toSkip: Set<SyntaxElementType>): Int {
-    var index = index
-    while (hasType(index, toSkip)) {
-      index--
-    }
-    return index
-  }
-
-  /**
-   * Moves forward from `index` while tokens belong to the given set
-   * @return the smallest `next >= index` whose token type doesn't belong to `toSkip`
-   */
-  fun forwardWhile(index: Int, toSkip: Set<SyntaxElementType>): Int {
-    var index = index
-    while (hasType(index, toSkip)) {
-      index++
-    }
-    return index
-  }
 }
 
 fun performLexing(text: CharSequence, lexer: Lexer, cancellationProvider: CancellationProvider? = null): TokenList {
@@ -143,4 +71,76 @@ fun TokenList(
 
 fun tokenListLexer(tokenList: TokenList): Lexer {
   return TokenListLexerImpl(tokenList)
+}
+
+/**
+ * @return whether [.getTokenType](index) would return the given type
+ */
+fun TokenList.hasType(index: Int, type: SyntaxElementType): Boolean {
+  return getTokenType(index) == type
+}
+
+/**
+ * @return whether [.getTokenType](index) would return any of the given types (null acceptable, indicating start or end of the text)
+ */
+fun TokenList.hasType(index: Int, vararg types: SyntaxElementType?): Boolean {
+  return getTokenType(index) in types
+}
+
+/**
+ * @return whether [.getTokenType](index) would return a type in the given set
+ */
+fun TokenList.hasType(index: Int, types: Set<SyntaxElementType>): Boolean {
+  return types.contains(getTokenType(index))
+}
+
+/**
+ * Moves back, potentially skipping tokens which represent a valid nesting sequence
+ * with the given types for opening and closing braces.
+ * @return an index `prev` of a token before `index` such that either:
+ *
+ *  1. `prev == index - 1`
+ *  1. `hasType(prev + 1, opening) && hasType(index, closing)` and every opening brace between those indices has its closing one before `index`
+ *
+ */
+fun TokenList.backWithBraceMatching(index: Int, opening: SyntaxElementType, closing: SyntaxElementType): Int {
+  var index = index
+  if (getTokenType(index) == closing) {
+    var nesting = 1
+    while (nesting > 0 && index > 0) {
+      index--
+      val type = getTokenType(index)
+      if (type == closing) {
+        nesting++
+      }
+      else if (type == opening) {
+        nesting--
+      }
+    }
+  }
+  return index - 1
+}
+
+/**
+ * Moves back from `index` while tokens belong to the given set
+ * @return the largest `prev <= index` whose token type doesn't belong to `toSkip`
+ */
+fun TokenList.backWhile(index: Int, toSkip: Set<SyntaxElementType>): Int {
+  var index = index
+  while (hasType(index, toSkip)) {
+    index--
+  }
+  return index
+}
+
+/**
+ * Moves forward from `index` while tokens belong to the given set
+ * @return the smallest `next >= index` whose token type doesn't belong to `toSkip`
+ */
+fun TokenList.forwardWhile(index: Int, toSkip: Set<SyntaxElementType>): Int {
+  var index = index
+  while (hasType(index, toSkip)) {
+    index++
+  }
+  return index
 }
