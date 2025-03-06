@@ -32,7 +32,7 @@ val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid
  */
 @get:ApiStatus.Internal
 val readLockCompensationTimeout: Int = try {
-  System.getProperty("ide.read.lock.compensation.timeout.ms", "-1").toInt()
+  System.getProperty("ide.read.lock.compensation.timeout.ms", "250").toInt()
 }
 catch (_: NumberFormatException) {
   -1
