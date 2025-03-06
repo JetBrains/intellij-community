@@ -11,19 +11,19 @@ import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
-class ClsStubBuilderForWrongAbiVersionTest : AbstractClsStubBuilderTest() {
+class ClsStubBuilderForWrongMetadataVersionTest : AbstractClsStubBuilderTest() {
 
-    fun testPackage() = testStubsForFileWithWrongAbiVersion("Wrong_packageKt")
+    fun testPackage() = testStubsForFileWithWrongMetadataVersion("Wrong_packageKt")
 
-    fun testClass() = testStubsForFileWithWrongAbiVersion("ClassWithWrongAbiVersion")
+    fun testClass() = testStubsForFileWithWrongMetadataVersion("ClassWithWrongMetadataVersion")
 
-    private fun testStubsForFileWithWrongAbiVersion(className: String) {
+    private fun testStubsForFileWithWrongMetadataVersion(className: String) {
         val root = findTestLibraryRoot(module!!)!!
         val result = root.findClassFileByName(className)
         testClsStubsForFile(result, null)
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinJdkAndLibraryProjectDescriptor(File(IDEA_TEST_DATA_DIR.absolutePath + "/wrongAbiVersionLib/bin"))
+        return KotlinJdkAndLibraryProjectDescriptor(File(IDEA_TEST_DATA_DIR.absolutePath + "/wrongMetadataVersionLib/bin"))
     }
 }
