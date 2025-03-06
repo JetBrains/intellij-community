@@ -313,6 +313,7 @@ class IdeaPluginDescriptorImpl(
       if (context.isPluginDisabled(dependency.pluginId)) {
         if (!dependency.isOptional && isIncomplete == null) {
           markAsIncomplete(dependency.pluginId, "plugin.loading.error.short.depends.on.disabled.plugin")
+          // TODO: why we don't just return immediately? or at least continue?
         }
       }
 
@@ -364,7 +365,7 @@ class IdeaPluginDescriptorImpl(
         subDescriptor.processOldDependencies(subDescriptor, context, pathResolver, subDescriptor.pluginDependencies, dataLoader)
       }
       dependency.subDescriptor = subDescriptor
-      visitedFiles.clear()
+      visitedFiles.clear() // TODO: shouldn't it be removeLast instead?
     }
   }
 
