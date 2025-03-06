@@ -63,6 +63,7 @@ class IdeStatusBarUI(data: ComponentData) : UiComponent(data) {
         val fileEncoding = widgetByTooltipContains("File Encoding")
         val editorConfig = WidgetFinder("Editor Config") { it.text.contains("spaces") }
         val readOnly = widgetByTooltipContains("Make file read-only")
+        val writeable = widgetByTooltipContains("Make file writable")
         val gitBranch = widgetByTooltipContains("Git Branch")
         val projectStatus = widgetByTooltipContains("Project is configured")
         val projectStatusWarning = widgetByTooltipContains("This file does not belong to any project target")
