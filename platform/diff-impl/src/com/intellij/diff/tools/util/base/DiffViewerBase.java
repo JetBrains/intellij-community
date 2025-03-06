@@ -10,6 +10,7 @@ import com.intellij.diff.util.DiffTaskQueue;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
@@ -279,7 +280,13 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(DiffDataKeys.NAVIGATABLE, getNavigatable());
+    //  at com.intellij.openapi.application.impl.ApplicationImpl.assertReadAccessAllowed(ApplicationImpl.java:1016)
+    //	at com.intellij.openapi.editor.impl.CaretImpl.getOffset(CaretImpl.java:661)
+    //	at com.intellij.openapi.editor.CaretModel.getOffset(CaretModel.java:129)
+    //	at com.intellij.diff.util.LineCol.fromCaret(LineCol.java:62)
+    //	at com.intellij.diff.tools.util.side.TwosideTextDiffViewer.getNavigatable(TwosideTextDiffViewer.java:268)
+    //	at com.intellij.diff.tools.util.base.DiffViewerBase.uiDataSnapshot(DiffViewerBase.java:282)
+    sink.set(DiffDataKeys.NAVIGATABLE, ReadAction.compute(() -> getNavigatable()));
     sink.set(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE, getDifferenceIterable());
     sink.set(CommonDataKeys.PROJECT, myProject);
   }
