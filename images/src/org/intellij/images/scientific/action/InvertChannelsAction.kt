@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.writeBytes
 import org.intellij.images.editor.ImageDocument.IMAGE_DOCUMENT_DATA_KEY
-import org.intellij.images.scientific.ScientificUtils
 import org.intellij.images.scientific.ScientificUtils.DEFAULT_IMAGE_FORMAT
 import org.intellij.images.scientific.ScientificUtils.ORIGINAL_IMAGE_KEY
 import java.awt.image.BufferedImage
@@ -16,11 +15,6 @@ import javax.imageio.ImageIO
 
 class InvertChannelsAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  override fun update(e: AnActionEvent) {
-    val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null
-  }
 
   override fun actionPerformed(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
