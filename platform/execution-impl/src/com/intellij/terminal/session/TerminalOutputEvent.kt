@@ -56,10 +56,6 @@ sealed interface TerminalShellIntegrationEvent : TerminalOutputEvent
 
 @ApiStatus.Internal
 @Serializable
-data object TerminalShellIntegrationInitializedEvent : TerminalShellIntegrationEvent
-
-@ApiStatus.Internal
-@Serializable
 data class TerminalCommandStartedEvent(val command: String) : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal

@@ -88,10 +88,6 @@ internal class TerminalSessionController(
       TerminalSessionTerminatedEvent -> {
         fireSessionTerminated()
       }
-      TerminalShellIntegrationInitializedEvent -> {
-        // TODO
-        shellIntegrationEventDispatcher.multicaster.initialized()
-      }
       TerminalPromptStartedEvent -> {
         withContext(Dispatchers.EDT) {
           blocksModel.promptStarted(outputModel.cursorOffsetState.value)
