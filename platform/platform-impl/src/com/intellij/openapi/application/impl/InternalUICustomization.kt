@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
+import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.toolWindow.StripesUxCustomizer
 import com.intellij.toolWindow.xNext.XNextStripesUxCustomizer
 import com.intellij.ui.JBColor
@@ -70,7 +70,11 @@ open class InternalUICustomization {
 
   open fun createCustomToolWindowPaneHolder(): JPanel = JPanel()
 
-  open fun attachBackgroundGradient(component: JComponent, disposable: Disposable): Unit = Unit
+  open val isCustomPaintersAllowed: Boolean = false
+
+  open fun attachIdeFallbackBackgroundPainter(glassPane: IdeGlassPane): Unit = Unit
+
+  open fun attachDialogFallbackBackgroundPainter(glassPane: IdeGlassPane): Unit = Unit
 
   open fun getToolWindowsPaneThreeSplitterBackground(): Color = JBColor.GRAY
 

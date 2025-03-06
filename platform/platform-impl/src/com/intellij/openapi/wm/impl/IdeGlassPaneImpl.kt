@@ -34,6 +34,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.*
 import java.util.*
@@ -131,6 +132,13 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
       val iconSize = icon.preferredSize
       icon.setBounds((width - iconSize.width) / 2, (height - iconSize.height) / 2, iconSize.width, iconSize.height)
     }
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  fun addFallbackBackgroundPainter(factory : FallbackBackgroundPainterFactory) {
+    installPainters()
+    IdeBackgroundUtil.addFallbackBackgroundPainter(this, factory)
   }
 
   internal fun installPainters() {

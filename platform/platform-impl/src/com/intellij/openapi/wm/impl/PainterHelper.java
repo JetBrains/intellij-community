@@ -19,6 +19,8 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import kotlin.jvm.functions.Function0;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,6 +160,22 @@ final class PainterHelper implements Painter.Listener {
     else {
       rootComponent.repaint();
     }
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  void addFallbackBackgroundPainter(@NotNull FallbackBackgroundPainterFactory factory) {
+    Optional<Painter> first = painters.stream().filter(it -> it instanceof MyImagePainter).findFirst();
+    Function0<@NotNull Boolean> availabilityChecker = () -> { return true; };
+    if(first.isPresent()) {
+      Painter painter = first.get();
+      if(painter instanceof MyImagePainter imagePainter) {
+        availabilityChecker = () -> {
+          return imagePainter.ensureImageLoaded();
+        };
+      }
+    }
+    addPainter(factory.create(availabilityChecker), null);
   }
 
   static void initWallpaperPainter(@NotNull String propertyName, @NotNull PainterHelper painters) {

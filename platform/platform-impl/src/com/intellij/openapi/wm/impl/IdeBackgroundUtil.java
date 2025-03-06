@@ -100,6 +100,16 @@ public final class IdeBackgroundUtil {
     return MyGraphics.wrap(g, helper, component);
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  static void addFallbackBackgroundPainter(IdeGlassPaneImpl glassPane, @NotNull FallbackBackgroundPainterFactory factory) {
+    PainterHelper painters = glassPane.getNamedPainters(EDITOR_PROP);
+    painters.addFallbackBackgroundPainter(factory);
+
+    painters = glassPane.getNamedPainters(FRAME_PROP);
+    painters.addFallbackBackgroundPainter(factory);
+  }
+
   static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
     PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
