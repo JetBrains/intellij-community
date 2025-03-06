@@ -282,7 +282,9 @@ fun prepareMultiDollarConversionInfo(element: KtStringTemplateExpression, useFal
  * If no such prefix exists, the [DEFAULT_INTERPOLATION_PREFIX_LENGTH] if [useFallbackPrefix] is `true`, or `null` otherwise.
  */
 private fun findSuitablePrefixLength(element: KtStringTemplateExpression, useFallbackPrefix: Boolean): Int? {
-    val longestUnsafeDollarSequence = longestUnsafeDollarSequenceLength(element, INTERPOLATION_PREFIX_LENGTH_THRESHOLD)
+    val longestUnsafeDollarSequence = longestUnsafeDollarSequenceLengthForSafeConversion(
+        element, INTERPOLATION_PREFIX_LENGTH_THRESHOLD
+    )
     if (longestUnsafeDollarSequence >= INTERPOLATION_PREFIX_LENGTH_THRESHOLD) {
         return if (useFallbackPrefix) DEFAULT_INTERPOLATION_PREFIX_LENGTH else null
     }
@@ -338,7 +340,14 @@ fun simplifyDollarEntries(element: KtStringTemplateExpression): KtStringTemplate
     return element.replace(replacement) as KtStringTemplateExpression
 }
 
-internal fun longestUnsafeDollarSequenceLength(
+/**
+ * Counts the maximum number of **unsafe** dollars for replacement that preserves interpolation entries and simplifies escaping.
+ *
+ * This means that:
+ * * Escaped dollars and interpolated single-char dollars are treated as regular character dollars
+ * * Dollars sequences before the rest of the interpolation entries are disregarded (because the entries will remain)
+ */
+fun longestUnsafeDollarSequenceLengthForSafeConversion(
     element: KtStringTemplateExpression,
     threshold: Int = Int.MAX_VALUE
 ): Int {
@@ -384,6 +393,54 @@ internal fun longestUnsafeDollarSequenceLength(
                 }
             }
         }
+    }
+
+    return longest
+}
+
+/**
+ * Counts the maximum number of **unsafe** dollars for replacement without preserving interpolation entries.
+ * In other words, the maximum prefix length with which the string will still have some interpolation.
+ */
+fun longestUnsafeDollarSequenceLengthForPlainTextConversion(
+    element: KtStringTemplateExpression,
+    threshold: Int = Int.MAX_VALUE
+): Int {
+    var longest = 0
+    var current = 0
+
+    val entryPrefixLength = element.interpolationPrefix?.textLength ?: 1
+
+    for (entry in element.entries) {
+        when (entry) {
+            is KtSimpleNameStringTemplateEntry,
+            is KtBlockStringTemplateEntry -> {
+                current += entryPrefixLength
+                if (current > longest) longest = current
+                current = 0
+            }
+            is KtEscapeStringTemplateEntry -> {
+                current = 0
+            }
+            is KtLiteralStringTemplateEntry -> {
+                when {
+                    entry.canBeConsideredIdentifierOrBlock() -> {
+                        if (current > longest) longest = current
+                        current = entry.text.takeLastWhile { it == '$' }.length
+                    }
+                    entry.text.all { it == '$' } -> {
+                        current += entry.text.length
+                    }
+                    entry.text.endsWith('$') -> {
+                        current = entry.text.takeLastWhile { it == '$' }.length
+                    }
+                    else -> {
+                        current = 0
+                    }
+                }
+            }
+        }
+        if (longest >= threshold) break
     }
 
     return longest

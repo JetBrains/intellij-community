@@ -440,6 +440,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "addAnnotationUseSiteTargetForConstructorParameter",
                     "simplifyExpression",
                     "redundantInterpolationPrefix", // K2-only multi-dollar interpolation
+                    "addInterpolationPrefixUnresolvedReference", // K2-only multi-dollar interpolation
                 )
             )
         }
