@@ -22,9 +22,9 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
   companion object {
     private val LOG = logger<LogLevelConfigurationManager>()
 
-    private const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.log.debug.categories"
-    private const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.log.trace.categories"
-    private const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.log.all.categories"
+    internal const val LOG_DEBUG_CATEGORIES_SYSTEM_PROPERTY = "idea.log.debug.categories"
+    internal const val LOG_TRACE_CATEGORIES_SYSTEM_PROPERTY = "idea.log.trace.categories"
+    internal const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.log.all.categories"
 
     @JvmStatic
     fun getInstance(): LogLevelConfigurationManager = service()
