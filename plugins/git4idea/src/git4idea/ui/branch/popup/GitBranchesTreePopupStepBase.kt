@@ -16,7 +16,7 @@ import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import git4idea.ui.branch.tree.createTreePathFor
 import javax.swing.tree.TreePath
 
-abstract class GitBranchesTreePopupStepBase(
+internal abstract class GitBranchesTreePopupStepBase(
   internal val project: Project,
   internal val selectedRepository: GitRepository?,
   internal val repositories: List<GitRepository>,

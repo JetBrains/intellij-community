@@ -30,7 +30,7 @@ import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
-class GitBranchesTreePopup(
+internal class GitBranchesTreePopup(
   project: Project,
   step: GitBranchesTreePopupStep,
   parent: JBPopup? = null,

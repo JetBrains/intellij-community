@@ -33,7 +33,7 @@ import git4idea.ui.branch.tree.*
 import org.intellij.lang.annotations.Language
 import javax.swing.JComponent
 
-class GitBranchesTreePopupStep(
+internal class GitBranchesTreePopupStep(
   project: Project,
   selectedRepository: GitRepository?,
   repositories: List<GitRepository>,

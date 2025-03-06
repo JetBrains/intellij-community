@@ -3,7 +3,7 @@ package git4idea.ui.branch.popup
 
 import git4idea.ui.branch.tree.GitBranchesWithDetailsTreeRenderer
 
-class GitBranchesTreePopupRenderer(private val step: GitBranchesTreePopupStepBase) :
+internal class GitBranchesTreePopupRenderer(private val step: GitBranchesTreePopupStepBase) :
   GitBranchesWithDetailsTreeRenderer(step.project, step.treeModel, step.selectedRepository, step.repositories) {
 
   override fun hasRightArrow(nodeUserObject: Any?): Boolean = step.hasSubstep(nodeUserObject)

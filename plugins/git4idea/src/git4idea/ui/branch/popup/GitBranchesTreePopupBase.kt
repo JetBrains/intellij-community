@@ -84,7 +84,7 @@ import kotlin.math.min
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
-abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
+internal abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
   project: Project,
   step: T,
   parent: JBPopup? = null,

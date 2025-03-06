@@ -7,7 +7,7 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
-class GitBranchesTreeSelectedRepoModel(
+internal class GitBranchesTreeSelectedRepoModel(
   project: Project,
   selectedRepository: GitRepository,
   private val repositories: List<GitRepository>,

@@ -39,7 +39,7 @@ import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
-abstract class GitBranchesTreeRenderer(
+internal abstract class GitBranchesTreeRenderer(
   protected val project: Project,
   private val treeModel: GitBranchesTreeModel,
   private val selectedRepository: GitRepository?,

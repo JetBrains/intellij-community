@@ -7,14 +7,22 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.AbstractTreeModel
+import git4idea.GitLocalBranch
 import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import git4idea.GitTag
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
 import git4idea.repo.GitRepository
 import javax.swing.Icon
 import javax.swing.tree.TreePath
 
-abstract class GitBranchesTreeModel : AbstractTreeModel() {
+internal abstract class GitBranchesTreeModel : AbstractTreeModel() {
+  protected lateinit var actionsTree: LazyActionsHolder
+  protected lateinit var localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch>
+  protected lateinit var remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>
+  protected lateinit var tagsTree: LazyRefsSubtreeHolder<GitTag>
+
   protected val branchesTreeCache = mutableMapOf<Any, List<Any>>()
   protected open val nameMatcher: MinusculeMatcher? = null
 

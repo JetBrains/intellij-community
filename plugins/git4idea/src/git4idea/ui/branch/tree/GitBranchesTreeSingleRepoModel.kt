@@ -9,7 +9,6 @@ import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
-import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
@@ -19,7 +18,7 @@ import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 import kotlin.properties.Delegates.observable
 
-open class GitBranchesTreeSingleRepoModel(
+internal open class GitBranchesTreeSingleRepoModel(
   protected val project: Project,
   protected val repository: GitRepository,
   private val topLevelActions: List<Any> = emptyList(),
@@ -29,10 +28,6 @@ open class GitBranchesTreeSingleRepoModel(
 
   private val branchManager = project.service<GitBranchManager>()
 
-  internal lateinit var actionsTree: LazyActionsHolder
-  internal lateinit var localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch>
-  internal lateinit var remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>
-  internal lateinit var tagsTree: LazyRefsSubtreeHolder<GitTag>
   internal lateinit var recentCheckoutBranchesTree: LazyRefsSubtreeHolder<GitReference>
 
   override var nameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher -> rebuild(matcher) }

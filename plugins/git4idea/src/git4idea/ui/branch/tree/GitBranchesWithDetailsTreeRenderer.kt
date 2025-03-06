@@ -31,7 +31,7 @@ import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.SwingConstants
 
-abstract class GitBranchesWithDetailsTreeRenderer(
+internal abstract class GitBranchesWithDetailsTreeRenderer(
   project: Project,
   treeModel: GitBranchesTreeModel,
   selectedRepository: GitRepository?,
