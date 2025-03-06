@@ -1,10 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.psi
 
-import com.intellij.lang.LanguageExtension
-import com.intellij.lang.LanguageExtensionWithAny
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -42,8 +41,7 @@ internal fun ElementTypeConverter.convertNotNull(type: SyntaxElementType): IElem
          ?: throw IllegalArgumentException("No converter found for elementType: '${type}' (${type.javaClass.getName()})")
 }
 
-@ApiStatus.Internal
-object ElementTypeConverters {
-  @JvmStatic
-  val instance: LanguageExtension<ElementTypeConverter> = LanguageExtensionWithAny("com.intellij.syntax.elementTypeConverter")
+fun Set<SyntaxElementType>.asTokenSet(converter: ElementTypeConverter): TokenSet {
+  val array = map { type -> converter.convertNotNull(type) }.toTypedArray()
+  return TokenSet.create(*array)
 }
