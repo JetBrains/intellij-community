@@ -136,7 +136,7 @@ public final class TreeState implements JDOMExternalizable {
     }
   }
 
-  private static final class PatchMatcherCache {
+  private static final class PathMatcherCache {
     private final Map<Object, Node> cachedNodes = new HashMap<>();
 
     @Nullable Node getNode(@NotNull Object parent) {
@@ -224,20 +224,20 @@ public final class TreeState implements JDOMExternalizable {
 
   private static final class PathMatcher {
     private final @NotNull PathElement @NotNull [] serializedPath;
-    private final @Nullable PatchMatcherCache cache;
+    private final @Nullable TreeState.PathMatcherCache cache;
     private int matchedSoFar = 0;
     private @Nullable TreePath matchedPath;
 
     record State(int matchedSoFar, @Nullable TreePath matchedPath) { }
 
-    static @Nullable PathMatcher tryStart(@NotNull PathElement @NotNull [] serializedPath, @NotNull TreePath rootPath, @Nullable PatchMatcherCache cache) {
+    static @Nullable PathMatcher tryStart(@NotNull PathElement @NotNull [] serializedPath, @NotNull TreePath rootPath, @Nullable TreeState.PathMatcherCache cache) {
       if (serializedPath.length == 0) return null;
       if (!serializedPath[0].matches(rootPath.getLastPathComponent())) return null;
       var attempt = new PathMatcher(serializedPath, rootPath.getParentPath(), cache);
       return attempt.tryAdvance(rootPath.getLastPathComponent()) ? attempt : null;
     }
 
-    private PathMatcher(@NotNull PathElement @NotNull [] serializedPath, @Nullable TreePath parentPath, @Nullable PatchMatcherCache cache) {
+    private PathMatcher(@NotNull PathElement @NotNull [] serializedPath, @Nullable TreePath parentPath, @Nullable TreeState.PathMatcherCache cache) {
       this.serializedPath = serializedPath;
       this.matchedPath = parentPath;
       this.cache = cache;
@@ -252,12 +252,12 @@ public final class TreeState implements JDOMExternalizable {
       this.matchedPath = state.matchedPath;
     }
 
-    @Nullable PatchMatcherCache.Node getCachedMatches(@NotNull Object parent) {
+    @Nullable TreeState.PathMatcherCache.Node getCachedMatches(@NotNull Object parent) {
       if (cache == null) return null;
       return cache.getNode(parent);
     }
 
-    @Nullable PatchMatcherCache.Node getOrCreateCachedMatches(@NotNull Object parent) {
+    @Nullable TreeState.PathMatcherCache.Node getOrCreateCachedMatches(@NotNull Object parent) {
       if (cache == null) return null;
       return cache.getOrCreateNode(parent);
     }
@@ -369,14 +369,14 @@ public final class TreeState implements JDOMExternalizable {
       }
     }
 
-    @Nullable Match tryAdvanceUsingCache(@NotNull PatchMatcherCache.Node cacheNode) {
+    @Nullable Match tryAdvanceUsingCache(@NotNull TreeState.PathMatcherCache.Node cacheNode) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Trying to advance a matcher using the cache");
         logCurrentMatchedPath();
       }
       assert matchedSoFar <= serializedPath.length;
       if (matchedSoFar == serializedPath.length) throw new IllegalStateException("Already matched all the path");
-      @Nullable PatchMatcherCache.CachedMatch match = null;
+      @Nullable TreeState.PathMatcherCache.CachedMatch match = null;
       var cachedUserObjectMatch = cacheNode.getUserObjectMatch(serializedPath[matchedSoFar]);
       if (cachedUserObjectMatch != null) {
         if (LOG.isDebugEnabled()) {
@@ -865,7 +865,7 @@ public final class TreeState implements JDOMExternalizable {
     applyCachedPresentation(tree);
     if (visit(tree)) return; // AsyncTreeModel#accept
     if (root == null) return;
-    var cache = new PatchMatcherCache();
+    var cache = new PathMatcherCache();
     TreeFacade facade = TreeFacade.getFacade(tree);
     ActionCallback callback = facade.getInitialized().doWhenDone(new TreeRunnable("TreeState.applyTo: on done facade init") {
       @Override
@@ -900,7 +900,7 @@ public final class TreeState implements JDOMExternalizable {
     }
   }
 
-  private void applyExpandedTo(@NotNull TreeFacade tree, @NotNull TreePath rootPath, @NotNull ProgressIndicator indicator, PatchMatcherCache cache) {
+  private void applyExpandedTo(@NotNull TreeFacade tree, @NotNull TreePath rootPath, @NotNull ProgressIndicator indicator, PathMatcherCache cache) {
     indicator.checkCanceled();
 
     for (PathElement[] path : myExpandedPaths) {
@@ -913,7 +913,7 @@ public final class TreeState implements JDOMExternalizable {
     tree.finishExpanding();
   }
 
-  private void applySelectedTo(@NotNull JTree tree, PatchMatcherCache cache) {
+  private void applySelectedTo(@NotNull JTree tree, PathMatcherCache cache) {
     TreeModel model = tree.getModel();
     List<TreePath> selection = new ArrayList<>();
     for (PathElement[] path : mySelectedPaths) {
@@ -926,7 +926,7 @@ public final class TreeState implements JDOMExternalizable {
     }
   }
 
-  private static @Nullable TreePath findMatchedPath(@NotNull TreeModel model, PathElement @NotNull [] path, @NotNull PatchMatcherCache cache) {
+  private static @Nullable TreePath findMatchedPath(@NotNull TreeModel model, PathElement @NotNull [] path, @NotNull TreeState.PathMatcherCache cache) {
     var root = model.getRoot();
     if (root == null) return null;
     var matcher = PathMatcher.tryStart(path, new CachingTreePath(root), cache);
@@ -934,7 +934,7 @@ public final class TreeState implements JDOMExternalizable {
     return findMatchedPath(matcher, model, cache);
   }
 
-  private static @Nullable TreePath findMatchedPath(@NotNull PathMatcher matcher, @NotNull TreeModel model, @NotNull PatchMatcherCache cache) {
+  private static @Nullable TreePath findMatchedPath(@NotNull PathMatcher matcher, @NotNull TreeModel model, @NotNull TreeState.PathMatcherCache cache) {
     var currentlyMatchedPath = matcher.matchedPath();
     assert currentlyMatchedPath != null; // this function is only called after a successful root match
     if (matcher.fullyMatched()) return currentlyMatchedPath;
