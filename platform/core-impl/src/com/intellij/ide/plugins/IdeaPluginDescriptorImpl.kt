@@ -279,22 +279,11 @@ class IdeaPluginDescriptorImpl(
    * This is done to support running without the module-based loader (from sources and in dev mode),
    * where all modules are available, but only some of them need to be loaded.
    *
-   * Module dependencies must be satisfied, module dependencies determine whether a module will be loaded.
-   * If a module declares a special dependency, the dependency might be not satisfied in some produce mode,
-   * and the module will not be loaded in that mode.
-   * This function determines which dependencies are satisfiable by the current product mode.
-   *
-   * There are three product modes:
-   * 1. Split frontend (JetBrains Client)
-   * 2. Monolith, or regular local IDE
-   * 3. Split backend (Remote Dev Host) or CWM plugin installed in monolith
-   *
-   * If a module needs to be loaded in some mode(-s), declare the following dependency(-ies):
-   * - in 1 or 2: `com.intellij.platform.experimental.frontend`
-   * - in 2 or 3: `com.intellij.platform.experimental.backend`
-   * - only in 2: both `com.intellij.platform.experimental.frontend` and `com.intellij.platform.experimental.backend`
-   * - in 1 or 2 or 3: no dependency needed
+   * This method is left for compatibility only. 
+   * Now dependencies on 'intellij.platform.frontend' and 'intellij.platform.backend' should be used instead. 
+   * These modules are automatically disabled if they aren't relevant to the product mode, see [PluginSetBuilder.getModuleIncompatibleWithCurrentProductMode].
    */
+  @ApiStatus.Obsolete
   private fun productModeAliasesForCorePlugin(): List<PluginId> = buildList {
     if (!AppMode.isRemoteDevHost()) {
       // This alias is available in monolith and frontend.

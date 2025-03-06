@@ -92,6 +92,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     val loadingErrors = ArrayList<PluginLoadingError>()
     val enabledRequiredContentModules = HashMap<String, IdeaPluginDescriptorImpl>()
     val disabledModuleToProblematicPlugin = HashMap<String, PluginId>()
+    val moduleIncompatibleWithCurrentMode = getModuleIncompatibleWithCurrentProductMode()
 
     fun registerLoadingError(plugin: IdeaPluginDescriptorImpl, disabledModule: PluginContentDescriptor.ModuleItem) {
       loadingErrors.add(createCannotLoadError(
@@ -102,6 +103,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     }
 
     m@ for (module in sortedModulesWithDependencies.modules) {
+      if (module.moduleName == moduleIncompatibleWithCurrentMode) {
+        module.isEnabled = false
+        logMessages.add("Module ${module.moduleName} is disabled because it is not compatible with the current product mode")
+        continue
+      }
+      
       if (module.isUseIdeaClassLoader && !canExtendIdeaClassLoader) {
         module.isEnabled = false
         logMessages.add("Module ${module.moduleName ?: module.pluginId} is not enabled because it uses deprecated `use-idea-classloader` attribute but PathClassLoader is disabled")
@@ -186,6 +193,20 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       PluginManagerCore.logger.info(logMessages.joinToString(separator = "\n"))
     }
     return loadingErrors
+  }
+
+  /**
+   * Returns a module which should be disabled because it's not relevant to the current com.intellij.platform.runtime.product.ProductMode.
+   * All modules that depend on the specified module will be automatically disabled as well.
+   */
+  private fun getModuleIncompatibleWithCurrentProductMode(): String? {
+    return when (ProductLoadingStrategy.strategy.currentModeId) {
+      /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
+      "monolith" -> "intellij.platform.frontend.split"
+      "backend" -> "intellij.platform.frontend"
+      "frontend" -> "intellij.platform.backend"
+      else -> null
+    }
   }
 
   private fun markModuleAsEnabled(moduleName: String, moduleDescriptor: IdeaPluginDescriptorImpl) {
