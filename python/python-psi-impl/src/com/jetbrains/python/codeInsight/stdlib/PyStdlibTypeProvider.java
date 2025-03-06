@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyEnumAttributeStubType;
@@ -301,7 +300,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   private static boolean isEnumMember(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
-    return PyKnownDecoratorUtil.getKnownDecorators(decoratable, context).contains(KnownDecorator.ENUM_MEMBER);
+    return PyKnownDecoratorUtil.getKnownDecorators(decoratable, context).contains(PyKnownDecorator.ENUM_MEMBER);
   }
 
   private static @Nullable PyType getEnumAutoConstructorType(@NotNull PsiElement target,

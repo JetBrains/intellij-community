@@ -12,7 +12,7 @@ import com.jetbrains.python.codeInsight.PyDataclassParameters.Type
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator
+import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.StubAwareComputation
@@ -120,17 +120,17 @@ object PyDataclassNames {
  * determine what settings dataclass has.
  */
 private val DECORATOR_AND_TYPE_AND_PARAMETERS = listOf(
-  Triple(KnownDecorator.DATACLASSES_DATACLASS, PyDataclassParameters.PredefinedType.STD, PyDataclassNames.Dataclasses.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_S, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_ATTRS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_ATTRIBUTES, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_DATACLASS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTRS_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTRS_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTRS_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.DATACLASSES_DATACLASS, PyDataclassParameters.PredefinedType.STD, PyDataclassNames.Dataclasses.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_S, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_ATTRS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_ATTRIBUTES, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_DATACLASS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTRS_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTRS_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTRS_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
 )
 
 fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
@@ -521,7 +521,7 @@ private fun resolveDataclassParameters(
     PyDataclassParameters.PredefinedType.ATTRS -> {
       // TODO remove this hack, make it a proper field
       val extraArguments = mutableMapOf<String, PyExpression>()
-      if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS && stub.decoratorName() == KnownDecorator.ATTR_DATACLASS.qualifiedName) {
+      if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS && stub.decoratorName() == PyKnownDecorator.ATTR_DATACLASS.qualifiedName) {
         extraArguments["auto_attribs"] = 
           PyElementGenerator.getInstance(pyClass.project).createExpressionFromText(LanguageLevel.forElement(pyClass), PyNames.TRUE)
       }
