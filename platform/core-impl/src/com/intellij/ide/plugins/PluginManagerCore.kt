@@ -694,16 +694,13 @@ object PluginManagerCore {
     */
   private fun checkThirdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
     val activity = parentActivity?.startChild("3rd-party plugins consent")
-
     val aliens = ArrayList<IdeaPluginDescriptorImpl>()
     for (id in readThirdPartyPluginIdsOnce()) {
       aliens.add(idMap[id] ?: continue)
     }
-    @Suppress("UsePropertyAccessSyntax")
     if (!aliens.isEmpty()) {
       checkThirdPartyPluginsPrivacyConsent(aliens)
     }
-
     activity?.end()
   }
 
