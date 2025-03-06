@@ -190,7 +190,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     }
     
     if (!logMessages.isEmpty()) {
-      PluginManagerCore.logger.info(logMessages.joinToString(separator = "\n"))
+      PluginManagerCore.logger.info(logMessages.joinToString(separator = "\n", prefix = "Plugin set resolution:\n"))
     }
     return loadingErrors
   }
