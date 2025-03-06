@@ -200,15 +200,6 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
       spec.withProjectLibrary("okhttp")
     },
-    pluginAuto(
-      listOf(
-        "intellij.performanceTesting",
-        "intellij.tools.ide.starter.bus",
-        "intellij.driver.model",
-        "intellij.driver.impl",
-        "intellij.driver.client"
-      )
-    ),
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     githubPlugin("intellij.vcs.github.community", productCode = "IC"),
     gitlabPlugin("intellij.vcs.gitlab.community", productCode = "IC"),

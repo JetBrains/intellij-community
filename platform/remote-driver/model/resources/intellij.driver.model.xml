@@ -1,0 +1,4 @@
+<idea-plugin>
+  <!-- this module is included in the Performance Testing plugin in IntelliJ IDEs, but it can be also used as a separate library not from
+       the IDE process, so services or extensions must not be declared here -->
+</idea-plugin>

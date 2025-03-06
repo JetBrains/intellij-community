@@ -13,6 +13,10 @@
   <content>
     <module name="intellij.performanceTesting.remoteDriver"/>
     <module name="intellij.performanceTesting.vcs"/>
+    <module name="intellij.tools.ide.starter.bus" loading="embedded"/>
+    <module name="intellij.driver.model" loading="embedded"/>
+    <module name="intellij.driver.impl" loading="embedded"/>
+    <module name="intellij.driver.client" loading="embedded"/>
   </content>
 
   <dependencies>
