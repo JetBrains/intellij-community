@@ -26,6 +26,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * @see JavaDocSyntaxElementType
+ */
 public interface BasicJavaDocElementType {
   IElementType BASIC_DOC_TAG = new IJavaDocElementType("DOC_TAG");
   IElementType BASIC_DOC_INLINE_TAG = new IJavaDocElementType("DOC_INLINE_TAG");

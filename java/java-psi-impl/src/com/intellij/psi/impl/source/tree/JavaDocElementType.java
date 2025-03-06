@@ -23,6 +23,9 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
+/**
+ * @see com.intellij.java.syntax.element.JavaDocSyntaxElementType
+ */
 public interface JavaDocElementType {
   final class JavaDocCompositeElementType extends BasicJavaDocElementType.JavaDocCompositeElementType {
     private JavaDocCompositeElementType(@NonNls @NotNull String debugName, @NotNull Supplier<? extends ASTNode> nodeClass, IElementType parentElementType) {

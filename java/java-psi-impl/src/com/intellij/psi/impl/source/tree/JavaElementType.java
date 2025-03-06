@@ -20,6 +20,9 @@ import java.util.function.Supplier;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
+/**
+ * @see com.intellij.java.syntax.element.JavaSyntaxElementType
+ */
 public interface JavaElementType {
   class JavaCompositeElementType extends BasicJavaElementType.JavaCompositeElementType {
     public JavaCompositeElementType(@NotNull String debugName,

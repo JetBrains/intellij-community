@@ -31,6 +31,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 
+/**
+ * @see com.intellij.java.syntax.element.JavaSyntaxElementType
+ */
 public interface BasicJavaElementType {
 
   IElementType BASIC_CLASS = new IJavaElementType("CLASS");
