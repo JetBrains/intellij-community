@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -16,14 +17,22 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
-import com.intellij.openapi.options.newEditor.OptionsEditorColleague
-import com.intellij.openapi.options.newEditor.SettingsDialog
-import com.intellij.openapi.options.newEditor.SettingsEditor
+import com.intellij.openapi.options.newEditor.*
+import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.getUserData
+import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.EditorNotifications
+import com.intellij.ui.UIBundle
+import com.intellij.util.application
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,8 +40,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Function
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 @Service(Level.PROJECT)
@@ -75,16 +87,17 @@ internal class SettingsVirtualFileHolder private constructor(private val project
 
     private val dialogLazy = SynchronizedClearableLazy {
       val dialog = initializer()
-      Disposer.register(dialog.disposable, Disposable {
+      val disposable = Disposable {
         val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx;
         fileEditorManager.closeFile(this)
         wasModified.set(false)
         val manager = project.getServiceIfCreated(FileStatusManager::class.java)
         manager?.fileStatusChanged(this@SettingsVirtualFile)
-      })
+      }
+      Disposer.register(dialog.disposable, disposable)
 
-      val settingsEditor = dialog.editor as? SettingsEditor
-      settingsEditor?.addOptionsListener(object : OptionsEditorColleague.Adapter() {
+      val settingsEditor = dialog.editor as? SettingsEditor ?: return@SynchronizedClearableLazy dialog
+      settingsEditor.addOptionsListener(object : OptionsEditorColleague.Adapter() {
         override fun onModifiedAdded(configurable: Configurable?): Promise<in Any> {
           updateIsModified()
           return resolvedPromise()
@@ -101,6 +114,16 @@ internal class SettingsVirtualFileHolder private constructor(private val project
             wasModified.set(modified)
             val manager = project.getServiceIfCreated(FileStatusManager::class.java)
             manager?.fileStatusChanged(this@SettingsVirtualFile)
+          }
+        }
+      })
+
+      val connection = application.messageBus.connect(disposable)
+      connection.subscribe(SettingsDialogListener.TOPIC, object : SettingsDialogListener {
+        override fun afterApply(editor: SettingsEditor, modifiedConfigurableIds: Set<String>) {
+          if (editor != settingsEditor) {
+            settingsEditor.putUserData(KEY, modifiedConfigurableIds)
+            EditorNotifications.getInstance(project).updateNotifications(this@SettingsVirtualFile)
           }
         }
       })
@@ -165,3 +188,31 @@ internal class SettingsVirtualFileHolder private constructor(private val project
     override fun isReadOnly(): Boolean = true
   }
 }
+
+private class SettingModifiedExternallyNotificationProvider : EditorNotificationProvider {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    if (file !is SettingsVirtualFile)
+      return null
+    return Function {
+      val settingsEditor = file.getOrCreateDialog().editor as SettingsEditor? ?: return@Function null
+      val userData: Set<String> = settingsEditor.getUserData(KEY) ?: return@Function null
+
+      val selectedConfigurableId = settingsEditor.selectedConfigurableId ?: return@Function null
+      if (!userData.contains(selectedConfigurableId)) {
+        return@Function null
+      }
+      settingsEditor.editor.putUserData(KEY, Collections.singleton(selectedConfigurableId))
+
+      val panel = EditorNotificationPanel(EditorNotificationPanel.Status.Info)
+      panel.text = UIBundle.message("settings.tab.modified.externally.text")
+      panel.createActionLabel(UIBundle.message("settings.tab.modified.externally.action.text"), Runnable {
+        settingsEditor.putUserData(KEY, null)
+        settingsEditor.editor.configurable?.reset()
+        EditorNotifications.getInstance(project).updateNotifications(file)
+      })
+      return@Function panel
+    }
+  }
+}
+
+private val KEY = Key.create<Set<String>>("SettingModifiedExternally")

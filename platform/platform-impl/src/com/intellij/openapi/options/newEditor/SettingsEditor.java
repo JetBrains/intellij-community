@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.options.Configurable;
@@ -242,6 +243,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         if (SettingsEditor.this.filter.context.getModified().isEmpty()) {
           return true;
         }
+        Set<String> modifiedIds = new HashSet<>() ;
         Map<Configurable, ConfigurationException> map = new LinkedHashMap<>();
         for (Configurable configurable : SettingsEditor.this.filter.context.getModified()) {
           ConfigurationException exception = ConfigurableEditor.apply(configurable);
@@ -250,6 +252,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           }
           else if (!configurable.isModified()) {
             SettingsEditor.this.filter.context.fireModifiedRemoved(configurable, null);
+            modifiedIds.add(ConfigurableVisitor.getId(configurable));
           }
         }
         search.updateToolTipText();
@@ -265,6 +268,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           return false;
         }
         updateStatus(SettingsEditor.this.filter.context.getCurrentConfigurable());
+        ApplicationManager.getApplication().getMessageBus()
+          .syncPublisher(SettingsDialogListener.TOPIC)
+          .afterApply(SettingsEditor.this, modifiedIds);
         return true;
       }
 
@@ -281,6 +287,28 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         settings.select(configurable);
       }
     };
+
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(SettingsDialogListener.TOPIC, new SettingsDialogListener() {
+        @Override
+        public void afterApply(@NotNull SettingsEditor settingsEditor, @NotNull Set<@NotNull String> modifiedConfigurableIds) {
+          if (settingsEditor == SettingsEditor.this)
+            return;
+          for (String id : modifiedConfigurableIds) {
+            Configurable conf = ConfigurableVisitor.findById(id, groups);
+            if (conf != null)
+              checkModified(conf);
+          }
+          for (Configurable modifiedConfigurable : SettingsEditor.this.filter.context.getModified()) {
+            String confId = ConfigurableVisitor.getId(modifiedConfigurable);
+            if (!confId.equals(getSelectedConfigurableId()) && modifiedConfigurableIds.contains(confId)) {
+              modifiedConfigurable.reset();
+              SettingsEditor.this.filter.context.fireModifiedRemoved(modifiedConfigurable, null);
+            }
+          }
+        }
+      });
+
 
     loadingDecorator = new LoadingDecorator(editor, this, 10, true);
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
