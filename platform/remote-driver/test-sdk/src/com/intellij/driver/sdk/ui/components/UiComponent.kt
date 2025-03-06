@@ -350,6 +350,11 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
+  fun tripleClick(point: Point) {
+    LOG.info("Triple click at $this${point?.let { ": $it" } ?: ""}")
+    withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 3) }
+  }
+
   fun rightClick(point: Point? = null) {
     LOG.info("Right click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
