@@ -276,7 +276,8 @@ enum class GutterIcon(val path: String) {
   RUNSUCCESS("expui/gutter/runSuccess.svg"),
   RUNERROR("expui/gutter/runError.svg"),
   RERUN("expui/gutter/rerun.svg"),
-  BREAKPOINT("expui/breakpoints/breakpointValid.svg"),
+  BREAKPOINT("expui/breakpoints/breakpoint.svg"),
+  BREAKPOINT_VALID("expui/breakpoints/breakpointValid.svg"),
   NEXT_STATEMENT("expui/debugger/nextStatement.svg"),
   GOTO("icons/expui/assocFile@14x14.svg"),
   IMPLEMENT("expui/gutter/implementingMethod.svg")
