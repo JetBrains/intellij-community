@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,6 +86,16 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
 
   public void testNoExternalTypeAnnotations2() {
     doTest(null);
+  }
+
+  public void testVarUnknownType() {
+    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class, 
+                 "Cannot perform refactoring.\nVariable type is unknown", () -> doTest(null));
+  }
+
+  public void testVarUnknownType2() {
+    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class, 
+                 "Cannot perform refactoring.\nVariable type is unknown", () -> doTest(null));
   }
 
   @Override
