@@ -59,6 +59,8 @@ abstract class CodeExecutionManager {
     val codeFile = getGeneratedCodeFile(basePath, code)
     // Save code in a temp file
     codeFile.writeText(code)
+    // Setup environment
+    setupEnvironment(project, sdk)
     // Compile
     val compilationExecutionLog = compileGeneratedCode()
     if (compilationExecutionLog.exitCode != 0) return compilationExecutionLog
