@@ -410,6 +410,9 @@ public final class LambdaUtil {
           final PsiCall contextCall = (PsiCall)gParent;
           JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
           PsiElement resultElement = resolveResult.getElement();
+          if (resultElement == null && contextCall instanceof PsiMethodCallExpression) {
+            return tryGetFunctionalTypeFromMultiResolve(expression, tryToSubstitute, (PsiMethodCallExpression)contextCall, lambdaIdx);
+          }
           LOG.assertTrue(!(MethodCandidateInfo.isOverloadCheck(contextCall.getArgumentList()) &&
                            resultElement instanceof PsiMethod &&
                            ((PsiMethod)resultElement).hasTypeParameters() &&
@@ -427,6 +430,40 @@ public final class LambdaUtil {
     PsiSwitchExpression switchExpression = PsiTreeUtil.getParentOfType(element, PsiSwitchExpression.class);
     if (switchExpression != null && PsiUtil.getSwitchResultExpressions(switchExpression).contains(element)) {
       return getFunctionalInterfaceType(switchExpression, tryToSubstitute);
+    }
+    return null;
+  }
+
+  /**
+   * It's possible that we have several overloads, but all of them resolve
+   * the same functional parameter to the same functional interface type.
+   * In this case, we can safely return that type.
+   * <p>
+   * Example: {@code Collectors.toMap(t -> {})}
+   * <p>
+   * This call is not resolved, as there are several overloads of {@code Collectors.toMap()},
+   * but all of them have a key-mapper lambda as the first parameter, so we can determine the functional interface type.
+   */
+  private static @Nullable PsiType tryGetFunctionalTypeFromMultiResolve(PsiElement expression,
+                                                                        boolean tryToSubstitute,
+                                                                        PsiMethodCallExpression contextCall,
+                                                                        int lambdaIdx) {
+    JavaResolveResult[] results = contextCall.getMethodExpression().multiResolve(true);
+    if (results.length > 1) {
+      PsiType firstType = null;
+      for (JavaResolveResult result : results) {
+        PsiType substitutedType = getSubstitutedType(expression, tryToSubstitute, lambdaIdx, result);
+        if (substitutedType == null) {
+          return null;
+        }
+        if (firstType == null) {
+          firstType = substitutedType;
+        }
+        else if (!substitutedType.equals(firstType)) {
+          return null;
+        }
+      }
+      return firstType;
     }
     return null;
   }
