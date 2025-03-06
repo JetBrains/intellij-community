@@ -3,7 +3,6 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
 import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.notebooks.visualization.use
 import com.intellij.openapi.Disposable
@@ -29,12 +28,6 @@ class EditorCellFoldingBar(
   // Because it is not possible to create RangeHighlighter for every single inlay in range,
   // RangeHighlighter created for text range and covered all inlays in range.
   private var panel: JComponent? = null
-
-  private val boundsChangeListener = object : JupyterBoundsChangeListener {
-    override fun boundsChanged() {
-      updateBounds()
-    }
-  }
 
   var visible: Boolean
     get() = panel?.isVisible == true
@@ -66,7 +59,7 @@ class EditorCellFoldingBar(
   }
 
   private fun registerListeners() {
-    JupyterBoundsChangeHandler.get(editor).subscribe(this, boundsChangeListener)
+    JupyterBoundsChangeHandler.get(editor).subscribe(this, ::updateBounds)
     editor.notebookAppearance.cellStripeSelectedColor.afterChange(this) {
       updateBarColor()
     }
