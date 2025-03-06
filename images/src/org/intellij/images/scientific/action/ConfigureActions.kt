@@ -5,9 +5,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import org.intellij.images.ImagesBundle
 import org.intellij.images.scientific.BinarizationThresholdConfig
-import javax.swing.JOptionPane
+import java.awt.BorderLayout
+import java.awt.Dimension
+import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.JTextField
 
 class ConfigureActions : AnAction(
@@ -16,35 +21,58 @@ class ConfigureActions : AnAction(
   AllIcons.General.Settings
 ) {
   override fun actionPerformed(e: AnActionEvent) {
-    openConfigurationDialog()
+    openConfigurationDialog(e.project)
   }
 
-  private fun openConfigurationDialog() {
+  private fun openConfigurationDialog(project: Project?) {
     val thresholdConfig = ApplicationManager.getApplication().getService(BinarizationThresholdConfig::class.java) ?: return
     val currentThreshold = thresholdConfig.threshold
-    val newThreshold = showThresholdDialog(currentThreshold)
-    if (newThreshold != null) {
-      thresholdConfig.threshold = newThreshold
+    val dialog = ThresholdDialogWrapper(project, currentThreshold)
+    if (dialog.showAndGet()) {
+      val newThreshold = dialog.thresholdValue
+      if (newThreshold != null) {
+        thresholdConfig.threshold = newThreshold
+      }
     }
   }
 
-  private fun showThresholdDialog(initialValue: Int): Int? {
-    val inputField = JTextField(initialValue.toString())
-    val optionPane = JOptionPane(inputField, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION)
-    val dialog = optionPane.createDialog(null, ImagesBundle.message("image.binarize.dialog.title"))
-    dialog.isAlwaysOnTop = true
-    dialog.isVisible = true
+  private class ThresholdDialogWrapper(project: Project?, initialValue: Int) : DialogWrapper(project) {
+    private val inputField = JTextField(initialValue.toString()).apply {
+      preferredSize = Dimension(150, 10)
+      maximumSize = Dimension(150, 10)
+      minimumSize = Dimension(150, 10)
+    }
 
-    if (optionPane.value == JOptionPane.OK_OPTION) {
-      val threshold = inputField.text.toIntOrNull()
-      if (threshold != null && threshold in 0..255) {
-        return threshold
+    var thresholdValue: Int? = null
+
+    init {
+      title = ImagesBundle.message("image.binarize.dialog.title")
+      init()
+    }
+
+    override fun createCenterPanel(): JComponent {
+      val panel = JPanel(BorderLayout())
+      panel.add(inputField, BorderLayout.CENTER)
+      return panel
+    }
+
+    override fun getPreferredFocusedComponent(): JComponent {
+      return inputField
+    }
+
+    override fun doOKAction() {
+      val value = inputField.text.toIntOrNull()
+      if (value != null && value in 0..255) {
+        thresholdValue = value
+        super.doOKAction()
       }
       else {
-        JOptionPane.showMessageDialog(null, ImagesBundle.message("image.binarize.dialog.message"), ImagesBundle.message("image.binarize.dialog.invalid"), JOptionPane.ERROR_MESSAGE)
-        return showThresholdDialog(initialValue)
+        setErrorText(ImagesBundle.message("image.binarize.dialog.invalid"))
       }
     }
-    return null
+
+    override fun getInitialSize(): Dimension {
+      return Dimension(300, 120)
+    }
   }
 }
