@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
@@ -433,7 +434,10 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
 
   @Test
   fun `pending read action do not cause thread starvation for default dispatcher`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
-    setCompensationTimeout(1.seconds)
+    val existingTimeout = setCompensationTimeout(1.seconds)
+    kotlin.coroutines.coroutineContext.job.invokeOnCompletion {
+      setCompensationTimeout(existingTimeout)
+    }
     val operationsCount = Runtime.getRuntime().availableProcessors() * 2
     val writeActionMayFinish = Job(coroutineContext.job).asCompletableFuture()
     val writeActionStarted = Job(coroutineContext.job)

@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.core.rwmutex.ReadPermit
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.readLockCompensationTimeout
 import com.intellij.openapi.application.useNestedLocking
@@ -126,6 +127,8 @@ else {
 
 @TestOnly
 @ApiStatus.Internal
-fun setCompensationTimeout(timeout: Duration?) {
+fun setCompensationTimeout(timeout: Duration?): Duration? {
+  val currentTimeout = compensationTimeout
   compensationTimeout = timeout
+  return currentTimeout
 }
