@@ -42,6 +42,36 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 
+/**
+ * A non-editable dropdown list component that follows the standard visual styling.
+ *
+ * Provides a selectable list of items in a dropdown format. When clicked, displays a popup with the list of items.
+ * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
+ * control.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
+ *
+ * **Usage example:**
+ * [`Dropdowns.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Dropdowns.kt)
+ *
+ * **Swing equivalent:**
+ * [`ComboBox`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/openapi/ui/ComboBox.java)
+ *
+ * @param items The list of items to display in the dropdown
+ * @param selectedIndex The index of the currently selected item
+ * @param onItemSelected Called when an item is selected, with the new index and item
+ * @param modifier Modifier to be applied to the combo box
+ * @param isEnabled Controls whether the combo box can be interacted with
+ * @param outline The outline style to be applied to the combo box
+ * @param maxPopupHeight The maximum height of the popup list
+ * @param interactionSource Source of interactions for this combo box
+ * @param style The visual styling configuration for the combo box
+ * @param textStyle The typography style to be applied to the items
+ * @param onPopupVisibleChange Called when the popup visibility changes
+ * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
+ * @param itemContent Composable content for rendering each item in the list
+ * @see com.intellij.openapi.ui.ComboBox
+ */
 @Composable
 public fun ListComboBox(
     items: List<String>,
@@ -166,11 +196,11 @@ public fun ListComboBox(
 }
 
 /**
- * A non-editable dropdown list component that follows the standard visual styling.
+ * An editable dropdown list component that follows the standard visual styling.
  *
- * Provides a selectable list of items in a dropdown format. When clicked, displays a popup with the list of items.
- * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
- * control.
+ * Provides a text field with a dropdown list of suggestions. Users can either select from the list or type their own
+ * value. Supports keyboard navigation, item selection, and custom item rendering. The selected or entered text is
+ * displayed in the editable text field.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
@@ -179,17 +209,19 @@ public fun ListComboBox(
  *
  * **Swing equivalent:**
  * [`ComboBox`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/openapi/ui/ComboBox.java)
+ * with [setEditable(true)](https://docs.oracle.com/javase/8/docs/api/javax/swing/JComboBox.html#setEditable-boolean-)
  *
  * @param items The list of items to display in the dropdown
+ * @param selectedIndex The index of the currently selected item
+ * @param onItemSelected Called when an item is selected, with the new index and item
+ * @param textFieldState The state of the text field, defaults to the text of the selected item
  * @param modifier Modifier to be applied to the combo box
  * @param isEnabled Controls whether the combo box can be interacted with
- * @param initialSelectedIndex The index of the initially selected item
  * @param outline The outline style to be applied to the combo box
  * @param maxPopupHeight The maximum height of the popup list
  * @param interactionSource Source of interactions for this combo box
  * @param style The visual styling configuration for the combo box
  * @param textStyle The typography style to be applied to the items
- * @param onSelectedItemChange Called when the selected item changes, with the new index and item
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
  * @param itemContent Composable content for rendering each item in the list
@@ -313,6 +345,36 @@ public fun EditableListComboBox(
     )
 }
 
+/**
+ * A non-editable dropdown list component that follows the standard visual styling.
+ *
+ * Provides a selectable list of items in a dropdown format. When clicked, displays a popup with the list of items.
+ * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
+ * control.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
+ *
+ * **Usage example:**
+ * [`Dropdowns.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Dropdowns.kt)
+ *
+ * **Swing equivalent:**
+ * [`ComboBox`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/openapi/ui/ComboBox.java)
+ *
+ * @param items The list of items to display in the dropdown
+ * @param modifier Modifier to be applied to the combo box
+ * @param isEnabled Controls whether the combo box can be interacted with
+ * @param initialSelectedIndex The index of the initially selected item
+ * @param outline The outline style to be applied to the combo box
+ * @param maxPopupHeight The maximum height of the popup list
+ * @param interactionSource Source of interactions for this combo box
+ * @param style The visual styling configuration for the combo box
+ * @param textStyle The typography style to be applied to the items
+ * @param onSelectedItemChange Called when the selected item changes, with the new index and item
+ * @param onPopupVisibleChange Called when the popup visibility changes
+ * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
+ * @param itemContent Composable content for rendering each item in the list
+ * @see com.intellij.openapi.ui.ComboBox
+ */
 @Deprecated(
     message = "Use the stateless ListComboBox with selectedIndex and onItemSelected parameters instead",
     level = DeprecationLevel.WARNING,
