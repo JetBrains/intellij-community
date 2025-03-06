@@ -229,4 +229,9 @@ public interface ApplicationEx extends Application {
   default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly, @NlsSafe String advice) {
     runnable.run();
   }
+
+  @ApiStatus.Internal
+  default void allowTakingLocksInsideAndRun(@NotNull Runnable runnable) {
+    runnable.run();
+  }
 }

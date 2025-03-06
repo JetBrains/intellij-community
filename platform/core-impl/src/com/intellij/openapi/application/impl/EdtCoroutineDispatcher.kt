@@ -105,6 +105,21 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
     return false
   }
 
+  override fun dispatch(context: CoroutineContext, block: Runnable) {
+    if (type.allowLocks() && !ApplicationManager.getApplication().isWriteIntentLockAcquired) {
+      // this was a request to perform an immediate dispatch from a non-locking dispatcher (UI or Main) to a locking one.
+      // In this case, 'isDispatchNeeded' returned true because locking was not acquired, but we still need to emulate immediate execution
+      // by executing the runnable in-place.
+      // once the lock is acquired, subsequent dispatches will be processed via 'invokeLater' as they should
+      return ApplicationManagerEx.getApplicationEx().allowTakingLocksInsideAndRun {
+        WriteIntentReadAction.run {
+          block.run()
+        }
+      }
+    }
+    super.dispatch(context, block)
+  }
+
   override fun toString(): String {
     return super.toString() + ".immediate"
   }

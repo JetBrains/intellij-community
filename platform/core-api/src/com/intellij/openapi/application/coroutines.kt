@@ -352,6 +352,14 @@ fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
 @Suppress("UnusedReceiverParameter")
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
 
+@Suppress("UnusedReceiverParameter")
+@get:Experimental
+val Dispatchers.EdtImmediate: CoroutineContext get() = coroutineSupport().immediateEdtDispatcher()
+
+@Suppress("UnusedReceiverParameter")
+@get:Experimental
+val Dispatchers.UiImmediate: CoroutineContext get() = coroutineSupport().immediateUiDispatcher()
+
 /**
  * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
  * The computations scheduled by this dispatcher are **not** protected by any lock, and it is forbidden to initiate Read or Write actions.

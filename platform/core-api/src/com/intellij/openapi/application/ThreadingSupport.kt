@@ -215,6 +215,15 @@ interface ThreadingSupport {
   fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean, advice: String)
 
   /**
+   * Allows using R/W locks inside [action].
+   * This is mostly needed for incremental transition from previous approach with unconditional lock acquisiton:
+   * we cannot afford prohibiting taking locks for large regions of the platform
+   */
+  @ApiStatus.Internal
+  @Throws(LockAccessDisallowed::class)
+  fun allowTakingLocksInsideAndRun(action: Runnable)
+
+  /**
    * If locking is prohibited for this thread (via [prohibitTakingLocksInsideAndRun]),
    * this function will return not-null string with advice on how to fix the problem
    */

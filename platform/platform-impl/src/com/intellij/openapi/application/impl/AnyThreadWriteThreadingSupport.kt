@@ -782,6 +782,17 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
+  override fun allowTakingLocksInsideAndRun(action: Runnable) {
+    val currentValue = myLockingProhibited.get()
+    myLockingProhibited.set(null)
+    try {
+      action.run()
+    }
+    finally {
+      myLockingProhibited.set(currentValue)
+    }
+  }
+
   override fun isInsideUnlockedWriteIntentLock(): Boolean {
     if (isLockStoredInContext) {
       return false

@@ -15,6 +15,7 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
+import io.kotest.assertions.withClue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.assertj.core.api.Assertions.assertThat
@@ -285,19 +286,31 @@ class EdtCoroutineDispatcherTest {
   fun `main ui dispatcher does not perform dispatch when used under edt`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       assertThat(application.isReadAccessAllowed).isTrue
-      withContext(Dispatchers.UIImmediate) {
-        assertThat(application.isReadAccessAllowed).isTrue
+      val currentTrace = Throwable().stackTrace.drop(1).reversed()
+      withContext(Dispatchers.UiImmediate) {
+        withClue("This code should be executing in the same frame as it was called from") {
+          assertThat(Throwable().stackTrace.reversed()).startsWith(*currentTrace.toTypedArray())
+        }
+        withClue("Locks should be acquired in EDT dispatcher") {
+          assertThat(application.isReadAccessAllowed).isTrue
+        }
       }
       assertThat(application.isReadAccessAllowed).isTrue
     }
   }
 
   @Test
-  fun `main edt dispatcher performs dispatch when used under ui`(): Unit = timeoutRunBlocking {
+  fun `main edt dispatcher does not perform dispatch when used under ui`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.UI) {
       assertThat(application.isReadAccessAllowed).isFalse
-      withContext(Dispatchers.EDTImmediate) {
-        assertThat(application.isReadAccessAllowed).isTrue
+      val currentTrace = Throwable().stackTrace.drop(1).reversed()
+      withContext(Dispatchers.EdtImmediate) {
+        withClue("This code should be executing in the same frame as it was called from") {
+          assertThat(Throwable().stackTrace.reversed()).startsWith(*currentTrace.toTypedArray())
+        }
+        withClue("Locks should be acquired in EDT dispatcher") {
+          assertThat(application.isReadAccessAllowed).isTrue
+        }
       }
       assertThat(application.isReadAccessAllowed).isFalse
     }
@@ -510,11 +523,3 @@ internal fun uiThreadDispatchers(): List<Arguments> = listOf(
   Dispatchers.UI,
   Dispatchers.Main,
 ).map { Arguments.of(it) }
-
-@Suppress("UnusedReceiverParameter")
-val Dispatchers.UIImmediate: CoroutineDispatcher
-  get() = (Dispatchers.UI[ContinuationInterceptor.Key] as MainCoroutineDispatcher).immediate
-
-@Suppress("UnusedReceiverParameter")
-val Dispatchers.EDTImmediate: CoroutineDispatcher
-  get() = (Dispatchers.EDT[ContinuationInterceptor.Key] as MainCoroutineDispatcher).immediate
