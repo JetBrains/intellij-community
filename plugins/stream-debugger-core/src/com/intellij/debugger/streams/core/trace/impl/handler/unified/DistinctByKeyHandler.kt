@@ -15,7 +15,8 @@ open class DistinctByKeyHandler(callNumber: Int,
                                 dsl: Dsl,
                                 private val functionApplyName: String = "apply",
                                 protected val keyExtractorPosition: Int = 0,
-                                protected val myKeyType: GenericType = dsl.types.ANY
+                                protected val myKeyType: GenericType = dsl.types.ANY,
+                                protected val afterValueType: GenericType = dsl.types.ANY,
                                 ) : HandlerBase.Intermediate(dsl)
 {
   protected companion object {
@@ -30,7 +31,7 @@ open class DistinctByKeyHandler(callNumber: Int,
   protected val myBeforeTimes: ListVariable = dsl.list(dsl.types.INT, myCall.name + callNumber + "BeforeTimes")
   protected val myBeforeValues: ListVariable = dsl.list(dsl.types.ANY, myCall.name + callNumber + "BeforeValues")
   protected val myKeys: ListVariable = dsl.list(myKeyType, myCall.name + callNumber + "Keys")
-  protected val myTime2ValueAfter: MapVariable = dsl.linkedMap(dsl.types.INT, dsl.types.ANY, myCall.name + callNumber + "after")
+  protected val myTime2ValueAfter: MapVariable = dsl.linkedMap(dsl.types.INT, afterValueType, myCall.name + callNumber + "After")
 
   init {
     val arguments = myCall.arguments
