@@ -8,6 +8,7 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 
 private class DisableCoroutineViewListener : DebuggerManagerListener {
     override fun sessionAttached(session: DebuggerSession) {
@@ -15,6 +16,7 @@ private class DisableCoroutineViewListener : DebuggerManagerListener {
             private var isFirstTimePaused = true
 
             override fun sessionPaused() {
+                if (XDebugSessionProxy.useFeProxy()) return // TODO IDEA-368739
                 // without waiting pause, there are some strange unexpected changes in the debugger layout
                 if (isFirstTimePaused && !Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
                     showOrHideCoroutinePanel(session.process, false)

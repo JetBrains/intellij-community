@@ -24,6 +24,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineView
@@ -59,6 +60,7 @@ class DebuggerConnection(
     }
 
     override fun processStarted(debugProcess: XDebugProcess) {
+        if (XDebugSessionProxy.useFeProxy()) return // TODO IDEA-368739
         DebuggerInvocationUtil.swingInvokeLater(project) {
             val session = debugProcess.session
             if (debugProcess is JavaDebugProcess &&
