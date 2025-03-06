@@ -15,6 +15,8 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.ObjectUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.net.NetUtils
@@ -22,12 +24,12 @@ import org.apache.commons.lang3.SystemUtils
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.MavenDisposable
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.indices.MavenIndices
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager.Companion.getInstance
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.DummyMavenServerConnector.Companion.isDummy
 import org.jetbrains.idea.maven.server.MavenServerManager.MavenServerConnectorFactory
-import org.jetbrains.idea.maven.server.MavenServerManagerEx.Companion.stopConnectors
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenUtil.isCompatibleWith
@@ -122,6 +124,15 @@ internal class MavenServerManagerImpl : MavenServerManager {
     }
     MavenProjectsManager.getInstance(project).embeddersManager.reset()
     stopConnectors(project, wait, connectorsToShutDown)
+  }
+
+  private fun stopConnectors(project: Project, wait: Boolean, connectors: List<MavenServerConnector>) {
+    runBlockingMaybeCancellable{
+      val taskCancellation = TaskCancellation.nonCancellable()
+      withBackgroundProgress(project, SyncBundle.message("maven.sync.restarting"), taskCancellation) {
+        connectors.forEach(Consumer { it: MavenServerConnector -> it.stop(wait) })
+      }
+    }
   }
 
   private fun doGetConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {
