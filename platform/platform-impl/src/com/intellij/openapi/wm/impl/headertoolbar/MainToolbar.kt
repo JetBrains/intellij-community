@@ -110,7 +110,7 @@ class MainToolbar(
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = ConcurrentHashSet<ToolbarWidthCalculationListener>()
-  private val cachedWidths = ConcurrentHashMap<String, Int>()
+  private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
 
   init {
     this.background = background
@@ -136,16 +136,15 @@ class MainToolbar(
             val sizeMap = CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>())
             val dimension = sizeMap.getValue(component)
 
-            val componentText = (component as ActionToolbar).actionGroup.templatePresentation.text
-            val cachedWidth = cachedWidths[componentText]
-            if (dimension.width != cachedWidth || cachedWidths[MAIN_TOOLBAR_ID] != mainToolbarWidth) {
-              notifyToolbarWidthCalculation(ToolbarWidthCalculationEvent(this@MainToolbar))
+            if (widthCalculationListeners.isNotEmpty()) {
               val componentText = (component as ActionToolbar).actionGroup.templatePresentation.text
-              cachedWidths.put(componentText, dimension.width)
-              (component as ActionToolbar).actionGroup.templatePresentation.text
-              cachedWidths.put(MAIN_TOOLBAR_ID, mainToolbarWidth)
+              val cachedWidth = cachedWidths[componentText]
+              if (dimension.width != cachedWidth || cachedWidths[MAIN_TOOLBAR_ID] != mainToolbarWidth) {
+                notifyToolbarWidthCalculation(ToolbarWidthCalculationEvent(this@MainToolbar))
+                cachedWidths.put(componentText, dimension.width)
+                cachedWidths.put(MAIN_TOOLBAR_ID, mainToolbarWidth)
+              }
             }
-
             dimension
           }
           else -> {
