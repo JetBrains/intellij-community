@@ -27,6 +27,10 @@ internal data class DocumentationContent(
   }
 }
 
+internal fun DocumentationItem.isIncludedInDocProvider(): Boolean {
+  return this.shouldBeRenderedIn(RenderContext.DOC_PROVIDER)
+}
+
 // allows for referencing elements by anchors in YAML
 internal data class ElementWrapper(
   var element: Element? = null

@@ -281,7 +281,7 @@ internal class DocumentationRenderer(private val project: Project) {
   private fun StringBuilder.appendAttributes(attributes: List<AttributeWrapper>) {
     val includedAttributes = attributes
       .mapNotNull { it.attribute }
-      .filter { it.shouldBeRenderedIn(RenderContext.DOC_PROVIDER) }
+      .filter { it.isIncludedInDocProvider() }
     if (includedAttributes.isNotEmpty()) {
       appendLine("$HEADER_LEVEL Attributes")
       for (attribute in includedAttributes) {
@@ -325,7 +325,7 @@ internal class DocumentationRenderer(private val project: Project) {
     else {
       for (child in element.children) {
         val childElement = child.element?.takeIf { !it.isWildcard() } ?: continue
-        if (!childElement.shouldBeRenderedIn(RenderContext.DOC_PROVIDER)) continue
+        if (!childElement.isIncludedInDocProvider()) continue
         val linkText = childElement.name
         val linkPath = childElement.path.toPathString()
         val linkUrl = "$ELEMENT_DOC_LINK_PREFIX$linkPath"
