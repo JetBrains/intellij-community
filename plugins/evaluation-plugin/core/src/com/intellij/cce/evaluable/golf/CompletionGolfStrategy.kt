@@ -63,7 +63,8 @@ data class CompletionGolfStrategy(
 
 enum class CompletionGolfMode {
   ALL,
-  TOKENS
+  TOKENS,
+  COMMENTS,
 }
 
 

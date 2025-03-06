@@ -7,15 +7,16 @@ import com.intellij.cce.evaluable.golf.CompletionGolfMode
 import com.intellij.cce.visitor.LineCompletionEvaluationVisitor
 import com.intellij.cce.visitor.LineCompletionVisitorFactory
 import com.intellij.cce.visitor.LineCompletionVisitorHelper
+import com.intellij.ml.inline.completion.java.features.JavaStringLiteralSupporter
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
-
 
 class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.JAVA
   override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor {
     when (mode) {
       CompletionGolfMode.ALL -> throw UnsupportedOperationException("Completion Golf mode \"ALL\" is not supported for PHP completion.")
+      CompletionGolfMode.COMMENTS -> return CommentsTokensVisitor(featureName)
       CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)
     }
   }
@@ -72,4 +73,26 @@ class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {
     override fun visitImportStaticStatement(statement: PsiImportStaticStatement) = Unit
     override fun visitComment(comment: PsiComment) = Unit
   }
+
+  class CommentsTokensVisitor(override val feature: String) : LineCompletionEvaluationVisitor, JavaRecursiveElementVisitor() {
+    private val visitorHelper = LineCompletionVisitorHelper()
+    private val javaStringLiteralSupporter = JavaStringLiteralSupporter()
+
+    override val language: Language = Language.JAVA
+
+    override fun getFile(): CodeFragment = visitorHelper.getFile()
+
+    override fun visitJavaFile(file: PsiJavaFile) {
+      visitorHelper.visitFile(file)
+      super.visitJavaFile(file)
+    }
+
+    override fun visitElement(element: PsiElement) {
+      if (javaStringLiteralSupporter.isCommentElement(element) || javaStringLiteralSupporter.isDocComment(element)) {
+        visitorHelper.addElement(element.node)
+      }
+      super.visitElement(element)
+    }
+  }
 }
+

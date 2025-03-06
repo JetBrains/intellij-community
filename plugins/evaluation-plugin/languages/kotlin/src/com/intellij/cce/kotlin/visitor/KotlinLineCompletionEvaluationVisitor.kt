@@ -21,6 +21,7 @@ class KotlinLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.KOTLIN
   override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor {
     when (mode) {
+      CompletionGolfMode.COMMENTS -> throw UnsupportedOperationException("Completion Golf mode \"COMMENTS\" is not supported for Kotlin completion.")
       CompletionGolfMode.ALL -> return AllVisitor(featureName)
       CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)
     }
