@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.BufferedInputStream
@@ -36,6 +37,7 @@ fun isBrokenPlugin(descriptor: IdeaPluginDescriptor): Boolean {
 
 internal fun getBrokenPluginVersions(): Map<PluginId, Set<String>> {
   if (PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
+    LOG.debug { "Broken plugins will not be loaded because 'Ignore disabled plugins' flag is set" }
     return emptyMap()
   }
 
@@ -43,6 +45,7 @@ internal fun getBrokenPluginVersions(): Map<PluginId, Set<String>> {
   if (result == null) {
     result = readBrokenPluginFile()
     brokenPluginVersions = SoftReference(result)
+    LOG.debug { "Broken plugins is loaded, state size=${result.size}" }
   }
   return result
 }
@@ -50,11 +53,13 @@ internal fun getBrokenPluginVersions(): Map<PluginId, Set<String>> {
 @Internal
 fun updateBrokenPlugins(brokenPlugins: Map<PluginId, Set<String>>) {
   brokenPluginVersions = SoftReference(brokenPlugins)
+  LOG.debug { "Broken plugins state is updated, state size=${brokenPlugins.size}" }
   writeBrokenPlugins(brokenPlugins)
 }
 
 @Internal
 fun writeBrokenPlugins(brokenPlugins: Map<PluginId, Set<String>>, configDir: Path? = null) {
+  LOG.debug { "Rewriting cached broken plugins, new state size=${brokenPlugins.size}" }
   val updatedBrokenPluginFile = getUpdatedBrokenPluginFile(configDir)
   try {
     DataOutputStream(BufferedOutputStream(Files.newOutputStream(updatedBrokenPluginFile), 32_000)).use { out ->
@@ -69,8 +74,10 @@ fun writeBrokenPlugins(brokenPlugins: Map<PluginId, Set<String>>, configDir: Pat
         }
       }
     }
+    LOG.debug("Cached broken plugins file is rewritten successfully")
   }
-  catch (ignore: NoSuchFileException) {
+  catch (e: NoSuchFileException) {
+    LOG.debug(e) { "Failed to update broken plugins file, because it doesn't exist: $updatedBrokenPluginFile" }
   }
   catch (e: Exception) {
     LOG.error("Failed to write $updatedBrokenPluginFile", e)
@@ -93,17 +100,22 @@ private fun readBrokenPluginFile(): Map<PluginId, Set<String>> {
     if (result != null) {
       LOG.info("Using cached broken plugins file")
     }
+  } else {
+    LOG.debug { "Cached broken plugins file doesn't exist: $updatedBrokenPluginFile" }
   }
   if (result == null) {
     result = tryReadBrokenPluginsFile(Paths.get(PathManager.getBinPath(), "brokenPlugins.db"))
     if (result != null) {
       LOG.info("Using broken plugins file from IDE distribution")
+    } else {
+      LOG.debug("Broken plugins file from the IDE distribution was not loaded")
     }
   }
   return result ?: emptyMap()
 }
 
 private fun tryReadBrokenPluginsFile(brokenPluginsStorage: Path): Map<PluginId, Set<String>>? {
+  LOG.debug { "Reading broken plugins file: $brokenPluginsStorage" }
   try {
     DataInputStream(BufferedInputStream(Files.newInputStream(brokenPluginsStorage), 32_000)).use { stream ->
       val version = stream.readUnsignedByte()
@@ -128,10 +140,12 @@ private fun tryReadBrokenPluginsFile(brokenPluginsStorage: Path): Map<PluginId, 
           }
         })
       }
+      LOG.debug { "Broken plugins file at $brokenPluginsStorage was read, state size=${result.size}, buildNumber=${buildNumber}" }
       return result
     }
   }
-  catch (ignore: NoSuchFileException) {
+  catch (e: NoSuchFileException) {
+    LOG.debug(e) { "Broken plugins file doesn't exist: $brokenPluginsStorage" }
   }
   catch (e: Exception) {
     LOG.warn("Failed to read $brokenPluginsStorage", e)
