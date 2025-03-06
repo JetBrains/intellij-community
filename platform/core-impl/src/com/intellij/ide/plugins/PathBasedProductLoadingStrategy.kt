@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.idea.AppMode
+import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -10,7 +11,11 @@ import java.nio.file.Path
 internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
   // this property returns hardcoded Strings instead of ProductMode, because currently ProductMode class isn't available in dependencies of this module
   override val currentModeId: String
-    get() = if (AppMode.isRemoteDevHost()) "backend" else "monolith"
+    get() = when {
+      AppMode.isRemoteDevHost() -> "backend"
+      PlatformUtils.isJetBrainsClient() -> "frontend" //this should be removed after all tests starts using the module-based loader to run the frontend process 
+      else -> "monolith"
+    }
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
   }
