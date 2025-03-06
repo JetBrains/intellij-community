@@ -73,14 +73,11 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
         ): JComponent {
           val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
           if (index != -1 && value == CONFIGURE_ACTIONS) {
-            return JPanel().apply {
+            return JSeparator().apply {
               icon = if (value == CONFIGURE_ACTIONS) AllIcons.General.Settings else null
               layout = BoxLayout(this, BoxLayout.Y_AXIS)
               isOpaque = false
-              add(JSeparator(HORIZONTAL).apply {
-                foreground = JBColor(Gray._160, Gray._80)
-                background = JBColor(Gray._200, Gray._100)
-              })
+              background = JBColor(Gray._200, Gray._100)
               add(component)
             }
           }
