@@ -57,8 +57,8 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
       addActionListener {
         val selectedItem = selectedItem as String
         if (selectedItem == CONFIGURE_ACTIONS) {
-          openConfigurationDialog()
           this.selectedItem = selectedMode
+          openConfigurationDialog()
         }
         else {
           selectedMode = selectedItem
