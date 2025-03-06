@@ -37,7 +37,7 @@ abstract class CodeExecutionManager {
 
   protected abstract fun getGeneratedCodeFile(basePath: String, code: String): Path
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
-  protected abstract fun setupEnvironment(project: Project, sdk: Sdk?)
+  abstract fun setupEnvironment(project: Project, sdk: Sdk?)
   protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: Path, sdk: Sdk?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog
 
   // Protected since there can be language-specific metrics
@@ -59,8 +59,6 @@ abstract class CodeExecutionManager {
     val codeFile = getGeneratedCodeFile(basePath, code)
     // Save code in a temp file
     codeFile.writeText(code)
-    // If this is the first execution, the plugin might need to set up the environment
-    setupEnvironment(project, sdk)
     // Compile
     val compilationExecutionLog = compileGeneratedCode()
     if (compilationExecutionLog.exitCode != 0) return compilationExecutionLog
