@@ -1806,6 +1806,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     return myEditor.getSettings().isLineNumbersAfterIcons();
   }
 
+  boolean isGapAfterIconsShown() {
+    return isLineMarkersShown() && !isLineNumbersAfterIcons();
+  }
+
   boolean areIconsShown() {
     return myEditor.getSettings().areGutterIconsShown();
   }
