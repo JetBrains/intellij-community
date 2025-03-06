@@ -186,6 +186,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = myTabInitDataFlow
 
   override fun getRunContentDescriptor(): RunContentDescriptor {
+    if (useFeProxy()) {
+      LOG.error("RunContentDescriptor should not be used in split mode from XDebugSession")
+    }
     val descriptor = myRunContentDescriptor
     LOG.assertTrue(descriptor != null, "Run content descriptor is not initialized yet!")
     return descriptor!!
@@ -396,8 +399,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
                                             contentToReuse, executionEnvironment)
       if (myTabInitDataFlow.compareAndSet(null, tabInfo)) {
         myRunContentDescriptor = contentToReuse // This is a mock descriptor used in backend only
-                                 ?: RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
-                                                         sessionName, myIcon, null)
+                                 ?: object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
+                                                                  sessionName, myIcon, null) {
+                                   override fun isHiddenContent(): Boolean = true
+                                 }
         myDebugProcess!!.sessionInitialized()
       }
     }
