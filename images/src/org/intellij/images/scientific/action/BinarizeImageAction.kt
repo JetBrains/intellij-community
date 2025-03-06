@@ -7,15 +7,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.writeBytes
-import org.intellij.images.ImagesBundle
 import org.intellij.images.editor.ImageDocument
-import org.intellij.images.scientific.ScientificUtils
 import org.intellij.images.scientific.BinarizationThresholdConfig
+import org.intellij.images.scientific.ScientificUtils
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
-import javax.swing.JOptionPane
-import javax.swing.JTextField
 
 
 class BinarizeImageAction : AnAction() {
@@ -26,16 +23,8 @@ class BinarizeImageAction : AnAction() {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val originalImage = imageFile.getUserData(ScientificUtils.ORIGINAL_IMAGE_KEY) ?: return
     val thresholdConfig = ApplicationManager.getApplication().getService(BinarizationThresholdConfig::class.java) ?: return
-    val currentThreshold = thresholdConfig.threshold
-    val newThreshold = showThresholdDialog(e.project, currentThreshold)
-    if (newThreshold != null) {
-      thresholdConfig.threshold = newThreshold
-    }
-    else {
-      return
-    }
     val byteArrayOutputStream = ByteArrayOutputStream()
-    val binarizedImage = applyBinarization(originalImage, newThreshold)
+    val binarizedImage = applyBinarization(originalImage, thresholdConfig.threshold)
     ImageIO.write(binarizedImage, ScientificUtils.DEFAULT_IMAGE_FORMAT, byteArrayOutputStream)
     imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY) ?: return
@@ -64,34 +53,5 @@ class BinarizeImageAction : AnAction() {
       }
     }
     return binarizedImage
-  }
-
-
-  private fun showThresholdDialog(project: com.intellij.openapi.project.Project?, initialValue: Int): Int? {
-    val inputField = JTextField(initialValue.toString())
-    val optionPane = JOptionPane(
-      inputField,
-      JOptionPane.PLAIN_MESSAGE,
-      JOptionPane.OK_CANCEL_OPTION
-    )
-    val dialog = optionPane.createDialog(null, ImagesBundle.message("image.binarize.dialog.title"))
-    dialog.isAlwaysOnTop = true
-    dialog.isVisible = true
-    if (optionPane.value == JOptionPane.OK_OPTION) {
-      val threshold = inputField.text.toIntOrNull()
-      if (threshold != null && threshold in 0..255) {
-        return threshold
-      }
-      else {
-        JOptionPane.showMessageDialog(
-          null,
-          ImagesBundle.message("image.binarize.dialog.message"),
-          ImagesBundle.message("image.binarize.dialog.invalid"),
-          JOptionPane.ERROR_MESSAGE
-        )
-        return showThresholdDialog(project, initialValue)
-      }
-    }
-    return null
   }
 }
