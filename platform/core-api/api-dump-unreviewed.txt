@@ -4899,7 +4899,7 @@ com.intellij.psi.tree.IStrongWhitespaceHolderElementType
 f:com.intellij.psi.tree.ParentAwareTokenSet
 - contains(com.intellij.psi.tree.IElementType):Z
 - s:create(com.intellij.psi.tree.TokenSet):com.intellij.psi.tree.ParentAwareTokenSet
-- s:create(java.util.Set):com.intellij.psi.tree.ParentAwareTokenSet
+- s:create(java.util.Collection):com.intellij.psi.tree.ParentAwareTokenSet
 - s:create(com.intellij.psi.tree.IElementType[]):com.intellij.psi.tree.ParentAwareTokenSet
 - s:orSet(com.intellij.psi.tree.ParentAwareTokenSet[]):com.intellij.psi.tree.ParentAwareTokenSet
 com.intellij.psi.tree.ParentProviderElementType
