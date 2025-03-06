@@ -173,7 +173,7 @@ final class CreateFromSimpleTemplateAction extends CreateFileFromTemplateAction 
       .setTitle(myTemplate.getName())
       .addKind(myTemplate.getName(),
                FileTemplateUtil.getIcon(myTemplate),
-               FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME);
+               myTemplate.getName());
   }
 
   @Override
