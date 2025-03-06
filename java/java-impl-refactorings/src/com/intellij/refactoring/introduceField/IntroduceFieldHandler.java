@@ -60,6 +60,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
       showErrorMessage(parentClass.getProject(), editor, message);
       return false;
     }
+    if (PsiTypes.nullType().equals(type) || type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType ||
+        type instanceof PsiMethodReferenceType) {
+      String message = JavaRefactoringBundle.message("variable.type.unknown");
+      showErrorMessage(parentClass.getProject(), editor, message);
+      return false;
+    }
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass != null && PsiUtil.isLocalClass(aClass) && !PsiTreeUtil.isAncestor(aClass, parentClass, false)) {
       String message = JavaRefactoringBundle.message("0.is.not.visible.to.members.of.1",
