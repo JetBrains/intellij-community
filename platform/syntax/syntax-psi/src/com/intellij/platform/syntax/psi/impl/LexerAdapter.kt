@@ -10,8 +10,7 @@ import com.intellij.psi.tree.IElementType
 
 open class LexerAdapter(language: Language, private val myDelegate: Lexer) : com.intellij.lexer.Lexer() {
 
-  private val elementTypeConverter = ElementTypeConverters.instance.forLanguage(language)
-
+  private val elementTypeConverter = ElementTypeConverters.forLanguage(language)
 
   override fun start(buffer: CharSequence, startOffset: Int, endOffset: Int, initialState: Int) {
     myDelegate.start(buffer, startOffset, endOffset, initialState)
