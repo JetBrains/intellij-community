@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
+import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.intention.IntentionActionDelegate
@@ -19,15 +20,18 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
@@ -53,6 +57,7 @@ import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import java.io.File
 import java.util.jar.JarFile
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -1003,6 +1008,55 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
+  fun testMultiReleaseJarWithDifferentJavaVersions() {
+    val location = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/jigsaw/multi-release.jar"
+    val libraryFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(location))!!
+    val libClasses = JarFileSystem.getInstance().getJarRootForLocalFile(libraryFile)!!
+    val module = ModuleManager.getInstance(project).findModuleByName(MAIN.moduleName)!!
+    ApplicationManager.getApplication().runWriteAction {
+      val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary("MultiReleaseLib")
+      val model = library.getModifiableModel()
+      model.addRoot(libClasses, OrderRootType.CLASSES)
+      model.commit()
+      ModuleRootModificationUtil.addDependency(module, library)
+    }
+
+    addFile("module-info.java", """
+      module my.module.name { 
+        requires org.example.multi.release.jar;
+      }""".trimIndent())
+
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_9) {
+      highlight("Main.java", """
+      import <error descr="Package 'org.example.first' is declared in module 'org.example.multi.release.jar', which does not export it to module 'my.module.name'">org.example.first</error>.First;
+      import org.example.second.Second;
+      import <error descr="Package 'org.example.third' is declared in module 'org.example.multi.release.jar', which does not export it to module 'my.module.name'">org.example.third</error>.Third;
+
+        public class Main {
+        }""".trimIndent())
+    }
+
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_11) {
+      highlight("Main.java", """
+        import <error descr="Package 'org.example.first' is declared in module 'org.example.multi.release.jar', which does not export it to module 'my.module.name'">org.example.first</error>.First;
+        import org.example.second.Second;
+        import <error descr="Package 'org.example.third' is declared in module 'org.example.multi.release.jar', which does not export it to module 'my.module.name'">org.example.third</error>.Third;
+
+        public class Main {
+        }""".trimIndent())
+    }
+
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_17) {
+      highlight("Main.java", """
+        import <error descr="Package 'org.example.first' is declared in module 'org.example.multi.release.jar', which does not export it to module 'my.module.name'">org.example.first</error>.First;
+        import org.example.second.Second;
+        import <error descr="Package 'org.example.third' is declared in module 'org.example.multi.release.jar', which does not export it to module 'my.module.name'">org.example.third</error>.Third;
+        
+        public class Main {
+        }""".trimIndent())
+    }
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
@@ -1029,7 +1083,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private fun withInternalJdk(moduleDescriptor: ModuleDescriptor, level: LanguageLevel, block: () -> Unit) {
     val name = "INTERNAL_JDK_TEST"
 
-    val module = getInstance(project).findModuleByName(moduleDescriptor.moduleName)!!
+    val module = ModuleManager.getInstance(project).findModuleByName(moduleDescriptor.moduleName)!!
     try {
 
       WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
@@ -1059,13 +1113,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
     val dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///") ?: return null
     dummyRoot.refresh(false, false)
-    val srcRoot = dummyRoot.createChildDirectory(this, "${srcPathPrefix}-${this.sourceRootName}");
+    val srcRoot = dummyRoot.createChildDirectory(this, "${srcPathPrefix}-${this.sourceRootName}")
     val tempFs: TempFileSystem = srcRoot.getFileSystem() as TempFileSystem
     for (child in srcRoot.getChildren()) {
       if (!tempFs.exists(child)) {
         tempFs.createChildFile(this, srcRoot, child.getName())
       }
-      child.delete(this);
+      child.delete(this)
     }
     ModuleRootModificationUtil.updateModel(module) { model ->
       model.addContentEntry(srcRoot).addSourceFolder(srcRoot, JavaSourceRootType.SOURCE)
