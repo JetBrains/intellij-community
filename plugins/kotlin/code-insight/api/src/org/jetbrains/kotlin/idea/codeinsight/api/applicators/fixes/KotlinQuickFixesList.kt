@@ -14,6 +14,9 @@ import kotlin.reflect.KClass
 class KotlinQuickFixesList @ForKtQuickFixesListBuilder constructor(
     private val quickFixes: Map<KClass<out KaDiagnosticWithPsi<*>>, List<KotlinQuickFixFactory<*>>>
 ) {
+    fun KaSession.canProduceQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): Boolean =
+        quickFixes[diagnostic.diagnosticClass]?.isNotEmpty() == true
+
     fun KaSession.getQuickFixesFor(diagnostic: KaDiagnosticWithPsi<*>): List<IntentionAction> {
         val fixes = getQuickFixesWithCatchingFor(diagnostic)
         return fixes
