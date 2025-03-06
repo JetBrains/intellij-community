@@ -34,22 +34,22 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
   }
 
   private static @NotNull String getFontFamily() {
-    return TerminalFontOptions.getInstance().getTerminalFontSettings().getFontFamily();
+    return TerminalFontOptions.getInstance().getSettings().getFontFamily();
   }
 
   @Override
   public float getTerminalFontSize() {
-    return TerminalFontOptions.getInstance().getTerminalFontSettings().getFontSize();
+    return TerminalFontOptions.getInstance().getSettings().getFontSize();
   }
 
   @Override
   public float getLineSpacing() {
-    return TerminalFontOptions.getInstance().getTerminalFontSettings().getLineSpacing();
+    return TerminalFontOptions.getInstance().getSettings().getLineSpacing();
   }
 
   @Override
   public float getColumnSpacing() {
-    return TerminalFontOptions.getInstance().getTerminalFontSettings().getColumnSpacing();
+    return TerminalFontOptions.getInstance().getSettings().getColumnSpacing();
   }
 
   @Override
