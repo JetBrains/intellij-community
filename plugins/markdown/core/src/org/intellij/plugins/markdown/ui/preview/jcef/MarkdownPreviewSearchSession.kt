@@ -27,14 +27,24 @@ internal class MarkdownPreviewSearchSession(
   override fun getFindModel(): FindModel = findModel
   override fun getComponent(): SearchReplaceComponent = searchComponent
 
-  override fun hasMatches(): Boolean = searchComponent.isVisible
+  override fun hasMatches(): Boolean = searchComponent.isVisible && searchComponent.searchTextComponent.text.isNotEmpty()
 
   override fun searchForward() {
+    addTextToRecent()
     search(findModel, true)
   }
 
   override fun searchBackward() {
+    addTextToRecent()
     search(findModel, false)
+  }
+
+  private fun addTextToRecent() {
+    val textComponent = searchComponent.searchTextComponent
+    val text = textComponent.text
+    if (text.isNotBlank()) {
+      searchComponent.addTextToRecent(textComponent)
+    }
   }
 
   private fun search(model: FindModel, forward: Boolean) {
@@ -51,7 +61,6 @@ internal class MarkdownPreviewSearchSession(
 
   override fun close() {
     searchComponent.isVisible = false
-    searchComponent.searchTextComponent.text = ""
     browser.stopFinding(true)
     IdeFocusManager.getInstance(project).requestFocus(targetComponent, false)
   }
