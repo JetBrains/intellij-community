@@ -16,8 +16,16 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 public class AddJavadocIntentionTest extends LightIntentionActionTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    JavaCodeStyleSettings settings = getCustomSettings(JavaCodeStyleSettings.class);
+    settings.JD_KEEP_EMPTY_LINES = false;
+  }
+
   @Override
   protected String getBasePath() {
     return "/codeInsight/addJavadoc";
