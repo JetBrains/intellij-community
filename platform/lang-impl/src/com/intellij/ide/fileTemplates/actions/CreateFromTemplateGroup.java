@@ -30,24 +30,6 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-    Presentation presentation = e.getPresentation();
-    Project project = e.getProject();
-    if (project != null && !project.isDisposed()) {
-      FileTemplate[] allTemplates = FileTemplateManager.getInstance(project).getAllTemplates();
-      for (FileTemplate template : allTemplates) {
-        if (canCreateFromTemplate(e, template)) {
-          presentation.setEnabled(true);
-          return;
-        }
-      }
-    }
-    presentation.setEnabled(false);
-  }
-
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -59,6 +41,7 @@ public final class CreateFromTemplateGroup extends ActionGroup implements DumbAw
 
     Project project = e.getProject();
     if (project == null || project.isDisposed()) return EMPTY_ARRAY;
+
     FileTemplateManager manager = FileTemplateManager.getInstance(project);
     FileTemplate[] templates = manager.getAllTemplates();
 
@@ -115,7 +98,7 @@ public final class CreateFromTemplateGroup extends ActionGroup implements DumbAw
     return result.toArray(EMPTY_ARRAY);
   }
 
-  private static AnAction replaceAction(final FileTemplate template) {
+  private static AnAction replaceAction(FileTemplate template) {
     for (CreateFromTemplateActionReplacer actionFactory : CreateFromTemplateActionReplacer.CREATE_FROM_TEMPLATE_REPLACER.getExtensionList()) {
       AnAction action = actionFactory.replaceCreateFromFileTemplateAction(template);
       if (action != null) {
