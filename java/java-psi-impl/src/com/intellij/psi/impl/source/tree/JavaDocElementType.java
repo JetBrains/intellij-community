@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
@@ -87,6 +87,7 @@ public interface JavaDocElementType {
     }
   };
 
+  @SuppressWarnings("unused") // used in plugins
   TokenSet ALL_JAVADOC_ELEMENTS = TokenSet.create(DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_TAG_VALUE_ELEMENT,
                                                   DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT);
 }
