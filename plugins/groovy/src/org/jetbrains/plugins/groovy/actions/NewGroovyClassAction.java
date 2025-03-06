@@ -32,8 +32,7 @@ import static org.jetbrains.plugins.groovy.projectRoots.RootTypesKt.ROOT_TYPES;
 
 final class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
   NewGroovyClassAction() {
-    super(GroovyBundle.messagePointer("new.class.action.text"), GroovyBundle.messagePointer("new.class.action.description"),
-          () -> JetgroovyIcons.Groovy.Class, ROOT_TYPES);
+    super(ROOT_TYPES);
   }
 
   @Override
@@ -84,7 +83,7 @@ final class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTyp
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return GroovyBundle.message("new.class.action.text");
+    return GroovyBundle.message("action.Groovy.NewClass.text");
   }
 
   @Override

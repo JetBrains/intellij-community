@@ -43,6 +43,10 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   private final @Nullable Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
 
+  protected CreateTemplateInPackageAction(@Nullable Set<? extends JpsModuleSourceRootType<?>> sourceRootTypes) {
+    mySourceRootTypes = sourceRootTypes;
+  }
+
   protected CreateTemplateInPackageAction(String text, String description, Icon icon,
                                           Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     this(() -> text, () -> description, icon, rootTypes);

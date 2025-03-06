@@ -19,10 +19,10 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
-  public NewScriptAction() {
-    super(GroovyBundle.messagePointer("new.script.action.text"), GroovyBundle.messagePointer("new.script.action.description"),
-          () -> JetgroovyIcons.Groovy.GroovyFile, null);
+final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
+
+  NewScriptAction() {
+    super(null);
   }
 
   @Override
@@ -40,7 +40,7 @@ public final class NewScriptAction extends JavaCreateTemplateInPackageAction<Gro
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return GroovyBundle.message("new.script.action.text");
+    return GroovyBundle.message("action.Groovy.NewScript.text");
   }
 
   @Override

@@ -1371,10 +1371,10 @@
       <add-to-group group-id="BuildMenu"/>
     </group>
 
-    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction">
+    <action id="Groovy.NewClass" class="org.jetbrains.plugins.groovy.actions.NewGroovyClassAction" icon="JetgroovyIcons.Groovy.Class">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewGroup1"/>
     </action>
-    <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction">
+    <action id="Groovy.NewScript" class="org.jetbrains.plugins.groovy.actions.NewScriptAction" icon="JetgroovyIcons.Groovy.GroovyFile">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
