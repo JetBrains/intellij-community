@@ -8,15 +8,13 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
 import org.intellij.images.ImagesBundle
 import org.intellij.images.scientific.ScientificUtils
 import org.jetbrains.annotations.Nls
 import java.awt.FlowLayout
-import javax.swing.DefaultComboBoxModel
-import javax.swing.DefaultListCellRenderer
-import javax.swing.JComponent
-import javax.swing.JList
-import javax.swing.JPanel
+import javax.swing.*
 
 class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
   private var selectedMode: String = ORIGINAL_IMAGE
@@ -59,13 +57,11 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
       addElement(INVERTED_IMAGE)
       addElement(GRAYSCALE_IMAGE)
       addElement(BINARIZE_IMAGE)
-      addSeparator()
       addElement(CONFIGURE_ACTIONS)
     }
 
     val comboBox = ComboBox(comboBoxModel).apply {
       selectedItem = selectedMode
-      isOpaque = false
       renderer = object : DefaultListCellRenderer() {
         override fun getListCellRendererComponent(
           list: JList<out Any>?,
@@ -75,10 +71,19 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
           cellHasFocus: Boolean,
         ): JComponent {
           val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-          if (value is String) {
-            text = value
-            icon = if (value == CONFIGURE_ACTIONS) AllIcons.General.Settings else null
+          if (index != -1 && value == CONFIGURE_ACTIONS) {
+            return JPanel().apply {
+              icon = if (value == CONFIGURE_ACTIONS) AllIcons.General.Settings else null
+              layout = BoxLayout(this, BoxLayout.Y_AXIS)
+              isOpaque = false
+              add(JSeparator(HORIZONTAL).apply {
+                foreground = JBColor(Gray._160, Gray._80)
+                background = JBColor(Gray._200, Gray._100)
+              })
+              add(component)
+            }
           }
+
           return component as JComponent
         }
       }
@@ -107,7 +112,6 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
     actionGroup.add(InvertChannelsAction())
     actionGroup.add(GrayscaleImageAction())
     actionGroup.add(BinarizeImageAction())
-    actionGroup.addSeparator()
     actionGroup.add(ConfigureActions())
     return actionGroup
   }
