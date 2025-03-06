@@ -17490,6 +17490,8 @@ f:org.jetbrains.io.JsonReaderEx
 - lenient(Z):org.jetbrains.io.JsonReaderEx
 - nextAsString():java.lang.String
 - nextBoolean():Z
+- nextCharSequence():java.lang.CharSequence
+- nextCharSequence(Z):java.lang.CharSequence
 - nextDouble():D
 - nextInt():I
 - nextLong():J
