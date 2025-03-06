@@ -18,7 +18,6 @@ import javax.imageio.ImageIO
 class BinarizeImageAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-
   override fun actionPerformed(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val originalImage = imageFile.getUserData(ScientificUtils.ORIGINAL_IMAGE_KEY) ?: return
@@ -30,7 +29,6 @@ class BinarizeImageAction : AnAction() {
     val document = e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY) ?: return
     document.value = binarizedImage
   }
-
 
   private fun applyBinarization(image: BufferedImage, threshold: Int): BufferedImage {
     val binarizedImage = BufferedImage(image.width, image.height, BufferedImage.TYPE_INT_ARGB)
