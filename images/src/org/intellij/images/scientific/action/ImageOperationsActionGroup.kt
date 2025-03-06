@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.scientific.action
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAware
@@ -9,14 +10,16 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
 import org.intellij.images.ImagesBundle
 import org.intellij.images.scientific.ScientificUtils
+import org.jetbrains.annotations.Nls
 import java.awt.FlowLayout
 import javax.swing.DefaultComboBoxModel
+import javax.swing.DefaultListCellRenderer
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.JPanel
 
 class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
   private var selectedMode: String = ORIGINAL_IMAGE
-  private val availableModes = listOf(ORIGINAL_IMAGE, INVERTED_IMAGE, GRAYSCALE_IMAGE, BINARIZE_IMAGE, CONFIGURE_ACTIONS)
 
   init {
     templatePresentation.apply {
@@ -50,9 +53,35 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     selectedMode = ORIGINAL_IMAGE
-    val comboBox = ComboBox(DefaultComboBoxModel((availableModes).toTypedArray())).apply {
+
+    val comboBoxModel = DefaultComboBoxModel<String>().apply {
+      addElement(ORIGINAL_IMAGE)
+      addElement(INVERTED_IMAGE)
+      addElement(GRAYSCALE_IMAGE)
+      addElement(BINARIZE_IMAGE)
+      addSeparator()
+      addElement(CONFIGURE_ACTIONS)
+    }
+
+    val comboBox = ComboBox(comboBoxModel).apply {
       selectedItem = selectedMode
       isOpaque = false
+      renderer = object : DefaultListCellRenderer() {
+        override fun getListCellRendererComponent(
+          list: JList<out Any>?,
+          value: Any?,
+          index: Int,
+          isSelected: Boolean,
+          cellHasFocus: Boolean,
+        ): JComponent {
+          val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+          if (value is String) {
+            text = value
+            icon = if (value == CONFIGURE_ACTIONS) AllIcons.General.Settings else null
+          }
+          return component as JComponent
+        }
+      }
       addActionListener {
         val selectedItem = selectedItem as String
         if (selectedItem == CONFIGURE_ACTIONS) {
@@ -78,7 +107,7 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
     actionGroup.add(InvertChannelsAction())
     actionGroup.add(GrayscaleImageAction())
     actionGroup.add(BinarizeImageAction())
-    actionGroup.add(Separator.create())
+    actionGroup.addSeparator()
     actionGroup.add(ConfigureActions())
     return actionGroup
   }
@@ -95,10 +124,19 @@ class ImageOperationsActionGroup : DefaultActionGroup(), CustomComponentAction, 
   }
 
   companion object {
+    @Nls
     private val ORIGINAL_IMAGE: String = ImagesBundle.message("image.color.mode.original.image")
+
+    @Nls
     private val INVERTED_IMAGE: String = ImagesBundle.message("image.color.mode.inverted.image")
+
+    @Nls
     private val GRAYSCALE_IMAGE: String = ImagesBundle.message("image.color.mode.grayscale.image")
+
+    @Nls
     private val BINARIZE_IMAGE: String = ImagesBundle.message("image.color.mode.binarize.image")
+
+    @Nls
     private val CONFIGURE_ACTIONS: String = ImagesBundle.message("image.color.mode.configure.actions")
   }
 }
