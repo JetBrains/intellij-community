@@ -226,7 +226,8 @@ public final class EditorGutterLayout {
     List<GutterArea> iconRelatedAreas = List.of(
       area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
       area(ICONS_AREA, myEditorGutter::getIconsAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
-      area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea).showIf(myEditorGutter::isGapAfterIconsShown)
+      area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea).showIf(
+        () -> myEditorGutter.isLineMarkersShown() && !isLineNumbersAfterIcons())
     );
 
     List<GutterArea> rightEdgeAreas = List.of(
