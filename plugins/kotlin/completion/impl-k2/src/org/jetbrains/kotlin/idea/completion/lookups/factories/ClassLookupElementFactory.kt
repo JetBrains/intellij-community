@@ -5,12 +5,12 @@ package org.jetbrains.kotlin.idea.completion.lookups.factories
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
@@ -25,7 +25,7 @@ internal object ClassLookupElementFactory {
         val name = symbol.nameOrAnonymous
         return LookupElementBuilder.create(ClassifierLookupObject(name, importingStrategy), name.asString())
             .withInsertHandler(ClassifierInsertionHandler)
-            .withTailText(getTailText(symbol))
+            .withTailText(TailTextProvider.getTailText(symbol))
             .let { withClassifierSymbolInfo(symbol, it) }
     }
 }
@@ -49,10 +49,16 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
         super.handleInsert(context, item)
 
         if (importingStrategy is ImportStrategy.InsertFqNameAndShorten) {
-            val fqNameRendered = importingStrategy.fqName
-                .withRootPrefixIfNeeded()
-                .render()
-            context.insertAndShortenReferencesInStringUsingTemporarySuffix(fqNameRendered)
+            val shortenCommand = item.shortenCommand
+                ?.takeUnless { it.isEmpty }
+
+            val fqName = importingStrategy.fqName
+                .applyIf(shortenCommand == null) { withRootPrefixIfNeeded() }
+
+            context.insertAndShortenReferencesInStringUsingTemporarySuffix(
+                string = fqName.render(),
+                shortenCommand = shortenCommand,
+            )
         } else if (importingStrategy is ImportStrategy.AddImport) {
             addImportIfRequired(targetFile, importingStrategy.nameToImport)
         }

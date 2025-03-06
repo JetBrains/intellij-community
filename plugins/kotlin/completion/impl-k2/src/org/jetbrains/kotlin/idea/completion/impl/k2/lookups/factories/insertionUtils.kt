@@ -3,13 +3,23 @@
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
+import org.jetbrains.kotlin.analysis.api.components.QualifierToShortenInfo
+import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
+import org.jetbrains.kotlin.analysis.api.components.ThisLabelToShortenInfo
+import org.jetbrains.kotlin.analysis.api.components.TypeToShortenInfo
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 
 /**
@@ -26,8 +36,12 @@ import org.jetbrains.kotlin.psi.*
  * ```
  * so that the reference is resolved and shortened successfully. After the shortening is finished, removes the space.
  */
-internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySuffix(string: String) {
-    val targetFile = file as? KtFile ?: return
+internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySuffix(
+    string: String,
+    shortenCommand: ShortenCommand? = null,
+) {
+    val file = file as? KtFile
+        ?: return
     val token = file.findElementAt(startOffset)
 
     val suffixToAffectParsingIfNecessary = token?.let {
@@ -54,11 +68,23 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
     commitDocument()
 
     val fqNameEndOffset = startOffset + string.length
-
     val rangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset + temporarySuffix.length)
     val fqNameRangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset)
 
-    shortenReferencesInRange(targetFile, TextRange(startOffset, fqNameEndOffset))
+    if (shortenCommand != null) {
+        ShortenCommandWrapper(
+            delegate = shortenCommand,
+            copy = file,
+        )
+    } else {
+        allowAnalysisFromWriteActionInEdt(file) {
+            collectPossibleReferenceShortenings(
+                file = file,
+                selection = TextRange(startOffset, fqNameEndOffset),
+            )
+        }
+    }.invokeShortening()
+
     commitDocument()
     doPostponedOperationsAndUnblockDocument()
 
@@ -95,4 +121,55 @@ private fun PsiElement.isContextReceiverWithoutFunctionalTypeDeclaration(): Bool
         ?: return false
 
     return contextReceiverList.parent.let { it is KtTypeReference || it?.parent is KtTypeReference }
+}
+
+private class ShortenCommandWrapper(
+    delegate: ShortenCommand,
+    private val copy: KtFile,
+) : ShortenCommand {
+
+    override val targetFile: SmartPsiElementPointer<KtFile> =
+        copy.createSmartPointer()
+
+    override val importsToAdd: Set<FqName> =
+        delegate.importsToAdd
+
+    override val starImportsToAdd: Set<FqName> =
+        delegate.starImportsToAdd
+
+    override val listOfTypeToShortenInfo: List<TypeToShortenInfo> =
+        delegate.listOfTypeToShortenInfo
+            .mapNotNull { (typeToShorten, shortenedReference) ->
+                typeToShorten.findSameElementInCopy()
+                    ?.let { TypeToShortenInfo(it, shortenedReference) }
+            }
+
+    override val listOfQualifierToShortenInfo: List<QualifierToShortenInfo> =
+        delegate.listOfQualifierToShortenInfo
+            .mapNotNull { (qualifierToShorten, shortenedReference) ->
+                qualifierToShorten.findSameElementInCopy()
+                    ?.let { QualifierToShortenInfo(it, shortenedReference) }
+            }
+
+    override val thisLabelsToShorten: List<ThisLabelToShortenInfo> =
+        delegate.thisLabelsToShorten
+            .mapNotNull { (labelToShorten) ->
+                labelToShorten.findSameElementInCopy()
+                    ?.let { ThisLabelToShortenInfo(it) }
+            }
+
+    override val kDocQualifiersToShorten: List<SmartPsiElementPointer<KDocName>> =
+        delegate.kDocQualifiersToShorten
+            .mapNotNull { it.findSameElementInCopy() }
+
+    private fun <T : KtElement> T.findSameElementInCopy(): T? = try {
+        PsiTreeUtil.findSameElementInCopy(this, copy)
+    } catch (e: IllegalStateException) {
+        logger<ShortenCommandWrapper>().error(e)
+        null
+    }
+
+    private fun <T : KtElement> SmartPsiElementPointer<T>.findSameElementInCopy(): SmartPsiElementPointer<T>? =
+        element?.findSameElementInCopy()
+            ?.createSmartPointer()
 }
