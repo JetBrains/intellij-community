@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.util.Computable
@@ -183,45 +183,6 @@ interface ThreadingSupport {
 
   @RequiresBlockingContext
   fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T
-
-  /**
-   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.
-   *
-   * See also [WriteAction.run] for a more lambda-friendly version.
-   *
-   * @param action the action to run
-   * @see WriteAction
-   */
-  @RequiresBlockingContext
-  fun runWriteAction(action: Runnable)
-
-  /**
-   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.
-   *
-   * See also [WriteAction.run] for a more lambda-friendly version.
-   *
-   * @param computation the action to run
-   * @return the result returned by the computation.
-   * @see WriteAction
-   */
-  @RequiresBlockingContext
-  fun <T> runWriteAction(computation: Computable<T>): T
-
-  /**
-   * Runs the specified write action. Must be called from the Swing dispatch thread. The action is executed
-   * immediately if no read actions are currently running, or blocked until all read actions complete.
-   *
-   * See also [WriteAction.run] for a more lambda-friendly version.
-   *
-   * @param computation the action to run
-   * @return the result returned by the computation.
-   * @see WriteAction
-   */
-  @RequiresBlockingContext
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runWriteAction(computation: ThrowableComputable<T, E>): T
 
   /**
    * If called inside a write-action, executes the given [action] with write-lock released

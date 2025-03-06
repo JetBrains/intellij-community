@@ -75,6 +75,8 @@ import static com.intellij.codeWithMe.ClientId.decorateRunnable;
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
 import static com.intellij.openapi.application.RuntimeFlagsKt.getReportInvokeLaterWithoutModality;
+import static com.intellij.openapi.application.impl.AppImplKt.rethrowCheckedExceptions;
+import static com.intellij.openapi.application.impl.AppImplKt.runnableUnitFunction;
 import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 import static com.intellij.util.concurrency.Propagation.isContextAwareComputation;
@@ -987,17 +989,17 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runWriteAction(@NotNull Runnable action) {
-    getThreadingSupport().runWriteAction(action);
+    getThreadingSupport().runWriteAction(action.getClass(), runnableUnitFunction(action));
   }
 
   @Override
   public <T> T runWriteAction(@NotNull Computable<T> computation) {
-    return getThreadingSupport().runWriteAction(computation);
+    return getThreadingSupport().runWriteAction(computation.getClass(), computation::compute);
   }
 
   @Override
   public <T, E extends Throwable> T runWriteAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return getThreadingSupport().runWriteAction(computation);
+    return getThreadingSupport().runWriteAction(computation.getClass(), rethrowCheckedExceptions(computation));
   }
 
   @Override

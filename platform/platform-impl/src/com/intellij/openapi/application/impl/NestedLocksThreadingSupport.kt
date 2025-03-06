@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
@@ -800,20 +800,10 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T {
-    return runWriteAction(clazz, ThrowableComputable(action))
-  }
-
-  override fun runWriteAction(action: Runnable) = runWriteAction<Unit, Throwable>(action.javaClass) { action.run() }
-
-  override fun <T> runWriteAction(computation: Computable<T>): T = runWriteAction<T, Throwable>(computation.javaClass) { computation.compute() }
-
-  override fun <T, E : Throwable?> runWriteAction(computation: ThrowableComputable<T, E>): T = runWriteAction(computation.javaClass, computation)
-
-  private fun <T, E : Throwable?> runWriteAction(clazz: Class<*>, block: ThrowableComputable<T, E>): T {
     val computationState = getComputationState()
     val releases = startWrite(computationState, clazz)
     return try {
-      block.compute()
+      action()
     }
     finally {
       endWrite(computationState, clazz, releases)

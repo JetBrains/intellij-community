@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.core.rwmutex.ReadPermit
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.readLockCompensationTimeout
 import com.intellij.openapi.application.useNestedLocking
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.util.coroutines.internal.runSuspend
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
@@ -132,3 +132,6 @@ fun setCompensationTimeout(timeout: Duration?): Duration? {
   compensationTimeout = timeout
   return currentTimeout
 }
+
+internal fun runnableUnitFunction(runnable: Runnable): () -> Unit = runnable::run
+internal fun <T> rethrowCheckedExceptions(f: ThrowableComputable<T, *>): () -> T = f::compute
