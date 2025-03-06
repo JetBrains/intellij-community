@@ -128,13 +128,18 @@ a:com.intellij.diff.actions.impl.NextDifferenceAction
 - <init>():V
 c:com.intellij.diff.actions.impl.OpenInEditorAction
 - com.intellij.ide.actions.EditSourceAction
+- com.intellij.openapi.actionSystem.ActionPromoter
 - com.intellij.openapi.project.DumbAware
-- sf:AFTER_NAVIGATE_CALLBACK:com.intellij.openapi.actionSystem.DataKey
+- sf:Companion:com.intellij.diff.actions.impl.OpenInEditorAction$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable,java.lang.Runnable):Z
-- s:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable[],java.lang.Runnable):Z
+- sf:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable,java.lang.Runnable):Z
+- sf:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable[],java.lang.Runnable):Z
+- promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.diff.actions.impl.OpenInEditorAction$Companion
+- f:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable,java.lang.Runnable):Z
+- f:openEditor(com.intellij.openapi.project.Project,com.intellij.pom.Navigatable[],java.lang.Runnable):Z
 f:com.intellij.diff.actions.impl.SetEditorSettingsAction
 - com.intellij.openapi.project.DumbAwareAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V

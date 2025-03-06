@@ -5,7 +5,10 @@ import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.actions.EditSourceAction
+import com.intellij.openapi.actionSystem.ActionPromoter
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
 import com.intellij.openapi.fileEditor.FileNavigator.Companion.getInstance
 import com.intellij.openapi.fileEditor.FileNavigatorImpl
@@ -13,15 +16,13 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 
-open class OpenInEditorAction : EditSourceAction(), DumbAware {
+open class OpenInEditorAction : EditSourceAction(), DumbAware, ActionPromoter {
   init {
     copyFrom(this, "EditSource")
   }
 
   override fun update(e: AnActionEvent) {
-    val request = e.getData(DiffDataKeys.DIFF_REQUEST)
-    val context = e.getData(DiffDataKeys.DIFF_CONTEXT)
-    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, request, context)) {
+    if (isManuallyHidden(e.dataContext)) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -37,9 +38,7 @@ open class OpenInEditorAction : EditSourceAction(), DumbAware {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val request = e.getData(DiffDataKeys.DIFF_REQUEST)
-    val context = e.getData(DiffDataKeys.DIFF_CONTEXT)
-    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, request, context)) return
+    if (isManuallyHidden(e.dataContext)) return
 
     val project = e.project ?: return
 
@@ -47,6 +46,14 @@ open class OpenInEditorAction : EditSourceAction(), DumbAware {
     val navigatables = e.getData(DiffDataKeys.NAVIGATABLE_ARRAY) ?: return
 
     openEditor(project, navigatables, callback)
+  }
+
+  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction>? {
+    if (isManuallyHidden(context)) return null
+    if (context.getData(DiffDataKeys.NAVIGATABLE_ARRAY) != null) {
+      return listOf(this)
+    }
+    return null
   }
 
   companion object {
@@ -68,4 +75,10 @@ open class OpenInEditorAction : EditSourceAction(), DumbAware {
       return success
     }
   }
+}
+
+private fun isManuallyHidden(dataContext: DataContext): Boolean {
+  val request = dataContext.getData(DiffDataKeys.DIFF_REQUEST)
+  val context = dataContext.getData(DiffDataKeys.DIFF_CONTEXT)
+  return DiffUtil.isUserDataFlagSet(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, request, context)
 }
