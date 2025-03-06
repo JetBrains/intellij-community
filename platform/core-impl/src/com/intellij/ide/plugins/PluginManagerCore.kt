@@ -152,14 +152,14 @@ object PluginManagerCore {
     get() = getPluginSet().enabledPlugins
 
   @Internal
-  fun getAndClearPluginLoadingErrors(): List<HtmlChunk> {
+  fun getAndClearPluginLoadingErrors(): List<Supplier<HtmlChunk>> {
     synchronized(pluginErrors) {
       @Suppress("UsePropertyAccessSyntax")
       if (pluginErrors.isEmpty()) {
         return emptyList()
       }
 
-      val errors = pluginErrors.map { it.get() }
+      val errors = pluginErrors.toList()
       pluginErrors.clear()
       return errors
     }

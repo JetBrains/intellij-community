@@ -239,7 +239,7 @@ public class PluginManagerTest {
     }
     text.append("\n\n");
     for (var html : PluginManagerCore.INSTANCE.getAndClearPluginLoadingErrors()) {
-      text.append(html.toString().replace("<br/>", "\n").replace("&#39;", "")).append('\n');
+      text.append(html.get().toString().replace("<br/>", "\n").replace("&#39;", "")).append('\n');
     }
     UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), text.toString());
   }

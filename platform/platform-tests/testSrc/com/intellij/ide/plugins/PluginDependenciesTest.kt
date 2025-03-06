@@ -131,7 +131,7 @@ internal class PluginDependenciesTest {
     assertThat(result).doesNotHaveEnabledPlugins()
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).isNotEmpty
-    assertThat(errors.first().toString()).contains("sample.plugin", "requires plugin", "unknown")
+    assertThat(errors.first().get().toString()).contains("sample.plugin", "requires plugin", "unknown")
   }
 
   @Test

@@ -295,15 +295,16 @@ private fun CoroutineScope.postOpenUiTasks() {
 }
 
 private suspend fun reportPluginErrors() {
-  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors().toMutableList()
+  val pluginErrors = PluginManagerCore.getAndClearPluginLoadingErrors()
   if (pluginErrors.isEmpty()) {
     return
   }
 
   withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
     val title = IdeBundle.message("title.plugin.error")
-    val actions = linksToActions(pluginErrors)
-    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
+    val pluginErrorMessages = pluginErrors.map { it.get() }.toMutableList()
+    val actions = linksToActions(pluginErrorMessages)
+    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrorMessages).toString()
     @Suppress("DEPRECATION")
     NotificationGroupManager.getInstance().getNotificationGroup(
       "Plugin Error").createNotification(title, content, NotificationType.ERROR)
