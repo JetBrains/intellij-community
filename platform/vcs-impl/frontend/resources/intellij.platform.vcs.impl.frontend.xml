@@ -3,7 +3,7 @@
   </projectListeners>
   <dependencies>
     <module name="intellij.platform.vcs.impl.shared"/>
-    <plugin id="com.intellij.platform.experimental.frontend"/>
+    <module name="intellij.platform.frontend"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

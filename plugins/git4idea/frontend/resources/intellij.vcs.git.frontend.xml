@@ -2,7 +2,6 @@
   <resource-bundle>messages.GitFrontendBundle</resource-bundle>
 
   <dependencies>
-    <plugin id="com.intellij.platform.experimental.frontend"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.vcs.git.shared"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
