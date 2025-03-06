@@ -83,6 +83,10 @@ public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest 
     doTest(null);
   }
 
+  public void testNoExternalTypeAnnotations2() {
+    doTest(null);
+  }
+
   @Override
   protected String getBasePath() {
     return BASE_PATH;
