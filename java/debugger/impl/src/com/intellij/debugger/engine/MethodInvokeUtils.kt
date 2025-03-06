@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.CommonClassNames
 import com.intellij.rt.debugger.MethodInvoker
 import com.intellij.util.BitUtil.isSet
+import com.jetbrains.jdi.ArrayReferenceImpl
 import com.sun.jdi.*
 import com.sun.jdi.ObjectReference.INVOKE_NONVIRTUAL
 import org.jetbrains.annotations.ApiStatus
@@ -140,7 +141,13 @@ internal fun tryInvokeWithHelper(
       val wrapper = value
       value = value.getValue(0)
       DebuggerUtilsAsync.disableCollection(value)
-      wrapper.setValue(0, null) // clear the reference TODO: make async
+      // clear the reference
+      if (DebuggerUtilsAsync.isAsyncEnabled() && wrapper is ArrayReferenceImpl) {
+        wrapper.setFirstElementToNull()
+      }
+      else {
+        wrapper.setValue(0, null)
+      }
     }
     return InvocationResult(true, value)
   }
