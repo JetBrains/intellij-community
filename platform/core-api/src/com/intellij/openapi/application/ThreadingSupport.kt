@@ -20,18 +20,15 @@ interface ThreadingSupport {
    *
    * @param computation the computation to perform.
    * @return the result returned by the computation.
-   * @throws E re-frown from ThrowableComputable
    */
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T
-
+  fun <T> runWriteIntentReadAction(computation: () -> T): T
 
   /**
    * Executes a runnable with a write-intent lock only if locking is permitted on this thread
    * We hope that if locking is forbidden, then preventive acquisition of write-intent lock in top-level places (such as event dispatch)
    * may be not needed.
    */
-  fun <T, E : Throwable?> runPreventiveWriteIntentReadAction(computation: ThrowableComputable<T, E>): T
+  fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T
 
   /**
    * Checks, if Write Intent lock acquired by the current thread.
@@ -45,17 +42,6 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   fun isWriteIntentLocked(): Boolean
-
-  /**
-   * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
-   * if no write-intent action is currently running, or blocked until the currently running write-intent action completes.
-   *
-   * This method is used to implement higher-level API. Please do not use it directly.
-   *
-   * @param action the action to run
-   */
-  @ApiStatus.Internal
-  fun runIntendedWriteActionOnCurrentThread(action: Runnable)
 
   /**
    * Runs the specified action, releasing the write-intent lock if it is acquired at the moment of the call.

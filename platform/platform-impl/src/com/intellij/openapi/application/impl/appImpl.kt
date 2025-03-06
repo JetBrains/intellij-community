@@ -9,6 +9,7 @@ import com.intellij.openapi.application.useNestedLocking
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.util.coroutines.internal.runSuspend
+import com.intellij.util.ThrowableRunnable
 import io.opentelemetry.api.metrics.BatchCallback
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -134,4 +135,5 @@ fun setCompensationTimeout(timeout: Duration?): Duration? {
 }
 
 internal fun runnableUnitFunction(runnable: Runnable): () -> Unit = runnable::run
+internal fun rethrowCheckedExceptions(f: ThrowableRunnable<*>): () -> Unit = f::run
 internal fun <T> rethrowCheckedExceptions(f: ThrowableComputable<T, *>): () -> T = f::compute

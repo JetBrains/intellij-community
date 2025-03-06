@@ -215,16 +215,15 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  override fun <T, E : Throwable?> runPreventiveWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+  override fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T {
     return runWriteIntentReadAction(computation, true)
   }
 
-  override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+  override fun <T> runWriteIntentReadAction(computation: () -> T): T {
     return runWriteIntentReadAction(computation, false)
   }
 
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>, isPreventive: Boolean): T {
+  fun <T> runWriteIntentReadAction(computation: () -> T, isPreventive: Boolean): T {
     if (!isPreventive) {
       handleLockAccess("write-intent lock")
     }
@@ -272,7 +271,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     try {
       fireWriteIntentActionStarted(listener, computation.javaClass)
-      return runWithTemporaryThreadLocal(ts) { computation.compute() }
+      return runWithTemporaryThreadLocal(ts) { computation() }
     }
     finally {
       fireWriteIntentActionFinished(listener, computation.javaClass)
@@ -312,12 +311,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       // the current thread now has inherited write intent permit, which should not give read access.
       // Otherwise, it would be impossible to upgrade WI to W
       return !mySecondaryPermits.get().isNullOrEmpty()
-    }
-  }
-
-  override fun runIntendedWriteActionOnCurrentThread(action: Runnable) {
-    runWriteIntentReadAction<Unit, Throwable> {
-      action.run()
     }
   }
 

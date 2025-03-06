@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
@@ -445,7 +445,7 @@ class EdtCoroutineDispatcherTest {
   @Test
   fun `exception messages in preventive locking for Dispatchers UI`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.UI) {
-      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction<Unit, RuntimeException> {
+      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction {
         val error = assertErrorLogged<RuntimeException> {
           ThreadingAssertions.assertReadAccess()
         }
@@ -468,7 +468,7 @@ class EdtCoroutineDispatcherTest {
   @Test
   fun `exception messages in preventive locking for Dispatchers Main`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.Main) {
-      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction<Unit, RuntimeException> {
+      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction {
         val error = assertErrorLogged<RuntimeException> {
           ThreadingAssertions.assertReadAccess()
         }

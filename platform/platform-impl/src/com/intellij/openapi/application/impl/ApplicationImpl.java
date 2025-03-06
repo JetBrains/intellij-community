@@ -929,7 +929,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
-    getThreadingSupport().runIntendedWriteActionOnCurrentThread(action);
+    getThreadingSupport().runWriteIntentReadAction(runnableUnitFunction(action));
   }
 
   @Override
@@ -1010,7 +1010,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) {
-    return getThreadingSupport().runWriteIntentReadAction(computation);
+    return getThreadingSupport().runWriteIntentReadAction(rethrowCheckedExceptions(computation));
   }
 
   @Override

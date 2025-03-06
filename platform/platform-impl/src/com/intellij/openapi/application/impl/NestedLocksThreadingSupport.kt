@@ -516,15 +516,15 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
            ?: zeroLevelComputationState
   }
 
-  override fun <T, E : Throwable?> runPreventiveWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+  override fun <T> runPreventiveWriteIntentReadAction(computation: () -> T): T {
     return runWriteIntentReadAction(computation, true)
   }
 
-  override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+  override fun <T> runWriteIntentReadAction(computation: () -> T): T {
     return runWriteIntentReadAction(computation, false)
   }
 
-  fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>, isPreventive: Boolean): T {
+  fun <T> runWriteIntentReadAction(computation: () -> T, isPreventive: Boolean): T {
     if (!isPreventive) {
       handleLockAccess("write-intent lock")
     }
@@ -549,7 +549,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
 
     try {
       fireWriteIntentActionStarted(listener, computation.javaClass)
-      return computation.compute()
+      return computation()
     }
     finally {
       fireWriteIntentActionFinished(listener, computation.javaClass)
@@ -571,12 +571,6 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     val currentState = getComputationState()
     val currentPermit = currentState.getThisThreadPermit()
     return currentPermit != null
-  }
-
-  override fun runIntendedWriteActionOnCurrentThread(action: Runnable) {
-    runWriteIntentReadAction<Unit, Throwable> {
-      action.run()
-    }
   }
 
   // @Throws(E::class)
