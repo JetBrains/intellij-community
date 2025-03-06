@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * This code should be located in XDebugSessionImpl, but it is written separately since suspend functions cannot be called there.
  */
-internal fun storeXDebugSessionInDb(sessionScope: CoroutineScope, session: XDebugSessionImpl): Deferred<XDebugSessionEntity> {
+internal fun storeXDebugSessionInDb(sessionScope: CoroutineScope, session: XDebugSessionImpl, id: XDebugSessionId): Deferred<XDebugSessionEntity> {
   val sessionEntity = AtomicReference<XDebugSessionEntity?>()
   val deferred = sessionScope.async {
     val projectEntity = session.project.asEntity()
@@ -24,7 +24,7 @@ internal fun storeXDebugSessionInDb(sessionScope: CoroutineScope, session: XDebu
         change {
           XDebugSessionEntity.new {
             it[XDebugSessionEntity.ProjectEntity] = projectEntity
-            it[XDebugSessionEntity.SessionId] = XDebugSessionId(UID.random())
+            it[XDebugSessionEntity.SessionId] = id
             it[XDebugSessionEntity.Session] = session
           }
         }

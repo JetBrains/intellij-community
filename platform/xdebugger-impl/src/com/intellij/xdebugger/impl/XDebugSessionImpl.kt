@@ -69,6 +69,7 @@ import com.intellij.xdebugger.impl.util.start
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import fleet.kernel.withEntities
+import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.cancel
@@ -139,7 +140,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val extraActions: MutableList<AnAction> = SmartList<AnAction>()
   private var myConsoleView: ConsoleView? = null
   private val myIcon: Icon? = icon
-  private val entity: Deferred<XDebugSessionEntity> = storeXDebugSessionInDb(this.coroutineScope, this)
+  private val mySessionId = XDebugSessionId(UID.random())
+  private val entity: Deferred<XDebugSessionEntity> = storeXDebugSessionInDb(this.coroutineScope, this, mySessionId)
   private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager(this.coroutineScope, this.entity)
 
   @get:ApiStatus.Internal
@@ -1004,6 +1006,16 @@ class XDebugSessionImpl @JvmOverloads constructor(
         })
     }
   }
+
+  /**
+   * Gets session ID without entity checks.
+   *
+   * This method should be used when the session existence is not important (e.g., the session is closing).
+   * Note that session entity may be already deleted.
+   * Prefer [id] where possible.
+   */
+  @get:ApiStatus.Internal
+  val idUnsafe: XDebugSessionId get() = mySessionId
 
   @ApiStatus.Internal
   suspend fun id(): XDebugSessionId {

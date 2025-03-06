@@ -97,12 +97,11 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun createSessionManagerEvents(projectId: ProjectId): Flow<XDebuggerManagerSessionEvent> {
     val project = projectId.findProject()
-    val dispatcher = Dispatchers.Default.limitedParallelism(1)
     return channelFlow {
       project.messageBus.connect(this).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
         override fun processStarted(debugProcess: XDebugProcess) {
           val session = debugProcess.session as? XDebugSessionImpl ?: return
-          launch(dispatcher) {
+          launch {
             val sessionDto = createSessionDto(session, debugProcess)
             send(XDebuggerManagerSessionEvent.ProcessStarted(sessionDto.id, sessionDto))
           }
@@ -110,20 +109,13 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
 
         override fun processStopped(debugProcess: XDebugProcess) {
           val session = debugProcess.session as? XDebugSessionImpl ?: return
-          launch(dispatcher) {
-            val sessionId = session.id()
-            send(XDebuggerManagerSessionEvent.ProcessStopped(sessionId))
-          }
+          trySend(XDebuggerManagerSessionEvent.ProcessStopped(session.idUnsafe))
         }
 
         override fun currentSessionChanged(previousSession: XDebugSession?, currentSession: XDebugSession?) {
-          val previousSession = previousSession as? XDebugSessionImpl ?: return
-          val currentSession = currentSession as? XDebugSessionImpl ?: return
-          launch(dispatcher) {
-            val previousSessionId = previousSession.id()
-            val currentSessionId = currentSession.id()
-            send(XDebuggerManagerSessionEvent.CurrentSessionChanged(previousSessionId, currentSessionId))
-          }
+          val previousSessionId = (previousSession as? XDebugSessionImpl)?.idUnsafe
+          val currentSessionId = (currentSession as? XDebugSessionImpl)?.idUnsafe
+          trySend(XDebuggerManagerSessionEvent.CurrentSessionChanged(previousSessionId, currentSessionId))
         }
       })
       awaitClose()
