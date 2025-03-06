@@ -99,16 +99,16 @@ object EelPathUtils {
    * ```
    */
   @JvmStatic
-  fun getUriLocalToEel(path: Path): URI = runBlockingMaybeCancellable {
+  fun getUriLocalToEel(path: Path): URI {
     val eelPath = path.asEelPath()
     if (eelPath.descriptor == LocalEelDescriptor) {
       // there is not mapping by Eel, hence the path may be considered local
-      return@runBlockingMaybeCancellable path.toUri()
+      return path.toUri()
     }
     val root = eelPath.root.toString().replace('\\', '/')
     // see sun.nio.fs.WindowsUriSupport#toUri(java.lang.String, boolean, boolean)
     val trailing = if (eelPath.descriptor.operatingSystem == EelPath.OS.WINDOWS) "/" else ""
-    URI("file", null, trailing + root + eelPath.parts.joinToString("/"), null, null)
+    return URI("file", null, trailing + root + eelPath.parts.joinToString("/"), null, null)
   }
 
   /**
