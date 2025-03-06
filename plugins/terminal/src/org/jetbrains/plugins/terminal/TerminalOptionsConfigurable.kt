@@ -31,7 +31,7 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
-import java.util.Locale
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.UIManager
@@ -48,7 +48,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     val optionsProvider = TerminalOptionsProvider.instance
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
     val blockTerminalOptions = BlockTerminalOptions.getInstance()
-    var fontPreferences = TerminalFontOptions.getInstance().getTerminalFontSettings()
+    var fontPreferences = TerminalFontOptions.getInstance().getSettings()
 
     return panel {
       lateinit var terminalEngineComboBox: ComboBox<TerminalEngine>
@@ -189,7 +189,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
 
         onApply {
-          TerminalFontOptions.getInstance().setTerminalFontSettings(fontPreferences)
+          TerminalFontOptions.getInstance().setSettings(fontPreferences)
         }
 
         row {

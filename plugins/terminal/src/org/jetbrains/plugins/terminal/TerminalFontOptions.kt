@@ -19,7 +19,7 @@ internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPrefer
     @JvmStatic fun getInstance(): TerminalFontOptions = service<TerminalFontOptions>()
   }
 
-  fun getTerminalFontSettings(): TerminalFontSettings {
+  fun getSettings(): TerminalFontSettings {
     val preferences = fontPreferences
     return TerminalFontSettings(
       fontFamily = preferences.fontFamily,
@@ -29,7 +29,7 @@ internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPrefer
     )
   }
 
-  fun setTerminalFontSettings(preferences: TerminalFontSettings) {
+  fun setSettings(preferences: TerminalFontSettings) {
     val newPreferences = FontPreferencesImpl()
     // start with the console preferences as the default
     AppConsoleFontOptions.getInstance().fontPreferences.copyTo(newPreferences)
