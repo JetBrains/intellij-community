@@ -38,14 +38,12 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
     <orderEntry type="module" module-name="fleet.util.logging.api" exported="" />
     <orderEntry type="library" exported="" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="fleet.reporting.api" />
     <orderEntry type="module" module-name="fleet.reporting.shared" />
     <orderEntry type="module" module-name="fleet.multiplatform.shims" exported="" />
     <orderEntry type="module" module-name="fleet.fastutil" exported="" />
-    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
     <orderEntry type="module" module-name="fleet.util.multiplatform" />
     <orderEntry type="library" name="de.cketti.unicode.kotlin.codepoints.jvm" level="project" />
