@@ -3,7 +3,6 @@ package com.intellij.java.codeInsight.editorActions;
 
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 public class FixDocCommentTest extends AbstractEditorTest {
