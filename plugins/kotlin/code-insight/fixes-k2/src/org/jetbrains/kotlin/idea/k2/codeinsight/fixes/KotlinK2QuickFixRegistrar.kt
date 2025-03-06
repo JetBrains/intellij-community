@@ -286,7 +286,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KaFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
         registerPsiQuickFixes(KaFirDiagnostic.UnresolvedImport::class, AddDependencyQuickFixHelper)
+    }
 
+    private val lazyImports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(ImportQuickFixFactories.tooManyArgumentsFactory)
         registerFactory(ImportQuickFixFactories.noValueForParameterFactory)
         registerFactory(ImportQuickFixFactories.argumentTypeMismatchFactory)
@@ -646,6 +648,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         optIn,
         multiplatform,
         superType,
+    )
+
+    override val lazyList: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
+        lazyImports,
     )
 
     override val importOnTheFlyList: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
