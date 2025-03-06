@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -43,7 +44,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.*
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -602,7 +602,7 @@ private object WindowCloseListener : WindowAdapter() {
     if (app != null && !app.isDisposed) {
       // Project closing process is also subject to cancellation checks.
       // Here we run the closing process in the scope of applicaiton, so that the user gets the chance to abort project closing process.
-      installThreadContext((app as ComponentManagerImpl).getCoroutineScope().coroutineContext).use {
+      installThreadContext((app as ComponentManagerEx).getCoroutineScope().coroutineContext).use {
         frameHelper.windowClosing(project)
       }
     }

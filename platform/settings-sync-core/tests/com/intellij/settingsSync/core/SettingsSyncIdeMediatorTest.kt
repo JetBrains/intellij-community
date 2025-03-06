@@ -8,7 +8,6 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.stateStore
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -123,7 +122,7 @@ true
   @TestFor(issues = ["IDEA-324914"])
   @Test
   fun `process files2apply last`() {
-    val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
+    val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
     val rootConfig = memoryFs.fs.getPath("/IDEA-324914/appConfig")
     val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager

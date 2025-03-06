@@ -118,9 +118,4 @@ public interface Project extends ComponentManager, AreaInstance {
   default boolean isDefault() {
     return false;
   }
-
-  @ApiStatus.Internal
-  default ComponentManager getActualComponentManager() {
-    return this;
-  }
 }

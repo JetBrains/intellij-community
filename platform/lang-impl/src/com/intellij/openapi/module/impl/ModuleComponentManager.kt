@@ -1,0 +1,97 @@
+package com.intellij.openapi.module.impl
+
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentConfig
+import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.emptyConstructorMethodType
+import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.openapi.module.Module
+import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
+
+@ApiStatus.Internal
+open class ModuleComponentManager(parent: ComponentManagerImpl) : ComponentManagerImpl(parent) {
+
+  companion object {
+    private val moduleMethodType = MethodType.methodType(Void.TYPE, Module::class.java)
+
+    private val LOG: Logger
+      get() = logger<ModuleComponentManager>()
+  }
+
+  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    return (lookup.findConstructorOrNull(aClass, moduleMethodType)?.invoke(module)
+            ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+            ?: RuntimeException("Cannot find suitable constructor, expected (Module) or ()")) as T
+  }
+
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
+    moduleMethodType,
+    emptyConstructorMethodType,
+  )
+  
+  lateinit var module: Module
+
+  open fun initForModule(module: Module) {
+    this.module = module
+    registerServiceInstance(
+      serviceInterface = Module::class.java,
+      instance = module,
+      pluginDescriptor = fakeCorePluginDescriptor
+    )
+  }
+
+  @ApiStatus.Internal
+  override fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
+    if (!super.isComponentSuitable(componentConfig)) {
+      return false
+    }
+
+    val options = componentConfig.options
+    if (options.isNullOrEmpty()) {
+      return true
+    }
+
+    for (optionName in options.keys) {
+      if ("workspace" == optionName || "overrides" == optionName) {
+        continue
+      }
+
+      // we cannot filter using module options because at this moment module file data could be not loaded
+      val message = "Don't specify $optionName in the component registration," +
+                    " transform component to service and implement your logic in your getInstance() method"
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        LOG.error(message)
+      }
+      else {
+        LOG.warn(message)
+      }
+    }
+    return true
+  }
+
+  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) =
+    pluginDescriptor.moduleContainerDescriptor
+
+  override fun dispose() {
+    runCatching {
+      serviceIfCreated<IComponentStore>()?.release()
+    }.getOrLogException(LOG)
+    super.dispose()
+  }
+
+  override fun debugString(short: Boolean): String =
+    if (short) javaClass.simpleName else super.debugString(short = false)
+  
+  override public fun createComponents() {
+    super.createComponents()
+  }
+}

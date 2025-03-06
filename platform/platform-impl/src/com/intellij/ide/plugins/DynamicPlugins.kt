@@ -39,6 +39,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -73,7 +74,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.plugins.parser.impl.elements.ActionElement.ActionElementName
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.CachedValuesManagerImpl
@@ -810,14 +811,14 @@ object DynamicPlugins {
     module.appContainerDescriptor.listeners.let { appMessageBus.unsubscribeLazyListeners(module, it) }
 
     for (project in openedProjects) {
-      (project.actualComponentManager as ComponentManagerImpl).unloadServices(module, module.projectContainerDescriptor.services)
-      module.projectContainerDescriptor.listeners.let {
-        ((project.actualComponentManager as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
+      (project as ComponentManagerEx).unloadServices(module, module.projectContainerDescriptor.services)
+      module.projectContainerDescriptor.listeners?.let {
+        ((project as ComponentManagerEx).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
       }
 
       val moduleServices = module.moduleContainerDescriptor.services
       for (ideaModule in ModuleManager.getInstance(project).modules) {
-        (ideaModule as ComponentManagerImpl).unloadServices(module, moduleServices)
+        (ideaModule as ComponentManagerEx).unloadServices(module, moduleServices)
         createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(ideaModule, it) }
       }
 
@@ -1137,10 +1138,10 @@ private fun optionalDependenciesOnPlugin(
 private fun loadModules(modules: List<IdeaPluginDescriptorImpl>, app: ApplicationImpl, listenerCallbacks: MutableList<in Runnable>) {
   app.registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
   for (openProject in getOpenedProjects()) {
-    (openProject.actualComponentManager as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
+    openProject.getComponentManagerImpl().registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
 
     for (module in ModuleManager.getInstance(openProject).modules) {
-      (module as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
+      module.getComponentManagerImpl().registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
     }
   }
 

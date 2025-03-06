@@ -5,14 +5,10 @@ package com.intellij.openapi.module.impl
 
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -20,30 +16,25 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.ui.Queryable
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.emptyConstructorMethodType
-import com.intellij.serviceContainer.findConstructorOrNull
+import com.intellij.serviceContainer.ComponentManagerImpl.Companion.fakeCorePluginDescriptor
+import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.nio.file.Path
-
-private val moduleMethodType = MethodType.methodType(Void.TYPE, Module::class.java)
-
-private val LOG: Logger
-  get() = logger<ModuleImpl>()
 
 open class ModuleImpl @ApiStatus.Internal constructor(
   name: String,
   project: Project,
-) : ComponentManagerImpl(parent = project.actualComponentManager as ComponentManagerImpl), ModuleEx, Queryable {
+  val componentManager: ComponentManager,
+) : DelegatingComponentManagerEx, ModuleEx, Queryable {
+
   private val project: Project
   protected var imlFilePointer: VirtualFilePointer? = null
 
@@ -53,37 +44,37 @@ open class ModuleImpl @ApiStatus.Internal constructor(
   private val moduleScopeProvider: ModuleScopeProvider
 
   @ApiStatus.Internal
-  constructor(name: String, project: Project, virtualFilePointer: VirtualFilePointer?) : this(name, project) {
+  constructor(
+    name: String,
+    project: Project,
+    virtualFilePointer: VirtualFilePointer?,
+    componentManager: ComponentManager,
+  ) : this(
+    name = name,
+    project = project,
+    componentManager = componentManager
+  ) {
     imlFilePointer = virtualFilePointer
   }
 
   init {
     @Suppress("LeakingThis")
-    registerServiceInstance(serviceInterface = Module::class.java, instance = this, pluginDescriptor = fakeCorePluginDescriptor)
     this.project = project
     @Suppress("LeakingThis")
     moduleScopeProvider = project.service<ModuleScopeProviderFactory>().createProvider(this)
     this.name = name
   }
 
-  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
-    @Suppress("UNCHECKED_CAST")
-    return (lookup.findConstructorOrNull(aClass, moduleMethodType)?.invoke(this)
-            ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
-            ?: RuntimeException("Cannot find suitable constructor, expected (Module) or ()")) as T
-  }
-
-  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(
-    moduleMethodType,
-    emptyConstructorMethodType,
-  )
+  private fun getModuleComponentManager(): ModuleComponentManager =
+    componentManager.getComponentManagerImpl() as ModuleComponentManager
 
   override fun init() {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
-    registerComponents()
+    val moduleComponentManager = getModuleComponentManager()
+    moduleComponentManager.registerComponents()
     if (!isPersistent) {
-      registerService(
+      moduleComponentManager.registerService(
         serviceInterface = IComponentStore::class.java,
         implementation = NonPersistentModuleStore::class.java,
         pluginDescriptor = fakeCorePluginDescriptor,
@@ -91,46 +82,24 @@ open class ModuleImpl @ApiStatus.Internal constructor(
       )
     }
     @Suppress("DEPRECATION")
-    createComponents()
+    moduleComponentManager.createComponents()
   }
 
   private val isPersistent: Boolean
     get() = imlFilePointer != null
 
+  @get:ApiStatus.Internal
+  override val delegateComponentManager: ComponentManagerEx
+    get() = componentManager as ComponentManagerEx
+
   override fun isDisposed(): Boolean {
     // in case of light project in tests when it's temporarily disposed, the module should be treated as disposed too.
     @Suppress("TestOnlyProblems")
-    return super.isDisposed() || (project as ProjectEx).isLight && project.isDisposed()
+    return componentManager.isDisposed() || (project as ProjectEx).isLight && project.isDisposed()
   }
 
-  @Internal
-  override fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
-    if (!super.isComponentSuitable(componentConfig)) {
-      return false
-    }
-
-    val options = componentConfig.options
-    if (options.isNullOrEmpty()) {
-      return true
-    }
-
-    for (optionName in options.keys) {
-      if ("workspace" == optionName || "overrides" == optionName) {
-        continue
-      }
-
-      // we cannot filter using module options because at this moment module file data could be not loaded
-      val message = "Don't specify $optionName in the component registration," +
-                    " transform component to service and implement your logic in your getInstance() method"
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        LOG.error(message)
-      }
-      else {
-        LOG.warn(message)
-      }
-    }
-    return true
-  }
+  override fun getMessageBus(): MessageBus =
+    delegateComponentManager.messageBus
 
   override fun getModuleFile(): VirtualFile? = imlFilePointer?.file
 
@@ -142,7 +111,7 @@ open class ModuleImpl @ApiStatus.Internal constructor(
   }
 
   protected val store: IComponentStore
-    get() = getService(IComponentStore::class.java)!!
+    get() = componentManager.getService(IComponentStore::class.java)!!
 
   override fun canStoreSettings(): Boolean = store !is NonPersistentModuleStore
 
@@ -153,13 +122,7 @@ open class ModuleImpl @ApiStatus.Internal constructor(
   @Synchronized
   override fun dispose() {
     isModuleAdded = false
-    runCatching {
-      serviceIfCreated<IComponentStore>()?.release()
-    }.getOrLogException(LOG)
-    super.dispose()
   }
-
-  override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl) = pluginDescriptor.moduleContainerDescriptor
 
   override fun getProject(): Project = project
 
@@ -227,7 +190,11 @@ open class ModuleImpl @ApiStatus.Internal constructor(
     info.put("name", getName())
   }
 
-  override fun debugString(short: Boolean): String = if (short) javaClass.simpleName else super.debugString(short = false)
+  override fun <T : Any?> getUserData(key: Key<T?>): T? =
+    componentManager.getUserData(key)
+
+  override fun <T : Any?> putUserData(key: Key<T?>, value: T?) =
+    componentManager.putUserData(key, value)
 }
 
 @State(name = "DeprecatedModuleOptionManager", useLoadedStateAsExisting = false)

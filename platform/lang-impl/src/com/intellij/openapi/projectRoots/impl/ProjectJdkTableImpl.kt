@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager.DEFAULT_EXT
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -32,7 +33,7 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
   private val cachedProjectJdks: MutableMap<String, Sdk> = HashMap()
 
   init {
-    val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
+    val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
     componentManager.registerService(SdkTableImplementationDelegate::class.java, SdkTableBridgeImpl::class.java,
                                      ComponentManagerImpl.fakeCorePluginDescriptor, false)
     delegate = SdkTableImplementationDelegate.getInstance()

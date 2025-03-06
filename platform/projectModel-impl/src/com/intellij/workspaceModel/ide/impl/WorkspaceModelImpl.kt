@@ -69,7 +69,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
 
-  private val virtualFileManager: VirtualFileUrlManager
+  val virtualFileManager: VirtualFileUrlManager
 
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current

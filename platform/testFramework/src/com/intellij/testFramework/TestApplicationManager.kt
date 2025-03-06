@@ -23,6 +23,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -37,7 +38,6 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.common.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -229,7 +229,7 @@ class TestApplicationManager private constructor() {
     @ApiStatus.Internal
     @JvmStatic
     fun waitForProjectLeakingThreads(project: Project) {
-      if (project is ComponentManagerImpl) {
+      if (project is ComponentManagerEx) {
         project.stopServicePreloading()
       }
 

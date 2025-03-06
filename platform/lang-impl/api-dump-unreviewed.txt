@@ -13119,19 +13119,16 @@ c:com.intellij.openapi.module.impl.ModuleConfigurationStateImpl
 - getModulesProvider():com.intellij.openapi.roots.ui.configuration.ModulesProvider
 - getProject():com.intellij.openapi.project.Project
 c:com.intellij.openapi.module.impl.ModuleImpl
-- com.intellij.openapi.Disposable$Parent
+- com.intellij.openapi.Disposable
 - com.intellij.openapi.components.ComponentManager
 - com.intellij.openapi.module.Module
 - com.intellij.openapi.ui.Queryable
-- com.intellij.openapi.util.UserDataHolderBase
-- com.intellij.util.messages.MessageBusOwner
 - canStoreSettings():Z
 - clearScopesCache():V
-- p:debugString(Z):java.lang.String
 - dispose():V
-- pf:findConstructorAndInstantiateClass(java.lang.invoke.MethodHandles$Lookup,java.lang.Class):java.lang.Object
-- p:getContainerDescriptor(com.intellij.ide.plugins.IdeaPluginDescriptorImpl):com.intellij.ide.plugins.ContainerDescriptor
+- f:getComponentManager():com.intellij.openapi.components.ComponentManager
 - pf:getImlFilePointer():com.intellij.openapi.vfs.pointers.VirtualFilePointer
+- getMessageBus():com.intellij.util.messages.MessageBus
 - getModuleContentScope():com.intellij.psi.search.GlobalSearchScope
 - getModuleContentWithDependenciesScope():com.intellij.psi.search.GlobalSearchScope
 - getModuleFile():com.intellij.openapi.vfs.VirtualFile
@@ -13150,12 +13147,13 @@ c:com.intellij.openapi.module.impl.ModuleImpl
 - getOptionValue(java.lang.String):java.lang.String
 - getProject():com.intellij.openapi.project.Project
 - pf:getStore():com.intellij.openapi.components.impl.stores.IComponentStore
-- getSupportedSignaturesOfLightServiceConstructors():java.util.List
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - init():V
 - isDisposed():Z
 - isLoaded():Z
 - markAsLoaded():V
 - putInfo(java.util.Map):V
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - rename(java.lang.String,Z):V
 - pf:setImlFilePointer(com.intellij.openapi.vfs.pointers.VirtualFilePointer):V
 - setOption(java.lang.String,java.lang.String):V

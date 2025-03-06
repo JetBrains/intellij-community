@@ -6,6 +6,7 @@ import com.intellij.diagnostic.isCoroutineDumpEnabled
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.inModalContext
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ObjectUtils
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT
@@ -119,7 +119,7 @@ internal fun cancelAndTryJoin(project: ProjectImpl) {
     return
   }
   // TODO install and use currentThreadCoroutineScope instead OR make this function suspending
-  val applicationScope = (ApplicationManager.getApplication() as ComponentManagerImpl).getCoroutineScope()
+  val applicationScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()
   applicationScope.launch(@OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class) blockingDispatcher) {
     val dumpJob = launch {
       delay(delayUntilCoroutineDump)

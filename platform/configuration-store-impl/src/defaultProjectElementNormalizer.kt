@@ -3,11 +3,11 @@
 
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.io.outputStream
@@ -122,7 +122,7 @@ internal fun moveComponentConfiguration(defaultProject: Project,
     }
   }
 
-  (defaultProject.actualComponentManager as ComponentManagerImpl).processAllHolders { _, componentClass, _ ->
+  (defaultProject as ComponentManagerEx).processAllHolders { _, componentClass, _ ->
     processComponents(componentClass)
   }
 

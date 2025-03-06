@@ -40,6 +40,10 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   private val indexDataReference = AtomicReference<WorkspaceFileIndexData>(EmptyWorkspaceFileIndexData.NOT_INITIALIZED)
   private val throttledLogger = ThrottledLogger(thisLogger(), MINUTES.toMillis(1))
+  
+  constructor(project: Project, indexData: WorkspaceFileIndexData) : this(project) {
+    indexDataReference.set(indexData)
+  }
 
   override var indexData: WorkspaceFileIndexData
     get() = indexDataReference.get()

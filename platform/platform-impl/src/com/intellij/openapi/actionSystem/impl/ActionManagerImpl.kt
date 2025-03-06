@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.Ligh
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -58,7 +59,6 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.plugins.parser.impl.elements.ActionElement.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.icons.IconLoadMeasurer
@@ -1150,8 +1150,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return
     }
     val container =
-      if (!event.presentation.isApplicationScope && project is ComponentManagerImpl) project
-      else ApplicationManager.getApplication() as ComponentManagerImpl
+      if (!event.presentation.isApplicationScope && project is ComponentManagerEx) project
+      else ApplicationManager.getApplication() as ComponentManagerEx
     val cs = container.pluginCoroutineScope(action.javaClass.classLoader)
     val coroutineName = CoroutineName("${action.javaClass.name}#actionPerformed@${event.place}")
     // save stack frames using an explicit continuation trick & inline blockingContext

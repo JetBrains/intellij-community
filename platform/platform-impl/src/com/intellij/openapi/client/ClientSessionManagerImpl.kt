@@ -7,6 +7,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.serviceContainer.getComponentManagerImpl
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -41,7 +42,7 @@ open class ClientProjectSessionsManager(project: Project, scope: CoroutineScope)
       registerSession(project, LocalProjectSessionImpl(project))
     }
     else if (project.isDefault) {
-      (project.actualComponentManager as? ClientAwareComponentManager)?.let { componentManager ->
+      (project.getComponentManagerImpl() as? ClientAwareComponentManager)?.let { componentManager ->
         val projectImpl = componentManager as? Project
         // real DefaultProjectImpl instance is accessible via DefaultProject.actualComponentManager
         // in the injection scenario exactly DefaultProjectImpl is passed, so we want to use it here also

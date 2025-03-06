@@ -2,6 +2,8 @@
 package com.intellij.openapi;
 
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A marker for classes that require some work done for cleaning up.

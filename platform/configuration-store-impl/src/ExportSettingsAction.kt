@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
@@ -207,7 +206,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
     }
   }
 
-  val app = ApplicationManager.getApplication() as ComponentManagerImpl
+  val app = ApplicationManager.getApplication() as ComponentManagerEx
 
   if (withExportable) {
     @Suppress("DEPRECATION")

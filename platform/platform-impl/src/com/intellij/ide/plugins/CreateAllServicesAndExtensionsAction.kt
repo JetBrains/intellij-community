@@ -29,6 +29,7 @@ import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.Companion.createAllServices2
+import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.*
 import java.awt.Component
@@ -121,17 +122,17 @@ private fun createAllServicesAndExtensions2(): List<Throwable> {
         checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
       }
 
-      val application = ApplicationManager.getApplication() as ComponentManagerImpl
+      val application = ApplicationManager.getApplication().getComponentManagerImpl()
       reporter.indeterminateStep {
         checkContainer2(application, "app", taskExecutor)
       }
 
-      val project = ProjectUtil.getOpenProjects().firstOrNull() as? ComponentManagerImpl
+      val project = ProjectUtil.getOpenProjects().firstOrNull()?.getComponentManagerImpl()
       if (project != null) {
         reporter.indeterminateStep {
           checkContainer2(project, "project", taskExecutor)
         }
-        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull() as? ComponentManagerImpl
+        val module = ModuleManager.getInstance(project as Project).modules.firstOrNull()?.getComponentManagerImpl()
         if (module != null) {
           reporter.indeterminateStep {
             checkContainer2(module, "module", taskExecutor)

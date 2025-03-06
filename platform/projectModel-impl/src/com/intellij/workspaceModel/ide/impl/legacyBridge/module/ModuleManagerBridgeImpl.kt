@@ -480,30 +480,29 @@ abstract class ModuleManagerBridgeImpl(
   ): ModuleBridge {
     val moduleFileUrl = getModuleVirtualFileUrl(moduleEntity)
 
-    val module = createModule(
+    return createModule(
       symbolicId = moduleEntity.symbolicId,
       name = moduleEntity.name,
       virtualFileUrl = moduleFileUrl,
       entityStorage = versionedStorage,
       diff = diff
-    )
+    ) { module ->
+      module.registerComponents(
+        corePlugin = corePlugin,
+        modules = plugins,
+        app = ApplicationManager.getApplication(),
+        precomputedExtensionModel = precomputedExtensionModel,
+        listenerCallbacks = null
+      )
 
-    module.registerComponents(
-      corePlugin = corePlugin,
-      modules = plugins,
-      app = ApplicationManager.getApplication(),
-      precomputedExtensionModel = precomputedExtensionModel,
-      listenerCallbacks = null
-    )
-
-    if (moduleFileUrl == null) {
-      registerNonPersistentModuleStore(module)
+      if (moduleFileUrl == null) {
+        registerNonPersistentModuleStore(module)
+      }
+      else {
+        val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
+        moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
+      }
     }
-    else {
-      val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
-      moduleStore.setPath(path = moduleFileUrl.toPath(), virtualFile = null, isNew = isNew)
-    }
-    return module
   }
 
   fun createModuleInstance(
@@ -536,6 +535,7 @@ abstract class ModuleManagerBridgeImpl(
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
+    init: (ModuleBridge) -> Unit,
   ): ModuleBridge
 
   abstract fun initializeBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)

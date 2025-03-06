@@ -29,6 +29,7 @@ import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
@@ -49,7 +50,7 @@ import kotlin.coroutines.coroutineContext
 private val LOG = logger<ModuleManagerComponentBridge>()
 
 @ApiStatus.Internal
-class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
+open class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
   : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
   private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
@@ -143,7 +144,7 @@ class ModuleManagerComponentBridge(private val project: Project, coroutineScope:
   }
 
   override fun registerNonPersistentModuleStore(module: ModuleBridge) {
-    (module as ModuleBridgeImpl).registerService(
+    (module as ModuleBridgeImpl).getModuleBridgeComponentManager().registerService(
       serviceInterface = IComponentStore::class.java,
       implementation = NonPersistentModuleStore::class.java,
       pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
@@ -185,7 +186,9 @@ class ModuleManagerComponentBridge(private val project: Project, coroutineScope:
     virtualFileUrl: VirtualFileUrl?,
     entityStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
+    init: (ModuleBridge) -> Unit
   ): ModuleBridge {
+    val componentManager = ModuleBridgeComponentManager(project.getComponentManagerImpl())
     return ModuleBridgeImpl(
       moduleEntityId = symbolicId,
       name = name,
@@ -193,7 +196,11 @@ class ModuleManagerComponentBridge(private val project: Project, coroutineScope:
       virtualFileUrl = virtualFileUrl,
       entityStorage = entityStorage,
       diff = diff,
-    )
+      componentManager = componentManager,
+    ).also {
+      componentManager.initForModule(it)
+      init(it)
+    }
   }
 }
 

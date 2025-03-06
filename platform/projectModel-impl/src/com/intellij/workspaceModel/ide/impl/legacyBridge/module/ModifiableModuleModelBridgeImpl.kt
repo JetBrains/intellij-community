@@ -64,7 +64,7 @@ internal class ModifiableModuleModelBridgeImpl(
                                                    entitySource = NonPersistentEntitySource
     )
 
-    val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff)
+    val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff) {}
     diff.mutableModuleMap.addMapping(moduleEntity, module)
     modulesToAdd.put(moduleName, module)
     currentModuleSet.add(module)

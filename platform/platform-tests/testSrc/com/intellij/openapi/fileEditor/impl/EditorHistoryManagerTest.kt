@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -90,10 +91,12 @@ class EditorHistoryManagerTest {
 fun overrideFileEditorManagerImplementation(implementation: Class<out FileEditorManager>, disposable: Disposable) {
   ProjectServiceContainerCustomizer.getEp().maskAll(listOf(object : ProjectServiceContainerCustomizer {
     override fun serviceRegistered(project: Project) {
-      (project as ComponentManagerImpl).registerService(serviceInterface = FileEditorManager::class.java,
-                                                        implementation = implementation,
-                                                        pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
-                                                        override = true)
+      (project as ComponentManagerEx).registerService(
+        serviceInterface = FileEditorManager::class.java,
+        implementation = implementation,
+        pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
+        override = true
+      )
     }
   }), disposable, false)
 }
