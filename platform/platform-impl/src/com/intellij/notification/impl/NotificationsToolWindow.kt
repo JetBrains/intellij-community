@@ -164,8 +164,7 @@ internal class NotificationContent(val project: Project,
       timeline.updateLaf()
     })
 
-    val newNotifications = ArrayList<Notification>()
-    ApplicationNotificationsModel.registerAndGetInitNotifications(this, newNotifications)
+    val newNotifications = ApplicationNotificationsModel.registerAndGetInitNotifications(this)
     for (notification in newNotifications) {
       add(notification)
     }
