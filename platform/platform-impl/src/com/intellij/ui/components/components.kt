@@ -296,46 +296,6 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(
   FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, null /*infer disposable from context*/)
 }
 
-private const val FILES_SEPARATOR: String = "; "
-
-@JvmOverloads
-fun <T : JComponent> installMultiFileCompletionAndBrowseDialog(
-  project: Project?,
-  component: ComponentWithBrowseButton<T>,
-  textField: JTextField,
-  fileChooserDescriptor: FileChooserDescriptor,
-  textComponentAccessor: TextComponentAccessor<T>,
-  fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
-) {
-  if (ApplicationManager.getApplication() == null) {
-    return // tests
-  }
-  val browseFolderDescriptor = fileChooserDescriptor.asBrowseFolderDescriptor()
-  if (fileChosen != null) {
-    browseFolderDescriptor.convertFileToText = fileChosen
-  }
-  val listener = object : BrowseFolderActionListener<T>(component, project, browseFolderDescriptor, textComponentAccessor) {
-
-    private fun chosenFilesToResultingText(chosenFiles: List<VirtualFile>) =
-      chosenFiles.joinToString(FILES_SEPARATOR) { chosenFile -> chosenFileToResultingText(chosenFile) }
-
-    override fun chooseFile(descriptor: FileChooserDescriptor) {
-      FileChooser.chooseFiles(
-        descriptor,
-        getProject(),
-        myTextComponent,
-        getInitialFile(),
-        Consumer { chosenFiles: List<VirtualFile> ->
-          myAccessor.setText(myTextComponent, chosenFilesToResultingText(chosenFiles))
-        }
-      )
-    }
-  }
-
-  component.addActionListener(listener)
-  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, null /*infer disposable from context*/)
-}
-
 @Deprecated(
   "Use `textFieldWithHistoryWithBrowseButton(Project, FileChooserDescriptor, () -> List<String>, (VirtualFile) -> String)` together with `FileChooserDescriptor#withTitle`",
   level = DeprecationLevel.ERROR
@@ -403,18 +363,6 @@ fun textFieldWithBrowseButton(
   val component = TextFieldWithBrowseButton(textField)
   val textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
   installFileCompletionAndBrowseDialog(project, component, component.textField, fileChooserDescriptor, textComponentAccessor, fileChosen)
-  return component
-}
-
-@JvmOverloads
-fun textFieldWithMultiFileBrowseButton(
-  project: Project?,
-  fileChooserDescriptor: FileChooserDescriptor,
-  fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
-): TextFieldWithBrowseButton {
-  val component = TextFieldWithBrowseButton()
-  val textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
-  installMultiFileCompletionAndBrowseDialog(project, component, component.textField, fileChooserDescriptor, textComponentAccessor, fileChosen)
   return component
 }
 
