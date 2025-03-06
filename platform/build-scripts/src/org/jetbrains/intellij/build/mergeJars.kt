@@ -336,7 +336,6 @@ private fun getIgnoredNames(): Set<String> {
   set.add("pom.xml")
   set.add("about.html")
   set.add("module-info.class")
-  set.add("META-INF/versions/9/module-info.class")
   // default is ok (modules not used)
   set.add("META-INF/versions/9/kotlin/reflect/jvm/internal/impl/serialization/deserialization/builtins/BuiltInsResourceLoader.class")
   set.add("META-INF/versions/9/org/apache/xmlbeans/impl/tool/MavenPluginResolver.class")
@@ -390,10 +389,12 @@ private fun getIgnoredNames(): Set<String> {
 }
 
 private val ignoredNames = getIgnoredNames()
+private val moduleInfoPattern = Regex("META-INF/versions/\\d+/module-info\\.class")
 
 fun defaultLibrarySourcesNamesFilter(name: String): Boolean {
   @Suppress("SpellCheckingInspection")
   return !ignoredNames.contains(name) &&
+         !name.matches(moduleInfoPattern) &&
          !name.endsWith(".kotlin_metadata") &&
          !name.startsWith("license/") &&
          !name.startsWith("META-INF/license/") &&
