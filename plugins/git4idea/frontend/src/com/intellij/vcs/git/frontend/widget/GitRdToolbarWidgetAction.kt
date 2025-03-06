@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.platform.project.asEntityOrNull
 import com.intellij.ui.RowIcon
 import com.intellij.vcs.git.frontend.GitFrontendBundle
+import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryEntity
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import icons.DvcsImplIcons
@@ -46,7 +47,7 @@ internal class GitRdToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    if (!Registry.Companion.`is`("git.branches.widget.rd", false)) {
+    if (!Registry.isRdBranchWidgetEnabled()) {
       e.presentation.isEnabledAndVisible = false
       return
     }

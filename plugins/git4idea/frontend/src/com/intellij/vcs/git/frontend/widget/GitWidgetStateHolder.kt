@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
+import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import com.intellij.vcs.git.shared.rpc.GitWidgetApi
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +26,7 @@ internal class GitWidgetStateHolder(private val project: Project, private val cs
   private var stateUpdateJob: Job? = null
 
   init {
-    if (Registry.Companion.`is`("git.branches.widget.rd", false)) {
+    if (Registry.isRdBranchWidgetEnabled()) {
       project.messageBus.connect(cs)
         .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
           override fun selectionChanged(event: FileEditorManagerEvent) {

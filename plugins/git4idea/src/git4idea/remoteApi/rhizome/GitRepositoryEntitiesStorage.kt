@@ -7,7 +7,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.project.asEntityOrNull
+import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import com.intellij.vcs.git.shared.ref.GitRefPrefix
 import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryEntity
 import com.intellij.vcs.git.shared.rhizome.repository.GitRepositoryFavoriteRefsEntity
@@ -34,6 +36,8 @@ import java.util.concurrent.CompletableFuture
 @Service(Service.Level.PROJECT)
 internal class GitRepositoryEntitiesStorage(private val project: Project, private val cs: CoroutineScope) {
   suspend fun cleanupIfNeeded() {
+    if (!Registry.isRdBranchWidgetEnabled()) return
+
     val projectEntity = project.asEntityOrNull() ?: return
     val repositories = GitRepositoryManager.getInstance(project).repositories.map { it.rpcId() }
 
@@ -53,6 +57,8 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
   }.asCompletableFuture()
 
   private suspend fun syncRepo(gitRepository: GitRepository, afterCreation: Boolean) {
+    if (!Registry.isRdBranchWidgetEnabled()) return
+
     val refsSet = GitReferencesSet(
       gitRepository.info.localBranchesWithHashes.keys,
       gitRepository.info.remoteBranchesWithHashes.keys.filterIsInstance<GitStandardRemoteBranch>().toSet(),
@@ -77,6 +83,8 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
   }
 
   suspend fun updateFavoriteRefs(gitRepository: GitRepository?) {
+    if (!Registry.isRdBranchWidgetEnabled()) return
+
     LOG.info("Updating favorite refs for ${gitRepository?.root ?: "all git repos"}")
 
     val refsToInsert = mutableMapOf<GitRepositoryEntity, Set<String>>()
@@ -169,6 +177,8 @@ internal class GitRepositoryEntitiesStorage(private val project: Project, privat
 
   internal class VcsMappingListener(private val project: Project, private val cs: CoroutineScope) : VcsRepositoryMappingListener {
     override fun mappingChanged() {
+      if (!Registry.isRdBranchWidgetEnabled()) return
+
       cs.launch {
         getInstance(project).cleanupIfNeeded()
       }

@@ -24,6 +24,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.RowIcon
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import git4idea.GitVcs
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
@@ -96,7 +97,7 @@ class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    if (Registry.`is`("git.branches.widget.rd", false)) {
+    if (Registry.isRdBranchWidgetEnabled()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
