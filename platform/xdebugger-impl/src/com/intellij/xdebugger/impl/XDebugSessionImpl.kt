@@ -440,8 +440,8 @@ class XDebugSessionImpl @JvmOverloads constructor(
   }
 
   fun showSessionTab() {
-    val tab: XDebugSessionTab? = checkNotNull(this.sessionTab)
-    tab!!.showTab()
+    val tab = checkNotNull(this.sessionTab)
+    tab.showTab()
   }
 
   val valueMarkers: XValueMarkers<*, *>?

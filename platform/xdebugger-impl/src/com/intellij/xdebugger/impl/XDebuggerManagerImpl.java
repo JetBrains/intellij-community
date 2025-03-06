@@ -48,6 +48,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -56,10 +57,10 @@ import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.ShowBreakpointsOverLineNumbersAction;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
@@ -272,7 +273,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     XDebugSessionImpl session = startSession(contentToReuse, starter,
       new XDebugSessionImpl(environment, this, sessionName, icon, showToolWindowOnSuspendOnly, contentToReuse));
 
-    if (!showToolWindowOnSuspendOnly) {
+    if (!showToolWindowOnSuspendOnly && !XDebugSessionProxy.useFeProxy()) {
       session.showSessionTab();
     }
     ProcessHandler handler = session.getDebugProcess().getProcessHandler();
@@ -347,17 +348,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   @Override
   public @Nullable XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole) {
     synchronized (mySessions) {
-      for (final XDebugSessionImpl debuggerSession : mySessions.values()) {
-        XDebugSessionTab sessionTab = debuggerSession.getSessionTab();
-        if (sessionTab != null) {
-          RunContentDescriptor contentDescriptor = sessionTab.getRunContentDescriptor();
-          if (contentDescriptor != null && executionConsole == contentDescriptor.getExecutionConsole()) {
-            return debuggerSession;
-          }
-        }
-      }
+      return ContainerUtil.find(mySessions.values(), session -> session.getConsoleView() == executionConsole);
     }
-    return null;
   }
 
   @Override
