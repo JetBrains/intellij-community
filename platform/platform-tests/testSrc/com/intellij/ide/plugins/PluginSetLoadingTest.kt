@@ -208,9 +208,6 @@ class PluginSetLoadingTest {
 
   private fun assertEnabledPluginsSetEquals(enabledIds: List<String>, builder: PluginSetTestBuilder.() -> Unit) {
     val pluginSet = PluginSetTestBuilder(pluginsDirPath).apply(builder).build()
-    assertThat(pluginSet.enabledPlugins)
-      .hasSize(enabledIds.size)
-    assertThat(pluginSet.enabledPlugins.map { it.pluginId.idString })
-      .containsExactlyInAnyOrderElementsOf(enabledIds)
+    assertThat(pluginSet).hasExactlyEnabledPlugins(*enabledIds.toTypedArray())
   }
 }
