@@ -154,7 +154,6 @@ object PluginManagerCore {
   @Internal
   fun getAndClearPluginLoadingErrors(): List<Supplier<HtmlChunk>> {
     synchronized(pluginErrors) {
-      @Suppress("UsePropertyAccessSyntax")
       if (pluginErrors.isEmpty()) {
         return emptyList()
       }
