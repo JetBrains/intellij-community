@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor.impl.ad.document
 
 import andel.operation.Operation
+import andel.text.charSequence
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
@@ -17,17 +19,20 @@ import com.intellij.util.ui.EDT
 import fleet.kernel.awaitCommitted
 import fleet.kernel.change
 import fleet.kernel.shared
+import fleet.kernel.rete.*
 import fleet.util.openmap.OpenMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
 
 @Experimental
+@Internal
 @Service(Level.APP)
-internal class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope): Disposable.Default {
+class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope): Disposable.Default {
 
   companion object {
     fun getInstance(): AdDocumentSynchronizer = service()
@@ -39,7 +44,7 @@ internal class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope
     coroutineScope.launch(AdTheManager.AD_DISPATCHER) {
       val entity = AdDocumentManager.getInstance().getDocEntity(document)
       checkNotNull(entity) { "entity $debugName not found" }
-      document.addDocumentListener(DocToEntitySynchronizer(debugName, entity, cs))
+      document.addDocumentListener(DocToEntitySynchronizer(debugName, entity, document, cs))
     }
     return cs
   }
@@ -47,12 +52,33 @@ internal class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope
   private class DocToEntitySynchronizer(
     private val debugName: String,
     private val entity: DocumentEntity,
+    private val document: DocumentEx,
     private val coroutineScope: CoroutineScope
   ) : PrioritizedDocumentListener {
+
+    private var documentChanging = false
+
+    init {
+      coroutineScope.launch {
+        entity.asQuery()[DocumentEntity.TextAttr].collect { text ->
+          writeAction {
+            documentChanging = true
+            try {
+              document.setText(text.view().charSequence())
+            }
+            finally {
+              documentChanging = false
+            }
+          }
+        }
+      }
+    }
 
     override fun getPriority(): Int = Int.MIN_VALUE + 1
 
     override fun documentChanged(event: DocumentEvent) {
+      if (documentChanging) return
+
       val entityChange = coroutineScope.async {
         val operation = operation(event)
         change {
