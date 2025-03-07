@@ -30,6 +30,8 @@ internal class SaveImageAction : DumbAwareAction() {
     val wrapper = chooser.save(project.basePath?.let { VirtualFileManager.getInstance().findFileByUrl(it) }, IMAGE_DEFAULT_NAME)
 
     if (wrapper == null) return
+    val targetFile = wrapper.file
+    val selectedFormat = targetFile.extension.lowercase()
 
     try {
       Files.write(wrapper.file.toPath(), virtualFile.contentsToByteArray())
@@ -37,7 +39,7 @@ internal class SaveImageAction : DumbAwareAction() {
     catch (e: IOException) {
       logger.warn("Failed to save image", e)
     }
-    ScientificImageActionsCollector.logSaveImageAction(this)
+    ScientificImageActionsCollector.logSaveAsImageInvoked(this, selectedFormat)
   }
 
   override fun update(e: AnActionEvent) {

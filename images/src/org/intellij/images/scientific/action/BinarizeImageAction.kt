@@ -28,7 +28,7 @@ class BinarizeImageAction : AnAction() {
     imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY) ?: return
     document.value = binarizedImage
-    ScientificImageActionsCollector.logBinarizeImageAction(this)
+    ScientificImageActionsCollector.logBinarizeImageInvoked(this)
   }
 
   private fun applyBinarization(image: BufferedImage, threshold: Int): BufferedImage {

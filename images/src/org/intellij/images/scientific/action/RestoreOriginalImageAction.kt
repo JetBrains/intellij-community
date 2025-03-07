@@ -24,6 +24,6 @@ class RestoreOriginalImageAction : DumbAwareAction() {
     imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
     document.value = originalImage
-    ScientificImageActionsCollector.logRestoreOriginalImageAction(this)
+    ScientificImageActionsCollector.logRestoreOriginalImageInvoked(this)
   }
 }
