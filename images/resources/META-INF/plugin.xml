@@ -48,7 +48,7 @@
     <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1" description="Pixels between grid lines"/>
     <registryKey key="ide.images.change.background.action.enabled" defaultValue="false"
                  description="Show action for changing background in the editor toolbar"/>
-    <registryKey key="ide.images.sci.mode.channels.operations" defaultValue="false"
+    <registryKey key="ide.images.sci.mode.channels.operations" defaultValue="true"
                  description="Show combobox for image channels operations"/>
   </extensions>
 
