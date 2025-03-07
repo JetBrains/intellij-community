@@ -76,9 +76,11 @@ internal fun IntArray.binarySearch(element: Int): Int {
 
     if (midElement < element) {
       l = m + 1
-    } else if (midElement > element) {
+    }
+    else if (midElement > element) {
       r = m - 1
-    } else {
+    }
+    else {
       return m
     }
   }

@@ -502,7 +502,7 @@ class RpcClient internal constructor(
           ProducerIsCancelledException(msg = rpcStreamFailureMessage(desc.displayName, error.message()), cause = null) as Throwable?
         }
         else {
-          cause as Throwable?
+          cause as Throwable? // without `as Throwable?` wasm compiles but throws on wasm compilation in the browser (same as in FL-32234)
         }
         desc.bufferedChannel.close(causePrime)
       }
