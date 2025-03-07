@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -330,7 +331,134 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyMatchStatement(@NotNull PyMatchStatement matchStatement) {
-    new PyMatchStatementControlFlowBuilder(myBuilder, this).build(matchStatement);
+    myBuilder.startNode(matchStatement);
+    PyExpression subject = matchStatement.getSubject();
+    if (subject != null) {
+      subject.accept(this);
+    }
+    for (PyCaseClause caseClause : matchStatement.getCaseClauses()) {
+      visitPyCaseClause(caseClause);
+    }
+    myBuilder.addNodeAndCheckPending(new TransparentInstructionImpl(myBuilder, matchStatement, ""));
+    if (!myBuilder.prevInstruction.allPred().isEmpty()) {
+      addTypeAssertionNodes(matchStatement, false);
+    }
+    myBuilder.addPendingEdge(matchStatement, myBuilder.prevInstruction);
+    myBuilder.prevInstruction = null;
+  }
+
+  @Override
+  public void visitPyCaseClause(@NotNull PyCaseClause clause) {
+    PyPattern pattern = clause.getPattern();
+    if (pattern != null) {
+      pattern.accept(this);
+      addTypeAssertionNodes(pattern, true);
+    }
+
+    TransparentInstruction trueNode = addTransparentInstruction();
+    TransparentInstruction falseNode = addTransparentInstruction();
+    PyExpression guard = clause.getGuardCondition();
+    if (guard != null) {
+      visitCondition(guard, trueNode, falseNode);
+      addTypeAssertionNodes(guard, true);
+    }
+    else {
+      myBuilder.addEdge(myBuilder.prevInstruction, trueNode);
+    }
+    myBuilder.addPendingEdge(clause, falseNode);
+    myBuilder.prevInstruction = trueNode;
+
+    clause.getStatementList().accept(this);
+
+    if (clause.getParent() instanceof PyMatchStatement matchStatement) {
+      myBuilder.addPendingEdge(matchStatement, myBuilder.prevInstruction);
+      myBuilder.updatePendingElementScope(clause.getStatementList(), matchStatement);
+    }
+    myBuilder.prevInstruction = null;
+  }
+
+  @Override
+  public void visitWildcardPattern(@NotNull PyWildcardPattern node) {
+    myBuilder.startNode(node);
+  }
+
+  @Override
+  public void visitPyPattern(@NotNull PyPattern node) {
+    boolean isRefutable = !node.isIrrefutable();
+    if (isRefutable) {
+      myBuilder.addNodeAndCheckPending(new RefutablePatternInstruction(myBuilder, node, false));
+      myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
+    }
+
+    node.acceptChildren(this);
+    myBuilder.updatePendingElementScope(node, node.getParent());
+
+    if (isRefutable) {
+      myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+    }
+  }
+
+  @Override
+  public void visitPyOrPattern(@NotNull PyOrPattern node) {
+    myBuilder.addNodeAndCheckPending(new RefutablePatternInstruction(myBuilder, node, false));
+
+    TransparentInstruction onSuccess = new TransparentInstructionImpl(myBuilder, node, "onSuccess");
+    List<PyPattern> alternatives = node.getAlternatives();
+    PyPattern lastAlternative = ContainerUtil.getLastItem(alternatives);
+
+    for (PyPattern alternative : alternatives) {
+      alternative.accept(this);
+      if (alternative != lastAlternative) {
+        // Allow next alternative to handle the fail edge of this alternative
+        myBuilder.updatePendingElementScope(node, alternative);
+      }
+      myBuilder.addEdge(myBuilder.prevInstruction, onSuccess);
+      myBuilder.prevInstruction = null;
+    }
+    myBuilder.addNode(onSuccess);
+    myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+    myBuilder.updatePendingElementScope(node, node.getParent());
+  }
+
+  @Override
+  public void visitPyClassPattern(@NotNull PyClassPattern node) {
+    myBuilder.addNodeAndCheckPending(new RefutablePatternInstruction(myBuilder, node, false));
+
+    node.getClassNameReference().accept(this);
+    myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
+
+    node.getArgumentList().acceptChildren(this);
+    myBuilder.updatePendingElementScope(node, node.getParent());
+
+    myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+  }
+
+  @Override
+  public void visitPyValuePattern(@NotNull PyValuePattern node) {
+    myBuilder.addNodeAndCheckPending(new RefutablePatternInstruction(myBuilder, node, false));
+
+    node.getValue().accept(this);
+    myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
+
+    myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+  }
+
+  @Override
+  public void visitPyAsPattern(@NotNull PyAsPattern node) {
+    // AsPattern cannot fail by itself - it fails only if its child fails.
+    // So no need to create additional fail edge
+    myBuilder.startNode(node);
+    node.acceptChildren(this);
+    myBuilder.updatePendingElementScope(node, node.getParent());
+  }
+
+  @Override
+  public void visitPyGroupPattern(@NotNull PyGroupPattern node) {
+    // GroupPattern cannot fail by itself - it fails only if its child fails.
+    // So no need to create additional fail edge
+    // Also no need to dedicated node for GroupPattern itself
+    node.acceptChildren(this);
+    myBuilder.updatePendingElementScope(node, node.getParent());
   }
 
   @Override
@@ -955,7 +1083,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
              || element instanceof PyStatementList);
   }
 
-  private void addTypeAssertionNodes(@NotNull PyExpression condition, boolean positive) {
+  private void addTypeAssertionNodes(@NotNull PyElement condition, boolean positive) {
     final PyTypeAssertionEvaluator evaluator = new PyTypeAssertionEvaluator(positive);
     condition.accept(evaluator);
     for (PyTypeAssertionEvaluator.Assertion def : evaluator.getDefinitions()) {

@@ -186,6 +186,7 @@ public final @NonNls class PyNames {
   public static final String ROUND = "__round__";
   public static final String CLASS_GETITEM = "__class_getitem__";
   public static final String PREPARE = "__prepare__";
+  public static final String MATCH_ARGS = "__match_args__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";

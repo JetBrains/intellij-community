@@ -154,8 +154,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
       }
     }
-    if (parent instanceof PyWithItem) {
-      return getWithItemVariableType((PyWithItem)parent, context);
+    if (parent instanceof PyWithItem withItem) {
+      return getWithItemVariableType(withItem, context);
+    }
+    if (parent instanceof PyPattern pattern) {
+      return context.getType(pattern);
     }
     if (parent instanceof PyAssignmentExpression) {
       final PyExpression assignedValue = ((PyAssignmentExpression)parent).getAssignedValue();
