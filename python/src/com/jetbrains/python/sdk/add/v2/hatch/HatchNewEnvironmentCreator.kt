@@ -5,8 +5,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.python.hatch.HatchConfiguration
+import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.text.nullize
@@ -25,6 +29,7 @@ internal class HatchNewEnvironmentCreator(
 ) : CustomNewEnvironmentCreator("hatch", model) {
   override val interpreterType: InterpreterType = InterpreterType.HATCH
   override val executable: ObservableMutableProperty<String> = propertyGraph.property(model.state.hatchExecutable.get())
+  private val hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
 
   init {
     propertyGraph.dependsOn(executable, model.state.hatchExecutable, deleteWhenChildModified = false) {
@@ -38,6 +43,7 @@ internal class HatchNewEnvironmentCreator(
     panel.buildHatchFormFields(
       model = model,
       hatchExecutableProperty = executable,
+      hatchEnvironmentProperty = hatchEnvironmentProperty,
       propertyGraph = propertyGraph,
       validationRequestor = validationRequestor,
       isGenerateNewMode = true,
@@ -53,18 +59,33 @@ internal class HatchNewEnvironmentCreator(
   }
 
   override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
+    project ?: return Result.failure(HatchUIError.ProjectIsNotSelected())
     module ?: return Result.failure(HatchUIError.ModuleIsNotSelected())
-    val selectedEnv = model.state.selectedHatchEnv.get() ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
+    val selectedEnv = hatchEnvironmentProperty.get() ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 
     val hatchExecutablePath = executable.get().toPath().getOr { return it }
     val hatchService = module.getHatchService(hatchExecutablePath = hatchExecutablePath).getOr { return it }
 
-    val existingHatchVenv = hatchService.createVirtualEnvironment(
+    if (project.isNewProject()) {
+      val projectStructure = hatchService.createNewProject(project.name).getOr { return it }
+      ModuleRootModificationUtil.updateModel(module) { moduleRootModel ->
+        val contentEntry = moduleRootModel.contentEntries.firstOrNull() ?: return@updateModel
+
+        projectStructure.sourceRoot?.let { VfsUtilCore.pathToUrl(it.toString()) }?.let { sourceRootUrl ->
+          contentEntry.addSourceFolder(sourceRootUrl, false)
+        }
+        projectStructure.testRoot?.let { VfsUtilCore.pathToUrl(it.toString()) }?.let { testRootUrl ->
+          contentEntry.addSourceFolder(testRootUrl, true)
+        }
+      }
+    }
+
+    val virtualEnvironment = hatchService.createVirtualEnvironment(
       basePythonBinaryPath = homePath?.let { Path.of(it) },
       envName = selectedEnv.hatchEnvironment.name
     ).getOr { return it }
 
-    val createdSdk = existingHatchVenv.createSdk(module).onSuccess {
+    val createdSdk = virtualEnvironment.createSdk(module).onSuccess {
       HatchConfiguration.persistPathForTarget(hatchExecutablePath = hatchExecutablePath)
     }
     return createdSdk
