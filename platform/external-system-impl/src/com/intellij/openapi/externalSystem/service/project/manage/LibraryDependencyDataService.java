@@ -67,6 +67,8 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
 
     Map<OrderEntry, OrderAware> orderEntryDataMap = new LinkedHashMap<>();
     ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
+    final ArrayList<ModifiableRootModel.Dependency> dependencies = new ArrayList<>(nodesToImport.size());
+    final ArrayList<LibraryDependencyData> orderedDependencies = new ArrayList<>(nodesToImport.size());
 
     for (OrderEntry entry : modifiableRootModel.getOrderEntries()) {
       LibraryDependencyData processingResult = null;
@@ -89,9 +91,18 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
 
     // Import missing library dependencies.
     for (LibraryDependencyData dependencyData : toImport.projectLibraries.values()) {
-      OrderEntry entry = importMissingLibraryOrderEntry(dependencyData, modifiableRootModel, modelsProvider, module);
-      orderEntryDataMap.put(entry, dependencyData);
+      ModifiableRootModel.LibraryDependency dependency =
+        importMissingLibraryOrderEntry(dependencyData, modifiableRootModel, modelsProvider, module);
+      if (dependency != null) {
+        dependencies.add(dependency);
+        orderedDependencies.add(dependencyData);
+      }
     }
+    List<OrderEntry> entries = modifiableRootModel.addEntries(dependencies);
+    for (int i=0; i < entries.size(); i++) {
+      orderEntryDataMap.put(entries.get(i), orderedDependencies.get(i));
+    }
+
     for (LibraryDependencyData dependencyData : toImport.moduleLibraries.values()) {
       OrderEntry entry = importMissingModuleLibraryOrderEntry(dependencyData, modifiableRootModel, modelsProvider,
                                                               module);
@@ -166,7 +177,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     return new DataToImport(moduleLibrariesToImport, projectLibrariesToImport, hasUnresolved);
   }
 
-  private static @NotNull OrderEntry importMissingModuleLibraryOrderEntry(@NotNull LibraryDependencyData dependencyData,
+  private static @Nullable OrderEntry importMissingModuleLibraryOrderEntry(@NotNull LibraryDependencyData dependencyData,
                                                                           @NotNull ModifiableRootModel moduleRootModel,
                                                                           @NotNull IdeModifiableModelsProvider modelsProvider,
                                                                           @NotNull Module module
@@ -181,10 +192,11 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     else {
       moduleLib = moduleLibraryTable.createLibrary(libraryName);
     }
-    return syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLib, moduleRootModel, module, null);
+    syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLib, moduleRootModel, module, null);
+    return null; // not adding a new library
   }
 
-  private static @NotNull OrderEntry importMissingLibraryOrderEntry(@NotNull LibraryDependencyData dependencyData,
+  private static @Nullable ModifiableRootModel.LibraryDependency importMissingLibraryOrderEntry(@NotNull LibraryDependencyData dependencyData,
                                                                     @NotNull ModifiableRootModel moduleRootModel,
                                                                     @NotNull IdeModifiableModelsProvider modelsProvider,
                                                                     @NotNull Module module
@@ -194,12 +206,11 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     final Library projectLib = modelsProvider.getLibraryByName(libraryName);
     if (projectLib == null) {
       LibraryTable moduleLibraryTable = moduleRootModel.getModuleLibraryTable();
-      return syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLibraryTable.createLibrary(libraryName), moduleRootModel,
+      syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLibraryTable.createLibrary(libraryName), moduleRootModel,
                                            module, null);
+      return null; // not adding a new library
     }
-    LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(projectLib);
-    setLibraryScope(orderEntry, projectLib, module, dependencyData);
-    return orderEntry;
+    return new ModifiableRootModel.LibraryDependency(projectLib, dependencyData.getScope(), dependencyData.isExported());
   }
 
   private static void setLibraryScope(@NotNull LibraryOrderEntry orderEntry,
@@ -216,7 +227,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     }
   }
 
-  private static @NotNull LibraryOrderEntry syncExistingLibraryDependency(@NotNull IdeModifiableModelsProvider modelsProvider,
+  private static void syncExistingLibraryDependency(@NotNull IdeModifiableModelsProvider modelsProvider,
                                                                           final @NotNull LibraryDependencyData libraryDependencyData,
                                                                           final @NotNull Library library,
                                                                           final @NotNull ModifiableRootModel moduleRootModel,
@@ -235,7 +246,6 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
 
     assert orderEntry != null;
     setLibraryScope(orderEntry, library, module, libraryDependencyData);
-    return orderEntry;
   }
 
   private static @Nullable LibraryOrderEntry findLibraryOrderEntry(@NotNull ModifiableRootModel moduleRootModel,
