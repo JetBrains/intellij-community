@@ -50,6 +50,14 @@ import static com.intellij.openapi.externalSystem.service.execution.ExternalSyst
 @Order(ExternalSystemConstants.UNORDERED)
 public final class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
 
+  private final IdentityHashMap<GradleBuildScriptClasspathModel, List<BuildScriptClasspathData.ClasspathEntry>> buildScriptEntriesMap =
+    new IdentityHashMap<>();
+
+  @Override
+  public void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {
+    buildScriptEntriesMap.clear();
+  }
+
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
     populateJavaProjectCompilerSettings(gradleProject, ideProject);
@@ -149,10 +157,10 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
       buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, GradleBuildScriptClasspathModel.class);
     final List<BuildScriptClasspathData.ClasspathEntry> classpathEntries;
     if (buildScriptClasspathModel != null) {
-      classpathEntries = ContainerUtil.map(
+      classpathEntries = buildScriptEntriesMap.computeIfAbsent(buildScriptClasspathModel, it -> ContainerUtil.map(
         buildScriptClasspathModel.getClasspath(),
         (Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>)model -> BuildScriptClasspathData.ClasspathEntry
-          .create(model.getClasses(), model.getSources(), model.getJavadoc()));
+          .create(model.getClasses(), model.getSources(), model.getJavadoc())));
     }
     else {
       classpathEntries = ContainerUtil.emptyList();
