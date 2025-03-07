@@ -288,15 +288,15 @@ internal class StorageSerializerUtil(
     }
   }
 
-  internal fun getMultimapStorageIndexSerializer(): Serializer<MultimapStorageIndex> = object : Serializer<MultimapStorageIndex>() {
-    override fun write(kryo: Kryo, output: Output, multimapIndex: MultimapStorageIndex) {
+  internal fun getMultimapStorageIndexSerializer(): Serializer<ImmutableMultimapStorageIndex> = object : Serializer<ImmutableMultimapStorageIndex>() {
+    override fun write(kryo: Kryo, output: Output, multimapIndex: ImmutableMultimapStorageIndex) {
       kryo.writeClassAndObject(output, multimapIndex.toMap().mapKeys { it.key.toSerializableEntityId() })
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun read(kryo: Kryo, input: Input?, type: Class<out MultimapStorageIndex>): MultimapStorageIndex {
+    override fun read(kryo: Kryo, input: Input?, type: Class<out ImmutableMultimapStorageIndex>): ImmutableMultimapStorageIndex {
       val data = kryo.readClassAndObject(input) as Map<SerializableEntityId, Set<SymbolicEntityId<*>>>
-      val index = MutableMultimapStorageIndex.from(MultimapStorageIndex())
+      val index = MutableMultimapStorageIndex.from(ImmutableMultimapStorageIndex())
       data.forEach { (key, value) ->
         index.index(key.toEntityId(classCache), value)
       }

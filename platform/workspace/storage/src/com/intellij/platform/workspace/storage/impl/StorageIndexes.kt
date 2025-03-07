@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.Mut
 
 internal sealed class AbstractStorageIndexes() {
   // List of IDs of entities that use this particular persistent id
-  internal abstract val softLinks: MultimapStorageIndex
+  internal abstract val softLinks: ImmutableMultimapStorageIndex
   internal abstract val virtualFileIndex: VirtualFileIndex
   internal abstract val entitySourceIndex: EntityStorageInternalIndex<EntitySource>
   internal abstract val symbolicIdIndex: SymbolicIdInternalIndex
@@ -124,18 +124,18 @@ internal sealed class AbstractStorageIndexes() {
 }
 internal class ImmutableStorageIndexes(
   // List of IDs of entities that use this particular persistent id
-  override val softLinks: MultimapStorageIndex,
+  override val softLinks: ImmutableMultimapStorageIndex,
   override val virtualFileIndex: VirtualFileIndex,
   override val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
   override val symbolicIdIndex: SymbolicIdInternalIndex,
   override val externalMappings: Map<ExternalMappingKey<*>, ImmutableExternalEntityMappingImpl<*>>
 ) : AbstractStorageIndexes() {
   companion object {
-    val EMPTY = ImmutableStorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false), SymbolicIdInternalIndex(),
+    val EMPTY = ImmutableStorageIndexes(ImmutableMultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false), SymbolicIdInternalIndex(),
                                         HashMap())
   }
 
-  constructor(softLinks: MultimapStorageIndex,
+  constructor(softLinks: ImmutableMultimapStorageIndex,
               virtualFileIndex: VirtualFileIndex,
               entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
               symbolicIdIndex: SymbolicIdInternalIndex

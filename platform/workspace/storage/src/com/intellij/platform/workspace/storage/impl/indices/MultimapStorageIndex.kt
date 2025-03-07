@@ -11,7 +11,7 @@ import org.jetbrains.annotations.TestOnly
 private typealias BidirectionalMap = BidirectionalLongMultiMap<SymbolicEntityId<*>>
 //private typealias BidirectionalMap = BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
 
-internal open class MultimapStorageIndex internal constructor(
+internal open class ImmutableMultimapStorageIndex internal constructor(
   internal open val index: BidirectionalMap,
 ) {
   constructor() : this(BidirectionalMap())
@@ -30,7 +30,7 @@ internal open class MultimapStorageIndex internal constructor(
 internal class MutableMultimapStorageIndex private constructor(
   // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
   override var index: BidirectionalMap,
-) : MultimapStorageIndex(index), WorkspaceMutableIndex<SymbolicEntityId<*>> {
+) : ImmutableMultimapStorageIndex(index), WorkspaceMutableIndex<SymbolicEntityId<*>> {
 
   private var freezed = true
 
@@ -58,7 +58,7 @@ internal class MutableMultimapStorageIndex private constructor(
   }
 
   @TestOnly
-  internal fun copyFrom(another: MultimapStorageIndex) {
+  internal fun copyFrom(another: ImmutableMultimapStorageIndex) {
     startWrite()
     this.index.putAll(another.index)
   }
@@ -71,13 +71,13 @@ internal class MutableMultimapStorageIndex private constructor(
 
   private fun copyIndex(): BidirectionalMap = index.copy()
 
-  fun toImmutable(): MultimapStorageIndex {
+  fun toImmutable(): ImmutableMultimapStorageIndex {
     freezed = true
-    return MultimapStorageIndex(index)
+    return ImmutableMultimapStorageIndex(index)
   }
 
   companion object {
-    fun from(other: MultimapStorageIndex): MutableMultimapStorageIndex {
+    fun from(other: ImmutableMultimapStorageIndex): MutableMultimapStorageIndex {
       if (other is MutableMultimapStorageIndex) other.freezed = true
       return MutableMultimapStorageIndex(other.index)
     }

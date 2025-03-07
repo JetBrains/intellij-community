@@ -173,7 +173,7 @@ public class EntityStorageSerializerImpl(
         time = logAndResetTime(time) { measuredTime -> "Read data and references: $measuredTime ns" }
 
         // Read indexes
-        val softLinks = kryo.readObject(input, MultimapStorageIndex::class.java)
+        val softLinks = kryo.readObject(input, ImmutableMultimapStorageIndex::class.java)
 
         time = logAndResetTime(time) { measuredTime -> "Read soft links: $measuredTime ns" }
         
