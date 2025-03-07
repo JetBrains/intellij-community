@@ -96,7 +96,7 @@ class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope): Dispos
             edit(operation)
           }
         }
-        awaitCommitted()
+        //TODO we should not wait for awaitCommitted()
       }
       // TODO: cannot replace with runWithModalProgressBlocking because pumping events ruins the models
       runBlocking { entityChange.await() }
