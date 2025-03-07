@@ -25,18 +25,20 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector.findSchema;
+
 // todo disable in guest (no file types)
 @ApiStatus.Internal
 public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  private final EventLogGroup GROUP = new EventLogGroup("file.types", 7);
+  private final EventLogGroup GROUP = new EventLogGroup("file.types", 8);
 
   private final RoundedIntEventField COUNT = EventFields.RoundedInt("count");
 
   // temporary not collected
-  private final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
-  private final IntEventField PERCENT = EventFields.Int("percent");
+  public static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
+  public static final IntEventField PERCENT = EventFields.Int("percent");
   private final ObjectListEventField FILE_SCHEME_PERCENT = new ObjectListEventField("file_schema", SCHEMA, PERCENT);
 
   private final VarargEventId FILE_IN_PROJECT = GROUP.registerVarargEvent(
@@ -61,10 +63,12 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     IProjectStore stateStore = ProjectKt.getStateStore(project);
     final ObjectIntMap<FileType> filesByTypeCount = new ObjectIntHashMap<>();
+    var schemaCounter = new FileTypeSchemaCounter();
     projectFileIndex.iterateContent(
       file -> {
         FileType type = file.getFileType();
         filesByTypeCount.put(type, filesByTypeCount.getOrDefault(type, 0) + 1);
+        schemaCounter.recordFileTypeWithSchema(type, findSchema(project, file));
         return true;
       },
       //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
@@ -73,10 +77,11 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
     final Set<MetricEvent> events = new HashSet<>();
     for (final FileType fileType : filesByTypeCount.keySet()) {
-      List<EventPair<?>> eventPairs = new ArrayList<>(3);
+      List<EventPair<?>> eventPairs = new ArrayList<>(4);
       eventPairs.add(EventFields.PluginInfoFromInstance.with(fileType));
       eventPairs.add(EventFields.FileType.with(fileType));
       eventPairs.add(COUNT.with(filesByTypeCount.get(fileType)));
+      eventPairs.add(FILE_SCHEME_PERCENT.with(schemaCounter.getFileTypeSchemaUsagePercentage(fileType)));
       events.add(FILE_IN_PROJECT.metric(eventPairs));
     }
 
