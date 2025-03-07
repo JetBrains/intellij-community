@@ -99,8 +99,8 @@ public class PyTypeTest extends PyTestCase {
   public void testUnionOfTuples() {
     doTest("Union[Tuple[int, str], Tuple[str, int]]",
            """
-             def x():
-               if True:
+             def x(b):
+               if b:
                  return (1, 'a')
                else:
                  return ('a', 1)

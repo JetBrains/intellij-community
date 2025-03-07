@@ -28,6 +28,22 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-78964
+  public void testFunctionReturnTypeTryFinally() {
+    doTest("str",
+           """
+             def test():
+                 try:
+                     return 42
+                 finally:
+                     return "str"
+             
+                 return True
+             
+             expr = test()
+             """);
+  }
+
   // PY-20710
   public void testLambdaGenerator() {
     doTest("Generator[int, Any, Any]", """
@@ -3435,6 +3451,44 @@ public class Py3TypeTest extends PyTestCase {
       s1 = concat(MyStr('apple'), MyStr('pie'))
       s2 = concat(MyStr('apple'), 'pie')
       expr = (s1, s2)
+      """);
+  }
+
+  public void testShadowingReturnInsideFinally() {
+    doTest("str", """
+      def f():
+          try:
+              return 42
+          finally:
+              return "foo"
+      expr = f()
+      """);
+  }
+
+  public void testNonShadowingReturnInsideFinally() {
+    doTest("int | str", """
+      def f(p):
+          try:
+              return 42
+          finally:
+              if p:
+                  return "foo"
+      expr = f()
+      """);
+  }
+
+  public void testReturnInsideExceptElse() {
+    doTest("str | bool", """
+      def f(p):
+          try:
+              e1()
+          except Exception:
+              return "foo"
+          else:
+              return True
+          finally:
+              pass
+      expr = f()
       """);
   }
 

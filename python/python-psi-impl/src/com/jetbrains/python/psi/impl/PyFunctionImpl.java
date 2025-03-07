@@ -17,6 +17,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.JBIterable;
@@ -379,26 +380,52 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public @NotNull List<PyStatement> getReturnPoints(@NotNull TypeEvalContext context) {
     final Instruction[] flow = ControlFlowCache.getControlFlow(this).getInstructions();
-    final List<PyStatement> returnPoints = new ArrayList<>();
+    final PyDataFlow dataFlow = ControlFlowCache.getDataFlow(this, context);
 
-    ControlFlowUtil.iteratePrev(flow.length-1, flow, instruction -> {
-      if (instruction instanceof CallInstruction ci && ci.isNoReturnCall(context)) {
+    class ReturnPointCollector {
+      final List<PyStatement> returnPoints = new ArrayList<>();
+      boolean collectImplicitReturn = true;
+
+      ControlFlowUtil.Operation checkInstruction(@NotNull Instruction instruction) {
+        if (dataFlow.isUnreachable(instruction)) {
+          return ControlFlowUtil.Operation.CONTINUE;
+        }
+        if (instruction instanceof PyFinallyFailExitInstruction exitInstruction) {
+          // Most nodes in try-part are connected to finally-fail-part,
+          // but we will only be interested in explicit return statements.
+          boolean oldCollectImplicitReturn = collectImplicitReturn;
+          collectImplicitReturn = false;
+          walkCFG(ArrayUtil.indexOf(flow, exitInstruction.getBegin()));
+          collectImplicitReturn = oldCollectImplicitReturn;
+          return ControlFlowUtil.Operation.CONTINUE;
+        }
+        if (instruction instanceof CallInstruction ci && ci.isNoReturnCall(context)) {
+          return ControlFlowUtil.Operation.CONTINUE;
+        }
+        if (instruction instanceof PyRaiseInstruction) {
+          return ControlFlowUtil.Operation.CONTINUE;
+        }
+        if (instruction instanceof PyWithContextExitInstruction withExit && !withExit.isSuppressingExceptions(context)) {
+          return ControlFlowUtil.Operation.CONTINUE;
+        }
+        final PsiElement element = instruction.getElement();
+        if (!(element instanceof PyStatement statement)) {
+          return ControlFlowUtil.Operation.NEXT;
+        }
+        if (collectImplicitReturn || statement instanceof PyReturnStatement) {
+          returnPoints.add(statement);
+        }
         return ControlFlowUtil.Operation.CONTINUE;
       }
-      if (instruction instanceof PyRaiseInstruction) {
-        return ControlFlowUtil.Operation.CONTINUE;
+      
+      void walkCFG(int startInstruction) {
+        ControlFlowUtil.iteratePrev(startInstruction, flow, this::checkInstruction);
       }
-      if (instruction instanceof PyWithContextExitInstruction withExit && !withExit.isSuppressingExceptions(context)) {
-        return ControlFlowUtil.Operation.CONTINUE;
-      }
-      final PsiElement element = instruction.getElement();
-      if (!(element instanceof PyStatement statement)) {
-        return ControlFlowUtil.Operation.NEXT;
-      }
-      returnPoints.add(statement);
-      return ControlFlowUtil.Operation.CONTINUE;
-    });
-    return returnPoints;
+    }
+    
+    ReturnPointCollector collector = new ReturnPointCollector();
+    collector.walkCFG(flow.length - 1);
+    return collector.returnPoints;
   }
 
   @Override
