@@ -32,6 +32,7 @@
     <module name="intellij.platform.bookmarks.frontend"/>
 
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.monolith"/>
 
     <module name="intellij.platform.inline.completion"/>
 

@@ -3,7 +3,6 @@
     <id>com.intellij.classic.ui</id>
     <vendor>JetBrains</vendor>
 
-    <depends>com.intellij.platform.experimental.monolith</depends>
     <incompatible-with>com.intellij.cwm.guest</incompatible-with>
     <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
     <incompatible-with>com.intellij.gateway</incompatible-with>
@@ -14,7 +13,9 @@
         If you prefer the old-school layout and visual style, this plugin brings back that familiar look and feel.
     ]]></description>
 
-    <depends>com.intellij.modules.lang</depends>
+    <dependencies>
+      <module name="intellij.platform.monolith"/>
+    </dependencies>
 
     <extensions defaultExtensionNs="com.intellij">
       <!--suppress PluginXmlDynamicPlugin -->
