@@ -50,7 +50,7 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
             actionMenu.isFocusable = false
           }
         }
-        if (mergedMainMenu != null && newVisibleActions.indexOf(action) >= visibleMenuCount) {
+        if (mergedMainMenu != null && visibleMenuCount < visibleActions.size && newVisibleActions.indexOf(action) >= visibleMenuCount) {
           mergedMainMenu.addInvisibleItem(actionMenu)
           continue
         }
