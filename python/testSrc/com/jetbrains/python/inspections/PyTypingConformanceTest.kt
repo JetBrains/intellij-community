@@ -33,8 +33,10 @@ private val inspections
   get() = arrayOf(
     PyArgumentListInspection(),
     PyAssertTypeInspection(),
+    PyClassVarInspection(),
     PyDataclassInspection(),
     PyEnumInspection(),
+    PyFinalInspection(),
     //PyInitNewSignatureInspection(), // False negative constructors_consistency.py
     PyNewStyleGenericSyntaxInspection(),
     PyNewTypeInspection(),
