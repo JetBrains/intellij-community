@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerSessionEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
@@ -19,28 +20,43 @@ import java.util.*
 @Service(Service.Level.PROJECT)
 internal class FrontendXDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
   private val sessions = Collections.synchronizedMap(LinkedHashMap<XDebugSessionId, FrontendXDebuggerSession>())
+  private val synchronousExecutor = Channel<suspend () -> Unit>(capacity = Integer.MAX_VALUE)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   val currentSession: StateFlow<FrontendXDebuggerSession?> =
     channelFlow {
       XDebuggerManagerApi.getInstance().currentSession(project.projectId()).collectLatest { sessionId ->
-        send(sessions[sessionId])
+        synchronousExecutor.trySend {
+          this@channelFlow.send(sessions[sessionId])
+        }
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   init {
     cs.launch {
+      for (event in synchronousExecutor) {
+        event()
+      }
+    }
+
+    cs.launch {
       val (sessionsList, eventFlow) = XDebuggerManagerApi.getInstance().sessions(project.projectId())
       for (sessionDto in sessionsList) {
-        createDebuggerSession(sessionDto)
+        synchronousExecutor.trySend {
+          createDebuggerSession(sessionDto)
+        }
       }
       project.messageBus.connect(cs).subscribe(FrontendXDebuggerManagerListener.TOPIC, object : FrontendXDebuggerManagerListener {
         override fun processStarted(sessionId: XDebugSessionId, sessionDto: XDebugSessionDto) {
-          createDebuggerSession(sessionDto)
+          synchronousExecutor.trySend {
+            createDebuggerSession(sessionDto)
+          }
         }
 
         override fun processStopped(sessionId: XDebugSessionId) {
-          sessions.remove(sessionId)?.closeScope()
+          synchronousExecutor.trySend {
+            sessions.remove(sessionId)?.closeScope()
+          }
         }
       })
       eventFlow.toFlow().collect { event ->
