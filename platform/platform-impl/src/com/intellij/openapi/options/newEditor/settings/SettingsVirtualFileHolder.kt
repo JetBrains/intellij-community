@@ -63,9 +63,13 @@ internal class SettingsVirtualFileHolder private constructor(private val project
       val settingsVirtualFile = settingsFileRef.get()
 
       if (settingsVirtualFile != null) {
-        val editor = settingsVirtualFile.getOrCreateDialog().editor as? SettingsEditor
-        if (editor != null && toSelect != null) {
-          editor.select(toSelect)
+        val dialogIfCreated = settingsVirtualFile.getIfCreated()
+        if (dialogIfCreated != null) {
+          if (toSelect != null) {
+            (dialogIfCreated.editor as? SettingsEditor)?.select(toSelect)
+          }
+        } else {
+          settingsVirtualFile.initializer = initializer
         }
         return@withContext settingsVirtualFile
       }
@@ -81,7 +85,7 @@ internal class SettingsVirtualFileHolder private constructor(private val project
     return settingsFileRef.getAndSet(null)
   }
 
-  class SettingsVirtualFile(val project: Project, private val initializer: () -> SettingsDialog) :
+  class SettingsVirtualFile(val project: Project, internal var initializer: () -> SettingsDialog) :
     LightVirtualFile(CommonBundle.settingsTitle(), SettingsFileType, ""), OptionallyIncluded {
     private val wasModified = AtomicBoolean()
 
@@ -137,6 +141,8 @@ internal class SettingsVirtualFileHolder private constructor(private val project
     }
 
     fun getOrCreateDialog(): SettingsDialog = dialogLazy.value
+
+    fun getIfCreated(): SettingsDialog? = dialogLazy.valueIfInitialized
 
     fun isModified(): Boolean {
       val dialog = dialogLazy.valueIfInitialized ?: return false
