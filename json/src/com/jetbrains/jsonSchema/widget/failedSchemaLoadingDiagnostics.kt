@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
+import com.jetbrains.jsonSchema.fus.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -27,6 +28,15 @@ internal fun logSchemaDownloadFailureDiagnostics(schemaFile: HttpVirtualFile, pr
     val anotherFileLookupAttempt = VfsUtil.findFile(schemaFile.toNioPath(), true)
     val isNull = anotherFileLookupAttempt == null
     val isValid = anotherFileLookupAttempt?.isValid
+    JsonHttpFileLoadingUsageCollector.jsonSchemaHighlightingSessionData.log(
+      JsonHttpFileNioFile.with(nioFileExists),
+      JsonHttpFileNioFileCanBeRead.with(canRead),
+      JsonHttpFileNioFileLength.with(nioFileLength),
+      JsonHttpFileVfsFile.with(schemaFile.fileInfo?.localFile != null),
+      JsonHttpFileSyncRefreshVfsFile.with(anotherFileLookupAttempt != null),
+      JsonHttpFileVfsFileValidity.with(isValid ?: false),
+      JsonHttpFileDownloadState.with(JsonRemoteSchemaDownloadState.fromRemoteFileState(stateOrNull))
+    )
     Logger.getInstance(schemaFile.javaClass).error("$instantData, syncRefreshFileIsNull: $isNull, syncRefreshFileIsValid: $isValid")
   }
 }
