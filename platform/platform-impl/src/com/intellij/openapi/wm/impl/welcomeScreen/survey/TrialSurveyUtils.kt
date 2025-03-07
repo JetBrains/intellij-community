@@ -30,8 +30,8 @@ fun trialSurveyPanel(createButtonsPanel: (JButton) -> JComponent, activateTrialB
   lateinit var panel: DialogPanel
 
   val activateTrialButton = activateTrialButtonFn {
-    reportSurveyAnswer(chosenOption)
     panel.apply()
+    reportSurveyAnswer(chosenOption)
   }
   //LicenseDialogComponents.adjustStartTrialButtonText(model, activateTrialButton)
   activateTrialButton.isEnabled = false
