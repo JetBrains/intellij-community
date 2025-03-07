@@ -7,8 +7,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ComputationState.Companion.thisLevelPermit
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.internal.runSuspend
 import com.intellij.util.ReflectionUtil
@@ -591,12 +589,6 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     myReadActionListener = null
   }
 
-  override fun runReadAction(action: Runnable) = runReadAction<Unit, Throwable>(action.javaClass) { action.run() }
-
-  override fun <T> runReadAction(computation: Computable<T>): T = runReadAction<T, Throwable>(computation.javaClass) { computation.compute() }
-
-  override fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T = runReadAction(computation.javaClass, computation)
-
   private fun smartAcquireReadPermit(state: ComputationState): ReadPermit {
     var permit = state.tryAcquireReadPermit()
     if (permit != null) {
@@ -641,7 +633,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  private fun <T, E : Throwable?> runReadAction(clazz: Class<*>, block: ThrowableComputable<T, E>): T {
+  override fun <T> runReadAction(clazz: Class<*>, action: () -> T): T {
     handleLockAccess("read lock")
 
     val listener = myReadActionListener
@@ -666,7 +658,7 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
 
     try {
       fireReadActionStarted(listener, clazz)
-      val rv = block.compute()
+      val rv = action()
       return rv
     }
     finally {

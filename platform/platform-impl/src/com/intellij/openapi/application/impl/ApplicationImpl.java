@@ -940,17 +940,17 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runReadAction(@NotNull Runnable action) {
-    getThreadingSupport().runReadAction(action);
+    getThreadingSupport().runReadAction(action.getClass(), runnableUnitFunction(action));
   }
 
   @Override
   public <T> T runReadAction(@NotNull Computable<T> computation) {
-    return getThreadingSupport().runReadAction(computation);
+    return getThreadingSupport().runReadAction(computation.getClass(), computation::compute);
   }
 
   @Override
   public <T, E extends Throwable> T runReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return getThreadingSupport().runReadAction(computation);
+    return getThreadingSupport().runReadAction(computation.getClass(), rethrowCheckedExceptions(computation));
   }
 
   @Override

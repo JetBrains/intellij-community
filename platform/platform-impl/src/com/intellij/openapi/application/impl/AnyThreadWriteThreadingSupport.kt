@@ -6,8 +6,6 @@ import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.internal.runSuspend
 import com.intellij.util.ReflectionUtil
@@ -355,12 +353,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myReadActionListener = null
   }
 
-  override fun runReadAction(action: Runnable) = runReadAction<Unit, Throwable>(action.javaClass) { action.run() }
-
-  override fun <T> runReadAction(computation: Computable<T>): T  = runReadAction<T, Throwable>(computation.javaClass) { computation.compute() }
-
-  override fun <T, E : Throwable?> runReadAction(computation: ThrowableComputable<T, E>): T = runReadAction(computation.javaClass, computation)
-
   private fun acquireReadPermit(lock: RWMutexIdea): Permit {
     var permit = tryGetReadPermit(lock)
     if (permit != null) {
@@ -404,7 +396,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  private fun <T, E : Throwable?> runReadAction(clazz: Class<*>, block: ThrowableComputable<T, E>): T {
+  override fun <T> runReadAction(clazz: Class<*>, action: () -> T): T {
     handleLockAccess("read lock")
 
     val listener = myReadActionListener
@@ -445,7 +437,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     try {
       fireReadActionStarted(listener, clazz)
-      val rv = runWithTemporaryThreadLocal(ts) { block.compute() }
+      val rv = runWithTemporaryThreadLocal(ts) { action() }
       return rv
     }
     finally {
