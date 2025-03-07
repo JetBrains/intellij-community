@@ -202,12 +202,37 @@ class PluginSetLoadingTest {
   }
 
   @Test
-  fun `module package filter collision leads to a failure`() {
+  fun `package prefix collision leads to a failure - two plugins`() {
     PluginBuilder.empty().id("foo")
       .module("foo.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginsDirPath.resolve("foo"))
     PluginBuilder.empty().id("bar")
       .module("bar.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginsDirPath.resolve("bar"))
+    assertThatThrownBy {
+      val pluginSet = buildPluginSet()
+    }.hasStackTraceContaining("ClassLoaderConfigurator.checkPackagePrefixUniqueness")
+      .hasMessageContaining("Package prefix common.module is already used")
+  }
+
+  @Test
+  fun `package prefix collision leads to a failure - same plugin`() {
+    PluginBuilder.empty().id("foo").packagePrefix("common.module")
+      .module("foo.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginsDirPath.resolve("foo"))
+    assertThatThrownBy {
+      val pluginSet = buildPluginSet()
+    }.hasStackTraceContaining("ClassLoaderConfigurator.checkPackagePrefixUniqueness")
+      .hasMessageContaining("Package prefix common.module is already used")
+  }
+
+  @Test
+  fun `package prefix collision leads to a failure - even if modules are optional`() {
+    PluginBuilder.empty().id("foo")
+      .module("foo.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .build(pluginsDirPath.resolve("foo"))
+    PluginBuilder.empty().id("bar")
+      .module("bar.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.OPTIONAL)
       .build(pluginsDirPath.resolve("bar"))
     assertThatThrownBy {
       val pluginSet = buildPluginSet()
