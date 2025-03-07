@@ -90,7 +90,7 @@ public class EntityStorageSerializerImpl(
     return Triple(kryo, classCache, storageSerializerUtil)
   }
 
-  private fun writeIndexes(kryo: Kryo, output: Output, indexes: StorageIndexes, storageSerializerUtil: StorageSerializerUtil) {
+  private fun writeIndexes(kryo: Kryo, output: Output, indexes: ImmutableStorageIndexes, storageSerializerUtil: StorageSerializerUtil) {
     kryo.writeObject(output, indexes.softLinks)
 
     kryo.writeObject(output, indexes.virtualFileIndex.entityId2VirtualFileUrl, storageSerializerUtil.getEntityId2VfuPersistentMapSerializer())
@@ -194,7 +194,7 @@ public class EntityStorageSerializerImpl(
 
         time = logAndResetTime(time) { measuredTime -> "Persistent id index: $measuredTime ns" }
 
-        val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, symbolicIdIndex)
+        val storageIndexes = ImmutableStorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, symbolicIdIndex)
 
         val storage = ImmutableEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
         val builder = MutableEntityStorageImpl(storage)

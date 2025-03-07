@@ -61,7 +61,7 @@ private val entityStorageSnapshotImplInstancesCounter: AtomicLong = AtomicLong()
 internal open class ImmutableEntityStorageImpl(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
-  override val indexes: StorageIndexes,
+  override val indexes: ImmutableStorageIndexes,
   internal val snapshotCache: TracedSnapshotCache = TracedSnapshotCacheImpl(),
 ) : ImmutableEntityStorageInstrumentation, AbstractEntityStorage() {
 
@@ -103,7 +103,7 @@ internal open class ImmutableEntityStorageImpl(
 
   companion object {
     private val NULL_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
-    val EMPTY = ImmutableEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), StorageIndexes.EMPTY)
+    val EMPTY = ImmutableEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), ImmutableStorageIndexes.EMPTY)
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
       val instancesCountCounter = meter.counterBuilder("workspaceModel.entityStorageSnapshotImpl.instances.count").buildObserver()
@@ -954,7 +954,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
 
   internal abstract val entitiesByType: EntitiesBarrel
   internal abstract val refs: AbstractRefsTable
-  internal abstract val indexes: StorageIndexes
+  internal abstract val indexes: ImmutableStorageIndexes
 
   internal var brokenConsistency: Boolean = false
 

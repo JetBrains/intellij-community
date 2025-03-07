@@ -82,7 +82,7 @@ abstract class BaseSerializationChecker {
     // External index should not be persisted
     assertTrue(actual.indexes.externalMappings.isEmpty())
     // Just checking that all properties have been asserted
-    assertEquals(5, StorageIndexes::class.memberProperties.size)
+    assertEquals(5, ImmutableStorageIndexes::class.memberProperties.size)
   }
 
   protected abstract fun assertEntitiesEqual(expected: List<WorkspaceEntityData<*>?>, actual: List<WorkspaceEntityData<*>?>)
