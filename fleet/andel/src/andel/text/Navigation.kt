@@ -4,11 +4,10 @@ package andel.text
 import andel.editor.Caret
 import andel.editor.CaretPosition
 import andel.editor.MutableDocument
-
-enum class Direction {
-  FORWARD,
-  BACKWARD,
-}
+import fleet.util.text.CodepointClass
+import fleet.util.text.Direction
+import fleet.util.text.codepointClass
+import fleet.util.text.codepoints
 
 private fun stopOnCodepointClass(
   before: CodepointClass,

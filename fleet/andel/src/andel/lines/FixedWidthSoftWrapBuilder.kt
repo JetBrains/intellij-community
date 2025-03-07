@@ -4,7 +4,9 @@ package andel.lines
 import andel.intervals.Interval
 import andel.intervals.IntervalsQuery
 import andel.text.*
-import andel.text.charGeomLength
+import fleet.util.text.CodepointClass
+import fleet.util.text.codepointClass
+import fleet.util.text.isFullWidth
 
 data class FixedWidthSoftWrapBuilder(
   val width: Float = Float.POSITIVE_INFINITY,
@@ -97,4 +99,16 @@ data class FixedWidthSoftWrapBuilder(
   }
 
   override fun wrappingChanged(width: Float, charWidth: Float): Boolean = this.width != width || this.charWidth != charWidth
+}
+
+//todo this is wrong
+internal fun charGeomLength(char: Char): Float {
+  return when {
+    char == '\n' -> 0f
+    char == '\r' -> 0f
+    char == '\t' -> 4f
+    char.isLowSurrogate() -> 0f
+    isFullWidth(char.code) -> 1.65f
+    else -> 1f
+  }
 }

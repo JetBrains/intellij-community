@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package andel.text
+package fleet.util.text
 
 /**
  * Ranges char codepoints which are both unicode identifier part and java identifier part (could be made two lists, but very long)

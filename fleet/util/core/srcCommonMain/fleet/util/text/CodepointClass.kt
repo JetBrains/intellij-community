@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package andel.text
+package fleet.util.text
 
 private const val SEPARATORS = "`~!@#\$%^&*()-=+[{]}\\|;:'\",.<>/?"
 private val maxSeparatorCode = SEPARATORS.maxBy { it.code }.code
@@ -25,18 +25,6 @@ fun codepointClass(codepoint: Int): CodepointClass =
     isUpperCase(codepoint) -> CodepointClass.UPPERCASE
     else -> CodepointClass.LOWERCASE // treat all lowercase and unicode symbols as lowercase
   }
-
-//todo this is wrong
-internal fun charGeomLength(char: Char): Float {
-  return when {
-    char == '\n' -> 0f
-    char == '\r' -> 0f
-    char == '\t' -> 4f
-    char.isLowSurrogate() -> 0f
-    isFullWidth(char.code) -> 1.65f
-    else -> 1f
-  }
-}
 
 // Code points are derived from:
 // https://unicode.org/Public/UNIDATA/PropList.txt

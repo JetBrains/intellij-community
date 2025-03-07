@@ -25,4 +25,5 @@ module fleet.util.core {
   requires kotlinx.datetime;
   requires fleet.reporting.api;
   requires fleet.util.multiplatform;
+  requires kotlin.codepoints.jvm;
 }
