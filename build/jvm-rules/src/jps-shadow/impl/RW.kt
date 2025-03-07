@@ -20,27 +20,12 @@ object RW {
     }
   }
 
-  inline fun <T : Any> writeCollection(out: DataOutput, collection: Collection<T>, writer: (T) -> Unit) {
-    out.writeInt(collection.size)
-    for (t in collection) {
-      writer(t)
-    }
-  }
-
   @JvmStatic
   fun <T : Any> readCollection(`in`: DataInput, reader: Reader<T>): List<T> {
     val size = `in`.readInt()
     @Suppress("UNCHECKED_CAST")
     return Array<Any>(size) {
       reader.read()
-    }.asList() as List<T>
-  }
-
-  inline fun <T : Any> readList(`in`: DataInput, reader: () -> T): List<T> {
-    val size = `in`.readInt()
-    @Suppress("UNCHECKED_CAST")
-    return Array<Any>(size) {
-      reader()
     }.asList() as List<T>
   }
 

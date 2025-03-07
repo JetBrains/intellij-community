@@ -178,7 +178,8 @@ private suspend inline fun doAssociate(
     val classFileData = ByteArray(size)
     buffer.get(classFileData)
     val reader = FailSafeClassReader(classFileData)
-    val node = JvmClassNodeBuilder.createForLibrary("\$cp/$name", reader).result
+    val node = JvmClassNodeBuilder.createForLibrary(filePath = name, classReader = reader)
+      .build(isLibraryMode = true, skipPrivateMethodsAndFields = false)
     if (node.flags.isPublic) {
       associator(node)
     }

@@ -13,13 +13,12 @@ import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.diff.DiffCapable
 import org.jetbrains.jps.dependency.diff.Difference
 import org.jetbrains.jps.dependency.diff.Difference.Specifier
-import org.jetbrains.jps.dependency.impl.GraphDataInputImpl
-import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl
 
 private val emptyMetadata = emptyArray<JvmMetadata<*, *>>()
 
 abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Node<T, D> {
-  private val id: JvmNodeReferenceID
+  final override val referenceID: JvmNodeReferenceID
+
   private val outFilePathHash: Long
   private val usages: Collection<Usage>
   private val metadata: Array<JvmMetadata<*, *>>
@@ -33,41 +32,32 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
     usages: Iterable<Usage>,
     metadata: Iterable<JvmMetadata<*, *>>
   ) : super(flags, signature, name, annotations) {
-    id = JvmNodeReferenceID(name)
+    referenceID = JvmNodeReferenceID(name)
     outFilePathHash = Hashing.xxh3_64().hashBytesToLong(outFilePath.toByteArray())
     this.usages = usages as Collection<Usage>
     this.metadata = (metadata as java.util.Collection<JvmMetadata<*, *>>).toArray(emptyMetadata)
   }
 
-  constructor(`in`: GraphDataInput) : super(`in`) {
-    val input = `in` as GraphDataInputImpl
-    id = JvmNodeReferenceID(name)
+  constructor(input: GraphDataInput) : super(input) {
+    referenceID = JvmNodeReferenceID(name)
     outFilePathHash = input.readRawLong()
 
     val usages = ArrayList<Usage>()
-    var groupCount = `in`.readInt()
+    var groupCount = input.readInt()
     while (groupCount-- > 0) {
-      `in`.readGraphElementCollection(usages)
+      input.readGraphElementCollection(usages)
     }
     this.usages = usages
-    metadata = Array(`in`.readInt()) {
-      `in`.readGraphElement()
+    metadata = Array(input.readInt()) {
+      input.readGraphElement()
     }
   }
 
   override fun write(out: GraphDataOutput) {
     super.write(out)
-    (out as GraphDataOutputImpl).writeRawLong(outFilePathHash)
+    out.writeRawLong(outFilePathHash)
 
-    val classToUsageList = Object2ObjectOpenHashMap<Class<out Usage>, MutableList<Usage>>()
-    for (usage in usages) {
-      classToUsageList.computeIfAbsent(usage.javaClass) { ArrayList() }.add(usage)
-    }
-
-    out.writeInt(classToUsageList.size)
-    for (entry in classToUsageList.object2ObjectEntrySet().fastIterator()) {
-      out.writeGraphElementCollection(entry.key, entry.value)
-    }
+    out.writeUsages(usages)
 
     out.writeInt(metadata.size)
     for (t in metadata) {
@@ -75,9 +65,9 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
     }
   }
 
-  final override fun getReferenceID(): JvmNodeReferenceID = id
-
   final override fun getUsages(): Iterable<Usage> = usages
+
+  final override fun usages(): Sequence<Usage> = usages.asSequence()
 
   @Suppress("unused")
   fun getMetadata(): Iterable<JvmMetadata<*, *>> = Iterable { metadata.iterator() }
@@ -131,11 +121,11 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
       return false
     }
     val that = other
-    return outFilePathHash == that.outFilePathHash && id == that.id
+    return outFilePathHash == that.outFilePathHash && referenceID == that.referenceID
   }
 
   final override fun diffHashCode(): Int {
-    return 31 * outFilePathHash.toInt() + id.hashCode()
+    return 31 * outFilePathHash.toInt() + referenceID.hashCode()
   }
 
   @Suppress("unused")

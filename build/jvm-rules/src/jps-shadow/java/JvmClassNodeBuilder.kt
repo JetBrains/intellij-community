@@ -3,7 +3,7 @@
 package org.jetbrains.jps.dependency.java
 
 import com.dynatrace.hash4j.hashing.Hashing
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
@@ -29,19 +29,17 @@ import kotlin.metadata.jvm.setterSignature
 import kotlin.metadata.jvm.signature
 
 private const val KOTLIN_LAMBDA_USAGE_CLASS_MARKER = "\$sam$"
-private val LOG: Logger = Logger.getInstance(JvmClassNodeBuilder::class.java)
 @Suppress("SpellCheckingInspection")
 private const val LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory"
 
 class JvmClassNodeBuilder private constructor(
   private val fileName: String,
   private val isGenerated: Boolean,
-  private val issLibraryMode: Boolean
 ) : ClassVisitor(API_VERSION), NodeBuilder {
   companion object {
     @JvmStatic
     fun create(filePath: String, classReader: ClassReader, isGenerated: Boolean): JvmClassNodeBuilder {
-      val builder = JvmClassNodeBuilder(fileName = filePath, isGenerated = isGenerated, issLibraryMode = false)
+      val builder = JvmClassNodeBuilder(fileName = filePath, isGenerated = isGenerated)
       try {
         classReader.accept(builder, ClassReader.SKIP_FRAMES)
       }
@@ -54,9 +52,8 @@ class JvmClassNodeBuilder private constructor(
       return builder
     }
 
-    @JvmStatic
     fun createForLibrary(filePath: String, classReader: ClassReader): JvmClassNodeBuilder {
-      val builder = JvmClassNodeBuilder(fileName = filePath, isGenerated = false, issLibraryMode = true)
+      val builder = JvmClassNodeBuilder(fileName = filePath, isGenerated = false)
       try {
         classReader.accept(builder, ClassReader.SKIP_FRAMES or ClassReader.SKIP_CODE or ClassReader.SKIP_DEBUG)
       }
@@ -234,7 +231,7 @@ class JvmClassNodeBuilder private constructor(
         SignatureReader(sig).accept(signatureCrawler)
       }
       catch (e: Exception) {
-        LOG.info("Problems parsing signature \"$sig\" in $fileName", e)
+        logger<JvmClassNodeBuilder>().warn("Problems parsing signature \"$sig\" in $fileName", e)
       }
     }
   }
@@ -277,7 +274,7 @@ class JvmClassNodeBuilder private constructor(
   private var retentionPolicy: RetentionPolicy? = null
 
   private val annotationArguments = Object2ObjectOpenHashMap<TypeRepr.ClassType, MutableSet<String>>()
-  private val annotationTargets = Object2ObjectOpenHashMap<TypeRepr.ClassType, MutableSet<ElemType>>()
+  private val annotationTargets = Object2ObjectOpenHashMap<TypeRepr.ClassType, EnumSet<ElemType>>()
   private val annotations = ObjectOpenHashSet<ElementAnnotation>()
 
   private var moduleRequires: Set<ModuleRequires>? = null
@@ -297,6 +294,13 @@ class JvmClassNodeBuilder private constructor(
   }
 
   override fun getResult(): JVMClassNode<*, out Proto.Diff<out JVMClassNode<*, *>?>> {
+    return build(isLibraryMode = false)
+  }
+
+  fun build(
+    isLibraryMode: Boolean,
+    skipPrivateMethodsAndFields: Boolean = isLibraryMode,
+  ): JVMClassNode<*, out Proto.Diff<out JVMClassNode<*, *>?>> {
     var flags = JVMFlags(access)
     if (localClassFlag) {
       flags = flags.deriveIsLocal()
@@ -310,24 +314,24 @@ class JvmClassNodeBuilder private constructor(
     if (isGenerated) {
       flags = flags.deriveIsGenerated()
     }
-    if (issLibraryMode) {
+    if (isLibraryMode) {
       flags = flags.deriveIsLibrary()
     }
 
     val moduleRequires = moduleRequires
     val moduleExports = moduleExports
     if (moduleRequires != null && moduleExports != null) {
-      if (!issLibraryMode) {
+      if (!isLibraryMode) {
         for (moduleRequire in moduleRequires) {
           if (name == moduleRequire.name) {
             addUsage(ModuleUsage(moduleRequire.name))
           }
         }
       }
-      return JvmModule(flags, name, fileName, version, moduleRequires, moduleExports, if (issLibraryMode) emptySet() else usages, metadata)
+      return JvmModule(flags, name, fileName, version, moduleRequires, moduleExports, if (isLibraryMode) emptySet() else usages, metadata)
     }
 
-    if (!issLibraryMode) {
+    if (!isLibraryMode) {
       superClass?.let {
         addUsage(ClassUsage(it))
       }
@@ -358,9 +362,9 @@ class JvmClassNodeBuilder private constructor(
       }
     }
 
-    val fields = if (issLibraryMode) fields.filter { !it.isPrivate } else fields
-    val methods = if (issLibraryMode) methods.filter { !it.isPrivate } else methods
-    val usages = if (issLibraryMode) emptySet() else usages
+    val fields = if (skipPrivateMethodsAndFields) fields.filter { !it.isPrivate } else fields
+    val methods = if (skipPrivateMethodsAndFields) methods.filter { !it.isPrivate } else methods
+    val usages = if (isLibraryMode) emptySet() else usages
     return JvmClass(
       flags = flags,
       signature = signature,
@@ -368,7 +372,7 @@ class JvmClassNodeBuilder private constructor(
       outFilePath = fileName,
       superFqName = superClass,
       outerFqName = outerClassName,
-      interfaces = interfaces?.asList() ?: emptyList(),
+      interfaces = interfaces?.takeIf { it.isNotEmpty() }?.asList() ?: emptyList(),
       fields = fields,
       methods = methods,
       annotations = annotations,
@@ -380,11 +384,11 @@ class JvmClassNodeBuilder private constructor(
   }
 
   override fun visit(version: Int, access: Int, name: String, sig: String?, superName: String?, interfaces: Array<String>?) {
-    this@JvmClassNodeBuilder.access = access
-    this@JvmClassNodeBuilder.name = name
+    this.access = access
+    this.name = name
     // implicit 'import' of the package to which the node belongs to
     usages.add(ImportPackageOnDemandUsage(JvmClass.getPackageName(name)))
-    this@JvmClassNodeBuilder.version = version.toString()
+    this.version = version.toString()
     signature = sig
     superClass = superName
     this.interfaces = interfaces
@@ -394,9 +398,7 @@ class JvmClassNodeBuilder private constructor(
   }
 
   override fun visitEnd() {
-    for (entry in annotationTargets.entries) {
-      val type: TypeRepr.ClassType = entry.key!!
-      val targets = entry.value
+    for ((type, targets) in annotationTargets.object2ObjectEntrySet().fastIterator()) {
       val usedArguments = annotationArguments.get(type)
       addUsage(AnnotationUsage(type, usedArguments ?: emptyList(), targets))
     }
@@ -496,14 +498,14 @@ class JvmClassNodeBuilder private constructor(
             defaultValue = buildContentHash(ContentHashBuilderImpl(), printer.getText()).getResult()
           }
           methods.add(JvmMethod(
-            JVMFlags(access),
-            signature,
-            name,
-            descriptor,
-            annotations.ifEmpty { emptySet() },
-            paramAnnotations.ifEmpty { emptySet() },
-            exceptions?.asList() ?: emptyList(),
-            defaultValue,
+            flags = JVMFlags(access),
+            signature = signature,
+            name = name,
+            descriptor = descriptor,
+            annotations = annotations.ifEmpty { emptySet() },
+            parameterAnnotations = paramAnnotations.ifEmpty { emptyList() },
+            exceptions = if (exceptions.isNullOrEmpty()) emptyList() else exceptions.map { TypeRepr.ClassType(it) },
+            defaultValue = defaultValue,
           ))
         }
       }

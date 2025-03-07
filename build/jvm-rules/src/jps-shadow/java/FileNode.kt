@@ -12,14 +12,16 @@ import org.jetbrains.jps.dependency.diff.DiffCapable
 import org.jetbrains.jps.dependency.diff.Difference
 
 class FileNode : Node<FileNode, Difference> {
-  private val referenceID: JvmNodeReferenceID
+  override val referenceID: JvmNodeReferenceID
   private val usages: Collection<Usage>
 
+  @Suppress("unused")
   constructor(name: String, usages: Iterable<Usage>) {
     this.referenceID = JvmNodeReferenceID(name)
     this.usages = usages as Collection<Usage>
   }
 
+  @Suppress("unused")
   constructor(`in`: GraphDataInput) {
     referenceID = JvmNodeReferenceID(`in`)
 
@@ -30,22 +32,14 @@ class FileNode : Node<FileNode, Difference> {
     }
   }
 
-  override fun getReferenceID(): ReferenceID = referenceID
-
   override fun getUsages(): Iterable<Usage> = usages
+
+  override fun usages(): Sequence<Usage> = usages.asSequence()
 
   override fun write(out: GraphDataOutput) {
     referenceID.write(out)
 
-    val usageGroups = Object2ObjectOpenHashMap<Class<out Usage>, MutableList<Usage>>()
-    for (usage in usages) {
-      usageGroups.computeIfAbsent(usage.javaClass) { ArrayList() }.add(usage)
-    }
-
-    out.writeInt(usageGroups.size)
-    for (entry in usageGroups.object2ObjectEntrySet().fastIterator()) {
-      out.writeGraphElementCollection(entry.key, entry.value)
-    }
+    out.writeUsages(usages)
   }
 
   fun getName(): String {

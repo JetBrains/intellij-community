@@ -5,6 +5,7 @@ package org.jetbrains.jps.dependency.java
 import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import jdk.internal.org.jline.utils.Colors.s
 import org.jetbrains.jps.dependency.diff.DiffCapable
 import org.jetbrains.jps.dependency.diff.Difference
 import org.jetbrains.jps.dependency.diff.Difference.Specifier
@@ -13,7 +14,7 @@ private object EmptyDiff : Specifier<Any, Difference> {
   override fun unchanged(): Boolean = true
 }
 
-internal fun <T : DiffCapable<T, D>, D : Difference> deepDiff(past: Set<T>?, now: Set<T>?): Specifier<T, D> {
+internal fun <T : DiffCapable<T, D>, D : Difference> deepDiff(past: Collection<T>?, now: Collection<T>?): Specifier<T, D> {
   if (past.isNullOrEmpty()) {
     if (now.isNullOrEmpty()) {
       @Suppress("UNCHECKED_CAST")
@@ -35,8 +36,11 @@ internal fun <T : DiffCapable<T, D>, D : Difference> deepDiff(past: Set<T>?, now
     }
   }
 
-  val added = now.asSequence().filter { !past.contains(it) }.asIterable()
-  val removed = past.asSequence().filter { !now.contains(it) }.asIterable()
+  val pS = toSet(past)
+  val nS = toSet(now)
+
+  val added = now.asSequence().filter { !pS.contains(it) }.asIterable()
+  val removed = past.asSequence().filter { !nS.contains(it) }.asIterable()
 
   val nowMap = Object2ObjectOpenCustomHashMap<T, T>(DiffCapableHashStrategy)
   for (s in now) {
@@ -64,6 +68,10 @@ internal fun <T : DiffCapable<T, D>, D : Difference> deepDiff(past: Set<T>?, now
 
     override fun changed(): Iterable<Difference.Change<T, D>> = changed
   }
+}
+
+private fun <D : Difference, T : DiffCapable<T, D>> toSet(past: Collection<T>): Collection<T> {
+  return if (past.size < 4 || past is Set<*>) past else past.toCollection(ObjectOpenHashSet(past.size))
 }
 
 internal object DiffCapableHashStrategy : Strategy<DiffCapable<*, *>> {

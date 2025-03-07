@@ -4,14 +4,14 @@ package org.jetbrains.jps.dependency.impl
 
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.IOUtil
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.FactoredExternalizableGraphElement
 import org.jetbrains.jps.dependency.GraphDataOutput
 import java.io.DataOutput
 import kotlin.jvm.javaClass
 
-open class GraphDataOutputImpl(
+class GraphDataOutputImpl(
   private val delegate: DataOutput,
   private val stringEnumerator: StringEnumerator?,
 ) : GraphDataOutput {
@@ -65,7 +65,7 @@ open class GraphDataOutputImpl(
     DataInputOutputUtil.writeLONG(delegate, v)
   }
 
-  fun writeRawLong(v: Long) {
+  override fun writeRawLong(v: Long) {
     delegate.writeLong(v)
   }
 
@@ -94,39 +94,35 @@ open class GraphDataOutputImpl(
     }
   }
 
-  final override fun <T : ExternalizableGraphElement> writeGraphElement(element: T) {
-    writeUTF(element.javaClass.getName())
+  override fun <T : ExternalizableGraphElement> writeGraphElement(element: T) {
+    ClassRegistry.writeClassId(element.javaClass, this)
     if (element is FactoredExternalizableGraphElement<*>) {
       writeGraphElement(element.getFactorData())
     }
     element.write(this)
   }
 
-  override fun <T : ExternalizableGraphElement> writeGraphElementCollection(elemType: Class<out T>, col: Iterable<T>) {
-    writeUTF(elemType.getName())
-    if (FactoredExternalizableGraphElement::class.java.isAssignableFrom(elemType)) {
-      val elementGroups = Object2ObjectLinkedOpenHashMap<ExternalizableGraphElement, MutableList<FactoredExternalizableGraphElement<*>>>()
-      for (e in col) {
+  override fun <T : ExternalizableGraphElement> writeGraphElementCollection(elementType: Class<out T>, collection: Iterable<T>) {
+    val classInfo = ClassRegistry.writeClassId(elementType, this)
+    if (classInfo.isFactored) {
+      val elementGroups = Object2ObjectOpenHashMap<ExternalizableGraphElement, MutableList<FactoredExternalizableGraphElement<*>>>()
+      for (e in collection) {
         e as FactoredExternalizableGraphElement<*>
         elementGroups.computeIfAbsent(e.getFactorData()) { ArrayList() }.add(e)
       }
       writeInt(elementGroups.size)
       for ((key, list) in elementGroups.object2ObjectEntrySet().fastIterator()) {
-        var commonPartWritten = false
+        writeGraphElement(key)
         writeInt(list.size)
         for (t in list) {
-          if (!commonPartWritten) {
-            commonPartWritten = true
-            writeGraphElement(key)
-          }
           t.write(this)
         }
       }
     }
     else {
-      col as Collection<*>
-      writeInt(col.size)
-      for (t in col) {
+      collection as Collection<*>
+      writeInt(collection.size)
+      for (t in collection) {
         t.write(this)
       }
     }

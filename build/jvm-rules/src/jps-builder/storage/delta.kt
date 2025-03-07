@@ -100,15 +100,11 @@ internal class MemoryMultiMaplet<K : Any, V : Any, C : MutableCollection<V>>(
   }
 
   override fun appendValues(key: K, values: Iterable<V>) {
-    map.computeIfAbsent(key) {
-      ObjectOpenHashSet()
-   }.addAll(values)
+    map.computeIfAbsent(key) { ObjectOpenHashSet() }.addAll(values)
   }
 
   override fun appendValue(key: K, value: V) {
-     map.computeIfAbsent(key) {
-       ObjectOpenHashSet()
-    }.add(value)
+     map.computeIfAbsent(key) { ObjectOpenHashSet() }.add(value)
   }
 
   override fun removeValue(key: K, value: V) {

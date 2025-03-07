@@ -3,17 +3,9 @@ package org.jetbrains.jps.dependency.impl
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.IOUtil
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
-import org.jetbrains.jps.dependency.FactoredExternalizableGraphElement
 import org.jetbrains.jps.dependency.GraphDataInput
 import java.io.DataInput
-import java.io.IOException
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.util.function.Function
-
-private val defaultReadConstructorType = MethodType.methodType(Void.TYPE, GraphDataInput::class.java)
-private val lookup = MethodHandles.lookup()
 
 open class GraphDataInputImpl(
   private val delegate: DataInput,
@@ -77,7 +69,7 @@ open class GraphDataInputImpl(
     return DataInputOutputUtil.readLONG(delegate)
   }
 
-  fun readRawLong(): Long {
+  override fun readRawLong(): Long {
     return delegate.readLong()
   }
 
@@ -104,50 +96,33 @@ open class GraphDataInputImpl(
   }
 
   override fun <T : ExternalizableGraphElement> readGraphElement(): T {
-    val constructor: MethodHandle
-    val className = readUTF()
-    val elementType = Class.forName(className)
-    if (FactoredExternalizableGraphElement::class.java.isAssignableFrom(elementType)) {
+    val classInfo = ClassRegistry.read(this)
+    val constructor = if (classInfo.isFactored) {
       val factorData = readGraphElement<ExternalizableGraphElement>()
-      constructor = lookup
-        .findConstructor(elementType, MethodType.methodType(Void.TYPE, factorData.javaClass, GraphDataInput::class.java))
-        .bindTo(factorData)
+      classInfo.constructor.bindTo(factorData)
     }
     else {
-      constructor = lookup.findConstructor(elementType, defaultReadConstructorType)
+      classInfo.constructor
     }
     @Suppress("UNCHECKED_CAST")
     return processLoadedGraphElement(constructor.invoke(this) as T)
   }
 
   override fun <T : ExternalizableGraphElement, C : MutableCollection<in T>> readGraphElementCollection(result: C): C {
-    val className = readUTF()
-    val elementType = Class.forName(className)
-    if (FactoredExternalizableGraphElement::class.java.isAssignableFrom(elementType)) {
-      var subGroupCount = readInt()
-      while (subGroupCount-- > 0) {
-        // per subgroup - must null for each subgroup as we must call readGraphElement for the first element
-        var constructor: MethodHandle? = null
-        var size = readInt()
-        // first element
-        while (size-- > 0) {
-          if (constructor == null) {
-            // first element
-            val factorData = readGraphElement<ExternalizableGraphElement>()
-            constructor = lookup
-              .findConstructor(elementType, MethodType.methodType(Void.TYPE, factorData.javaClass, GraphDataInput::class.java))
-              .bindTo(factorData)
-          }
-          // first element
+    val classInfo = ClassRegistry.read(this)
+    val constructor = classInfo.constructor
+    if (classInfo.isFactored) {
+      repeat(readInt()) {
+        val factorData = readGraphElement<ExternalizableGraphElement>()
+        val constructor = constructor.bindTo(factorData)
+        repeat(readInt()) {
           @Suppress("UNCHECKED_CAST")
           result.add(processLoadedGraphElement(constructor.invoke(this) as T))
         }
       }
     }
     else {
-      val constructor = lookup.findConstructor(elementType, defaultReadConstructorType)
-      var size = readInt()
-      while (size-- > 0) {
+      repeat(readInt()) {
         @Suppress("UNCHECKED_CAST")
         result.add(processLoadedGraphElement(constructor.invoke(this) as T))
       }

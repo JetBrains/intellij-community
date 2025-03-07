@@ -6,7 +6,8 @@ import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.diff.Difference
-import org.jetbrains.jps.dependency.impl.RW
+import org.jetbrains.jps.dependency.readList
+import org.jetbrains.jps.dependency.writeCollection
 
 import java.lang.annotation.RetentionPolicy
 
@@ -15,7 +16,7 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
   val superFqName: String
   val interfaces: Collection<String>
   val fields: Collection<JvmField>
-  val methods: Collection<JvmMethod>
+  private val methods: Collection<JvmMethod>
   val annotationTargets: Collection<ElemType>
 
   companion object {
@@ -30,7 +31,6 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
 
   private val retentionPolicy: RetentionPolicy?
 
-  @Suppress("unused")
   constructor(
     flags: JVMFlags,
     signature: String?,
@@ -65,32 +65,30 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
   }
 
   @Suppress("unused")
-  constructor(`in`: GraphDataInput) : super(`in`) {
-    this.outerFqName = `in`.readUTF()
-    this.superFqName = `in`.readUTF()
-    this.interfaces = RW.readList(`in`) { `in`.readUTF() }
-    this.fields = RW.readList(`in`) { JvmField(`in`) }
-    this.methods = RW.readList(`in`) { JvmMethod(`in`) }
-    this.annotationTargets = RW.readList(`in`) { ElemType.fromOrdinal(`in`.readInt()) }
+  constructor(input: GraphDataInput) : super(input) {
+    outerFqName = input.readUTF()
+    superFqName = input.readUTF()
+    interfaces = input.readList { readUTF() }
+    fields = input.readList { JvmField(this) }
+    methods = input.readList { JvmMethod(input) }
+    annotationTargets = input.readList { ElemType.fromOrdinal(readUnsignedByte()) }
 
-    val policyOrdinal = `in`.readInt()
-    this.retentionPolicy = if (policyOrdinal >= 0) {
-      RetentionPolicy.entries.firstOrNull { it.ordinal == policyOrdinal }
-    }
-    else {
-      null
-    }
+    val policyOrdinal = input.readByte().toInt()
+    retentionPolicy = if (policyOrdinal == -1) null else RetentionPolicy.entries.getOrNull(policyOrdinal)
   }
+
+  @Suppress("unused")
+  fun getMethods(): Iterable<JvmMethod> = methods
 
   override fun write(out: GraphDataOutput) {
     super.write(out)
     out.writeUTF(outerFqName)
     out.writeUTF(superFqName)
-    RW.writeCollection(out, interfaces) { out.writeUTF(it) }
-    RW.writeCollection(out, fields) { it.write(out) }
-    RW.writeCollection(out, methods) { it.write(out) }
-    RW.writeCollection(out, annotationTargets) { out.writeInt(it.ordinal) }
-    out.writeInt(retentionPolicy?.ordinal ?: -1)
+    out.writeCollection(interfaces) { writeUTF(it) }
+    out.writeCollection(fields) { it.write(this) }
+    out.writeCollection(methods) { it.write(this) }
+    out.writeCollection(annotationTargets) { writeByte(it.ordinal) }
+    out.writeByte(retentionPolicy?.ordinal ?: -1)
   }
 
   @Suppress("unused")
@@ -120,7 +118,7 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
   fun isLocal(): Boolean = flags.isLocal
 
   @Suppress("unused")
-  fun isInnerClass(): Boolean = outerFqName != null && !outerFqName.isBlank()
+  fun isInnerClass(): Boolean = !outerFqName.isNullOrEmpty()
 
   @Suppress("unused")
   fun getSuperTypes(): Iterable<String> {
@@ -132,6 +130,15 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
     }
   }
 
+  fun superTypes(): Sequence<String> {
+    if (superFqName.isEmpty() || OBJECT_CLASS_NAME == superFqName) {
+      return interfaces.asSequence()
+    }
+    else {
+      return (sequenceOf(superFqName) + interfaces)
+    }
+  }
+
   @Suppress("unused")
   fun getRetentionPolicy(): RetentionPolicy? = retentionPolicy
 
@@ -139,8 +146,8 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
 
   inner class Diff(past: JvmClass) : JVMClassNode<JvmClass, Diff>.Diff(past) {
     private val interfacesDiff by lazy(LazyThreadSafetyMode.NONE) { diff(myPast.interfaces, interfaces) }
-    private val methodsDiff by lazy(LazyThreadSafetyMode.NONE) { Difference.deepDiff(myPast.methods, methods) }
-    private val fieldsDiff by lazy(LazyThreadSafetyMode.NONE) { Difference.deepDiff(myPast.fields, fields) }
+    private val methodsDiff by lazy(LazyThreadSafetyMode.NONE) { deepDiff(myPast.methods, methods) }
+    private val fieldsDiff by lazy(LazyThreadSafetyMode.NONE) { deepDiff(myPast.fields, fields) }
     private val annotationTargetsDiff by lazy(LazyThreadSafetyMode.NONE) { diff(myPast.annotationTargets, annotationTargets) }
 
     override fun unchanged(): Boolean {
@@ -173,10 +180,10 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
     fun interfaces(): Difference.Specifier<String, *> = interfacesDiff
 
     @Suppress("unused")
-    fun methods(): Difference.Specifier<JvmMethod?, JvmMethod.Diff?> = methodsDiff
+    fun methods(): Difference.Specifier<JvmMethod, JvmMethod.Diff> = methodsDiff
 
     @Suppress("unused")
-    fun fields(): Difference.Specifier<JvmField?, JvmField.Diff> = fieldsDiff
+    fun fields(): Difference.Specifier<JvmField, JvmField.Diff> = fieldsDiff
 
     fun retentionPolicyChanged(): Boolean = myPast.retentionPolicy != retentionPolicy
 
@@ -184,12 +191,12 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
 
     @Suppress("unused")
     fun targetAttributeCategoryMightChange(): Boolean {
-      val targetsDiff = annotationTargets()
+      val targetsDiff = annotationTargetsDiff
       if (!targetsDiff.unchanged()) {
-        for (elemType in arrayOf(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
-          if (targetsDiff.added().contains(elemType) ||
-            targetsDiff.removed().contains(elemType) ||
-            myPast.annotationTargets.contains(elemType)) {
+        for (elementType in arrayOf(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
+          if (targetsDiff.added().contains(elementType) ||
+            targetsDiff.removed().contains(elementType) ||
+            myPast.annotationTargets.contains(elementType)) {
             return true
           }
         }
