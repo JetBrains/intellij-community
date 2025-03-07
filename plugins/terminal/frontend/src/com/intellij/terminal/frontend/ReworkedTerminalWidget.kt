@@ -72,7 +72,7 @@ internal class ReworkedTerminalWidget(
   }
 
   override fun isCommandRunning(): Boolean {
-    return false // TODO
+    return view.isCommandRunning()
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
