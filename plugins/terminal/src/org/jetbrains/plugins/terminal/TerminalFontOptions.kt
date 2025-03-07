@@ -24,6 +24,8 @@ internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPrefer
 
   private val listeners = CopyOnWriteArrayList<TerminalFontOptionsListener>()
 
+  private var columnSpacing = DEFAULT_COLUMN_SPACING
+
   fun addListener(listener: TerminalFontOptionsListener, disposable: Disposable) {
     listeners.add(listener)
     Disposer.register(disposable) {
@@ -37,7 +39,7 @@ internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPrefer
       fontFamily = preferences.fontFamily,
       fontSize = preferences.getSize2D(preferences.fontFamily),
       lineSpacing = preferences.lineSpacing,
-      columnSpacing = state.COLUMN_SPACING,
+      columnSpacing = columnSpacing,
     )
   }
 
@@ -51,14 +53,21 @@ internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPrefer
     newPreferences.setFontSize(preferences.fontFamily, preferences.fontSize)
     newPreferences.lineSpacing = preferences.lineSpacing
     // then apply the settings that aren't a part of FontPreferences
-    state.COLUMN_SPACING = preferences.columnSpacing
+    columnSpacing = preferences.columnSpacing
     // apply the FontPreferences part, the last line because it invokes incModificationCount()
     update(newPreferences)
     listeners.forEach { it.fontOptionsChanged() }
   }
 
   override fun createFontState(fontPreferences: FontPreferences): PersistentTerminalFontPreferences =
-    PersistentTerminalFontPreferences(fontPreferences)
+    PersistentTerminalFontPreferences(fontPreferences).also {
+      it.COLUMN_SPACING = columnSpacing
+    }
+
+  override fun loadState(state: PersistentTerminalFontPreferences) {
+    columnSpacing = state.COLUMN_SPACING
+    super.loadState(state)
+  }
 
   override fun noStateLoaded() {
     // the state is mostly inherited from the console settings
@@ -98,5 +107,7 @@ internal class PersistentTerminalFontPreferences: AppEditorFontOptions.Persisten
   constructor(): super()
   constructor(fontPreferences: FontPreferences): super(fontPreferences)
 
-  var COLUMN_SPACING: Float = 1.0f
+  var COLUMN_SPACING: Float = DEFAULT_COLUMN_SPACING
 }
+
+private const val DEFAULT_COLUMN_SPACING = 1.0f
