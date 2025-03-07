@@ -51,6 +51,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CountDownLatch
@@ -163,34 +164,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }.visibleIf(wasUsedBefore)
 
       row {
-        val enableButtonCell = button(message("config.button.enable")) {
-          if (!enabledStatus.get()) {
-            runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("enable.sync.check.server.data.progress")) {
-              val (userId, userData, providerCode, providerName) = userDropDownLink.selectedItem ?: run {
-                LOG.warn("No selected user")
-                return@runWithModalProgressBlocking
-              }
-              val provider = RemoteCommunicatorHolder.getProvider(providerCode) ?: run {
-                LOG.warn("Provider '$providerName' ($providerCode) is not available")
-                return@runWithModalProgressBlocking
-              }
-              val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userId) ?: run {
-                LOG.warn("Cannot create remote communicator of type '$providerName' ($providerCode)")
-                return@runWithModalProgressBlocking
-              }
-              if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
-                enabledStatus.set(true)
-                triggerUpdateConfigurable()
-              }
-            }
-          } else {
-            val syncDisableOption = showDisableSyncDialog()
-            if (syncDisableOption != DisableSyncType.DONT_DISABLE) {
-              enabledStatus.set(false)
-              disableSyncOption.set(syncDisableOption)
-            }
-          }
-        }
+        val enableButtonCell = button(message("config.button.enable"), ::enableButtonAction)
         enableButton = enableButtonCell.component
       }.visibleIf(wasUsedBefore)
 
@@ -288,6 +262,43 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     return configPanel
   }
 
+  private fun enableButtonAction(event: ActionEvent){
+    if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
+      val actionRequired = SettingsSyncStatusTracker.getInstance().currentStatus as SettingsSyncStatusTracker.SyncStatus.ActionRequired
+      runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), actionRequired.actionTitle) {
+        actionRequired.execute()
+      }
+      return
+    }
+    if (!enabledStatus.get()) {
+      runWithModalProgressBlocking(ModalTaskOwner.component(configPanel), message("enable.sync.check.server.data.progress")) {
+        val (userId, userData, providerCode, providerName) = userDropDownLink.selectedItem ?: run {
+          LOG.warn("No selected user")
+          return@runWithModalProgressBlocking
+        }
+        val provider = RemoteCommunicatorHolder.getProvider(providerCode) ?: run {
+          LOG.warn("Provider '$providerName' ($providerCode) is not available")
+          return@runWithModalProgressBlocking
+        }
+        val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userId) ?: run {
+          LOG.warn("Cannot create remote communicator of type '$providerName' ($providerCode)")
+          return@runWithModalProgressBlocking
+        }
+        if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
+          enabledStatus.set(true)
+          triggerUpdateConfigurable()
+        }
+      }
+    }
+    else {
+      val syncDisableOption = showDisableSyncDialog()
+      if (syncDisableOption != DisableSyncType.DONT_DISABLE) {
+        enabledStatus.set(false)
+        disableSyncOption.set(syncDisableOption)
+      }
+    }
+  }
+
   private fun showDisableSyncDialog(): Int {
     @Suppress("DialogTitleCapitalization")
     val providerName = userDropDownLink.selectedItem?.providerName ?: ""
@@ -330,12 +341,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
         when (result) {
           is DeleteServerDataResult.Error -> {
-            val messageBuilder = StringBuilder()
-            messageBuilder.append(message("sync.status.failed"))
             statusLabel.icon = AllIcons.General.Error
-            messageBuilder.append(' ').append("${message("disable.remove.data.failure")}: ${result.error}")
             @Suppress("HardCodedStringLiteral")
-            statusLabel.text = messageBuilder.toString()
+            statusLabel.text = message("sync.status.failed", "${message("disable.remove.data.failure")}: ${result.error}")
           }
           DeleteServerDataResult.Success -> {
             syncStatusChanged()
@@ -511,44 +519,46 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     UserProviderHolder(id, this, providerCode, providerName, separatorString)
 
   override fun syncStatusChanged() {
-    if (::statusLabel.isInitialized) {
-      if (enabledStatus.get()) {
-        val messageBuilder = StringBuilder()
-        if (SettingsSyncSettings.getInstance().syncEnabled) {
-          val statusTracker = SettingsSyncStatusTracker.getInstance()
-          if (statusTracker.isSyncSuccessful()) {
-            statusLabel.icon = icons.SettingsSyncIcons.StatusEnabled
-            if (statusTracker.isSynced()) {
-              messageBuilder.append(message("sync.status.last.sync.message", getReadableSyncTime()))
-            } else {
-              messageBuilder.append(message("sync.status.enabled"))
-            }
-          }
-          else {
-            messageBuilder.append(message("sync.status.failed"))
-            statusLabel.icon = AllIcons.General.Error
-            messageBuilder.append(' ').append(statusTracker.getErrorMessage())
+    if (!::statusLabel.isInitialized)
+      return
+    if (!enabledStatus.get()) {
+      statusLabel.icon = icons.SettingsSyncIcons.StatusDisabled
+      statusLabel.text = message("sync.status.disabled.message")
+      enableButton.text = message("config.button.enable")
+      return
+    }
+    if (SettingsSyncSettings.getInstance().syncEnabled) {
+      enableButton.text = message("config.button.disable")
+      val currentStatus = SettingsSyncStatusTracker.getInstance().currentStatus
+      when(currentStatus) {
+        SettingsSyncStatusTracker.SyncStatus.Success -> {
+          statusLabel.icon = icons.SettingsSyncIcons.StatusEnabled
+          val lastSyncTime = SettingsSyncStatusTracker.getInstance().getLastSyncTime()
+          if (lastSyncTime > 0) {
+            statusLabel.text = message("sync.status.last.sync.message", DateFormatUtil.formatPrettyDateTime(lastSyncTime))
+          } else {
+            statusLabel.text = message("sync.status.enabled")
           }
         }
-        else {
-          statusLabel.icon = icons.SettingsSyncIcons.StatusNotRun
-          messageBuilder.append(message("sync.status.enabled"))
+        is SettingsSyncStatusTracker.SyncStatus.Error -> {
+          statusLabel.text = message("sync.status.failed", currentStatus.errorMessage)
+          statusLabel.icon = AllIcons.General.Error
         }
-        @Suppress("HardCodedStringLiteral") // The above strings are localized
-        statusLabel.text = messageBuilder.toString()
-        enableButton.text = message("config.button.disable")
+        is SettingsSyncStatusTracker.SyncStatus.ActionRequired -> {
+          statusLabel.text = message("sync.status.action.required", currentStatus.message)
+          statusLabel.icon = AllIcons.General.BalloonWarning
+          enableButton.text = currentStatus.actionTitle
+        }
       }
-      else {
-        statusLabel.icon = icons.SettingsSyncIcons.StatusDisabled
-        statusLabel.text = message("sync.status.disabled.message")
-        enableButton.text = message("config.button.enable")
-      }
+    }
+    else {
+      statusLabel.icon = icons.SettingsSyncIcons.StatusNotRun
+      statusLabel.text = message("sync.status.enabled")
     }
   }
 
   // triggers fake action, which causes SettingEditor to update and check if configurable was modified
   private fun triggerUpdateConfigurable() {
-    println("triggerUpdateConfigurable")
     val dumbAwareAction = DumbAwareAction.create(Consumer { _: AnActionEvent? ->
       // do nothing
     })
@@ -556,8 +566,6 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     ActionUtil.performActionDumbAwareWithCallbacks(dumbAwareAction, event)
   }
 
-  private fun getReadableSyncTime(): String =
-    DateFormatUtil.formatPrettyDateTime(SettingsSyncStatusTracker.getInstance().getLastSyncTime())
 
 
   private fun checkServerState(syncPanelHolder: SettingsSyncPanelHolder,
