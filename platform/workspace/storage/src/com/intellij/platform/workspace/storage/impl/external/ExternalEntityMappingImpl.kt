@@ -13,7 +13,7 @@ import com.intellij.platform.workspace.storage.impl.containers.PersistentBidirec
 import com.intellij.platform.workspace.storage.impl.containers.PersistentBidirectionalMapImpl
 import java.util.*
 
-internal open class ExternalEntityMappingImpl<T> internal constructor(internal open val index: PersistentBidirectionalMap<EntityId, T>)
+internal open class ImmutableExternalEntityMappingImpl<T> internal constructor(internal open val index: PersistentBidirectionalMap<EntityId, T>)
   : ExternalEntityMapping<T> {
   protected lateinit var entityStorage: AbstractEntityStorage
 
@@ -52,7 +52,7 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
 internal class MutableExternalEntityMappingImpl<T> private constructor(
   override var index: PersistentBidirectionalMap.Builder<EntityId, T>,
   internal var indexLogBunches: IndexLog,
-) : ExternalEntityMappingImpl<T>(index), MutableExternalEntityMapping<T> {
+) : ImmutableExternalEntityMappingImpl<T>(index), MutableExternalEntityMapping<T> {
 
   constructor() : this(PersistentBidirectionalMapImpl<EntityId, T>().builder(), IndexLog(LinkedHashMap()))
 
@@ -147,8 +147,8 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     return if (sourceId != null) null else id
   }
 
-  private fun toImmutable(): ExternalEntityMappingImpl<T> {
-    return ExternalEntityMappingImpl(this.index.build())
+  private fun toImmutable(): ImmutableExternalEntityMappingImpl<T> {
+    return ImmutableExternalEntityMappingImpl(this.index.build())
   }
 
   internal sealed class IndexLogRecord {
@@ -204,7 +204,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   companion object {
-    fun fromMap(other: Map<ExternalMappingKey<*>, ExternalEntityMappingImpl<*>>): MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>> {
+    fun fromMap(other: Map<ExternalMappingKey<*>, ImmutableExternalEntityMappingImpl<*>>): MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>> {
       val result = mutableMapOf<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
         if (index is MutableExternalEntityMappingImpl) error("Cannot create mutable index from mutable index")
@@ -214,8 +214,8 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
       return result
     }
 
-    fun toImmutable(other: MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>): Map<ExternalMappingKey<*>, ExternalEntityMappingImpl<*>> {
-      val result = mutableMapOf<ExternalMappingKey<*>, ExternalEntityMappingImpl<*>>()
+    fun toImmutable(other: MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>): Map<ExternalMappingKey<*>, ImmutableExternalEntityMappingImpl<*>> {
+      val result = mutableMapOf<ExternalMappingKey<*>, ImmutableExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
         result[identifier] = index.toImmutable()
       }

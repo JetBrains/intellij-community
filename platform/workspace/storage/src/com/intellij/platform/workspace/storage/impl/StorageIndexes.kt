@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.impl
 
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.platform.workspace.storage.impl.external.ImmutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
@@ -17,7 +17,7 @@ internal open class StorageIndexes(
   internal open val virtualFileIndex: VirtualFileIndex,
   internal open val entitySourceIndex: EntityStorageInternalIndex<EntitySource>,
   internal open val symbolicIdIndex: SymbolicIdInternalIndex,
-  internal open val externalMappings: Map<ExternalMappingKey<*>, ExternalEntityMappingImpl<*>>
+  internal open val externalMappings: Map<ExternalMappingKey<*>, ImmutableExternalEntityMappingImpl<*>>
 ) {
 
   constructor(softLinks: MultimapStorageIndex,

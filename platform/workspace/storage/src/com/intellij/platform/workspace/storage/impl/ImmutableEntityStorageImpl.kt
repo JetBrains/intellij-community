@@ -15,7 +15,7 @@ import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import com.intellij.platform.workspace.storage.impl.external.EmptyExternalEntityMapping
-import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.platform.workspace.storage.impl.external.ImmutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
@@ -468,7 +468,7 @@ internal class MutableEntityStorageImpl(
       val possibleRemovedSameEntity = removes[addedEntityData]
       val newEntityId = addedEntityData.createEntityId()
       val hasMapping = this.indexes.externalMappings.any { (_, value) ->
-        (value as ExternalEntityMappingImpl<*>).getDataByEntityId(newEntityId) != null
+        (value as ImmutableExternalEntityMappingImpl<*>).getDataByEntityId(newEntityId) != null
       }
       if (hasMapping) return@forEach
       val found = possibleRemovedSameEntity?.firstOrNull { possibleRemovedSame ->
@@ -1022,7 +1022,7 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
       // https://stackoverflow.com/a/26122232
       reporterExecutor.execute(BridgeAccessThreadAnalyzer(Exception(), identifier as ExternalMappingKey<Any>))
     }
-    val index = indexes.externalMappings[identifier] as? ExternalEntityMappingImpl<T>
+    val index = indexes.externalMappings[identifier] as? ImmutableExternalEntityMappingImpl<T>
     if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)
     return index
