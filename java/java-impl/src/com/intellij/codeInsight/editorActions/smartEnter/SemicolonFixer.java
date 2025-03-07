@@ -13,15 +13,12 @@ import org.jetbrains.annotations.Nullable;
 public class SemicolonFixer extends AbstractBasicSemicolonFixer {
   @Override
   protected boolean fixReturn(@NotNull Editor editor, @Nullable PsiElement psiElement) {
-    if (psiElement instanceof PsiReturnStatement) {
+    if (psiElement instanceof PsiReturnStatement stmt) {
       PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class, true, PsiLambdaExpression.class);
-      if (method != null && PsiTypes.voidType().equals(method.getReturnType())) {
-        PsiReturnStatement stmt = (PsiReturnStatement)psiElement;
-        if (stmt.getReturnValue() != null) {
-          Document doc = editor.getDocument();
-          doc.insertString(stmt.getTextRange().getStartOffset() + "return".length(), ";");
-          return true;
-        }
+      if (method != null && PsiTypes.voidType().equals(method.getReturnType()) && stmt.getReturnValue() != null) {
+        Document doc = editor.getDocument();
+        doc.insertString(stmt.getTextRange().getStartOffset() + "return".length(), ";");
+        return true;
       }
     }
     return false;
