@@ -395,22 +395,24 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     val currentProviderCode = link?.selectedItem?.providerCode
 
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(configPanel))
+    val provider = currentProviderCode?.let { RemoteCommunicatorHolder.getProvider(it ) }
+    val logoutFunction = provider?.authService?.logoutFunction
     val listPopup = object : ListPopupImpl(project, accounts) {
 
       override fun setFooterComponent(c: JComponent?) {
         val thePopup = this
+        if (logoutFunction == null) {
+          return super.setFooterComponent(c)
+        }
         super.setFooterComponent(DslLabel(DslLabelType.LABEL).apply {
           text = "<a>${message("logout.link.text", currentProviderCode ?: "")}</a>"
 
           addHyperlinkListener {
             if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
               thePopup.cancel()
-              if (currentProviderCode == null) return@addHyperlinkListener
               coroutineScope.launch(ModalityState.current().asContextElement()) {
                 withContext(Dispatchers.EDT) {
-                  val provider = RemoteCommunicatorHolder.getProvider(currentProviderCode) ?: return@withContext
-                  val authService = provider.authService
-                  authService.logout(configPanel)
+                  logoutFunction(configPanel)
                 }
               }
             }
@@ -425,7 +427,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         })
       }
     }
-    if (currentProviderCode != null) {
+    if (currentProviderCode != null && logoutFunction != null) {
       listPopup.setAdText(message("logout.link.text", currentProviderCode)) // doesn't matter, will be changed
     }
 
