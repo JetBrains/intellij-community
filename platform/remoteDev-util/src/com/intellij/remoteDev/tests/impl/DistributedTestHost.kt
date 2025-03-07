@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.platform.util.coroutines.limitedParallelism
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
