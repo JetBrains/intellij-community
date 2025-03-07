@@ -24,9 +24,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.psi.util.childrenOfType
 import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.amper.dependency.resolution.Context
-import org.jetbrains.amper.dependency.resolution.MavenLocalRepository
-import org.jetbrains.amper.dependency.resolution.createOrReuseDependency
+import org.jetbrains.amper.dependency.resolution.LocalM2RepositoryFinder
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.ucache.relativeName
@@ -53,7 +51,7 @@ import kotlin.script.experimental.jvm.jvm
 class DependentScriptConfigurationsSource(override val project: Project, val coroutineScope: CoroutineScope) :
     ScriptConfigurationsSource<BaseScriptModel>(project) {
 
-    private val localRepository = MavenLocalRepository()
+    private val m2LocalRepositoryPath = LocalM2RepositoryFinder.findPath()
 
     override fun getConfigurationWithSdk(virtualFile: VirtualFile): ScriptConfigurationWithSdk? {
         data.get()[virtualFile]?.let { return it }
@@ -255,8 +253,13 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
 
         return artifactLocations.all {
             val splitted = it.split(":")
-            val dependency = Context {}.createOrReuseDependency(splitted[0], splitted[1], splitted[2])
-            Files.exists(localRepository.getTempDir(dependency))
+            val group = splitted[0]
+            val module = splitted[1]
+            val version = splitted[2]
+            val dependencyPath = m2LocalRepositoryPath.resolve(
+                "${group.split('.').joinToString("/")}/$module/$version"
+            )
+            Files.exists(dependencyPath)
         }
     }
 }
