@@ -9,8 +9,9 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
-import com.intellij.python.hatch.HatchStandaloneEnvironment
+import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.PythonVirtualEnvironment
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.ActionLink
@@ -24,14 +25,10 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.isFailure
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterComboBox
+import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
-import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers
-import com.jetbrains.python.sdk.add.v2.displayLoaderWhen
-import com.jetbrains.python.sdk.add.v2.executableSelector
-import com.jetbrains.python.sdk.add.v2.pythonInterpreterComboBox
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.Nls
@@ -39,12 +36,16 @@ import java.nio.file.Path
 import javax.swing.JList
 
 internal sealed class HatchUIError(message: String) : PyError.Message(message) {
+  class ProjectIsNotSelected : HatchUIError(
+    message("sdk.create.custom.hatch.error.project.is.not.selected")
+  )
+
   class ModuleIsNotSelected : HatchUIError(
     message("sdk.create.custom.hatch.error.module.is.not.selected")
   )
 
   class HatchEnvironmentIsNotSelected : HatchUIError(
-    message("sdk.create.custom.hatch.error.module.is.not.selected")
+    message("sdk.create.custom.hatch.error.environment.is.not.selected")
   )
 
   class HatchExecutablePathIsNotValid(hatchExecutablePath: String?) : HatchUIError(
@@ -66,9 +67,14 @@ internal fun String.toPath(): Result<Path, PyError> {
   }
 }
 
-private class HatchEnvComboBoxListCellRenderer : ColoredListCellRenderer<HatchStandaloneEnvironment>() {
-  override fun customizeCellRenderer(list: JList<out HatchStandaloneEnvironment?>, value: HatchStandaloneEnvironment?, index: Int, selected: Boolean, hasFocus: Boolean) {
-    if (value == null) return
+private class HatchEnvComboBoxListCellRenderer : ColoredListCellRenderer<HatchVirtualEnvironment>() {
+  override fun customizeCellRenderer(list: JList<out HatchVirtualEnvironment?>, value: HatchVirtualEnvironment?, index: Int, selected: Boolean, hasFocus: Boolean) {
+    if (value == null) {
+      icon = AnimatedIcon.Default.INSTANCE
+      append(message("sdk.create.custom.hatch.environment.loading"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
+      return
+    }
+
     icon = when (value.pythonVirtualEnvironment) {
       is PythonVirtualEnvironment.Existing -> PythonIcons.Python.PythonClosed
       is PythonVirtualEnvironment.NotExisting -> AllIcons.Nodes.Folder
@@ -84,18 +90,19 @@ private class HatchEnvComboBoxListCellRenderer : ColoredListCellRenderer<HatchSt
 
 private fun Panel.addEnvironmentComboBox(
   model: PythonMutableTargetAddInterpreterModel,
+  hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?>,
   propertyGraph: PropertyGraph,
   validationRequestor: DialogValidationRequestor,
   isValidateOnlyNotExisting: Boolean,
-): ComboBox<HatchStandaloneEnvironment> {
+): ComboBox<HatchVirtualEnvironment> {
   val environmentAlreadyExists = propertyGraph.property(false)
-  lateinit var environmentComboBox: ComboBox<HatchStandaloneEnvironment>
+  lateinit var environmentComboBox: ComboBox<HatchVirtualEnvironment>
 
   row(message("sdk.create.custom.hatch.environment")) {
     environmentComboBox = comboBox(emptyList(), HatchEnvComboBoxListCellRenderer())
-      .bindItem(model.state.selectedHatchEnv)
+      .bindItem(hatchEnvironmentProperty)
       .displayLoaderWhen(model.hatchEnvironmentsLoading, scope = model.scope, uiContext = model.uiContext)
-      .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(model.state.selectedHatchEnv))
+      .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(hatchEnvironmentProperty))
       .validationInfo { component ->
         environmentAlreadyExists.set(false)
         with(component) {
@@ -119,6 +126,7 @@ private fun Panel.addEnvironmentComboBox(
       message = message("sdk.create.custom.hatch.environment.exists"),
       firstActionLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
         PythonNewProjectWizardCollector.logExistingVenvFixUsed()
+        model.state.selectedHatchEnv.set(environmentComboBox.item)
         model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PythonSupportedEnvironmentManagers.HATCH)
       },
       validationType = ValidationType.ERROR
@@ -173,6 +181,7 @@ private fun Panel.addExecutableSelector(
 
 internal fun Panel.buildHatchFormFields(
   model: PythonMutableTargetAddInterpreterModel,
+  hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?>,
   hatchExecutableProperty: ObservableMutableProperty<String>,
   propertyGraph: PropertyGraph,
   validationRequestor: DialogValidationRequestor,
@@ -180,7 +189,13 @@ internal fun Panel.buildHatchFormFields(
   installHatchActionLink: ActionLink? = null,
   basePythonComboboxReceiver: ((PythonInterpreterComboBox) -> Unit) = { },
 ) {
-  val environmentComboBox = addEnvironmentComboBox(model, propertyGraph, validationRequestor, isValidateOnlyNotExisting = isGenerateNewMode)
+  val environmentComboBox = addEnvironmentComboBox(
+    model = model,
+    hatchEnvironmentProperty = hatchEnvironmentProperty,
+    propertyGraph = propertyGraph,
+    validationRequestor = validationRequestor,
+    isValidateOnlyNotExisting = isGenerateNewMode
+  )
 
   if (isGenerateNewMode) {
     row(message("sdk.create.custom.base.python")) {
@@ -198,13 +213,17 @@ internal fun Panel.buildHatchFormFields(
   addExecutableSelector(model, propertyGraph, hatchExecutableProperty, hatchError, validationRequestor, installHatchActionLink)
 
   model.hatchEnvironmentsResult.onEach { environmentsResult ->
-    environmentsResult?.let { environmentComboBox.syncWithEnvs(it, isFilterOnlyExisting = !isGenerateNewMode) }
+    environmentsResult?.let {
+      environmentComboBox.syncWithEnvs(it, isFilterOnlyExisting = !isGenerateNewMode)
+      if (it.isFailure) hatchEnvironmentProperty.set(null)
+    }
     hatchError.set((environmentsResult as? Result.Failure)?.error)
   }.launchIn(model.scope)
 }
 
-private fun ComboBox<HatchStandaloneEnvironment>.syncWithEnvs(
-  environmentsResult: Result<List<HatchStandaloneEnvironment>, PyError>,
+@Synchronized
+private fun ComboBox<HatchVirtualEnvironment>.syncWithEnvs(
+  environmentsResult: Result<List<HatchVirtualEnvironment>, PyError>,
   isFilterOnlyExisting: Boolean = false,
 ) {
   removeAllItems()

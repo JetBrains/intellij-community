@@ -38,6 +38,7 @@ internal class HatchExistingEnvironmentSelector(
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
     panel.buildHatchFormFields(
       model = model,
+      hatchEnvironmentProperty = state.selectedHatchEnv,
       hatchExecutableProperty = executable,
       propertyGraph = propertyGraph,
       validationRequestor = validationRequestor,
