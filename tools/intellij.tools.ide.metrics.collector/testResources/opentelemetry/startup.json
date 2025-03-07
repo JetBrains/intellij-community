@@ -16281,11 +16281,6 @@
           "duration": 3706,
           "tags": [
             {
-              "key": "class",
-              "type": "string",
-              "value": "com.intellij.space.kotlin.scriptdefinition.detect.SpaceKtsStartupActivity"
-            },
-            {
               "key": "plugin",
               "type": "string",
               "value": "com.jetbrains.space"

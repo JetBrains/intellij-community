@@ -144,7 +144,6 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     val prefix = "$parentGroup."
     for (dependency in getModuleDependencies(dependentModule)) {
       val moduleName = dependency.moduleReference.moduleName
-      // intellij.space.kotlin depends on module intellij.space and both uses library org.apache.ivy
       if (moduleName == parentGroup) {
         if (getLibraryDependencies(dependency.module ?: continue, withTests).any { it.libraryReference.libraryName == libraryName }) {
           return true
