@@ -471,6 +471,71 @@ internal class PluginDependenciesTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
 
+  @Test
+  fun `plugin is loaded when it has no dependency on core plugin, but core is a classloader parent excluding its content modules`() {
+    PluginBuilder.empty()
+      .id(PluginManagerCore.CORE_PLUGIN_ID)
+      .pluginAlias("com.intellij.modules.platform")
+      .module("embedded.module", PluginBuilder.empty().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("required.module", PluginBuilder.empty().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("optional.module", PluginBuilder.empty().packagePrefix("optional"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .build(pluginDirPath.resolve("core"))
+    PluginBuilder.empty()
+      .id("foo")
+      .build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
+    val (core, foo) = pluginSet.getEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
+    val (opt, req, emb) = pluginSet.getEnabledModules("optional.module", "required.module", "embedded.module")
+    assertThat(foo).doesNotHaveDirectParentClassloaders(core, opt, req, emb)
+      .hasTransitiveParentClassloaders(core, emb)
+      .doesNotHaveTransitiveParentClassloaders(opt, req)
+  }
+
+  @Test
+  fun `plugin is loaded when it has a plugin dependency on core plugin, its content modules are not in classloader parents`() {
+    PluginBuilder.empty()
+      .id(PluginManagerCore.CORE_PLUGIN_ID)
+      .module("embedded.module", PluginBuilder.empty().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("required.module", PluginBuilder.empty().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("optional.module", PluginBuilder.empty().packagePrefix("optional"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .build(pluginDirPath.resolve("core"))
+    PluginBuilder.empty()
+      .id("foo")
+      .pluginDependency(PluginManagerCore.CORE_PLUGIN_ID)
+      .build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
+    val (core, foo) = pluginSet.getEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
+    val (opt, req, emb) = pluginSet.getEnabledModules("optional.module", "required.module", "embedded.module")
+    assertThat(foo).doesNotHaveDirectParentClassloaders(core, opt, req, emb)
+      .hasTransitiveParentClassloaders(core, emb)
+      .doesNotHaveTransitiveParentClassloaders(opt, req)
+  }
+
+  @Test
+  fun `plugin is loaded when it has a module dependency on content module of core plugin`() {
+    PluginBuilder.empty()
+      .id(PluginManagerCore.CORE_PLUGIN_ID)
+      .module("embedded.module", PluginBuilder.empty().packagePrefix("embedded"), loadingRule = ModuleLoadingRule.EMBEDDED)
+      .module("required.module", PluginBuilder.empty().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .module("optional.module", PluginBuilder.empty().packagePrefix("optional"), loadingRule = ModuleLoadingRule.OPTIONAL)
+      .build(pluginDirPath.resolve("core"))
+    PluginBuilder.empty()
+      .id("foo")
+      .dependency("optional.module")
+      .build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
+    val (core, foo) = pluginSet.getEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
+    val (opt, req, emb) = pluginSet.getEnabledModules("optional.module", "required.module", "embedded.module")
+    assertThat(foo)
+      .hasDirectParentClassloaders(opt)
+      .doesNotHaveDirectParentClassloaders(core, req, emb)
+      .hasTransitiveParentClassloaders(core, emb)
+      .doesNotHaveTransitiveParentClassloaders(req)
+  }
+
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
   private fun `foo depends bar`() = PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
   private fun `foo depends-optional bar`() = PluginBuilder.empty().id("foo")
