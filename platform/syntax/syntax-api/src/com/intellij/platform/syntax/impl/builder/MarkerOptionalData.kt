@@ -101,9 +101,13 @@ internal class MarkerOptionalData {
 
   private fun ensureCapacity(markerId: Int) {
     val index = markerId shr indexShift
-    if (index >= bitset.size) {
-      bitset = bitset.copyOf(bitset.size * 3 / 2)
+    var size = bitset.size
+    if (index < size) return
+
+    while (index >= size) {
+      size = size * 3 / 2
     }
+    bitset = bitset.copyOf(size)
   }
 }
 
