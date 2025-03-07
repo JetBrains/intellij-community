@@ -127,6 +127,7 @@ object ActionUtil {
   enum class ActionGroupPopupCaption {
     /** No popup caption */
     NONE,
+
     /** Use the text of ActionGroup presentation as a popup caption */
     FROM_ACTION_TEXT,
   }
@@ -634,7 +635,8 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun createActionFromSwingAction(action: Action): AnAction {
+  @JvmOverloads
+  fun createActionFromSwingAction(action: Action, dumbAware: Boolean = false): AnAction {
     val anAction: AnAction = object : AnAction(action.getValue(Action.NAME) as String) {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -645,7 +647,10 @@ object ActionUtil {
       override fun actionPerformed(e: AnActionEvent) {
         action.actionPerformed(ActionEvent(this, ActionEvent.ACTION_PERFORMED, null))
       }
+
+      override fun isDumbAware(): Boolean = dumbAware
     }
+
     val value = action.getValue(Action.ACCELERATOR_KEY)
     if (value is KeyStroke) {
       anAction.shortcutSet = CustomShortcutSet(value)

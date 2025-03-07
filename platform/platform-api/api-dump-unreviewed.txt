@@ -1780,6 +1780,8 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:copyFrom(com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.openapi.actionSystem.AnAction
 - sf:copyRegisteredShortcuts(javax.swing.JComponent,javax.swing.JComponent):V
 - sf:createActionFromSwingAction(javax.swing.Action):com.intellij.openapi.actionSystem.AnAction
+- sf:createActionFromSwingAction(javax.swing.Action,Z):com.intellij.openapi.actionSystem.AnAction
+- bs:createActionFromSwingAction$default(javax.swing.Action,Z,I,java.lang.Object):com.intellij.openapi.actionSystem.AnAction
 - sf:createActionListener(java.lang.String,java.awt.Component,java.lang.String):java.awt.event.ActionListener
 - sf:createEmptyEvent():com.intellij.openapi.actionSystem.AnActionEvent
 - sf:getActionUnavailableMessage(java.lang.String):java.lang.String
