@@ -52,7 +52,6 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
-import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.jvm.functions.Function0;
 import kotlinx.coroutines.CoroutineScope;
@@ -1126,15 +1125,14 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
                                            @NotNull @NlsContexts.DialogTitle String title,
                                            @NotNull Runnable runnable) {
     ThreadingAssertions.assertWriteIntentReadAccess();
-    getThreadingSupport().executeSuspendingWriteAction(() -> {
-      ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
+    getThreadingSupport().executeSuspendingWriteAction(runnableUnitFunction(
+      () -> ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           runnable.run();
         }
-      });
-      return Unit.INSTANCE;
-    });
+      })
+    ));
   }
 
   @Override
