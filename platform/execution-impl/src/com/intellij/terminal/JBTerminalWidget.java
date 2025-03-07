@@ -279,6 +279,13 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     throw new RuntimeException("Should be called for ShellTerminalWidget only");
   }
 
+  /**
+   * @throws IllegalStateException of it fails to determine whether the command is running or not.
+   */
+  protected boolean hasRunningCommands() throws IllegalStateException {
+    return false;
+  }
+
   private final TerminalWidgetBridge myBridge = new TerminalWidgetBridge();
 
   public @NotNull TerminalWidget asNewWidget() {
@@ -399,6 +406,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
       }
       catch (IOException e) {
         LOG.info("Cannot execute shell command: " + shellCommand);
+      }
+    }
+
+    @Override
+    public boolean isCommandRunning() {
+      try {
+        return widget().hasRunningCommands();
+      }
+      catch (IllegalStateException e) {
+        return true;
       }
     }
 
