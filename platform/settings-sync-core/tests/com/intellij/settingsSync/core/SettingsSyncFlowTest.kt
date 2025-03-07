@@ -287,7 +287,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "Partial apply was not rolled back")
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled on error")
     Assertions.assertFalse(SettingsSyncStatusTracker.getInstance().isSyncSuccessful(), "Sync is not marked as failed")
-    Assertions.assertEquals(errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage(), "Incorrect error message")
+    Assertions.assertEquals(errorMessage,
+                            (SettingsSyncStatusTracker.getInstance().currentStatus as? SettingsSyncStatusTracker.SyncStatus.Error)?.errorMessage,
+                            "Incorrect error message")
   }
 
   @Test
@@ -313,7 +315,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "Partial apply was not rolled back")
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled on error")
     Assertions.assertFalse(SettingsSyncStatusTracker.getInstance().isSyncSuccessful(), "Sync is not marked as failed")
-    Assertions.assertEquals(errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage(), "Incorrect error message")
+    Assertions.assertEquals(errorMessage,
+                            (SettingsSyncStatusTracker.getInstance().currentStatus as? SettingsSyncStatusTracker.SyncStatus.Error)?.errorMessage,
+                            "Incorrect error message")
   }
 
   @Test
@@ -439,7 +443,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       timeoutRunBlocking {
         initSettingsSync(waitForInit = false)
         waitUntil {
-          SettingsSyncStatusTracker.getInstance().getErrorMessage() != null
+          SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.Error
         }
       }
     }
@@ -457,7 +461,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       Assertions.assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
       bridge.isInitialized
     }
-    Assertions.assertEquals(MockRemoteCommunicator.DISCONNECTED_ERROR, SettingsSyncStatusTracker.getInstance().getErrorMessage())
+    Assertions.assertEquals(MockRemoteCommunicator.DISCONNECTED_ERROR,
+                            (SettingsSyncStatusTracker.getInstance().currentStatus as? SettingsSyncStatusTracker.SyncStatus.Error)?.errorMessage
+    )
 
 
   }
