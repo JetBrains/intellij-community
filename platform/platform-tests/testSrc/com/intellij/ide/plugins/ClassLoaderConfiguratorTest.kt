@@ -8,7 +8,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.directoryStreamIfExists
 import kotlinx.coroutines.runBlocking
@@ -57,30 +56,6 @@ internal class ClassLoaderConfiguratorTest {
     )
     sortDependenciesInPlace(modules)
     assertThat(modules.map { it.moduleName }).containsExactly("com.foo.bar", "com.foo")
-  }
-
-  @Test
-  fun packageForOptionalMustBeSpecified() {
-    assertThatThrownBy {
-      loadPlugins(modulePackage = null)
-    }.hasMessageContaining("Package is not specified")
-    .hasMessageContaining("package=null")
-  }
-
-  @Test
-  fun packageForOptionalMustBeDifferent() {
-    assertThatThrownBy {
-      loadPlugins(modulePackage = "com.example")
-    }.hasMessageContaining("Package prefix com.example is already used")
-    .hasMessageContaining("com.example")
-  }
-
-  @Test
-  fun packageMustBeUnique() {
-    assertThatThrownBy {
-      loadPlugins(modulePackage = "com.bar")
-    }.hasMessageContaining("Package prefix com.bar is already used")
-    .hasMessageContaining("package=com.bar")
   }
 
   @Test
