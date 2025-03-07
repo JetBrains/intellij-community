@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.writeBytes
 import org.intellij.images.editor.ImageDocument
 import org.intellij.images.scientific.BinarizationThresholdConfig
 import org.intellij.images.scientific.ScientificUtils
+import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
@@ -27,6 +28,7 @@ class BinarizeImageAction : AnAction() {
     imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY) ?: return
     document.value = binarizedImage
+    ScientificImageActionsCollector.logBinarizeImageAction(this)
   }
 
   private fun applyBinarization(image: BufferedImage, threshold: Int): BufferedImage {

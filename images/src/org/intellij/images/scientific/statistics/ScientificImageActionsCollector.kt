@@ -13,6 +13,7 @@ object ScientificImageActionsCollector : CounterUsagesCollector() {
   private val restoreOriginalImageAction = GROUP.registerEvent("restore_original_image_action", EventFields.Class("action_handler"))
   private val invertChannelsAction = GROUP.registerEvent("invert_channels_action", EventFields.Class("action_handler"))
   private val grayscaleImageAction = GROUP.registerEvent("grayscale_image_action", EventFields.Class("action_handler"))
+  private val binarizeImageAction = GROUP.registerEvent("binarize_image_action", EventFields.Class("action_handler"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -34,5 +35,9 @@ object ScientificImageActionsCollector : CounterUsagesCollector() {
 
   fun logGrayscaleImageAction(action: GrayscaleImageAction) {
     grayscaleImageAction.log(action::class.java)
+  }
+
+  fun logBinarizeImageAction(action: BinarizeImageAction) {
+    binarizeImageAction.log(action::class.java)
   }
 }
