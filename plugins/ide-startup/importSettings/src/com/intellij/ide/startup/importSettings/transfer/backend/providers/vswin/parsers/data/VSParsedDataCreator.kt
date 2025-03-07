@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vswin.parsers.data
 
 import com.intellij.ide.startup.importSettings.providers.vswin.mappings.FontsAndColorsMappings
-import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHive
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.Version2
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.data.KeyBindingsParsedData
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHive
 import com.intellij.openapi.diagnostic.logger
 import org.jdom.Element
 

@@ -1,14 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vswin.utilities
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities
 
 import com.intellij.ide.startup.importSettings.TransferableIdeVersionId
-import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSIsolationIniParser
 import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSRegistryParserNew
+import com.intellij.ide.startup.importSettings.providers.vswin.utilities.Version2
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSIsolationIniParser
 import com.intellij.openapi.diagnostic.logger
 import java.util.*
 
 class VSHiveDetourFileNotFoundException : Exception()
-class VSHiveDetourFileReadErrorException(t: Throwable?) : Exception(t)
 
 private val logger = logger<VSHive>()
 // Example: "15.0_a0848a47Exp", where VS version = "15.0", Instance Id = "a0848a47", Root Suffix = "Exp".
@@ -63,9 +63,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
   }
 
   companion object {
-    const val LATEST_VS_VERSION: Int = 16
-
-    val regex: Regex = Regex("\\b(?:(?:([0-9]{1,2}).([0-9]))(?:_([a-fA-F0-9]{8}))?([a-zA-Z0-9]*))\\b")
+    val regex: Regex = Regex("\\b([0-9]{1,2})\\.([0-9])(?:_([a-fA-F0-9]{8}))?([a-zA-Z0-9]*)\\b")
 
     fun parse(hive: String, type: Types = Types.All): VSHive? {
       logger.info("Starting $hive on type $type")
@@ -76,7 +74,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
       val ver = try {
         Version2(maj.toInt(), min.toInt())
       }
-      catch (e: NumberFormatException) {
+      catch (_: NumberFormatException) {
         logger.warn("Bad major or minor version number ($hive)")
         return null
       }
