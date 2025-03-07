@@ -14,7 +14,6 @@ java_library(
   runtime_deps = [
     ":plugin_resources",
     "//java/compiler/impl:java-compiler-impl",
-    "//java/compiler/charts:java-compiler-charts",
     "//java/debugger/impl:java-debugger-impl",
     "//java/debugger/shared:java-debugger-impl-shared",
     "//java/debugger/frontend:java-debugger-impl-frontend",

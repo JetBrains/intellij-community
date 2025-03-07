@@ -37,7 +37,6 @@
     <module name="intellij.java.performancePlugin"/>
     <module name="intellij.java.unscramble"/>
     <module name="intellij.java.vcs"/>
-    <module name="intellij.java.compiler.charts"/>
     <module name="intellij.java.terminal"/>
     <module name="intellij.jvm.analysis.impl"/>
     <module name="intellij.java.debugger.impl.frontend"/>

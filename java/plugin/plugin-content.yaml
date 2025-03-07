@@ -74,7 +74,6 @@
     reason: <- intellij.java.plugin
   contentModules:
   - name: intellij.java.performancePlugin
-  - name: intellij.java.compiler.charts
   - name: intellij.java.terminal
   - name: intellij.java.debugger.impl.backend
 - name: lib/javac2.jar
@@ -113,9 +112,6 @@
 - name: lib/jps-launcher.jar
   modules:
   - name: intellij.platform.jps.build.launcher
-- name: lib/jps/java-compiler-charts-jps.jar
-  modules:
-  - name: intellij.java.compiler.charts.jps
 - name: lib/jshell-frontend.jar
 - name: lib/jshell-protocol.jar
   modules:

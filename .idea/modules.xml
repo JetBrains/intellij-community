@@ -453,8 +453,6 @@
       <module fileurl="file://$PROJECT_DIR$/java/codeserver/highlighting/intellij.java.codeserver.highlighting.iml" filepath="$PROJECT_DIR$/java/codeserver/highlighting/intellij.java.codeserver.highlighting.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/openapi/intellij.java.compiler.iml" filepath="$PROJECT_DIR$/java/compiler/openapi/intellij.java.compiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/javac2/intellij.java.compiler.antTasks.iml" filepath="$PROJECT_DIR$/java/compiler/javac2/intellij.java.compiler.antTasks.iml" />
-      <module fileurl="file://$PROJECT_DIR$/java/compiler/charts/intellij.java.compiler.charts.iml" filepath="$PROJECT_DIR$/java/compiler/charts/intellij.java.compiler.charts.iml" />
-      <module fileurl="file://$PROJECT_DIR$/java/compiler/charts/jps-plugin/intellij.java.compiler.charts.jps.iml" filepath="$PROJECT_DIR$/java/compiler/charts/jps-plugin/intellij.java.compiler.charts.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/impl/intellij.java.compiler.impl.iml" filepath="$PROJECT_DIR$/java/compiler/impl/intellij.java.compiler.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util/intellij.java.compiler.instrumentationUtil.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util/intellij.java.compiler.instrumentationUtil.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util-8/intellij.java.compiler.instrumentationUtil.java8.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util-8/intellij.java.compiler.instrumentationUtil.java8.iml" />

@@ -221,7 +221,6 @@ java_library(
     "//plugins/gitlab/gitlab-community:vcs-gitlab-community",
     "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
     "//plugins/yaml",
-    "//java/compiler/charts:java-compiler-charts",
     "//platform/compose",
     "//json/split",
     "//java/java-terminal:terminal-tests",
