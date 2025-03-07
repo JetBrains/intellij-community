@@ -10,7 +10,6 @@ import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.PyWithContextExitInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyStatementListContainer;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,14 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class PyInspectionsUtil {
-  @ApiStatus.Internal
-  public static boolean hasAnyInterruptedControlFlowPaths(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
-    if (owner != null) {
-      return !collectUnreachable(owner, element, context).isEmpty();
-    }
-    return false;
-  }
 
   /**
    * Collects a list of unreachable elements, iterating through CFG backwards
