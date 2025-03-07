@@ -6,6 +6,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("DEPRECATION")
@@ -24,6 +25,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   class State {
+    @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
     var myShellPath: String? = null
     var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
     var myCloseSessionOnLogout: Boolean = true
@@ -53,11 +55,14 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
+
+  @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
   var shellPath: String?
-    get() = state.myShellPath
+    get() = TerminalLocalOptions.getInstance().shellPath
     set(value) {
-      if (state.myShellPath != value) {
-        state.myShellPath = value
+      val options = TerminalLocalOptions.getInstance()
+      if (options.shellPath != value) {
+        options.shellPath = value
         fireSettingsChanged()
       }
     }
