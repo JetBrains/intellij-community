@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
@@ -52,6 +53,8 @@ import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalFontOptions
+import org.jetbrains.plugins.terminal.TerminalFontOptionsListener
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
@@ -94,12 +97,6 @@ object TerminalUiUtils {
     editor.gutterComponentEx.isPaintBackground = false
     editor.gutterComponentEx.setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.HIDE)
 
-    editor.colorsScheme.apply {
-      editorFontName = settings.terminalFont.fontName
-      setEditorFontSize(settings.terminalFont.size2D)
-      lineSpacing = settings.lineSpacing
-    }
-
     editor.settings.apply {
       isShowingSpecialChars = false
       isLineNumbersShown = false
@@ -113,8 +110,30 @@ object TerminalUiUtils {
       isBlockCursor = true
       isWhitespacesShown = false
       isUseCustomSoftWrapIndent = false
-      characterGridWidthMultiplier = settings.columnSpacing
     }
+
+    fun applyFontSettings() {
+      editor.colorsScheme.apply {
+        editorFontName = settings.terminalFont.fontName
+        setEditorFontSize(settings.terminalFont.size2D)
+        lineSpacing = settings.lineSpacing
+      }
+      editor.settings.apply {
+        characterGridWidthMultiplier = settings.columnSpacing
+      }
+    }
+
+    applyFontSettings()
+    val fontSettingsListenerDisposable = Disposer.newDisposable().also {
+      EditorUtil.disposeWithEditor(editor, it)
+    }
+    val fontSettingsListener = object : TerminalFontOptionsListener {
+      override fun fontOptionsChanged() {
+        applyFontSettings()
+        editor.reinitSettings()
+      }
+    }
+    TerminalFontOptions.getInstance().addListener(fontSettingsListener, fontSettingsListenerDisposable)
 
     editor.view.setDoubleWidthCharacterStrategy { codePoint ->
       CharUtils.isDoubleWidthCharacter(codePoint, false)
