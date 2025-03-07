@@ -7,22 +7,32 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
+/**
+ * Used if:
+ * * "Execute operations on all roots" is disabled
+ * * Current repository was defined (see [git4idea.branch.GitBranchUtil.guessWidgetRepository])
+ *
+ * Besides displaying refs and actions for the selected repo, it also displays a list of all git repos in the project
+ */
 internal class GitBranchesTreeSelectedRepoModel(
   project: Project,
   selectedRepository: GitRepository,
-  private val repositories: List<GitRepository>,
-  topLevelActions: List<Any> = emptyList()
+  /**
+   * Note that it isn't the same as [repositories].
+   * [allProjectRepositories] contains a list of repositories to be displayed as repo-level nodes in this tree,
+   * while [repositories] is used to specify repositories which refs should be displayed
+   */
+  private val allProjectRepositories: List<GitRepository>,
+  topLevelActions: List<Any>
 ) : GitBranchesTreeSingleRepoModel(project, selectedRepository, topLevelActions) {
-  val selectedRepository get() = repository
-
   private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
   private val branchesSubtreeSeparator = GitBranchesTreePopupBase.createTreeSeparator()
 
   private lateinit var repositoriesTree: LazyRepositoryHolder
 
   override fun rebuild(matcher: MinusculeMatcher?) {
-    repositoriesTree = LazyRepositoryHolder(project, repositories, matcher)
     super.rebuild(matcher)
+    repositoriesTree = LazyRepositoryHolder(project, allProjectRepositories, matcher)
   }
 
   override fun getTopLevelNodes(): List<Any> {

@@ -42,13 +42,13 @@ internal abstract class GitBranchesTreePopupStepBase(
 
   fun setSearchPattern(pattern: String?) {
     if (pattern == null || pattern == "/") {
-      treeModel.filterBranches()
+      treeModel.applyFilterAndRebuild(null)
       return
     }
 
     val trimmedPattern = pattern.trim() //otherwise Character.isSpaceChar would affect filtering
     val matcher = GitBranchesMatcherWrapper(NameUtil.buildMatcher("*$trimmedPattern").build())
-    treeModel.filterBranches(matcher)
+    treeModel.applyFilterAndRebuild(matcher)
   }
 
   fun updateTreeModelIfNeeded(tree: Tree, pattern: String?) {

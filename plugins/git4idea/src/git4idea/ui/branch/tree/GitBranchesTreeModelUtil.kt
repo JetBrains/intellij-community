@@ -15,11 +15,7 @@ import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
 import com.intellij.vcs.log.Hash
-import git4idea.GitBranch
-import git4idea.GitLocalBranch
-import git4idea.GitReference
-import git4idea.GitRemoteBranch
-import git4idea.GitTag
+import git4idea.*
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
 import git4idea.branch.GitTagType
@@ -342,5 +338,11 @@ internal class LazyRefsSubtreeHolder<out T: GitReference>(repositories: List<Git
     }
 
     return result
+  }
+
+  companion object {
+    fun <T: GitReference> emptyHolder(): LazyRefsSubtreeHolder<T> {
+      return LazyRefsSubtreeHolder(emptyList(), emptyList(), emptyMap(), null, { false })
+    }
   }
 }

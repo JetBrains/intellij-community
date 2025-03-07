@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
-import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import git4idea.GitReference
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
@@ -16,53 +14,29 @@ import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
 import javax.swing.tree.TreePath
-import kotlin.properties.Delegates.observable
 
 internal class GitBranchesTreeMultiRepoFilteringModel(
-  private val project: Project,
-  private val repositories: List<GitRepository>,
-  private val topLevelActions: List<Any> = emptyList(),
-) : GitBranchesTreeModel() {
-
-  private val branchManager = project.service<GitBranchManager>()
-
+  project: Project,
+  repositories: List<GitRepository>,
+  topLevelActions: List<Any> = emptyList(),
+) : GitBranchesTreeModel(project, topLevelActions, repositories) {
   private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
   private val repositoriesSeparator = GitBranchesTreePopupBase.createTreeSeparator()
 
   private lateinit var repositoriesTree: LazyTopLevelRepositoryHolder
   private lateinit var repositoriesWithBranchesTree: LazyRepositoryBranchesHolder
 
-  override var nameMatcher: MinusculeMatcher? by observable(null) { _, _, matcher -> rebuild(matcher) }
-
-  override var isPrefixGrouping: Boolean by equalVetoingObservable(branchManager.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
-    nameMatcher = null // rebuild tree
-  }
-
-  fun init() {
-    // set trees
-    nameMatcher = null
-  }
-
-  private fun rebuild(matcher: MinusculeMatcher?) {
-    branchesTreeCache.keys.clear()
-    val localBranches = GitBranchUtil.getCommonLocalBranches(repositories)
-    val remoteBranches = GitBranchUtil.getCommonRemoteBranches(repositories)
-    val localFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL)
-    val remoteFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE)
-    actionsTree = LazyActionsHolder(project, topLevelActions, matcher)
+  override fun rebuild(matcher: MinusculeMatcher?) {
+    super.rebuild(matcher)
     repositoriesTree = LazyTopLevelRepositoryHolder(repositories, matcher)
-    localBranchesTree = LazyRefsSubtreeHolder(repositories, localBranches, localFavorites, matcher, ::isPrefixGrouping)
-    remoteBranchesTree = LazyRefsSubtreeHolder(repositories, remoteBranches, remoteFavorites, matcher, ::isPrefixGrouping)
     repositoriesWithBranchesTree = LazyRepositoryBranchesHolder()
-    initTags(matcher)
-    treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
 
-  override fun initTags(matcher: MinusculeMatcher?) {
-    val tags = GitBranchUtil.getCommonTags(repositories)
-    val favoriteTags = project.service<GitBranchManager>().getFavoriteBranches(GitTagType)
-    tagsTree = LazyRefsSubtreeHolder(repositories, tags, favoriteTags, matcher, ::isPrefixGrouping)
-  }
+  override fun getLocalBranches() = GitBranchUtil.getCommonLocalBranches(repositories)
+
+  override fun getRemoteBranches() = GitBranchUtil.getCommonRemoteBranches(repositories)
+
+  override fun getTags() = GitBranchUtil.getCommonTags(repositories)
 
   override fun isLeaf(node: Any?): Boolean = node is GitReference || node is RefUnderRepository
                                              || (node === GitBranchType.LOCAL && localBranchesTree.isEmpty())
@@ -151,10 +125,6 @@ internal class GitBranchesTreeMultiRepoFilteringModel(
     return repositoriesWithBranchesTree[nonEmptyRepo]
       .let { getPreferredBranch(project, listOf(nonEmptyRepo), nameMatcher, it.localBranches, it.remoteBranches, it.tags) }
       ?.let { RefUnderRepository(nonEmptyRepo, it) }
-  }
-
-  override fun filterBranches(matcher: MinusculeMatcher?) {
-    nameMatcher = matcher
   }
 
   private fun haveFilteredBranches(): Boolean =

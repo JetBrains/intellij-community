@@ -160,7 +160,7 @@ internal abstract class GitBranchesTreeRenderer(
       val value = treeNode ?: return null
       return when (value) {
         is GitRefType -> when {
-          model is GitBranchesTreeSelectedRepoModel -> value.getInRepoText(DvcsUtil.getShortRepositoryName(model.selectedRepository))
+          model is GitBranchesTreeSelectedRepoModel -> value.getInRepoText(DvcsUtil.getShortRepositoryName(model.repository))
           repositories.size > 1 -> value.getCommonText()
           else -> value.getText()
         }

@@ -68,18 +68,17 @@ internal class GitBranchesTreePopupStep(
     private set
 
   override fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
-    return when {
-      !filterActive && repositories.size > 1
-      && !userWantsSyncControl(project) && selectedRepository != null -> {
+    val model = when {
+      !filterActive && repositories.size > 1 && !userWantsSyncControl(project) && selectedRepository != null -> {
         GitBranchesTreeSelectedRepoModel(project, selectedRepository, repositories, topLevelItems)
-          .apply(GitBranchesTreeSelectedRepoModel::init)
       }
       filterActive && repositories.size > 1 -> {
-        GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems).apply(GitBranchesTreeMultiRepoFilteringModel::init)
+        GitBranchesTreeMultiRepoFilteringModel(project, repositories, topLevelItems)
       }
       !filterActive && repositories.size > 1 -> GitBranchesTreeMultiRepoModel(project, repositories, topLevelItems)
-      else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems).apply(GitBranchesTreeSingleRepoModel::init)
+      else -> GitBranchesTreeSingleRepoModel(project, repositories.first(), topLevelItems)
     }
+    return model.apply(GitBranchesTreeModel::init)
   }
 
   override fun setTreeModel(treeModel: GitBranchesTreeModel) {
