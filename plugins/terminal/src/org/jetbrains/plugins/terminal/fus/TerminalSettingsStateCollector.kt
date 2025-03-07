@@ -13,6 +13,7 @@ import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.Constants
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
+import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 
 internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("terminalShell.settings", 2)
@@ -39,10 +40,8 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     val metrics = mutableSetOf<MetricEvent>()
     addNonDefaultBooleanOptions(metrics)
 
-    val curOptions = TerminalOptionsProvider.instance.state
-    val defaultOptions = TerminalOptionsProvider.State()
-    addIfNotDefault(metrics, NON_DEFAULT_SHELL, curOptions, defaultOptions) { it.myShellPath }
-    addIfNotDefault(metrics, NON_DEFAULT_TAB_NAME, curOptions, defaultOptions) { it.myTabName }
+    addIfNotDefault(metrics, NON_DEFAULT_SHELL, TerminalLocalOptions.getInstance().shellPath, null)
+    addIfNotDefault(metrics, NON_DEFAULT_TAB_NAME, TerminalOptionsProvider.instance.tabName, TerminalOptionsProvider.State().myTabName)
 
     addIfNotDefault(
       metrics,
@@ -105,15 +104,7 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     }
   }
 
-  private inline fun <T> addIfNotDefault(
-    metrics: MutableSet<MetricEvent>,
-    event: EventId,
-    curState: T,
-    defaultState: T,
-    valueFunction: (T) -> Any?,
-  ) {
-    val curValue = valueFunction(curState)
-    val defaultValue = valueFunction(defaultState)
+  private fun <T> addIfNotDefault(metrics: MutableSet<MetricEvent>, event: EventId, curValue: T, defaultValue: T) {
     if (curValue != defaultValue) {
       metrics.add(event.metric())
     }
