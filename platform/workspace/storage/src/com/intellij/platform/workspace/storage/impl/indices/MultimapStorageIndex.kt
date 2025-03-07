@@ -11,10 +11,9 @@ import org.jetbrains.annotations.TestOnly
 private typealias BidirectionalMap = BidirectionalLongMultiMap<SymbolicEntityId<*>>
 //private typealias BidirectionalMap = BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
 
-internal open class ImmutableMultimapStorageIndex internal constructor(
+internal sealed class AbstractMultimapStorageIndex protected constructor(
   internal open val index: BidirectionalMap,
 ) {
-  constructor() : this(BidirectionalMap())
 
   internal fun getIdsByEntry(entitySource: SymbolicEntityId<*>): Set<EntityId> = index.getKeys(entitySource)
 
@@ -27,10 +26,16 @@ internal open class ImmutableMultimapStorageIndex internal constructor(
   }
 }
 
+internal class ImmutableMultimapStorageIndex internal constructor(
+  index: BidirectionalMap,
+) : AbstractMultimapStorageIndex(index) {
+  constructor() : this(BidirectionalMap())
+}
+
 internal class MutableMultimapStorageIndex private constructor(
   // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
   override var index: BidirectionalMap,
-) : ImmutableMultimapStorageIndex(index), WorkspaceMutableIndex<SymbolicEntityId<*>> {
+) : AbstractMultimapStorageIndex(index), WorkspaceMutableIndex<SymbolicEntityId<*>> {
 
   private var freezed = true
 
@@ -58,7 +63,7 @@ internal class MutableMultimapStorageIndex private constructor(
   }
 
   @TestOnly
-  internal fun copyFrom(another: ImmutableMultimapStorageIndex) {
+  internal fun copyFrom(another: AbstractMultimapStorageIndex) {
     startWrite()
     this.index.putAll(another.index)
   }
@@ -77,7 +82,7 @@ internal class MutableMultimapStorageIndex private constructor(
   }
 
   companion object {
-    fun from(other: ImmutableMultimapStorageIndex): MutableMultimapStorageIndex {
+    fun from(other: AbstractMultimapStorageIndex): MutableMultimapStorageIndex {
       if (other is MutableMultimapStorageIndex) other.freezed = true
       return MutableMultimapStorageIndex(other.index)
     }

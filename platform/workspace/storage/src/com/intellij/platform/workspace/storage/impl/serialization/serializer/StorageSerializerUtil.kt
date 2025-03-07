@@ -300,7 +300,7 @@ internal class StorageSerializerUtil(
       data.forEach { (key, value) ->
         index.index(key.toEntityId(classCache), value)
       }
-      return index
+      return index.toImmutable()
     }
   }
 

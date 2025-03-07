@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.Mut
 
 internal sealed class AbstractStorageIndexes() {
   // List of IDs of entities that use this particular persistent id
-  internal abstract val softLinks: ImmutableMultimapStorageIndex
+  internal abstract val softLinks: AbstractMultimapStorageIndex
   internal abstract val virtualFileIndex: VirtualFileIndex
   internal abstract val entitySourceIndex: EntityStorageInternalIndex<EntitySource>
   internal abstract val symbolicIdIndex: SymbolicIdInternalIndex
