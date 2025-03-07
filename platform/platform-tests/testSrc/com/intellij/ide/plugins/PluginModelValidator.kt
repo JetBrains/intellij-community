@@ -32,9 +32,13 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.indexing.shared.ultimate.plugin.internal.generator",
   "intellij.indexing.shared.ultimate.plugin.public",
   "kotlin-ultimate.appcode-kmm.main", /* Used only when running from sources */
+  "intellij.idea.ultimate.min.customization", //has the same plugin ID as intellij.idea.ultimate.customization 
   "intellij.javaFX.community",
+  "intellij.vcs.gitlab.community", //has the same plugin ID as intellij.vcs.gitlab.ultimate 
   "intellij.lightEdit",
   "intellij.webstorm",
+  "intellij.datagrip", //the core plugin with 'com.intellij' ID
+  "intellij.gateway", //the core plugin with 'com.intellij' ID
   "intellij.cwm", /* remote-dev/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
   "intellij.osgi", /* no particular package prefix to choose */
   "intellij.hunspell", /* MP-3656 Marketplace doesn't allow uploading plugins without dependencies */
@@ -439,8 +443,10 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
         continue
       }
 
-      val moduleDescriptor = requireNotNull(moduleDescriptorFileInfo.moduleDescriptor) {
-        "No module descriptor ($moduleDescriptorFileInfo)"
+      val moduleDescriptor = moduleDescriptorFileInfo.moduleDescriptor
+      if (moduleDescriptor == null) {
+        _errors.add(PluginValidationError("No module descriptor ($moduleDescriptorFileInfo)", getErrorInfo()))
+        continue
       }
       val moduleInfo = checkModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo) ?: continue
       referencingModuleInfo.content.add(moduleInfo)
