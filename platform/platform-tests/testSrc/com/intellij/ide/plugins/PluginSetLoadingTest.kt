@@ -215,6 +215,27 @@ class PluginSetLoadingTest {
       .hasMessageContaining("Package prefix common.module is already used")
   }
 
+  @Test
+  fun `content module without a package prefix nor isSeparateJar fails to load`() {
+    PluginBuilder.empty().id("foo")
+      .module("foo.module", PluginBuilder.empty())
+      .build(pluginsDirPath.resolve("foo"))
+    assertThatThrownBy {
+      buildPluginSet()
+    }.hasMessageContaining("Package is not specified")
+  }
+
+  @Test
+  fun `content module with a package prefix or separate jar loads`() {
+    PluginBuilder.empty().id("foo")
+      .module("foo.module", PluginBuilder.empty().packagePrefix("foo.module"))
+      .build(pluginsDirPath.resolve("foo"))
+    PluginBuilder.empty().id("bar")
+      .module("bar.module", PluginBuilder.empty().separateJar(true))
+      .build(pluginsDirPath.resolve("bar"))
+    assertThat(buildPluginSet()).hasExactlyEnabledPlugins("foo", "bar")
+  }
+
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
     pluginsDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)

@@ -56,6 +56,7 @@ class PluginBuilder private constructor() {
     private set
 
   private var implementationDetail = false
+  private var separateJar = false
   private var name: String? = null
   private var description: String? = null
   private var packagePrefix: String? = null
@@ -73,7 +74,7 @@ class PluginBuilder private constructor() {
   private val pluginDependencies = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
   private val incompatibleWith = mutableListOf<ModuleDependenciesDescriptor.PluginReference>()
 
-  private data class SubDescriptor(val filename: String, val builder: PluginBuilder, val separateJar: Boolean)
+  private data class SubDescriptor(val filename: String, val builder: PluginBuilder)
   private val subDescriptors = ArrayList<SubDescriptor>()
 
   fun dependsIntellijModulesLang(): PluginBuilder {
@@ -106,6 +107,11 @@ class PluginBuilder private constructor() {
     return this
   }
 
+  fun separateJar(value: Boolean): PluginBuilder {
+    separateJar = value
+    return this
+  }
+
   fun depends(pluginId: String, configFile: String? = null): PluginBuilder {
     dependsTags.add(DependsTag(pluginId, configFile))
     return this
@@ -113,14 +119,14 @@ class PluginBuilder private constructor() {
 
   fun depends(pluginId: String, subDescriptor: PluginBuilder, filename: String? = null): PluginBuilder {
     val fileName = filename ?: "dep_${pluginIdCounter.incrementAndGet()}.xml"
-    subDescriptors.add(SubDescriptor(PluginManagerCore.META_INF + fileName, subDescriptor, separateJar = false))
+    subDescriptors.add(SubDescriptor(PluginManagerCore.META_INF + fileName, subDescriptor))
     depends(pluginId, fileName)
     return this
   }
 
   fun module(moduleName: String, moduleDescriptor: PluginBuilder, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL,
-             separateJar: Boolean = false, moduleFile: String = "$moduleName.xml"): PluginBuilder {
-    subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor, separateJar))
+             moduleFile: String = "$moduleName.xml"): PluginBuilder {
+    subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor))
     content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null, loadingRule = loadingRule))
 
     // remove default dependency on lang
@@ -197,6 +203,9 @@ class PluginBuilder private constructor() {
       packagePrefix?.let {
         append(""" $PACKAGE_ATTRIBUTE="$it"""")
       }
+      if (separateJar) {
+        append(""" separate-jar="true"""") // todo change to const from xml reader
+      }
       append(">")
       if (requireId) {
         append("<id>$id</id>")
@@ -265,12 +274,12 @@ class PluginBuilder private constructor() {
 
   fun build(path: Path): PluginBuilder {
     val allDescriptors = collectAllSubDescriptors(subDescriptors).toList()
-    if (allDescriptors.any { it.separateJar }) {
+    if (allDescriptors.any { it.builder.separateJar }) {
       val modulesDir = path.resolve("lib/modules")
       modulesDir.createDirectories()
       buildJar(path.resolve("lib/$id.jar"))
-      for ((fileName, subDescriptor, separateJar) in allDescriptors) {
-        if (separateJar) {
+      for ((fileName, subDescriptor) in allDescriptors) {
+        if (subDescriptor.separateJar) {
           val jarPath = modulesDir.resolve("${fileName.removeSuffix(".xml")}.jar")
           subDescriptor.buildJarToStream(Files.newOutputStream(jarPath), mainDescriptorRelativePath = fileName)
         }
@@ -297,8 +306,8 @@ class PluginBuilder private constructor() {
   private fun buildJarToStream(outputStream: OutputStream, mainDescriptorRelativePath: String) {
     Compressor.Zip(outputStream).use {
       it.addFile(mainDescriptorRelativePath, text(requireId = mainDescriptorRelativePath == PluginManagerCore.PLUGIN_XML_PATH).toByteArray())
-      for ((fileName, subDescriptor, separateJar) in subDescriptors) {
-        if (!separateJar) {
+      for ((fileName, subDescriptor) in subDescriptors) {
+        if (!subDescriptor.separateJar) {
           it.addFile(fileName, subDescriptor.text(requireId = false).toByteArray())
         }
       }
