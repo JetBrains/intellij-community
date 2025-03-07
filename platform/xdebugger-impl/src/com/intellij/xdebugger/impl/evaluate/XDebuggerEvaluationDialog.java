@@ -176,6 +176,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.medium();
+  }
+
+  @Override
   protected void dispose() {
     super.dispose();
     myMainPanel.removeAll();

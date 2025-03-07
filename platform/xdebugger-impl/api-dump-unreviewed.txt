@@ -520,6 +520,7 @@ c:com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 - p:getDimensionServiceKey():java.lang.String
 - getExpression():com.intellij.xdebugger.XExpression
 - p:getHelpId():java.lang.String
+- getInitialSize():java.awt.Dimension
 - getPreferredFocusedComponent():javax.swing.JComponent
 - startEvaluation(com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback):V
 c:com.intellij.xdebugger.impl.evaluate.XExpressionDialog
