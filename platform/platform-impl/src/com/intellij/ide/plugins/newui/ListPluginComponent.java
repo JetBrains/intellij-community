@@ -73,7 +73,6 @@ public final class ListPluginComponent extends JPanel {
   private final boolean myIsEssential;
   private final boolean myIsNotFreeInFreeMode;
   private @NotNull IdeaPluginDescriptor myPlugin;
-  private final @Nullable IdeaPluginDescriptor myUltimatePlugin;
   private PluginNode myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
@@ -121,7 +120,6 @@ public final class ListPluginComponent extends JPanel {
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
     var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
     myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(plugin.getPluginId(), idMap);
-    myUltimatePlugin = idMap.get(PluginManagerCore.ULTIMATE_PLUGIN_ID);
     pluginModel.addComponent(this);
 
     setOpaque(true);
