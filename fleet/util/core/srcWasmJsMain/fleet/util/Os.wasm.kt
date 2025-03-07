@@ -5,10 +5,10 @@ import fleet.util.multiplatform.Actual
 
 // todo: define client's os
 @Actual("getName")
-internal fun getNameWasm(): String = "mac"
+internal fun getNameWasmJs(): String = "mac"
 
 @Actual("getVersion")
-internal fun getVersionWasm(): String = ""
+internal fun getVersionWasmJs(): String = ""
 
 @Actual("getArch")
-internal fun getArchWasm(): String = ""
+internal fun getArchWasmJs(): String = ""

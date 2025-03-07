@@ -1,5 +1,3 @@
-*f:com.intellij.platform.syntax.i18n.JvmResourceBundleKt
-- sf:JvmResourceBundle(java.lang.String,java.lang.String,java.lang.Object):com.intellij.platform.syntax.i18n.ResourceBundle
 *:com.intellij.platform.syntax.i18n.ResourceBundle
 - a:message(java.lang.String,java.lang.Object[]):java.lang.String
 - a:messagePointer(java.lang.String,java.lang.Object[]):kotlin.jvm.functions.Function0

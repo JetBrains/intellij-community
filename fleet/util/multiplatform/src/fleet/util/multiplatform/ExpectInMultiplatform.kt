@@ -35,4 +35,8 @@ fun <T> linkToActual(): T = error(
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
-annotation class Actual(val linkedTo: String)
+annotation class Actual(
+  @Deprecated("name of the function is now used instead")
+  val linkedTo: String = ""
+)
+

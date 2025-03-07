@@ -4,10 +4,10 @@ package fleet.util
 import fleet.util.multiplatform.Actual
 
 @Actual("capitalizeWithCurrentLocale")
-fun String.capitalizeWithCurrentLocaleWasm(): String = replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+fun String.capitalizeWithCurrentLocaleWasmJs(): String = replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 
 @Actual("lowercaseWithCurrentLocale")
-fun String.lowercaseWithCurrentLocaleWasm(): String = lowercase()
+fun String.lowercaseWithCurrentLocaleWasmJs(): String = lowercase()
 
 @Actual("uppercaseWithCurrentLocale")
-fun String.uppercaseWithCurrentLocaleWasm(): String = uppercase()
+fun String.uppercaseWithCurrentLocaleWasmJs(): String = uppercase()

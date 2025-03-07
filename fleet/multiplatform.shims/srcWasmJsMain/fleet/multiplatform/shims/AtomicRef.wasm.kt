@@ -4,7 +4,7 @@ package fleet.multiplatform.shims
 import fleet.util.multiplatform.Actual
 
 @fleet.util.multiplatform.Actual("atomicRefImpl")
-internal fun atomicRefImplWasm(value: Any?): AtomicRef<Any?> = atomicRef(value)
+internal fun atomicRefImplWasmJs(value: Any?): AtomicRef<Any?> = atomicRef(value)
 
 private fun <T> atomicRef(value: T) = object : AtomicRef<T> {
   private var _value: T = value

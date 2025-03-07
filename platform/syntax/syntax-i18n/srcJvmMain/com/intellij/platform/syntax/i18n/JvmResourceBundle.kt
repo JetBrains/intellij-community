@@ -14,7 +14,7 @@ import java.util.function.Supplier
  */
 @Suppress("FunctionName")
 @Actual("ResourceBundle")
-fun JvmResourceBundle(
+internal fun ResourceBundleJvm(
   bundleClass: String,
   pathToBundle: String,
   self: Any,

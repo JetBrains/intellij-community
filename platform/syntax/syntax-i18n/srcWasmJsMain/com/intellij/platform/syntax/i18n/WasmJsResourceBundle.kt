@@ -10,6 +10,6 @@ import java.util.function.Supplier
  * see expect function [com.intellij.platform.syntax.i18n.ResourceBundle]
  */
 @Actual("ResourceBundle")
-fun WasmJsResourceBundle(bundleClass: String, pathToBundle: String, self: Any): ResourceBundle {
+internal fun ResourceBundleWasmJs(bundleClass: String, pathToBundle: String, self: Any): ResourceBundle {
   TODO()
 }

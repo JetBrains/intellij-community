@@ -6,7 +6,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 @Actual("newSingleThreadCoroutineDispatcher")
-fun newSingleThreadCoroutineDispatcherWasm(
+fun newSingleThreadCoroutineDispatcherWasmJs(
   name: String,
   priority: DispatcherPriority
 ): HighPriorityCoroutineDispatcherResource =

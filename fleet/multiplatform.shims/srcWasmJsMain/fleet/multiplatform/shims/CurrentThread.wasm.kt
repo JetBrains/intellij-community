@@ -4,7 +4,7 @@ package fleet.multiplatform.shims
 import fleet.util.multiplatform.Actual
 
 @fleet.util.multiplatform.Actual("currentThreadId")
-fun currentThreadIdWasm(): Long = 0
+fun currentThreadIdWasmJs(): Long = 0
 
 @fleet.util.multiplatform.Actual("currentThreadName")
-fun currentThreadNameWasm(): String = "main"
+fun currentThreadNameWasmJs(): String = "main"

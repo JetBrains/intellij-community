@@ -5,7 +5,7 @@ package fleet.multiplatform.shims
 import fleet.util.multiplatform.Actual
 
 @Actual("ConcurrentHashMap")
-fun <K, V> ConcurrentHashMapWasm(): ConcurrentHashMap<K, V> = ConcurrentHashMapWasm(mutableMapOf())
+fun <K, V> ConcurrentHashMapWasmJs(): ConcurrentHashMap<K, V> = ConcurrentHashMapWasm(mutableMapOf())
 
 internal fun <K, V> ConcurrentHashMapWasm(base: MutableMap<K, V>): ConcurrentHashMap<K, V> = object : MutableMap<K, V> by base, ConcurrentHashMap<K, V> {
   override fun putIfAbsent(key: K, value: V): V? {

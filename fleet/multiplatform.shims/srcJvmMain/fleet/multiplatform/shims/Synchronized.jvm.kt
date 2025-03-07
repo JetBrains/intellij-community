@@ -4,5 +4,5 @@ package fleet.multiplatform.shims
 import fleet.util.multiplatform.Actual
 
 @Actual("synchronizedImpl")
-inline fun <T> synchronizedImplJvm(lock: Any, block: () -> Any?): Any? =
+internal inline fun synchronizedImplJvm(lock: Any, block: () -> Any?): Any? =
   kotlin.synchronized(lock, block)
