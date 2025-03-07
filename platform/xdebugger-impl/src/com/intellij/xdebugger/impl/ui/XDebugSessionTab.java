@@ -401,13 +401,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     XDebugTabLayouter layouter = session.createTabLayouter();
-    layouter.registerAdditionalContent(myUi);
     if (myConsole != null) { // TODO should be non-null
       Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
       attachNotificationTo(consoleContent);
+      layouter.registerAdditionalContent(myUi);
 
       RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
       consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
+    }
+    else {
+      layouter.registerAdditionalContent(myUi);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
