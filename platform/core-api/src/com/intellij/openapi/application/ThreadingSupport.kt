@@ -49,8 +49,7 @@ interface ThreadingSupport {
    * This method is used to implement higher-level API. Please do not use it directly.
    */
   @ApiStatus.Internal
-  // @Throws(E::class)
-  fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T
+  fun <T> runUnlockingIntendedWrite(action: () -> T): T
 
   /**
    * Set a [ReadActionListener].

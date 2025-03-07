@@ -573,9 +573,8 @@ internal object NestedLocksThreadingSupport : ThreadingSupport {
     return currentPermit != null
   }
 
-  // @Throws(E::class)
-  override fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T {
-    return action.compute()
+  override fun <T> runUnlockingIntendedWrite(action: () -> T): T {
+    return action()
   }
 
   @ApiStatus.Internal

@@ -314,17 +314,16 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  // @Throws(E::class)
-  override fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T {
+  override fun <T> runUnlockingIntendedWrite(action: () -> T): T {
     if (isLockStoredInContext) {
-      return action.compute()
+      return action()
     }
 
     val ts = getThreadState()
     if (!ts.hasWriteIntent) {
       try {
         ts.writeIntentReleased = true
-        return action.compute()
+        return action()
       }
       finally {
         ts.writeIntentReleased = false
@@ -334,7 +333,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     ts.writeIntentReleased = true
     ts.release()
     try {
-      return action.compute()
+      return action()
     }
     finally {
       ts.writeIntentReleased = false
