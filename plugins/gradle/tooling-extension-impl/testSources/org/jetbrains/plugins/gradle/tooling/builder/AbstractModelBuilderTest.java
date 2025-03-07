@@ -41,10 +41,7 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -169,6 +166,7 @@ public abstract class AbstractModelBuilderTest {
         .setStandardOutput(System.out)
         .setJavaHome(new File(gradleJvmHomePath))
         .withArguments(executionSettings.getArguments())
+        .withSystemProperties(Collections.emptyMap())
         .setJvmArguments(executionSettings.getJvmArguments())
         .run();
       Assert.assertNotNull(state);
