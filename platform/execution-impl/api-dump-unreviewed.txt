@@ -2275,6 +2275,7 @@ c:com.intellij.terminal.JBTerminalWidget
 - getTerminalPanel():com.intellij.terminal.JBTerminalPanel
 - getTerminalTitle():com.intellij.terminal.TerminalTitle
 - getText():java.lang.String
+- p:hasRunningCommands():Z
 - notifyStarted():V
 - resetFontSize():V
 - setFontSize(F):V

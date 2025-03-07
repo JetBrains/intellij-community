@@ -72,6 +72,13 @@ interface TerminalWidget : ComponentContainer {
   @RequiresEdt(generateAssertion = false)
   fun sendCommandToExecute(shellCommand: String)
 
+  /**
+   * Note that implementations might not guarantee that the result is 100% correct.
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt(generateAssertion = false)
+  fun isCommandRunning(): Boolean
+
   @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
 }

@@ -71,6 +71,10 @@ internal class ReworkedTerminalWidget(
     view.sendCommandToExecute(shellCommand)
   }
 
+  override fun isCommandRunning(): Boolean {
+    return false // TODO
+  }
+
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
     view.addTerminationCallback(onTerminated, parentDisposable)
   }
