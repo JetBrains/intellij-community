@@ -134,7 +134,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
         if (qualifier == null) {
             if (descriptor is KtLambdaThisVariableDescriptor) {
                 val scopeName = (descriptor.lambda.parentOfType<KtFunction>() as? KtNamedFunction)?.name
-                val scopePart = scopeName?.let(Regex::escape) ?: ".+"
+                val scopePart = scopeName?.replace(Regex("\\W"), "_")?.let(Regex::escape) ?: ".+"
                 val inlinedPart = Regex.escape(inlineSuffix)
                 val regex = Regex("\\\$this\\\$${scopePart}(_\\w+)?_u\\d+lambda_u\\d+$inlinedPart")
                 val lambdaThis = proxy.stackFrame.visibleVariables().filter { it.name().matches(regex) }
