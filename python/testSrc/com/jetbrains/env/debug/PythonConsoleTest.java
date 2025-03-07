@@ -472,4 +472,27 @@ public class PythonConsoleTest extends PyEnvTestCase {
       }
     });
   }
+
+  // PY-66456
+  @Test
+  public void testAwaitHighlight() {
+    // TODO: This shouldn't require an actual Python interpreter to run
+    runPythonTest(new PyConsoleTask() {
+      @Override
+      public void testing() throws Exception {
+        exec("import asyncio");
+        waitForReady();
+        addTextToEditor("await asyncio.sleep(1)");
+        waitForReady();
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          myFixture.testHighlighting(true, false, false, getConsoleFile().getVirtualFile());
+        });
+      }
+
+      @Override
+      public @NotNull Set<String> getTags() {
+        return Set.of("python3.8");
+      }
+    });
+  }
 }

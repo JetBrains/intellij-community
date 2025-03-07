@@ -7,7 +7,9 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.psi.PyExpressionCodeFragment;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPrefixExpression;
 import org.jetbrains.annotations.NotNull;
@@ -18,15 +20,22 @@ public final class PyAsyncAwaitAnnotator extends PyAnnotator {
     super.visitPyPrefixExpression(node);
     if (node.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
       var scopeOwner = ScopeUtil.getScopeOwner(node);
-      if (!(scopeOwner instanceof PyFunction pyFunction && pyFunction.isAsync())) {
-        var annotation = getHolder()
-          .newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.await.outside.async.function"))
-          .range(node.getFirstChild());
-        if (scopeOwner instanceof PyFunction pyFunction) {
-            annotation = annotation.newFix(new ConvertIntoAsyncFunctionFix(pyFunction)).registerFix();
-        }
-        annotation.create();
+
+      // Async functions are allowed to contain "await"
+      if (scopeOwner instanceof PyFunction pyFunction && pyFunction.isAsync())
+        return;
+
+      // Top-level expressions in the Python console are allowed to contain "await"
+      if (scopeOwner instanceof PyExpressionCodeFragment && PythonRuntimeService.getInstance().isInPydevConsole(node))
+          return;
+
+      var annotation = getHolder()
+        .newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.await.outside.async.function"))
+        .range(node.getFirstChild());
+      if (scopeOwner instanceof PyFunction pyFunction) {
+          annotation = annotation.newFix(new ConvertIntoAsyncFunctionFix(pyFunction)).registerFix();
       }
+      annotation.create();
     }
   }
 
