@@ -24,7 +24,7 @@ private val LOG: Logger
   get() = Logger.getInstance("#com.intellij.ide.plugins.PluginManager")
 
 internal fun getUpdatedBrokenPluginFile(configDir: Path? = null): Path =
-  Paths.get(configDir?.toString() ?: PathManager.getConfigPath(), "updatedBrokenPlugins.db")
+  (configDir ?: PathManager.getConfigDir()).resolve("updatedBrokenPlugins.db")
 
 private var brokenPluginVersions: Reference<Map<PluginId, Set<String>>>? = null
 
