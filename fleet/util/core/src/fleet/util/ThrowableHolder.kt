@@ -23,17 +23,6 @@ data class ThrowableHolder(
   val cause: ThrowableHolder?,
   val suppressed: List<ThrowableHolder>?,
 ) {
-  constructor(e: Throwable)
-    : this(e.localizedMessage ?: e.message,
-           e.javaClass.name,
-           stacktraceToStrings(e.stackTrace),
-           e.cause?.let { ThrowableHolder(it) },
-           e.suppressedExceptions.map { ThrowableHolder(it) })
-
-  companion object{
-    fun stacktraceToStrings(elements: Array<StackTraceElement>): List<String> = elements.map { "$it" }
-  }
-
   fun getMessageString(): String = "$exceptionType: $message"
 
   fun getStacktraceString(): String = StringBuilder().also { appendStacktraceString(it) }.toString()
