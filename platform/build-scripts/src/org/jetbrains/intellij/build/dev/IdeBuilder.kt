@@ -481,14 +481,14 @@ private suspend fun createBuildContext(
       jarCacheManager.cleanup()
     }
 
-    val compilationContext = compilationContextDeferred.await()
+    val compilationContext = compilationContextDeferred.await().asArchivedIfNeeded
 
     val productProperties = async(CoroutineName("create product properties")) {
       createProductProperties(compilationContext)
     }
 
     BuildContextImpl(
-      compilationContext = compilationContext.asArchivedIfNeeded,
+      compilationContext = compilationContext,
       productProperties = productProperties.await(),
       windowsDistributionCustomizer = WindowsDistributionCustomizer(),
       linuxDistributionCustomizer = LinuxDistributionCustomizer(),
