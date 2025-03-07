@@ -16,13 +16,13 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
 
     private fun formatErrorMessage(descriptor: IdeaPluginDescriptor, message: String): @NonNls String {
       val builder = StringBuilder()
-      builder.append("The ").append(descriptor.name).append(" (id=").append(descriptor.pluginId).append(", path=")
+      builder.append(descriptor.name).append(" (id=").append(descriptor.pluginId).append(", path=")
       builder.append(pluginPathToUserString(descriptor.pluginPath))
       val version = descriptor.version
       if (version != null && !descriptor.isBundled && version != PluginManagerCore.buildNumber.asString()) {
         builder.append(", version=").append(version)
       }
-      builder.append(") plugin ").append(message)
+      builder.append("): ").append(message)
       return builder.toString()
     }
   }
