@@ -6,16 +6,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy.Companion.defaultCallableShortenStrategy
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy.Companion.defaultClassShortenStrategy
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
-import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -87,7 +82,7 @@ private fun shortenReferencesIfValid(
 }
 
 /**
- * Shorten references in the given [file] and [range].
+ * Shorten references in the given [file] and [selection].
  *
  * This function must be invoked on the EDT thread because it modifies the underlying PSI. It analyzes Kotlin code
  * and hence could block the EDT thread for a long period of time. Therefore, this function should be called only to shorten references
@@ -95,25 +90,16 @@ private fun shortenReferencesIfValid(
  * [org.jetbrains.kotlin.analysis.api.components.KtReferenceShortenerMixIn] in a background thread to perform the analysis and then
  * modify PSI on the EDT thread by invoking [org.jetbrains.kotlin.analysis.api.components.ShortenCommand.invokeShortening].
  */
-@OptIn(KaAllowAnalysisOnEdt::class)
 fun shortenReferencesInRange(
     file: KtFile,
-    range: TextRange = file.textRange,
+    selection: TextRange = file.textRange,
     shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
     classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = defaultClassShortenStrategy,
     callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = defaultCallableShortenStrategy
-): PsiElement? {
-    val shortenCommand = allowAnalysisOnEdt {
-        @OptIn(KaAllowAnalysisFromWriteAction::class)
-        allowAnalysisFromWriteAction {
-            analyze(file) {
-                collectPossibleReferenceShortenings(file, range, shortenOptions, classShortenStrategy, callableShortenStrategy)
-            }
-        }
-    }
-
-    return shortenCommand.invokeShortening().firstOrNull()
-}
+): PsiElement? = allowAnalysisFromWriteActionInEdt(file) {
+    collectPossibleReferenceShortenings(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
+}.invokeShortening()
+    .firstOrNull()
 
 fun shortenReferencesInRange(
     element: KtElement,

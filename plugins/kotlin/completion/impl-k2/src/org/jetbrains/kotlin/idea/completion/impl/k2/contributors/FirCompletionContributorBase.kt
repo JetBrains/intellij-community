@@ -126,7 +126,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
         shortenReferencesInRange(
             file = context.file as KtFile,
-            range = explicitReceiverRange.grown(newReceiver.length),
+            selection = explicitReceiverRange.grown(newReceiver.length),
         )
     }
 
