@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.*;
@@ -13,6 +13,7 @@ import com.intellij.lexer.TokenList;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.ParsingDiagnostics;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -303,15 +304,21 @@ public interface BasicJavaElementType {
     @Override
     public ASTNode parseContents(final @NotNull ASTNode chameleon) {
       final PsiBuilder builder = BasicJavaParserUtil.createBuilder(chameleon, languageLevelFunction, myLexerFunction, psiAsLexer);
+      long startTime = System.nanoTime();
       myJavaThinParser.get().getStatementParser().parseCodeBlockDeep(builder, true);
-      return builder.getTreeBuilt().getFirstChildNode();
+      ASTNode node = builder.getTreeBuilt().getFirstChildNode();
+      ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
+      return node;
     }
 
     @Override
     public @NotNull FlyweightCapableTreeStructure<LighterASTNode> parseContents(final @NotNull LighterLazyParseableNode chameleon) {
       final PsiBuilder builder = BasicJavaParserUtil.createBuilder(chameleon, languageLevelFunction, myLexerFunction);
+      long startTime = System.nanoTime();
       myJavaThinParser.get().getStatementParser().parseCodeBlockDeep(builder, true);
-      return builder.getLightTree();
+      FlyweightCapableTreeStructure<LighterASTNode> tree = builder.getLightTree();
+      ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
+      return tree;
     }
 
     @Override
