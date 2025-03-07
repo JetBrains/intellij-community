@@ -60,7 +60,14 @@ class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope): Dispos
 
     init {
       coroutineScope.launch {
+        var initial = true
         entity.asQuery()[DocumentEntity.TextAttr].collect { text ->
+          // TODO do we need to process first change in some cases (e.g. on the frontend)?
+          if (initial) {
+            initial = false
+            return@collect
+          }
+
           writeAction {
             documentChanging = true
             try {
