@@ -4,6 +4,9 @@
 
 package fleet.tracing.runtime
 
+import kotlin.jvm.JvmMultifileClass
+import kotlin.jvm.JvmName
+
 //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.reporting.opentelemetry"])
 data class SpanInfo(
   val name: String,

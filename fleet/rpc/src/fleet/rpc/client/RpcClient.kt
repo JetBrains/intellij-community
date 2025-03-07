@@ -498,10 +498,10 @@ class RpcClient internal constructor(
       is InternalStreamDescriptor.FromRemote -> {
         val producerCancelled = error?.producerCancelled
         val causePrime = if (producerCancelled != null) {
-          ProducerIsCancelledException(msg = rpcStreamFailureMessage(desc.displayName, error.message()), cause = null)
+          ProducerIsCancelledException(msg = rpcStreamFailureMessage(desc.displayName, error.message()), cause = null) as Throwable?
         }
         else {
-          cause
+          cause as Throwable?
         }
         desc.bufferedChannel.close(causePrime)
       }
