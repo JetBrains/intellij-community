@@ -10,10 +10,12 @@ kt_jvm_library(
     deps = [
         "@lib//:kotlin-stdlib",
         "@lib//:fastutil-min",
+        "@lib//:asm",
         "//src/worker-util",
         "@lib//:hash4j",
         "//:fury-core",
         "//:jps",
+        "//:kotlin-metadata",
     ],
     visibility = ["//visibility:public"],
 )
