@@ -3597,10 +3597,12 @@ e:com.intellij.ide.plugins.PluginEnabledState
 f:com.intellij.ide.plugins.PluginHostsConfigurable
 - com.intellij.openapi.options.Configurable
 - com.intellij.openapi.options.Configurable$NoScroll
+- com.intellij.openapi.options.Configurable$SingleEditorConfiguration
 - <init>():V
 - apply():V
 - createComponent():javax.swing.JComponent
 - disposeUIResources():V
+- getDialogInitialSize():java.awt.Dimension
 - getDisplayName():java.lang.String
 - isModified():Z
 - reset():V
@@ -9744,6 +9746,7 @@ c:com.intellij.openapi.options.newEditor.SettingsDialog
 - p:getDimensionServiceKey():java.lang.String
 - f:getEditor():com.intellij.openapi.options.newEditor.AbstractEditor
 - p:getHelpId():java.lang.String
+- getInitialSize():java.awt.Dimension
 - getPreferredFocusedComponent():javax.swing.JComponent
 - p:getStyle():com.intellij.openapi.ui.DialogWrapper$DialogStyle
 - p:setHelpTooltip(javax.swing.JButton):V

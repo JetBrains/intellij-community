@@ -1555,6 +1555,8 @@ com.intellij.openapi.options.Configurable$NoMargin
 com.intellij.openapi.options.Configurable$NoScroll
 com.intellij.openapi.options.Configurable$Promo
 - a:getPromoIcon():javax.swing.Icon
+com.intellij.openapi.options.Configurable$SingleEditorConfiguration
+- a:getDialogInitialSize():java.awt.Dimension
 com.intellij.openapi.options.Configurable$TopComponentController
 - sf:EMPTY:com.intellij.openapi.options.Configurable$TopComponentController
 - a:setLeftComponent(java.awt.Component):V

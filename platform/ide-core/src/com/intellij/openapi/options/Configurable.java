@@ -233,6 +233,18 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   /**
+   * The interface is used when configuration opens as single configuration in dialog.
+   */
+  interface SingleEditorConfiguration {
+    /**
+     * Override to set default initial size of the window.
+     *
+     * @return initial window size
+     */
+    @NotNull Dimension getDialogInitialSize();
+  }
+
+  /**
    * Ask opened configurable to focus on a control with a specified label.
    * It could be a tab name, name of the tree item, checkbox label, etc.
    * The configurable may or may not ignore this request.

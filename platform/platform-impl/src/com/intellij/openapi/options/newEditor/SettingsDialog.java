@@ -181,6 +181,11 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   }
 
   @Override
+  public @Nullable Dimension getInitialSize() {
+    return editor.getDialogInitialSize();
+  }
+
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return editor.getPreferredFocusedComponent();
   }
