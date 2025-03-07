@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.intellij.images.ImagesBundle
 import org.intellij.images.scientific.ScientificUtils
+import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 import java.io.IOException
 import java.nio.file.Files
 
@@ -36,6 +37,7 @@ internal class SaveImageAction : DumbAwareAction() {
     catch (e: IOException) {
       logger.warn("Failed to save image", e)
     }
+    ScientificImageActionsCollector.logSaveImageAction(this)
   }
 
   override fun update(e: AnActionEvent) {
