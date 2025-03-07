@@ -312,7 +312,9 @@ internal fun Editor.getCharSize(): Dimension2D {
   // For monospaced fonts this shouldn't really matter, but let's stay on the safe side.
   // Otherwise, we may end up with some characters falsely displayed as double-width ones.
   val width = FontLayoutService.getInstance().charWidth2D(fontMetrics, '%'.code)
-  return Dimension2DDouble(width.toDouble(), lineHeight.toDouble())
+  val columnSpacing = settings.characterGridWidthMultiplier ?: 1.0f
+  // lineHeight already includes lineSpacing
+  return Dimension2DDouble(width.toDouble() * columnSpacing, lineHeight.toDouble())
 }
 
 fun Editor.calculateTerminalSize(): TermSize? {
