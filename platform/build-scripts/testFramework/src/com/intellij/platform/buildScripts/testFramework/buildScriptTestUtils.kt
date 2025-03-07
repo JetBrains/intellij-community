@@ -101,6 +101,7 @@ fun runTestBuild(
   testInfo: TestInfo,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   isReproducibilityTestAllowed: Boolean = true,
+  checkIntegrityOfEmbeddedFrontend: Boolean = true,
   build: suspend (BuildContext) -> Unit = { buildDistributions(context = it) },
   onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
@@ -121,6 +122,7 @@ fun runTestBuild(
           ),
           traceSpanName = "${testInfo.spanName}#${iterationNumber}",
           writeTelemetry = false,
+          checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
           build = { context ->
             build(context)
             onSuccess(context)
@@ -140,6 +142,7 @@ fun runTestBuild(
         createBuildOptionsForTest(productProperties, homeDir, testInfo, buildOptionsCustomizer),
       ),
       writeTelemetry = true,
+      checkIntegrityOfEmbeddedFrontend =  checkIntegrityOfEmbeddedFrontend,
       traceSpanName = testInfo.spanName,
       build = { context ->
         build(context)
@@ -155,12 +158,14 @@ suspend fun runTestBuild(
   context: suspend () -> BuildContext,
   build: suspend (BuildContext) -> Unit = { buildDistributions(it) }
 ) {
-  doRunTestBuild(context(), testInfo.spanName, writeTelemetry = true, build)
+  doRunTestBuild(context(), testInfo.spanName, writeTelemetry = true, checkIntegrityOfEmbeddedFrontend = true, build)
 }
 
 private val defaultLogFactory = Logger.getFactory()
 
-private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String, writeTelemetry: Boolean, build: suspend (context: BuildContext) -> Unit) {
+private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String, writeTelemetry: Boolean,
+                                   checkIntegrityOfEmbeddedFrontend: Boolean,
+                                   build: suspend (context: BuildContext) -> Unit) {
   var outDir: Path? = null
   var traceFile: Path? = null
   var error: Throwable? = null
@@ -176,12 +181,14 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String,
       }
       try {
         build(context)
-        val frontendRootModule = context.productProperties.embeddedFrontendRootModule
-        if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
-          val softly = SoftAssertions()
-          RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
-          checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
-          softly.assertAll()
+        if (checkIntegrityOfEmbeddedFrontend) {
+          val frontendRootModule = context.productProperties.embeddedFrontendRootModule
+          if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
+            val softly = SoftAssertions()
+            RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
+            checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
+            softly.assertAll()
+          }
         }
       }
       catch (e: CancellationException) {
