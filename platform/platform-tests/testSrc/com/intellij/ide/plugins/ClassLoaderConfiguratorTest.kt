@@ -2,7 +2,6 @@
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
-import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
@@ -10,20 +9,19 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.directoryStreamIfExists
 import kotlinx.coroutines.runBlocking
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.TestName
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 
-private val buildNumber = BuildNumber.fromString("2042.0")!!
-
 internal class ClassLoaderConfiguratorTest {
-  @Rule @JvmField val name = TestName()
+  @RegisterExtension
+  @JvmField
+  val inMemoryFs = InMemoryFsExtension()
 
-  @Rule @JvmField val inMemoryFs = InMemoryFsRule()
+  val rootDir: Path get() = inMemoryFs.fs.getPath("/")
 
   @Test
   fun `plugin must be after child`() {
@@ -138,35 +136,21 @@ internal class ClassLoaderConfiguratorTest {
   }
 
   private fun loadPlugins(modulePackage: String?): PluginLoadingResult {
-    val rootDir = inMemoryFs.fs.getPath("/")
-
     val dependencyId = "p_dependency"
-    plugin(rootDir, """
-      <idea-plugin package="com.bar">
-        <id>$dependencyId</id>
-        <extensionPoints>
-          <extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"
-        </extensionPoints>
-      </idea-plugin>
-      """)
+    PluginBuilder.empty()
+      .id(dependencyId)
+      .packagePrefix("com.bar")
+      .extensionPoints("""<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
+      .build(rootDir.resolve(dependencyId))
 
     val dependentPluginId = "p_dependent"
-    plugin(rootDir, """
-      <idea-plugin package="com.example">
-        <id>$dependentPluginId</id>
-        <content>
-          <module name="com.example.sub"/>
-        </content>
-      </idea-plugin>
-    """)
-    module(rootDir, dependentPluginId, "com.example.sub", """
-      <idea-plugin ${modulePackage?.let { """package="$it"""" } ?: ""}>
-        <!-- dependent must not be empty, add some extension -->
-        <extensionPoints>
-          <extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"
-        </extensionPoints>
-      </idea-plugin>
-    """)
+    PluginBuilder.empty()
+      .id(dependentPluginId)
+      .packagePrefix("com.example")
+      .module("com.example.sub",
+              PluginBuilder.empty().packagePrefix(modulePackage)
+                .extensionPoints("""<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""))
+      .build(rootDir.resolve(dependentPluginId))
 
     val loadResult = runBlocking { loadDescriptors(rootDir) }
     val plugins = loadResult.enabledPlugins
@@ -179,6 +163,7 @@ internal class ClassLoaderConfiguratorTest {
 }
 
 internal fun loadDescriptors(dir: Path): PluginLoadingResult {
+  val buildNumber = BuildNumber.fromString("2042.0")!!
   val result = PluginLoadingResult()
   val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet(),
                                              customBrokenPluginVersions = emptyMap(),
