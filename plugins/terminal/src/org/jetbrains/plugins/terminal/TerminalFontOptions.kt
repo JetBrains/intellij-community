@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
@@ -9,6 +10,8 @@ import com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.AppFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
+import com.intellij.openapi.util.Disposer
+import java.util.concurrent.CopyOnWriteArrayList
 
 @State(
   name = "TerminalFontOptions",
@@ -17,6 +20,15 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() {
   companion object {
     @JvmStatic fun getInstance(): TerminalFontOptions = service<TerminalFontOptions>()
+  }
+
+  private val listeners = CopyOnWriteArrayList<TerminalFontOptionsListener>()
+
+  fun addListener(listener: TerminalFontOptionsListener, disposable: Disposable) {
+    listeners.add(listener)
+    Disposer.register(disposable) {
+      listeners.remove(listener)
+    }
   }
 
   fun getSettings(): TerminalFontSettings {
@@ -42,6 +54,7 @@ internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPrefer
     state.COLUMN_SPACING = preferences.columnSpacing
     // apply the FontPreferences part, the last line because it invokes incModificationCount()
     update(newPreferences)
+    listeners.forEach { it.fontOptionsChanged() }
   }
 
   override fun createFontState(fontPreferences: FontPreferences): PersistentTerminalFontPreferences =
@@ -53,6 +66,10 @@ internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPrefer
     // but it can be changed here later, for example, if we want to change the default line spacing
     loadState(defaultState)
   }
+}
+
+internal interface TerminalFontOptionsListener {
+  fun fontOptionsChanged()
 }
 
 // All this weirdness with similar nondescript names like TerminalFontOptions and TerminalFontSettings
