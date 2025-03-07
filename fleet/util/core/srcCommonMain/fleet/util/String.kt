@@ -2,6 +2,7 @@
 package fleet.util
 
 import fleet.util.multiplatform.linkToActual
+import fleet.util.text.codepoints
 
 fun String.capitalizeWithCurrentLocale(): String = linkToActual()
 fun String.lowercaseWithCurrentLocale(): String = linkToActual()
@@ -40,7 +41,8 @@ fun String.normalizeLineEndings(): String {
 fun String.offset8to16(offset: Int): Int {
   var utf8Offset = offset
   var utf16Offset = 0
-  for (codePoint in codePoints()) {
+  for (c in codepoints(0)) {
+    val codePoint = c.codepoint
     utf8Offset -= when {
       codePoint < 128 -> 1
       codePoint < 2048 -> 2
