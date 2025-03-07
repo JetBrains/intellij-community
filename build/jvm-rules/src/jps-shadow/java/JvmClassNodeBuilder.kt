@@ -4,16 +4,13 @@ package org.jetbrains.jps.dependency.java
 
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Ref
-import com.intellij.util.SmartList
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import org.jetbrains.annotations.Nullable
-import org.jetbrains.bazel.jvm.hashMap
+import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.jps.dependency.NodeBuilder
 import org.jetbrains.jps.dependency.Usage
-import org.jetbrains.jps.javac.Iterators
 import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Opcodes.API_VERSION
@@ -24,8 +21,6 @@ import org.jetbrains.org.objectweb.asm.util.TraceMethodVisitor
 import java.lang.annotation.RetentionPolicy
 import java.util.*
 import java.util.concurrent.CancellationException
-import java.util.function.Consumer
-import java.util.function.Supplier
 import kotlin.metadata.KmDeclarationContainer
 import kotlin.metadata.isInline
 import kotlin.metadata.jvm.JvmMethodSignature
@@ -36,7 +31,7 @@ import kotlin.metadata.jvm.signature
 private const val KOTLIN_LAMBDA_USAGE_CLASS_MARKER = "\$sam$"
 private val LOG: Logger = Logger.getInstance(JvmClassNodeBuilder::class.java)
 @Suppress("SpellCheckingInspection")
-private const val LAMBDA_FACTORY_CLASS: String = "java/lang/invoke/LambdaMetafactory"
+private const val LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory"
 
 class JvmClassNodeBuilder private constructor(
   private val fileName: String,
@@ -110,12 +105,12 @@ class JvmClassNodeBuilder private constructor(
   private inner class AnnotationCrawler(
     private val type: TypeRepr.ClassType,
     private val target: ElemType,
-    private val resultConsumer: (ElementAnnotation) -> Unit,
+    private val resultConsumer: ((ElementAnnotation) -> Unit)?,
   ) : AnnotationVisitor(API_VERSION) {
     // Do not track changes in the annotation's content if there are no registered annotation trackers that would process these changes.
     // Some technical annotations (e.g., DebugInfo) may contain different content after every compiler run => they will always be considered "changed".
     // Handling such changes may involve additional type-consuming analysis and unnecessary dependency data updates.
-    private val hashBuilder = if (isAnnotationTracked(type)) ContentHashBuilderImpl() else ContentHashBuilder.NULL_CONTENT_BUILDER
+    private val hashBuilder = if (isAnnotationTracked(type)) ContentHashBuilderImpl() else null
 
     private val usedArguments = hashSet<String>()
     private var arrayName: String? = null
@@ -162,15 +157,15 @@ class JvmClassNodeBuilder private constructor(
     override fun visit(name: String?, value: Any) {
       val isArray = name == null && arrayName != null
       val argName: String?
-      if (name != null) {
-        argName = name
-      }
-      else {
+      if (name == null) {
         argName = arrayName
         // not interested in collecting complete array value; need to know just an array type
         arrayName = null
       }
-      registerUsages(argName, Supplier { getMethodDescr(value, isArray) }, value)
+      else {
+        argName = name
+      }
+      registerUsages(argName, value) { getMethodDescr(value, isArray) }
     }
 
     override fun visitEnum(name: String?, desc: String?, value: String) {
@@ -184,11 +179,15 @@ class JvmClassNodeBuilder private constructor(
         // not interested in collecting complete array value; need to know just an array type
         arrayName = null
       }
-      registerUsages(argName, Supplier { (if (isArray) "()[" else "()") + desc }, value)
+      registerUsages(argName, value) { (if (isArray) "()[" else "()") + desc }
     }
 
     override fun visitAnnotation(name: String?, desc: String): AnnotationVisitor {
-      return AnnotationCrawler(type = TypeRepr.getType(desc) as TypeRepr.ClassType, target = target) { hashBuilder.update(it.contentHash) }
+      return AnnotationCrawler(
+        type = TypeRepr.getType(desc) as TypeRepr.ClassType,
+        target = target,
+        resultConsumer = if (hashBuilder == null) null else { { hashBuilder.update(it.contentHash) } },
+      )
     }
 
     override fun visitArray(name: String?): AnnotationVisitor? {
@@ -196,17 +195,21 @@ class JvmClassNodeBuilder private constructor(
       return this
     }
 
-    fun registerUsages(@Nullable methodName: String?, methodDescr: Supplier<String?>, value: Any) {
+    private inline fun registerUsages(methodName: String?, value: Any, methodDescr: () -> String) {
       if (value is Type) {
         val className = value.className.replace('.', '/')
         addUsage(ClassUsage(className))
+        hashBuilder?.putString(className)
       }
+      else {
+        hashBuilder?.update(value)
+      }
+
       if (methodName != null) {
-        addUsage(MethodUsage(type.jvmName, methodName, methodDescr.get()))
+        addUsage(MethodUsage(type.jvmName, methodName, methodDescr()))
         usedArguments.add(methodName)
-        hashBuilder.update(methodName)
+        hashBuilder?.putString(methodName)
       }
-      hashBuilder.update(value)
     }
 
     override fun visitEnd() {
@@ -220,116 +223,15 @@ class JvmClassNodeBuilder private constructor(
         }
       }
       finally {
-        resultConsumer(ElementAnnotation(type, hashBuilder.getResult()))
+        resultConsumer?.invoke(ElementAnnotation(type, hashBuilder?.getResult()))
       }
-    }
-  }
-
-  private class KotlinMetadataCrawler(
-    private val resultConsumer: Consumer<KotlinMeta>,
-  ) : AnnotationVisitor(API_VERSION) {
-    private val data = hashMap<String, Any>()
-
-    private class DataField<T>(private val name: String, private val type: Class<T>) {
-      fun get(data: Map<String, Any>): T? {
-        val value = data.get(name)
-        return if (type.isInstance(value)) type.cast(value) else null
-      }
-    }
-
-    override fun visit(name: String, value: Any) {
-      data.put(name, value)
-    }
-
-    override fun visitArray(name: String?): AnnotationVisitor {
-      return object : AnnotationVisitor(API_VERSION) {
-        private val values = ArrayList<Any>()
-
-        override fun visit(name: String, value: Any?) {
-          if (value != null) {
-            values.add(value)
-          }
-        }
-
-        override fun visitEnd() {
-          if (!values.isEmpty()) {
-            data.put(name, values.toArray<Any>(java.lang.reflect.Array.newInstance(values.first().javaClass, values.size) as Array<out Any?>))
-          }
-        }
-      }
-    }
-
-    override fun visitEnd() {
-      val kind = KIND.get(data)
-      if (kind != null) {
-        val extraInt = EXTRA_INT.get(data)
-        resultConsumer.accept(KotlinMeta(
-          kind,
-          VERSION.get(data),
-          DATA1.get(data),
-          DATA2.get(data),
-          EXTRA_STRING.get(data),
-          PACKAGE_NAME.get(data),
-          extraInt ?: 0
-        ))
-      }
-    }
-
-    @Suppress("RemoveRedundantQualifierName")
-    companion object {
-      private val KIND = DataField<Int>("k", java.lang.Integer.TYPE)
-      private val VERSION = DataField<IntArray>("mv", IntArray::class.java)
-      private val DATA1 = DataField<Array<String>>("d1", Array<String>::class.java)
-      private val DATA2 = DataField<Array<String>>("d2", Array<String>::class.java)
-      private val EXTRA_STRING = DataField<String>("xs", String::class.java)
-      private val PACKAGE_NAME = DataField<String>("pn", String::class.java)
-      private val EXTRA_INT = DataField<Int>("xi", java.lang.Integer.TYPE)
-    }
-  }
-
-  private inner class ModuleCrawler : ModuleVisitor(API_VERSION) {
-    override fun visitMainClass(mainClass: String) {
-      addUsage(ClassUsage(mainClass))
-    }
-
-    override fun visitRequire(module: String?, access: Int, version: String?) {
-      if (isExplicit(access)) {
-        // collect non-synthetic dependencies only
-        myModuleRequires.add(ModuleRequires(JVMFlags(access), module, version))
-      }
-    }
-
-    override fun visitExport(packaze: String?, access: Int, vararg modules: String?) {
-      if (isExplicit(access)) {
-        // collect non-synthetic dependencies only
-        @Suppress("UNNECESSARY_SAFE_CALL")
-        myModuleExports.add(ModulePackage(packaze, modules?.asList() ?: emptyList()))
-      }
-    }
-
-    override fun visitUse(service: String) {
-      addUsage(ClassUsage(service))
-    }
-
-    override fun visitProvide(service: String, vararg providers: String) {
-      addUsage(ClassUsage(service))
-      @Suppress("SENSELESS_COMPARISON")
-      if (providers != null) {
-        for (provider in providers) {
-          addUsage(ClassUsage(provider))
-        }
-      }
-    }
-
-    fun isExplicit(access: Int): Boolean {
-      return (access and (Opcodes.ACC_SYNTHETIC or Opcodes.ACC_MANDATED)) == 0
     }
   }
 
   private fun processSignature(sig: String?) {
     if (sig != null) {
       try {
-        SignatureReader(sig).accept(mySignatureCrawler)
+        SignatureReader(sig).accept(signatureCrawler)
       }
       catch (e: Exception) {
         LOG.info("Problems parsing signature \"$sig\" in $fileName", e)
@@ -337,53 +239,49 @@ class JvmClassNodeBuilder private constructor(
     }
   }
 
-  private val mySignatureCrawler: SignatureVisitor = object : BaseSignatureVisitor() {
-    override fun visitClassBound(): SignatureVisitor {
-      return mySignatureWithGenericBoundUsageCrawler
-    }
+  private val signatureCrawler: SignatureVisitor = object : BaseSignatureVisitor() {
+    override fun visitClassBound() = signatureWithGenericBoundUsageCrawler
 
-    override fun visitInterfaceBound(): SignatureVisitor {
-      return mySignatureWithGenericBoundUsageCrawler
-    }
+    override fun visitInterfaceBound() = signatureWithGenericBoundUsageCrawler
 
     override fun visitTypeArgument(wildcard: Char): SignatureVisitor? {
-      return if (wildcard == '+' || wildcard == '-') mySignatureWithGenericBoundUsageCrawler else super.visitTypeArgument(wildcard)
+      return if (wildcard == '+' || wildcard == '-') signatureWithGenericBoundUsageCrawler else super.visitTypeArgument(wildcard)
     }
   }
 
-  private val mySignatureWithGenericBoundUsageCrawler: SignatureVisitor = object : BaseSignatureVisitor() {
+  private val signatureWithGenericBoundUsageCrawler = object : BaseSignatureVisitor() {
     override fun visitClassType(name: String) {
       super.visitClassType(name)
       addUsage(ClassAsGenericBoundUsage(name))
     }
   }
 
-  private var isModule = false
   private var access = 0
   private var name: String? = null
-  private var myVersion: String? = null // for class contains a class bytecode version, for module contains a module version
+  // for class contains a class bytecode version, for module contains a module version
+  private var version: String? = null
   private var superClass: String? = null
   private var interfaces: Array<String>? = null
   private var signature: String? = null
 
-  private val classNameHolder: Ref<String?> = Ref.create()
+  private var className: String? = null
   private var outerClassName: String? = null
   private var localClassFlag = false
   private var anonymousClassFlag = false
   private var sealedClassFlag = false
 
-  private val myMethods = ObjectOpenHashSet<JvmMethod>()
-  private val myFields = ObjectOpenHashSet<JvmField>()
-  private val myUsages = ObjectOpenHashSet<Usage>()
+  private val methods = ObjectOpenHashSet<JvmMethod>()
+  private val fields = ObjectOpenHashSet<JvmField>()
+  private val usages = ObjectOpenHashSet<Usage>()
   private val targets = EnumSet.noneOf<ElemType>(ElemType::class.java)
   private var retentionPolicy: RetentionPolicy? = null
 
   private val annotationArguments = Object2ObjectOpenHashMap<TypeRepr.ClassType, MutableSet<String>>()
   private val annotationTargets = Object2ObjectOpenHashMap<TypeRepr.ClassType, MutableSet<ElemType>>()
-  private val myAnnotations = ObjectOpenHashSet<ElementAnnotation>()
+  private val annotations = ObjectOpenHashSet<ElementAnnotation>()
 
-  private val myModuleRequires = ObjectOpenHashSet<ModuleRequires>()
-  private val myModuleExports = ObjectOpenHashSet<ModulePackage>()
+  private var moduleRequires: Set<ModuleRequires>? = null
+  private var moduleExports: Set<ModulePackage>? = null
 
   private val metadata = ArrayList<JvmMetadata<*, *>>()
 
@@ -394,7 +292,7 @@ class JvmClassNodeBuilder private constructor(
   override fun addUsage(usage: Usage) {
     val owner = usage.elementOwner
     if (owner !is JvmNodeReferenceID || JvmClass.OBJECT_CLASS_NAME != owner.nodeName) {
-      myUsages.add(usage)
+      usages.add(usage)
     }
   }
 
@@ -416,15 +314,17 @@ class JvmClassNodeBuilder private constructor(
       flags = flags.deriveIsLibrary()
     }
 
-    if (isModule) {
+    val moduleRequires = moduleRequires
+    val moduleExports = moduleExports
+    if (moduleRequires != null && moduleExports != null) {
       if (!issLibraryMode) {
-        for (moduleRequire in myModuleRequires) {
+        for (moduleRequire in moduleRequires) {
           if (name == moduleRequire.name) {
             addUsage(ModuleUsage(moduleRequire.name))
           }
         }
       }
-      return JvmModule(flags, name, fileName, myVersion, myModuleRequires, myModuleExports, if (issLibraryMode) mutableSetOf<Usage?>() else myUsages, metadata)
+      return JvmModule(flags, name, fileName, version, moduleRequires, moduleExports, if (issLibraryMode) emptySet() else usages, metadata)
     }
 
     if (!issLibraryMode) {
@@ -436,12 +336,12 @@ class JvmClassNodeBuilder private constructor(
           addUsage(ClassUsage(anInterface))
         }
       }
-      for (field in myFields) {
+      for (field in fields) {
         for (usage in field.type.usages) {
           addUsage(usage)
         }
       }
-      for (jvmMethod in myMethods) {
+      for (jvmMethod in methods) {
         for (usage in jvmMethod.type.usages) {
           addUsage(usage)
         }
@@ -458,9 +358,9 @@ class JvmClassNodeBuilder private constructor(
       }
     }
 
-    val fields = if (issLibraryMode) myFields.filter { !it.isPrivate } else myFields
-    val methods = if (issLibraryMode) myMethods.filter { !it.isPrivate } else myMethods
-    val usages = if (issLibraryMode) emptySet() else myUsages
+    val fields = if (issLibraryMode) fields.filter { !it.isPrivate } else fields
+    val methods = if (issLibraryMode) methods.filter { !it.isPrivate } else methods
+    val usages = if (issLibraryMode) emptySet() else usages
     return JvmClass(
       flags = flags,
       signature = signature,
@@ -471,7 +371,7 @@ class JvmClassNodeBuilder private constructor(
       interfaces = interfaces?.asList() ?: emptyList(),
       fields = fields,
       methods = methods,
-      annotations = myAnnotations,
+      annotations = annotations,
       annotationTargets = targets,
       retentionPolicy = retentionPolicy,
       usages = usages,
@@ -482,13 +382,14 @@ class JvmClassNodeBuilder private constructor(
   override fun visit(version: Int, access: Int, name: String, sig: String?, superName: String?, interfaces: Array<String>?) {
     this@JvmClassNodeBuilder.access = access
     this@JvmClassNodeBuilder.name = name
-    myUsages.add(ImportPackageOnDemandUsage(JvmClass.getPackageName(name))) // implicit 'import' of the package to which the node belongs to
-    myVersion = version.toString()
+    // implicit 'import' of the package to which the node belongs to
+    usages.add(ImportPackageOnDemandUsage(JvmClass.getPackageName(name)))
+    this@JvmClassNodeBuilder.version = version.toString()
     signature = sig
     superClass = superName
     this.interfaces = interfaces
 
-    classNameHolder.set(name)
+    className = name
     processSignature(sig)
   }
 
@@ -502,28 +403,23 @@ class JvmClassNodeBuilder private constructor(
   }
 
   override fun visitModule(name: String, access: Int, version: String?): ModuleVisitor {
-    isModule = true
-    this@JvmClassNodeBuilder.access = access
+    this.access = access
     this.name = name
-    myVersion = version
-    return ModuleCrawler()
+    this.version = version
+    val moduleRequires = ObjectOpenHashSet<ModuleRequires>().also { this.moduleRequires = it }
+    val moduleExports = ObjectOpenHashSet<ModulePackage>().also { this.moduleExports = it }
+    return ModuleCrawler(moduleRequires, moduleExports, this)
   }
 
   override fun visitAnnotation(desc: String, visible: Boolean): AnnotationVisitor {
     @Suppress("SpellCheckingInspection")
     return when (desc) {
-      "Ljava/lang/annotation/Target;" -> {
-        AnnotationTargetCrawler()
-      }
-      "Ljava/lang/annotation/Retention;" -> {
-        AnnotationRetentionPolicyCrawler()
-      }
-      "Lkotlin/Metadata;" -> {
-        KotlinMetadataCrawler(metadata::add)
-      }
+      "Ljava/lang/annotation/Target;" -> AnnotationTargetCrawler()
+      "Ljava/lang/annotation/Retention;" -> AnnotationRetentionPolicyCrawler()
+      "Lkotlin/Metadata;" -> KotlinMetadataCrawler(metadata::add)
       else -> AnnotationCrawler(
         type = TypeRepr.getType(desc) as TypeRepr.ClassType,
-        target = if ((access and Opcodes.ACC_ANNOTATION) > 0) ElemType.ANNOTATION_TYPE else ElemType.TYPE) { myAnnotations.add(it) }
+        target = if ((access and Opcodes.ACC_ANNOTATION) > 0) ElemType.ANNOTATION_TYPE else ElemType.TYPE) { annotations.add(it) }
     }
   }
 
@@ -534,10 +430,16 @@ class JvmClassNodeBuilder private constructor(
     processSignature(signature)
 
     return object : FieldVisitor(API_VERSION) {
-      val annotations: MutableSet<ElementAnnotation?> = HashSet<ElementAnnotation?>()
+      private var annotations: MutableSet<ElementAnnotation>? = null
 
       override fun visitAnnotation(desc: String, visible: Boolean): AnnotationVisitor? {
-        return AnnotationCrawler(TypeRepr.getType(desc) as TypeRepr.ClassType, ElemType.FIELD) { annotations.add(it) }
+        return AnnotationCrawler(TypeRepr.getType(desc) as TypeRepr.ClassType, ElemType.FIELD) {
+          if (annotations == null) {
+            // set is expected very small - do not use a hash set
+            annotations = ObjectArraySet()
+          }
+          annotations!!.add(it)
+        }
       }
 
       override fun visitEnd() {
@@ -546,7 +448,7 @@ class JvmClassNodeBuilder private constructor(
         }
         finally {
           if ((access and Opcodes.ACC_SYNTHETIC) == 0 || (access and Opcodes.ACC_PRIVATE) == 0) {
-            myFields.add(JvmField(JVMFlags(access), signature, name, desc, annotations, value))
+            fields.add(JvmField(JVMFlags(access), signature, name, desc, annotations ?: emptySet(), value))
           }
         }
       }
@@ -578,22 +480,31 @@ class JvmClassNodeBuilder private constructor(
   }
 
   override fun visitMethod(access: Int, name: String, descriptor: String, signature: String?, exceptions: Array<out String?>?): MethodVisitor? {
-    val defaultValue: Ref<Any?> = Ref.create()
-    val annotations: MutableSet<ElementAnnotation?> = HashSet<ElementAnnotation?>()
-    val paramAnnotations: MutableSet<ParamAnnotation?> = HashSet<ParamAnnotation?>()
+    var defaultValue: Any? = null
+    val annotations = ObjectArraySet<ElementAnnotation>()
+    val paramAnnotations = ObjectArraySet<ParamAnnotation>()
     processSignature(signature)
 
     val isInlined = isInlined(name, descriptor)
     val printer = Textifier()
 
-    val visitor: MethodVisitor = object : MethodVisitor(API_VERSION) {
+    val visitor = object : MethodVisitor(API_VERSION) {
       override fun visitEnd() {
         if ((access and Opcodes.ACC_SYNTHETIC) == 0 || (access and Opcodes.ACC_BRIDGE) > 0 || (access and Opcodes.ACC_PRIVATE) == 0) {
           if (isInlined) {
             // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
-            defaultValue.set(buildContentHash(ContentHashBuilderImpl(), printer.getText()).getResult())
+            defaultValue = buildContentHash(ContentHashBuilderImpl(), printer.getText()).getResult()
           }
-          myMethods.add(JvmMethod(JVMFlags(access), signature, name, descriptor, annotations, paramAnnotations, Iterators.asIterable(exceptions), defaultValue.get()))
+          methods.add(JvmMethod(
+            JVMFlags(access),
+            signature,
+            name,
+            descriptor,
+            annotations.ifEmpty { emptySet() },
+            paramAnnotations.ifEmpty { emptySet() },
+            exceptions?.asList() ?: emptyList(),
+            defaultValue,
+          ))
         }
       }
 
@@ -619,7 +530,7 @@ class JvmClassNodeBuilder private constructor(
 
       override fun visitAnnotationDefault(): AnnotationVisitor {
         return object : AnnotationVisitor(API_VERSION) {
-          private var myAcc: MutableList<Any?>? = null
+          private var result: MutableList<Any?>? = null
 
           override fun visit(name: String?, value: Any?) {
             collectValue(value)
@@ -630,39 +541,40 @@ class JvmClassNodeBuilder private constructor(
           }
 
           override fun visitArray(name: String?): AnnotationVisitor? {
-            myAcc = SmartList<Any?>()
+            this.result = ArrayList<Any?>()
             return this
           }
 
           override fun visitEnd() {
-            if (myAcc != null) {
-              if (!myAcc!!.isEmpty()) {
-                var elem: Any? = null
-                for (o in myAcc) {
-                  if (o != null) {
-                    elem = o
-                    break
-                  }
-                }
-                if (elem != null) {
-                  defaultValue.set(myAcc!!.toTypedArray())
+            val result = result ?: return
+            if (!result.isEmpty()) {
+              var elem: Any? = null
+              for (o in result) {
+                if (o != null) {
+                  elem = o
+                  break
                 }
               }
+              if (elem != null) {
+                defaultValue = result.toTypedArray()
+              }
+            }
 
-              if (defaultValue.get() == null) {
-                val declaredType: Type = Type.getReturnType(descriptor)
-                // spec does not allow array of array
-                defaultValue.set(java.lang.reflect.Array.newInstance(getTypeClass(if (declaredType.sort == Type.ARRAY) declaredType.getElementType() else declaredType), myAcc!!.size))
-              }
+            if (defaultValue == null) {
+              val declaredType = Type.getReturnType(descriptor)
+              // spec does not allow array of array
+              val typeClass = getTypeClass(if (declaredType.sort == Type.ARRAY) declaredType.getElementType() else declaredType)
+              defaultValue = java.lang.reflect.Array.newInstance(typeClass, result.size)
             }
           }
 
           fun collectValue(value: Any?) {
-            if (myAcc != null) {
-              myAcc!!.add(value)
+            val result = result
+            if (result == null) {
+              defaultValue = value
             }
             else {
-              defaultValue.set(value)
+              result.add(value)
             }
           }
         }
@@ -684,7 +596,7 @@ class JvmClassNodeBuilder private constructor(
 
       override fun visitMultiANewArrayInsn(desc: String, dims: Int) {
         val typ = TypeRepr.getType(desc) as TypeRepr.ArrayType
-        Iterators.collect(typ.usages, myUsages)
+        usages.addAll(typ.usages)
 
         val element = typ.deepElementType
         if (element is TypeRepr.ClassType) {
@@ -697,14 +609,14 @@ class JvmClassNodeBuilder private constructor(
       override fun visitLocalVariable(n: String?, desc: String, signature: String?, start: Label?, end: Label?, index: Int) {
         if ("this" != n) {
           processSignature(signature)
-          myUsages.addAll(TypeRepr.getType(desc).usages)
+          usages.addAll(TypeRepr.getType(desc).usages)
         }
         super.visitLocalVariable(n, desc, signature, start, end, index)
       }
 
       override fun visitTryCatchBlock(start: Label?, end: Label?, handler: Label?, type: String?) {
         if (type != null) {
-          myUsages.addAll(TypeRepr.ClassType(type).usages)
+          usages.addAll(TypeRepr.ClassType(type).usages)
         }
         super.visitTryCatchBlock(start, end, handler, type)
       }
@@ -731,7 +643,7 @@ class JvmClassNodeBuilder private constructor(
           }
         }
 
-        Iterators.collect(typ.usages, myUsages)
+        usages.addAll(typ.usages)
 
         super.visitTypeInsn(opcode, type)
       }
@@ -748,19 +660,19 @@ class JvmClassNodeBuilder private constructor(
 
       override fun visitInvokeDynamicInsn(methodName: String?, desc: String?, bsm: Handle, vararg bsmArgs: Any?) {
         val returnType = Type.getReturnType(desc)
-        myUsages.addAll(TypeRepr.getType(returnType).usages)
+        usages.addAll(TypeRepr.getType(returnType).usages)
 
         // common args processing
         for (arg in bsmArgs) {
           if (arg is Type) {
             if (arg.sort == Type.METHOD) {
               for (argType in arg.argumentTypes) {
-                Iterators.collect(TypeRepr.getType(argType).usages, myUsages)
+                usages.addAll(TypeRepr.getType(argType).usages)
               }
-              Iterators.collect(TypeRepr.getType(arg.returnType).usages, myUsages)
+              usages.addAll(TypeRepr.getType(arg.returnType).usages)
             }
             else {
-              Iterators.collect(TypeRepr.getType(arg).usages, myUsages)
+              usages.addAll(TypeRepr.getType(arg).usages)
             }
           }
           else if (arg is Handle) {
@@ -795,11 +707,11 @@ class JvmClassNodeBuilder private constructor(
       }
 
       fun processMethodHandle(handle: Handle) {
-        val memberOwner: String? = handle.owner
-        if (memberOwner != null && memberOwner != classNameHolder.get()) {
+        val memberOwner = handle.owner
+        if (memberOwner != null && memberOwner != className) {
           // do not register access to own class members
-          val memberName: String? = handle.name
-          val memberDescriptor: String = handle.desc
+          val memberName = handle.name
+          val memberDescriptor = handle.desc
           val opCode = getFieldAccessOpcode(handle)
           if (opCode > 0) {
             registerFieldUsage(opCode, memberOwner, memberName, memberDescriptor)
@@ -815,19 +727,19 @@ class JvmClassNodeBuilder private constructor(
           addUsage(FieldAssignUsage(owner, fName, desc))
         }
         if (opcode == Opcodes.GETFIELD || opcode == Opcodes.GETSTATIC) {
-          Iterators.collect(TypeRepr.getType(desc).usages, myUsages)
+          usages.addAll(TypeRepr.getType(desc).usages)
         }
         addUsage(FieldUsage(owner, fName, desc))
       }
 
-      fun registerMethodUsage(owner: String?, name: String?, @Nullable desc: String?) {
+      fun registerMethodUsage(owner: String?, name: String?, desc: String?) {
         if (desc == null) {
           // todo: verify for which methods null descriptor is passed
           addUsage(MethodUsage(owner, name, ""))
         }
         else {
           addUsage(MethodUsage(owner, name, desc))
-          myUsages.addAll(TypeRepr.getType(Type.getReturnType(desc)).usages)
+          usages.addAll(TypeRepr.getType(Type.getReturnType(desc)).usages)
         }
       }
     }
@@ -836,7 +748,7 @@ class JvmClassNodeBuilder private constructor(
   }
 
   override fun visitInnerClass(name: String?, outerName: String?, innerName: String?, access: Int) {
-    if (name != null && name == classNameHolder.get()) {
+    if (name != null && name == className) {
       // Set outer class name only if we are parsing the real inner class and
       // not the reference to inner class inside some top-level class.
       // Information about some access flags for the inner class is missing from the mask passed to 'visit' method.
@@ -872,16 +784,11 @@ class JvmClassNodeBuilder private constructor(
 }
 
 private interface ContentHashBuilder {
-  companion object {
-    val NULL_CONTENT_BUILDER: ContentHashBuilder = object : ContentHashBuilder {
-      override fun update(data: Any?) {
-      }
-
-      override fun getResult(): Any? = null
-    }
-  }
-
   fun update(data: Any?)
+
+  fun putString(data: String)
+
+  fun putLong(data: Long)
 
   fun getResult(): Any?
 }
@@ -889,6 +796,16 @@ private interface ContentHashBuilder {
 private class ContentHashBuilderImpl : ContentHashBuilder {
   private val digest = Hashing.xxh3_64().hashStream()
   private var hasData = false
+
+  override fun putString(data: String) {
+    hasData = true
+    digest.putByteArray(data.toByteArray())
+  }
+
+  override fun putLong(data: Long) {
+    hasData = true
+    digest.putLong(data)
+  }
 
   override fun update(data: Any?) {
     hasData = true

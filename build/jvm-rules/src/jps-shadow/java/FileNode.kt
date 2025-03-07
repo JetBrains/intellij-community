@@ -2,7 +2,7 @@
 
 package org.jetbrains.jps.dependency.java
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.Node
@@ -37,7 +37,7 @@ class FileNode : Node<FileNode, Difference> {
   override fun write(out: GraphDataOutput) {
     referenceID.write(out)
 
-    val usageGroups = Object2ObjectLinkedOpenHashMap<Class<out Usage>, MutableList<Usage>>()
+    val usageGroups = Object2ObjectOpenHashMap<Class<out Usage>, MutableList<Usage>>()
     for (usage in usages) {
       usageGroups.computeIfAbsent(usage.javaClass) { ArrayList() }.add(usage)
     }

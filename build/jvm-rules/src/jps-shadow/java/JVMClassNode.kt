@@ -3,7 +3,6 @@
 package org.jetbrains.jps.dependency.java
 
 import com.dynatrace.hash4j.hashing.Hashing
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.bazel.jvm.emptySet
@@ -60,7 +59,7 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
     super.write(out)
     (out as GraphDataOutputImpl).writeRawLong(outFilePathHash)
 
-    val classToUsageList = Object2ObjectLinkedOpenHashMap<Class<out Usage>, MutableList<Usage>>()
+    val classToUsageList = Object2ObjectOpenHashMap<Class<out Usage>, MutableList<Usage>>()
     for (usage in usages) {
       classToUsageList.computeIfAbsent(usage.javaClass) { ArrayList() }.add(usage)
     }
