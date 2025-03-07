@@ -70,11 +70,12 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
 
   @Override
   protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
-    doCheckResult(myFullDataPath, targetDataName + "_node.txt",
-                  DebugUtil.nodeTreeAsElementTypeToString(file.getNode(), !skipSpaces()).trim());
     if (myConfigurator.checkPsi()) {
       super.checkResult(targetDataName, file);
     }
+
+    doCheckResult(myFullDataPath, targetDataName + "_node.txt",
+                  DebugUtil.nodeTreeAsElementTypeToString(file.getNode(), !skipSpaces()).trim());
   }
 
   protected void doParserTest(String text, Consumer<PsiBuilder> parser) {
