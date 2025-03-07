@@ -6,14 +6,21 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
-@Actual("newHighPriorityCoroutineDispatcher")
-fun newHighPriorityCoroutineDispatcherJvm(name: String): HighPriorityCoroutineDispatcherResource =
+@Actual("newSingleThreadCoroutineDispatcher")
+fun newSingleThreadCoroutineDispatcherJvm(
+  name: String,
+  priority: DispatcherPriority
+): HighPriorityCoroutineDispatcherResource =
   object : HighPriorityCoroutineDispatcherResource {
     override suspend fun <U> use(body: suspend (CoroutineContext) -> U): U {
       val changesThread = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, name).apply {
-          isDaemon = true
-          priority = Thread.MAX_PRIORITY
+          this.isDaemon = true
+          this.priority = when (priority) {
+            DispatcherPriority.HIGH -> Thread.MAX_PRIORITY
+            DispatcherPriority.NORMAL -> Thread.NORM_PRIORITY
+            DispatcherPriority.LOW -> Thread.MIN_PRIORITY
+          }
         }
       }
 

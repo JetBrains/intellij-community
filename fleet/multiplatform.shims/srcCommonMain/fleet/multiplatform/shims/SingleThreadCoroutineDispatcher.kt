@@ -4,8 +4,15 @@ package fleet.multiplatform.shims
 import fleet.util.multiplatform.linkToActual
 import kotlin.coroutines.CoroutineContext
 
-fun newHighPriorityCoroutineDispatcher(name: String): HighPriorityCoroutineDispatcherResource = linkToActual()
+fun newSingleThreadCoroutineDispatcher(
+  name: String,
+  priority: DispatcherPriority = DispatcherPriority.NORMAL
+): HighPriorityCoroutineDispatcherResource = linkToActual()
 
 interface HighPriorityCoroutineDispatcherResource {
   suspend fun <U> use(body: suspend (CoroutineContext) -> U): U
+}
+
+enum class DispatcherPriority {
+  HIGH, NORMAL, LOW
 }

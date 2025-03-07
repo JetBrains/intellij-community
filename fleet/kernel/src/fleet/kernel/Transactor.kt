@@ -6,7 +6,8 @@ import com.jetbrains.rhizomedb.impl.*
 import fleet.kernel.rebase.OfferContributorEntity
 import fleet.kernel.rebase.RemoteKernelConnectionEntity
 import fleet.kernel.rebase.WorkspaceClockEntity
-import fleet.multiplatform.shims.newHighPriorityCoroutineDispatcher
+import fleet.multiplatform.shims.DispatcherPriority
+import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
 import fleet.reporting.shared.runtime.currentSpan
 import fleet.reporting.shared.tracing.completeWithResult
 import fleet.rpc.client.RpcClientDisconnectedException
@@ -30,7 +31,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.builtins.serializer
-import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -470,7 +470,7 @@ suspend fun <T> withTransactor(
 
     sharedFlow.emit(TransactorEvent.Init(timestamp = 0L, db = initialDb))
 
-    newHighPriorityCoroutineDispatcher("Kernel event loop thread ${kernelId}").use { coroutineDispatcher ->
+    newSingleThreadCoroutineDispatcher("Kernel event loop thread ${kernelId}", DispatcherPriority.HIGH).use { coroutineDispatcher ->
       launch(coroutineNameAppended("Changes processing job for $transactor") + coroutineDispatcher,
              start = CoroutineStart.ATOMIC) {
         spannedScope("kernel changes") {

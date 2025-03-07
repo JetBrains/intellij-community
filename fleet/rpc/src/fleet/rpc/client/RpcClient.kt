@@ -23,6 +23,7 @@ import kotlinx.coroutines.selects.whileSelect
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
 import kotlin.coroutines.*
 
 private data class OutgoingRequest(
@@ -45,13 +46,13 @@ suspend fun <T> rpcClient(
   abortOnError: Boolean,
   body: suspend CoroutineScope.(RpcClient) -> T,
 ): T =
-  newSingleThreadContext("rpc-client-$origin").use { executor ->
+  newSingleThreadCoroutineDispatcher("rpc-client-$origin").use { dispatcher ->
     withSupervisor { supervisor ->
       val client = RpcClient(coroutineScope = supervisor + supervisor.coroutineNameAppended("RpcClient"),
                              transport = transport,
                              origin = origin,
                              requestInterceptor = requestInterceptor)
-      launch(start = CoroutineStart.ATOMIC, context = executor) { client.work(abortOnError) }
+      launch(start = CoroutineStart.ATOMIC, context = dispatcher) { client.work(abortOnError) }
         .use {
           body(client)
         }

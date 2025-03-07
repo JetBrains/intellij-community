@@ -5,8 +5,11 @@ import fleet.util.multiplatform.Actual
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-@Actual("newHighPriorityCoroutineDispatcher")
-fun newHighPriorityCoroutineDispatcherWasm(name: String): HighPriorityCoroutineDispatcherResource =
+@Actual("newSingleThreadCoroutineDispatcher")
+fun newSingleThreadCoroutineDispatcherWasm(
+  name: String,
+  priority: DispatcherPriority
+): HighPriorityCoroutineDispatcherResource =
   object : HighPriorityCoroutineDispatcherResource {
     override suspend fun <U> use(body: suspend (CoroutineContext) -> U): U {
       return body(EmptyCoroutineContext)
