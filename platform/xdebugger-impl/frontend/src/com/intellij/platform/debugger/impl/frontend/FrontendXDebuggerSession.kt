@@ -101,6 +101,25 @@ internal class FrontendXDebuggerSession(
   override val sessionTab: XDebugSessionTab?
     get() = _sessionTab
 
+  // TODO all of the methods below
+  // TODO pass in DTO?
+  override val sessionName: String = sessionDto.sessionName
+  override val sessionData: XDebugSessionData = createFeSessionData(sessionDto)
+  override val consoleView: ConsoleView? get() = null // TODO
+  override val restartActions: List<AnAction>
+    get() = emptyList() // TODO
+  override val extraActions: List<AnAction>
+    get() = emptyList() // TODO
+  override val extraStopActions: List<AnAction>
+    get() = emptyList() // TODO
+  override val processHandler: ProcessHandler?
+    get() = null // TODO
+  override val coroutineScope: CoroutineScope = cs
+  override val currentStateMessage: String
+    get() = if (isStopped) XDebuggerBundle.message("debugger.state.message.disconnected") else XDebuggerBundle.message("debugger.state.message.connected") // TODO
+  override val currentStateHyperlinkListener: HyperlinkListener?
+    get() = null // TODO
+
   init {
     cs.launch {
       sessionDto.sessionEvents.toFlow().collect { event ->
@@ -146,25 +165,6 @@ internal class FrontendXDebuggerSession(
       }
     }
   }
-
-  // TODO all of the methods below
-  // TODO pass in DTO?
-  override val sessionName: String = sessionDto.sessionName
-  override val sessionData: XDebugSessionData = createFeSessionData(sessionDto)
-  override val consoleView: ConsoleView? get() = null // TODO
-  override val restartActions: List<AnAction>
-    get() = emptyList() // TODO
-  override val extraActions: List<AnAction>
-    get() = emptyList() // TODO
-  override val extraStopActions: List<AnAction>
-    get() = emptyList() // TODO
-  override val processHandler: ProcessHandler? get() = null // TODO
-  override val coroutineScope: CoroutineScope
-    get() = cs
-  override val currentStateMessage: String
-    get() = if (isStopped) XDebuggerBundle.message("debugger.state.message.disconnected") else XDebuggerBundle.message("debugger.state.message.connected") // TODO
-  override val currentStateHyperlinkListener: HyperlinkListener?
-    get() = null // TODO
 
   override fun getCurrentPosition(): XSourcePosition? = sourcePosition.value
 
