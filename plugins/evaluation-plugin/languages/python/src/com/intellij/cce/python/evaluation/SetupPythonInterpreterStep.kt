@@ -63,7 +63,9 @@ class SetupPythonInterpreterStep(private val project: Project) : SetupSdkStep() 
         if (sdk != null) {
           WriteAction.run<Throwable> {
             val sdkTable = ProjectJdkTable.getInstance()
-            sdkTable.addJdk(sdk)
+            if (sdkTable.findJdk(sdk.name) == null) {
+              sdkTable.addJdk(sdk)
+            }
             projectRootManager.projectSdk = sdk
           }
           println("Python interpreter \"${sdk.name}\" (${sdk.homePath}) will be used as a project SDK")
