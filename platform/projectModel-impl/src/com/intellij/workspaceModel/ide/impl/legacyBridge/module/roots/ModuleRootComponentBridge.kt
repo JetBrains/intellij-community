@@ -10,8 +10,6 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -34,13 +32,9 @@ class ModuleRootComponentBridge(
 
   private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
-  private val moduleEntityCache = VersionedCache<ModuleEntity> {
-    moduleBridge.findModuleEntity(moduleBridge.entityStorage.current)
-  }
-
-  private val modelValue = CachedValue { storage ->
+  private val modelValue = VersionedCache<RootModelBridgeImpl> {
     RootModelBridgeImpl(
-      moduleEntity = moduleEntityCache.getValue(moduleBridge.entityStorage.version),
+      moduleEntity = moduleBridge.findModuleEntity(moduleBridge.entityStorage.current),
       storage = moduleBridge.entityStorage,
       itemUpdater = null,
       // TODO
@@ -69,7 +63,7 @@ class ModuleRootComponentBridge(
   }
 
   private val model: RootModelBridgeImpl
-    get() = moduleBridge.entityStorage.cachedValue(modelValue)
+    get() = modelValue.getValue(moduleBridge.entityStorage.version)
 
   override val storage: EntityStorage
     get() = moduleBridge.entityStorage.current
@@ -92,8 +86,7 @@ class ModuleRootComponentBridge(
   }
 
   internal fun dropRootModelCache() {
-    moduleBridge.entityStorage.clearCachedValue(modelValue)
-    //cachedModuleEntity = null
+    modelValue.clear()
   }
 
   override fun getModificationCountForTests(): Long = moduleBridge.entityStorage.version
@@ -180,16 +173,23 @@ private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
   }
 }
 
-private class VersionedCache<T>(val compute: () -> T?) {
+private class VersionedCache<T>(val compute: () -> T) {
   private var version: Long = -1
   private var valueResult: T? = null
 
   @Synchronized
-  fun getValue(currentVersion: Long): T? {
-    if (this.version != currentVersion) {
-      this.version = currentVersion
-      valueResult = compute()
-    }
-    return valueResult
+  fun getValue(currentVersion: Long): T {
+    var res = valueResult
+    if (res != null && version == currentVersion) return res
+
+    this.version = currentVersion
+    res = compute()
+    valueResult = res
+    return res
+  }
+
+  @Synchronized
+  fun clear() {
+    valueResult = null
   }
 }
