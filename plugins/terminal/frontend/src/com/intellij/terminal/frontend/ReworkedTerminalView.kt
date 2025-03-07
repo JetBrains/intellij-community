@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
@@ -27,6 +28,8 @@ import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.TerminalFontOptions
+import org.jetbrains.plugins.terminal.TerminalFontOptionsListener
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
@@ -176,10 +179,14 @@ internal class ReworkedTerminalView(
   private fun listenPanelSizeChanges() {
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
-        val newSize = getTerminalSize() ?: return
-        terminalInput.sendResize(newSize)
+        sendResizeEvent()
       }
     })
+  }
+
+  private fun sendResizeEvent() {
+    val newSize = getTerminalSize() ?: return
+    terminalInput.sendResize(newSize)
   }
 
   private fun listenAlternateBufferSwitch() {
@@ -300,9 +307,25 @@ internal class ReworkedTerminalView(
     settings: JBTerminalSystemSettingsProviderBase,
   ): EditorImpl {
     val result = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
+
     result.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
     result.softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
     result.softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
+
+    val fontSettingsListenerDisposable = Disposer.newDisposable().also {
+      EditorUtil.disposeWithEditor(result, it)
+    }
+    val fontSettingsListener = object : TerminalFontOptionsListener {
+      override fun fontOptionsChanged() {
+        result.applyFontSettings(settings)
+        result.reinitSettings()
+        if (result.component.isShowing) { // to avoid sending the resize event twice, for the regular and alternate buffer editors
+          sendResizeEvent()
+        }
+      }
+    }
+    TerminalFontOptions.getInstance().addListener(fontSettingsListener, fontSettingsListenerDisposable)
+
     return result
   }
 

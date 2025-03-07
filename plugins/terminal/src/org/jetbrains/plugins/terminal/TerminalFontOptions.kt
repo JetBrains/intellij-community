@@ -11,13 +11,15 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.AppFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CopyOnWriteArrayList
 
 @State(
   name = "TerminalFontOptions",
   storages = [Storage("terminal-font.xml")],
 )
-internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() {
+@ApiStatus.Internal
+class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() {
   companion object {
     @JvmStatic fun getInstance(): TerminalFontOptions = service<TerminalFontOptions>()
   }
@@ -77,7 +79,8 @@ internal class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPrefer
   }
 }
 
-internal interface TerminalFontOptionsListener {
+@ApiStatus.Internal
+interface TerminalFontOptionsListener {
   fun fontOptionsChanged()
 }
 
@@ -95,14 +98,16 @@ internal interface TerminalFontOptionsListener {
 // To reduce possible confusion, the name TerminalFontSettings was chosen here to make it different
 // from FontPreferences and AppFontOptions and PersistentFontPreferences.
 
-internal data class TerminalFontSettings(
+@ApiStatus.Internal
+data class TerminalFontSettings(
   val fontFamily: String,
   val fontSize: Float,
   val lineSpacing: Float,
   val columnSpacing: Float,
 )
 
-internal class PersistentTerminalFontPreferences: AppEditorFontOptions.PersistentFontPreferences {
+@ApiStatus.Internal
+class PersistentTerminalFontPreferences: AppEditorFontOptions.PersistentFontPreferences {
   @Suppress("unused") // for serialization
   constructor(): super()
   constructor(fontPreferences: FontPreferences): super(fontPreferences)
