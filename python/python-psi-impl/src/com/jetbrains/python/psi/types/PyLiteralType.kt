@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 
 /**
@@ -54,6 +55,17 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
         .createExpressionFromText(LanguageLevel.forElement(enumClass), "${enumClass.name}.$memberName")
       assert(expression is PyReferenceExpression)
       return PyLiteralType(enumClass, expression)
+    }
+
+    @Internal
+    @JvmStatic
+    fun upcastLiteralToClass(type: PyType?): PyType? {
+      return when (type) {
+        is PyUnionType -> type.map(::upcastLiteralToClass)
+        is PyLiteralStringType -> PyClassTypeImpl(type.cls, false)
+        is PyLiteralType -> PyClassTypeImpl(type.pyClass, false)
+        else -> type
+      }
     }
 
     private fun promoteToType(
