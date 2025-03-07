@@ -16,6 +16,7 @@
 package org.jetbrains.debugger.sourcemap
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Mapping entry in the source map
@@ -37,4 +38,52 @@ interface MappingEntry {
     get() = null
 
   val nextGenerated: MappingEntry?
+}
+
+internal interface MutableEntry : MappingEntry {
+  override var nextGenerated: MappingEntry?
+}
+
+/**
+ * Not mapped to a section in the original source.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+data class UnmappedEntry(override val generatedLine: Int, override val generatedColumn: Int) : MappingEntry, MutableEntry {
+  override val sourceLine: Int = UNMAPPED
+
+  override val sourceColumn: Int = UNMAPPED
+
+  override var nextGenerated: MappingEntry? = null
+}
+
+/**
+ * Mapped to a section in the original source.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+data class UnnamedEntry(
+  override val generatedLine: Int,
+  override val generatedColumn: Int,
+  override val source: Int,
+  override val sourceLine: Int,
+  override val sourceColumn: Int,
+) : MappingEntry, MutableEntry {
+  override var nextGenerated: MappingEntry? = null
+}
+
+/**
+ * Mapped to a section in the original source, and is associated with a name.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+data class NamedEntry(
+  override val name: String,
+  override val generatedLine: Int,
+  override val generatedColumn: Int,
+  override val source: Int,
+  override val sourceLine: Int,
+  override val sourceColumn: Int,
+) : MappingEntry, MutableEntry {
+  override var nextGenerated: MappingEntry? = null
 }

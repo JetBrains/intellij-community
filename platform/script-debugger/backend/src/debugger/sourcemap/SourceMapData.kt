@@ -10,4 +10,5 @@ interface SourceMapData {
   val sourcesContent: List<String?>?
   val hasNameMappings: Boolean
   val mappings: List<MappingEntry>
+  val ignoreList: List<Int>
 }
