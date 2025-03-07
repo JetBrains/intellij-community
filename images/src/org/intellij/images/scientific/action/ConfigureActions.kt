@@ -25,7 +25,7 @@ class ConfigureActions : AnAction(
   }
 
   private fun openConfigurationDialog(project: Project?) {
-    val thresholdConfig = ApplicationManager.getApplication().getService(BinarizationThresholdConfig::class.java) ?: return
+    val thresholdConfig = BinarizationThresholdConfig.getInstance()
     val currentThreshold = thresholdConfig.threshold
     val dialog = ThresholdDialogWrapper(project, currentThreshold)
     if (dialog.showAndGet()) {
