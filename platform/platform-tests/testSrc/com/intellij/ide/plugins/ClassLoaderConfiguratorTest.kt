@@ -97,7 +97,7 @@ internal class ClassLoaderConfiguratorTest {
       loadingResult.enabledPlugins).createPluginSetWithEnabledModulesMap())!!
     assertThat(scope.isDefinitelyAlienClass(name = "dd", packagePrefix = "dd", force = false)).isNull()
     assertThat(scope.isDefinitelyAlienClass(name = "com.example.extraSupportedFeature.Foo", packagePrefix = "com.example.extraSupportedFeature.", force = false))
-      .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent_1115w8a plugin. " +
+      .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent plugin. " +
                  "Matches content module (packagePrefix=com.example.extraSupportedFeature., moduleName=com.example.sub).")
   }
 
@@ -140,9 +140,7 @@ internal class ClassLoaderConfiguratorTest {
   private fun loadPlugins(modulePackage: String?): PluginLoadingResult {
     val rootDir = inMemoryFs.fs.getPath("/")
 
-    // toUnsignedLong - avoid `-` symbol
-    val pluginIdSuffix = Integer.toUnsignedLong(Hashing.komihash5_0().hashCharsToInt(javaClass.name + name.methodName)).toString(36)
-    val dependencyId = "p_dependency_$pluginIdSuffix"
+    val dependencyId = "p_dependency"
     plugin(rootDir, """
       <idea-plugin package="com.bar">
         <id>$dependencyId</id>
@@ -152,7 +150,7 @@ internal class ClassLoaderConfiguratorTest {
       </idea-plugin>
       """)
 
-    val dependentPluginId = "p_dependent_$pluginIdSuffix"
+    val dependentPluginId = "p_dependent"
     plugin(rootDir, """
       <idea-plugin package="com.example">
         <id>$dependentPluginId</id>
