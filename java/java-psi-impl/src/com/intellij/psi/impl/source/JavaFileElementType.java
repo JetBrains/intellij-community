@@ -60,8 +60,11 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   @Override
   public FlyweightCapableTreeStructure<LighterASTNode> parseContentsLight(ASTNode chameleon) {
     PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
+    long startTime = System.nanoTime();
     doParse(builder);
-    return builder.getLightTree();
+    FlyweightCapableTreeStructure<LighterASTNode> tree = builder.getLightTree();
+    ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
+    return tree;
   }
 
   @Override
