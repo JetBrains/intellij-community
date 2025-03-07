@@ -225,7 +225,7 @@ public final class JDOMUtil {
     }
   }
 
-  private static @NotNull Element loadUsingStaX(@NotNull InputStream stream) throws JDOMException {
+  private static @NotNull Element loadUsingStaX(@NotNull InputStream stream, @Nullable String filePathForErrorMessage) throws JDOMException {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(stream, null);
       try {
@@ -236,7 +236,11 @@ public final class JDOMUtil {
       }
     }
     catch (XMLStreamException | UncheckedStreamException | IllegalNameException e) {
-      throw new JDOMException(e.getMessage(), e);
+      String message = e.getMessage();
+      if (filePathForErrorMessage != null) {
+        message += ", file: " + filePathForErrorMessage;
+      }
+      throw new JDOMException(message, e);
     }
   }
 
@@ -253,12 +257,12 @@ public final class JDOMUtil {
   }
 
   public static @NotNull Element load(@NotNull File file) throws JDOMException, IOException {
-    return loadUsingStaX(new FileInputStream(file));
+    return loadUsingStaX(new FileInputStream(file), file.getAbsolutePath());
   }
 
   public static @NotNull Element load(@NotNull Path file) throws JDOMException, IOException {
     try {
-      return loadUsingStaX(Files.newInputStream(file));
+      return loadUsingStaX(Files.newInputStream(file), file.toString());
     }
     catch (ClosedFileSystemException e) {
       throw new IOException("Cannot read file from closed file system: " + file, e);
@@ -297,7 +301,7 @@ public final class JDOMUtil {
 
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
-    return stream == null ? null : loadUsingStaX(stream);
+    return stream == null ? null : loadUsingStaX(stream, null);
   }
 
   public static @NotNull Element load(byte @NotNull [] data) throws JDOMException, IOException {
