@@ -202,42 +202,51 @@ class PluginSetLoadingTest {
   }
 
   @Test
-  fun `package prefix collision leads to a failure - two plugins`() {
+  fun `package prefix collision prevents plugin from loading`() {
+    PluginManagerCore.getAndClearPluginLoadingErrors()
+    // FIXME these plugins are not related, but one of them loads => depends on implicit order
     PluginBuilder.empty().id("foo")
       .module("foo.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginsDirPath.resolve("foo"))
     PluginBuilder.empty().id("bar")
       .module("bar.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginsDirPath.resolve("bar"))
-    assertThatThrownBy {
-      val pluginSet = buildPluginSet()
-    }.hasStackTraceContaining("ClassLoaderConfigurator.checkPackagePrefixUniqueness")
-      .hasMessageContaining("Package prefix common.module is already used")
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
+    val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    assertThat(errors).hasSizeGreaterThan(0)
+    assertThat(errors[0].get().toString()).contains("conflicts with", "bar.module", "foo.module", "package prefix")
   }
 
   @Test
-  fun `package prefix collision leads to a failure - same plugin`() {
+  fun `package prefix collision prevents plugin from loading - same plugin`() {
+    PluginManagerCore.getAndClearPluginLoadingErrors()
     PluginBuilder.empty().id("foo").packagePrefix("common.module")
       .module("foo.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.REQUIRED)
       .build(pluginsDirPath.resolve("foo"))
-    assertThatThrownBy {
-      val pluginSet = buildPluginSet()
-    }.hasStackTraceContaining("ClassLoaderConfigurator.checkPackagePrefixUniqueness")
-      .hasMessageContaining("Package prefix common.module is already used")
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    assertThat(errors).hasSizeGreaterThan(0)
+    assertThat(errors[0].get().toString()).contains("conflicts with", "foo.module", "package prefix")
   }
 
   @Test
-  fun `package prefix collision leads to a failure - even if modules are optional`() {
+  fun `package prefix collision does not prevent plugin from loading if module is optional`() {
+    PluginManagerCore.getAndClearPluginLoadingErrors()
     PluginBuilder.empty().id("foo")
       .module("foo.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.OPTIONAL)
       .build(pluginsDirPath.resolve("foo"))
     PluginBuilder.empty().id("bar")
       .module("bar.module", PluginBuilder.empty().packagePrefix("common.module"), loadingRule = ModuleLoadingRule.OPTIONAL)
       .build(pluginsDirPath.resolve("bar"))
-    assertThatThrownBy {
-      val pluginSet = buildPluginSet()
-    }.hasStackTraceContaining("ClassLoaderConfigurator.checkPackagePrefixUniqueness")
-      .hasMessageContaining("Package prefix common.module is already used")
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
+    // FIXME these plugins are not related, but one of them loads => depends on implicit order
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("foo.module")
+    val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    assertThat(errors).isNotEmpty()
+    assertThat(errors[0].get().toString()).contains("conflicts with", "bar", "foo.module", "package prefix")
   }
 
   @Test
