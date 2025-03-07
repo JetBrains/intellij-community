@@ -231,27 +231,24 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
     val expectedOutput = """^\s+Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
 
     return executeAndMatch("show", "--ascii", *options, *envs, expectedOutput = expectedOutput) { matchResult ->
-      val tables = buildMap {
-        val (standaloneTable, matricesTable) = matchResult.destructured
-        put(HatchEnvironmentType.STANDALONE, standaloneTable.parseHatchEnvironments())
-        put(HatchEnvironmentType.MATRICES, matricesTable.parseHatchEnvironments())
-      }
-      Result.success(tables)
+      val (standaloneTable, matricesTable) = matchResult.destructured
+      val standalone = standaloneTable.parseAsciiTable()?.parseHatchEnvironments()?.map { it.first } ?: emptyList()
+      val matrices = matricesTable.parseAsciiTable()?.parseHatchEnvironments()?.mapNotNull {
+        it.second?.let { envs -> HatchMatrixEnvironment(it.first, envs) }
+      } ?: emptyList()
+      Result.success(HatchEnvironments(standalone, matrices))
     }
   }
 }
 
-typealias HatchEnvironments = Map<HatchEnvironmentType, List<HatchEnvironment>>
-
-enum class HatchEnvironmentType {
-  STANDALONE,
-  MATRICES,
-}
+data class HatchEnvironments(
+  val standalone: List<HatchEnvironment>,
+  val matrices: List<HatchMatrixEnvironment>,
+)
 
 data class HatchEnvironment(
   val name: @NlsSafe String,
   val type: @NlsSafe String,
-  val envs: String? = null,
   val features: String? = null,
   val dependencies: String? = null,
   val environmentVariables: String? = null,
@@ -263,56 +260,32 @@ data class HatchEnvironment(
   }
 }
 
-private fun String.parseHatchEnvironments(): List<HatchEnvironment> {
-  val table = parseTable() ?: return emptyList()
-  val nameIdx = table.findColumnIdx("Name") ?: error("Name column not found")
-  val typeIdx = table.findColumnIdx("Type") ?: error("Type column not found")
-  val envIdx = table.findColumnIdx("Env")
-  val featuresIdx = table.findColumnIdx("Features")
-  val dependenciesIdx = table.findColumnIdx("Features")
-  val environmentVariablesIdx = table.findColumnIdx("EnvironmentVariables")
-  val scriptsIdx = table.findColumnIdx("Scripts")
-  val descriptionIdx = table.findColumnIdx("Description")
+data class HatchMatrixEnvironment(
+  val hatchEnvironment: HatchEnvironment,
+  val envs: List<String>,
+)
 
-  return table.rows.map { row ->
+
+private fun AsciiTable.parseHatchEnvironments(): List<Pair<HatchEnvironment, List<String>?>> {
+  val nameIdx = findColumnIdx("Name") ?: error("Name column not found")
+  val typeIdx = findColumnIdx("Type") ?: error("Type column not found")
+  val featuresIdx = findColumnIdx("Features")
+  val dependenciesIdx = findColumnIdx("Dependencies")
+  val environmentVariablesIdx = findColumnIdx("Environment variables")
+  val scriptsIdx = findColumnIdx("Scripts")
+  val descriptionIdx = findColumnIdx("Description")
+  val envsIdx = findColumnIdx("Envs")
+
+  return rows.map { row ->
+    val matrixEnvironments = envsIdx?.let { idx -> row[idx].lines().map { it.trim() } }
     HatchEnvironment(
       name = row[nameIdx],
       type = row[typeIdx],
-      envs = envIdx?.let { row[it] },
-      features = featuresIdx?.let { row[it] },
-      dependencies = dependenciesIdx?.let { row[it] },
-      environmentVariables = environmentVariablesIdx?.let { row[it] },
-      scripts = scriptsIdx?.let { row[it] },
-      description = descriptionIdx?.let { row[it] },
-    )
+      features = row.cell(featuresIdx),
+      dependencies = row.cell(dependenciesIdx),
+      environmentVariables = row.cell(environmentVariablesIdx),
+      scripts = row.cell(scriptsIdx),
+      description = row.cell(descriptionIdx),
+    ) to matrixEnvironments
   }
-}
-
-
-private data class Table(val headers: List<String>, val rows: List<List<String>>)
-
-private fun Table.findColumnIdx(name: String): Int? = headers.indexOf(name).takeIf { it >= 0 }
-
-
-private fun String.parseTable(): Table? {
-  val lines = this.trim().lines()
-  val columns = lines.first().count { it == '+' } - 1
-  if (columns <= 0) return null
-
-  val data = buildList {
-    val currentRow = Array(columns) { "" }
-    for (line in lines.drop(1)) {
-      if (line.startsWith('+')) {
-        add(currentRow.map { it.trim() })
-        currentRow.fill("")
-        continue
-      }
-
-      val cells = line.splitToSequence('|').map { it.trim() }.toList()
-      for (col in 0..<columns) {
-        currentRow[col] += "\n${cells[col + 1]}"
-      }
-    }
-  }
-  return Table(headers = data.first(), rows = data.drop(1))
 }

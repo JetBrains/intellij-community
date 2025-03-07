@@ -41,13 +41,13 @@ class FileSystemOperationHatchError(eelFsError: EelFsError) : HatchError(
 )
 
 
-data class HatchStandaloneEnvironment(
+data class HatchVirtualEnvironment(
   val hatchEnvironment: HatchEnvironment,
   val pythonVirtualEnvironment: PythonVirtualEnvironment,
 ) {
   companion object {
-    val AVAILABLE_ENVIRONMENTS_FOR_NEW_PROJECT: List<HatchStandaloneEnvironment> = listOf(
-      HatchStandaloneEnvironment(HatchEnvironment.DEFAULT, PythonVirtualEnvironment.NotExisting())
+    val AVAILABLE_ENVIRONMENTS_FOR_NEW_PROJECT: List<HatchVirtualEnvironment> = listOf(
+      HatchVirtualEnvironment(HatchEnvironment.DEFAULT, PythonVirtualEnvironment.NotExisting())
     )
   }
 }
@@ -59,6 +59,11 @@ sealed interface PythonVirtualEnvironment {
   data class NotExisting(override val pythonHomePath: PythonHomePath? = null) : PythonVirtualEnvironment
 }
 
+data class ProjectStructure(
+  val sourceRoot: Path?,
+  val testRoot: Path?,
+)
+
 interface HatchService {
   fun getWorkingDirectoryPath(): Path
 
@@ -66,7 +71,7 @@ interface HatchService {
   suspend fun isHatchManagedProject(): Result<Boolean, PyError>
 
   @RequiresBackgroundThread
-  suspend fun createNewProject(projectName: String): Result<Unit, PyError>
+  suspend fun createNewProject(projectName: String): Result<ProjectStructure, PyError>
 
   /**
    * param[basePythonBinaryPath] base python for environment, the one on the PATH should be used if null.
@@ -76,7 +81,7 @@ interface HatchService {
   suspend fun createVirtualEnvironment(basePythonBinaryPath: PythonBinary? = null, envName: String? = null): Result<PythonVirtualEnvironment.Existing, PyError>
 
   @RequiresBackgroundThread
-  suspend fun findStandaloneEnvironments(): Result<List<HatchStandaloneEnvironment>, PyError>
+  suspend fun findVirtualEnvironments(): Result<List<HatchVirtualEnvironment>, PyError>
 }
 
 /**
