@@ -55,6 +55,7 @@ internal class ReworkedTerminalView(
   private val coroutineScope = terminalProjectScope(project).childScope("ReworkedTerminalView")
 
   private val sessionModel: TerminalSessionModel
+  private val blocksModel: TerminalBlocksModel
   private val encodingManager: TerminalKeyEncodingManager
   private val controller: TerminalSessionController
 
@@ -116,7 +117,7 @@ internal class ReworkedTerminalView(
 
     terminalSearchController = TerminalSearchController(project)
 
-    val blocksModel = TerminalBlocksModelImpl(outputEditor.document)
+    blocksModel = TerminalBlocksModelImpl(outputEditor.document)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
     controller = TerminalSessionController(
@@ -150,6 +151,12 @@ internal class ReworkedTerminalView(
     // TODO: should we always use UTF8?
     val bytes = shellCommand.toByteArray(Charsets.UTF_8) + newLineBytes
     terminalInput.sendBytes(bytes)
+  }
+
+  override fun isCommandRunning(): Boolean {
+    // Will work only if there is a shell integration.
+    // If there is no shell integration, then it is always false.
+    return blocksModel.blocks.last().outputStartOffset != -1
   }
 
   override fun getTerminalSize(): TermSize? {
