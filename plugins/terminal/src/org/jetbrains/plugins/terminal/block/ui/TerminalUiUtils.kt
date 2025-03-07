@@ -112,28 +112,7 @@ object TerminalUiUtils {
       isUseCustomSoftWrapIndent = false
     }
 
-    fun applyFontSettings() {
-      editor.colorsScheme.apply {
-        editorFontName = settings.terminalFont.fontName
-        setEditorFontSize(settings.terminalFont.size2D)
-        lineSpacing = settings.lineSpacing
-      }
-      editor.settings.apply {
-        characterGridWidthMultiplier = settings.columnSpacing
-      }
-    }
-
-    applyFontSettings()
-    val fontSettingsListenerDisposable = Disposer.newDisposable().also {
-      EditorUtil.disposeWithEditor(editor, it)
-    }
-    val fontSettingsListener = object : TerminalFontOptionsListener {
-      override fun fontOptionsChanged() {
-        applyFontSettings()
-        editor.reinitSettings()
-      }
-    }
-    TerminalFontOptions.getInstance().addListener(fontSettingsListener, fontSettingsListenerDisposable)
+    editor.applyFontSettings(settings)
 
     editor.view.setDoubleWidthCharacterStrategy { codePoint ->
       CharUtils.isDoubleWidthCharacter(codePoint, false)
@@ -310,6 +289,17 @@ object TerminalUiUtils {
 
   const val GREEN_COLOR_INDEX: Int = 2
   const val YELLOW_COLOR_INDEX: Int = 3
+}
+
+fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase) {
+  colorsScheme.apply {
+    editorFontName = newSettings.terminalFont.fontName
+    setEditorFontSize(newSettings.terminalFont.size2D)
+    lineSpacing = newSettings.lineSpacing
+  }
+  settings.apply {
+    characterGridWidthMultiplier = newSettings.columnSpacing
+  }
 }
 
 internal fun Editor.getCharSize(): Dimension2D {
