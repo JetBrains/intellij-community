@@ -11,21 +11,11 @@ import kotlinx.serialization.builtins.serializer
  */
 @Serializable(with = UID.Serializer::class)
 class UID private constructor(val id: String) {
-  init {
-    if (id.length > MAX_LENGTH) {
-      logger.warn(Throwable()) {
-        "Invalid UID format: \"$id\", UID is a random [A-Za-z0-9_-] string, case-sensitive, no more than 36 characters long. This will be a hard error in the future."
-      }
-    }
-  }
-
-  object Serializer : DelegateSerializer<UID, String>(UID::toString, String.serializer(), ::UID)
+  object Serializer : DelegateSerializer<UID, String>(UID::toString, String.serializer(), UID::fromString)
 
   companion object {
-    private val logger = logger<UID>()
-
     private val uidRegex = Regex("^([A-Za-z0-9_-]{1,36})$")
-    const val MAX_LENGTH = 36
+    const val MAX_LENGTH: Int = 36
 
     private const val LEN = 20
 
