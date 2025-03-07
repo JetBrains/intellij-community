@@ -17,7 +17,7 @@ import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.UICustomization
 import com.intellij.python.hatch.HatchConfiguration
-import com.intellij.python.hatch.HatchStandaloneEnvironment
+import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.getHatchService
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
@@ -70,7 +70,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
   val manuallyAddedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter>> = MutableStateFlow(emptyList())
   private var installable: List<PythonSelectableInterpreter> = emptyList()
   val condaEnvironments: MutableStateFlow<List<PyCondaEnv>> = MutableStateFlow(emptyList())
-  val hatchEnvironmentsResult: MutableStateFlow<com.jetbrains.python.Result<List<HatchStandaloneEnvironment>, PyError>?> = MutableStateFlow(null)
+  val hatchEnvironmentsResult: MutableStateFlow<com.jetbrains.python.Result<List<HatchVirtualEnvironment>, PyError>?> = MutableStateFlow(null)
 
   var allInterpreters: StateFlow<List<PythonSelectableInterpreter>> = combine(knownInterpreters,
                                                                               detectedInterpreters,
@@ -135,8 +135,7 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
 
   suspend fun detectHatchEnvironments(
     hatchExecutablePathString: String,
-  ): com.jetbrains.python.Result<List<HatchStandaloneEnvironment>, PyError> {
-    hatchEnvironmentsLoading.value = true
+  ): com.jetbrains.python.Result<List<HatchVirtualEnvironment>, PyError> {
     val environmentsResult = withContext(Dispatchers.IO) {
       val projectPath = myProjectPathFlows.projectPathWithDefault.first()
       val hatchExecutablePath = NioFiles.toPath(hatchExecutablePathString)
@@ -149,10 +148,10 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
         hatchExecutablePath = hatchExecutablePath,
       ).getOr { return@withContext it }
 
-      val hatchEnvironments = hatchService.findStandaloneEnvironments().getOr { return@withContext it }
+      val hatchEnvironments = hatchService.findVirtualEnvironments().getOr { return@withContext it }
       val availableEnvironments = when {
         hatchWorkingDirectory == projectPath -> hatchEnvironments
-        else -> HatchStandaloneEnvironment.AVAILABLE_ENVIRONMENTS_FOR_NEW_PROJECT
+        else -> HatchVirtualEnvironment.AVAILABLE_ENVIRONMENTS_FOR_NEW_PROJECT
       }
 
       com.jetbrains.python.Result.success(availableEnvironments)
@@ -257,12 +256,7 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
         val hatchEnvironmentResult = detectHatchEnvironments(pathString)
         withContext(uiContext) {
           hatchEnvironmentsResult.value = hatchEnvironmentResult
-          if (hatchEnvironmentResult.isFailure) {
-            state.selectedHatchEnv.set(null)
-          }
-          else {
-            hatchEnvironmentsLoading.value = false
-          }
+          hatchEnvironmentsLoading.value = hatchEnvironmentResult.isFailure
         }
       }
     }
@@ -401,7 +395,7 @@ open class AddInterpreterState(propertyGraph: PropertyGraph) {
    */
   val baseCondaEnv: ObservableMutableProperty<PyCondaEnv?> = propertyGraph.property(null)
 
-  val selectedHatchEnv: ObservableMutableProperty<HatchStandaloneEnvironment?> = propertyGraph.property(null)
+  val selectedHatchEnv: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
 }
 
 class MutableTargetState(propertyGraph: PropertyGraph) : AddInterpreterState(propertyGraph) {
