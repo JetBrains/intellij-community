@@ -28,9 +28,8 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   originalStorage: EntityStorage,
   private val libraryTable: ProjectLibraryTableBridgeImpl,
   private val project: Project,
-  diff: MutableEntityStorage = MutableEntityStorage.from(originalStorage.toSnapshot()),
-  cacheStorageResult: Boolean = true
-) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ProjectModifiableLibraryTableBridge {
+  diff: MutableEntityStorage = MutableEntityStorage.from(originalStorage.toSnapshot())
+) : LegacyBridgeModifiableBase(diff), ProjectModifiableLibraryTableBridge {
 
   private val myAddedLibraries = mutableListOf<LibraryBridgeImpl>()
 

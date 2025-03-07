@@ -128,7 +128,7 @@ class LibraryBridgeImpl(
       is LibraryOrigin.OfDescriptor -> GlobalWorkspaceModel.getInstance(origin.descriptor).getVirtualFileUrlManager()
       is LibraryOrigin.OfProject -> WorkspaceModel.getInstance(origin.project).getVirtualFileUrlManager()
     }
-    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, virtualFileUrlManager, false)
+    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, virtualFileUrlManager)
   }
 
   override fun getSource(): Library? = null

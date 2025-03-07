@@ -6,19 +6,17 @@ import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.DummyVersionedEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import org.jetbrains.annotations.ApiStatus
 
 //todo restore internal visibility for members of this class after other classes will be moved to this module
 @ApiStatus.Internal
-abstract class LegacyBridgeModifiableBase(val diff: MutableEntityStorage, cacheStorageResult: Boolean) {
+abstract class LegacyBridgeModifiableBase(val diff: MutableEntityStorage) {
   init {
     SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
   }
 
-  val entityStorageOnDiff = if (cacheStorageResult) VersionedEntityStorageOnBuilder(diff)
-  else DummyVersionedEntityStorage(diff)
+  val entityStorageOnDiff = VersionedEntityStorageOnBuilder(diff)
 
   private var committedOrDisposed = false
 

@@ -41,9 +41,8 @@ private val LOG: Logger
 internal class ModifiableModuleModelBridgeImpl(
   private val project: Project,
   private val moduleManager: ModuleManagerBridgeImpl,
-  diff: MutableEntityStorage,
-  cacheStorageResult: Boolean = true
-) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableModuleModelBridge {
+  diff: MutableEntityStorage
+) : LegacyBridgeModifiableBase(diff), ModifiableModuleModelBridge {
   private val moduleTypes = ConcurrentFactoryMap.createMap<String, ModuleTypeId> { ModuleTypeId(it) }
 
   override fun getProject(): Project = project

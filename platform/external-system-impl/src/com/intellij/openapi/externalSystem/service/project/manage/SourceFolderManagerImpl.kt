@@ -228,8 +228,7 @@ class SourceFolderManagerImpl(
     val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
     val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
       val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
-      val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
-                                                                                           false)
+      val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder))
       modifiableRootModel as ModifiableRootModelBridge
       modifier.invoke(modifiableRootModel)
       modifiableRootModel.prepareForCommit()

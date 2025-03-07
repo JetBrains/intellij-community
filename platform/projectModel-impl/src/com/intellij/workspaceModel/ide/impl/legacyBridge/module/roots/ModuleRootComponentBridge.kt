@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -32,7 +33,7 @@ class ModuleRootComponentBridge(
 
   private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
-  private val modelValue = VersionedCache<RootModelBridgeImpl> {
+  private val modelValue = CachedValue {
     RootModelBridgeImpl(
       moduleEntity = moduleBridge.findModuleEntity(moduleBridge.entityStorage.current),
       storage = moduleBridge.entityStorage,
@@ -63,7 +64,7 @@ class ModuleRootComponentBridge(
   }
 
   private val model: RootModelBridgeImpl
-    get() = modelValue.getValue(moduleBridge.entityStorage.version)
+    get() = moduleBridge.entityStorage.cachedValue(modelValue)
 
   override val storage: EntityStorage
     get() = moduleBridge.entityStorage.current
@@ -86,7 +87,7 @@ class ModuleRootComponentBridge(
   }
 
   internal fun dropRootModelCache() {
-    modelValue.clear()
+    moduleBridge.entityStorage.clearCachedValue(modelValue)
   }
 
   override fun getModificationCountForTests(): Long = moduleBridge.entityStorage.version
@@ -102,28 +103,14 @@ class ModuleRootComponentBridge(
     moduleBridge,
     accessor)
 
-  /**
-   * This method is used in Project Structure dialog to ensure that changes made in {@link ModifiableModuleModel} after creation
-   * of this {@link ModifiableRootModel} are available in its storage and references in its {@link OrderEntry} can be resolved properly.
-   */
-  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel =
-    getModifiableModelForMultiCommit(accessor, true)
-
-  @ApiStatus.Internal
-  fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor, cacheStorageResult: Boolean): ModifiableRootModel = ModifiableRootModelBridgeImpl(
-    (moduleBridge.diff as? MutableEntityStorage) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
+  override fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
+    moduleBridge.diff ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
     ?: MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()),
     moduleBridge,
-    accessor,
-    cacheStorageResult)
-
-  @ApiStatus.Internal
-  fun getModifiableModelWithoutCaching(): ModifiableRootModel {
-    return getModifiableModel(MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()), RootConfigurationAccessor.DEFAULT_INSTANCE)
-  }
+    accessor)
 
   fun getModifiableModel(diff: MutableEntityStorage, accessor: RootConfigurationAccessor): ModifiableRootModel {
-    return ModifiableRootModelBridgeImpl(diff, moduleBridge, accessor, false)
+    return ModifiableRootModelBridgeImpl(diff, moduleBridge, accessor)
   }
 
   override fun getDependencies(): Array<Module> = moduleDependencies
@@ -170,26 +157,5 @@ private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
     is ImmutableEntityStorage -> this
     is MutableEntityStorage -> this.toSnapshot()
     else -> error("Unexpected storage: $this")
-  }
-}
-
-private class VersionedCache<T>(val compute: () -> T) {
-  private var version: Long = -1
-  private var valueResult: T? = null
-
-  @Synchronized
-  fun getValue(currentVersion: Long): T {
-    var res = valueResult
-    if (res != null && version == currentVersion) return res
-
-    this.version = currentVersion
-    res = compute()
-    valueResult = res
-    return res
-  }
-
-  @Synchronized
-  fun clear() {
-    valueResult = null
   }
 }

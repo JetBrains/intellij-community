@@ -17,7 +17,7 @@ private class ValuesCache {
   private val cachedValuesWithParameter: Cache<Pair<CachedValueWithParameter<*, *>, *>, Any?> =
     Caffeine.newBuilder().build()
 
-  fun <R> cachedValue(value: CachedValue<R>, storage: ImmutableEntityStorage): R {
+  fun <R> cachedValue(value: CachedValue<R>, storage: EntityStorage): R {
     val o: Any? = cachedValues.getIfPresent(value)
     var valueToReturn: R? = null
 
@@ -36,7 +36,7 @@ private class ValuesCache {
     return requireNotNull(valueToReturn) { "Cached value must not be null" }
   }
 
-  fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P, storage: ImmutableEntityStorage): R {
+  fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P, storage: EntityStorage): R {
     // recursive update - loading get cannot be used
     val o = cachedValuesWithParameter.getIfPresent(value to parameter)
     var valueToReturn: R? = null
@@ -125,16 +125,18 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
   override val version: Long
     get() = builder.instrumentation.modificationCount
 
-  override val current: ImmutableEntityStorage
-    get() = getCurrentSnapshot().storage
+  override val current: EntityStorage = builder
 
-  override val base: MutableEntityStorage
-    get() = builder
+  // This is not correct, but nothing should actually depend on the original version
+  // of the builder as it's non-final an in-memory representation.
+  override val base: MutableEntityStorage = builder
 
-  override fun <R> cachedValue(value: CachedValue<R>): R = valuesCache.cachedValue(value, current)
+  override fun <R> cachedValue(value: CachedValue<R>): R {
+    return valuesCache.cachedValue(value, builder)
+  }
 
   override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R =
-    valuesCache.cachedValue(value, parameter, current)
+    valuesCache.cachedValue(value, parameter, builder)
 
   override fun <R> clearCachedValue(value: CachedValue<R>): Unit = valuesCache.clearCachedValue(value)
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P): Unit =
@@ -142,8 +144,8 @@ public class VersionedEntityStorageOnBuilder(private val builder: MutableEntityS
 
   private fun getCurrentSnapshot(): StorageSnapshotCache {
     val snapshotCache = currentSnapshot.get()
-    if (snapshotCache == null || builder.instrumentation.modificationCount != snapshotCache.storageVersion) {
-      val storageSnapshotCache = StorageSnapshotCache(builder.instrumentation.modificationCount, ValuesCache(), builder.toSnapshot())
+    if (snapshotCache == null || version != snapshotCache.storageVersion) {
+      val storageSnapshotCache = StorageSnapshotCache(builder.instrumentation.modificationCount, ValuesCache())
       currentSnapshot.set(storageSnapshotCache)
       return storageSnapshotCache
     }
@@ -197,7 +199,7 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
       val snapshotCache = currentSnapshot.get()
       if (snapshotCache == null || pointer.version != snapshotCache.storageVersion) {
         val cache = ValuesCache()
-        currentSnapshot.set(StorageSnapshotCache(pointer.version, cache, pointer.storage))
+        currentSnapshot.set(StorageSnapshotCache(pointer.version, cache))
         return cache
       }
       return snapshotCache.cache
@@ -280,4 +282,4 @@ private class VersionedStorageChangeImpl(
   override fun getAllChanges(): Sequence<EntityChange<*>> = changes.values.asSequence().flatten()
 }
 
-private data class StorageSnapshotCache(val storageVersion: Long, val cache: ValuesCache, val storage: ImmutableEntityStorage)
+private data class StorageSnapshotCache(val storageVersion: Long, val cache: ValuesCache)
