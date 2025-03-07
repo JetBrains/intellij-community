@@ -134,6 +134,8 @@ private object GitConfigHelper {
     val inclusion = when {
       key.startsWith("core.")
       || key.startsWith("i18n.")
+      || key.startsWith("rebase.")
+      || key.startsWith("merge.")
       || key == GitConfigUtil.GPG_COMMIT_SIGN ->
         Inclusion.INCLUDE
 
