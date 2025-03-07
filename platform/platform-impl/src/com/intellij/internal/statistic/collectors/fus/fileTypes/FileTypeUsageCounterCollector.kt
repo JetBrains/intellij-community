@@ -239,11 +239,11 @@ private class ProjectStateObserver(private val project: Project, coroutineScope:
     val connection = project.messageBus.connect(coroutineScope)
     connection.subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun enteredDumbMode() {
-        flow.value = ProjectState(true, flow.value.dependenciesState)
+        updateState { state -> ProjectState(true, state.dependenciesState) }
       }
 
       override fun exitDumbMode() {
-        flow.value = ProjectState(false, flow.value.dependenciesState)
+        updateState { state -> ProjectState(false, state.dependenciesState) }
       }
     })
 
@@ -254,12 +254,22 @@ private class ProjectStateObserver(private val project: Project, coroutineScope:
       )
 
       project.service<IncompleteDependenciesService>().stateFlow.collect {
-        flow.value = ProjectState(flow.value.isDumb, it)
+        updateState { state -> ProjectState(state.isDumb, it) }
       }
     }
   }
 
   fun getState(): ProjectState = flow.value
+
+  private fun updateState(updater: (ProjectState) -> ProjectState) {
+    while (true) {
+      val state = flow.value
+      val newState = updater(state)
+      if (flow.compareAndSet(state, newState)) {
+        return
+      }
+    }
+  }
 }
 
 private class ProjectState(
