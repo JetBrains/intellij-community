@@ -1,6 +1,8 @@
 package com.intellij.python.hatch.service
 
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES
+import com.intellij.platform.eel.fs.move
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
@@ -8,7 +10,9 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.WhatToExec.Binary
 import com.intellij.python.hatch.*
-import com.intellij.python.hatch.cli.HatchEnvironmentType
+import com.intellij.python.hatch.cli.ENV_TYPE_VIRTUAL
+import com.intellij.python.hatch.cli.HatchEnvironment
+import com.intellij.python.hatch.cli.HatchEnvironments
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.intellij.python.hatch.runtime.createHatchRuntime
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -17,6 +21,9 @@ import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.resolvePythonBinary
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -30,8 +37,8 @@ internal class CliBasedHatchService private constructor(
   companion object {
     suspend operator fun invoke(workingDirectoryPath: Path, hatchExecutablePath: Path?): Result<CliBasedHatchService, PyError> {
       val hatchRuntime = createHatchRuntime(
-        hatchExecutablePath=hatchExecutablePath,
-        workingDirectoryPath=workingDirectoryPath,
+        hatchExecutablePath = hatchExecutablePath,
+        workingDirectoryPath = workingDirectoryPath,
       ).getOr { return it }
       return Result.success(CliBasedHatchService(workingDirectoryPath, hatchRuntime))
     }
@@ -52,42 +59,46 @@ internal class CliBasedHatchService private constructor(
     return Result.success(isHatchManaged)
   }
 
-  @RequiresBackgroundThread
-  override suspend fun findStandaloneEnvironments(): Result<List<HatchStandaloneEnvironment>, PyError> {
-    val hatchEnv = hatchRuntime.hatchCli().env()
-    val environments = hatchEnv.show().getOr { return it }
-    val standaloneEnvironments = environments.getOrDefault(HatchEnvironmentType.STANDALONE, emptyList())
+  suspend fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> = coroutineScope {
+    map { async { f(it) } }.awaitAll()
+  }
 
-    val available = standaloneEnvironments.mapNotNull { env ->
-      val pythonHomePath = hatchEnv.find(env.name).getOr { return@mapNotNull null } ?: return@mapNotNull null
-      val pythonVirtualEnvironment = pythonHomePath.toPythonVirtualEnvironment().getOr { return@mapNotNull null }
-      HatchStandaloneEnvironment(
+  @RequiresBackgroundThread
+  override suspend fun findVirtualEnvironments(): Result<List<HatchVirtualEnvironment>, PyError> {
+    val hatchEnv = hatchRuntime.hatchCli().env()
+    val environments: HatchEnvironments = hatchEnv.show().getOr { return it }
+    val virtualEnvironments = environments.getAvailableVirtualHatchEnvironments()
+
+    val available = virtualEnvironments.parallelMap { env ->
+      val pythonHomePath = hatchEnv.find(env.name).getOr { return@parallelMap null } ?: return@parallelMap null
+      val pythonVirtualEnvironment = pythonHomePath.toPythonVirtualEnvironment().getOr { return@parallelMap null }
+      HatchVirtualEnvironment(
         hatchEnvironment = env,
         pythonVirtualEnvironment = pythonVirtualEnvironment
       )
-    }
+    }.filterNotNull()
 
     return Result.success(available)
   }
 
+
   @RequiresBackgroundThread
-  override suspend fun createNewProject(projectName: String): Result<Unit, PyError> {
+  override suspend fun createNewProject(projectName: String): Result<ProjectStructure, PyError> {
     val eelApi = workingDirectoryPath.getEelDescriptor().upgrade()
     val tempDir = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().build()).getOr { failure ->
       return Result.failure(FileSystemOperationHatchError(failure.error))
     }
 
     hatchRuntime.hatchCli().new(projectName, tempDir.asNioPath()).getOr { return it }
-    eelApi.fs.move(
-      tempDir,
-      workingDirectoryPath.asEelPath(),
-      EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES,
-      true
-    ).getOr { failure ->
+    val target = workingDirectoryPath.asEelPath()
+    eelApi.fs.move(tempDir, target).replaceExisting(DO_NOT_REPLACE_DIRECTORIES).eelIt().getOr { failure ->
       return Result.failure(FileSystemOperationHatchError(failure.error))
     }
 
-    return Result.success(Unit)
+    return Result.success(ProjectStructure(
+      sourceRoot = target.asNioPath().resolve("src").takeIf { it.isDirectory() },
+      testRoot = target.asNioPath().resolve("tests").takeIf { it.isDirectory() },
+    ))
   }
 
   @RequiresBackgroundThread
@@ -120,4 +131,22 @@ internal suspend fun PythonHomePath.toPythonVirtualEnvironment(): Result<PythonV
     else -> PythonVirtualEnvironment.Existing(this, pythonVersion)
   }
   return Result.success(pythonVirtualEnvironment)
+}
+
+private fun HatchEnvironments.getAvailableVirtualHatchEnvironments(): List<HatchEnvironment> {
+  val matricesFlatted = matrices.flatMap { matrixEnvironment ->
+    matrixEnvironment.envs.map { envName ->
+      with(matrixEnvironment.hatchEnvironment) {
+        HatchEnvironment(
+          name = envName,
+          type = type,
+          dependencies = dependencies,
+          environmentVariables = environmentVariables,
+          scripts = scripts,
+          description = description,
+        )
+      }
+    }
+  }
+  return (standalone + matricesFlatted).filter { it.type == ENV_TYPE_VIRTUAL }
 }
