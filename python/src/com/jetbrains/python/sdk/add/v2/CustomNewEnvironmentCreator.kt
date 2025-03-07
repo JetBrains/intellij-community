@@ -9,24 +9,25 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonHelpersLocator
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.errorProcessing.emit
 import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
-import com.jetbrains.python.Result
 
 @Internal
 internal abstract class CustomNewEnvironmentCreator(private val name: String, model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
@@ -66,14 +67,20 @@ internal abstract class CustomNewEnvironmentCreator(private val name: String, mo
       is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
       is ModuleOrProject.ProjectOnly -> null
     }
-    val newSdk = setupEnvSdk(moduleOrProject.project,
-                             module,
-                             ProjectJdkTable.getInstance().allJdks.asList(),
-                             model.myProjectPathFlows.projectPathWithDefault.first().toString(),
-                             homePath,
-                             false).getOr { return it }
+
+    val newSdk = withBackgroundProgress(moduleOrProject.project, message("python.sdk.progress.setting.up.environment", name), false) {
+      setupEnvSdk(
+        project = moduleOrProject.project,
+        module = module,
+        baseSdks = ProjectJdkTable.getInstance().allJdks.asList(),
+        projectPath = model.myProjectPathFlows.projectPathWithDefault.first().toString(),
+        homePath = homePath,
+        installPackages = false
+      )
+    }.getOr { return it }
+
     newSdk.persist()
-6
+
     module?.excludeInnerVirtualEnv(newSdk)
     model.addInterpreter(newSdk)
 
@@ -121,12 +128,12 @@ internal abstract class CustomNewEnvironmentCreator(private val name: String, mo
     val pythonExecutable = model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString()
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
       if (installationScript != null) {
-        val versionArgs: List<String> = installationVersion?.let { listOf("-v", it)  } ?: emptyList()
+        val versionArgs: List<String> = installationVersion?.let { listOf("-v", it) } ?: emptyList()
         val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name, *versionArgs.toTypedArray())
         executablePath.onSuccess {
-        savePathToExecutableToProperties(it)
-      }.onFailure {
-        errorSink.emit(it.localizedMessage)
+          savePathToExecutableToProperties(it)
+        }.onFailure {
+          errorSink.emit(it.localizedMessage)
         }
       }
     }
