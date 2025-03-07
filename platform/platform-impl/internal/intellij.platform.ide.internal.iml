@@ -34,5 +34,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>
