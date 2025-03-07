@@ -392,7 +392,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   public void select(Configurable configurable) {
     treeView.select(configurable);
     editor.select(configurable);
-    updateController(configurable);
   }
 
   boolean isSidebarVisible() {
