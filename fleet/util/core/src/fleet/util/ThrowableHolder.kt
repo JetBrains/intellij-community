@@ -4,17 +4,6 @@ package fleet.util
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class StackTraceElementHolder(
-  val classLoaderName: String?,
-  val moduleName: String?,
-  val moduleVersion: String?,
-  val declaringClass: String?,
-  val methodName: String?,
-  val fileName: String?,
-  val lineNumber: Int,
-)
-
-@Serializable
 data class LogErrorHolder(
   val logMessage: String,
   val throwable: ThrowableHolder,
