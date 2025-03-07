@@ -4,16 +4,20 @@ package com.intellij.ide.plugins
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.junit5.asDynamicTests
 import org.jetbrains.jps.model.module.JpsModule
 import org.junit.Assert
 import org.junit.Test
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 import java.nio.file.Path
 
 class PluginModelTest {
-  @Test
-  fun check() {
+  @TestFactory
+  fun check(): List<DynamicTest> {
     val communityPath = PlatformTestUtil.getCommunityPath()
     val validator = validatePluginModel(Path.of(communityPath), skipUnresolvedOptionalContentModules = true)
+    
     if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
       val out = Path.of(communityPath, System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
       validator.writeGraph(out)
@@ -21,6 +25,8 @@ class PluginModelTest {
       println("Graph is written to $out")
       println("Drop file to https://plugingraph.ij.pages.jetbrains.team/ to visualize.")
     }
+    
+    return validator.namedFailures.asDynamicTests("problems in plugin configuration")
   }
 }
 
@@ -29,13 +35,7 @@ fun validatePluginModel(homePath: Path, skipUnresolvedOptionalContentModules: Bo
     .modules
     .map { ModuleWrap(it) }
 
-  val validator = PluginModelValidator(modules, skipUnresolvedOptionalContentModules = skipUnresolvedOptionalContentModules)
-  val errors = validator.errorsAsString
-  if (!errors.isEmpty()) {
-    System.err.println(errors)
-    Assert.fail(errors.toString().take(1000))
-  }
-  return validator
+  return PluginModelValidator(modules, skipUnresolvedOptionalContentModules = skipUnresolvedOptionalContentModules)
 }
 
 private data class ModuleWrap(private val module: JpsModule) : PluginModelValidator.Module {
