@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.AWTEvent
 import java.awt.BorderLayout
+import java.awt.Dimension
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -51,4 +52,6 @@ abstract class AbstractEditor internal constructor(parent: Disposable) : JPanel(
   protected open fun cancel(source: AWTEvent?): Boolean = true
 
   protected abstract fun getPreferredFocusedComponent(): JComponent?
+
+  open fun getDialogInitialSize(): Dimension? = null
 }
