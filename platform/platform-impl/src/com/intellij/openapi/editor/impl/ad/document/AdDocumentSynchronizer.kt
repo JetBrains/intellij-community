@@ -82,10 +82,11 @@ class AdDocumentSynchronizer(private val coroutineScope: CoroutineScope): Dispos
       val entityChange = coroutineScope.async {
         val operation = operation(event)
         change {
-          shared { // shared to mutate shared document components (e.g., AdMarkupModel)
-            entity.mutate(this, OpenMap.empty()) {
-              edit(operation)
-            }
+          // shared should not be used here, otherwise an exception is going to be thrown during rebase
+          // `mutate` should decide when to use `shared`
+          // TODO check that markups work // shared to mutate shared document components (e.g., AdMarkupModel)
+          entity.mutate(this, OpenMap.empty()) {
+            edit(operation)
           }
         }
         awaitCommitted()
