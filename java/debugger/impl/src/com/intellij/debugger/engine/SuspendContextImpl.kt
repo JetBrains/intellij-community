@@ -1,605 +1,526 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.engine;
+package com.intellij.debugger.engine
 
-import com.intellij.Patches;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerUtilsAsync;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PrioritizedTask;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.CheckedDisposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.platform.util.coroutines.CoroutineScopeKt;
-import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.sun.jdi.Location;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ThreadReference;
-import com.sun.jdi.event.EventSet;
-import com.sun.jdi.event.LocatableEvent;
-import com.sun.jdi.request.EventRequest;
-import kotlin.coroutines.EmptyCoroutineContext;
-import kotlinx.coroutines.CoroutineScope;
-import one.util.streamex.StreamEx;
-import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.Patches
+import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.debugger.JavaDebuggerBundle
+import com.intellij.debugger.engine.DebuggerDiagnosticsUtil.needAnonymizedReports
+import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.requests.RequestManagerImpl
+import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.PrioritizedTask
+import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
+import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.frame.XSuspendContext
+import com.sun.jdi.Location
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.ThreadReference
+import com.sun.jdi.event.EventSet
+import com.sun.jdi.event.LocatableEvent
+import com.sun.jdi.request.EventRequest
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.function.Supplier
+import kotlin.concurrent.Volatile
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Supplier;
+abstract class SuspendContextImpl @ApiStatus.Internal constructor(
+  private val myDebugProcess: DebugProcessImpl,
+  @param:MagicConstant(flagsFromClass = EventRequest::class)
+  private val mySuspendPolicy: Int,
+  @JvmField protected var myVotesToVote: Int,
+  private var myEventSet: EventSet?,
+  private val myDebugId: Long,
+) : XSuspendContext(), SuspendContext, Disposable {
 
-public abstract class SuspendContextImpl extends XSuspendContext implements SuspendContext, Disposable {
-  private static final Logger LOG = Logger.getInstance(SuspendContextImpl.class);
+  // Save the VM related to this suspend context, as a VM may be changed due to reattach
+  @Suppress("UsagesOfObsoleteApi")
+  val virtualMachineProxy: VirtualMachineProxyImpl = myDebugProcess.getVirtualMachineProxy()
 
-  private final long myDebugId;
+  @Suppress("UsagesOfObsoleteApi")
+  val managerThread: DebuggerManagerThreadImpl = myDebugProcess.managerThread
 
-  private final DebugProcessImpl myDebugProcess;
-  private final int mySuspendPolicy;
-  private final VirtualMachineProxyImpl myVirtualMachine;
-  private final @NotNull DebuggerManagerThreadImpl myDebuggerManagerThread;
+  /** The thead that comes from the JVM event or was reset by switching to suspend-all procedure  */
+  @get:ApiStatus.Internal
+  var eventThread: ThreadReferenceProxyImpl? = null
+    private set
 
-  private ThreadReferenceProxyImpl myThread;
-  boolean myIsVotedForResume = true;
+  @JvmField
+  internal var myIsVotedForResume: Boolean = true
 
-  private @Nullable Object myLightThreadFilter = null;
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var lightThreadFilter: Any? = null
 
-  protected int myVotesToVote;
-  protected Set<ThreadReferenceProxyImpl> myResumedThreads;
+  @JvmField
+  internal var myResumedThreads: MutableSet<ThreadReferenceProxyImpl>? = null
 
-  protected final Set<ThreadReferenceProxyImpl> myNotExecutableThreads = new HashSet<>();
+  @JvmField
+  protected val myNotExecutableThreads: MutableSet<ThreadReferenceProxyImpl> = HashSet()
 
   // There may be several events for the same break-point. So let's use custom processing if any of them is wanted it.
-  protected boolean mySuspendAllSwitchedContext = false;
+  @JvmField
+  protected var mySuspendAllSwitchedContext: Boolean = false
 
-  private EventSet myEventSet;
-  private volatile boolean myIsResumed;
-  protected volatile boolean myIsGoingToResume;
+  @Volatile
+  private var myIsResumed = false
 
-  private final ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<>();
+  @JvmField
+  @Volatile
+  protected var myIsGoingToResume: Boolean = false
+
+  private val myPostponedCommands = ConcurrentLinkedQueue<SuspendContextCommandImpl>()
 
   /**
    * These commands are started but can be switched to another dispatcher, so they are not present in DMT.
    * However, they should be canceled on context resume, so they are tracked via this set.
    */
-  private final Set<SuspendContextCommandImpl> myUnfinishedCommands = ConcurrentCollectionFactory.createConcurrentSet();
-  public volatile boolean myInProgress;
-  private final HashSet<ObjectReference> myKeptReferences = new HashSet<>();
-  private EvaluationContextImpl myEvaluationContext = null;
-  private int myFrameCount = -1;
-  private final CoroutineScope myCoroutineScope;
+  private val myUnfinishedCommands: MutableSet<SuspendContextCommandImpl> = ConcurrentCollectionFactory.createConcurrentSet<SuspendContextCommandImpl>()
 
-  private JavaExecutionStack myActiveExecutionStack;
+  @JvmField
+  @Volatile
+  var myInProgress: Boolean = false
+  private val myKeptReferences = hashSetOf<ObjectReference>()
+  var evaluationContext: EvaluationContextImpl? = null
+    private set
+  private var myFrameCount = -1
+  private val myCoroutineScope = managerThread.coroutineScope.childScope("SuspendContextImpl $myDebugId")
 
-  private final ThreadReferenceProxyImpl.ThreadListener myListener = new ThreadReferenceProxyImpl.ThreadListener() {
-    @Override
-    public void threadSuspended() {
-      myNotExecutableThreads.clear();
-      myFrameCount = -1;
+  private var myActiveExecutionStack: JavaExecutionStack? = null
+
+  private val myListener = object : ThreadReferenceProxyImpl.ThreadListener {
+    override fun threadSuspended() {
+      myNotExecutableThreads.clear()
+      myFrameCount = -1
     }
 
-    @Override
-    public void threadResumed() {
-      myNotExecutableThreads.clear();
-      myFrameCount = -1;
+    override fun threadResumed() {
+      myNotExecutableThreads.clear()
+      myFrameCount = -1
     }
-  };
+  }
 
-  SuspendContextImpl(@NotNull DebugProcessImpl debugProcess,
-                     @MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy,
-                     int eventVotes,
-                     @Nullable EventSet set,
-                     long debugId) {
-    myDebugProcess = debugProcess;
-    mySuspendPolicy = suspendPolicy;
-    // Save the VM related to this suspend context, as a VM may be changed due to reattach
-    //noinspection UsagesOfObsoleteApi
-    myVirtualMachine = debugProcess.getVirtualMachineProxy();
-    //noinspection UsagesOfObsoleteApi
-    myDebuggerManagerThread = debugProcess.getManagerThread();
-    myVotesToVote = eventVotes;
-    myEventSet = set;
-    myDebugId = debugId;
-
-    CoroutineScope dmtScope = myDebuggerManagerThread.getCoroutineScope();
-    myCoroutineScope = CoroutineScopeKt.childScope(dmtScope, "SuspendContextImpl " + debugId, EmptyCoroutineContext.INSTANCE, true);
-    CheckedDisposable disposable = debugProcess.disposable;
+  init {
+    val disposable = myDebugProcess.disposable
     if (disposable.isDisposed()) {
       // could be due to VM death
-      Disposer.dispose(this);
+      Disposer.dispose(this)
     }
     else {
-      Disposer.register(disposable, this);
+      Disposer.register(disposable, this)
     }
   }
 
-  public @NotNull VirtualMachineProxyImpl getVirtualMachineProxy() {
-    return myVirtualMachine;
-  }
+  override fun getCoroutineScope(): CoroutineScope = myCoroutineScope
 
-  @Override
-  public @NotNull CoroutineScope getCoroutineScope() {
-    return myCoroutineScope;
-  }
-
-  protected void setEventSet(EventSet eventSet) {
-    assertCanBeUsed();
-    assertInLog(myEventSet == null, () -> "Event set in " + this + "should be empty");
-    myEventSet = eventSet;
-  }
-
-  public void setThread(@Nullable ThreadReference thread) {
-    assertCanBeUsed();
-    ThreadReferenceProxyImpl threadProxy = myVirtualMachine.getThreadReferenceProxy(thread);
-    assertInLog(myThread == null || myThread == threadProxy,
-                () -> "Invalid thread setting in " + this + ": myThread = " + myThread + ", thread = " + thread);
-    setThread(threadProxy);
-  }
-
-  void resetThread(@NotNull ThreadReferenceProxyImpl threadProxy) {
-    if (myThread == threadProxy) {
-      return;
+  fun setThread(thread: ThreadReference?) {
+    assertCanBeUsed()
+    val threadProxy = virtualMachineProxy.getThreadReferenceProxy(thread)
+    assertInLog(eventThread == null || eventThread === threadProxy) {
+      "Invalid thread setting in $this: myThread = ${eventThread}, thread = $thread"
     }
-    assertInLog(myEvaluationContext == null, () -> "Resetting thread during evaluation is not supported: " + this);
-    assertInLog(myActiveExecutionStack == null, () -> "Thread should be retested before the active execution stack initialization: " + this);
-    assertCanBeUsed();
-    if (myThread != null) {
-      myThread.removeListener(myListener);
+    setThread(threadProxy)
+  }
+
+  fun resetThread(threadProxy: ThreadReferenceProxyImpl) {
+    val currentThread = eventThread
+    if (currentThread === threadProxy) return
+    assertInLog(evaluationContext == null) { "Resetting thread during evaluation is not supported: $this" }
+    assertInLog(myActiveExecutionStack == null) { "Thread should be retested before the active execution stack initialization: $this" }
+    assertCanBeUsed()
+    currentThread?.removeListener(myListener)
+    myFrameCount = -1
+    setThread(threadProxy)
+  }
+
+  private fun setThread(threadProxy: ThreadReferenceProxyImpl?) {
+    if (threadProxy != null && eventThread !== threadProxy && !myDebugProcess.disposable.isDisposed()) { // do not add more than once
+      threadProxy.addListener(myListener, this)
     }
-    myFrameCount = -1;
-    setThread(threadProxy);
+    eventThread = threadProxy
   }
 
-  private void setThread(@Nullable ThreadReferenceProxyImpl threadProxy) {
-    if (threadProxy != null && myThread != threadProxy && !myDebugProcess.disposable.isDisposed()) { // do not add more than once
-      threadProxy.addListener(myListener, this);
-    }
-    myThread = threadProxy;
+  override fun dispose() {
+    myCoroutineScope.cancel()
   }
 
-  @Override
-  public void dispose() {
-    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, null);
-  }
-
-  int getCachedThreadFrameCount() {
-    if (myFrameCount == -1) {
-      try {
-        myFrameCount = myThread != null ? myThread.frameCount() : 0;
-      }
-      catch (EvaluateException e) {
-        myFrameCount = 0;
-      }
-    }
-    return myFrameCount;
-  }
-
-  public @Nullable Location getLocation() {
-    // getting location from the event set is much faster than obtaining the frame and getting it from there
-    if ((myActiveExecutionStack == null || myActiveExecutionStack.getThreadProxy() == myThread) && myEventSet != null) {
-      LocatableEvent event = StreamEx.of(myEventSet).select(LocatableEvent.class).findFirst().orElse(null);
-      if (event != null) {
-        // myThread can be reset to the different thread in resetThread() method
-        if (myThread == null || myThread.getThreadReference().equals(event.thread())) {
-          return event.location();
+  val cachedThreadFrameCount: Int
+    get() {
+      if (myFrameCount == -1) {
+        try {
+          myFrameCount = eventThread?.frameCount() ?: 0
+        }
+        catch (_: EvaluateException) {
+          myFrameCount = 0
         }
       }
+      return myFrameCount
     }
-    try {
-      StackFrameProxyImpl frameProxy = getFrameProxy();
-      return frameProxy != null ? frameProxy.location() : null;
-    }
-    catch (Throwable e) {
-      LOG.debug(e);
-    }
-    return null;
-  }
 
-  protected abstract void resumeImpl();
-
-  void resume(boolean callResume) {
-    assertNotResumed();
-    if (isEvaluating()) {
-      logError("Resuming context " + this + " while evaluating");
+  val location: Location?
+    get() {
+      // getting location from the event set is much faster than obtaining the frame and getting it from there
+      val executionStack = myActiveExecutionStack
+      val currentThread = eventThread
+      if ((executionStack == null || executionStack.threadProxy === currentThread) && myEventSet != null) {
+        val event = myEventSet?.filterIsInstance<LocatableEvent>()?.firstOrNull()
+        if (event != null) {
+          // myThread can be reset to the different thread in resetThread() method
+          if (currentThread == null || currentThread.getThreadReference() == event.thread()) {
+            return event.location()
+          }
+        }
+      }
+      try {
+        return getFrameProxy()?.location()
+      }
+      catch (e: Throwable) {
+        LOG.debug(e)
+      }
+      return null
     }
-    DebuggerManagerThreadImpl.assertIsManagerThread();
+
+  protected abstract fun resumeImpl()
+
+  fun resume(callResume: Boolean) {
+    assertNotResumed()
+    if (isEvaluating) {
+      logError("Resuming context $this while evaluating")
+    }
+    DebuggerManagerThreadImpl.assertIsManagerThread()
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
         // delay enable collection to speed up the resume
-        for (ObjectReference r : myKeptReferences) {
-          myDebugProcess.getManagerThread().schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection(r));
+        for (r in myKeptReferences) {
+          managerThread.schedule(PrioritizedTask.Priority.LOWEST) { DebuggerUtilsEx.enableCollection(r) }
         }
-        myKeptReferences.clear();
+        myKeptReferences.clear()
       }
 
-      cancelAllPostponed();
+      cancelAllPostponed()
       if (callResume) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Resuming " + this);
+          LOG.debug("Resuming $this")
         }
-        resumeImpl();
+        resumeImpl()
       }
     }
     finally {
-      myIsResumed = true;
-      Disposer.dispose(this);
+      myIsResumed = true
+      Disposer.dispose(this)
     }
   }
 
-  private void assertCanBeUsed() {
-    assertNotResumed();
-    assertInLog(!myIsGoingToResume, () -> "Context " + this + " is going to resume.");
+  private fun assertCanBeUsed() {
+    assertNotResumed()
+    assertInLog(!myIsGoingToResume) { "Context $this is going to resume." }
   }
 
-  private void assertNotResumed() {
-    if (myIsResumed) {
-      if (myDebugProcess.isAttached()) {
-        logError("Cannot access " + this + " because it is resumed.");
-      }
+  private fun assertNotResumed() {
+    if (myIsResumed && myDebugProcess.isAttached) {
+      logError("Cannot access $this because it is resumed.")
     }
   }
 
+  var eventSet: EventSet?
+    get() = myEventSet
+    set(eventSet) {
+      assertCanBeUsed()
+      assertInLog(myEventSet == null) { "Event set in ${this}should be empty" }
+      myEventSet = eventSet
+    }
 
-  public @Nullable EventSet getEventSet() {
-    return myEventSet;
+  override fun getDebugProcess(): DebugProcessImpl = myDebugProcess
+
+  override fun getFrameProxy(): StackFrameProxyImpl? = try {
+    myActiveExecutionStack?.threadProxy?.frame(0) ?: frameProxyFromTechnicalThread
+  }
+  catch (e: EvaluateException) {
+    myDebugProcess.logError("Error in proxy extracting", e)
+    frameProxyFromTechnicalThread
   }
 
-  @Override
-  public @NotNull DebugProcessImpl getDebugProcess() {
-    return myDebugProcess;
-  }
 
-  @Override
-  public @Nullable StackFrameProxyImpl getFrameProxy() {
-    if (myActiveExecutionStack != null) {
+  private val frameProxyFromTechnicalThread: StackFrameProxyImpl?
+    get() {
+      assertNotResumed()
       try {
-        return myActiveExecutionStack.getThreadProxy().frame(0);
-      }
-      catch (EvaluateException e) {
-        myDebugProcess.logError("Error in proxy extracting", e);
-      }
-    }
-    return getFrameProxyFromTechnicalThread();
-  }
-
-  private @Nullable StackFrameProxyImpl getFrameProxyFromTechnicalThread() {
-    assertNotResumed();
-    try {
-      if (myThread != null) {
-        int frameCount = myThread.frameCount();
+        val currentThread = eventThread ?: return null
+        val frameCount = currentThread.frameCount()
         if (myFrameCount != -1 && myFrameCount != frameCount) {
-          logError("Incorrect frame count, cached " + myFrameCount + ", now " + frameCount +
-                   ", thread " + myThread + " suspend count " + myThread.getSuspendCount());
+          logError("Incorrect frame count, cached $myFrameCount, now $frameCount, thread $currentThread suspend count ${currentThread.getSuspendCount()}")
         }
-        myFrameCount = frameCount;
+        myFrameCount = frameCount
         if (frameCount > 0) {
-          return myThread.frame(0);
+          return currentThread.frame(0)
         }
+        return null
       }
-      return null;
-    }
-    catch (EvaluateException ignored) {
-      return null;
-    }
-  }
-
-  @Override
-  public @Nullable ThreadReferenceProxyImpl getThread() {
-    if (myActiveExecutionStack != null) {
-      return myActiveExecutionStack.getThreadProxy();
-    }
-    return myThread;
-  }
-
-  /** The thead that comes from the JVM event or was reset by switching to suspend-all procedure */
-  @ApiStatus.Internal
-  public @Nullable ThreadReferenceProxyImpl getEventThread() {
-    return myThread;
-  }
-
-  @MagicConstant(flagsFromClass = EventRequest.class)
-  @Override
-  public int getSuspendPolicy() {
-    return mySuspendPolicy;
-  }
-
-  public String getSuspendPolicyFromRequestors() {
-    if (mySuspendPolicy == EventRequest.SUSPEND_ALL) {
-      return DebuggerSettings.SUSPEND_ALL;
-    }
-    if (myEventSet != null) {
-      return RequestManagerImpl.hasSuspendAllRequestor(myEventSet) ? DebuggerSettings.SUSPEND_ALL : asStrPolicy();
+      catch (_: EvaluateException) {
+        return null
+      }
     }
 
-    return asStrPolicy();
-  }
+  override fun getThread(): ThreadReferenceProxyImpl? = myActiveExecutionStack?.threadProxy ?: eventThread
 
-  private String asStrPolicy() {
-    return switch (mySuspendPolicy) {
-      case EventRequest.SUSPEND_ALL -> DebuggerSettings.SUSPEND_ALL;
-      case EventRequest.SUSPEND_EVENT_THREAD -> DebuggerSettings.SUSPEND_THREAD;
-      case EventRequest.SUSPEND_NONE -> DebuggerSettings.SUSPEND_NONE;
-      default -> throw new IllegalStateException("Cannot convert number " + mySuspendPolicy);
-    };
-  }
+  @MagicConstant(flagsFromClass = EventRequest::class)
+  override fun getSuspendPolicy(): Int = mySuspendPolicy
 
-
-  @SuppressWarnings("unused")
-  public void doNotResumeHack() {
-    assertNotResumed();
-    myVotesToVote = 1000000000;
-  }
-
-  public boolean isExplicitlyResumed(@NotNull ThreadReferenceProxyImpl thread) {
-    return myResumedThreads != null && myResumedThreads.contains(thread);
-  }
-
-  public boolean suspends(@NotNull ThreadReferenceProxyImpl thread) {
-    assertNotResumed();
-    if (myEvaluationContext != null && thread == myEvaluationContext.getThreadForEvaluation()) {
-      return false;
+  val suspendPolicyFromRequestors: String?
+    get() {
+      if (mySuspendPolicy == EventRequest.SUSPEND_ALL) return DebuggerSettings.SUSPEND_ALL
+      val eventSet = myEventSet
+      if (eventSet == null) return asStrPolicy()
+      return if (RequestManagerImpl.hasSuspendAllRequestor(eventSet)) DebuggerSettings.SUSPEND_ALL else asStrPolicy()
     }
-    return switch (getSuspendPolicy()) {
-      case EventRequest.SUSPEND_ALL -> !isExplicitlyResumed(thread);
-      case EventRequest.SUSPEND_EVENT_THREAD -> thread == myThread;
-      default -> false;
-    };
+
+  private fun asStrPolicy(): String {
+    return when (mySuspendPolicy) {
+      EventRequest.SUSPEND_ALL -> DebuggerSettings.SUSPEND_ALL
+      EventRequest.SUSPEND_EVENT_THREAD -> DebuggerSettings.SUSPEND_THREAD
+      EventRequest.SUSPEND_NONE -> DebuggerSettings.SUSPEND_NONE
+      else -> throw IllegalStateException("Cannot convert number $mySuspendPolicy")
+    }
   }
 
-  public boolean isEvaluating() {
-    assertNotResumed();
-    return myEvaluationContext != null;
+  @Suppress("unused")
+  fun doNotResumeHack() {
+    assertNotResumed()
+    myVotesToVote = 1000000000
   }
 
-  public EvaluationContextImpl getEvaluationContext() {
-    return myEvaluationContext;
+  fun isExplicitlyResumed(thread: ThreadReferenceProxyImpl): Boolean = myResumedThreads?.contains(thread) == true
+
+  fun suspends(thread: ThreadReferenceProxyImpl): Boolean {
+    assertNotResumed()
+    if (thread === evaluationContext?.threadForEvaluation) return false
+    return when (getSuspendPolicy()) {
+      EventRequest.SUSPEND_ALL -> !isExplicitlyResumed(thread)
+      EventRequest.SUSPEND_EVENT_THREAD -> thread === eventThread
+      else -> false
+    }
   }
 
-  public boolean isResumed() {
-    return myIsResumed || myIsGoingToResume;
-  }
+  val isEvaluating: Boolean
+    get() {
+      assertNotResumed()
+      return evaluationContext != null
+    }
+
+  val isResumed: Boolean
+    get() = myIsResumed || myIsGoingToResume
 
   @ApiStatus.Internal
-  public void setIsEvaluating(EvaluationContextImpl evaluationContext) {
-    assertCanBeUsed();
-    myEvaluationContext = evaluationContext;
+  fun setIsEvaluating(context: EvaluationContextImpl?) {
+    assertCanBeUsed()
+    evaluationContext = context
   }
 
-  @ApiStatus.Internal
-  public @Nullable Object getLightThreadFilter() {
-    return myLightThreadFilter;
+  override fun toString(): String = "{$myDebugId} SP=${suspendPolicyString} ${oldToString()}"
+
+  private fun eventSetAsString(): String? {
+    val eventSet = myEventSet ?: return "null"
+    if (!needAnonymizedReports()) return eventSet.toString()
+    return "EventSet" + DebuggerDiagnosticsUtil.getEventSetClasses(eventSet) + " in " + eventThread
   }
 
-  @ApiStatus.Internal
-  public void setLightThreadFilter(@Nullable Object lightThreadFilter) {
-    myLightThreadFilter = lightThreadFilter;
-  }
-
-  @Override
-  public String toString() {
-    return "{" + myDebugId + "} " + "SP=" + getSuspendPolicyString() + " " + oldToString();
-  }
-
-  private String eventSetAsString() {
-    if (myEventSet == null) {
-      return "null";
+  private val stackStr: String?
+    get() {
+      val executionStack = myActiveExecutionStack ?: return "null"
+      return if (needAnonymizedReports()) "Stack in $eventThread" else executionStack.toString()
     }
-    if (DebuggerDiagnosticsUtil.needAnonymizedReports()) {
-      return "EventSet" + DebuggerDiagnosticsUtil.getEventSetClasses(myEventSet) + " in " + myThread;
-    }
-    return myEventSet.toString();
+
+  private fun oldToString(): String? {
+    if (myEventSet != null) return eventSetAsString()
+    return eventThread?.toString() ?: JavaDebuggerBundle.message("string.null.context")
   }
 
-  private String getStackStr() {
-    if (myActiveExecutionStack == null) {
-      return "null";
-    }
-    return DebuggerDiagnosticsUtil.needAnonymizedReports() ? ("Stack in " + myThread) : myActiveExecutionStack.toString();
-  }
+  fun toAttachmentString(): String {
+    val sb = StringBuilder()
+    sb.append("------------------\ncontext ").append(this).append(":\n")
+    sb.append("myDebugId = ").append(myDebugId).append("\n")
+    sb.append("myThread = ").append(eventThread).append("\n")
+    sb.append("Suspend policy = ").append(suspendPolicyString).append("\n")
+    sb.append("myEventSet = ").append(eventSetAsString()).append("\n")
+    sb.append("myInProgress = ").append(myInProgress).append("\n")
+    sb.append("myEvaluationContext = ").append(evaluationContext).append("\n")
+    sb.append("myFrameCount = ").append(myFrameCount).append("\n")
+    sb.append("myActiveExecutionStack = ").append(stackStr).append("\n")
 
-  private String oldToString() {
-    if (myEventSet != null) {
-      return eventSetAsString();
-    }
-    return myThread != null ? myThread.toString() : JavaDebuggerBundle.message("string.null.context");
-  }
-
-  String toAttachmentString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("------------------\ncontext ").append(this).append(":\n");
-    sb.append("myDebugId = ").append(myDebugId).append("\n");
-    sb.append("myThread = ").append(myThread).append("\n");
-    sb.append("Suspend policy = ").append(getSuspendPolicyString()).append("\n");
-    sb.append("myEventSet = ").append(eventSetAsString()).append("\n");
-    sb.append("myInProgress = ").append(myInProgress).append("\n");
-    sb.append("myEvaluationContext = ").append(myEvaluationContext).append("\n");
-    sb.append("myFrameCount = ").append(myFrameCount).append("\n");
-    sb.append("myActiveExecutionStack = ").append(getStackStr()).append("\n");
-
-    if (myResumedThreads != null && !myResumedThreads.isEmpty()) {
-      sb.append("myResumedThreads:\n");
-      for (ThreadReferenceProxyImpl thread : myResumedThreads) {
-        sb.append("  ").append(thread).append("\n");
+    val resumedThreads = myResumedThreads
+    if (!resumedThreads.isNullOrEmpty()) {
+      sb.append("myResumedThreads:\n")
+      for (thread in resumedThreads) {
+        sb.append("  ").append(thread).append("\n")
       }
     }
 
     if (!myNotExecutableThreads.isEmpty()) {
-      sb.append("myNotExecutableThreads:\n");
-      for (ThreadReferenceProxyImpl thread : myNotExecutableThreads) {
-        sb.append("  ").append(thread).append("\n");
+      sb.append("myNotExecutableThreads:\n")
+      for (thread in myNotExecutableThreads) {
+        sb.append("  ").append(thread).append("\n")
       }
     }
 
-    sb.append("mySuspendAllSwitchedContext = ").append(mySuspendAllSwitchedContext).append("\n");
-    sb.append("myPostponedCommands: ").append(myPostponedCommands.size()).append("\n");
-    sb.append("myKeptReferences: ").append(myKeptReferences.size()).append("\n");
-    sb.append("myIsVotedForResume = ").append(myIsVotedForResume).append("\n");
-    sb.append("myVotesToVote = ").append(myVotesToVote).append("\n");
-    sb.append("myIsResumed = ").append(myIsResumed).append("\n");
-    sb.append("myIsGoingToResume = ").append(myIsGoingToResume).append("\n");
-    return sb.toString();
+    sb.append("mySuspendAllSwitchedContext = ").append(mySuspendAllSwitchedContext).append("\n")
+    sb.append("myPostponedCommands: ").append(myPostponedCommands.size).append("\n")
+    sb.append("myKeptReferences: ").append(myKeptReferences.size).append("\n")
+    sb.append("myIsVotedForResume = ").append(myIsVotedForResume).append("\n")
+    sb.append("myVotesToVote = ").append(myVotesToVote).append("\n")
+    sb.append("myIsResumed = ").append(myIsResumed).append("\n")
+    sb.append("myIsGoingToResume = ").append(myIsGoingToResume).append("\n")
+    return sb.toString()
   }
 
-  private String getSuspendPolicyString() {
-    return switch (getSuspendPolicy()) {
-      case EventRequest.SUSPEND_EVENT_THREAD -> "thread";
-      case EventRequest.SUSPEND_ALL -> "all";
-      case EventRequest.SUSPEND_NONE -> "none";
-      default -> "other";
-    };
-  }
+  private val suspendPolicyString: String
+    get() = when (getSuspendPolicy()) {
+      EventRequest.SUSPEND_EVENT_THREAD -> "thread"
+      EventRequest.SUSPEND_ALL -> "all"
+      EventRequest.SUSPEND_NONE -> "none"
+      else -> "other"
+    }
 
-  public void keep(ObjectReference reference) {
+  fun keep(reference: ObjectReference) {
     if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-      final boolean added = myKeptReferences.add(reference);
+      val added = myKeptReferences.add(reference)
       if (added) {
-        DebuggerUtilsEx.disableCollection(reference);
+        DebuggerUtilsEx.disableCollection(reference)
       }
     }
   }
 
-  public final void addUnfinishedCommand(final SuspendContextCommandImpl command) {
-    myUnfinishedCommands.add(command);
+  internal fun addUnfinishedCommand(command: SuspendContextCommandImpl) {
+    myUnfinishedCommands.add(command)
   }
 
-  public final void removeUnfinishedCommand(final SuspendContextCommandImpl command) {
-    myUnfinishedCommands.remove(command);
+  internal fun removeUnfinishedCommand(command: SuspendContextCommandImpl) {
+    myUnfinishedCommands.remove(command)
   }
 
-  public final void postponeCommand(final SuspendContextCommandImpl command) {
-    if (!isResumed()) {
+  fun postponeCommand(command: SuspendContextCommandImpl) {
+    if (!isResumed) {
       // Important! when postponing increment the holds counter, so that the action is not released too early.
       // This will ensure that the counter becomes zero only when the command is actually executed or canceled
-      command.hold();
-      myPostponedCommands.add(command);
+      command.hold()
+      myPostponedCommands.add(command)
     }
     else {
-      command.notifyCancelled();
+      command.notifyCancelled()
     }
   }
 
-  public final void cancelAllPostponed() {
-    for (SuspendContextCommandImpl postponed = pollPostponedCommand(); postponed != null; postponed = pollPostponedCommand()) {
-      postponed.notifyCancelled();
+  fun cancelAllPostponed() {
+    var postponed = pollPostponedCommand()
+    while (postponed != null) {
+      postponed.notifyCancelled()
+      postponed = pollPostponedCommand()
     }
-    DebuggerCommandImpl currentCommand = DebuggerManagerThreadImpl.getCurrentCommand();
-    for (var it = myUnfinishedCommands.iterator(); it.hasNext(); ) {
-      SuspendContextCommandImpl command = it.next();
-      if (currentCommand != command) {
-        command.cancelCommandScope();
-        it.remove();
+    val currentCommand = DebuggerManagerThreadImpl.getCurrentCommand()
+    val it = myUnfinishedCommands.iterator()
+    while (it.hasNext()) {
+      val command = it.next()
+      if (currentCommand !== command) {
+        command.cancelCommandScope()
+        it.remove()
       }
       else {
-        command.cancelCommandScopeOnSuspend();
+        command.cancelCommandScopeOnSuspend()
         // do not remove itself
       }
     }
   }
 
-  public final SuspendContextCommandImpl pollPostponedCommand() {
-    return myPostponedCommands.poll();
-  }
+  fun pollPostponedCommand(): SuspendContextCommandImpl? = myPostponedCommands.poll()
 
-  @Override
-  public @Nullable JavaExecutionStack getActiveExecutionStack() {
-    return myActiveExecutionStack;
-  }
+  override fun getActiveExecutionStack(): JavaExecutionStack? = myActiveExecutionStack
 
-  public void initExecutionStacks(ThreadReferenceProxyImpl activeThread) {
-    assertCanBeUsed();
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myThread == null) {
-      setThread(activeThread);
+  fun initExecutionStacks(activeThread: ThreadReferenceProxyImpl?) {
+    assertCanBeUsed()
+    DebuggerManagerThreadImpl.assertIsManagerThread()
+    if (eventThread == null) {
+      setThread(activeThread)
     }
     if (activeThread != null) {
-      if (mySuspendPolicy == EventRequest.SUSPEND_EVENT_THREAD && activeThread != myThread) {
-        logError("Thread " + activeThread + " was set as active into " + this);
+      if (mySuspendPolicy == EventRequest.SUSPEND_EVENT_THREAD && activeThread !== eventThread) {
+        logError("Thread $activeThread was set as active into $this")
       }
-      myActiveExecutionStack = new JavaExecutionStack(activeThread, myDebugProcess, myThread == activeThread);
-      myActiveExecutionStack.initTopFrame();
+      myActiveExecutionStack = JavaExecutionStack(activeThread, myDebugProcess, eventThread === activeThread)
+      myActiveExecutionStack!!.initTopFrame()
     }
   }
 
-  @Override
-  public void computeExecutionStacks(final XExecutionStackContainer container) {
-    assertCanBeUsed();
-    getManagerThread().schedule(new SuspendContextCommandImpl(this) {
-      final Set<ThreadReferenceProxyImpl> myAddedThreads = new HashSet<>();
+  override fun computeExecutionStacks(container: XExecutionStackContainer) {
+    assertCanBeUsed()
+    managerThread.schedule(object : SuspendContextCommandImpl(this) {
+      val myAddedThreads = hashSetOf<ThreadReferenceProxyImpl>()
 
-      @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-        List<ThreadReferenceProxyImpl> pausedThreads =
-          StreamEx.of(myDebugProcess.getSuspendManager().getPausedContexts())
-            .map(SuspendContextImpl::getEventThread)
-            .nonNull()
-            .toList();
+      override fun contextAction(suspendContext: SuspendContextImpl) {
+        val pausedThreads = myDebugProcess.suspendManager.getPausedContexts().mapNotNull { it.eventThread }
         // add paused threads first
         CompletableFuture.completedFuture(pausedThreads)
-          .thenCompose(tds -> addThreads(tds, THREAD_NAME_COMPARATOR, false))
-          .thenCompose(res -> res
-                              ? suspendContext.getVirtualMachineProxy().allThreadsAsync()
-                              : CompletableFuture.completedFuture(Collections.emptyList()))
-          .thenAccept(tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true))
-          .exceptionally(throwable -> DebuggerUtilsAsync.logError(throwable));
+          .thenCompose { tds -> addThreads(tds, THREAD_NAME_COMPARATOR, false) }
+          .thenCompose { res ->
+            if (res)
+              suspendContext.virtualMachineProxy.allThreadsAsync()
+            else
+              CompletableFuture.completedFuture(emptyList())
+          }
+          .thenAccept { tds -> addThreads(tds, THREADS_SUSPEND_AND_NAME_COMPARATOR, true) }
+          .exceptionally { DebuggerUtilsAsync.logError(it) }
       }
 
-      CompletableFuture<Boolean> addThreads(Collection<ThreadReferenceProxyImpl> threads, @Nullable Comparator<? super JavaExecutionStack> comparator, boolean last) {
-        List<CompletableFuture<JavaExecutionStack>> futures = new ArrayList<>();
-        for (ThreadReferenceProxyImpl thread : threads) {
-          if (container.isObsolete()) {
-            return CompletableFuture.completedFuture(false);
-          }
-          if (thread != null && myAddedThreads.add(thread)) {
-            futures.add(JavaExecutionStack.create(thread, myDebugProcess, thread == myThread));
-          }
+      fun addThreads(
+        threads: Collection<ThreadReferenceProxyImpl?>,
+        comparator: Comparator<in JavaExecutionStack>,
+        last: Boolean,
+      ): CompletableFuture<Boolean> {
+        val futures = threads.filterNotNull().mapNotNull { thread ->
+          if (container.isObsolete) return CompletableFuture.completedFuture(false)
+          if (!myAddedThreads.add(thread)) return@mapNotNull null
+          JavaExecutionStack.create(thread, myDebugProcess, thread === eventThread)
         }
-        return DebuggerUtilsAsync.reschedule(CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))).thenApply(__ -> {
-          if (!container.isObsolete()) {
-            StreamEx<JavaExecutionStack> stacks = StreamEx.of(futures).map(CompletableFuture::join);
-            if (comparator != null) {
-              stacks = stacks.sorted(comparator);
-            }
-            container.addExecutionStack(stacks.toList(), last);
-          }
-          return true;
-        });
+        return DebuggerUtilsAsync.reschedule(CompletableFuture.allOf(*futures.toTypedArray())).thenApply {
+          if (container.isObsolete) return@thenApply true
+          val stacks = futures.map { it.join() }.sortedWith(comparator)
+          container.addExecutionStack(stacks, last)
+          true
+        }
       }
-    });
+    })
   }
 
-  private static final Comparator<JavaExecutionStack> THREAD_NAME_COMPARATOR =
-    Comparator.comparing(XExecutionStack::getDisplayName, String.CASE_INSENSITIVE_ORDER);
-
-  private static final Comparator<ThreadReferenceProxyImpl> SUSPEND_FIRST_COMPARATOR =
-    Comparator.comparing(ThreadReferenceProxyImpl::isSuspended).reversed();
-
-  private static final Comparator<JavaExecutionStack> THREADS_SUSPEND_AND_NAME_COMPARATOR =
-    Comparator.comparing(JavaExecutionStack::getThreadProxy, SUSPEND_FIRST_COMPARATOR).thenComparing(THREAD_NAME_COMPARATOR);
-
-  private void logError(@NotNull String message) {
-    myDebugProcess.logError(message);
+  private fun logError(message: String) {
+    myDebugProcess.logError(message)
   }
 
-  private void assertInLog(boolean value, @NotNull Supplier<@NotNull String> supplier) {
+  private fun assertInLog(value: Boolean, supplier: Supplier<String>) {
     if (!value) {
-      myDebugProcess.logError(supplier.get());
+      myDebugProcess.logError(supplier.get())
     }
   }
 
-  public @NotNull DebuggerManagerThreadImpl getManagerThread() {
-    return myDebuggerManagerThread;
+  companion object {
+    private val LOG = Logger.getInstance(SuspendContextImpl::class.java)
+
+    private val THREAD_NAME_COMPARATOR: Comparator<JavaExecutionStack> =
+      Comparator.comparing(JavaExecutionStack::getDisplayName, java.lang.String.CASE_INSENSITIVE_ORDER)
+
+    private val SUSPEND_FIRST_COMPARATOR: Comparator<ThreadReferenceProxyImpl> =
+      Comparator.comparing<ThreadReferenceProxyImpl, Boolean>(ThreadReferenceProxyImpl::isSuspended).reversed()
+
+    private val THREADS_SUSPEND_AND_NAME_COMPARATOR: Comparator<JavaExecutionStack> =
+      Comparator.comparing(JavaExecutionStack::getThreadProxy, SUSPEND_FIRST_COMPARATOR).thenComparing(THREAD_NAME_COMPARATOR)
   }
 }
