@@ -26,7 +26,7 @@ class GrayscaleImageAction : DumbAwareAction() {
     imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
     document.value = grayscaleImage
-    ScientificImageActionsCollector.logGrayscaleImageAction(this)
+    ScientificImageActionsCollector.logGrayscaleImageInvoked(this)
   }
 
   private fun applyGrayscale(image: BufferedImage): BufferedImage {

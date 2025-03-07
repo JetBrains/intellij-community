@@ -8,36 +8,39 @@ import org.intellij.images.scientific.action.*
 object ScientificImageActionsCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("scientific.image.actions", 1)
 
-  private val copyImageAction = GROUP.registerEvent("copy_image_action", EventFields.Class("action_handler"))
-  private val saveImageAction = GROUP.registerEvent("save_image_action", EventFields.Class("action_handler"))
-  private val restoreOriginalImageAction = GROUP.registerEvent("restore_original_image_action", EventFields.Class("action_handler"))
-  private val invertChannelsAction = GROUP.registerEvent("invert_channels_action", EventFields.Class("action_handler"))
-  private val grayscaleImageAction = GROUP.registerEvent("grayscale_image_action", EventFields.Class("action_handler"))
-  private val binarizeImageAction = GROUP.registerEvent("binarize_image_action", EventFields.Class("action_handler"))
+  private val ACTION_HANDLER_FIELD = EventFields.Class("action_handler")
+  private val IMAGE_FORMAT_FIELD = EventFields.String("image_format", listOf("png", "jpg", "jpeg", "bmp"))
+
+  private val INVOKED_COPY_IMAGE_EVENT = GROUP.registerEvent("copy_image_action", ACTION_HANDLER_FIELD)
+  private val INVOKED_SAVE_IMAGE_EVENT = GROUP.registerEvent("save_image_action", ACTION_HANDLER_FIELD, IMAGE_FORMAT_FIELD)
+  private val INVOKED_RESTORE_ORIGINAL_IMAGE_EVENT = GROUP.registerEvent("restore_original_image_action", ACTION_HANDLER_FIELD)
+  private val INVOKED_INVERT_IMAGE_CHANNELS_EVENT = GROUP.registerEvent("invert_channels_action", ACTION_HANDLER_FIELD)
+  private val INVOKED_GRAYSCALE_IMAGE_EVENT = GROUP.registerEvent("grayscale_image_action", ACTION_HANDLER_FIELD)
+  private val INVOKED_BINARY_IMAGE_EVENT = GROUP.registerEvent("binarize_image_action", ACTION_HANDLER_FIELD)
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  fun logCopyImageAction(action: CopyImageAction) {
-    copyImageAction.log(action::class.java)
+  fun logCopyImageInvoked(action: CopyImageAction) {
+    INVOKED_COPY_IMAGE_EVENT.log(action::class.java)
   }
 
-  internal fun logSaveImageAction(action: SaveImageAction) {
-    saveImageAction.log(action::class.java)
+  internal fun logSaveAsImageInvoked(action: SaveImageAction, imageFormat: String) {
+    INVOKED_SAVE_IMAGE_EVENT.log(action::class.java, imageFormat)
   }
 
-  fun logRestoreOriginalImageAction(action: RestoreOriginalImageAction) {
-    restoreOriginalImageAction.log(action::class.java)
+  fun logRestoreOriginalImageInvoked(action: RestoreOriginalImageAction) {
+    INVOKED_RESTORE_ORIGINAL_IMAGE_EVENT.log(action::class.java)
   }
 
-  fun logInvertChannelsAction(action: InvertChannelsAction) {
-    invertChannelsAction.log(action::class.java)
+  fun logInvertChannelsInvoked(action: InvertChannelsAction) {
+    INVOKED_INVERT_IMAGE_CHANNELS_EVENT.log(action::class.java)
   }
 
-  fun logGrayscaleImageAction(action: GrayscaleImageAction) {
-    grayscaleImageAction.log(action::class.java)
+  fun logGrayscaleImageInvoked(action: GrayscaleImageAction) {
+    INVOKED_GRAYSCALE_IMAGE_EVENT.log(action::class.java)
   }
 
-  fun logBinarizeImageAction(action: BinarizeImageAction) {
-    binarizeImageAction.log(action::class.java)
+  fun logBinarizeImageInvoked(action: BinarizeImageAction) {
+    INVOKED_BINARY_IMAGE_EVENT.log(action::class.java)
   }
 }

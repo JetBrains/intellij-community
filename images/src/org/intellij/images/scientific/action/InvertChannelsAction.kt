@@ -26,7 +26,7 @@ class InvertChannelsAction : DumbAwareAction() {
     imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
     document.value = invertedImage
-    ScientificImageActionsCollector.logInvertChannelsAction(this)
+    ScientificImageActionsCollector.logInvertChannelsInvoked(this)
   }
 
 
