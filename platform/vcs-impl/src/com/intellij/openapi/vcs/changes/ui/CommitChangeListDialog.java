@@ -579,6 +579,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.extraLarge();
+  }
+
+  @Override
   protected @NonNls String getDimensionServiceKey() {
     return DIMENSION_SERVICE_KEY;
   }

@@ -2983,6 +2983,7 @@ a:com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 - getIncludedChanges():java.util.List
 - getIncludedUnversionedFiles():java.util.List
 - getInclusionModel():com.intellij.openapi.vcs.changes.InclusionModel
+- getInitialSize():java.awt.Dimension
 - p:getOKAction():javax.swing.Action
 - getPreferredFocusableComponent():javax.swing.JComponent
 - getPreferredFocusedComponent():javax.swing.JComponent
