@@ -105,6 +105,8 @@
     <languageStubDefinition language="JAVA" implementationClass="com.intellij.psi.impl.java.stubs.JavaStubDefinition"/>
     <stubElementRegistryExtension implementation="com.intellij.psi.impl.java.stubs.JavaStubRegistryExtension"/>
 
+    <syntax.syntaxDefinition language="JAVA" implementationClass="com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension"/>
+
     <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
     <treeGenerator implementation="com.intellij.psi.impl.source.tree.JavaTreeGenerator"/>
