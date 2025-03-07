@@ -6,11 +6,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object SourceMapDataCache {
-
   private val cache: MutableMap<SourceMapDataImpl, SourceMapDataEx> =
     ContainerUtil.createConcurrentSoftValueMap()
 
-  fun getOrCreate(sourceMapData: String, mapDebugName: String? = null): SourceMapDataEx? {
+  fun getOrCreate(sourceMapData: CharSequence, mapDebugName: String? = null): SourceMapDataEx? {
     val data = parseMapSafely(sourceMapData, mapDebugName) ?: return null
     val value = cache[data]
     if (value != null) return value
@@ -22,5 +21,34 @@ object SourceMapDataCache {
     cache[data] = result
 
     return result
+  }
+
+  private fun calculateReverseMappings(data: SourceMapData): Array<MappingList?> {
+    val reverseMappingsBySourceUrl = arrayOfNulls<MutableList<MappingEntry>?>(data.sources.size)
+    for (entry in data.mappings) {
+      val sourceIndex = entry.source
+      if (sourceIndex >= 0) {
+        val reverseMappings = getOrCreateMapping(reverseMappingsBySourceUrl, sourceIndex)
+        reverseMappings.add(entry)
+      }
+    }
+    return Array(reverseMappingsBySourceUrl.size) {
+      val entries = reverseMappingsBySourceUrl[it]
+      if (entries == null) {
+        null
+      }
+      else {
+        SourceMappingList(entries)
+      }
+    }
+  }
+
+  private fun getOrCreateMapping(reverseMappingsBySourceUrl: Array<MutableList<MappingEntry>?>, sourceIndex: Int): MutableList<MappingEntry> {
+    var reverseMappings = reverseMappingsBySourceUrl[sourceIndex]
+    if (reverseMappings == null) {
+      reverseMappings = ArrayList()
+      reverseMappingsBySourceUrl[sourceIndex] = reverseMappings
+    }
+    return reverseMappings
   }
 }
