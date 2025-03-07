@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.writeBytes
 import org.intellij.images.editor.ImageDocument.IMAGE_DOCUMENT_DATA_KEY
 import org.intellij.images.scientific.ScientificUtils.DEFAULT_IMAGE_FORMAT
 import org.intellij.images.scientific.ScientificUtils.ORIGINAL_IMAGE_KEY
+import org.intellij.images.scientific.statistics.ScientificImageActionsCollector
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
@@ -25,6 +26,7 @@ class GrayscaleImageAction : DumbAwareAction() {
     imageFile.writeBytes(byteArrayOutputStream.toByteArray())
     val document = e.getData(IMAGE_DOCUMENT_DATA_KEY) ?: return
     document.value = grayscaleImage
+    ScientificImageActionsCollector.logGrayscaleImageAction(this)
   }
 
   private fun applyGrayscale(image: BufferedImage): BufferedImage {
