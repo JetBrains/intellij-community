@@ -5,10 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.external.ImmutableExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.external.MutableExternalEntityMappingImpl
-import com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
-import com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
-import com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex
-import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
+import com.intellij.platform.workspace.storage.impl.indices.*
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 
 internal open class StorageIndexes(
@@ -32,7 +29,7 @@ internal open class StorageIndexes(
   }
 
   fun toMutable(): MutableStorageIndexes {
-    val copiedSoftLinks = MultimapStorageIndex.MutableMultimapStorageIndex.from(softLinks)
+    val copiedSoftLinks = MutableMultimapStorageIndex.from(softLinks)
     val copiedVirtualFileIndex = VirtualFileIndex.MutableVirtualFileIndex.from(virtualFileIndex)
     val copiedEntitySourceIndex = EntityStorageInternalIndex.MutableEntityStorageInternalIndex.from(entitySourceIndex)
     val copiedSymbolicIdIndex = SymbolicIdInternalIndex.MutableSymbolicIdInternalIndex.from(symbolicIdIndex)
@@ -148,11 +145,11 @@ internal open class StorageIndexes(
 }
 
 internal class MutableStorageIndexes(
-  override val softLinks: MultimapStorageIndex.MutableMultimapStorageIndex,
+  override val softLinks: MutableMultimapStorageIndex,
   override val virtualFileIndex: VirtualFileIndex.MutableVirtualFileIndex,
   override val entitySourceIndex: EntityStorageInternalIndex.MutableEntityStorageInternalIndex<EntitySource>,
   override val symbolicIdIndex: SymbolicIdInternalIndex.MutableSymbolicIdInternalIndex,
-  override val externalMappings: MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>
+  override val externalMappings: MutableMap<ExternalMappingKey<*>, MutableExternalEntityMappingImpl<*>>,
 ) : StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, symbolicIdIndex, externalMappings) {
 
   fun <T : WorkspaceEntity> entityAdded(entityData: WorkspaceEntityData<T>, symbolicId: SymbolicEntityId<*>?) {

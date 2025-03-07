@@ -296,7 +296,7 @@ internal class StorageSerializerUtil(
     @Suppress("UNCHECKED_CAST")
     override fun read(kryo: Kryo, input: Input?, type: Class<out MultimapStorageIndex>): MultimapStorageIndex {
       val data = kryo.readClassAndObject(input) as Map<SerializableEntityId, Set<SymbolicEntityId<*>>>
-      val index = MultimapStorageIndex.MutableMultimapStorageIndex.from(MultimapStorageIndex())
+      val index = MutableMultimapStorageIndex.from(MultimapStorageIndex())
       data.forEach { (key, value) ->
         index.index(key.toEntityId(classCache), value)
       }
