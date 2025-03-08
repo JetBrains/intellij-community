@@ -8,12 +8,14 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.Constants
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
+import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
 
 internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
   private val GROUP = EventLogGroup("terminalShell.settings", 2)
@@ -67,12 +69,18 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     addBooleanIfNotDefault(metrics, BooleanOptions.ENABLE_AUDIBLE_BELL, curOptions, defaultOptions) { it.mySoundBell }
     addBooleanIfNotDefault(metrics, BooleanOptions.CLOSE_ON_SESSION_END, curOptions, defaultOptions) { it.myCloseSessionOnLogout }
     addBooleanIfNotDefault(metrics, BooleanOptions.REPORT_MOUSE, curOptions, defaultOptions) { it.myReportMouse }
-    addBooleanIfNotDefault(metrics, BooleanOptions.COPY_ON_SELECTION, curOptions, defaultOptions) { it.myCopyOnSelection }
     addBooleanIfNotDefault(metrics, BooleanOptions.PASTE_ON_MIDDLE_MOUSE_BUTTON, curOptions, defaultOptions) { it.myPasteOnMiddleMouseButton }
     addBooleanIfNotDefault(metrics, BooleanOptions.OVERRIDE_IDE_SHORTCUTS, curOptions, defaultOptions) { it.myOverrideIdeShortcuts }
     addBooleanIfNotDefault(metrics, BooleanOptions.ENABLE_SHELL_INTEGRATION, curOptions, defaultOptions) { it.myShellIntegration }
     addBooleanIfNotDefault(metrics, BooleanOptions.HIGHLIGHT_HYPERLINKS, curOptions, defaultOptions) { it.myHighlightHyperlinks }
     addBooleanIfNotDefault(metrics, BooleanOptions.USE_OPTION_AS_META, curOptions, defaultOptions) { it.useOptionAsMetaKey }
+
+    addIfNotDefault(
+      metrics,
+      BooleanOptions.COPY_ON_SELECTION,
+      curValue = TerminalOsSpecificOptions.getInstance().copyOnSelection,
+      defaultValue = SystemInfo.isLinux
+    )
 
     val curBlockOptions = BlockTerminalOptions.getInstance().state
     val defaultBlockOptions = BlockTerminalOptions.State()

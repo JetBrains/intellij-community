@@ -16,6 +16,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.terminal.settings.TerminalLocalOptions"
                         serviceImplementation="org.jetbrains.plugins.terminal.settings.impl.TerminalLocalOptionsImpl"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions"
+                        serviceImplementation="org.jetbrains.plugins.terminal.settings.impl.TerminalOsSpecificOptionsImpl"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalFontOptions"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>

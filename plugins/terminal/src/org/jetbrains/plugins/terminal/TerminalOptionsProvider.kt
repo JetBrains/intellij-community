@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
+import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("DEPRECATION")
@@ -25,13 +26,10 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   class State {
-    @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
-    var myShellPath: String? = null
     var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
-    var myCopyOnSelection: Boolean = SystemInfo.isLinux
     var myPasteOnMiddleMouseButton: Boolean = true
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
@@ -40,6 +38,12 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
     @Deprecated("Use BlockTerminalOptions#promptStyle instead")
     var useShellPrompt: Boolean = false
+
+    @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
+    var myShellPath: String? = null
+
+    @Deprecated("Use TerminalOsSpecificOptions#copyOnSelection instead", ReplaceWith("TerminalOsSpecificOptions.getInstance().copyOnSelection"))
+    var myCopyOnSelection: Boolean = SystemInfo.isLinux
   }
 
   private val listeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
@@ -103,11 +107,13 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       }
     }
 
+  @Deprecated("Use TerminalOsSpecificOptions#copyOnSelection instead", ReplaceWith("TerminalOsSpecificOptions.getInstance().copyOnSelection"))
   var copyOnSelection: Boolean
-    get() = state.myCopyOnSelection
+    get() = TerminalOsSpecificOptions.getInstance().copyOnSelection
     set(value) {
-      if (state.myCopyOnSelection != value) {
-        state.myCopyOnSelection = value
+      val options = TerminalOsSpecificOptions.getInstance()
+      if (options.copyOnSelection != value) {
+        options.copyOnSelection = value
         fireSettingsChanged()
       }
     }
