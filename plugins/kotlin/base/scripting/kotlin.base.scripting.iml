@@ -70,12 +70,12 @@
     <orderEntry type="library" name="kotlinc.kotlin-scripting-dependencies" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="amper.dependency.resolution" type="repository">
-        <properties maven-id="org.jetbrains.amper:dependency-resolution-jvm:0.6.0-dev-2519">
+        <properties maven-id="org.jetbrains.amper:dependency-resolution-jvm:0.6.0-dev-2523">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0.6.0-dev-2519/dependency-resolution-jvm-0.6.0-dev-2519.jar">
-              <sha256sum>1f0d972d19875faf8ef44a531dd90995f287d462735a16291e32d16bef58637b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0.6.0-dev-2523/dependency-resolution-jvm-0.6.0-dev-2523.jar">
+              <sha256sum>db6b86ef2173c7ce0615199f8497d6fd2f64cb0fd8ca073d75efd6689aeb5962</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0.6.0-dev-2519/concurrency-jvm-0.6.0-dev-2519.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0.6.0-dev-2523/concurrency-jvm-0.6.0-dev-2523.jar">
               <sha256sum>bfd0d26fc45476913caa2f0f17cae748fce4f4d014b5dc382440b16e0f9085bd</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar">
@@ -109,8 +109,8 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0.6.0-dev-2519/dependency-resolution-jvm-0.6.0-dev-2519.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0.6.0-dev-2519/concurrency-jvm-0.6.0-dev-2519.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0.6.0-dev-2523/dependency-resolution-jvm-0.6.0-dev-2523.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0.6.0-dev-2523/concurrency-jvm-0.6.0-dev-2523.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2.jar!/" />
@@ -119,8 +119,8 @@
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0.6.0-dev-2519/dependency-resolution-jvm-0.6.0-dev-2519-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0.6.0-dev-2519/concurrency-jvm-0.6.0-dev-2519-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/dependency-resolution-jvm/0.6.0-dev-2523/dependency-resolution-jvm-0.6.0-dev-2523-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/amper/concurrency-jvm/0.6.0-dev-2523/concurrency-jvm-0.6.0-dev-2523-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/serialization-jvm/0.86.2/serialization-jvm-0.86.2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/github/pdvrieze/xmlutil/core-jvm/0.86.2/core-jvm-0.86.2-sources.jar!/" />
