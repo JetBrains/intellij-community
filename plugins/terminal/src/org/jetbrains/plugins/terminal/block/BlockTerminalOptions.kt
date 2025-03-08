@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 
 /**
@@ -12,7 +13,10 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
  */
 @ApiStatus.Internal
 @Service
-@State(name = "BlockTerminalOptions", storages = [Storage(value = "terminal.xml", roamingType = RoamingType.DISABLED)])
+@State(name = "BlockTerminalOptions",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage(value = "terminal.xml")])
 class BlockTerminalOptions : PersistentStateComponent<BlockTerminalOptions.State> {
   private var state: State = State()
   private val dispatcher = EventDispatcher.create(BlockTerminalOptionsListener::class.java)
