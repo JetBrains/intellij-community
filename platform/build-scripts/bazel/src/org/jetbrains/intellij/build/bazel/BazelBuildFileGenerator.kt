@@ -354,7 +354,8 @@ internal class BazelBuildFileGenerator(
         module.name != "kotlin.base.frontend-agnostic" &&
         // also a marker module like frontend-agnostic above
         module.name != "intellij.platform.monolith" &&
-        module.name != "intellij.platform.backend"
+        module.name != "intellij.platform.backend" &&
+        module.name != "intellij.platform.compose.compilerPlugin"
       }) {
         option("name", moduleDescriptor.targetName)
         visibility(arrayOf("//visibility:public"))
