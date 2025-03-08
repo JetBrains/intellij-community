@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.impl.DummyProject
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.*
@@ -40,6 +41,7 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.navigation.Place
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -430,12 +432,15 @@ object MavenEelUtil  {
     ProgressManager.getInstance().run(jdkTask)
   }
 
+  @Service(Service.Level.PROJECT)
+  private class CoroutineService(val coroutineScope: CoroutineScope)
+
   private fun findOrDownloadNewJdkOverEel(
     project: Project,
     notification: Notification,
     listener: NotificationListener,
   ) {
-    MavenCoroutineScopeProvider.getCoroutineScope(project).launch(Dispatchers.IO) {
+    project.service<CoroutineService>().coroutineScope.launch(Dispatchers.IO) {
       withBackgroundProgress(project, MavenProjectBundle.message("wsl.jdk.searching"), cancellable = false) {
         val eel = project.getEelDescriptor().upgrade()
         val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
