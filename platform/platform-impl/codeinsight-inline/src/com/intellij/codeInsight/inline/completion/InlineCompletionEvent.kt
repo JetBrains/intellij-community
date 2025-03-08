@@ -324,6 +324,7 @@ interface InlineCompletionEvent {
    * Triggered when an editor becomes active.
    */
   @ApiStatus.Experimental
+  @Deprecated("This event is never created by the platform. Will be fixed later. See IJPL-179647 (slow ops)")
   class EditorFocused @ApiStatus.Internal constructor(val editor: Editor) : Builtin {
     override fun toRequest(): InlineCompletionRequest? {
       return getRequest(event = this, editor = editor)
