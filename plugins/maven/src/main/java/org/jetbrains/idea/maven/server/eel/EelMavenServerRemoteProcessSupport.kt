@@ -5,6 +5,8 @@ import com.intellij.execution.Executor
 import com.intellij.execution.configurations.*
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -22,12 +24,12 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerCMDState
-import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil.parseMavenProperties
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -43,6 +45,10 @@ class EelMavenServerRemoteProcessSupport(
   project: Project,
   debugPort: Int?,
 ) : AbstractMavenServerRemoteProcessSupport(jdk, vmOptions, mavenDistribution, project, debugPort) {
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineService(val coroutineScope: CoroutineScope)
+
   override fun getRunProfileState(target: Any, configuration: Any, executor: Executor): RunProfileState {
     return EelMavenCmdState(eel, myProject, myJdk, myOptions, myDistribution, myDebugPort)
   }
@@ -53,7 +59,7 @@ class EelMavenServerRemoteProcessSupport(
 
   @OptIn(DelicateCoroutinesApi::class)
   override fun publishPort(port: Int): Int {
-    MavenCoroutineScopeProvider.getCoroutineScope(myProject).launch {
+    myProject.service<CoroutineService>().coroutineScope.launch {
       forwardLocalPort(eel.tunnels, port, EelTunnelsApi.HostAddress.Builder(port.toUShort()).hostname(remoteHost).build())
     }
     return port
@@ -72,9 +78,13 @@ private class EelMavenCmdState(
   mavenDistribution: MavenDistribution,
   debugPort: Int?,
 ) : MavenServerCMDState(jdk, vmOptions, mavenDistribution, debugPort) {
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineService(val coroutineScope: CoroutineScope)
+
   // TODO: dispose?
   private val scope by lazy {
-    MavenCoroutineScopeProvider.getCoroutineScope(project).childScope("scope for: $this")
+    project.service<CoroutineService>().coroutineScope.childScope("scope for: $this")
   }
 
   override fun getWorkingDirectory(): String {

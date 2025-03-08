@@ -5,6 +5,7 @@ import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
@@ -29,6 +30,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,6 +46,10 @@ import org.jetbrains.idea.maven.utils.*
 import java.nio.file.Path
 
 class MavenProjectAsyncBuilder {
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineService(val coroutineScope: CoroutineScope)
+
   fun commitSync(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     if (ApplicationManager.getApplication().isDispatchThread) {
       return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
@@ -91,7 +97,7 @@ class MavenProjectAsyncBuilder {
     if (createDummyModule) {
       val previewModule = createPreviewModule(project, rootDirectory)
       // do not update all modules because it can take a lot of time (freeze at project opening)
-      val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+      val cs =  project.service<CoroutineService>().coroutineScope
       cs.launch {
         project.trackActivity(MavenActivityKey) {
           doCommit(project,

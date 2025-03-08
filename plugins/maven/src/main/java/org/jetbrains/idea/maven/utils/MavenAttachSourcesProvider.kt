@@ -8,6 +8,8 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
@@ -16,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiFile
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,6 +33,10 @@ import java.io.IOException
 import java.nio.file.Files
 
 internal class MavenAttachSourcesProvider : AttachSourcesProvider {
+
+  @Service(Service.Level.PROJECT)
+  private class CoroutineService(val coroutineScope: CoroutineScope)
+
   override fun getActions(orderEntries: List<LibraryOrderEntry>,
                           psiFile: PsiFile): Collection<AttachSourcesAction> {
     val projects = getMavenProjects(psiFile)
@@ -41,7 +48,7 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
 
       override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>): ActionCallback {
         val project = psiFile.getProject()
-        val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+        val cs = project.service<CoroutineService>().coroutineScope
         val resultWrapper = ActionCallback()
         cs.launch {
           // may have been changed by this time...
