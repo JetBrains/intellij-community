@@ -33,8 +33,9 @@ private class DataClassResolver(private val log: Logger) {
 
     val serviceClassLoaders = services.map { it.javaClass.classLoader }
     val set = LinkedHashSet<ClassLoader>(managerClassLoaders.size + serviceClassLoaders.size)
-    set.addAll(managerClassLoaders)
+    // Trying the service classloaders first, since they have a higher chance of succeeding
     set.addAll(serviceClassLoaders)
+    set.addAll(managerClassLoaders)
     return set
   }
 
