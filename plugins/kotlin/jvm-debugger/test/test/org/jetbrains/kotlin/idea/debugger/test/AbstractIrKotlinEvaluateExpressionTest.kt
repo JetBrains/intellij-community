@@ -163,12 +163,20 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                 }
             }
 
-            printFrame(this) {
+            printFrameIfNeeded(this) {
                 resume(this)
             }
         }
 
         finish()
+    }
+
+    private fun printFrameIfNeeded(suspendContext: SuspendContextImpl, completion: SuspendContextImpl.() -> Unit) {
+        if (!isFrameTest) {
+            completion(suspendContext)
+            return
+        }
+        printFrame(suspendContext, completion)
     }
 
     private fun performMultipleBreakpointTest(data: EvaluationTestData) {
@@ -178,33 +186,12 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                     try {
                         evaluate(this, expression, CodeFragmentKind.EXPRESSION, expected)
                     } finally {
-                        printFrame(this) { resume(this) }
+                        printFrameIfNeeded(this) { resume(this) }
                     }
                 }
             }
         }
         finish()
-    }
-
-    private fun printFrame(suspendContext: SuspendContextImpl, completion: () -> Unit) {
-        if (!isFrameTest) {
-            completion()
-            return
-        }
-
-        processStackFramesOnPooledThread {
-            for (stackFrame in this) {
-                val result = FramePrinter(suspendContext).print(stackFrame)
-                print(result, ProcessOutputTypes.SYSTEM)
-            }
-            assert(debugProcess.isAttached)
-            suspendContext.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
-                override fun contextAction(suspendContext: SuspendContextImpl) {
-                    completion()
-                }
-                override fun commandCancelled() = error(message = "Test was cancelled")
-            })
-        }
     }
 
     override fun evaluate(suspendContext: SuspendContextImpl, textWithImports: TextWithImportsImpl) {
