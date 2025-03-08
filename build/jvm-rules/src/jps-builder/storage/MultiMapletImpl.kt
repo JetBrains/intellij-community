@@ -125,7 +125,7 @@ internal class MultiMapletImpl<K : Any, V : Any>(
     }
   }
 
-  override fun removeValues(key: K?, values: Iterable<V>) {
+  override fun removeValues(key: K, values: Iterable<V>) {
     val size = values.count()
     if (size == 0) {
       return

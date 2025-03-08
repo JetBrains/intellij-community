@@ -1,4 +1,4 @@
-@file:Suppress("PackageDirectoryMismatch", "UnstableApiUsage", "SSBasedInspection")
+@file:Suppress("PackageDirectoryMismatch", "UnstableApiUsage", "SSBasedInspection", "ReplaceGetOrSet")
 
 package org.jetbrains.jps.dependency.impl
 
@@ -95,6 +95,13 @@ internal class MemoryMultiMaplet<K : Any, V : Any, C : MutableCollection<V>>(
     }
   }
 
+  override fun removeValues(key: K, values: Iterable<V>) {
+    val set = map.get(key) ?: return
+    for (value in values) {
+      set.remove(value)
+    }
+  }
+
   override fun remove(key: K) {
     map.remove(key)
   }
@@ -111,9 +118,7 @@ internal class MemoryMultiMaplet<K : Any, V : Any, C : MutableCollection<V>>(
     map.get(key)?.remove(value)
   }
 
-  override fun getKeys(): Iterable<K?> {
-    return map.keys
-  }
+  override fun getKeys(): Iterable<K> = map.keys
 
   override fun close() {
   }

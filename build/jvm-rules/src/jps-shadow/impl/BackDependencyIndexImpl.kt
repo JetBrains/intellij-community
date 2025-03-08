@@ -21,7 +21,6 @@ abstract class BackDependencyIndexImpl protected constructor(
   private val map: MultiMaplet<ReferenceID, ReferenceID>
 
   init {
-    // important: if multiple implementations of ReferenceID are available, change to createMultitypeExternalizer
     val ext = object : Externalizer<ReferenceID> {
       override fun load(input: GraphDataInput): ReferenceID {
         return JvmNodeReferenceID(input.readUTF())
@@ -42,7 +41,7 @@ abstract class BackDependencyIndexImpl protected constructor(
 
   final override fun getName(): String = name
 
-  final override fun getKeys(): Iterable<ReferenceID> = map.getKeys()
+  final override fun getKeys(): Iterable<ReferenceID> = throw UnsupportedOperationException("Not used")
 
   final override fun getDependencies(id: ReferenceID): Iterable<ReferenceID> = map.get(id)
 
@@ -54,39 +53,46 @@ abstract class BackDependencyIndexImpl protected constructor(
   }
 
   final override fun integrate(deletedNodes: Iterable<Node<*, *>>, updatedNodes: Iterable<Node<*, *>>, deltaIndex: BackDependencyIndex) {
-    val depsToRemove = Object2ObjectOpenHashMap<ReferenceID, MutableSet<ReferenceID>>()
+    val depsToRemove = Object2ObjectOpenHashMap<ReferenceID, ObjectOpenHashSet<ReferenceID>>()
 
     for (node in deletedNodes) {
-      cleanupDependencies(node, depsToRemove)
+      collectDepsToRemove(node, depsToRemove)
       // corner case, relevant to situations when keys in this index are actually real node IDs
       // if a node gets deleted, the corresponding index key gets deleted to: this allows to ensure there is no outdated information in the index
       // If later a new node with the same ID is added, the previous index data for this ID will not interfere with the new state.
       map.remove(node.referenceID)
     }
 
-    for (node in updatedNodes) {
-      cleanupDependencies(node, depsToRemove)
+    if (deltaIndex !is BackDependencyIndexImpl) {
+      // the only another impl is empty (BackDependencyIndex.createEmpty)
+      return
     }
 
-    for (id in (deltaIndex.keys.asSequence() + depsToRemove.keys).distinct()) {
+    for (node in updatedNodes) {
+      collectDepsToRemove(node, depsToRemove)
+    }
+
+    val deltaMap = deltaIndex.map
+    val iterator = if (depsToRemove.isEmpty()) {
+      deltaMap.keys.iterator()
+    }
+    else {
+      ((deltaMap.keys.asSequence() + depsToRemove.keys).distinct()).iterator()
+    }
+    for (id in iterator) {
       val toRemove = depsToRemove.get(id)
-      val toAdd = deltaIndex.getDependencies(id)
+      val toAdd = deltaMap.get(id)
       if (!toRemove.isNullOrEmpty()) {
-        if (toAdd is Set<*>) {
-          toRemove.removeAll(toAdd as Set<*>)
+        toRemove.removeAll(toAdd as Set<*>)
+        if (toRemove.isNotEmpty()) {
+          map.removeValues(id, toRemove)
         }
-        else {
-          for (refId in toAdd) {
-            toRemove.remove(refId)
-          }
-        }
-        map.removeValues(id, toRemove)
       }
       map.appendValues(id, toAdd)
     }
   }
 
-  private fun cleanupDependencies(node: Node<*, *>, depsToRemove: MutableMap<ReferenceID, MutableSet<ReferenceID>>) {
+  private fun collectDepsToRemove(node: Node<*, *>, depsToRemove: MutableMap<ReferenceID, ObjectOpenHashSet<ReferenceID>>) {
     val nodeId = node.referenceID
     for (referentId in getIndexedDependencies(node)) {
       depsToRemove.computeIfAbsent(referentId) { ObjectOpenHashSet() }.add(nodeId)
@@ -96,7 +102,7 @@ abstract class BackDependencyIndexImpl protected constructor(
 
 internal class NodeDependenciesIndex(mapletFactory: MapletFactory) : BackDependencyIndexImpl("node-backward-dependencies", mapletFactory) {
   override fun getIndexedDependencies(node: Node<*, *>): Sequence<ReferenceID> {
-    val nodeID = node.referenceID
-    return node.usages().filter { nodeID != it.elementOwner }.map { it.elementOwner }.distinct()
+    val nodeId = node.referenceID
+    return node.usages().filter { nodeId != it.elementOwner }.map { it.elementOwner }.distinct()
   }
 }
