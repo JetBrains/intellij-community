@@ -10,6 +10,7 @@ import com.jediterm.terminal.model.TerminalTypeAheadSettings;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.action.TerminalNewTabAction;
+import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions;
 
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +65,7 @@ public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSett
 
   @Override
   public boolean copyOnSelect() {
-    return TerminalOptionsProvider.getInstance().getCopyOnSelection();
+    return TerminalOsSpecificOptions.getInstance().getCopyOnSelection();
   }
 
   @Override
