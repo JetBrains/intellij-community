@@ -15,7 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList
        category = SettingsCategory.TOOLS,
        exportable = true,
        presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
-       storages = [Storage(value = "terminal.xml", roamingType = RoamingType.DISABLED)])
+       storages = [Storage(value = "terminal.xml")])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
   private var state = State()
 
