@@ -1,40 +1,42 @@
-@file:Suppress("PackageDirectoryMismatch", "unused", "UnstableApiUsage", "ReplaceGetOrSet")
+@file:Suppress("PackageDirectoryMismatch", "unused", "UnstableApiUsage", "ReplaceGetOrSet", "SSBasedInspection", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.jps.incremental.dependencies
 
 import com.github.benmanes.caffeine.cache.AsyncCacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.compiler.instrumentation.FailSafeClassReader
+import io.netty.buffer.Unpooled
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
-import org.jetbrains.bazel.jvm.emptyList
+import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.fileToNodeSource
 import org.jetbrains.bazel.jvm.jps.impl.markAffectedFilesDirty
+import org.jetbrains.bazel.jvm.jps.output.ABI_IC_NODE_FORMAT_VERSION
 import org.jetbrains.bazel.jvm.jps.state.DependencyDescriptor
 import org.jetbrains.bazel.jvm.jps.state.DependencyState
 import org.jetbrains.bazel.jvm.span
-import org.jetbrains.intellij.build.io.suspendAwareReadZipFile
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.impl.DeltaImpl
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder
+import org.jetbrains.jps.dependency.impl.NettyBufferGraphDataInput
 import org.jetbrains.jps.dependency.impl.PathSource
-import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder
+import org.jetbrains.jps.dependency.java.JvmClass
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
-import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
@@ -65,14 +67,10 @@ internal suspend fun checkDependencies(
   }
 
   val graph = context.projectDescriptor.dataManager.depGraph
-  val changedOrAddedNodes = toNodeList(changedOrAdded, relativizer)
-  val deletedNodes = toNodeList(deleted, relativizer)
+  val changedOrAddedNodes = toNodeSet(changedOrAdded, relativizer)
+  val deletedNodes = toNodeSet(deleted, relativizer)
   @Suppress("InconsistentCommentForJavaParameter", "RedundantSuppression")
-  val delta = graph.createDelta(
-    /* sourcesToProcess = */ changedOrAddedNodes,
-    /* deletedSources = */ deletedNodes,
-    /* isSourceOnly = */ false,
-  ) as DeltaImpl
+  val delta = DeltaImpl(baseSources = changedOrAddedNodes, deletedSources = deletedNodes)
   tracer.span("associate dependencies") {
     associate(
       changedOrAddedNodes = changedOrAddedNodes,
@@ -105,24 +103,32 @@ internal suspend fun checkDependencies(
   graph.integrate(diffResult)
 }
 
-private fun toNodeList(
+private fun toNodeSet(
   descriptors: ArrayList<DependencyDescriptor>,
   relativizer: PathTypeAwareRelativizer
-): List<PathSource> {
+): Set<PathSource> {
   val size = descriptors.size
-  if (size == 0) {
-    return emptyList()
+  when (size) {
+    0 -> return emptySet()
+    1 -> return java.util.Set.of(fileToNodeSource(descriptors.get(0).file, relativizer))
+    2 -> return java.util.Set.of(fileToNodeSource(descriptors.get(0).file, relativizer), fileToNodeSource(descriptors.get(1).file, relativizer))
+    else -> {
+      val result = ObjectLinkedOpenHashSet<PathSource>(size)
+      for (descriptor in descriptors) {
+        result.add(fileToNodeSource(descriptor.file, relativizer))
+      }
+      return result
+    }
   }
-  return Array(size) { fileToNodeSource(descriptors.get(it).file, relativizer) }.asList()
 }
 
 private fun CoroutineScope.associate(
-  changedOrAddedNodes: List<NodeSource>,
+  changedOrAddedNodes: Set<NodeSource>,
   changedOrAdded: List<DependencyDescriptor>,
   delta: DeltaImpl,
   dependencyAnalyzer: DependencyAnalyzer,
 ) {
-  val channel = Channel<Pair<NodeSource, List<Node<*, *>>>>(capacity = Channel.BUFFERED)
+  val channel = Channel<Pair<NodeSource, List<Node<*, *>>>>(capacity = 4)
 
   launch {
     for ((source, nodes) in channel) {
@@ -148,8 +154,19 @@ class DependencyAnalyzer(private val coroutineScope: CoroutineScope) {
     .buildAsync(AsyncCacheLoader<DependencyDescriptor, List<Node<*, *>>> { key, executor ->
       coroutineScope.future {
         val result = ArrayList<Node<*, *>>()
-        doAssociate(key.file) {
-          result.add(it)
+        readZipFile(key.file) { name, dataProvider ->
+          if (!name.endsWith(".class.n") || name.startsWith("META-INF/")) {
+            return@readZipFile
+          }
+
+          val byteBuf = Unpooled.wrappedBuffer(dataProvider())
+          val formatVersion = byteBuf.readIntLE()
+          if (formatVersion != ABI_IC_NODE_FORMAT_VERSION) {
+            throw RuntimeException("Unsupported ABI IC node format version: $formatVersion")
+          }
+          val input = NettyBufferGraphDataInput(byteBuf)
+          val node = JvmClass(input)
+          result.add(node)
         }
         result
       }
@@ -157,31 +174,5 @@ class DependencyAnalyzer(private val coroutineScope: CoroutineScope) {
 
   suspend fun analyze(descriptor: DependencyDescriptor): List<Node<*, *>> {
     return cache.get(descriptor).asDeferred().await()
-  }
-}
-
-private suspend inline fun doAssociate(
-  jarFile: Path,
-  crossinline associator: suspend (Node<*, *>) -> Unit,
-) {
-  suspendAwareReadZipFile(jarFile) { name, dataProvider ->
-    if (!name.endsWith(".class") || name.startsWith("META-INF/")) {
-      return@suspendAwareReadZipFile
-    }
-
-    val buffer = dataProvider()
-    val size = buffer.remaining()
-    if (size == 0) {
-      return@suspendAwareReadZipFile
-    }
-
-    val classFileData = ByteArray(size)
-    buffer.get(classFileData)
-    val reader = FailSafeClassReader(classFileData)
-    val node = JvmClassNodeBuilder.createForLibrary(filePath = name, classReader = reader)
-      .build(isLibraryMode = true, skipPrivateMethodsAndFields = false)
-    if (node.flags.isPublic) {
-      associator(node)
-    }
   }
 }

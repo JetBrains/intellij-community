@@ -4,8 +4,6 @@ import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.diff.Difference
-import org.jetbrains.jps.dependency.impl.GraphDataInputImpl
-import org.jetbrains.jps.dependency.impl.GraphDataOutputImpl
 
 abstract class AnnotationInstance : ExternalizableGraphElement {
   val annotationClass: TypeRepr.ClassType

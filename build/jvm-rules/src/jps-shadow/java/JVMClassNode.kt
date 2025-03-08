@@ -5,6 +5,7 @@ package org.jetbrains.jps.dependency.java
 import com.dynatrace.hash4j.hashing.Hashing
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
@@ -42,14 +43,26 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
     referenceID = JvmNodeReferenceID(name)
     outFilePathHash = input.readRawLong()
 
-    val usages = ArrayList<Usage>()
     var groupCount = input.readInt()
-    while (groupCount-- > 0) {
-      input.readGraphElementCollection(usages)
+    if (groupCount == 0) {
+      usages = emptyList()
     }
-    this.usages = usages
-    metadata = Array(input.readInt()) {
-      input.readGraphElement()
+    else {
+      val usages = ArrayList<Usage>()
+      while (groupCount-- > 0) {
+        input.readGraphElementCollection(usages)
+      }
+      this.usages = usages
+    }
+
+    val metadataSize = input.readInt()
+    if (metadataSize == 0) {
+      metadata = emptyMetadata
+    }
+    else {
+      metadata = Array(metadataSize) {
+        input.readGraphElement()
+      }
     }
   }
 
@@ -70,10 +83,13 @@ abstract class JVMClassNode<T : JVMClassNode<T, D>, D : Difference> : Proto, Nod
   final override fun usages(): Sequence<Usage> = usages.asSequence()
 
   @Suppress("unused")
-  fun getMetadata(): Iterable<JvmMetadata<*, *>> = Iterable { metadata.iterator() }
+  fun getMetadata(): Iterable<JvmMetadata<*, *>> = if (metadata.isEmpty()) emptyList() else Iterable { metadata.iterator() }
 
   @Suppress("unused")
   fun <MT : JvmMetadata<MT, *>> getMetadata(metaClass: Class<MT>): Iterable<MT> {
+    if (metadata.isEmpty()) {
+      return emptyList()
+    }
     return metadata
       .asSequence()
       .mapNotNull { if (metaClass.isInstance(it)) metaClass.cast(it) else null }

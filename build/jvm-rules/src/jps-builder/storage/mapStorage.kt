@@ -52,6 +52,8 @@ internal class BazelPersistentMapletFactory private constructor(
   private val maps = ArrayList<BaseMaplet<*>>()
 
   private val usageInterner = ConcurrentHashMap<Usage, Usage>()
+  // do not use global lock for all PHM maps
+  private val mapStorageLockContext = StorageLockContext()
 
   private val usageInternerFunction: (Usage) -> Usage = { usage ->
     usageInterner.computeIfAbsent(usage) { it }
@@ -103,6 +105,7 @@ internal class BazelPersistentMapletFactory private constructor(
           stringEnumerator = stringEnumerator,
           elementInterner = usageInternerFunction,
         ),
+        storageLockContext = mapStorageLockContext,
       ),
     )
     maps.add(container)

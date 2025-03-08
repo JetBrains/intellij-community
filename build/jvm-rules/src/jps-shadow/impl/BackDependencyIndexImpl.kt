@@ -100,7 +100,7 @@ abstract class BackDependencyIndexImpl protected constructor(
   }
 }
 
-internal class NodeDependenciesIndex(mapletFactory: MapletFactory) : BackDependencyIndexImpl("node-backward-dependencies", mapletFactory) {
+class NodeDependenciesIndex(mapletFactory: MapletFactory) : BackDependencyIndexImpl("node-backward-dependencies", mapletFactory) {
   override fun getIndexedDependencies(node: Node<*, *>): Sequence<ReferenceID> {
     val nodeId = node.referenceID
     return node.usages().filter { nodeId != it.elementOwner }.map { it.elementOwner }.distinct()

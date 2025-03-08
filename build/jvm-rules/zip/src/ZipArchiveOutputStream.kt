@@ -113,6 +113,41 @@ class ZipArchiveOutputStream(
     )
   }
 
+  fun writeEntryWithHalfBackedBuffer(name: ByteArray, unwrittenHeaderAndData: ByteBuf) {
+    if (finished) {
+      throw IOException("Stream has already been finished")
+    }
+
+    val headerSize = 30 + name.size
+    val size = unwrittenHeaderAndData.readableBytes() - headerSize
+    val currentWriterIndex = unwrittenHeaderAndData.writerIndex()
+    unwrittenHeaderAndData.writerIndex(0)
+    writeZipLocalFileHeader(
+      name = name,
+      size = size,
+      compressedSize = size,
+      crc32 = 0,
+      method = ZipEntry.STORED,
+      buffer = unwrittenHeaderAndData,
+    )
+    assert(unwrittenHeaderAndData.writerIndex() == headerSize)
+    unwrittenHeaderAndData.writerIndex(currentWriterIndex)
+
+    val localFileHeaderOffset = channelPosition
+    val dataOffset = localFileHeaderOffset + headerSize
+    writeBuffer(unwrittenHeaderAndData)
+
+    zipIndexWriter.writeCentralFileHeader(
+      size = size,
+      compressedSize = size,
+      method = ZipEntry.STORED,
+      crc = 0,
+      name = name,
+      localFileHeaderOffset = localFileHeaderOffset,
+      dataOffset = dataOffset,
+    )
+  }
+
   // data contains only data - zip local file header will be generated
   fun writeDataRawEntry(
     data: ByteBuffer,
@@ -199,14 +234,19 @@ class ZipArchiveOutputStream(
   }
 
   fun writeEntryHeaderWithoutCrc(name: ByteArray, size: Int) {
+    buffer.clear()
+    writeEntryHeaderWithoutCrc(name, size, buffer)
+    buffer.clear()
+  }
+
+  fun writeEntryHeaderWithoutCrc(name: ByteArray, size: Int, buffer: ByteBuf) {
     val localFileHeaderOffset = channelPosition
     val headerSize = 30 + name.size
     val dataOffset = channelPosition + headerSize
 
-    buffer.clear()
     writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = 0, method = ZipEntry.STORED, buffer = buffer)
     assert(buffer.readableBytes() == headerSize)
-    writeAndClearBuffer()
+    writeBuffer(buffer)
 
     zipIndexWriter.writeCentralFileHeader(
       size = size,

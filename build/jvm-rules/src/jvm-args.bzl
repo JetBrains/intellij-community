@@ -17,8 +17,10 @@ def get_jvm_flags(flags):
         # kotlin compiler
         "-Dkotlin.environment.keepalive=true",
         "-Didea.io.use.nio2=true",
-        # a new one is quite buggy (broken in netty 4.2.0-RC3, so we use RC2)
+        # https://github.com/netty/netty/issues/11532
+        "-Dio.netty.tryReflectionSetAccessible=true",
         "-Dio.netty.allocator.type=pooled",
+        "-Dio.netty.allocator.useCacheForAllThreads=true",
         # see TargetConfigurationDigestProperty.KOTLIN_VERSION - we invalidate cache if kotlinc version changed
         "-Dkotlin.jps.skip.cache.version.check=true",
     ] + flags

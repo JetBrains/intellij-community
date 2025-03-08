@@ -13,7 +13,7 @@ kt_jvm_library(
         "@lib//:asm",
         "//src/worker-util",
         "@lib//:hash4j",
-        "//:fury-core",
+        "@lib//:netty-buffer",
         "//:jps",
         "//:kotlin-metadata",
     ],

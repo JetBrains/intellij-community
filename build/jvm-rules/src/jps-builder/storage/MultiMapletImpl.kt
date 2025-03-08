@@ -8,6 +8,7 @@ import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentHashMapValueStorage
 import com.intellij.util.io.PersistentMapBuilder
 import com.intellij.util.io.PersistentMapImpl
+import com.intellij.util.io.StorageLockContext
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.jps.dependency.MultiMaplet
 import java.io.DataInput
@@ -22,6 +23,7 @@ internal class MultiMapletImpl<K : Any, V : Any>(
   mapFile: Path,
   keyDescriptor: KeyDescriptor<K>,
   private val valueExternalizer: GraphDataExternalizer<V>,
+  storageLockContext: StorageLockContext,
 ) : MultiMaplet<K, V> {
   private val map: PersistentMapImpl<K, Set<V>>
 
@@ -58,6 +60,7 @@ internal class MultiMapletImpl<K : Any, V : Any>(
         return result
       }
     })
+      .withStorageLockContext(storageLockContext)
     map = PersistentMapImpl(builder, phmCreationOptions)
   }
 

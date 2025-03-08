@@ -3,8 +3,10 @@
 
 package org.jetbrains.bazel.jvm.jps.output
 
+import com.intellij.compiler.instrumentation.FailSafeClassReader
 import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.ImmutableZipEntry
+import io.netty.buffer.ByteBufAllocator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -13,13 +15,18 @@ import org.jetbrains.bazel.jvm.jps.java.InMemoryJavaOutputFileObject
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
+import org.jetbrains.intellij.build.io.use
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
+import org.jetbrains.jps.dependency.impl.NettyBufferGraphDataOutput
+import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.build.GeneratedFile
 import java.io.File
 import java.nio.file.Path
 import java.util.*
 import java.util.zip.ZipEntry
+
+internal const val ABI_IC_NODE_FORMAT_VERSION: Int = 1
 
 @PublishedApi
 internal class KotlinOutputData(@JvmField val data: ByteArray)
@@ -205,9 +212,9 @@ class OutputSink internal constructor(
   }
 
   fun writeToZip(outJar: Path) {
-    val packageIndexBuilder = PackageIndexBuilder()
+    val packageIndexBuilder = PackageIndexBuilder(writeCrc32 = false)
     writeZipUsingTempFile(outJar, packageIndexBuilder.indexWriter) { stream ->
-      doWriteToZip(oldZipFile = oldZipFile, fileToData = fileToData, packageIndexBuilder = packageIndexBuilder, stream = stream)
+      doWriteToZip(oldZipFile = oldZipFile, fileToData = fileToData, packageIndexBuilder = packageIndexBuilder, stream = stream) { _, _ ->}
       packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
 
       // now, close the old file, before writing to it
@@ -215,10 +222,7 @@ class OutputSink internal constructor(
     }
   }
 
-  suspend fun createOutputAndAbi(
-    outJar: Path,
-    abiJar: Path,
-  ) {
+  suspend fun createOutputAndAbi(outJar: Path, abiJar: Path) {
     withContext(Dispatchers.IO) {
       launch {
         writeToZip(outJar)
@@ -226,7 +230,28 @@ class OutputSink internal constructor(
 
       launch {
         writeZipUsingTempFile(file = abiJar, indexWriter = null) { stream ->
-          doWriteToZip(oldZipFile = oldAbiZipFile, fileToData = abiFileToData!!, packageIndexBuilder = null, stream = stream)
+          doWriteToZip(
+            oldZipFile = oldAbiZipFile,
+            fileToData = abiFileToData!!,
+            packageIndexBuilder = null,
+            stream = stream,
+          ) { data, path ->
+            if (path.endsWith(".class") && !path.startsWith("META-INF/")) {
+              val reader = FailSafeClassReader(data)
+              val node = JvmClassNodeBuilder.createForLibrary(filePath = path, classReader = reader)
+                .build(isLibraryMode = true, skipPrivateMethodsAndFields = false)
+              ByteBufAllocator.DEFAULT.directBuffer(1024).use { buffer ->
+                val name = abiClassPathToIncrementalNodePath(path).toByteArray()
+                val headerSize = 30 + name.size
+                buffer.writerIndex(headerSize)
+
+                buffer.writeIntLE(ABI_IC_NODE_FORMAT_VERSION)
+                node.write(NettyBufferGraphDataOutput(buffer))
+
+                stream.writeEntryWithHalfBackedBuffer(name = name, unwrittenHeaderAndData = buffer)
+              }
+            }
+          }
 
           // now, close the old file before writing to it
           oldAbiZipFile?.close()
@@ -238,7 +263,13 @@ class OutputSink internal constructor(
   @Synchronized
   fun remove(path: String) {
     val isOutChanged = fileToData.remove(path) != null
-    val isAbiChanged = abiFileToData != null && abiFileToData.remove(path) != null
+    val isAbiChanged = if (abiFileToData == null || abiFileToData.remove(path) == null) {
+      false
+    }
+    else {
+      abiFileToData.remove(abiClassPathToIncrementalNodePath(path))
+      true
+    }
     if (isOutChanged || isAbiChanged) {
       isChanged = true
     }
@@ -252,26 +283,23 @@ class OutputSink internal constructor(
   }
 }
 
-private fun doWriteToZip(
+private fun abiClassPathToIncrementalNodePath(path: String): String = "$path.n"
+
+private inline fun doWriteToZip(
   oldZipFile: HashMapZipFile?,
   fileToData: TreeMap<String, Any>,
   packageIndexBuilder: PackageIndexBuilder?,
   stream: ZipArchiveOutputStream,
+  newDataProcessor: (ByteArray, String) -> Unit,
 ) {
   for ((path, info) in fileToData.entries) {
     packageIndexBuilder?.addFile(name = path, addClassDir = false)
     val name = path.toByteArray()
     when (info) {
       is ByteArray -> {
-        val data = info
+        stream.writeDataRawEntryWithoutCrc(name = name, data = info)
 
-        //classChannel?.send(JarContentToProcess(
-        //  name = name,
-        //  data = data,
-        //  isKotlinModuleMetadata = false,
-        //  isKotlin = false,
-        //))
-        stream.writeDataRawEntryWithoutCrc(name = name, data = data)
+        newDataProcessor(info, path)
       }
 
       is ImmutableZipEntry -> {
@@ -284,44 +312,13 @@ private fun doWriteToZip(
         finally {
           hashMapZipFile.releaseBuffer(buffer)
         }
-
-        //if (classChannel != null) {
-        //  val isClass = path.endsWith(".class")
-        //  val isKotlinMetadata = !isClass && path.endsWith(".kotlin_module")
-        //  if (isClass || isKotlinMetadata) {
-        //    val sourceFile = outputToSource.get(path)
-        //    if (sourceFile == null) {
-        //      throw IllegalStateException("No source file for $path")
-        //    }
-        //
-        //    val data = info.getData(hashMapZipFile)
-        //    classChannel.send(JarContentToProcess(
-        //      name = name,
-        //      data = data,
-        //      isKotlinModuleMetadata = isKotlinMetadata,
-        //      isKotlin = sourceFile.endsWith(".kt"),
-        //    ))
-        //  }
-        //}
       }
 
       else -> {
         val data = (info as KotlinOutputData).data
-
-        //if (classChannel != null) {
-        //  val isClass = path.endsWith(".class")
-        //  val isKotlinMetadata = !isClass && path.endsWith(".kotlin_module")
-        //  if (isClass || isKotlinMetadata) {
-        //    classChannel.send(JarContentToProcess(
-        //      name = name,
-        //      data = data,
-        //      isKotlinModuleMetadata = isKotlinMetadata,
-        //      isKotlin = true,
-        //    ))
-        //  }
-        //}
-
         stream.writeDataRawEntryWithoutCrc(name = name, data = data)
+
+        newDataProcessor(data, path)
       }
     }
   }

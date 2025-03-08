@@ -10,8 +10,7 @@ import java.io.File
 
 private val isForwardSlash = File.separatorChar == '/'
 
-@Suppress("unused")
-internal class PathSource : NodeSource {
+class PathSource : NodeSource {
   private val path: String
 
   constructor(relativePath: String) {

@@ -3,8 +3,7 @@
 package org.jetbrains.jps.dependency
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import jdk.internal.jimage.decompressor.CompressIndexes
-import org.jetbrains.jps.dependency.java.ElemType
+import org.jetbrains.bazel.jvm.emptyList
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
@@ -33,6 +32,10 @@ interface GraphDataOutput : DataOutput {
 
   fun writeRawLong(v: Long)
 
+  override fun writeBytes(s: String) = throw UnsupportedOperationException("do not use")
+
+  override fun writeChars(s: String) = throw UnsupportedOperationException("do not use")
+
   fun writeUsages(usages: Collection<Usage>) {
     val totalSize = usages.size
     when (totalSize) {
@@ -59,12 +62,15 @@ interface GraphDataOutput : DataOutput {
   }
 }
 
-inline fun <T : Any> GraphDataInput.readList(reader: GraphDataInput.() -> T): List<T> {
+inline fun <reified T : Any> GraphDataInput.readList(reader: GraphDataInput.() -> T): List<T> {
   val size = readInt()
-  @Suppress("UNCHECKED_CAST")
-  return Array<Any>(size) {
+  if (size == 0) {
+    return emptyList()
+  }
+
+  return Array(size) {
     reader()
-  }.asList() as List<T>
+  }.asList()
 }
 
 internal inline fun <T : Any> GraphDataOutput.writeCollection(collection: Collection<T>, writer: GraphDataOutput.(T) -> Unit) {

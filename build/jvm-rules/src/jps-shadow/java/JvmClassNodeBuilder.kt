@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.jps.dependency.NodeBuilder
@@ -21,6 +22,7 @@ import org.jetbrains.org.objectweb.asm.util.TraceMethodVisitor
 import java.lang.annotation.RetentionPolicy
 import java.util.*
 import java.util.concurrent.CancellationException
+import kotlin.collections.orEmpty
 import kotlin.metadata.KmDeclarationContainer
 import kotlin.metadata.isInline
 import kotlin.metadata.jvm.JvmMethodSignature
@@ -300,7 +302,7 @@ class JvmClassNodeBuilder private constructor(
   fun build(
     isLibraryMode: Boolean,
     skipPrivateMethodsAndFields: Boolean = isLibraryMode,
-  ): JVMClassNode<*, out Proto.Diff<out JVMClassNode<*, *>?>> {
+  ): JVMClassNode<*, out Proto.Diff<out JVMClassNode<*, *>>> {
     var flags = JVMFlags(access)
     if (localClassFlag) {
       flags = flags.deriveIsLocal()
@@ -379,7 +381,7 @@ class JvmClassNodeBuilder private constructor(
       annotationTargets = targets,
       retentionPolicy = retentionPolicy,
       usages = usages,
-      metadata = metadata,
+      metadata = metadata.ifEmpty { emptyList() },
     )
   }
 
