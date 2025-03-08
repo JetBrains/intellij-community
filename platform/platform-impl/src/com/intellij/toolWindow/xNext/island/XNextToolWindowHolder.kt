@@ -17,14 +17,23 @@ import javax.swing.border.AbstractBorder
 import javax.swing.border.Border
 import kotlin.math.max
 
+@ApiStatus.Experimental
 @ApiStatus.Internal
-class XNextToolWindowHolder private constructor(): JPanel() {
+class XNextToolWindowHolder private constructor() : JPanel() {
   companion object {
     @JvmStatic
-    fun create(parentColor: Color? = null, fillColor: Color? = null): JComponent = XNextToolWindowHolder().apply {
-      border = JRoundedCornerBorder(parentColor, fillColor)
-      ClientProperty.putRecursive(this, IdeBackgroundUtil.NO_BACKGROUND, true)
+    fun create(fillColor: () -> Color): JComponent = XNextToolWindowHolder().apply {
+      border = JRoundedCornerBorder( fillColor)
     }
+  }
+
+  override fun addImpl(comp: Component?, constraints: Any?, index: Int) {
+    comp?.let {
+      if (it is JComponent) {
+        ClientProperty.putRecursive(it, IdeBackgroundUtil.NO_BACKGROUND, true)
+      }
+    }
+    super.addImpl(comp, constraints, index)
   }
 
   override fun setBorder(border: Border?) {
@@ -32,7 +41,7 @@ class XNextToolWindowHolder private constructor(): JPanel() {
       logger<XNextToolWindowHolder>().warn {
         "Border type is invalid. Expected JRoundedCornerBorder, but received: ${border?.javaClass?.name ?: "null"}."
       }
-      return 
+      return
     }
     super.setBorder(border)
   }
@@ -42,7 +51,7 @@ class XNextToolWindowHolder private constructor(): JPanel() {
   }
 }
 
-private class JRoundedCornerBorder(private val parentColor: Color?, private val fillColor: Color?) : AbstractBorder() {
+private class JRoundedCornerBorder(private val fillColor: () -> Color?) : AbstractBorder() {
   companion object {
     const val THICKNESS: Int = 10
     const val ARC: Int = 25
@@ -61,19 +70,26 @@ private class JRoundedCornerBorder(private val parentColor: Color?, private val 
 
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-
+      val borderShape = getBorderShape(width, height)
       val extArea = Area(Rectangle(0, 0, width, height))
-      extArea.subtract(Area(getBorderShape(width, height)))
-      g2.color =  parentColor ?: InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() ?: c.background
+     // extArea.subtract(Area(borderShape))
 
-      g2.fill(extArea)
+      var trG = (if (c is JComponent) {
+        InternalUICustomization.getInstance()?.transformGraphics(c, g2) ?: g2
+      } else g2) as Graphics2D
 
-      g2.color = fillColor ?: c.parent.background
+      trG = IdeBackgroundUtil.withEditorBackground(g2, c.parent as JComponent)
+      trG.color =  InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() ?: c.parent.background
+
+      trG.fill(extArea)
+
+      g2.color = fillColor() ?: return
       val th = JBUI.scale(THICKNESS).toFloat()
       g2.stroke = BasicStroke(th, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
-      val borderShape = getBorderShape(width, height)
+
       g2.draw(borderShape)
-    } finally {
+    }
+    finally {
       g2.dispose()
     }
   }

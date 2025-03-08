@@ -4,6 +4,9 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.ui.Painter
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * TODO remove
+ */
 @ApiStatus.Experimental
 @ApiStatus.Internal
 fun interface FallbackBackgroundPainterFactory {
