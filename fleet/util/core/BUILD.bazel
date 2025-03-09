@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:slf4j-api",
     "@lib//:kotlinx-datetime-jvm",
     "//fleet/util/multiplatform:fleet-util-multiplatform",
+    "@lib//:de-cketti-unicode-kotlin-codepoints-jvm",
   ],
   exports = [
     "//fleet/util/logging/api:fleet-util-logging-api",

@@ -64,6 +64,7 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:assert_j",
     "//platform/todo",
+    "//platform/syntax/syntax-api:syntax",
   ],
   exports = [
     "//platform/execution-impl",
@@ -142,6 +143,8 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/todo",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-api:syntax_test_lib",
   ],
   runtime_deps = [
     ":testFramework_resources",

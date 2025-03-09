@@ -11,6 +11,7 @@ jvm_library(
   module_name = "intellij.platform.syntax.i18n",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",

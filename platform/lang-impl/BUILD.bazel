@@ -109,6 +109,9 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/eel-provider",
     "//platform/foldings",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-util:util",
+    "//platform/syntax/syntax-psi:psi",
   ],
   exports = [
     "//platform/lang-api:lang",
