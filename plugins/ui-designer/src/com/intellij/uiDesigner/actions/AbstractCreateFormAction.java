@@ -24,14 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import javax.swing.*;
 import java.io.IOException;
-import java.util.function.Supplier;
 
-
-public abstract class AbstractCreateFormAction extends CreateElementActionBase implements DumbAware {
-  public AbstractCreateFormAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
-    super(dynamicText, dynamicDescription, icon);
+abstract class AbstractCreateFormAction extends CreateElementActionBase implements DumbAware {
+  protected AbstractCreateFormAction() {
   }
 
   @Override
