@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.actions
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.actions.obsolete
 
 import com.intellij.ide.actions.CreateElementActionBase
 import com.intellij.ide.actions.CreateTemplateInPackageAction
@@ -20,15 +20,18 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.util.xml.DomManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -37,7 +40,8 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-class NewMessageBundleAction : CreateElementActionBase() {
+@ApiStatus.Obsolete
+internal class NewMessageBundleAction : CreateElementActionBase() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -75,7 +79,7 @@ class NewMessageBundleAction : CreateElementActionBase() {
                                       }
                                     }, bundleClass, pluginXml)
     }
-    val resourcesRoot = getOrCreateResourcesRoot(module)
+    val resourcesRoot = getOrCreateBundleResourcesRoot(module)
     if (resourcesRoot == null) return arrayOf(bundleClass)
     val propertiesFile = runWriteAction {
       val messagesDirName = "messages"
@@ -85,56 +89,16 @@ class NewMessageBundleAction : CreateElementActionBase() {
     return arrayOf(bundleClass, propertiesFile)
   }
 
-  private fun getOrCreateResourcesRoot(module: Module): PsiDirectory? {
-    fun reportError(@Nls message: String): Nothing? {
-      val notification =
-        Notification("DevKit Errors",
-                     DevKitBundle.message("action.DevKit.NewMessageBundle.notification.title.cannot.create.resources.root.for.properties.file"),
-                     DevKitBundle.message("action.DevKit.NewMessageBundle.notification.content.cannot.create.resources.root.for.properties.file",
-                                          message),
-                     NotificationType.ERROR)
-      Notifications.Bus.notify(notification, module.project)
-      return null
-    }
-    fun createResourcesRoot(): VirtualFile? {
-      val contentRoot = ModuleRootManager.getInstance(module).contentRoots.singleOrNull()
-                        ?: return reportError(DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.multiple.content.roots.for.module", module.name))
-      @NonNls val resourcesDirName = "resources"
-      if (contentRoot.findChild(resourcesDirName) != null) {
-        return reportError(DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.folder.already.exists",
-                                                resourcesDirName, contentRoot.path))
-      }
-      if (ProjectFileIndex.getInstance(module.project).isInSource(contentRoot)) {
-        return reportError(DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.under.sources.root", contentRoot.path))
-      }
-      return runWriteAction {
-        val resourcesDir = contentRoot.createChildDirectory(this, resourcesDirName)
-        ModuleRootModificationUtil.updateModel(module) {
-          it.contentEntries.single().addSourceFolder(resourcesDir, JavaResourceRootType.RESOURCE)
-        }
-        resourcesDir
-      }
-    }
-
-    val resourcesRoot = ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE).firstOrNull()
-                        ?: createResourcesRoot()
-                        ?: return null
-    return PsiManager.getInstance(module.project).findDirectory(resourcesRoot)
-  }
-
   override fun isAvailable(dataContext: DataContext): Boolean {
-    if (!super.isAvailable(dataContext)) {
-      return false
-    }
+    if (!super.isAvailable(dataContext)) return false
+    if (!Registry.`is`("devkit.obsolete.new.file.actions.enabled")) return false
     if (!IntelliJProjectUtil.isIntelliJPlatformProject(dataContext.getData(CommonDataKeys.PROJECT))) return false
 
     return CreateTemplateInPackageAction.isAvailable(dataContext, JavaModuleSourceRootTypes.SOURCES,
                                                      Predicate { JavaCreateTemplateInPackageAction.doCheckPackageExists(it) })
   }
 
-  override fun startInWriteAction(): Boolean {
-    return false
-  }
+  override fun startInWriteAction(): Boolean = false
 
   override fun getErrorTitle(): String {
     return DevKitBundle.message("action.DevKit.NewMessageBundle.error.title.cannot.create.new.message.bundle")
@@ -151,4 +115,42 @@ fun generateDefaultBundleName(module: Module): String {
   val commonPrefix = commonGroupNames.find { nameWithoutPrefix.startsWith("$it.") }
   val shortenedName = if (commonPrefix != null) nameWithoutPrefix.removePrefix("$commonPrefix.") else nameWithoutPrefix
   return shortenedName.split(".").joinToString("") { StringUtil.capitalize(it) } + "Bundle"
+}
+
+internal fun getOrCreateBundleResourcesRoot(module: Module): PsiDirectory? {
+  fun reportError(@Nls message: String): Nothing? {
+    val notification =
+      Notification("DevKit Errors",
+                   DevKitBundle.message("action.DevKit.NewMessageBundle.notification.title.cannot.create.resources.root.for.properties.file"),
+                   DevKitBundle.message("action.DevKit.NewMessageBundle.notification.content.cannot.create.resources.root.for.properties.file",
+                                        message),
+                   NotificationType.ERROR)
+    Notifications.Bus.notify(notification, module.project)
+    return null
+  }
+
+  fun createResourcesRoot(): VirtualFile? {
+    val contentRoot = ModuleRootManager.getInstance(module).contentRoots.singleOrNull()
+                      ?: return reportError(DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.multiple.content.roots.for.module", module.name))
+    @NonNls val resourcesDirName = "resources"
+    if (contentRoot.findChild(resourcesDirName) != null) {
+      return reportError(DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.folder.already.exists",
+                                              resourcesDirName, contentRoot.path))
+    }
+    if (ProjectFileIndex.getInstance(module.project).isInSource(contentRoot)) {
+      return reportError(DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.under.sources.root", contentRoot.path))
+    }
+    return runWriteAction {
+      val resourcesDir = contentRoot.createChildDirectory(NewMessageBundleAction::class.java, resourcesDirName)
+      ModuleRootModificationUtil.updateModel(module) {
+        it.contentEntries.single().addSourceFolder(resourcesDir, JavaResourceRootType.RESOURCE)
+      }
+      resourcesDir
+    }
+  }
+
+  val resourcesRoot = ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE).firstOrNull()
+                      ?: createResourcesRoot()
+                      ?: return null
+  return PsiManager.getInstance(module.project).findDirectory(resourcesRoot)
 }

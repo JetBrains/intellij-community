@@ -39,7 +39,11 @@ public abstract class CustomCreateFromTemplateAction extends CreateFileFromTempl
     builder
       .setTitle(myTemplateName)
       .addKind(myTemplateName, FileTemplateUtil.getIcon(template), template.getName());
+
+    customizeBuilder(builder);
   }
+
+  protected void customizeBuilder(@NotNull CreateFileFromTemplateDialog.Builder builder) { }
 
   @SuppressWarnings("HardCodedStringLiteral")
   @Override

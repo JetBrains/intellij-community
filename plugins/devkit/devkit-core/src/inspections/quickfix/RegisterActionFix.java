@@ -10,7 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.actions.NewActionDialog;
+import org.jetbrains.idea.devkit.actions.obsolete.NewActionDialog;
 import org.jetbrains.idea.devkit.util.ActionData;
 import org.jetbrains.idea.devkit.util.ActionType;
 

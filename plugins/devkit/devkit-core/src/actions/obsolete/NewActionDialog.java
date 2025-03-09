@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.actions;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.actions.obsolete;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -23,10 +23,12 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.actions.DevkitActionsUtil;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.ActionData;
 import org.jetbrains.idea.devkit.util.ActionType;
@@ -44,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Obsolete
 public class NewActionDialog extends DialogWrapper implements ActionData {
   private JPanel myRootPanel;
   private JList<DefaultActionGroup> myGroupList;

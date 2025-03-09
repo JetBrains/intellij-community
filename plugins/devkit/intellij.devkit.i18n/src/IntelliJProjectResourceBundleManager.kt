@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.PathUtil
-import org.jetbrains.idea.devkit.actions.generateDefaultBundleName
+import org.jetbrains.idea.devkit.actions.obsolete.generateDefaultBundleName
 
 internal class IntelliJProjectResourceBundleManager(project: Project) : ResourceBundleManager(project) {
   override fun isActive(context: PsiFile): Boolean {

@@ -1,0 +1,18 @@
+#set($lowercasedName = $NAME.toLowerCase())
+#if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")package ${PACKAGE_NAME}
+
+#end
+import com.intellij.openapi.components.*
+
+#parse("File Header.java")
+@Service
+@State(name = "${NAME}", storages = [Storage("${lowercasedName}.xml")])
+internal class ${NAME}: SimplePersistentStateComponent<${NAME}State>(${NAME}State()) {
+    companion object {
+        fun getInstance(): ${NAME} = service()
+    }
+}
+
+internal class ${NAME}State : BaseState() {
+    var value by string()
+}

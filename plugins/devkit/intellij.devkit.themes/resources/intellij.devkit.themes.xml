@@ -26,8 +26,8 @@
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.metadata.ThemeMetadataJsonSchemaProviderFactory"/>
   </extensions>
   <actions>
-    <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.themes.actions.NewThemeAction">
-      <add-to-group group-id="DevkitNewActions" anchor="last"/>
+    <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.themes.actions.NewThemeAction" icon="AllIcons.Actions.Colors">
+      <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
     <group id="DevKit.ThemeEditorToolbar">
       <action id="DevKit.ApplyTheme" class="org.jetbrains.idea.devkit.themes.actions.ApplyThemeAction"
