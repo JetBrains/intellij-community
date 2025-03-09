@@ -94,7 +94,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   }
 
   @Override
-  protected boolean isAvailable(final DataContext dataContext) {
+  protected boolean isAvailable(@NotNull DataContext dataContext) {
     return isAvailable(dataContext, mySourceRootTypes, this::checkPackageExists);
   }
 

@@ -21,7 +21,8 @@ final class CreateHtmlFileAction extends CreateFileFromTemplateAction implements
   }
 
   @Override
-  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(XmlBundle.message("html.action.new.file.dialog.title"))
       .addKind(XmlBundle.message("html.action.new.file.item.html5.file"), HtmlFileType.INSTANCE.getIcon(), FileTemplateManager.INTERNAL_HTML5_TEMPLATE_NAME);

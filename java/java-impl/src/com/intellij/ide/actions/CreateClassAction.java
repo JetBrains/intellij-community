@@ -33,7 +33,8 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   @Override
-  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(JavaBundle.message("action.create.new.class"))
       .addKind(JavaPsiBundle.message("node.class.tooltip"), IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME)

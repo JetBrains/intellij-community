@@ -165,7 +165,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     presentation.setEnabledAndVisible(enabled);
   }
 
-  protected boolean isAvailable(DataContext dataContext) {
+  protected boolean isAvailable(@NotNull DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null && editor.getSelectionModel().hasSelection()) {
       return false;
