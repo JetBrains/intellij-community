@@ -3,7 +3,6 @@ package org.jetbrains.jewel.foundation.lazy
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,19 +17,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.focused
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeContainer.Entry
@@ -53,7 +52,6 @@ public fun SelectableLazyColumn(
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     keyActions: KeyActions = DefaultSelectableLazyColumnKeyActions,
     pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: SelectableLazyListScope.() -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -71,7 +69,6 @@ public fun SelectableLazyColumn(
         onSelectedIndexesChange(indices)
     }
 
-    val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier =
@@ -84,15 +81,14 @@ public fun SelectableLazyColumn(
                         }
                     }
                 }
+                .focusProperties { canFocus = true }
                 .focusRequester(focusRequester)
-                .focusable(interactionSource = interactionSource)
+                .focusable(enabled = true)
                 .onPreviewKeyEvent { event ->
-                    // Handle Tab key press to move focus to next item
-                    if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
-                        val focusDirection = if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next
-                        focusManager.moveFocus(focusDirection)
-                        return@onPreviewKeyEvent true
+                    if (event.key == Key.Tab) {
+                        return@onPreviewKeyEvent false
                     }
+
                     if (state.lastActiveItemIndex != null) {
                         val actionHandled = keyActions.handleOnKeyEvent(event, keys, state, selectionMode).invoke(event)
                         if (actionHandled) {
@@ -160,7 +156,6 @@ private fun LazyListScope.appendEntry(
                     entry.content.invoke(itemScope)
                 }
             }
-
         is Entry.Items ->
             items(count = entry.count, key = { entry.key(it) }, contentType = { entry.contentType(it) }) { index ->
                 val key = remember(entry, index) { entry.key(index) }
@@ -184,7 +179,6 @@ private fun LazyListScope.appendEntry(
                     entry.itemContent.invoke(itemScope, index)
                 }
             }
-
         is Entry.StickyHeader ->
             stickyHeader(entry.key, entry.contentType) {
                 val itemScope = SelectableLazyItemScope(entry.key in state.selectedKeys, isFocused)
@@ -221,23 +215,35 @@ private fun Modifier.selectable(
     allKeys: List<SelectableLazyListKey>,
     itemKey: Any,
 ) =
-    pointerInput(allKeys, itemKey) {
-        awaitPointerEventScope {
-            while (true) {
-                val event = awaitPointerEvent()
-                when (event.type) {
-                    PointerEventType.Press -> {
-                        requester?.requestFocus()
-                        actionHandler.handlePointerEventPress(
-                            pointerEvent = event,
-                            keybindings = keybindings,
-                            selectableLazyListState = selectableState,
-                            selectionMode = selectionMode,
-                            allKeys = allKeys,
-                            key = itemKey,
-                        )
+    // Prevent this item from being individually focusable by Tab
+    focusProperties {
+            // Make items unfocusable by Tab focus traversal
+            canFocus = false
+        }
+        // Add semantics for accessibility
+        .semantics(mergeDescendants = true) {
+            selected = itemKey in selectableState.selectedKeys
+            focused = selectableState.lastActiveItemIndex == allKeys.indexOfFirst { it.key == itemKey }
+            stateDescription = ""
+        }
+        // Handle pointer input but ensure Tab keys aren't intercepted
+        .pointerInput(allKeys, itemKey) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent()
+                    when (event.type) {
+                        PointerEventType.Press -> {
+                            requester?.requestFocus()
+                            actionHandler.handlePointerEventPress(
+                                pointerEvent = event,
+                                keybindings = keybindings,
+                                selectableLazyListState = selectableState,
+                                selectionMode = selectionMode,
+                                allKeys = allKeys,
+                                key = itemKey,
+                            )
+                        }
                     }
                 }
             }
         }
-    }
