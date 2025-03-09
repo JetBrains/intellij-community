@@ -277,7 +277,7 @@ abstract class ModuleManagerBridgeImpl(
   }
 
   fun getModifiableModel(diff: MutableEntityStorage): ModifiableModuleModel {
-    return ModifiableModuleModelBridgeImpl(project = project, moduleManager = this, diff = diff, cacheStorageResult = false)
+    return ModifiableModuleModelBridgeImpl(project = project, moduleManager = this, diff = diff)
   }
 
   override fun newModule(filePath: String, moduleTypeId: String): Module = newModuleTimeMs.addMeasuredTime {

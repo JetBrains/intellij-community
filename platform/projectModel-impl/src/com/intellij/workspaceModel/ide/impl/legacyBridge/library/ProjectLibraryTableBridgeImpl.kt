@@ -233,8 +233,7 @@ class ProjectLibraryTableBridgeImpl(
       libraryTable = this,
       project = project,
       originalStorage = entityStorage.current,
-      diff = diff,
-      cacheStorageResult = false
+      diff = diff
     )
 
   override fun addListener(listener: LibraryTable.Listener) {
