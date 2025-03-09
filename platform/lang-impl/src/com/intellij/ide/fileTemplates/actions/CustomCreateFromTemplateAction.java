@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public abstract class CustomCreateFromTemplateAction extends CreateFileFromTempl
     FileTemplate template = fileTemplateManager.getInternalTemplate(myTemplateName);
 
     builder
-      .setTitle(myTemplateName)
+      .setTitle(UIBundle.message("create.new.file.from.template.dialog.title", myTemplateName))
       .addKind(myTemplateName, FileTemplateUtil.getIcon(template), template.getName());
 
     customizeBuilder(builder);
