@@ -70,6 +70,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
     private val LOG = Logger.getInstance(KotlinGradleProjectResolverExtension::class.java)
 
     private val isAndroidProjectKey = Key.findKeyByName("IS_ANDROID_PROJECT_KEY")
+    private var anyImplementsInAnyModule : Boolean = false
 
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> {
         return setOf(KotlinGradleModelBuilder::class.java, KotlinTarget::class.java, RandomUtils::class.java, Unit::class.java)
@@ -115,6 +116,9 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
 
         if (gradleModel.hasKotlinPlugin) {
             KotlinIDEGradleActionsFUSCollector.logImport(project, gradleModel.kotlinTarget ?: "unknown")
+        }
+        if (gradleModel.implements.isNotEmpty()) {
+            anyImplementsInAnyModule = true
         }
 
         KotlinGradleProjectData().apply {
@@ -288,8 +292,10 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         }
         ideModule.kotlinTaskPropertiesBySourceSet = gradleModel.kotlinTaskProperties
 
-        addTransitiveDependenciesOnImplementedModules(gradleModule, ideModule, ideProject)
-        addImplementedModuleNames(gradleModule, ideModule, ideProject, gradleModel)
+        if (anyImplementsInAnyModule) {
+            addTransitiveDependenciesOnImplementedModules(gradleModule, ideModule, ideProject)
+            addImplementedModuleNames(gradleModule, ideModule, ideProject, gradleModel)
+        }
 
         if (useModulePerSourceSet()) {
             super.populateModuleDependencies(gradleModule, ideModule, ideProject)
