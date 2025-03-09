@@ -414,5 +414,10 @@
     <action class="com.intellij.find.findUsages.GroupByPackageAction" id="UsageGrouping.Package" use-shortcut-of="UsageGrouping.Directory">
       <add-to-group group-id="UsageGroupingActionGroup"/>
     </action>
+
+    <action id="DevKit.Bootstrap" class="com.intellij.java.devkit.CreatePluginAction" icon="AllIcons.Nodes.Plugin">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+      <synonym key="action.DevKit.Bootstrap.synonym"/>
+    </action>
   </actions>
 </idea-plugin>
