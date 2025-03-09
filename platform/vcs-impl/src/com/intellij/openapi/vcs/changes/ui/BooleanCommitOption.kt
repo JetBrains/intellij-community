@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -17,6 +18,7 @@ import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.commit.CommitSessionCollector
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.Icon
@@ -31,7 +33,7 @@ open class BooleanCommitOption(
   @Nls text: String,
   private val disableWhenDumb: Boolean,
   protected val getter: () -> Boolean,
-  protected val setter: Consumer<Boolean>
+  protected val setter: Consumer<Boolean>,
 ) : RefreshableOnComponent,
     UiDslUnnamedConfigurable.Simple() {
 
@@ -51,6 +53,8 @@ open class BooleanCommitOption(
 
   private var checkinHandler: CheckinHandler? = null
   private var isDuringUpdate: Boolean = false
+
+  private val isVisibleProperty: AtomicBooleanProperty = AtomicBooleanProperty(true)
 
   init {
     checkBox.addActionListener {
@@ -91,7 +95,7 @@ open class BooleanCommitOption(
     row {
       cell(checkBox).also {
         if (isInSettings) it.bindSelected(getter, setter::accept)
-      }
+      }.visibleIf(isVisibleProperty)
     }
   }
 
@@ -108,6 +112,11 @@ open class BooleanCommitOption(
   fun withCheckinHandler(checkinHandler: CheckinHandler): BooleanCommitOption {
     this.checkinHandler = checkinHandler
     return this
+  }
+
+  @ApiStatus.Internal
+  fun setIsVisible(isVisible: Boolean) {
+    this.isVisibleProperty.set(isVisible)
   }
 
   companion object {
