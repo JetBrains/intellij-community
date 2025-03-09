@@ -63,7 +63,7 @@ class ZipArchiveOutputStream(
     buffer.writeShortLE(0)
     buffer.writeBytes(nameInArchive)
 
-    writeBuffer()
+    writeAndClearBuffer()
 
     zipIndexWriter.writeCentralFileHeader(
       size = 0,
@@ -100,7 +100,7 @@ class ZipArchiveOutputStream(
 
     // write to buffer, to avoid writing to disk in two calls
     buffer.writeBytes(data)
-    writeBuffer(buffer)
+    writeAndClearBuffer()
 
     zipIndexWriter.writeCentralFileHeader(
       size = size,
@@ -134,7 +134,7 @@ class ZipArchiveOutputStream(
     val localFileHeaderOffset = channelPosition
     val dataOffset = localFileHeaderOffset + buffer.readableBytes()
 
-    writeBuffer(buffer)
+    writeAndClearBuffer()
     writeBuffer(data)
 
     zipIndexWriter.writeCentralFileHeader(
@@ -206,7 +206,7 @@ class ZipArchiveOutputStream(
     buffer.clear()
     writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = 0, method = ZipEntry.STORED, buffer = buffer)
     assert(buffer.readableBytes() == headerSize)
-    writeBuffer()
+    writeAndClearBuffer()
 
     zipIndexWriter.writeCentralFileHeader(
       size = size,
@@ -374,7 +374,12 @@ class ZipArchiveOutputStream(
     }
   }
 
-  private fun writeBuffer(buffer: ByteBuf = this.buffer): Int {
+  private fun writeAndClearBuffer() {
+    writeBuffer(buffer)
+    buffer.clear()
+  }
+
+  private fun writeBuffer(buffer: ByteBuf) {
     val size = if (fileChannel == null) {
       writeToChannelFully(channel = channel, buffer = buffer)
     }
@@ -383,8 +388,6 @@ class ZipArchiveOutputStream(
     }
 
     channelPosition += size
-    buffer.clear()
-    return size
   }
 
   internal fun writeBuffer(data: ByteBuffer) {
