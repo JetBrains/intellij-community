@@ -1133,15 +1133,14 @@ private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress
 private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, source: Path, context: BuildContext) {
   if (optimized) {
     writeNewZipWithoutIndex(target, compress) { zipCreator ->
-      ZipArchiver(zipCreator).use { archiver ->
-        if (Files.isDirectory(source)) {
-          archiver.setRootDir(source, source.fileName.toString())
-          archiveDir(startDir = source, addFile = { archiver.addFile(it) })
-        }
-        else {
-          archiver.setRootDir(source.parent)
-          archiver.addFile(source)
-        }
+      val archiver = ZipArchiver()
+      if (Files.isDirectory(source)) {
+        archiver.setRootDir(source, source.fileName.toString())
+        archiveDir(startDir = source, addFile = { archiver.addFile(it, zipCreator) })
+      }
+      else {
+        archiver.setRootDir(source.parent)
+        archiver.addFile(source, zipCreator)
       }
     }
   }

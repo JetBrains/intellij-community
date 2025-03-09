@@ -102,7 +102,7 @@ private suspend fun writeSource(
   when (source) {
     is DirSource -> {
       val includeManifest = sources.size == 1
-      val archiver = ZipArchiver(zipCreator = zipCreator, fileAdded = { name, file ->
+      val archiver = ZipArchiver(fileAdded = { name, file ->
         if (name == listOfEntitiesFileName) {
           filesToMerge.add(Files.readString(file))
           false
@@ -120,7 +120,7 @@ private suspend fun writeSource(
       indexWriter
       archiveDir(
         startDir = normalizedDir,
-        addFile = { archiver.addFile(it)},
+        addFile = { archiver.addFile(it, zipCreator) },
         excludes = source.excludes.takeIf(List<PathMatcher>::isNotEmpty)
       )
     }

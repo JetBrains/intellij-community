@@ -3,7 +3,14 @@ package org.jetbrains.intellij.build.io
 
 import java.io.File
 import java.nio.channels.FileChannel
-import java.nio.file.*
+import java.nio.file.AccessDeniedException
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.nio.file.PathMatcher
+import java.nio.file.StandardCopyOption
+import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
@@ -113,11 +120,11 @@ private fun archiveDirToZipWriter(
   fileAdded: ((String, Path) -> Boolean)?,
   dirs: Map<Path, String>,
 ) {
-  val archiver = ZipArchiver(zipFileWriter, fileAdded)
+  val archiver = ZipArchiver(fileAdded)
   for ((dir, prefix) in dirs.entries) {
     val normalizedDir = dir.toAbsolutePath().normalize()
     archiver.setRootDir(normalizedDir, prefix)
-    archiveDir(startDir = normalizedDir, addFile = { archiver.addFile(it) })
+    archiveDir(startDir = normalizedDir, addFile = { archiver.addFile(it, zipFileWriter) })
   }
 }
 
@@ -133,7 +140,7 @@ private fun addDirWithParents(name: String, dirNameSetToAdd: MutableSet<String>)
   }
 }
 
-class ZipArchiver(private val zipCreator: ZipFileWriter, @JvmField val fileAdded: ((String, Path) -> Boolean)? = null) : AutoCloseable {
+class ZipArchiver(@JvmField val fileAdded: ((String, Path) -> Boolean)? = null) {
   private var localPrefixLength = -1
   private var archivePrefix = ""
 
@@ -148,15 +155,11 @@ class ZipArchiver(private val zipCreator: ZipFileWriter, @JvmField val fileAdded
     localPrefixLength = rootDir.toString().length + 1
   }
 
-  fun addFile(file: Path) {
+  fun addFile(file: Path, zipCreator: ZipFileWriter) {
     val name = archivePrefix + file.toString().substring(localPrefixLength).replace(File.separatorChar, '/')
     if (fileAdded == null || fileAdded.invoke(name, file)) {
       zipCreator.file(name, file)
     }
-  }
-
-  override fun close() {
-    zipCreator.close()
   }
 }
 
