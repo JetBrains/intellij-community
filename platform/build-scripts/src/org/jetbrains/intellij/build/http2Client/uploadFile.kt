@@ -66,12 +66,7 @@ internal suspend fun Http2ClientConnection.upload(
     else if (isDir) {
       zstdCompressContextPool.withZstd(contentSize = -1) { zstd ->
         stream.alloc().directBuffer(sourceBlockSize).use { sourceBuffer ->
-          compressDir(
-            dir = file,
-            zstd = zstd,
-            sourceBuffer = sourceBuffer,
-            stream = stream,
-          )
+          compressDir(dir = file, zstd = zstd, sourceBuffer = sourceBuffer, stream = stream)
         }
       }
     }
@@ -174,23 +169,21 @@ private suspend fun compressDir(
       }
     })
 
-    zipIndexWriter.finish(centralDirectoryOffset = uncompressedPosition, indexWriter = null, indexOffset = -1)
-
-    var toRead = zipIndexWriter.buffer.readableBytes()
+    val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = uncompressedPosition, indexWriter = null, indexOffset = -1)
+    var toRead = zipIndexData.readableBytes()
     uncompressedPosition += toRead
 
     // compress central directory not in a separate ZSTD frame if possible
-    var writableBytes = sourceBuffer.writableBytes()
-    if (writableBytes > 0) {
-      val chunkSize = min(toRead, writableBytes)
-      sourceBuffer.writeBytes(zipIndexWriter.buffer, chunkSize)
+    val chunkSize = min(toRead, sourceBuffer.writableBytes())
+    if (chunkSize > 0) {
+      sourceBuffer.writeBytes(zipIndexData, chunkSize)
       toRead -= chunkSize
 
       uploadedSize += compressBufferAndWrite(source = sourceBuffer, stream = stream, zstd = zstd, endStream = toRead == 0)
     }
 
     if (toRead > 0) {
-      uploadedSize += compressBufferAndWrite(source = zipIndexWriter.buffer, stream = stream, zstd = zstd, endStream = true)
+      uploadedSize += compressBufferAndWrite(source = zipIndexData, stream = stream, zstd = zstd, endStream = true)
     }
 
     return UploadResult(uploadedSize = uploadedSize, fileSize = uncompressedPosition)

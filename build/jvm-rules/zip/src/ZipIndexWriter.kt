@@ -8,8 +8,7 @@ import io.netty.buffer.ByteBufAllocator
 internal const val INDEX_FORMAT_VERSION: Byte = 4
 
 class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
-  @JvmField
-  val buffer: ByteBuf = ByteBufAllocator.DEFAULT.directBuffer(512 * 1024)
+  private val buffer = ByteBufAllocator.DEFAULT.directBuffer(512 * 1024)
 
   internal var entryCount = 0
     private set
@@ -58,7 +57,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
     buffer.writeBytes(name)
   }
 
-  fun finish(centralDirectoryOffset: Long, indexWriter: IkvIndexBuilder?, indexOffset: Int) {
+  fun finish(centralDirectoryOffset: Long, indexWriter: IkvIndexBuilder?, indexOffset: Int): ByteBuf {
     val centralDirectoryLength = buffer.readableBytes()
     if (entryCount < 65_535) {
       // write an end of central directory record (EOCD)
@@ -93,6 +92,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
         optimizedMetadataOffset = indexOffset,
       )
     }
+    return buffer
   }
 
   private fun writeZip64End(

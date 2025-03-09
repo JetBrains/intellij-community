@@ -337,12 +337,8 @@ class ZipArchiveOutputStream(
     bufferReleased = true
 
     // write central directory file header
-    zipIndexWriter.finish(
-      centralDirectoryOffset = channelPosition,
-      indexWriter = indexWriter,
-      indexOffset = indexOffset,
-    )
-    writeBuffer(zipIndexWriter.buffer)
+    val buffer = zipIndexWriter.finish(centralDirectoryOffset = channelPosition, indexWriter = indexWriter, indexOffset = indexOffset)
+    writeBuffer(buffer)
     zipIndexWriter.release()
 
     finished = true

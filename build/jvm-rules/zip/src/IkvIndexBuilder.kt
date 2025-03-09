@@ -3,12 +3,13 @@ package org.jetbrains.intellij.build.io
 
 import io.netty.buffer.ByteBuf
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 
 class IkvIndexBuilder() {
-  private val entries = LinkedHashSet<IkvIndexEntry>()
+  private val entries = ObjectLinkedOpenHashSet<IkvIndexEntry>()
 
   @JvmField
-  val names = mutableListOf<ByteArray>()
+  val names: MutableList<ByteArray> = mutableListOf()
 
   @JvmField
   val classPackages: LongOpenHashSet = LongOpenHashSet()
@@ -35,8 +36,12 @@ class IkvIndexBuilder() {
   }
 }
 
-class IkvIndexEntry(@JvmField internal val longKey: Long, @JvmField internal val offset: Long, @JvmField internal val size: Int) {
-  override fun equals(other: Any?): Boolean = longKey == (other as? IkvIndexEntry)?.longKey
+class IkvIndexEntry(
+  @JvmField internal val longKey: Long,
+  @JvmField internal val offset: Long,
+  @JvmField internal val size: Int,
+) {
+  override fun equals(other: Any?): Boolean = other is IkvIndexEntry && longKey == other.longKey
 
   override fun hashCode(): Int = longKey.toInt()
 }
