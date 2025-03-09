@@ -22,7 +22,7 @@ class ZipArchiveOutputStream(
   private var finished = false
 
   private var bufferReleased = false
-  private val buffer = ByteBufAllocator.DEFAULT.directBuffer(128 * 1024)
+  private val buffer = ByteBufAllocator.DEFAULT.directBuffer()
 
   private var channelPosition = 0L
 
@@ -256,35 +256,23 @@ class ZipArchiveOutputStream(
     )
   }
 
-  private fun writeIndex(crc32: CRC32, indexWriter: IkvIndexBuilder): Int {
-    fun writeData(task: (ByteBuf) -> Unit) {
-      buffer.clear()
-      task(buffer)
-
-      crc32.update(buffer.nioBuffer())
-
-      writeBuffer()
-    }
-
+  private fun writeIndex(crc32: CRC32?, indexWriter: IkvIndexBuilder): Int {
     // write one by one to channel to avoid buffer overflow
-    writeData {
-      indexWriter.write(it)
-    }
-
-    val indexDataEnd = channelPosition.toInt()
 
     // write package class and resource hashes
-    writeData { buffer ->
-      val classPackages = indexWriter.classPackages
-      val resourcePackages = indexWriter.resourcePackages
-      val size = (classPackages.size + resourcePackages.size) * Long.SIZE_BYTES
-      val lengthHeaderSize = Int.SIZE_BYTES * 2
+    val classPackages = indexWriter.classPackages
+    val resourcePackages = indexWriter.resourcePackages
+    val size = (classPackages.size + resourcePackages.size) * Long.SIZE_BYTES
+    val lengthHeaderSize = Int.SIZE_BYTES * 2
+
+    val indexDataSize = indexWriter.dataSize()
+    val indexDataEnd = channelPosition.toInt() + indexDataSize
+    ByteBufAllocator.DEFAULT.directBuffer(indexDataSize + lengthHeaderSize + size).use { buffer ->
+      indexWriter.write(buffer)
       if (size == 0) {
         buffer.writeZero(lengthHeaderSize)
       }
       else {
-        buffer.ensureWritable(lengthHeaderSize + size)
-
         val classPackageArray = indexWriter.classPackages.toLongArray()
         val resourcePackageArray = indexWriter.resourcePackages.toLongArray()
 
@@ -299,25 +287,24 @@ class ZipArchiveOutputStream(
         longBuffer.put(resourcePackageArray)
         buffer.writerIndex(buffer.writerIndex() + size)
       }
+
+      crc32?.update(buffer.nioBuffer())
+      writeBuffer(buffer)
     }
 
     // write names
-    for (list in indexWriter.names.asSequence().chunked(4096)) {
-      writeData { buffer ->
-        for (name in list) {
-          buffer.writeShortLE(name.size)
-        }
+    ByteBufAllocator.DEFAULT.directBuffer((indexWriter.names.sumOf { it.size + Short.SIZE_BYTES })).use { buffer ->
+      for (name in indexWriter.names) {
+        buffer.writeShortLE(name.size)
       }
-    }
 
-    for (list in indexWriter.names.asSequence().chunked(1024)) {
-      writeData { buffer ->
-        for (name in list) {
-          buffer.writeBytes(name)
-        }
+      for (name in indexWriter.names) {
+        buffer.writeBytes(name)
       }
-    }
 
+      crc32?.update(buffer.nioBuffer())
+      writeBuffer(buffer)
+    }
     return indexDataEnd
   }
 
@@ -337,8 +324,8 @@ class ZipArchiveOutputStream(
     bufferReleased = true
 
     // write central directory file header
-    val buffer = zipIndexWriter.finish(centralDirectoryOffset = channelPosition, indexWriter = indexWriter, indexOffset = indexOffset)
-    writeBuffer(buffer)
+    val zipIndexData = zipIndexWriter.finish(centralDirectoryOffset = channelPosition, indexWriter = indexWriter, indexOffset = indexOffset)
+    writeBuffer(zipIndexData)
     zipIndexWriter.release()
 
     finished = true
@@ -350,7 +337,7 @@ class ZipArchiveOutputStream(
     val headerPosition = getChannelPositionAndAdd(headerSize)
     val entryDataPosition = channelPosition
 
-    val crc32 = CRC32()
+    val crc32 = if (indexWriter.writeCrc32) CRC32() else null
     val indexOffset = writeIndex(crc32, indexWriter)
 
     val size = (channelPosition - entryDataPosition).toInt()
@@ -359,7 +346,7 @@ class ZipArchiveOutputStream(
       position = headerPosition,
       size = size,
       compressedSize = size,
-      crc = crc32.value,
+      crc = crc32?.value ?: 0,
       method = ZipEntry.STORED,
     )
     return indexOffset

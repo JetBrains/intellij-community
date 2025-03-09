@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 
-class IkvIndexBuilder() {
+class IkvIndexBuilder(@JvmField val writeCrc32: Boolean = true) {
   private val entries = ObjectLinkedOpenHashSet<IkvIndexEntry>()
 
   @JvmField
@@ -23,8 +23,9 @@ class IkvIndexBuilder() {
     }
   }
 
+  fun dataSize(): Int = (entries.size * Long.SIZE_BYTES * 2) + Int.SIZE_BYTES + 1
+
   fun write(buffer: ByteBuf) {
-    buffer.ensureWritable((entries.size * Long.SIZE_BYTES * 2) + Int.SIZE_BYTES + 1)
     for (entry in entries) {
       buffer.writeLongLE(entry.longKey)
       buffer.writeLongLE(entry.offset shl 32 or (entry.size.toLong() and 0xffffffffL))

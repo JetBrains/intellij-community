@@ -3,11 +3,11 @@ package org.jetbrains.intellij.build.io
 
 import com.dynatrace.hash4j.hashing.Hashing
 
-class PackageIndexBuilder {
+class PackageIndexBuilder(writeCrc32: Boolean = true) {
   private val dirsToRegister = HashSet<String>()
 
   @JvmField
-  val indexWriter: IkvIndexBuilder = IkvIndexBuilder()
+  val indexWriter: IkvIndexBuilder = IkvIndexBuilder(writeCrc32)
 
   fun addFile(name: String, addClassDir: Boolean = false) {
     val i = name.lastIndexOf('/')
