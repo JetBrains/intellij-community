@@ -24,6 +24,8 @@ class XNextToolWindowHolder private constructor() : JPanel() {
     @JvmStatic
     fun create(fillColor: () -> Color): JComponent = XNextToolWindowHolder().apply {
       border = JRoundedCornerBorder( fillColor)
+      ClientProperty.putRecursive(this, IdeBackgroundUtil.NO_BACKGROUND, true)
+      background = fillColor()
     }
   }
 
