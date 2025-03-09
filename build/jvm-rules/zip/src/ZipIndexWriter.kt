@@ -8,12 +8,10 @@ import io.netty.buffer.ByteBufAllocator
 internal const val INDEX_FORMAT_VERSION: Byte = 4
 
 class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
-  private val buffer = ByteBufAllocator.DEFAULT.directBuffer(512 * 1024)
+  private var buffer: ByteBuf? = ByteBufAllocator.DEFAULT.directBuffer(64 * 1024)
 
   internal var entryCount = 0
     private set
-
-  private var isReleased = false
 
   fun writeCentralFileHeader(
     size: Int,
@@ -25,6 +23,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
     dataOffset: Long,
     normalName: ByteArray = name,
   ) {
+    val buffer = buffer!!
     entryCount++
     buffer.ensureWritable(46 + name.size)
 
@@ -58,6 +57,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
   }
 
   fun finish(centralDirectoryOffset: Long, indexWriter: IkvIndexBuilder?, indexOffset: Int): ByteBuf {
+    val buffer = buffer!!
     val centralDirectoryLength = buffer.readableBytes()
     if (entryCount < 65_535) {
       // write an end of central directory record (EOCD)
@@ -101,6 +101,7 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
     centralDirectoryOffset: Long,
     optimizedMetadataOffset: Int,
   ) {
+    val buffer = buffer!!
     buffer.writeIntLE(0x06064b50)
     // size of - will be written later
     val eocdSizePosition = buffer.writerIndex()
@@ -160,9 +161,9 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
   }
 
   fun release() {
-    if (!isReleased) {
-      buffer.release()
-      isReleased = true
+    buffer?.let {
+      buffer = null
+      it.release()
     }
   }
 }
