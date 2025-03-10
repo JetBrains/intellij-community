@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -124,14 +124,14 @@ open class AddModifierFix(
     }
 
     companion object : Factory<AddModifierFix> {
-        val addAbstractModifier = AddModifierFix.createFactory(KtTokens.ABSTRACT_KEYWORD)
-        val addAbstractToContainingClass = AddModifierFix.createFactory(KtTokens.ABSTRACT_KEYWORD, KtClassOrObject::class.java)
-        val addOpenToContainingClass = AddModifierFix.createFactory(KtTokens.OPEN_KEYWORD, KtClassOrObject::class.java)
-        val addFinalToProperty = AddModifierFix.createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
-        val addInnerModifier = createFactory(KtTokens.INNER_KEYWORD)
-        val addOverrideModifier = createFactory(KtTokens.OVERRIDE_KEYWORD)
-        val addDataModifier = createFactory(KtTokens.DATA_KEYWORD, KtClass::class.java)
-        val addInlineToFunctionWithReified = createFactory(KtTokens.INLINE_KEYWORD, KtNamedFunction::class.java)
+        val addAbstractModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.ABSTRACT_KEYWORD)
+        val addAbstractToContainingClass: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.ABSTRACT_KEYWORD, KtClassOrObject::class.java)
+        val addOpenToContainingClass: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.OPEN_KEYWORD, KtClassOrObject::class.java)
+        val addFinalToProperty: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.FINAL_KEYWORD, KtProperty::class.java)
+        val addInnerModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.INNER_KEYWORD)
+        val addOverrideModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.OVERRIDE_KEYWORD)
+        val addDataModifier: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.DATA_KEYWORD, KtClass::class.java)
+        val addInlineToFunctionWithReified: QuickFixesPsiBasedFactory<PsiElement> = createFactory(KtTokens.INLINE_KEYWORD, KtNamedFunction::class.java)
 
         val modifiersWithWarning: Set<KtModifierKeywordToken> = setOf(KtTokens.ABSTRACT_KEYWORD, KtTokens.FINAL_KEYWORD)
         private val modalityModifiers = modifiersWithWarning + KtTokens.OPEN_KEYWORD

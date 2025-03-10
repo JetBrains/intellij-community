@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.collectAllExpectAndActualDeclaration
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -103,6 +104,5 @@ fun KtTypeReference.classForRefactor(): KtClass? {
     val type = bindingContext[BindingContext.TYPE, this] ?: return null
     val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor ?: return null
     val declaration = DescriptorToSourceUtils.descriptorToDeclaration(classDescriptor) as? KtClass ?: return null
-    if (!declaration.canRefactor()) return null
-    return declaration
+    return declaration.takeIf { declaration.canRefactorElement() }
 }
