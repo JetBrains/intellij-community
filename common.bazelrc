@@ -10,6 +10,10 @@ common --@rules_jvm//:default-kotlinc-opts=@community//:k17
 common --@rules_jvm//:worker-impl=@rules_jvm//src/misc:worker-jvm
 common --@rules_jvm//:koltin_inc_threshold=80 --@rules_jvm//:java_inc_threshold=200
 
+# configure resources
+common --local_resources=memory=HOST_RAM*.77 --local_resources=cpu=HOST_CPUS*2
+common --jobs=HOST_CPUS*2 --worker_max_multiplex_instances=JpsCompile=HOST_CPUS*2
+
 # hide Java 8 deprecation warnings
 common --javacopt=-Xlint:-options
 
@@ -45,7 +49,6 @@ build --experimental_windows_watchfs
 build:ci --nowatchfs
 
 common --enable_platform_specific_config
-
 common --incompatible_strict_action_env=true
 
 # Generally good remote cache tweaks
