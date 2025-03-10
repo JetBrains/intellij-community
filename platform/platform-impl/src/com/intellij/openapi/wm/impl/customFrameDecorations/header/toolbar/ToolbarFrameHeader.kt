@@ -4,14 +4,11 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.ActionToolbarListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration
@@ -64,8 +61,6 @@ internal class ToolbarFrameHeader(
   private val menuBarContainer = createMenuBarContainer()
   private val mainMenuButtonComponent = mainMenuWithButton.mainMenuButton.button
   private var toolbar: MainToolbar? = null
-  private val selfDisposable = Disposer.newCheckedDisposable()
-  private var toolbarDisposable: Disposable? = null
   private val toolbarPlaceholder = createToolbarPlaceholder()
   private val headerContent = createHeaderContent()
   private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope("ExpandableMenu"), frame) { !isCompactHeader }
@@ -196,7 +191,6 @@ internal class ToolbarFrameHeader(
     super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
-      Disposer.dispose(selfDisposable)
     }
   }
 
@@ -290,26 +284,11 @@ internal class ToolbarFrameHeader(
       toolbar?.removeComponentListener(resizeListener)
       toolbar?.removeWidthCalculationListener(widthCalculationListener)
       toolbarPlaceholder.removeAll()
-      toolbarDisposable?.let {
-        Disposer.dispose(it)
-      }
       MainToolbar(coroutineScope = coroutineScope.childScope("MainToolbar"), frame = frame, isFullScreen = isFullScreen)
     }
     newToolbar.init(customTitleBar)
 
     withContext(Dispatchers.EDT) {
-      toolbarDisposable?.let {
-        Disposer.dispose(it)
-      }
-      val newToolbarDisposable = Disposer.newCheckedDisposable()
-
-      newToolbar.addToolbarListeners(object : ActionToolbarListener {
-        override fun actionsUpdated() {
-          mainMenuWithButton.recalculateWidth(toolbar)
-        }
-      }, newToolbarDisposable)
-      Disposer.register(selfDisposable, newToolbarDisposable)
-      toolbarDisposable = newToolbarDisposable
       newToolbar.addComponentListener(resizeListener)
       newToolbar.addComponentListener(contentResizeListener)
       newToolbar.addWidthCalculationListener(widthCalculationListener)
@@ -348,7 +327,6 @@ internal class ToolbarFrameHeader(
     toolbar?.removeComponentListener(contentResizeListener)
     toolbar?.removeComponentListener(resizeListener)
     toolbar?.removeWidthCalculationListener(widthCalculationListener)
-    toolbarDisposable?.let { Disposer.dispose(it) }
     this.removeComponentListener(resizeListener)
     ideMenuHelper.uninstallListeners()
   }
