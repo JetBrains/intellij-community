@@ -27,7 +27,7 @@ import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 
@@ -60,6 +60,7 @@ class IndexingIteratorsProviderImpl(
     val index = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexImpl
     val storage = model.currentSnapshot
     val virtualFileUrlManager = model.getVirtualFileUrlManager()
+    val moduleDependencyIndex = ModuleDependencyIndex.getInstance(project)
 
     val iterators = ArrayList<IndexableFilesIterator>()
     val libraryOrigins = HashSet<LibraryOrigin>()
@@ -83,7 +84,7 @@ class IndexingIteratorsProviderImpl(
       }
       else {
         val entity = entityPointer.resolve(storage)
-        if (entity is LibraryEntity) {
+        if (entity is LibraryEntity && moduleDependencyIndex.hasDependencyOn(entity.symbolicId)) {
           val libraryBridge = storage.libraryMap.getDataByEntity(entity)
           if (libraryBridge != null) {
             val sourceLibraryRoot = SmartList<VirtualFile>()
@@ -102,7 +103,7 @@ class IndexingIteratorsProviderImpl(
             }
           }
         }
-        else if (entity is SdkEntity) {
+        else if (entity is SdkEntity && moduleDependencyIndex.hasDependencyOn(entity.symbolicId)) {
           val sdkType = SdkType.findByName(entity.type)
           iterators.add(SdkIndexableFilesIteratorImpl.createIterator(
             entity.name,
