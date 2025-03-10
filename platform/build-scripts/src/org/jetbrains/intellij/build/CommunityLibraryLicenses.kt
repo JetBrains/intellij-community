@@ -631,7 +631,7 @@ object CommunityLibraryLicenses {
 
     LibraryLicense("JetBrains Jewel IDE LaF Bridge", url = "https://github.com/JetBrains/jewel", libraryName = "jetbrains.jewel.ide.laf.bridge.243")
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
-      .additionalLibraryNames("jewel-ide-laf-bridge")
+      .additionalLibraryNames("jetbrains.jewel.ide.laf.bridge.242")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
     LibraryLicense("JetBrains Jewel Markdown IDE LaF Bridge Styling", url = "https://github.com/JetBrains/jewel", libraryName = "jewel-markdown-ide-laf-bridge-styling-242")

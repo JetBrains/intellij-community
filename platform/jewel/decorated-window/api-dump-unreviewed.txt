@@ -37,6 +37,7 @@ com.jetbrains.WindowMove
 - a:startMovingTogetherWithMouse(java.awt.Window,I):V
 f:org.jetbrains.jewel.window.ComposableSingletons$TitleBarKt
 - sf:INSTANCE:org.jetbrains.jewel.window.ComposableSingletons$TitleBarKt
+- s:lambda-1:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_decoratedWindow():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.window.DecoratedWindowKt

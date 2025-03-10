@@ -222,6 +222,10 @@ f:org.jetbrains.jewel.ui.component.ComboBoxState$Companion
 - bs:of-b6bHBqw$default(org.jetbrains.jewel.ui.component.ComboBoxState$Companion,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$BannerKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$BannerKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 - f:getLambda-2$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
@@ -229,6 +233,10 @@ f:org.jetbrains.jewel.ui.component.ComposableSingletons$BannerKt
 - f:getLambda-4$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 - f:getLambda-2$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
@@ -236,6 +244,7 @@ f:org.jetbrains.jewel.ui.component.ComposableSingletons$InlineBannerKt
 - f:getLambda-4$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.ui.component.ComposableSingletons$MenuKt
 - sf:INSTANCE:org.jetbrains.jewel.ui.component.ComposableSingletons$MenuKt
+- s:lambda-1:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_ui():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.ui.component.ContextMenuDivider

@@ -13,6 +13,13 @@ f:org.jetbrains.jewel.samples.showcase.components.ChipsAndTreeKt
 - sf:TreeSample(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BannersKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BannersKt
+- s:lambda-1:kotlin.jvm.functions.Function4
+- s:lambda-2:kotlin.jvm.functions.Function4
+- s:lambda-3:kotlin.jvm.functions.Function4
+- s:lambda-4:kotlin.jvm.functions.Function4
+- s:lambda-5:kotlin.jvm.functions.Function4
+- s:lambda-6:kotlin.jvm.functions.Function4
+- s:lambda-7:kotlin.jvm.functions.Function4
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
 - f:getLambda-2$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
@@ -23,6 +30,12 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BannersKt
 - f:getLambda-7$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BordersKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BordersKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
+- s:lambda-5:kotlin.jvm.functions.Function2
+- s:lambda-6:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-2$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
@@ -32,6 +45,23 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$BordersKt
 - f:getLambda-6$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ButtonsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ButtonsKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-10:kotlin.jvm.functions.Function2
+- s:lambda-11:kotlin.jvm.functions.Function2
+- s:lambda-12:kotlin.jvm.functions.Function2
+- s:lambda-13:kotlin.jvm.functions.Function2
+- s:lambda-14:kotlin.jvm.functions.Function2
+- s:lambda-15:kotlin.jvm.functions.Function2
+- s:lambda-16:kotlin.jvm.functions.Function3
+- s:lambda-17:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
+- s:lambda-5:kotlin.jvm.functions.Function4
+- s:lambda-6:kotlin.jvm.functions.Function4
+- s:lambda-7:kotlin.jvm.functions.Function2
+- s:lambda-8:kotlin.jvm.functions.Function2
+- s:lambda-9:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-10$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
@@ -52,6 +82,13 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ButtonsKt
 - f:getLambda-9$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ChipsAndTreeKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ChipsAndTreeKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
+- s:lambda-5:kotlin.jvm.functions.Function2
+- s:lambda-6:kotlin.jvm.functions.Function2
+- s:lambda-7:kotlin.jvm.functions.Function4
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-2$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
@@ -62,6 +99,16 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$ChipsAndT
 - f:getLambda-7$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$DropdownsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$DropdownsKt
+- s:lambda-1:kotlin.jvm.functions.Function3
+- s:lambda-10:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
+- s:lambda-5:kotlin.jvm.functions.Function2
+- s:lambda-6:kotlin.jvm.functions.Function3
+- s:lambda-7:kotlin.jvm.functions.Function5
+- s:lambda-8:kotlin.jvm.functions.Function5
+- s:lambda-9:kotlin.jvm.functions.Function5
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function3
 - f:getLambda-10$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
@@ -75,6 +122,13 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$Dropdowns
 - f:getLambda-9$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function5
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$SplitLayoutsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$SplitLayoutsKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
+- s:lambda-5:kotlin.jvm.functions.Function2
+- s:lambda-6:kotlin.jvm.functions.Function2
+- s:lambda-7:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-2$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
@@ -85,10 +139,16 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$SplitLayo
 - f:getLambda-7$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TabsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TabsKt
+- s:lambda-1:kotlin.jvm.functions.Function4
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextAreasKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextAreasKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
+- s:lambda-5:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-2$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
@@ -97,6 +157,14 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextAreas
 - f:getLambda-5$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextFieldsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextFieldsKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
+- s:lambda-5:kotlin.jvm.functions.Function2
+- s:lambda-6:kotlin.jvm.functions.Function2
+- s:lambda-7:kotlin.jvm.functions.Function2
+- s:lambda-8:kotlin.jvm.functions.Function4
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-2$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
@@ -108,6 +176,9 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TextField
 - f:getLambda-8$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function4
 f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-2$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
@@ -182,6 +253,22 @@ f:org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel
 - f:setCurrentView(org.jetbrains.jewel.samples.showcase.views.ViewInfo):V
 f:org.jetbrains.jewel.samples.showcase.views.ComposableSingletons$ComponentsViewModelKt
 - sf:INSTANCE:org.jetbrains.jewel.samples.showcase.views.ComposableSingletons$ComponentsViewModelKt
+- s:lambda-1:kotlin.jvm.functions.Function2
+- s:lambda-10:kotlin.jvm.functions.Function2
+- s:lambda-11:kotlin.jvm.functions.Function2
+- s:lambda-12:kotlin.jvm.functions.Function2
+- s:lambda-13:kotlin.jvm.functions.Function2
+- s:lambda-14:kotlin.jvm.functions.Function2
+- s:lambda-15:kotlin.jvm.functions.Function2
+- s:lambda-16:kotlin.jvm.functions.Function2
+- s:lambda-2:kotlin.jvm.functions.Function2
+- s:lambda-3:kotlin.jvm.functions.Function2
+- s:lambda-4:kotlin.jvm.functions.Function2
+- s:lambda-5:kotlin.jvm.functions.Function2
+- s:lambda-6:kotlin.jvm.functions.Function2
+- s:lambda-7:kotlin.jvm.functions.Function2
+- s:lambda-8:kotlin.jvm.functions.Function2
+- s:lambda-9:kotlin.jvm.functions.Function2
 - <init>():V
 - f:getLambda-1$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda-10$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
