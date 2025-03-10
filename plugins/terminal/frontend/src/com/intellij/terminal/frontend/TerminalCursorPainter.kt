@@ -21,6 +21,7 @@ import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.CursorShape
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
@@ -176,7 +177,7 @@ internal class TerminalCursorPainter private constructor(
 
   private fun getDefaultCursorShape(): CursorShape {
     val editorSettings = editor.settings
-    val shapeFromSettings = TerminalUiSettingsManager.getInstance().cursorShape
+    val shapeFromSettings = TerminalOptionsProvider.instance.cursorShape
     when (shapeFromSettings) {
       TerminalUiSettingsManager.CursorShape.BLOCK -> {
         return if (editorSettings.isBlinkCaret) CursorShape.BLINK_BLOCK else CursorShape.STEADY_BLOCK

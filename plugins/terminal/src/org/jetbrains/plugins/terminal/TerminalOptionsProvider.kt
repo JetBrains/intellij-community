@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
+import com.intellij.ide.util.RunOnceUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
@@ -23,6 +25,11 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
   override fun loadState(newState: State) {
     state = newState
+
+    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.cursorShape.migration") {
+      val previousCursorShape = TerminalUiSettingsManager.getInstance().cursorShape
+      state.cursorShape = previousCursorShape
+    }
   }
 
   class State {
@@ -35,6 +42,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
     var useOptionAsMetaKey: Boolean = false
+    var cursorShape: CursorShape = CursorShape.BLOCK
 
     @Deprecated("Use BlockTerminalOptions#promptStyle instead")
     var useShellPrompt: Boolean = false
@@ -173,12 +181,12 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       }
     }
 
-  var cursorShape: TerminalUiSettingsManager.CursorShape
-    get() = TerminalUiSettingsManager.getInstance().cursorShape
+  var cursorShape: CursorShape
+    get() = state.cursorShape
     set(value) {
-      val uiSettings = TerminalUiSettingsManager.getInstance()
-      if (uiSettings.cursorShape != value) {
-        uiSettings.cursorShape = value
+      if (state.cursorShape != value) {
+        state.cursorShape = value
+        TerminalUiSettingsManager.getInstance().cursorShape = value
         fireSettingsChanged()
       }
     }

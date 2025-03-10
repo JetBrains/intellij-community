@@ -48,8 +48,8 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     addIfNotDefault(
       metrics,
       NON_DEFAULT_CURSOR_SHAPE,
-      curValue = TerminalUiSettingsManager.getInstance().cursorShape,
-      defaultValue = TerminalUiSettingsManager.State().cursorShape
+      curValue = TerminalOptionsProvider.instance.cursorShape,
+      defaultValue = TerminalOptionsProvider.State().cursorShape
     )
 
     addIfNotDefault(
