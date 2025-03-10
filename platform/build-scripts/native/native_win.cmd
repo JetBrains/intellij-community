@@ -22,13 +22,6 @@ if errorlevel 1 (
 )
 @echo native_win.cmd time: %time%
 
-@echo "Building breakgen64.dll"
-call %SCRIPT_DIR%build-win-breakgen.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
-if errorlevel 1 (
-  set /A EXITCODE=EXITCODE+1
-)
-@echo native_win.cmd time: %time%
-
 @echo "Building WinProcessListHelper"
 call %SCRIPT_DIR%build-win-process-list-helper.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
 if errorlevel 1 (
@@ -38,13 +31,6 @@ if errorlevel 1 (
 
 @echo "Building WinShellIntegration"
 call %SCRIPT_DIR%build-win-shell-integration.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
-if errorlevel 1 (
-  set /A EXITCODE=EXITCODE+1
-)
-@echo native_win.cmd time: %time%
-
-@echo "Building runnerw.exe"
-call %SCRIPT_DIR%build-win-runnerw.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
 if errorlevel 1 (
   set /A EXITCODE=EXITCODE+1
 )
