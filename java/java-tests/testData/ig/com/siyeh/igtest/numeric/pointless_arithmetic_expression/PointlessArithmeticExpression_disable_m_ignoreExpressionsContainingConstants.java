@@ -18,9 +18,9 @@ class PointlessArithmeticExpression
         System.out.println(k);
         k = <warning descr="'0 - j' can be replaced with '- j'">0 - j</warning>;
         System.out.println(k);
-        k = j * ZERO_CONSTANT;
+        k = <warning descr="'j * ZERO_CONSTANT' can be replaced with '0'">j * ZERO_CONSTANT</warning>;
         System.out.println(k);
-        k = j * ONE_CONSTANT;
+        k = <warning descr="'j * ONE_CONSTANT' can be replaced with 'j'">j * ONE_CONSTANT</warning>;
         System.out.println(k);
         k = <warning descr="'j / 1' can be replaced with 'j'">j / 1</warning>;
         k = 0/0; // don't warn on division by zero

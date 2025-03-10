@@ -53,9 +53,6 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
     JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC, JavaTokenType.GT,
     JavaTokenType.LT, JavaTokenType.LE, JavaTokenType.GE);
 
-  /**
-   * @noinspection PublicField
-   */
   public boolean m_ignoreExpressionsContainingConstants = true;
 
   @Override
@@ -121,7 +118,9 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
       }
       else if (tokenType.equals(JavaTokenType.ASTERISK) && isZero(operand) ||
                tokenType.equals(JavaTokenType.PERC) &&
-               (isOne(operand) || EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(ContainerUtil.getLastItem(expressions), operand))) {
+               (isOne(operand) ||
+                EquivalenceChecker.getCanonicalPsiEquivalence()
+                  .expressionsAreEquivalent(ContainerUtil.getLastItem(expressions), operand))) {
         expressions.clear();
         expressions.add(factory.createExpressionFromText(numberAsText(0, type), operand));
         return expressions;
@@ -262,7 +261,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
-            (isOne(expression) || 
+            (isOne(expression) ||
              i == 1 && areExpressionsIdenticalWithoutSideEffects(previousExpression, expression) && !isZeroWithDataflow(expression))) {
           return true;
         }
@@ -276,7 +275,7 @@ public final class PointlessArithmeticExpressionInspection extends BaseInspectio
              !SideEffectChecker.mayHaveSideEffects(expression1);
     }
   }
-  
+
   boolean isZeroWithDataflow(@NotNull PsiExpression expression) {
     return isZero(expression) || (CommonDataflow.computeValue(expression) instanceof Number number && number.doubleValue() == 0.0d);
   }
