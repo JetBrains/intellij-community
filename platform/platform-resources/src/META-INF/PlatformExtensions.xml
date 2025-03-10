@@ -1145,6 +1145,9 @@
     <vcs.fileStatusProvider implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
     <editorTabTitleProvider implementation="com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.options.newEditor.settings.SettingModifiedExternallyNotificationProvider"/>
+    <virtualFileSystem implementationClass="com.intellij.openapi.options.newEditor.settings.SettingsFileSystem" key="settings" physical="false"/>
+    <navbar implementation="com.intellij.openapi.options.newEditor.settings.SettingsNavBarModelExtension"/>
+
 
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>

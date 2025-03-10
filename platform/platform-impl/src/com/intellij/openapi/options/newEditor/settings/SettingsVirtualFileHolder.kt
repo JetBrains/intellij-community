@@ -3,6 +3,8 @@ package com.intellij.openapi.options.newEditor.settings
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension
+import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -20,6 +22,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.newEditor.*
 import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.getUserData
 import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Disposer
@@ -27,6 +30,12 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem
+import com.intellij.platform.ide.progress.ModalTaskOwner.project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -40,7 +49,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
-import java.util.Collections
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
@@ -54,9 +63,17 @@ internal class SettingsVirtualFileHolder private constructor(private val project
     fun getInstance(project: Project): SettingsVirtualFileHolder {
       return project.getService(SettingsVirtualFileHolder::class.java)
     }
+
+    fun getInstanceIfExists(project: Project): SettingsVirtualFileHolder? {
+      return project.getServiceIfCreated(SettingsVirtualFileHolder::class.java)
+    }
   }
 
   private val settingsFileRef = AtomicReference<SettingsVirtualFile?>(null)
+
+  fun getIfExists(): SettingsVirtualFile? {
+    return settingsFileRef.get()
+  }
 
   suspend fun getOrCreate(toSelect: Configurable?, initializer: () -> SettingsDialog): SettingsVirtualFile {
     return withContext(Dispatchers.EDT) {
@@ -88,7 +105,7 @@ internal class SettingsVirtualFileHolder private constructor(private val project
   }
 
   class SettingsVirtualFile(val project: Project, internal var initializer: () -> SettingsDialog) :
-    LightVirtualFile(CommonBundle.settingsTitle(), SettingsFileType, ""), OptionallyIncluded {
+    LightVirtualFile(settingsFileName(project), SettingsFileType, ""), OptionallyIncluded {
     private val wasModified = AtomicBoolean()
 
     private val dialogLazy = SynchronizedClearableLazy {
@@ -157,6 +174,10 @@ internal class SettingsVirtualFileHolder private constructor(private val project
 
     override fun shouldSkipEventSystem() = true
 
+    override fun getFileSystem(): VirtualFileSystem {
+      return SettingsFileSystem.getInstance() ?: super.getFileSystem()
+    }
+
     fun disposeDialog() {
       dialogLazy.valueIfInitialized?.apply {
         Disposer.dispose( this.disposable )
@@ -186,9 +207,9 @@ internal class SettingsVirtualFileHolder private constructor(private val project
   }
 
   private object SettingsFileType : FileType {
-    override fun getName(): @NonNls String = CommonBundle.settingsTitle()
+    override fun getName(): @NonNls String = "settingsType"
 
-    override fun getDescription(): @NlsContexts.Label String = CommonBundle.settingsTitle()
+    override fun getDescription(): @NlsContexts.Label String = "SettingsFile"
     override fun getDefaultExtension() = ""
 
     override fun getIcon() = AllIcons.General.Settings
@@ -222,5 +243,46 @@ private class SettingModifiedExternallyNotificationProvider : EditorNotification
     }
   }
 }
+private fun settingsFileName(project: Project): String {
+  return "${project.locationHash}/$SETTINGS_KEY"
+}
+
+private class SettingsFileSystem : DummyFileSystem() {
+
+  companion object{
+    const val PROTOCOL = SETTINGS_KEY
+
+    fun getInstance(): SettingsFileSystem? {
+      return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as SettingsFileSystem?
+    }
+  }
+
+  override fun findFileByPath(path: String): VirtualFile? {
+    val split = path.split("/").filterNot(String::isNullOrBlank)
+    return ProjectManager.getInstance().openProjects.firstOrNull {
+      it.locationHash == split.getOrNull(0)
+    }?.let { project ->
+      SettingsVirtualFileHolder.getInstance(project).getIfExists() ?: return null
+    }
+  }
+
+  override fun getProtocol(): String {
+    return PROTOCOL
+  }
+}
+
+private class SettingsNavBarModelExtension: AbstractNavBarModelExtension() {
+  override fun getPresentableText(obj: Any?): String? {
+    val virtualFile = PsiUtilCore.getVirtualFile(obj as? PsiElement ?: return null) ?: return null
+    if (virtualFile is SettingsVirtualFile)
+      return CommonBundle.settingsTitle()
+    else
+      return null
+  }
+
+
+}
+
+private const val SETTINGS_KEY = "settings"
 
 private val KEY = Key.create<Set<String>>("SettingModifiedExternally")
