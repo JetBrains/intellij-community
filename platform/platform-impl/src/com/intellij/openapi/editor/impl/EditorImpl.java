@@ -44,6 +44,8 @@ import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
 import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
+import com.intellij.openapi.editor.impl.view.CharacterGrid;
+import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -343,6 +345,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   final EditorView myView;
   final @Nullable EditorView myAdView;
   private static final boolean AD_V2 = Registry.is("ijpl.rhizome.ad.v2.enabled", false);
+
+  private @Nullable CharacterGridImpl myCharacterGrid;
 
   private boolean myCharKeyPressed;
   private boolean myNeedToSelectPreviousChar;
@@ -3596,6 +3600,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public @NotNull DeleteProvider getDeleteProvider() {
     return getViewer();
+  }
+
+  /**
+   * Returns the instance of the character grid corresponding to this editor
+   * <p>
+   *   A non-{@code null} value is only returned when the character grid mode is enabled,
+   *   see {@link EditorSettings#setCharacterGridWidthMultiplier(Float)}.
+   * </p>
+   * @return the current character grid instance or {@code null} if the editor is not in the grid mode
+   */
+  @ApiStatus.Internal
+  public @Nullable CharacterGrid getCharacterGrid() {
+    if (getSettings().getCharacterGridWidthMultiplier() == null) {
+      myCharacterGrid = null;
+      return null;
+    }
+    else {
+      if (myCharacterGrid == null) {
+        myCharacterGrid = new CharacterGridImpl(this);
+      }
+      return myCharacterGrid;
+    }
   }
 
   private final class MyEditable implements CutProvider, CopyProvider, PasteProvider, DeleteProvider, DumbAware {
