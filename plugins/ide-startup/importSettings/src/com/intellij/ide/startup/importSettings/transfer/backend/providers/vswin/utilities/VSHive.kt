@@ -2,11 +2,13 @@
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities
 
 import com.intellij.ide.startup.importSettings.TransferableIdeVersionId
-import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSRegistryParserNew
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.Version2
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSIsolationIniParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSRegistryParserNew
 import com.intellij.openapi.diagnostic.logger
 import java.util.*
+import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
 
 class VSHiveDetourFileNotFoundException : Exception()
 
@@ -25,7 +27,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
   val isolation: VSIsolationIniParser? by lazy { VSIsolationIniParser.create(this) }
 
   val isInstalled: Boolean by lazy { registry?.envPath?.second.let { it != null && it.exists() } }
-  val lastUsage: Date by lazy { registry?.settingsFile?.lastModified().let { Date(it ?: 0) } }
+  val lastUsage: Date by lazy { registry?.settingsFile?.getLastModifiedTime().let { Date(it?.toMillis() ?: 0L) } }
   val edition: String? by lazy { isolation?.edition }
 
   init {

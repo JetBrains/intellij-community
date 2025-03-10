@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vswin.utilities
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities
 
 import com.intellij.ide.startup.importSettings.db.WindowsEnvVariables
-import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHive
 import com.intellij.openapi.diagnostic.logger
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
-import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 class VSPossibleVersionsEnumerator {
 
@@ -43,24 +45,17 @@ class VSPossibleVersionsEnumerator {
   }
 
   private fun enumNewPossibleVersions(): List<VSHive> {
-    val dir = File("${WindowsEnvVariables.localApplicationData}\\Microsoft\\VisualStudio")
+    val dir = Path(WindowsEnvVariables.localApplicationData, "Microsoft\\VisualStudio")
 
-    if (!dir.exists()) {
+    if (!dir.isDirectory()) {
       return emptyList()
     }
 
     return try {
-      dir.list()?.mapNotNull { VSHive.parse(it, VSHive.Types.New) }.let {
-        if (it == null) {
-          logger.warn("list was null")
-          emptyList()
-        }
-        else it
-      }
+      dir.listDirectoryEntries().mapNotNull { VSHive.parse(it.name, VSHive.Types.New) }
     }
     catch (t: Throwable) {
-      logger.warn("Failed to read ${dir.absolutePath}")
-      logger.warn(t)
+      logger.warn("Failed to read \"$dir\".", t)
       emptyList()
     }
 

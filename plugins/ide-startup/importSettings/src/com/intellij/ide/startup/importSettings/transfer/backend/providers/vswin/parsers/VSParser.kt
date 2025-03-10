@@ -3,7 +3,6 @@ package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin
 
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSXmlParser
 import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSchemes
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHive
 import com.intellij.openapi.diagnostic.logger
