@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.builtInHelp.indexer
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer
@@ -10,19 +10,21 @@ import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.store.FSDirectory
 import org.jsoup.Jsoup
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.Locale
-import kotlin.collections.ArrayList
+import java.util.*
+import kotlin.io.path.extension
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 class HelpIndexer
 @Throws(IOException::class)
 internal constructor(indexDir: String) {
 
   private val writer: IndexWriter
-  private val queue = ArrayList<File>()
 
   init {
     val dir = FSDirectory.open(Paths.get(indexDir))
@@ -32,8 +34,20 @@ internal constructor(indexDir: String) {
 
   @Throws(IOException::class)
   fun indexFileOrDirectory(fileName: String) {
-
-    addFiles(File(fileName))
+    val file = Path.of(fileName)
+    val queue = if (Files.isRegularFile(file)) {
+      if (file.extension.lowercase(Locale.getDefault()) in setOf("htm", "html")) listOf(file)
+      else return
+    }
+    else if (Files.isDirectory(file)) {
+      Files.walk(file).use { stream ->
+        stream
+          .filter { it.isRegularFile() }
+          .filter { it.extension.lowercase(Locale.getDefault()) in setOf("htm", "html") }
+          .toList()
+      }
+    }
+    else return
 
     for (f in queue) {
       try {
@@ -42,35 +56,34 @@ internal constructor(indexDir: String) {
 
         val content = StringBuilder()
         val lineSeparator = System.lineSeparator()
-        parsedDocument.body().getElementsByClass("article")[0].children()
+        val articles = parsedDocument.body().getElementsByClass("article")
+        val title = parsedDocument.title()
+        if (articles.isEmpty()) {
+          if (title.contains("You will be redirected shortly")) {
+            println("Skipping redirect page: $f ")
+          }
+          else if (parsedDocument.body().attr("data-template") == "section-page") {
+            println("Skipping section page: $f")
+          }
+          else {
+            System.err.println("Could not add: $f because no `<article>` found. Title is '$title'")
+          }
+          continue
+        }
+        @Suppress("SpellCheckingInspection")
+        articles[0].children()
           .filterNot { it.hasAttr("data-swiftype-index") }
           .forEach { content.append(it.text()).append(lineSeparator) }
 
         doc.add(TextField("contents", content.toString(), Field.Store.YES))
         doc.add(StringField("filename", f.name, Field.Store.YES))
-        doc.add(StringField("title", parsedDocument.title(), Field.Store.YES))
+        doc.add(StringField("title", title, Field.Store.YES))
 
         writer.addDocument(doc)
         println("Added: $f")
       }
       catch (e: Throwable) {
-        println("Could not add: $f because ${e.message}")
-      }
-    }
-    queue.clear()
-  }
-
-  private fun addFiles(file: File) {
-    if (file.isDirectory) {
-      val files = file.listFiles() ?: emptyArray()
-      for (f in files) {
-        addFiles(f)
-      }
-    }
-    else {
-      val filename = file.name.lowercase(Locale.getDefault())
-      if (filename.endsWith(".htm") || filename.endsWith(".html")) {
-        queue.add(file)
+        System.err.println("Could not add: $f because ${e.message}")
       }
     }
   }
@@ -92,6 +105,7 @@ internal constructor(indexDir: String) {
     @Throws(IOException::class)
     @JvmStatic
     fun main(args: Array<String>) {
+      @Suppress("SpellCheckingInspection")
       val tokens = listOf(
         "<noscript><iframe src=\"//www.googletagmanager.com/ns.html?id=GTM-5P98\" height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>",
         "</script><script src=\"/help/app/v2/analytics.js\"></script>",
@@ -101,15 +115,21 @@ internal constructor(indexDir: String) {
         "'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);",
         "})(window,document,'script','dataLayer','GTM-5P98');")
 
-      val files = Paths.get(args[1]).toFile().listFiles() ?: emptyArray()
-      files.filter { it.extension == "html" }.forEach {
-        var contents = String(Files.readAllBytes(it.toPath()), Charsets.UTF_8)
-        println("Removing analytics code from ${it.name}")
+      val files = Paths.get(args[1]).listDirectoryEntries("*.html")
+      files.forEach {
+        val original = Files.readString(it, Charsets.UTF_8)
+        var contents = original
         for (token in tokens) {
           contents = contents.replace(token, "")
         }
         contents = contents.replace("//resources.jetbrains.com/storage/help-app/", "/help/")
-        Files.write(it.toPath(), contents.toByteArray(Charsets.UTF_8))
+        if (contents != original) {
+          println("Removed analytics code from ${it.name}")
+          Files.writeString(it, contents, Charsets.UTF_8)
+        }
+        else {
+          println("No analytics code to remove from ${it.name}")
+        }
       }
 
       doIndex(args[0], args[1])
