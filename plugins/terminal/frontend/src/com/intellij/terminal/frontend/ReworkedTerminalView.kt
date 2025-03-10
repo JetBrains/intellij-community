@@ -50,7 +50,7 @@ import kotlin.math.min
 internal class ReworkedTerminalView(
   private val project: Project,
   settings: JBTerminalSystemSettingsProviderBase,
-  sessionFuture: CompletableFuture<TerminalSession>,
+  private val sessionFuture: CompletableFuture<TerminalSession>,
 ) : TerminalContentView {
   private val coroutineScope = terminalProjectScope(project).childScope("ReworkedTerminalView")
 
@@ -156,7 +156,9 @@ internal class ReworkedTerminalView(
   override fun isCommandRunning(): Boolean {
     // Will work only if there is a shell integration.
     // If there is no shell integration, then it is always false.
+    val session = sessionFuture.getNow(null) ?: return false
     return blocksModel.blocks.last().outputStartOffset != -1
+           && !session.isClosed
   }
 
   override fun getTerminalSize(): TermSize? {
