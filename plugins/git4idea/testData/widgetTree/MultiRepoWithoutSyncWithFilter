@@ -1,0 +1,14 @@
+------
+-Local Branches in project
+ -another
+  -group
+   test
+ -group
+  test
+-Remote Branches in project
+ -origin
+  -another
+   -group
+    test
+  -group
+   test

@@ -24,6 +24,7 @@ import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSI
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
@@ -138,9 +139,14 @@ class GitBranchesTreePopup(
      */
     @JvmStatic
     fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
+      return GitBranchesTreePopup(project, createBranchesTreePopupStep(project, selectedRepository))
+    }
+
+    @VisibleForTesting
+    internal fun createBranchesTreePopupStep(project: Project, selectedRepository: GitRepository?): GitBranchesTreePopupStep {
       val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
       val selectedRepoIfNeeded = if (GitBranchActionsUtil.userWantsSyncControl(project)) null else selectedRepository
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true))
+      return GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true)
     }
   }
 }

@@ -1,0 +1,27 @@
+-Update Project...
+-Commit…
+-Push…
+------
+-New Branch…
+-Checkout Tag or Revision…
+------
+-bro-repo
+-project
+------
+-Local Branches in project
+ master
+ -another
+  -group
+   test
+ -group
+  test
+ test
+-Remote Branches in project
+ -origin
+  master
+  -another
+   -group
+    test
+  -group
+   test
+  test

@@ -1,0 +1,48 @@
+-Common Local Branches
+ -another
+  -group
+   test
+ -group
+  test
+-Common Remote Branches
+ -origin
+  -another
+   -group
+    test
+  -group
+   test
+-Common Tags
+-bro-repo
+ -Local
+  -another
+   -group
+    test
+  -group
+   test
+ -Remote
+  -origin
+   -another
+    -group
+     test
+   -group
+    test
+ -Tags
+  -group
+   v2
+-project
+ -Local
+  -another
+   -group
+    test
+  -group
+   test
+ -Remote
+  -origin
+   -another
+    -group
+     test
+   -group
+    test
+ -Tags
+  -group
+   v2
