@@ -348,7 +348,7 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
 
   fun SyntaxGeneratedParserRuntime.leftMarkerIs(type: SyntaxElementType?): Boolean {
     val lastDoneMarker = builder.lastDoneMarker
-    return lastDoneMarker?.getTokenType() === type
+    return lastDoneMarker?.getNodeType() === type
   }
 
   private fun SyntaxGeneratedParserRuntime.consumeTokens(smart: Boolean, pin: Int, vararg tokens: SyntaxElementType?): Boolean {
@@ -741,7 +741,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
         errorReported = reportError(state, frame, elementType != null, false, false)
       }
       // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
-      if (latestDoneMarker != null && frame.position >= latestDoneMarker.getStartIndex() && frame.position <= latestDoneMarker.getEndIndex()) {
+      if (latestDoneMarker != null && frame.position >= latestDoneMarker.getStartTokenIndex() && frame.position <= latestDoneMarker.getEndTokenIndex()) {
         extend_marker_impl(latestDoneMarker)
       }
       state.suppressErrors = false
@@ -801,10 +801,10 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
       if (result || pinned) {
         if ((frame.modifiers and _COLLAPSE_) != 0) {
           val last: SyntaxTreeBuilder.Marker? = builder.lastDoneMarker
-          if (last != null && last.getStartIndex() == frame.position &&
-              state.typeExtends(last.getTokenType(), elementType) &&
-              wasAutoSkipped(builder.rawTokenIndex() - last.getEndIndex())) {
-            elementType = last.getTokenType()
+          if (last != null && last.getStartTokenIndex() == frame.position &&
+              state.typeExtends(last.getNodeType(), elementType) &&
+              wasAutoSkipped(builder.rawTokenIndex() - last.getEndTokenIndex())) {
+            elementType = last.getNodeType()
             last.drop()
           }
         }
@@ -852,7 +852,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
 
   private fun extend_marker_impl(marker: SyntaxTreeBuilder.Marker) {
     val precede: SyntaxTreeBuilder.Marker = marker.precede()
-    val elementType: SyntaxElementType = marker.getTokenType()
+    val elementType: SyntaxElementType = marker.getNodeType()
     if (elementType === SyntaxTokenTypes.ERROR_ELEMENT) {
       precede.error(marker.getErrorMessage() ?: "")
     }
@@ -877,7 +877,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
     }
     else {
       frame?.let {
-        val position: Int = marker.getStartIndex()
+        val position: Int = marker.getStartTokenIndex()
         if (frame.errorReportedAt > position) {
           frame.errorReportedAt = frame.parentFrame?.let { parentFrame -> parentFrame.errorReportedAt } ?: -1
         }
@@ -962,7 +962,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
     else if (inner) {
       val latestDoneMarker: SyntaxTreeBuilder.Marker? = getLatestExtensibleDoneMarker(builder)
       builder.error(message)
-      if (latestDoneMarker != null && frame.position >= latestDoneMarker.getStartIndex() && frame.position <= latestDoneMarker.getEndIndex()) {
+      if (latestDoneMarker != null && frame.position >= latestDoneMarker.getStartTokenIndex() && frame.position <= latestDoneMarker.getEndTokenIndex()) {
         extend_marker_impl(latestDoneMarker)
       }
     }
@@ -981,7 +981,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
     if (frame != null && frame.errorReportedAt > pos) {
       // report error for previous unsuccessful frame
       val marker: SyntaxTreeBuilder.Marker? = builder.lastDoneMarker
-      var endOffset = marker?.getEndIndex() ?: (pos + 1)
+      var endOffset = marker?.getEndTokenIndex() ?: (pos + 1)
       while (endOffset <= pos && isWhitespaceOrComment(builder.rawLookup(endOffset - pos))) endOffset++
       val inner = endOffset == pos
       builder.eof()
@@ -1032,7 +1032,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
       var tokenIdx = -1
       while (builder.rawLookup(tokenIdx) === SyntaxTokenTypes.WHITE_SPACE) tokenIdx--
       val doneMarker = if (builder.rawLookup(tokenIdx) == lBrace) builder.lastDoneMarker else null
-      if (doneMarker != null && doneMarker.getStartOffset() == builder.rawTokenTypeStart(tokenIdx) && doneMarker.getTokenType() === SyntaxTokenTypes.ERROR_ELEMENT) {
+      if (doneMarker != null && doneMarker.getStartOffset() == builder.rawTokenTypeStart(tokenIdx) && doneMarker.getNodeType() === SyntaxTokenTypes.ERROR_ELEMENT) {
         parens.add(Pair(doneMarker.precede(), null))
       }
     }
