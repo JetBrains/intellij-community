@@ -13,7 +13,7 @@ import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("DEPRECATION")
-@State(name = "TerminalOptionsProvider",
+@State(name = TerminalOptionsProvider.COMPONENT_NAME,
        category = SettingsCategory.TOOLS,
        exportable = true,
        presentableName = TerminalOptionsProvider.PresentableNameGetter::class,
@@ -30,6 +30,14 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       val previousCursorShape = TerminalUiSettingsManager.getInstance().cursorShape
       state.cursorShape = previousCursorShape
     }
+
+    // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
+    // So, notify the listeners on every `loadState` to not miss the change.
+    fireSettingsChanged()
+  }
+
+  override fun noStateLoaded() {
+    loadState(State())
   }
 
   class State {
@@ -195,6 +203,8 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     val instance: TerminalOptionsProvider
       @JvmStatic
       get() = service()
+
+    internal const val COMPONENT_NAME: String = "TerminalOptionsProvider"
   }
 
   class PresentableNameGetter: com.intellij.openapi.components.State.NameGetter() {

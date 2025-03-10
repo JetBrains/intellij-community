@@ -16,13 +16,15 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.abs
 
 @State(
-  name = "TerminalFontOptions",
+  name = TerminalFontOptions.COMPONENT_NAME,
   storages = [Storage("terminal-font.xml")],
 )
 @ApiStatus.Internal
 class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() {
   companion object {
     @JvmStatic fun getInstance(): TerminalFontOptions = service<TerminalFontOptions>()
+
+    internal const val COMPONENT_NAME: String = "TerminalFontOptions"
   }
 
   private val listeners = CopyOnWriteArrayList<TerminalFontOptionsListener>()
@@ -59,7 +61,7 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
     columnSpacing = settings.columnSpacing
     // apply the FontPreferences part, the last line because it invokes incModificationCount()
     update(newPreferences)
-    listeners.forEach { it.fontOptionsChanged() }
+    fireListeners()
   }
 
   override fun createFontState(fontPreferences: FontPreferences): PersistentTerminalFontPreferences =
@@ -70,6 +72,10 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
   override fun loadState(state: PersistentTerminalFontPreferences) {
     columnSpacing = state.COLUMN_SPACING
     super.loadState(state)
+
+    // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
+    // So, notify the listeners on every `loadState` to not miss the change.
+    fireListeners()
   }
 
   override fun noStateLoaded() {
@@ -82,6 +88,12 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
       defaultState.LINE_SPACING = DEFAULT_TERMINAL_LINE_SPACING
     }
     loadState(defaultState)
+  }
+
+  private fun fireListeners() {
+    for (listener in listeners) {
+      listener.fontOptionsChanged()
+    }
   }
 }
 
