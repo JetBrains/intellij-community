@@ -8,4 +8,5 @@ object DistributedTestsAgentConstants {
   const val protocolHostPropertyName = "RDCT_TESTING_HOST"
   const val protocolPortPropertyName = "RDCT_TESTING_PORT"
   const val threadDumpFileSubstring = "threadDump"
+  const val sourcePathProperty = "idea.sources.path"
 }

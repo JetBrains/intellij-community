@@ -3,12 +3,6 @@
     <module name="intellij.platform.testFramework.common" />
     <module name="intellij.platform.testFramework.core" />
     <module name="intellij.platform.testFramework.impl" />
+    <module name="intellij.libraries.junit4" />
   </dependencies>
-  <extensions defaultExtensionNs="com.intellij">
-    <!-- 'serviceImplementation' not needed here-->
-    <!--suppress PluginXmlValidity -->
-    <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
-                        testServiceImplementation="com.intellij.project.TestProjectManager"
-                        overrides="true"/>
-  </extensions>
 </idea-plugin>

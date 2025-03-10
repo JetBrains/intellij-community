@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
-    <orderEntry type="library" exported="" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" exported="" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />

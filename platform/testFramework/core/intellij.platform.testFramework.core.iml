@@ -12,8 +12,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
     <orderEntry type="library" name="opentest4j" level="project" />
-    <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
