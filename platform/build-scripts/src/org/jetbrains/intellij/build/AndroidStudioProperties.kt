@@ -37,8 +37,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     private val EXTRA_PLUGINS = listOf(
       // We bundle DevKit for ASwB development purposes (b/308477340).
       "intellij.devkit",
-      // Bundle the GitHub plugin, just like IdeaCommunityProperties does.
+      // Bundle the GitHub and GitLab plugins, just like IdeaCommunityProperties does.
       "intellij.vcs.github.community",
+      "intellij.vcs.gitlab.community",
       // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
       // and the structure of CIDR plugins.
       "intellij.c.clangd",
