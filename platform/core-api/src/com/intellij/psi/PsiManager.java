@@ -76,6 +76,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @param file the directory for which the PSI is requested.
    * @return the PSI directory, or {@code null} if there is no PSI for the specified directory in this project.
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiDirectory findDirectory(@NotNull VirtualFile file);
 
   /**
