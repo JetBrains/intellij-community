@@ -33,6 +33,10 @@ internal suspend fun <R> suspendAllAndEvaluate(
 
   }
   else if (process.isEvaluationPossible(suspendContext)) {
+    if (suspendContext.suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD) {
+      error("Capturing extended thread dump is not yet supported on suspend-thread breakpoint")
+    }
+
     // We are on a breakpoint, we can evaluate right here.
     val result = Channel<R>(capacity = 1)
 
