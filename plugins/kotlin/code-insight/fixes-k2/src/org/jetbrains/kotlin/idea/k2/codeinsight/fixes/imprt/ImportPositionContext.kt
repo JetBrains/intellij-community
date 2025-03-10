@@ -32,8 +32,8 @@ internal sealed class ImportPositionContext<out TPosition : KtElement, out TRece
     class InfixCall(position: KtOperationReferenceExpression, receiver: KtExpression) :
         ImportPositionContext<KtOperationReferenceExpression, KtExpression>(position, receiver)
 
-    class OperatorCall(position: KtOperationReferenceExpression, receiver: KtExpression) :
-        ImportPositionContext<KtOperationReferenceExpression, KtExpression>(position, receiver)
+    class OperatorCall(position: KtReferenceExpression, receiver: KtExpression) :
+        ImportPositionContext<KtReferenceExpression, KtExpression>(position, receiver)
 
     class CallableReference(position: KtSimpleNameExpression, receiver: KtExpression?) :
         ImportPositionContext<KtSimpleNameExpression, KtExpression?>(position, receiver)

@@ -45,6 +45,12 @@ object ImportQuickFixFactories {
 
     val newInferenceNoInformationForParameterFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NewInferenceNoInformationForParameter> =
         ImportQuickFixProvider.upcast()
+
+    val noGetMethodFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoGetMethod> =
+        ImportQuickFixProvider.upcast()
+
+    val noSetMethodFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoSetMethod> =
+        ImportQuickFixProvider.upcast()
 }
 
 /**

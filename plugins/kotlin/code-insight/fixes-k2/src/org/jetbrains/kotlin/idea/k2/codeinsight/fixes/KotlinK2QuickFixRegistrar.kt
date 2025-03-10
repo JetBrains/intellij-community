@@ -287,7 +287,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ImportQuickFixFactories.noneApplicableFactory)
         registerFactory(ImportQuickFixFactories.wrongNumberOfTypeArgumentsFactory)
         registerFactory(ImportQuickFixFactories.newInferenceNoInformationForParameterFactory)
-        
+
+        registerFactory(ImportQuickFixFactories.noGetMethodFactory)
+        registerFactory(ImportQuickFixFactories.noSetMethodFactory)
+
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionMissingFactory)
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionNoneApplicableFactory)
     }
