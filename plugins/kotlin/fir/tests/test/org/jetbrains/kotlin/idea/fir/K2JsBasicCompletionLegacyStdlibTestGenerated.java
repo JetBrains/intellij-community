@@ -2382,11 +2382,6 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/primitiveCompletion/noCompletionAfterNumberLiteral1.kt");
             }
 
-            @TestMetadata("noCompletionAfterNumberLiteral2.kt")
-            public void testNoCompletionAfterNumberLiteral2() throws Exception {
-                runTest("../../completion/testData/basic/common/primitiveCompletion/noCompletionAfterNumberLiteral2.kt");
-            }
-
             @TestMetadata("nullableCompletion.kt")
             public void testNullableCompletion() throws Exception {
                 runTest("../../completion/testData/basic/common/primitiveCompletion/nullableCompletion.kt");

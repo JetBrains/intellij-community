@@ -69,7 +69,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParameters.create(parameters)
             ?: return
 
-        if (shouldSuppressCompletion(parameters, result.prefixMatcher)) return
+        if (shouldSuppressCompletion(parameters)) return
         val positionContext = KotlinPositionContextDetector.detect(parameters.position)
 
         val resultSet = result.withRelevanceSorter(parameters, positionContext)
@@ -116,16 +116,11 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
     private fun shouldSuppressCompletion(
         parameters: KotlinFirCompletionParameters,
-        prefixMatcher: PrefixMatcher
     ): Boolean {
         val position = parameters.position
-        val invocationCount = parameters.invocationCount
 
         // no completion inside number literals
         if (AFTER_NUMBER_LITERAL.accepts(position)) return true
-
-        // no completion auto-popup after integer and dot
-        if (invocationCount == 0 && prefixMatcher.prefix.isEmpty() && AFTER_INTEGER_LITERAL_AND_DOT.accepts(position)) return true
 
         return false
     }
