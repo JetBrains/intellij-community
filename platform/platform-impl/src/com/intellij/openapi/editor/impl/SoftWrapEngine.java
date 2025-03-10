@@ -12,10 +12,12 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
+import com.intellij.openapi.editor.impl.view.CharacterGrid;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.impl.view.WrapElementMeasuringIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +69,16 @@ public final class SoftWrapEngine {
     int startOffset = myEvent.getStartOffset();
     int minEndOffset = myEvent.getMandatoryEndOffset();
     int maxEndOffset = getEndOffsetUpperEstimate();
+    var inlineInlays = myEditor.getInlayModel().getInlineElementsInRange(startOffset, maxEndOffset);
+    var afterLineEndInlays = ContainerUtil.filter(
+      myEditor.getInlayModel().getAfterLineEndElementsInRange(DocumentUtil.getLineStartOffset(startOffset, myDocument), maxEndOffset),
+      inlay -> !inlay.getProperties().isSoftWrappingDisabled()
+    );
+    var grid = myEditor.getCharacterGrid();
+    if (grid != null && inlineInlays.isEmpty() && afterLineEndInlays.isEmpty()) {
+      generateGridSoftWraps(grid, startOffset, minEndOffset, maxEndOffset);
+      return;
+    }
 
     SoftWrap lastSoftWrap = null;
     boolean minWrapOffsetAtFolding = false;
@@ -84,7 +96,7 @@ public final class SoftWrapEngine {
       x = lastSoftWrap == null ? 0 : lastSoftWrap.getIndentInPixels();
     }
 
-    WrapElementMeasuringIterator it = new WrapElementMeasuringIterator(myView, startOffset, maxEndOffset);
+    WrapElementMeasuringIterator it = new WrapElementMeasuringIterator(myView, startOffset, maxEndOffset, inlineInlays, afterLineEndInlays);
     while (!it.atEnd()) {
       if (it.isLineBreak()) {
         minWrapOffset = -1;
@@ -208,5 +220,39 @@ public final class SoftWrapEngine {
       endOffsetUpperEstimate = myDocument.getLineStartOffset(line + 1);
     }
     return endOffsetUpperEstimate;
+  }
+
+  private void generateGridSoftWraps(CharacterGrid grid, int startOffset, int minEndOffset, int maxEndOffset) {
+    int widthInColumns = grid.getColumns();
+    int endOffset = maxEndOffset;
+    var wrappedSoFar = 0;
+    for (var it = grid.iterator(startOffset, maxEndOffset); !it.isAtEnd(); it.advance()) {
+      var cellStartOffset = it.getCellStartOffset();
+      var cellEndOffset = it.getCellEndOffset();
+      var cellStartColumn = it.getCellStartColumn() - wrappedSoFar;
+      var cellEndColumn = it.getCellEndColumn() - wrappedSoFar;
+      if (it.isLineBreak()) {
+        wrappedSoFar = 0;
+        if (cellEndOffset > minEndOffset) {
+          endOffset = cellEndOffset;
+          break;
+        }
+      }
+      else if (cellEndColumn > widthInColumns) {
+        wrappedSoFar += cellStartColumn;
+        var softWrap = createGridSoftWrap(cellStartOffset);
+        if (cellStartOffset > minEndOffset && myDataMapper.matchesOldSoftWrap(softWrap, myEvent.getLengthDiff())) {
+          endOffset = cellStartOffset;
+          break;
+        }
+      }
+    }
+    myEvent.setActualEndOffset(endOffset);
+  }
+
+  private @NotNull SoftWrapImpl createGridSoftWrap(int offset) {
+    var result = new SoftWrapImpl(new TextChangeImpl("\n", offset), 1, mySoftWrapWidth);
+    myStorage.storeOrReplace(result);
+    return result;
   }
 }
