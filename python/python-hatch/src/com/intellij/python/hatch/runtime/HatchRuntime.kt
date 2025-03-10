@@ -3,20 +3,20 @@ package com.intellij.python.hatch.runtime
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.*
-import com.intellij.python.hatch.BasePythonExecutableNotFoundHatchError
-import com.intellij.python.hatch.HatchConfiguration
-import com.intellij.python.hatch.HatchError
-import com.intellij.python.hatch.WorkingDirectoryNotFoundHatchError
+import com.intellij.python.community.execService.WhatToExec.Binary
+import com.intellij.python.hatch.*
 import com.intellij.python.hatch.cli.HatchCli
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.resolvePythonBinary
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
 
 class HatchRuntime(
-  val hatchBinary: WhatToExec.Binary,
+  val hatchBinary: Binary,
   val execOptions: ExecOptions,
   private val execService: ExecService = ExecService(),
 ) {
@@ -58,6 +58,17 @@ class HatchRuntime(
   internal suspend fun <T> executeInteractive(vararg arguments: String, eelProcessInteractiveHandler: EelProcessInteractiveHandler<T>): Result<T, PyError.ExecException> {
     return execService.executeInteractive(hatchBinary, arguments.toList(), execOptions, eelProcessInteractiveHandler)
   }
+
+  internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): Result<PythonVirtualEnvironment, PyError> {
+    val pythonVersion = pythonHomePath.takeIf { it.isDirectory() }?.resolvePythonBinary()?.let { pythonBinaryPath ->
+      execService.execGetStdout(Binary(pythonBinaryPath), listOf("--version")).getOr { return it }.trim()
+    }
+    val pythonVirtualEnvironment = when {
+      pythonVersion == null -> PythonVirtualEnvironment.NotExisting(pythonHomePath)
+      else -> PythonVirtualEnvironment.Existing(pythonHomePath, pythonVersion)
+    }
+    return Result.success(pythonVirtualEnvironment)
+  }
 }
 
 
@@ -84,7 +95,7 @@ suspend fun createHatchRuntime(
   val actualEnvVars = defaultVariables + envVars
 
   val runtime = HatchRuntime(
-    hatchBinary = WhatToExec.Binary(actualHatchExecutable),
+    hatchBinary = Binary(actualHatchExecutable),
     execOptions = ExecOptions(
       env = actualEnvVars,
       workingDirectory = workingDirectoryPath
