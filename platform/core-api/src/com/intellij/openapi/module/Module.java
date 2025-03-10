@@ -19,6 +19,7 @@ import java.nio.file.Path;
  *
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/module.html">IntelliJ Platform Docs</a>
  */
+@ApiStatus.NonExtendable
 public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
    * The empty array of modules which can be reused to avoid unnecessary allocations.
