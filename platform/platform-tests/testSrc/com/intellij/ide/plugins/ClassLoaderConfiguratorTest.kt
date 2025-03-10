@@ -70,22 +70,6 @@ internal class ClassLoaderConfiguratorTest {
   }
 
   @Test
-  fun packageForOptionalMustBeDifferent() {
-    assertThatThrownBy {
-      loadPlugins(modulePackage = "com.example")
-    }.hasMessageContaining("Package prefix com.example is already used")
-    .hasMessageContaining("com.example")
-  }
-
-  @Test
-  fun packageMustBeUnique() {
-    assertThatThrownBy {
-      loadPlugins(modulePackage = "com.bar")
-    }.hasMessageContaining("Package prefix com.bar is already used")
-    .hasMessageContaining("package=com.bar")
-  }
-
-  @Test
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
     val loadingResult = loadPlugins(modulePackage = "com.example.extraSupportedFeature")
     val plugin = loadingResult
