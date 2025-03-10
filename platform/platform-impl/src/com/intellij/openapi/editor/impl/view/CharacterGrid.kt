@@ -30,6 +30,11 @@ interface CharacterGrid {
   val rows: Int
 
   /**
+   * The width of a single-width character in pixels.
+   */
+  val charWidth: Float
+
+  /**
    * The strategy to differentiate between single and double width characters.
    *
    *   If not set, then the character width will be guessed by its actual width in the font used.
@@ -130,7 +135,7 @@ internal class CharacterGridImpl(
   private val size: Dimension
     get() = editor.scrollingModel.visibleArea.size
 
-  private val charWidth: Float
+  override val charWidth: Float
     get() = view.maxCharWidth * columnSpacing
 
   override val columns: Int

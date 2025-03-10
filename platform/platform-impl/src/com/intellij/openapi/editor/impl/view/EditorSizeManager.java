@@ -369,20 +369,28 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     if (!myWidthIsValid) {
       assert !myDocument.isInBulkUpdate();
       assert !myInlayModel.isInBatchMode();
-      boolean needFullScan = true;
-      if (myStartInvalidLine <= myEndInvalidLine && (myEndInvalidLine - myStartInvalidLine) < SPECIFIC_LINES_RECALC_THRESHOLD ) {
-        IntPair pair = calculateTextPreferredWidth(myStartInvalidLine, myEndInvalidLine);
-        needFullScan = pair.first < myWidthInPixels &&
-                       myStartInvalidLine <= myWidthDefiningLineNumber && myWidthDefiningLineNumber <= myEndInvalidLine;
-        if (pair.first >= myWidthInPixels) {
+      var grid = myEditor.getCharacterGrid();
+      var columns = grid == null ? 0 : grid.getColumns();
+      if (columns > 0) {
+        myWidthInPixels = (int)Math.ceil(columns * grid.getCharWidth());
+        myWidthDefiningLineNumber = 0; // not used anyway
+      }
+      else {
+        boolean needFullScan = true;
+        if (myStartInvalidLine <= myEndInvalidLine && (myEndInvalidLine - myStartInvalidLine) < SPECIFIC_LINES_RECALC_THRESHOLD) {
+          IntPair pair = calculateTextPreferredWidth(myStartInvalidLine, myEndInvalidLine);
+          needFullScan = pair.first < myWidthInPixels &&
+                         myStartInvalidLine <= myWidthDefiningLineNumber && myWidthDefiningLineNumber <= myEndInvalidLine;
+          if (pair.first >= myWidthInPixels) {
+            myWidthInPixels = pair.first;
+            myWidthDefiningLineNumber = pair.second;
+          }
+        }
+        if (needFullScan) {
+          IntPair pair = calculateTextPreferredWidth(0, Integer.MAX_VALUE);
           myWidthInPixels = pair.first;
           myWidthDefiningLineNumber = pair.second;
         }
-      }
-      if (needFullScan) {
-        IntPair pair = calculateTextPreferredWidth(0, Integer.MAX_VALUE);
-        myWidthInPixels = pair.first;
-        myWidthDefiningLineNumber = pair.second;
       }
       myWidthIsValid = true;
       myStartInvalidLine = Integer.MAX_VALUE;
