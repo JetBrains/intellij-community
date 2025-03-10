@@ -9,6 +9,7 @@ import com.sun.jna.platform.win32.WinReg
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.io.path.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
@@ -52,6 +53,9 @@ internal class VisualStudioCollectionDataProvider : ExternalEditorCollectionData
       logger.runAndLogException {
         val appData = System.getenv("LOCALAPPDATA") ?: return@withContext emptySequence()
         val visualStudioHomeDir = Path(appData, "Microsoft", "VisualStudio")
+        if (!visualStudioHomeDir.isDirectory())
+          return@withContext emptySequence()
+
         visualStudioHomeDir.listDirectoryEntries().asSequence()
           .mapNotNull { matchVersion(it.name) }
           .filter { it.instanceId?.length == 8 }
@@ -60,7 +64,14 @@ internal class VisualStudioCollectionDataProvider : ExternalEditorCollectionData
     }
 
   private fun readVersionsFromRegistry(): Sequence<String> = logger.runAndLogException {
-    val registry = Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\VisualStudio")
+    val key = "SOFTWARE\\Microsoft\\VisualStudio"
+    val registry = if (Advapi32Util.registryKeyExists(WinReg.HKEY_CURRENT_USER, key)) {
+      Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, key)
+    }
+    else {
+      return emptySequence()
+    }
+
     registry.asSequence()
       .mapNotNull { matchVersion(it) }
       .filter { it.major == 11 || it.major == 12 || it.major == 14 }
