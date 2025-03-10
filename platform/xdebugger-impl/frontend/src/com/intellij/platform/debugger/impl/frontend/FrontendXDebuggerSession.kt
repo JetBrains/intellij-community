@@ -32,10 +32,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.swing.event.HyperlinkListener
 
-internal class FrontendXDebuggerSession(
+internal class FrontendXDebuggerSession private constructor(
   override val project: Project,
   scope: CoroutineScope,
   sessionDto: XDebugSessionDto,
+  override val consoleView: ConsoleView?,
 ) : XDebugSessionProxy {
   private val cs = scope.childScope("Session ${sessionDto.id}")
   private val localEditorsProvider = sessionDto.editorsProviderDto.editorsProvider
@@ -105,7 +106,7 @@ internal class FrontendXDebuggerSession(
   // TODO pass in DTO?
   override val sessionName: String = sessionDto.sessionName
   override val sessionData: XDebugSessionData = createFeSessionData(sessionDto)
-  override val consoleView: ConsoleView? get() = null // TODO
+
   override val restartActions: List<AnAction>
     get() = emptyList() // TODO
   override val extraActions: List<AnAction>
@@ -234,6 +235,17 @@ internal class FrontendXDebuggerSession(
 
   fun closeScope() {
     cs.cancel()
+  }
+
+  companion object {
+    suspend fun create(
+      project: Project,
+      scope: CoroutineScope,
+      sessionDto: XDebugSessionDto,
+    ): FrontendXDebuggerSession {
+      val consoleView = sessionDto.consoleViewData?.consoleView()
+      return FrontendXDebuggerSession(project, scope, sessionDto, consoleView)
+    }
   }
 }
 

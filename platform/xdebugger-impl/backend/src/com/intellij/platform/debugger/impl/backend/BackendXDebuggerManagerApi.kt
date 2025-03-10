@@ -2,11 +2,8 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
-import com.intellij.openapi.project.Project
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.project.findProjectOrNull
@@ -42,6 +39,14 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   }
 
   private suspend fun createSessionDto(currentSession: XDebugSessionImpl, debugProcess: XDebugProcess): XDebugSessionDto {
+    // TODO: !!!really strong HACK to let consoleView to be initialized.
+    //  It should be Deferred in this case
+    //  or processStarted of DebugProcess listener should.
+    repeat(20) {
+      if (currentSession.consoleView == null) {
+        delay(100)
+      }
+    }
     val editorsProvider = debugProcess.editorsProvider
     val fileTypeId = editorsProvider.fileType.name
     val initialSessionState = XDebugSessionState(
@@ -57,6 +62,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       currentSession.sessionName,
       createSessionEvents(currentSession).toRpc(),
       sessionDataDto,
+      currentSession.consoleView?.toRpc(debugProcess),
     )
   }
 

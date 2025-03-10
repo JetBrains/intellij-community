@@ -75,8 +75,8 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
     }
   }
 
-  private fun createDebuggerSession(sessionDto: XDebugSessionDto) {
-    val frontendSession = FrontendXDebuggerSession(project, cs, sessionDto)
+  private suspend fun createDebuggerSession(sessionDto: XDebugSessionDto) {
+    val frontendSession = FrontendXDebuggerSession.create(project, cs, sessionDto)
     val previousSession = sessions.put(sessionDto.id, frontendSession)
     previousSession?.closeScope()
   }
