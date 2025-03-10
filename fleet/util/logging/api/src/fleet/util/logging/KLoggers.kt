@@ -16,7 +16,3 @@ object KLoggers {
 inline fun <reified T> logger(): KLogger = KLoggers.logger(T::class)
 
 fun KClass<*>.logger(): KLogger = KLoggers.logger(this)
-
-abstract class KLogging(target: KClass<*>? = null) {
-  val logger: KLogger by lazy { KLoggers.logger(target ?: this::class) }
-}

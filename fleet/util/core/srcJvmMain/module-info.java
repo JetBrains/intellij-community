@@ -10,7 +10,6 @@ module fleet.util.core {
   exports fleet.util.serialization;
   exports fleet.util.text;
   exports fleet.util.tree;
-  exports com.tylerthrailkill.helpers.prettyprint;
 
   requires kotlin.stdlib;
   requires kotlinx.coroutines.core;
