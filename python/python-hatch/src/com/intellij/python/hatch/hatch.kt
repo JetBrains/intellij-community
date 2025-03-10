@@ -42,20 +42,32 @@ class FileSystemOperationHatchError(eelFsError: EelFsError) : HatchError(
 
 data class HatchVirtualEnvironment(
   val hatchEnvironment: HatchEnvironment,
-  val pythonVirtualEnvironment: PythonVirtualEnvironment,
+  val pythonVirtualEnvironment: PythonVirtualEnvironment?,
 ) {
   companion object {
     val AVAILABLE_ENVIRONMENTS_FOR_NEW_PROJECT: List<HatchVirtualEnvironment> = listOf(
-      HatchVirtualEnvironment(HatchEnvironment.DEFAULT, PythonVirtualEnvironment.NotExisting())
+      HatchVirtualEnvironment(HatchEnvironment.DEFAULT, null)
     )
   }
 }
 
+/**
+ * Represents a Python virtual environment that can be either existing or non-existing.
+ */
 sealed interface PythonVirtualEnvironment {
-  val pythonHomePath: PythonHomePath?
+  val pythonHomePath: PythonHomePath
 
+  /**
+   * Represents an existing Python virtual environment.
+   * The environment was verified and the Python version was already discovered.
+   */
   data class Existing(override val pythonHomePath: PythonHomePath, val pythonVersion: String) : PythonVirtualEnvironment
-  data class NotExisting(override val pythonHomePath: PythonHomePath? = null) : PythonVirtualEnvironment
+
+  /**
+   * Represents a non-existing Python virtual environment.
+   * This class is used for cases where the Python virtual environment is expected or referenced but does not exist on the file system.
+   */
+  data class NotExisting(override val pythonHomePath: PythonHomePath) : PythonVirtualEnvironment
 }
 
 data class ProjectStructure(
