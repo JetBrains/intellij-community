@@ -78,6 +78,7 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
         }
       }
       String basePath = project.getBasePath();
+      DevKitApplicationPatcherKt.enableIjentDefaultFsProvider(project, project.getBasePath(), vm);
       if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
         assert basePath != null;
         vm.addProperty(PathManager.PROPERTY_SYSTEM_PATH, EelPathUtils.renderAsEelPath(Path.of(basePath, "system/test").toAbsolutePath()));
