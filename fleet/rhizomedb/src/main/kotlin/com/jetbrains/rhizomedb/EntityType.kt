@@ -199,4 +199,5 @@ internal fun <E : Entity> EntityType<E>.buildAttributes(builder: EntityBuilder<E
   }
 }
 
-fun entityModule(entityClass: KClass<out Entity>): String = entityClass.java.module.name ?: "<unknown>"
+// todo: commented out as it's not multiplatform call. Module name is unused now, we need to invent something else when we decide to use it
+fun entityModule(entityClass: KClass<out Entity>): String = /*entityClass.java.module.name ?: */"<unknown>"
