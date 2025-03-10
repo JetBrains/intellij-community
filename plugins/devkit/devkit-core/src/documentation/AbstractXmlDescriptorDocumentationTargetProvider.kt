@@ -9,10 +9,17 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.*
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.pom.PomTargetPsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.siblings
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.xml.DomElement
+import com.intellij.util.xml.DomManager
+import com.intellij.util.xml.reflect.DomAttributeChildDescription
+import com.intellij.util.xml.reflect.DomChildrenDescription
 
 internal const val ELEMENT_PATH_PREFIX = "#element:"
 internal const val ATTRIBUTE_PATH_PREFIX = "#attribute:"
@@ -38,24 +45,62 @@ internal abstract class AbstractXmlDescriptorDocumentationTargetProvider : PsiDo
   override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
     originalElement ?: return null
     if (!isApplicable(element, originalElement)) return null
-    val parent = originalElement.parent
-    val xmlElement = parent as? XmlAttribute ?: parent as? XmlTag ?: return null
-    val elementPath = getXmlElementPath(xmlElement)
+    val (isAttribute, elementPath) = getTargetXmlElementAndPath(element, originalElement) ?: return null
     val content = DocumentationContentProvider.getInstance().getContent(docYamlCoordinates) ?: return null
-    return when (xmlElement) {
-      is XmlTag -> {
-        val docElement = content.findElement(elementPath)?.takeIf { !it.isWildcard() && it.isIncludedInDocProvider() } ?: return null
-        XmlDescriptorElementDocumentationTarget(element.project, content, docElement)
-      }
-      is XmlAttribute -> {
-        val docAttribute = content.findAttribute(elementPath)?.takeIf { it.isIncludedInDocProvider() } ?: return null
-        XmlDescriptorAttributeDocumentationTarget(element.project, content, docAttribute)
-      }
-      else -> null
+    return if (isAttribute) {
+      val docAttribute = content.findAttribute(elementPath)?.takeIf { it.isIncludedInDocProvider() } ?: return null
+      XmlDescriptorAttributeDocumentationTarget(element.project, content, docAttribute)
+    }
+    else {
+      val docElement = content.findElement(elementPath)?.takeIf { !it.isWildcard() && it.isIncludedInDocProvider() } ?: return null
+      XmlDescriptorElementDocumentationTarget(element.project, content, docElement)
     }
   }
 
   abstract fun isApplicable(element: PsiElement, originalElement: PsiElement?): Boolean
+
+  private fun getTargetXmlElementAndPath(element: PsiElement, originalElement: PsiElement): Pair<Boolean, List<String>>? {
+    val originalParent = originalElement.parent
+    val originalXmlElement = originalParent as? XmlAttribute ?: originalParent as? XmlTag ?: return null
+    val domManager = DomManager.getDomManager(element.project)
+    val originalPomTarget = originalXmlElement.asDomElement(domManager)?.childDescription
+    val pomTarget = (element as? PomTargetPsiElement)?.target
+    if (pomTarget == originalPomTarget) { // regular documentation request
+      val elementPath = getXmlElementPath(originalXmlElement)
+      return (originalXmlElement is XmlAttribute) to elementPath
+    }
+    else if (element is PomTargetPsiElement) { // documentation invoked in the completion lookup popup
+      val domElement = findDomContext(domManager, originalElement) ?: return null
+      val target = element.target as? DomChildrenDescription ?: return null
+      val isAttribute = (target is DomAttributeChildDescription<*>)
+      val lookupElementPath = getLookupElementPath(domElement, target) ?: return null
+      return isAttribute to lookupElementPath
+    }
+    return null
+  }
+
+  private fun PsiElement.asDomElement(domManager: DomManager): DomElement? {
+    return when (this) {
+      is XmlTag -> domManager.getDomElement(this)
+      is XmlAttribute -> domManager.getDomElement(this)
+      else -> null
+    }
+  }
+
+  private fun findDomContext(domManager: DomManager, context: PsiElement): DomElement? {
+    if (context is PsiWhiteSpace) {
+      val prevDomElement = context.siblings(forward = false, withSelf = false)
+            .mapNotNull { it as? XmlTag }
+            .firstOrNull()
+            ?.asDomElement(domManager)
+      if (prevDomElement != null) {
+        return prevDomElement
+      }
+    }
+    return generateSequence(context) { it.parent }
+      .mapNotNull { it.asDomElement(domManager) }
+      .firstOrNull()
+  }
 
   private fun getXmlElementPath(element: PsiElement): List<String> =
     generateSequence(element) { it.parent }
@@ -63,6 +108,13 @@ internal abstract class AbstractXmlDescriptorDocumentationTargetProvider : PsiDo
       .mapNotNull { (it as PsiNamedElement).name }
       .toList()
       .asReversed()
+
+  private fun getLookupElementPath(domElement: DomElement, target: DomChildrenDescription): List<String>? {
+    val domXmlElement = domElement.xmlElement ?: return null
+    val parentPath = getXmlElementPath(domXmlElement)
+    val lookupElementName = target.xmlElementName
+    return parentPath + lookupElementName
+  }
 
   abstract val docYamlCoordinates: DocumentationDataCoordinates
 
