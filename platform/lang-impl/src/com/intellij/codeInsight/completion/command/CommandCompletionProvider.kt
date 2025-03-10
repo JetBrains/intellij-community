@@ -138,8 +138,17 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
           tailText += " ($additionalInfo)"
         }
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
-        val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name.trim())
+        val lookupString = command.name.trim().let {
+          if (it.length > 50) {
+            it.substring(0, 50) + "\u2026"
+          }
+          else {
+            it
+          }
+        }
+        val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(lookupString)
                                                                       .withLookupString(i18nName.trim())
+                                                                      .withLookupString(lookupString)
                                                                       .withTypeText(tailText)
                                                                       .withIcon(command.icon ?: Lightning)
                                                                       .withInsertHandler(CommandInsertHandler(command))

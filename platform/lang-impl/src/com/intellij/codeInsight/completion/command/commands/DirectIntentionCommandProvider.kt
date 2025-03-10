@@ -285,7 +285,11 @@ internal class DirectIntentionCommandProvider : CommandProvider {
           ShowIntentionsPass.addAvailableFixesForGroups(info, topLevelEditor, topLevelFile, fixes, -1, offset, false)
           for (descriptor in fixes) {
             if (descriptor.action is EmptyIntentionAction) continue
-            val command = DirectErrorFixCompletionCommand(name = descriptor.action.text,
+            var name = descriptor.action.text
+            if (name.startsWith("<html>")) {
+              name = descriptor.action.familyName
+            }
+            val command = DirectErrorFixCompletionCommand(name = name,
                                                           priority = 100,
                                                           icon = AllIcons.Actions.QuickfixBulb,
                                                           highlightInfo = HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),
