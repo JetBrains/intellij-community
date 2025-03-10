@@ -135,6 +135,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJ
      ExposedCopyVisibility
      ExtensionFunctionType
      Function
+     IgnorableReturnValue
      InitializedLazyImpl
      kotlin.kotlin_builtins
      KotlinNothingValueException
@@ -144,6 +145,7 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJ
      Lazy
      LazyThreadSafetyMode
      Metadata
+     MustUseReturnValue
      NotImplementedError
      NoWhenBranchMatchedException
      OptIn

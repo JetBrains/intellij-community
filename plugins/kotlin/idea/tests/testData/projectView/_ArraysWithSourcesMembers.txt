@@ -1914,6 +1914,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      +ExposedCopyVisibility
      +ExtensionFunctionType
      Function
+     +IgnorableReturnValue
      +InitializedLazyImpl
      +kotlin.kotlin_builtins
      +KotlinNothingValueException
@@ -1923,6 +1924,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      +Lazy
      +LazyThreadSafetyMode
      +Metadata
+     +MustUseReturnValue
      +NotImplementedError
      +NoWhenBranchMatchedException
      +OptIn

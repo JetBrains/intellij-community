@@ -14,7 +14,7 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.KtLightClassMarker
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.config.JvmAnalysisFlags
+import org.jetbrains.kotlin.config.jvmDefaultMode
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
@@ -67,7 +67,7 @@ class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
 
         if (hasJvmDefaultOrJvmStatic) return false
 
-        val jvmDefaultMode = psiMethod.languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
+        val jvmDefaultMode = psiMethod.languageVersionSettings.jvmDefaultMode
         return !jvmDefaultMode.isEnabled
     }
 

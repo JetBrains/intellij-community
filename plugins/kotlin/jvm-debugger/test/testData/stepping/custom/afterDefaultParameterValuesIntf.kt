@@ -24,3 +24,6 @@ class FooImpl : Foo
 
 // STEP_INTO: 1
 // STEP_OVER: 2
+
+// JVM_DEFAULT_MODE: disable
+// ^ After fixing IDEA-367937, please provide a copy of this test with the 'enable' mode.
