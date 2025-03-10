@@ -599,9 +599,9 @@ class StructureViewWrapperImpl(
       val project = CommonDataKeys.PROJECT.getData(asyncDataContext)
       return when {
         commonFiles != null && commonFiles.size == 1 -> commonFiles[0]
-        // In the RemoteDev some editors as well as IdeFrame do not have VirtualFile in the context, so the general fallback is required
-        AppMode.isRemoteDevHost() && project != null -> {
-          LOG.debug("In the data context of the ${focusOwner?.javaClass?.simpleName} there are not virtual files. Fallback to the editor")
+        AppMode.isRemoteDevHost() && project != null && focusOwner is IdeFrame -> {
+          // In RD when focus is set to a frontend-component
+          // (e.g., tabs, editors, notification tool window) on the backend it will be set to `IdeFrame`
           FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
         }
         else -> null
