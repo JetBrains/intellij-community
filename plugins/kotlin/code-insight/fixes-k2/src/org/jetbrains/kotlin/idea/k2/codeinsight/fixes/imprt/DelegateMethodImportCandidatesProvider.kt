@@ -3,14 +3,13 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinPropertyDelegatePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
 // TODO Get rid of this provider, use CallableImportCandidatesProvider instead
 internal class DelegateMethodImportCandidatesProvider(
-    override val positionContext: KotlinPropertyDelegatePositionContext,
+    override val importPositionContext: ImportPositionContext.Delegate,
 ) : AbstractImportCandidatesProvider() {
 
     private fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean {
@@ -24,7 +23,7 @@ internal class DelegateMethodImportCandidatesProvider(
         name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<CallableImportCandidate> {
-        val expressionType = positionContext.propertyDelegate.expression?.expressionType ?: return emptyList()
+        val expressionType = importPositionContext.receiver?.expressionType ?: return emptyList()
         return indexProvider.getExtensionCallableSymbolsByName(
             name = name,
             receiverTypes = listOf(expressionType),
