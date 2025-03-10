@@ -30,7 +30,7 @@ open class DefaultNotebookEditorAppearance(private val editor: Editor) : Noteboo
     Registry.`is`("jupyter.editor.swap.cell.and.editor.background", false)
   ).distinct()
 
-  private val colorsScheme: ObservableMutableProperty<EditorColorsScheme> = AtomicProperty<EditorColorsScheme>(
+  private val colorsScheme: ObservableMutableProperty<EditorColorsScheme> = AtomicProperty(
     editor.colorsScheme
   )
   override val editorBackgroundColor: ObservableProperty<Color> = operation(colorsScheme, swapCellAndEditorBackgroundColor) { colorsScheme, swapCellAndEditorBackgroundColor ->
@@ -76,6 +76,22 @@ open class DefaultNotebookEditorAppearance(private val editor: Editor) : Noteboo
       it.getColor(NotebookEditorAppearance.CELL_STRIPE_HOVERED_COLOR_OLD)
       ?: it.getColor(NotebookEditorAppearance.CELL_STRIPE_HOVERED_COLOR)
       ?: JBColor.GRAY
+    }
+    .distinct()
+
+  override val cellFrameSelectedColor: ObservableProperty<Color> = colorsScheme
+    .transform {
+      it.getColor(NotebookEditorAppearance.CELL_FRAME_SELECTED_COLOR)
+      ?: it.getColor(NotebookEditorAppearance.CELL_STRIPE_SELECTED_COLOR)
+      ?: JBColor.BLUE
+    }
+    .distinct()
+
+  override val cellFrameHoveredColor: ObservableProperty<Color> = colorsScheme
+    .transform {
+      it.getColor(NotebookEditorAppearance.CELL_FRAME_HOVERED_COLOR)
+      ?: it.getColor(NotebookEditorAppearance.CELL_STRIPE_HOVERED_COLOR)
+      ?: JBColor.border()
     }
     .distinct()
 
