@@ -10048,6 +10048,7 @@ f:com.intellij.openapi.ui.WindowWrapperBuilder
 - <init>(com.intellij.openapi.ui.WindowWrapper$Mode,javax.swing.JComponent):V
 - build():com.intellij.openapi.ui.WindowWrapper
 - setDimensionServiceKey(java.lang.String):com.intellij.openapi.ui.WindowWrapperBuilder
+- setInitialSize(java.awt.Dimension):com.intellij.openapi.ui.WindowWrapperBuilder
 - setOnCloseHandler(com.intellij.openapi.util.BooleanGetter):com.intellij.openapi.ui.WindowWrapperBuilder
 - setOnShowCallback(java.lang.Runnable):com.intellij.openapi.ui.WindowWrapperBuilder
 - setParent(java.awt.Component):com.intellij.openapi.ui.WindowWrapperBuilder
