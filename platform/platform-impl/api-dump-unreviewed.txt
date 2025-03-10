@@ -3351,6 +3351,40 @@ f:com.intellij.ide.lightEdit.project.LightEditDumbService
 - waitForSmartMode():V
 - wrapGently(javax.swing.JComponent,com.intellij.openapi.Disposable):javax.swing.JComponent
 - wrapWithSpoiler(javax.swing.JComponent,java.lang.Runnable,com.intellij.openapi.Disposable):javax.swing.JComponent
+a:com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension
+- com.intellij.ide.navigationToolbar.NavBarModelExtension
+- <init>():V
+- additionalRoots(com.intellij.openapi.project.Project):java.util.Collection
+- adjustElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- a:getPresentableText(java.lang.Object):java.lang.String
+c:com.intellij.ide.navigationToolbar.DefaultNavBarExtension
+- com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension
+- <init>():V
+- adjustElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getPresentableText(java.lang.Object):java.lang.String
+- processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
+com.intellij.ide.navigationToolbar.NavBarModelExtension
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:additionalRoots(com.intellij.openapi.project.Project):java.util.Collection
+- a:adjustElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getData(java.lang.String,com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
+- getIcon(java.lang.Object):javax.swing.Icon
+- getLeafElement(com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiElement
+- a:getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getPopupMenuGroup(com.intellij.openapi.actionSystem.DataProvider):java.lang.String
+- a:getPresentableText(java.lang.Object):java.lang.String
+- getPresentableText(java.lang.Object,Z):java.lang.String
+- normalizeChildren():Z
+- processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
+f:com.intellij.ide.navigationToolbar.NavBarRootPaneExtension
+- <init>():V
+a:com.intellij.ide.navigationToolbar.NavBarRootPaneExtension$NavBarWrapperPanel
+- javax.swing.JPanel
+- com.intellij.ide.ui.UISettingsListener
+- <init>(java.awt.LayoutManager):V
+- p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 f:com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
 - sf:SECRET_KEY_SIZE_BYTES:I
 - s:decryptText(B[],B[]):com.intellij.credentialStore.OneTimeString
