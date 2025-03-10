@@ -301,9 +301,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     catch (InvokerException.ExitException e) {
       StringBuilder message = new StringBuilder(e.getMessage());
       for (var entry : entries) {
-        var error = entry.error();
-        if (error != null) {
-          message.append("\n").append(error.getMessage());
+        if (entry.level() == Logger.Level.ERROR) {
+          message.append("\n").append(entry.error().getMessage());
         }
       }
       throw new MavenConfigParseException(message.toString(), multiModuleProjectDirectory);
