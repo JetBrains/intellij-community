@@ -2333,6 +2333,7 @@ c:com.intellij.ide.actions.ShowSettingsUtilImpl
 - com.intellij.openapi.options.ShowSettingsUtil
 - sf:Companion:com.intellij.ide.actions.ShowSettingsUtilImpl$Companion
 - <init>():V
+- closeSettings(com.intellij.openapi.project.Project,java.awt.Component):V
 - sf:createDimensionKey(com.intellij.openapi.options.Configurable):java.lang.String
 - editConfigurable(com.intellij.openapi.project.Project,com.intellij.openapi.options.Configurable):Z
 - editConfigurable(com.intellij.openapi.project.Project,com.intellij.openapi.options.Configurable,java.lang.Runnable):Z

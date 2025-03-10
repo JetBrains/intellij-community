@@ -81,6 +81,8 @@ internal class SettingsVirtualFileHolder private constructor(private val project
 
   internal fun virtualFileExists() = settingsFileRef.get() != null
 
+  internal fun getVirtualFileIfExists() = settingsFileRef.get()
+
   fun invalidate(): SettingsVirtualFile? {
     return settingsFileRef.getAndSet(null)
   }

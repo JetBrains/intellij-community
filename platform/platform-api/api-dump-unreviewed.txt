@@ -2822,6 +2822,7 @@ f:com.intellij.openapi.options.SettingsEditorWrapper
 - resetEditorFrom(java.lang.Object):V
 a:com.intellij.openapi.options.ShowSettingsUtil
 - <init>():V
+- a:closeSettings(com.intellij.openapi.project.Project,java.awt.Component):V
 - a:editConfigurable(com.intellij.openapi.project.Project,com.intellij.openapi.options.Configurable):Z
 - a:editConfigurable(com.intellij.openapi.project.Project,com.intellij.openapi.options.Configurable,java.lang.Runnable):Z
 - a:editConfigurable(com.intellij.openapi.project.Project,com.intellij.openapi.options.Configurable,java.util.function.Consumer):Z

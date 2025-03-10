@@ -23,10 +23,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapperDialog
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.navigation.Place
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import org.jetbrains.annotations.NotNull
 import java.awt.Component
 import java.awt.Composite
 import java.util.function.Consumer
@@ -252,6 +255,23 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
                             dimensionKey = dimensionServiceKey,
                             advancedInitialization = null,
                             showApplyButton = isWorthToShowApplyButton(configurable))
+  }
+
+  override fun closeSettings(@NotNull project: Project, @NotNull component: Component) {
+    if (useNonModalSettingsWindow()) {
+      val virtualFile = SettingsVirtualFileHolder.getInstance(project).getVirtualFileIfExists() ?: return
+      val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
+      fileEditorManager.closeFile(virtualFile)
+    } else {
+      val dialogWrapper: DialogWrapper = getDialogWrapperFor(component) ?: return
+      dialogWrapper.doCancelAction()
+    }
+
+  }
+
+  private fun getDialogWrapperFor(component: Component): DialogWrapper? {
+    val window = UIUtil.getWindow(component)
+    return (window as? DialogWrapperDialog)?.dialogWrapper
   }
 }
 
