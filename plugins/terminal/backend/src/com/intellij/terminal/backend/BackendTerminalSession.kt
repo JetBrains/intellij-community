@@ -15,7 +15,8 @@ internal class BackendTerminalSession(
   outputFlow: Flow<List<TerminalOutputEvent>>,
 ) : TerminalSession {
   @Volatile
-  private var isClosed: Boolean = false
+  override var isClosed: Boolean = false
+    private set
 
   private val closeAwareOutputFlow = outputFlow.onEach { events ->
     if (events.any { it == TerminalSessionTerminatedEvent }) {

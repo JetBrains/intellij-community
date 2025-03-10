@@ -22,4 +22,12 @@ interface TerminalSession {
    * Underlying logic should continue reading the PTYs output stream only if there is some collector of this flow.
    */
   suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>>
+
+  /**
+   * Returns true of this session was terminated.
+   * ([TerminalSessionTerminatedEvent] was received from the output flow)
+   *
+   * Can be accessed from any thread.
+   */
+  val isClosed: Boolean
 }
