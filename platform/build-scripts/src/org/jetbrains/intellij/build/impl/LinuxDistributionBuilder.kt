@@ -27,7 +27,6 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
 import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 
@@ -305,16 +304,8 @@ class LinuxDistributionBuilder(
         )
         val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName), context.paths.artifactDir)
         context.notifyArtifactBuilt(snapArtifactPath)
-        checkExecutablePermissions(unSquashSnap(snapArtifactPath), root = "", includeRuntime = true, arch)
+        checkExecutablePermissions(snapArtifactPath, root = "", includeRuntime = true, arch)
       }
-  }
-
-  private suspend fun unSquashSnap(snap: Path): Path {
-    val unSquashed = context.paths.tempDir.resolve("unSquashed-${snap.nameWithoutExtension}")
-    NioFiles.deleteRecursively(unSquashed)
-    Files.createDirectories(unSquashed)
-    runProcess(listOf("unsquashfs", "$snap"), workingDir = unSquashed, inheritOut = true)
-    return unSquashed.resolve("squashfs-root")
   }
 
   override fun distributionFilesBuilt(arch: JvmArchitecture): List<Path> {
