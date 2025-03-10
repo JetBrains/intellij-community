@@ -240,23 +240,23 @@ public final class MultiRoutingFileSystemProvider
   @Contract("null -> null; !null -> !null")
   @Override
   @VisibleForTesting
-  public @Nullable Path toDelegatePath(@Nullable Path path) {
-    if (path == null) {
+  public @Nullable Path wrapDelegatePath(@Nullable Path delegatePath) {
+    if (delegatePath == null) {
       return null;
     }
-    else if (path instanceof MultiRoutingFsPath) {
+    else if (delegatePath instanceof MultiRoutingFsPath) {
       // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
       // Tricks with classloaders are not expected here.
-      return path;
+      return delegatePath;
     }
     else {
-      return new MultiRoutingFsPath(myFileSystem, path);
+      return new MultiRoutingFsPath(myFileSystem, delegatePath);
     }
   }
 
   @Contract("null -> null; !null -> !null")
   @Override
-  public @Nullable Path fromDelegatePath(@Nullable Path path) {
+  public @Nullable Path toDelegatePath(@Nullable Path path) {
     if (path instanceof MultiRoutingFsPath) {
       // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
       // Tricks with classloaders are not expected here.

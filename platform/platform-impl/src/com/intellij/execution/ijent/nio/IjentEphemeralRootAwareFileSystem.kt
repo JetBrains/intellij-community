@@ -163,14 +163,14 @@ internal class IjentEphemeralRootAwareFileSystemProvider(
     return delegate
   }
 
-  override fun toDelegatePath(path: Path?): Path? {
-    if (path == null) return null
+  override fun wrapDelegatePath(delegatePath: Path?): Path? {
+    if (delegatePath == null) return null
 
-    if (path is IjentNioPath) {
-      return IjentEphemeralRootAwarePath(root, path)
+    if (delegatePath is IjentNioPath) {
+      return IjentEphemeralRootAwarePath(root, delegatePath)
     }
 
-    return path
+    return delegatePath
   }
 
   override fun isSameFile(path: Path?, path2: Path?): Boolean {
@@ -185,7 +185,7 @@ internal class IjentEphemeralRootAwareFileSystemProvider(
     return super.isSameFile(path, path2)
   }
 
-  override fun fromDelegatePath(path: Path?): Path? {
+  override fun toDelegatePath(path: Path?): Path? {
     if (path is IjentEphemeralRootAwarePath) {
       check(root === path.rootPath)
       return path.originalPath

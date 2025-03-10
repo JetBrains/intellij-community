@@ -26,9 +26,9 @@ class TracingFileSystemProvider(
 
   override fun getDelegate(path1: Path?, path2: Path?): FileSystemProvider = delegate
 
-  override fun toDelegatePath(path: Path?): Path? = path
+   override fun wrapDelegatePath(delegatePath: Path?): Path? = delegatePath
 
-  override fun fromDelegatePath(path: Path?): Path? = path
+  override fun toDelegatePath(path: Path?): Path? = path
 
   override fun toString(): String = """${javaClass.simpleName}($delegate)"""
 

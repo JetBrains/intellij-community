@@ -57,12 +57,12 @@ class CorePosixFilteringFileSystemProvider
 
   @Override
   @Contract("null -> null; !null -> !null")
-  protected @Nullable Path toDelegatePath(@Nullable Path path) {
-    return path;
+  protected @Nullable Path wrapDelegatePath(@Nullable Path delegatePath) {
+    return delegatePath;
   }
 
   @Override
-  protected @Nullable Path fromDelegatePath(@Nullable Path path) {
+  protected @Nullable Path toDelegatePath(@Nullable Path path) {
     return path;
   }
 
