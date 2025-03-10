@@ -141,7 +141,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
       return Pair(null, null)
     }
     if (fileDirStr == null) {
-      logger.warn("EnvDir is null")
+      logger.trace("EnvDir is null")
     }
 
     val filePathStr = try {
@@ -153,7 +153,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
       return Pair(null, null)
     }
     if (filePathStr == null) {
-      logger.warn("EnvPath is null")
+      logger.trace("EnvPath is null")
     }
 
     // file access

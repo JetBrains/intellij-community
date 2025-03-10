@@ -22,7 +22,12 @@ class VSPossibleVersionsEnumerator {
 
   private fun enumOldPossibleVersions(): List<VSHive> {
     val registry = try {
-      Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\VisualStudio")
+      val key = "SOFTWARE\\Microsoft\\VisualStudio"
+      if (Advapi32Util.registryKeyExists(WinReg.HKEY_CURRENT_USER, key)) {
+        Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, key)
+      } else {
+        emptyArray()
+      }
     }
     catch (t: Throwable) {
       logger.warn(t)

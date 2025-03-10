@@ -66,7 +66,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
     val regex: Regex = Regex("\\b([0-9]{1,2})\\.([0-9])(?:_([a-fA-F0-9]{8}))?([a-zA-Z0-9]*)\\b")
 
     fun parse(hive: String, type: Types = Types.All): VSHive? {
-      logger.info("Starting $hive on type $type")
+      logger.trace("Starting $hive on type $type")
 
       val spl = regex.find(hive) ?: return null
       val (maj, min, instId, rtSuf) = spl.destructured
@@ -75,7 +75,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
         Version2(maj.toInt(), min.toInt())
       }
       catch (_: NumberFormatException) {
-        logger.warn("Bad major or minor version number ($hive)")
+        logger.info("Bad major or minor version number ($hive)")
         return null
       }
 
@@ -85,12 +85,12 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
       }
 
       if (type == Types.New && instId.length != 8) {
-        logger.warn("Requested only new vs, but got something other ($hive)")
+        logger.trace("Requested only new vs, but got something other ($hive)")
         return null
       }
 
       if (maj.toInt() < 14) { // 2015
-        logger.warn("Unsupported version ($hive)")
+        logger.trace("Unsupported version ($hive)")
         return null
       }
 
@@ -101,7 +101,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
       }
        */
 
-      logger.info("Parsed $hive")
+      logger.trace("Parsed $hive")
 
       return VSHive(ver, instId.ifEmpty { null }, rtSuf.ifEmpty { null }).apply {
         logger.assertTrue(hive == this.hiveString, "different hive string")
