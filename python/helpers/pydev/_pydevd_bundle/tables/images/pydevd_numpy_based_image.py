@@ -44,6 +44,8 @@ def get_bytes(arr):
 
         if arr_to_convert.ndim == 1:
             arr_to_convert = np.expand_dims(arr_to_convert, axis=0)
+        elif arr_to_convert.ndim == 3 and arr_to_convert.shape[2] == 1:
+            arr_to_convert = arr_to_convert[:, :, 0]
 
         arr_min, arr_max = np.min(arr_to_convert), np.max(arr_to_convert)
         if arr_min == arr_max:  # handle constant values
