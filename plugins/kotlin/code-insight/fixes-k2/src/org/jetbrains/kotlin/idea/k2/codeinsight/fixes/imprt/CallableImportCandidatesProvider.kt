@@ -7,17 +7,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinOperatorCallPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 
 internal class CallableImportCandidatesProvider(
-    override val positionContext: KotlinNameReferencePositionContext,
+    override val importPositionContext: ImportPositionContext<*, *>,
     private val allowInapplicableExtensions: Boolean = false,
 ) : AbstractImportCandidatesProvider() {
 
@@ -25,9 +22,9 @@ internal class CallableImportCandidatesProvider(
         acceptsKotlinCallableAtPosition(kotlinCallable) && !kotlinCallable.isImported() && kotlinCallable.canBeImported()
 
     private fun acceptsKotlinCallableAtPosition(kotlinCallable: KtCallableDeclaration): Boolean =
-        when (positionContext) {
-            is KotlinInfixCallPositionContext -> kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD)
-            is KotlinOperatorCallPositionContext -> kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)
+        when (importPositionContext) {
+            is ImportPositionContext.InfixCall -> kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD)
+            is ImportPositionContext.OperatorCall -> kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)
             else -> true
         }
 
@@ -35,16 +32,16 @@ internal class CallableImportCandidatesProvider(
         acceptsJavaCallableAtPosition() && !javaCallable.isImported() && javaCallable.canBeImported()
 
     private fun acceptsJavaCallableAtPosition(): Boolean =
-        when (positionContext) {
-            is KotlinInfixCallPositionContext, 
-            is KotlinOperatorCallPositionContext -> false
+        when (importPositionContext) {
+            is ImportPositionContext.InfixCall,
+            is ImportPositionContext.OperatorCall -> false
             else -> true
         }
 
     private fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean =
-        when (positionContext) {
-            is KotlinInfixCallPositionContext -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
-            is KotlinOperatorCallPositionContext -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isOperator == true
+        when (importPositionContext) {
+            is ImportPositionContext.InfixCall -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
+            is ImportPositionContext.OperatorCall -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isOperator == true
             else -> true
         }
 
@@ -54,7 +51,7 @@ internal class CallableImportCandidatesProvider(
         name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<CallableImportCandidate> {
-        val explicitReceiver = positionContext.explicitReceiver
+        val explicitReceiver = importPositionContext.receiver
         val fileSymbol = getFileSymbol()
 
         val candidates = sequence {
@@ -74,29 +71,31 @@ internal class CallableImportCandidatesProvider(
                 )
             }
 
-            val context = positionContext
             when {
                 allowInapplicableExtensions -> {
                     // extensions were already provided
                 }
-                context is KotlinSimpleNameReferencePositionContext -> {
-                    val receiverTypes = collectReceiverTypesForElement(context.nameExpression, context.explicitReceiver)
+                importPositionContext is ImportPositionContext.KDocNameReference -> {
+                    // we do not try to complete extensions for KDocs for now
+                    // TODO consider combining this with allowInapplicableExtensions flag
+                }
+
+                else -> {
+                    val receiverTypes = collectReceiverTypesForElement(importPositionContext.position, explicitReceiver as? KtExpression)
                     yieldAll(
                         indexProvider.getExtensionCallableSymbolsByName(name, receiverTypes) { acceptsKotlinCallable(it) }
                             .map { CallableImportCandidate.create(it) }
                     )
-                    
+
                     yieldAll(
                         indexProvider.getExtensionCallableSymbolsFromSubclassObjects(name, receiverTypes)
                             .map { (dispatcherObject, callableSymbol) -> CallableImportCandidate.create(callableSymbol, dispatcherObject) }
                     )
                 }
-
-                else -> {}
             }
         }
 
-        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, positionContext.position)
+        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, importPositionContext.position)
 
         return candidates
             .distinct()

@@ -2,25 +2,18 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories
 
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.AbstractImportCandidatesProvider
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ClassifierImportCandidatesProvider
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
-import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 
 internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>? {
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, ImportPositionContext<*, *>>? {
         return when (diagnostic) {
             is KaFirDiagnostic.TooManyArguments,
             is KaFirDiagnostic.NoValueForParameter,
@@ -29,7 +22,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
             is KaFirDiagnostic.NoneApplicable,
             is KaFirDiagnostic.WrongNumberOfTypeArguments,
             is KaFirDiagnostic.NewInferenceNoInformationForParameter -> {
-                
+
                 val originalDiagnosticPsi = diagnostic.psi
 
                 val adjustedDiagnosticPsi = when {
@@ -42,26 +35,24 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
                     else -> originalDiagnosticPsi.parentOfType<KtCallExpression>()?.calleeExpression
                 } ?: return null
 
-                val position = adjustedDiagnosticPsi.containingFile.findElementAt(adjustedDiagnosticPsi.startOffset)
-                val positionContext = position?.let { KotlinPositionContextDetector.detect(it) } as? KotlinNameReferencePositionContext
-                    ?: return null
-                positionContext.nameExpression to positionContext
+                val importPositionContext = ImportPositionContext.detect(adjustedDiagnosticPsi)
+                importPositionContext.position to importPositionContext
             }
 
             else -> null
         }
     }
 
-    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, positionContext: KotlinRawPositionContext): Set<Name> =
-        (positionContext as? KotlinNameReferencePositionContext)?.reference?.resolvesByNames?.toSet().orEmpty()
+    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, importPositionContext: ImportPositionContext<*, *>): Set<Name> {
+        return (importPositionContext.position as? KtSimpleNameExpression)?.mainReference?.resolvesByNames?.toSet().orEmpty()
+    }
 
     override fun KaSession.provideImportCandidates(
         unresolvedName: Name,
-        positionContext: KotlinRawPositionContext,
+        importPositionContext: ImportPositionContext<*, *>,
         indexProvider: KtSymbolFromIndexProvider
     ): List<ImportCandidate> {
-        if (positionContext !is KotlinNameReferencePositionContext) return emptyList()
-        val providers = getCandidateProvidersForUnresolvedNameReference(positionContext)
+        val providers = getCandidateProvidersForUnresolvedNameReference(importPositionContext)
 
         // TODO add applicability check here, see KTIJ-33214
 
@@ -70,31 +61,20 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
 
     context(KaSession)
     private fun getCandidateProvidersForUnresolvedNameReference(
-        positionContext: KotlinNameReferencePositionContext,
-    ): Sequence<AbstractImportCandidatesProvider> = when (positionContext) {
-        is KotlinWithSubjectEntryPositionContext,
-        is KotlinExpressionNameReferencePositionContext
-            -> sequenceOf(
-            CallableImportCandidatesProvider(positionContext),
-            ClassifierImportCandidatesProvider(positionContext),
+        importPositionContext: ImportPositionContext<*, *>,
+    ): Sequence<AbstractImportCandidatesProvider> = when (importPositionContext) {
+        is ImportPositionContext.DefaultCall -> sequenceOf(
+            CallableImportCandidatesProvider(importPositionContext),
+            ClassifierImportCandidatesProvider(importPositionContext),
         )
 
-        is KotlinInfixCallPositionContext,
-        is KotlinOperatorCallPositionContext
-            -> sequenceOf(
-            CallableImportCandidatesProvider(positionContext),
+        is ImportPositionContext.DotCall,
+        is ImportPositionContext.SafeCall,
+        is ImportPositionContext.InfixCall,
+        is ImportPositionContext.OperatorCall -> sequenceOf(
+            CallableImportCandidatesProvider(importPositionContext),
         )
 
-        is KotlinAnnotationTypeNameReferencePositionContext,
-        is KotlinCallableReferencePositionContext,
-        is KotlinSuperTypeCallNameReferencePositionContext,
-        is KotlinTypeNameReferencePositionContext,
-        is KotlinImportDirectivePositionContext,
-        is KotlinPackageDirectivePositionContext,
-        is KotlinSuperReceiverNameReferencePositionContext,
-        is KotlinLabelReferencePositionContext,
-        is KDocLinkNamePositionContext,
-        is KDocParameterNamePositionContext
-            -> sequenceOf()
+        else -> sequenceOf()
     }
 }
