@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
@@ -238,12 +239,17 @@ internal class FrontendXDebuggerSession private constructor(
   }
 
   companion object {
+    private val LOG = thisLogger()
+
     suspend fun create(
       project: Project,
       scope: CoroutineScope,
       sessionDto: XDebugSessionDto,
     ): FrontendXDebuggerSession {
-      val consoleView = sessionDto.consoleViewData?.consoleView()
+      val consoleView = sessionDto.consoleViewData.consoleView()
+      if (consoleView == null) {
+        LOG.warn("consoleView is null for session[${sessionDto.sessionName}] with id [${sessionDto.id}]")
+      }
       return FrontendXDebuggerSession(project, scope, sessionDto, consoleView)
     }
   }

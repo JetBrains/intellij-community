@@ -294,6 +294,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     session.init(process, contentToReuse);
 
+    myProject.getMessageBus().syncPublisher(TOPIC).sessionInitialized(session);
+
     // TODO: may be this session activation is not needed?
     if (processStarter instanceof XDebugProcessConfiguratorStarter) {
       session.activateSession(false);

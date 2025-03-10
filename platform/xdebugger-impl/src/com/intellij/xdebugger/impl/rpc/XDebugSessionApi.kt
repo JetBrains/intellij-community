@@ -66,7 +66,7 @@ data class XDebugSessionDto(
   val sessionName: String,
   val sessionEvents: RpcFlow<XDebuggerSessionEvent>,
   val sessionDataDto: XDebugSessionDataDto,
-  val consoleViewData: XDebuggerConsoleViewData?
+  val consoleViewData: XDebuggerConsoleViewData
 )
 
 @ApiStatus.Internal
