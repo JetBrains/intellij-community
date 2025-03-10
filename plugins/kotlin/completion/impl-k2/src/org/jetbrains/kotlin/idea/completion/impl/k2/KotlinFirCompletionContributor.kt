@@ -68,9 +68,11 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     ) {
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParameters.create(parameters)
             ?: return
+        val position = parameters.position
 
-        if (shouldSuppressCompletion(parameters)) return
-        val positionContext = KotlinPositionContextDetector.detect(parameters.position)
+        // no completion inside number literals
+        if (AFTER_NUMBER_LITERAL.accepts(position)) return
+        val positionContext = KotlinPositionContextDetector.detect(position)
 
         val resultSet = result.withRelevanceSorter(parameters, positionContext)
             .withPrefixMatcher(parameters)
@@ -109,19 +111,4 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         PsiJavaPatterns.psiElement().withText(""),
         PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
     )
-    private val AFTER_INTEGER_LITERAL_AND_DOT = PsiJavaPatterns.psiElement().afterLeafSkipping(
-        PsiJavaPatterns.psiElement().withText("."),
-        PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.INTEGER_LITERAL))
-    )
-
-    private fun shouldSuppressCompletion(
-        parameters: KotlinFirCompletionParameters,
-    ): Boolean {
-        val position = parameters.position
-
-        // no completion inside number literals
-        if (AFTER_NUMBER_LITERAL.accepts(position)) return true
-
-        return false
-    }
 }
