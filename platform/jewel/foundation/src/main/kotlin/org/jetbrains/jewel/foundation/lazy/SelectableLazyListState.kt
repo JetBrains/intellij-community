@@ -32,6 +32,9 @@ public class SelectableLazyListState(public val lazyListState: LazyListState) :
     ScrollableState by lazyListState, SelectableScope {
     internal var lastKeyEventUsedMouse: Boolean = false
 
+    /** Flag indicating whether the user is currently navigating via keyboard */
+    public var isKeyboardNavigating: Boolean by mutableStateOf(false)
+
     override var selectedKeys: Set<Any> by mutableStateOf(emptySet())
 
     public var lastActiveItemIndex: Int? = null
