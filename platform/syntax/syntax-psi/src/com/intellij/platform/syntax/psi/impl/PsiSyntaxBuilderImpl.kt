@@ -136,14 +136,12 @@ internal class PsiSyntaxBuilderImpl(
     return diffLog
   }
 
-  private var markedId = 0
-
   private fun createMarker(
     productionMarker: SyntaxTreeBuilder.Production,
     parent: CompositeNode?,
     nodeData: NodeData,
+    markedId: Int,
   ): CompositeNode {
-    markedId++
     val errorMessage = productionMarker.getErrorMessage()
     if (errorMessage != null) {
       nodeData.optionalData.setErrorMessage(markedId, errorMessage)
@@ -165,8 +163,8 @@ internal class PsiSyntaxBuilderImpl(
     item: SyntaxTreeBuilder.Production,
     parent: CompositeNode,
     nodeData: NodeData,
+    markedId: Int
   ): ErrorNode {
-    markedId++
     val error = ErrorNode(
       markerId = markedId,
       index = item.getStartTokenIndex(),
@@ -210,7 +208,7 @@ internal class PsiSyntaxBuilderImpl(
       file = this@PsiSyntaxBuilderImpl.file,
     )
     val rootProductionMarker = productions.getMarker(0)
-    val rootMarker = createMarker(rootProductionMarker, null, nodeData)
+    val rootMarker = createMarker(rootProductionMarker, null, nodeData, 0)
     val nodes = ArrayDeque<Pair<CompositeNode, SyntaxTreeBuilder.Production>>()
     nodes.addLast(rootMarker to rootProductionMarker)
 
@@ -242,7 +240,7 @@ internal class PsiSyntaxBuilderImpl(
         val item = productions.getMarker(i)
         if (item.isErrorMarker()) {
           // todo myData.myErrorInterner.intern(message)
-          val error = createErrorNode(item, curNode, nodeData)
+          val error = createErrorNode(item, curNode, nodeData, i)
           val curToken = item.getStartTokenIndex()
           if (curToken != lastErrorIndex) { // adding only the first (deepest) error from the same lexeme offset
             lastErrorIndex = curToken
@@ -250,7 +248,7 @@ internal class PsiSyntaxBuilderImpl(
           }
         }
         else {
-          val marker = createMarker(item, curNode, nodeData)
+          val marker = createMarker(item, curNode, nodeData, i)
           curNode.addChild(marker)
           nodes.addLast(curNode to curProduction)
           curNode = marker
