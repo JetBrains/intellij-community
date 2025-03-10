@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.ui.preview.accessor.impl
+package org.intellij.plugins.markdown.frontend.preview.accessor.impl
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.invokeLater
@@ -49,10 +48,10 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
   private fun isSafeUri(project: Project?, uri: URI): Boolean {
     val protocol = uri.scheme ?: return false
     if (project != null) {
-      val safeLinksState = DocumentLinksSafeState.getInstance(project)
+      val safeLinksState = DocumentLinksSafeState.Companion.getInstance(project)
       return safeLinksState.isProtocolAllowed(protocol)
     }
-    return DocumentLinksSafeState.isHttpScheme(protocol) && isLocalHost(uri.host)
+    return DocumentLinksSafeState.Companion.isHttpScheme(protocol) && isLocalHost(uri.host)
   }
 
   @RequiresEdt
@@ -102,7 +101,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
     return object: DoNotAskOption.Adapter() {
       override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
         if (isSelected) {
-          DocumentLinksSafeState.getInstance(project).allowProtocol(protocol)
+          DocumentLinksSafeState.Companion.getInstance(project).allowProtocol(protocol)
         }
       }
 
@@ -198,7 +197,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
         null
       )
       val balloon = balloonBuilder.createBalloon()
-      Disposer.register(MarkdownDisposable.getInstance(project), balloon)
+      Disposer.register(MarkdownDisposable.Companion.getInstance(project), balloon)
       balloon.show(point, Balloon.Position.below)
     }
 

@@ -37,7 +37,6 @@ import java.util.Collection;
 import java.util.List;
 
 // md TODO: organize the code better
-@Service(Service.Level.APP)
 public final class MarkdownFrontendServiceImpl implements MarkdownFrontendService {
   private static final Logger logger = Logger.getInstance(MarkdownFrontendServiceImpl.class);
 

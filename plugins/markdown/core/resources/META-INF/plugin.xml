@@ -191,9 +191,6 @@
 
     <search.optionContributor implementation="org.intellij.plugins.markdown.extensions.ExtensionSearchableOptionContributor"/>
 
-    <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
-                        serviceImplementation="org.intellij.plugins.markdown.ui.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
-
     <projectConfigurable id="Settings.Markdown"
                          bundle="messages.MarkdownBundle"
                          groupId="language"
