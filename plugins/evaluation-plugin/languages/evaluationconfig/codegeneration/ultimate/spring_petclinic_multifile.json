@@ -1,9 +1,8 @@
 {
   "language": "Java",
-  "projectPath": "../ml-eval/java-2-kotlin-generator-samples/spring/train-ticket",
+  "projectPath": "../ml-eval/java-2-kotlin-generator-samples/spring/petclinic/java/spring-petclinic",
   "repositoryPath": "../ml-eval/java-2-kotlin-generator-samples",
-  "repository": "https://git.jetbrains.team/java-2-kotlin-samples/java-2-kotlin-generator-samples.git",
-  "revision": "master",
+  "revision": "main",
   "outputDir": "bin/ml-eval-code-generation-java-output",
   "strategy": {
     "model": "",
@@ -16,7 +15,7 @@
     "evaluationRoots": [
       "."
     ],
-    "sourceFile": "../ml-eval/java-2-kotlin-generator-samples/spring/train-ticket/evaluation/actions.json"
+    "sourceFile": "../ml-eval/java-2-kotlin-generator-samples/spring/petclinic/java/spring-petclinic/evaluation/actions.json"
   },
   "interpret": {
     "saveLogs": true,
@@ -26,7 +25,7 @@
     "filesLimit": 100,
     "order": "LINEAR",
     "trainTestSplit": 70,
-    "registry": ""
+    "registry": "llm.action.generateCodeInplace.interaction.noSelection=[MULTI_FILE*|ORIGINAL_UPDATED|FULL_TEXT|NO_SELECTION_CODE]"
   },
   "reports": {
     "evaluationTitle": "Default",

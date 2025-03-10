@@ -1,8 +1,9 @@
 {
   "language": "Java",
   "projectPath": "../ml-eval/java-2-kotlin-generator-samples/spring/spring-restbucks/server",
+  "repositoryPath": "../ml-eval/java-2-kotlin-generator-samples",
   "repository": "https://git.jetbrains.team/java-2-kotlin-samples/java-2-kotlin-generator-samples.git",
-  "revision": "main",
+  "revision": "master",
   "outputDir": "bin/ml-eval-code-generation-java-output",
   "strategy": {
     "model": "",
