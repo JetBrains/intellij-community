@@ -91,11 +91,11 @@ class EditorCellFrameManager(
 
     val inlays = view.input.getBlockElementsInRange()
     val upperInlayBounds = inlays.firstOrNull {
-      it.properties.priority == editor.notebookAppearance.JUPYTER_BELOW_OUTPUT_CELL_SPACERS_INLAY_PRIORITY && it.properties.isShownAbove
+      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && it.properties.isShownAbove
     }?.bounds ?: return
 
     val lowerInlayBounds = inlays.lastOrNull {
-      it.properties.priority == editor.notebookAppearance.JUPYTER_BELOW_OUTPUT_CELL_SPACERS_INLAY_PRIORITY && !it.properties.isShownAbove
+      it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY && !it.properties.isShownAbove
     }?.bounds ?: return
 
     val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
