@@ -195,7 +195,7 @@ public fun retrieveTextStyle(
         fontFamily = derivedFont.asComposeFontFamily(),
         // TODO textDecoration might be defined in the AWT theme
         lineHeight = lineHeight,
-        platformStyle = retrievePlatformTextStyle()
+        platformStyle = retrievePlatformTextStyle(),
     )
 }
 
@@ -204,26 +204,29 @@ public fun retrievePlatformTextStyle(): PlatformTextStyle {
     val uiSettings = UISettings.instanceOrNull
     val aa = uiSettings?.ideAAType ?: AntialiasingType.GREYSCALE
     val platformDefaultFontRasterization = FontRasterizationSettings.PlatformDefault
-    
+
     return PlatformTextStyle(
         null,
-        paragraphStyle = PlatformParagraphStyle(
-            fontRasterizationSettings = FontRasterizationSettings(
-                smoothing = aa.asComposeFontSmoothing(),
-                hinting = platformDefaultFontRasterization.hinting,
-                subpixelPositioning = platformDefaultFontRasterization.subpixelPositioning,
-                platformDefaultFontRasterization.autoHintingForced
-            )
-        ),
+        paragraphStyle =
+            PlatformParagraphStyle(
+                fontRasterizationSettings =
+                    FontRasterizationSettings(
+                        smoothing = aa.asComposeFontSmoothing(),
+                        hinting = platformDefaultFontRasterization.hinting,
+                        subpixelPositioning = platformDefaultFontRasterization.subpixelPositioning,
+                        platformDefaultFontRasterization.autoHintingForced,
+                    )
+            ),
     )
 }
 
 @OptIn(ExperimentalTextApi::class)
-private fun AntialiasingType.asComposeFontSmoothing(): FontSmoothing = when(this) {
-    AntialiasingType.GREYSCALE -> FontSmoothing.AntiAlias
-    AntialiasingType.SUBPIXEL -> FontSmoothing.SubpixelAntiAlias
-    AntialiasingType.OFF -> FontSmoothing.None
-}
+private fun AntialiasingType.asComposeFontSmoothing(): FontSmoothing =
+    when (this) {
+        AntialiasingType.GREYSCALE -> FontSmoothing.AntiAlias
+        AntialiasingType.SUBPIXEL -> FontSmoothing.SubpixelAntiAlias
+        AntialiasingType.OFF -> FontSmoothing.None
+    }
 
 public val JBValue.dp: Dp
     get() = unscaled.dp

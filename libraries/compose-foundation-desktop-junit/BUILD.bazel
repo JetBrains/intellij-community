@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.compose.foundation.desktop` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "compose-foundation-desktop-junit_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "compose-foundation-desktop-junit",
+  visibility = ["//visibility:public"],
+  exports = ["@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop-junit"],
+  runtime_deps = [
+    ":compose-foundation-desktop_resources",
+    "//libraries/skiko",
+    "@lib//:libraries-compose-foundation-desktop-compose-foundation-desktop-junit",
+  ]
+)
+### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` end
