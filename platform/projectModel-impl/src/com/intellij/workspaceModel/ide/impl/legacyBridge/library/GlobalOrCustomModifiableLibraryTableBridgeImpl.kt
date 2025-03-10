@@ -20,7 +20,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable, val descriptor: EelDescriptor, private val entitySource: EntitySource) :
-  LegacyBridgeModifiableBase(MutableEntityStorage.from(GlobalWorkspaceModel.getInstance(descriptor).currentSnapshot), true),
+  LegacyBridgeModifiableBase(MutableEntityStorage.from(GlobalWorkspaceModel.getInstance(descriptor).currentSnapshot)),
   LibraryTable.ModifiableModel {
 
   private val myAddedLibraries = mutableListOf<LibraryBridgeImpl>()
