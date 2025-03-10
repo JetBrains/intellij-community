@@ -22,11 +22,13 @@ import kotlin.math.max
 class XNextToolWindowHolder private constructor() : JPanel() {
   companion object {
     @JvmStatic
-    fun create(fillColor: () -> Color): JComponent = XNextToolWindowHolder().apply {
-      border = JRoundedCornerBorder( fillColor)
-      ClientProperty.putRecursive(this, IdeBackgroundUtil.NO_BACKGROUND, true)
-      background = fillColor()
+    fun create(fillColor: (c: JComponent) -> Paint?): JComponent = XNextToolWindowHolder().apply {
+      border = XNextRoundedBorder.createIslandBorder(fillColor)
     }
+  }
+
+  override fun getComponentGraphics(g: Graphics?): Graphics? {
+    return IdeBackgroundUtil.getOriginalGraphics(super.getComponentGraphics(g))
   }
 
   override fun addImpl(comp: Component?, constraints: Any?, index: Int) {
@@ -39,7 +41,7 @@ class XNextToolWindowHolder private constructor() : JPanel() {
   }
 
   override fun setBorder(border: Border?) {
-    if (border !is JRoundedCornerBorder) {
+    if (border !is XNextRoundedBorder) {
       logger<XNextToolWindowHolder>().warn {
         "Border type is invalid. Expected JRoundedCornerBorder, but received: ${border?.javaClass?.name ?: "null"}."
       }
@@ -74,13 +76,9 @@ private class JRoundedCornerBorder(private val fillColor: () -> Color?) : Abstra
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       val borderShape = getBorderShape(width, height)
       val extArea = Area(Rectangle(0, 0, width, height))
-     // extArea.subtract(Area(borderShape))
+      extArea.subtract(Area(borderShape))
 
-      var trG = (if (c is JComponent) {
-        InternalUICustomization.getInstance()?.transformGraphics(c, g2) ?: g2
-      } else g2) as Graphics2D
-
-      trG = IdeBackgroundUtil.withEditorBackground(g2, c.parent as JComponent)
+      val trG = IdeBackgroundUtil.withEditorBackground(g2, c.parent as JComponent)
       trG.color =  InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() ?: c.parent.background
 
       trG.fill(extArea)
