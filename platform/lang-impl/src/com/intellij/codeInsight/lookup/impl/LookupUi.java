@@ -63,8 +63,8 @@ final class LookupUi {
   private final Alarm hintAlarm;
   private final JScrollPane myScrollPane;
   private final AsyncProcessIcon processIcon = new AsyncProcessIcon("Completion progress");
-  private final ActionButton myMenuButton;
-  private final ActionButton hintButton;
+  private final JComponent myMenuButton;
+  private final JComponent hintButton;
   private final @Nullable JComponent myBottomPanel;
 
   private int myMaximumHeight = Integer.MAX_VALUE;
@@ -103,8 +103,8 @@ final class LookupUi {
     menuAction.addSeparator();
     menuAction.add(new ShowCompletionSettingsAction());
 
-    myMenuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-    JComponent menuButtonWrapper = UiDataProvider.wrapComponent(myMenuButton, sink -> {
+    ActionButton menuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    myMenuButton = UiDataProvider.wrapComponent(menuButton, sink -> {
       sink.set(CommonDataKeys.PROJECT, this.lookup.getProject());
       sink.set(CommonDataKeys.EDITOR, this.lookup.getEditor());
     });
@@ -121,7 +121,7 @@ final class LookupUi {
       myBottomPanel.add(myAdvertiser.getAdComponent());
       myBottomPanel.add(processIcon);
       myBottomPanel.add(hintButton);
-      myBottomPanel.add(menuButtonWrapper);
+      myBottomPanel.add(myMenuButton);
       if (ExperimentalUI.isNewUI()) {
         myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
         myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
