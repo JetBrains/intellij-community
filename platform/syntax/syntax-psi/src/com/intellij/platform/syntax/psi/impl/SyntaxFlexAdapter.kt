@@ -9,6 +9,7 @@ import com.intellij.platform.syntax.lexer.FlexLexer
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.LexerPosition
 
+//A copy from com.intellij.lexer.FlexAdapter. Similarly to the FlexLexer class, it is necessary to return SyntaxElementType instead of IElementType
 open class SyntaxFlexAdapter(val flex: FlexLexer) : Lexer {
   private var myTokenType: SyntaxElementType? = null
   private var myText: CharSequence? = null

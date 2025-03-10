@@ -7,9 +7,6 @@ import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.logger.noopLogger
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.Builder
-import com.intellij.platform.syntax.util.CancellationProvider
-import com.intellij.platform.syntax.util.Logger
-import com.intellij.platform.syntax.util.NoopLogger
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -94,8 +91,7 @@ private class BuilderImpl(
   private var logger: Logger? = null
   private var whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy? = null
   private var opaquePolicy: OpaqueElementPolicy? = null
-
-
+  
   override fun withStartOffset(startOffset: Int): Builder {
     this.startOffset = startOffset
     return this
