@@ -582,10 +582,12 @@ class InspectionRunner {
             return;
           }
         }
-        LOG.error(PluginException.createByClass("Inspection '"+myToolWrapper+"' ("+myToolWrapper.getTool().getClass()+")" +
-         " generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
-         " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
-         "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")", null, myToolWrapper.getTool().getClass()));
+        if (isOnTheFly()) {
+          LOG.error(PluginException.createByClass("Inspection '"+myToolWrapper+"' ("+myToolWrapper.getTool().getClass()+")" +
+           " generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
+           " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
+           "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")", null, myToolWrapper.getTool().getClass()));
+        }
       }
 
       saveProblem(problemDescriptor);

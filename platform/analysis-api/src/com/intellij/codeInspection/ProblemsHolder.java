@@ -63,9 +63,11 @@ public class ProblemsHolder {
           return;
         }
       }
-      LOG.error("Inspection generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
-                " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
-                "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")");
+      if (isOnTheFly()) {
+        LOG.error("Inspection generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
+                  " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
+                  "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")");
+      }
     }
 
     saveProblem(problemDescriptor);
