@@ -349,7 +349,7 @@ public final class PythonSdkType extends SdkType {
     final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
     AtomicReference<Project> projectRef = new AtomicReference<>();
     if (PlatformUtils.isQodana()) {
-      Project project = Arrays.stream(ProjectManager.getInstance().getOpenProjects()).findFirst().orElse(null);
+      Project project = ContainerUtil.getFirstItem(Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
       projectRef.set(project);
     }
     else {
