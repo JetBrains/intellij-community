@@ -7,12 +7,20 @@ import com.intellij.openapi.components.*
 #parse("File Header.java")
 @Service
 @State(name = "${NAME}", storages = [Storage("${lowercasedName}.xml")])
-internal class ${NAME}: SimplePersistentStateComponent<${NAME}State>(${NAME}State()) {
+internal class ${NAME}: SerializablePersistentStateComponent<${NAME}State>(${NAME}State()) {
     companion object {
         fun getInstance(): ${NAME} = service()
     }
+
+    var value: String?
+        get() = state.storeValue
+        set(value) {
+            updateState {
+                it.copy(storeValue = value)
+            }
+        }
 }
 
-internal class ${NAME}State : BaseState() {
-    var value by string()
-}
+internal data class ${NAME}State(
+    @JvmField val storeValue: String? = null
+)

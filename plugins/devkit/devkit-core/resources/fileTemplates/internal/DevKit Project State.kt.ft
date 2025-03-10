@@ -8,12 +8,20 @@ import com.intellij.openapi.project.Project
 #parse("File Header.java")
 @Service(Service.Level.PROJECT)
 @State(name = "${NAME}", storages = [Storage("${lowercasedName}.xml")])
-internal class ${NAME}(private val project: Project): SimplePersistentStateComponent<${NAME}State>(${NAME}State()) {
+internal class ${NAME}(private val project: Project): SerializablePersistentStateComponent<${NAME}State>(${NAME}State()) {
     companion object {
         fun getInstance(project: Project): ${NAME} = project.service()
     }
+
+    var value: String?
+        get() = state.storeValue
+        set(value) {
+            updateState {
+                it.copy(storeValue = value)
+            }
+        }
 }
 
-internal class ${NAME}State : BaseState() {
-    var value by string()
-}
+internal data class ${NAME}State(
+    @JvmField val storeValue: String? = null
+)
