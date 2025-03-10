@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.idea.maven.indices.IndicesBundle
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.plugins.compatibility.MavenPluginM2ELifecycles
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -22,6 +23,7 @@ object MavenArtifactUtil {
   @JvmField
   val DEFAULT_GROUPS: Array<String> = arrayOf("org.apache.maven.plugins", "org.codehaus.mojo")
   const val MAVEN_PLUGIN_DESCRIPTOR: String = "META-INF/maven/plugin.xml"
+  const val M2E_LIFECYCLE_MAPPING: String = "META-INF/m2e/lifecycle-mapping-metadata.xml"
 
   private val ourPluginInfoCache: MutableMap<Path, MavenPluginInfo?> = Collections.synchronizedMap(HashMap())
 
@@ -186,10 +188,9 @@ object MavenArtifactUtil {
           MavenLog.LOG.info(IndicesBundle.message("repository.plugin.corrupt", file))
           return null
         }
-        entry.getInputStream().use { `is` ->
-          val bytes = FileUtil.loadBytes(`is`)
-          return MavenPluginInfo(bytes)
-        }
+        val bytes = entry.getInputStream().use(FileUtil::loadBytes)
+        val lifecycle = jar.getEntry(M2E_LIFECYCLE_MAPPING)?.getInputStream()?.use(FileUtil::loadBytes)
+        return MavenPluginInfo(bytes, lifecycle)
       }
     }
     catch (e: IOException) {
