@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.platform.inspect" exported="" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="commons-cli" level="project" />
-    <orderEntry type="module" module-name="intellij.properties.psi.impl" />
+    <orderEntry type="module" module-name="intellij.properties.backend.psi" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />

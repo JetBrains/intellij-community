@@ -15,12 +15,12 @@
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.properties" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties.backend" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.properties.psi.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties.backend.psi" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />

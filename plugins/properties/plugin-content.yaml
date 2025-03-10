@@ -1,9 +1,10 @@
-- name: lib/properties-frontend.jar
-  modules:
-  - name: intellij.properties.psi
-    reason: <- intellij.properties
-  - name: intellij.properties.psi.impl
-    reason: <- intellij.properties
-- name: lib/properties.jar
-  modules:
+- name: lib/modules/intellij.properties.jar
+  contentModules:
   - name: intellij.properties
+- name: lib/modules/intellij.properties.psi.impl.jar
+  contentModules:
+  - name: intellij.properties.psi.impl
+- name: lib/properties.jar
+  contentModules:
+  - name: intellij.properties.psi
+  - name: intellij.properties.frontback

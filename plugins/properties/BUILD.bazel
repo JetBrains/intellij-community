@@ -21,6 +21,7 @@ jvm_library(
     "//xml/impl",
     "//plugins/properties/properties-psi-api:psi",
     "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties/frontback:intellij.properties.frontback",
     "//platform/usageView",
     "//platform/core-ui",
     "//platform/refactoring",

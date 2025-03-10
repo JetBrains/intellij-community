@@ -28,7 +28,7 @@ public class PropertiesFileType extends LanguageFileType {
   private static final Logger log = Logger.getInstance(PropertiesFileType.class);
 
 
-  private PropertiesFileType() {
+  protected PropertiesFileType() {
     super(PropertiesLanguage.INSTANCE);
   }
 

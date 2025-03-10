@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
-    <orderEntry type="module" module-name="intellij.properties" />
+    <orderEntry type="module" module-name="intellij.properties.backend" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="library" name="Guava" level="project" />
@@ -68,7 +68,7 @@
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="module" module-name="intellij.properties.psi.impl" />
+    <orderEntry type="module" module-name="intellij.properties.backend.psi" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
