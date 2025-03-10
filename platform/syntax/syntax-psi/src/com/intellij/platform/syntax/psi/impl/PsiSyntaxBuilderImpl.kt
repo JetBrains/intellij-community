@@ -215,7 +215,6 @@ internal class PsiSyntaxBuilderImpl(
     var lastErrorIndex = -1
     var maxDepth = 0
     var curDepth = 0
-    var hasCollapsedChameleons = false
     var i = 1
     val size = productions.size
     while (i < size) {
@@ -224,10 +223,6 @@ internal class PsiSyntaxBuilderImpl(
       if (isDone) {
         // done marker, id < 0
         assertMarkersBalanced(productionResult.productionMarkers.getMarker(i) == curProduction, null)
-
-        if (isCollapsedChameleon(curNode)) {
-          hasCollapsedChameleons = true
-        }
         val pair = nodes.removeLast()
         curNode = pair.first
         curProduction = pair.second
@@ -258,7 +253,10 @@ internal class PsiSyntaxBuilderImpl(
       i++
     }
 
-    markCollapsedNodes(productionResult, nodeData)
+    val hasCollapsedChameleons = productionResult.productionMarkers.collapsedMarkerSize > 0
+    if (hasCollapsedChameleons) {
+      markCollapsedNodes(productionResult, nodeData)
+    }
 
     assertMarkersBalanced(curNode === rootMarker, curNode)
 
