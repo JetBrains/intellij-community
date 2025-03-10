@@ -33,7 +33,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.yield
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -234,13 +233,12 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.MarkupRestoredEvent(recipe.fileId, type))
   }
 
-  fun firstOpenedEditor(file: VirtualFile) {
+  fun firstOpenedEditor(file: VirtualFile, project: Project) {
     if (!currentThreadContext().isProperContext()) {
       return
     }
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime()))
     if (ApplicationManagerEx.isInIntegrationTest()) {
-      val project = ProjectManager.getInstance().openProjects[0]
       val fileEditorManager = FileEditorManager.getInstance(project)
       checkEditorHasBasicHighlight(file, project, fileEditorManager)
     }
