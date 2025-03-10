@@ -15,6 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.backend.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
   </component>
 </module>
