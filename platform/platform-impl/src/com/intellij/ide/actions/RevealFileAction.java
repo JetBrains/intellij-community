@@ -31,11 +31,11 @@ import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -162,8 +162,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return null;
   }
 
-  /** @see #openFile(Path) */
-  public static void openFile(@NotNull File file) {
+  /** Please use #openFile(Path) */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
+  public static void openFile(@NotNull java.io.File file) {
     openFile(file.toPath());
   }
 
@@ -181,8 +183,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  /** @see #openDirectory(Path) */
-  public static void openDirectory(@NotNull File directory) {
+  /** Please use #openDirectory(Path) */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"})
+  public static void openDirectory(@NotNull java.io.File directory) {
     doOpen(directory.toPath(), null);
   }
 
@@ -359,11 +363,13 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated trivial to implement, just inline */
   @Deprecated(forRemoval = true)
-  public static void showDialog(Project project,
-                                @NlsContexts.DialogMessage String message,
-                                @NlsContexts.DialogTitle String title,
-                                @NotNull File file,
-                                @SuppressWarnings("removal") @Nullable DialogWrapper.DoNotAskOption option) {
+  public static void showDialog(
+    Project project,
+    @NlsContexts.DialogMessage String message,
+    @NlsContexts.DialogTitle String title,
+    @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE"}) @NotNull java.io.File file,
+    @SuppressWarnings("removal") @Nullable DialogWrapper.DoNotAskOption option
+  ) {
     if (MessageDialogBuilder.okCancel(title, message)
       .yesText(getActionName(null))
       .noText(IdeBundle.message("action.close"))
