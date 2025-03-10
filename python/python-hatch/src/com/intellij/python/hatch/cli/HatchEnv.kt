@@ -112,6 +112,10 @@ const val ENV_TYPE_VIRTUAL: String = "virtual"
  * Manage project environments
  */
 class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
+  companion object {
+    private val SHOW_RESPONSE_REGEX = """^\s+Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
+  }
+
   enum class CreateResult {
     Created,
     AlreadyExists,
@@ -228,9 +232,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
   suspend fun show(vararg envs: String, internal: Boolean = false): Result<HatchEnvironments, ExecException> {
     val options = listOf(internal to "--internal").makeOptions()
 
-    val expectedOutput = """^\s+Standalone\s*\n((?:[+|].*[+|]\n)+)(?:\s+Matrices\s*\n((?:[+|].*[+|]\n)+))?$""".toRegex()
-
-    return executeAndMatch("show", "--ascii", *options, *envs, expectedOutput = expectedOutput) { matchResult ->
+    return executeAndMatch("show", "--ascii", *options, *envs, expectedOutput = SHOW_RESPONSE_REGEX) { matchResult ->
       val (standaloneTable, matricesTable) = matchResult.destructured
       val standalone = standaloneTable.parseAsciiTable()?.parseHatchEnvironments()?.map { it.first } ?: emptyList()
       val matrices = matricesTable.parseAsciiTable()?.parseHatchEnvironments()?.mapNotNull {

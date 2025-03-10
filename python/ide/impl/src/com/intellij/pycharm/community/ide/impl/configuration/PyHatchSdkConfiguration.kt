@@ -13,17 +13,20 @@ import com.intellij.python.hatch.getHatchService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.orLogException
-import com.jetbrains.python.sdk.hatch.createSdk
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.hatch.createSdk
 
-class PyHatchSdkConfiguration : PyProjectSdkConfigurationExtension {
+internal class PyHatchSdkConfiguration : PyProjectSdkConfigurationExtension {
   companion object {
     private val LOGGER = Logger.getInstance(PyHatchSdkConfiguration::class.java)
   }
 
   @RequiresBackgroundThread
   override fun getIntention(module: Module): @IntentionName String? {
-    val isReadyAndHaveOwnership = runWithModalProgressBlocking(module.project, "Hatch Project Analysis") {
+    val isReadyAndHaveOwnership = runWithModalProgressBlocking(
+      module.project,
+      PyCharmCommunityCustomizationBundle.message("sdk.set.up.hatch.project.analysis")
+    ) {
       val hatchService = module.getHatchService().getOr { return@runWithModalProgressBlocking false }
       hatchService.isHatchManagedProject().getOrNull() == true
     }
