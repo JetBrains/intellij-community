@@ -51,7 +51,7 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * }
  * </pre>
  *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/basic-action-system.html">Actions (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
  * @see AnActionEvent
  * @see ActionPlaces
  * @see Presentation

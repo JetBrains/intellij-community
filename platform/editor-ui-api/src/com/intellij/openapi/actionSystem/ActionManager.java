@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
@@ -17,7 +17,7 @@ import java.util.List;
  * Used to register and unregister actions, it also contains utility methods to easily fetch action by id and id by action.
  *
  * @see AnAction
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/basic-action-system.html#buildingToolbarPopupMenu">Building a Toolbar/Popup Menu from Actions (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html#buildingToolbarPopupMenu">Building a Toolbar/Popup Menu from Actions (IntelliJ Platform Docs)</a>
  */
 public abstract class ActionManager {
   /**
