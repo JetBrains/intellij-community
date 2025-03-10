@@ -3,7 +3,10 @@ package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
 import com.intellij.execution.process.*
-import com.intellij.execution.target.*
+import com.intellij.execution.target.HostPort
+import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -107,12 +110,12 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       }
     }
 
-    val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true || PlatformUtils.isFleetBackend()) null
+    val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true || PlatformUtils.isFleetBackend()) {
+      null
+    }
     else {
       connection.putUserData(targetPreparationKey, true)
-      val targetTypeId = serverEnvironmentSetup.getEnvironmentConfiguration().typeId
-      val targetDisplayName = TargetEnvironmentType.EXTENSION_NAME.findFirstSafe { it.id == targetTypeId }?.displayName
-      targetDisplayName?.run { GradleBundle.message("gradle.target.execution.running", this) + "\n" }
+      GradleBundle.message("gradle.target.execution.running") + "\n"
     }
     processHandler.addProcessListener(
       GradleServerProcessListener(appStartedMessage, targetProgressIndicator, resultHandler, gradleServerEventsListener)
