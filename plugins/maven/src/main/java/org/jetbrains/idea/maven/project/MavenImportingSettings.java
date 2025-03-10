@@ -52,6 +52,7 @@ public class MavenImportingSettings implements Cloneable {
   private @NotNull @NlsSafe String vmOptionsForImporter = "";
 
   private @NotNull @NlsSafe String jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
+  private boolean runPluginsCompatibilityOnSyncAndBuild;
 
   public enum GeneratedSourcesFolder {
     IGNORE("maven.settings.generated.folder.ignore"),
@@ -230,6 +231,13 @@ public class MavenImportingSettings implements Cloneable {
     this.jdkForImporter = jdkForImporter;
   }
 
+  public void setRunPluginsCompatibilityOnSyncAndBuild(boolean runPluginsCompatibilityOnSyncAndBuild) {
+    this.runPluginsCompatibilityOnSyncAndBuild = runPluginsCompatibilityOnSyncAndBuild;
+  }
+
+  public boolean isRunPluginsCompatibilityOnSyncAndBuild() {
+    return runPluginsCompatibilityOnSyncAndBuild;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -249,6 +257,7 @@ public class MavenImportingSettings implements Cloneable {
     if (generatedSourcesFolder != that.generatedSourcesFolder) return false;
     if (!jdkForImporter.equals(that.jdkForImporter)) return false;
     if (!vmOptionsForImporter.equals(that.vmOptionsForImporter)) return false;
+    if (runPluginsCompatibilityOnSyncAndBuild != that.runPluginsCompatibilityOnSyncAndBuild) return false;
     if (updateFoldersOnImportPhase != null
         ? !updateFoldersOnImportPhase.equals(that.updateFoldersOnImportPhase)
         : that.updateFoldersOnImportPhase != null) {
@@ -273,6 +282,8 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadAnnotationsAutomatically) result++;
     result <<= 1;
     if (autoDetectCompiler) result++;
+    result <<= 1;
+    if (runPluginsCompatibilityOnSyncAndBuild) result++;
     result <<= 1;
 
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);

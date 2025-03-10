@@ -346,6 +346,9 @@
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 
+    <registryKey key="maven.use.plugins.m2e.compat" defaultValue="false"
+                 description="Shows checkbox to run m2e compatibility"/>
+
     <registryKey key="maven.import.keep.existing.module.names" defaultValue="true"
                  description="Keep existing module names after maven project reimport"/>
 
@@ -941,5 +944,9 @@
     <listener class="org.jetbrains.idea.maven.project.MavenImportListenerBridge"
               topic="org.jetbrains.idea.maven.project.MavenSyncListener"
               activeInTestMode="true" activeInHeadlessMode="true"/>
+
+    <listener class="org.jetbrains.idea.maven.plugins.compatibility.PluginCompatibilityConfiguratorListener"
+              topic="org.jetbrains.idea.maven.project.MavenSyncListener"
+              activeInTestMode="false" activeInHeadlessMode="false"/>
   </applicationListeners>
 </idea-plugin>
