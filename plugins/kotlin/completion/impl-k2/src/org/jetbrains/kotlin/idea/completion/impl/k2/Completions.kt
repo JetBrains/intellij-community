@@ -160,7 +160,6 @@ internal object Completions {
             }
 
             is KotlinOperatorCallPositionContext,
-            is KotlinPropertyDelegatePositionContext,
             is KotlinIncorrectPositionContext -> {
                 // do nothing, completion is not supposed to be called here
             }
