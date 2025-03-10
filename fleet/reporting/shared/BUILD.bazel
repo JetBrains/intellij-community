@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/multiplatform.shims:multiplatform-shims",
   ]
 )
 ### auto-generated section `build fleet.reporting.shared` end
