@@ -2,7 +2,6 @@
 package com.intellij.diff.tools.util
 
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.CalledInAny
 
 internal interface PrevNextFileIterable {
   /**
@@ -11,7 +10,7 @@ internal interface PrevNextFileIterable {
    * @param fastCheckOnly if `true`, the check is performed as part of a fast update process (typically from an update method);
    * if `false`, a more comprehensive check is performed with a full update.
    */
-  @CalledInAny
+  @RequiresEdt
   fun canGoPrev(fastCheckOnly: Boolean): Boolean
 
   /**
@@ -20,7 +19,7 @@ internal interface PrevNextFileIterable {
    * @param fastCheckOnly if `true`, the check is performed as part of a fast update process (typically from an update method);
    * if `false`, a more comprehensive check is performed with a full update.
    */
-  @CalledInAny
+  @RequiresEdt
   fun canGoNext(fastCheckOnly: Boolean): Boolean
 
   /**
