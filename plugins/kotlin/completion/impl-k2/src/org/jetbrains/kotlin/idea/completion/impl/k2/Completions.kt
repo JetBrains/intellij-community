@@ -141,9 +141,9 @@ internal object Completions {
                     .complete(positionContext, weighingContext)
                 FirClassifierCompletionContributor(parameters, sink, priority = 1)
                     .complete(positionContext, weighingContext)
-                FirPackageCompletionContributor(parameters, sink, priority = 2)
+                FirCallableCompletionContributor(parameters, sink, priority = 2)
                     .complete(positionContext, weighingContext)
-                FirCallableCompletionContributor(parameters, sink, priority = 3)
+                FirPackageCompletionContributor(parameters, sink, priority = 3)
                     .complete(positionContext, weighingContext)
             }
 
