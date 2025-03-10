@@ -22,7 +22,6 @@ class PythonLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor {
     when (mode) {
       CompletionGolfMode.ALL -> return AllVisitor(featureName)
-      CompletionGolfMode.COMMENTS -> throw UnsupportedOperationException("Completion Golf mode \"COMMENTS\" is not supported for Python completion.")
       CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)
     }
   }
