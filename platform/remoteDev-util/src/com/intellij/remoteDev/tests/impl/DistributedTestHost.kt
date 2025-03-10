@@ -57,6 +57,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
+@Suppress("NonDefaultConstructor")
 @TestOnly
 @ApiStatus.Internal
 open class DistributedTestHost(coroutineScope: CoroutineScope) {
