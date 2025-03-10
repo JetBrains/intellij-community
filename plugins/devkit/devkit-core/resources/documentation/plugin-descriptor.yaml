@@ -1417,7 +1417,7 @@ elements:
                               requirement:
                                 required: no
                               description: |
-                                The [message key]([message key](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups)) for the separator text.
+                                The [message key](https://plugins.jetbrains.com/docs/intellij/action-system.html#localizing-actions-and-groups) for the separator text.
                                 The message bundle for use should be registered via the [`resource-bundle`](#attribute:idea-plugin__actions__resource-bundle) attribute of
                                 the [`<actions>`](#element:idea-plugin__actions) element.
                                 The attribute is ignored if the [`text`](#attribute:idea-plugin__group__separator) attribute is specified.
