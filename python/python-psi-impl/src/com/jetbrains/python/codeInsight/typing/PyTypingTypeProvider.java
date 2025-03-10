@@ -31,6 +31,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
@@ -1529,7 +1530,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
                 .toList();
               PyExpression boundExpression = assignedCall.getKeywordArgument("bound");
               PyType bound = boundExpression == null ? null : Ref.deref(getType(boundExpression, context));
-              return new PyTypeVarTypeImpl(name, constraints, bound, defaultType);
+              PyTypeVarType.Variance variance = getTypeVarVarianceFromDeclaration(assignedCall);
+              return new PyTypeVarTypeImpl(name, constraints, bound, defaultType, variance);
             }
             case ParamSpec -> {
               return new PyParamSpecType(name)
@@ -1541,6 +1543,25 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       }
     }
     return null;
+  }
+
+  private static @NotNull PyTypeVarType.Variance getTypeVarVarianceFromDeclaration(@NotNull PyCallExpression assignedCall) {
+    boolean covariant = PyEvaluator.evaluateAsBooleanNoResolve(assignedCall.getKeywordArgument("covariant"), false);
+    boolean contravariant = PyEvaluator.evaluateAsBooleanNoResolve(assignedCall.getKeywordArgument("contravariant"), false);
+    boolean inferVariance = PyEvaluator.evaluateAsBooleanNoResolve(assignedCall.getKeywordArgument("infer_variance"), false);
+
+    if (covariant && !contravariant) {
+      return PyTypeVarType.Variance.COVARIANT;
+    }
+    else if (contravariant && !covariant) {
+      return PyTypeVarType.Variance.CONTRAVARIANT;
+    }
+    else if (inferVariance) {
+      return PyTypeVarType.Variance.INFER_VARIANCE;
+    }
+    else {
+      return PyTypeVarType.Variance.INVARIANT;
+    }
   }
 
   @ApiStatus.Internal
@@ -1600,7 +1621,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
           else if (boundExpression != null) {
             boundType = Ref.deref(getTypePreventingRecursion(boundExpression, context));
           }
-          return new PyTypeVarTypeImpl(name, constraints, boundType, defaultType)
+          return new PyTypeVarTypeImpl(name, constraints, boundType, defaultType, PyTypeVarType.Variance.INFER_VARIANCE)
             .withScopeOwner(scopeOwner)
             .withDeclarationElement(declarationElement);
         }
