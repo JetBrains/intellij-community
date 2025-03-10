@@ -6,24 +6,23 @@ import org.apache.maven.cling.invoker.LookupContext;
 import org.apache.maven.cling.invoker.ProtoLookup;
 import org.apache.maven.cling.invoker.mvn.MavenContext;
 import org.apache.maven.cling.invoker.mvn.MavenInvoker;
-import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenContext;
 import org.apache.maven.cling.invoker.mvn.resident.ResidentMavenInvoker;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.MavenServerGlobals;
 
 public class Maven40Invoker extends ResidentMavenInvoker {
-  ResidentMavenContext myContext = null;
+  MavenContext myContext = null;
 
   public Maven40Invoker(ProtoLookup protoLookup) {
     super(protoLookup);
   }
 
   @Override
-  protected int doInvoke(ResidentMavenContext context) throws Exception {
-    pushCoreProperties(context);
+  protected int doInvoke(MavenContext context) throws Exception {
     validate(context);
-    prepare(context);
+    pushCoreProperties(context);
+    pushUserProperties(context);
     configureLogging(context);
     createTerminal(context);
     activateLogging(context);
@@ -35,7 +34,7 @@ public class Maven40Invoker extends ResidentMavenInvoker {
       () -> ((Maven40InvokerRequest)context.invokerRequest).disableCoreExtensions()
     );
     postContainer(context);
-    pushUserProperties(context);
+    pushUserProperties(context); // after PropertyContributor SPI
     lookup(context);
     init(context);
     postCommands(context);
@@ -53,7 +52,7 @@ public class Maven40Invoker extends ResidentMavenInvoker {
    * adapted from {@link MavenInvoker#execute(MavenContext)}
    */
   public MavenExecutionRequest createMavenExecutionRequest() throws Exception {
-    ResidentMavenContext context = myContext;
+    MavenContext context = myContext;
     MavenExecutionRequest request = prepareMavenExecutionRequest();
     toolchains(context, request);
     populateRequest(context, context.lookup, request);
@@ -61,7 +60,7 @@ public class Maven40Invoker extends ResidentMavenInvoker {
     return request;
   }
 
-  private boolean tryRun(String methodName, ThrowingRunnable action, Runnable onFailure) {
+  private static boolean tryRun(String methodName, ThrowingRunnable action, Runnable onFailure) {
     try {
       action.run();
     }
@@ -75,7 +74,7 @@ public class Maven40Invoker extends ResidentMavenInvoker {
     return true;
   }
 
-  private void tryRunAndRetryOnFailure(String methodName, ThrowingRunnable action, Runnable onFailure) {
+  private static void tryRunAndRetryOnFailure(String methodName, ThrowingRunnable action, Runnable onFailure) {
     if (!tryRun(methodName, action, onFailure)) {
       tryRun(methodName, action, null);
     }
