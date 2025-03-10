@@ -32,6 +32,6 @@ public abstract class ModuleRootManagerEx extends ModuleRootManager {
 
   public static ModuleRootManagerEx getInstanceEx(@NotNull Module module) {
     ProjectRootManager projectRootManager = ProjectRootManager.getInstance(module.getProject());
-    return (ModuleRootManagerEx)projectRootManager.getOrCreateModuleRootManager(module);
+    return (ModuleRootManagerEx)projectRootManager.getModuleRootManager(module);
   }
 }

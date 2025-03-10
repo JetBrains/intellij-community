@@ -20,7 +20,7 @@ public abstract class ModuleRootManager implements ModuleRootModel, ProjectModel
    */
   public static ModuleRootManager getInstance(@NotNull Module module) {
     ProjectRootManager projectRootManager = ProjectRootManager.getInstance(module.getProject());
-    return projectRootManager.getOrCreateModuleRootManager(module);
+    return projectRootManager.getModuleRootManager(module);
   }
 
   /**

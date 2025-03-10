@@ -481,7 +481,7 @@ open class ProjectRootManagerImpl(
     return AutoCloseable { rootsChanged.rootsChanged(changes) }
   }
 
-  override fun getOrCreateModuleRootManager(module: Module): ModuleRootManager {
+  override fun getModuleRootManager(module: Module): ModuleRootManager {
     return moduleRootManagerInstances.computeIfAbsent(module) { ModuleRootComponentBridge(module) }
   }
 
