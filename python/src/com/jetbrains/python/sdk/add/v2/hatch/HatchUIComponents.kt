@@ -76,12 +76,13 @@ private class HatchEnvComboBoxListCellRenderer : ColoredListCellRenderer<HatchVi
     }
 
     icon = when (value.pythonVirtualEnvironment) {
+      null -> AllIcons.Nodes.Folder
       is PythonVirtualEnvironment.Existing -> PythonIcons.Python.PythonClosed
       is PythonVirtualEnvironment.NotExisting -> AllIcons.Nodes.Folder
     }
 
     append(value.hatchEnvironment.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-    value.pythonVirtualEnvironment.pythonHomePath?.let { pythonHomePath ->
+    value.pythonVirtualEnvironment?.pythonHomePath?.let { pythonHomePath ->
       append("\t", SimpleTextAttributes.REGULAR_ATTRIBUTES)
       append(pythonHomePath.toString(), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
