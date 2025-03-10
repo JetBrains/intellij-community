@@ -1,14 +1,40 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40;
 
-import com.intellij.maven.server.m40.utils.*;
+import com.intellij.maven.server.m40.utils.ExceptionUtils;
+import com.intellij.maven.server.m40.utils.Maven40ApiModelConverter;
+import com.intellij.maven.server.m40.utils.Maven40EffectivePomDumper;
+import com.intellij.maven.server.m40.utils.Maven40ExecutionResult;
+import com.intellij.maven.server.m40.utils.Maven40ImporterSpy;
+import com.intellij.maven.server.m40.utils.Maven40Invoker;
+import com.intellij.maven.server.m40.utils.Maven40InvokerRequest;
+import com.intellij.maven.server.m40.utils.Maven40ModelConverter;
+import com.intellij.maven.server.m40.utils.Maven40ModelInheritanceAssembler;
+import com.intellij.maven.server.m40.utils.Maven40ProjectResolver;
+import com.intellij.maven.server.m40.utils.Maven40RepositorySystemSessionFactory;
+import com.intellij.maven.server.m40.utils.Maven40ServerConsoleLogger;
+import com.intellij.maven.server.m40.utils.Maven40SettingsBuilder;
+import com.intellij.maven.server.m40.utils.Maven40Sl4jLoggerWrapper;
+import com.intellij.maven.server.m40.utils.Maven40Slf4jServiceProvider;
+import com.intellij.maven.server.m40.utils.Maven40TransferListenerAdapter;
+import com.intellij.maven.server.m40.utils.Maven40WorkspaceMapReader;
 import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import org.apache.maven.*;
-import org.apache.maven.api.*;
+import org.apache.maven.AbstractMavenLifecycleParticipant;
+import org.apache.maven.DefaultMaven;
+import org.apache.maven.Maven;
+import org.apache.maven.MavenExecutionException;
+import org.apache.maven.RepositoryUtils;
+import org.apache.maven.api.ArtifactCoordinates;
+import org.apache.maven.api.DependencyCoordinates;
+import org.apache.maven.api.DownloadedArtifact;
+import org.apache.maven.api.Node;
+import org.apache.maven.api.PathScope;
+import org.apache.maven.api.Session;
+import org.apache.maven.api.cli.InvokerException;
 import org.apache.maven.api.cli.InvokerRequest;
-import org.apache.maven.api.cli.ParserException;
+import org.apache.maven.api.cli.Logger;
 import org.apache.maven.api.cli.ParserRequest;
 import org.apache.maven.api.cli.mvn.MavenOptions;
 import org.apache.maven.api.services.ArtifactResolver;
@@ -22,15 +48,31 @@ import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cling.invoker.ProtoLookup;
 import org.apache.maven.cling.invoker.mvn.MavenInvokerRequest;
 import org.apache.maven.cling.invoker.mvn.MavenParser;
-import org.apache.maven.execution.*;
+import org.apache.maven.execution.DefaultMavenExecutionResult;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenExecutionRequestPopulationException;
+import org.apache.maven.execution.MavenExecutionResult;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.execution.ProfileActivation;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
 import org.apache.maven.jline.JLineMessageBuilderFactory;
-import org.apache.maven.model.*;
+import org.apache.maven.model.Activation;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
+import org.apache.maven.model.Profile;
+import org.apache.maven.model.Reporting;
 import org.apache.maven.model.Repository;
-import org.apache.maven.model.building.*;
+import org.apache.maven.model.Resource;
+import org.apache.maven.model.building.DefaultModelBuildingRequest;
+import org.apache.maven.model.building.FileModelSource;
+import org.apache.maven.model.building.ModelBuildingRequest;
+import org.apache.maven.model.building.ModelProblem;
+import org.apache.maven.model.building.ModelProblemCollector;
+import org.apache.maven.model.building.ModelProblemCollectorRequest;
+import org.apache.maven.model.building.ModelProcessor;
 import org.apache.maven.model.interpolation.StringVisitorModelInterpolator;
 import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.model.path.DefaultPathTranslator;
@@ -65,15 +107,58 @@ import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenArtifactInfo;
+import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
+import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.idea.maven.server.LongRunningTask;
+import org.jetbrains.idea.maven.server.LongRunningTaskInput;
+import org.jetbrains.idea.maven.server.MavenArtifactResolutionRequest;
+import org.jetbrains.idea.maven.server.MavenArtifactResolveResult;
+import org.jetbrains.idea.maven.server.MavenConfigParseException;
+import org.jetbrains.idea.maven.server.MavenEmbedderSettings;
+import org.jetbrains.idea.maven.server.MavenGoalExecutionRequest;
+import org.jetbrains.idea.maven.server.MavenGoalExecutionResult;
+import org.jetbrains.idea.maven.server.MavenServerConfigUtil;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
+import org.jetbrains.idea.maven.server.MavenServerEmbeddedBase;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
+import org.jetbrains.idea.maven.server.MavenServerGlobals;
+import org.jetbrains.idea.maven.server.MavenServerResponse;
+import org.jetbrains.idea.maven.server.MavenServerSettings;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.server.ParallelRunnerForServer;
+import org.jetbrains.idea.maven.server.PluginResolutionRequest;
+import org.jetbrains.idea.maven.server.PluginResolutionResponse;
+import org.jetbrains.idea.maven.server.PomHashMap;
+import org.jetbrains.idea.maven.server.ProfileApplicationResult;
+import org.jetbrains.idea.maven.server.ProjectResolutionRequest;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -171,7 +256,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         "",
         "",
         commandLineOptions,
-        myConsoleWrapper,
         new JLineMessageBuilderFactory()
       )
       .userHome(userHomeDirectory)
@@ -181,9 +265,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     MavenParser mavenParser = new MavenParser() {
       @Override
-      protected MavenInvokerRequest getInvokerRequest(LocalContext context) {
+      public MavenInvokerRequest getInvokerRequest(LocalContext context) {
         return new Maven40InvokerRequest(
           context.parserRequest,
+          context.parsingFailed,
           context.cwd,
           context.installationDirectory,
           context.userHomeDirectory,
@@ -191,16 +276,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
           context.systemProperties,
           context.topDirectory,
           context.rootDirectory,
-          context.parserRequest.in(),
-          context.parserRequest.out(),
-          context.parserRequest.err(),
           context.extensions,
-          getJvmArguments(context.rootDirectory),
           (MavenOptions)context.options);
       }
 
       @Override
-      protected Path getRootDirectory(LocalContext context) throws ParserException {
+      public Path getRootDirectory(LocalContext context) {
         Path rootDir = super.getRootDirectory(context);
         if (null == rootDir) {
           Path topDirectory = context.topDirectory;
@@ -211,17 +292,25 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       }
     };
     InvokerRequest invokerRequest;
+    List<Logger.Entry> entries = new ArrayList<>();
     try {
       invokerRequest = mavenParser.parseInvocation(parserRequest);
+      entries.addAll(invokerRequest.parserRequest().logger().drain());
+      myContainer = myMavenInvoker.invokeAndGetContext(invokerRequest).lookup;
     }
-    catch (ParserException e) {
-      throw new MavenConfigParseException(e.getMessage(), multiModuleProjectDirectory);
+    catch (InvokerException.ExitException e) {
+      StringBuilder message = new StringBuilder(e.getMessage());
+      for (var entry : entries) {
+        var error = entry.error();
+        if (error != null) {
+          message.append("\n").append(error.getMessage());
+        }
+      }
+      throw new MavenConfigParseException(message.toString(), multiModuleProjectDirectory);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-
-    myContainer = myMavenInvoker.invokeAndGetContext(invokerRequest).lookup;
 
     SettingsBuilder settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
 
@@ -1059,7 +1148,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       request.setUserProperties(userProperties);
       request.setSystemProperties(MavenServerUtil.collectSystemProperties());
       request.setBuildStartTime(new Date());
-      request.setFileModel(result);
+      //request.setFileModel(result);
 
       List<ModelProblemCollectorRequest> problems = new ArrayList<>();
       result = interpolator.interpolateModel(result, basedir, request, new ModelProblemCollector() {

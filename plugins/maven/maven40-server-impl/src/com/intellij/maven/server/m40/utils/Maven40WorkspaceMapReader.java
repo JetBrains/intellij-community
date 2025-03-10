@@ -2,6 +2,7 @@
 package com.intellij.maven.server.m40.utils;
 
 import org.apache.maven.api.model.Model;
+import org.apache.maven.impl.resolver.MavenWorkspaceReader;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.repository.WorkspaceRepository;
@@ -10,10 +11,14 @@ import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMapWrapper;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Maven40WorkspaceMapReader implements WorkspaceReader, org.apache.maven.internal.impl.resolver.MavenWorkspaceReader {
+public class Maven40WorkspaceMapReader implements WorkspaceReader, MavenWorkspaceReader {
 
   private final WorkspaceRepository myRepository = new WorkspaceRepository();
 

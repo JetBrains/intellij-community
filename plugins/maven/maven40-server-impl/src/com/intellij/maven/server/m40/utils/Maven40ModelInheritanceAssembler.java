@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
-import org.apache.maven.api.model.Model;
+import org.apache.maven.model.Model;
 import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelProblemCollector;
 import org.apache.maven.model.building.ModelProblemCollectorRequest;
@@ -24,14 +24,14 @@ public final class Maven40ModelInheritanceAssembler {
       }
     }
 
-    Model result = Maven40ModelConverter.toNativeModel(model).getDelegate();
-    Model parent = Maven40ModelConverter.toNativeModel(parentModel).getDelegate();
+    Model result = Maven40ModelConverter.toNativeModel(model);
+    Model parent = Maven40ModelConverter.toNativeModel(parentModel);
     DefaultModelBuildingRequest request = new DefaultModelBuildingRequest();
     new DefaultInheritanceAssembler().assembleModelInheritance(result, parent, request, new ModelProblemCollector() {
       @Override
       public void add(ModelProblemCollectorRequest request) {
       }
     });
-    return Maven40ApiModelConverter.convertModel(result);
+    return Maven40ApiModelConverter.convertModel(result.getDelegate());
   }
 }
