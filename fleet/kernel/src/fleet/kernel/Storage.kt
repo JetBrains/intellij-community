@@ -42,7 +42,7 @@ suspend fun <T> withStorage(
       spannedScope("transact snapshot") {
         if (snapshot != DurableSnapshotWithPartitions.Empty) {
           Storage.logger.info { "applying non-empty snapshot $storageKey" }
-          val isFailFast = currentCoroutineContext()[FailFastMarker] != null
+          val isFailFast = currentCoroutineContext().shouldFailFast
           hackyNonBlockingChange {
             span("apply snapshot") {
               DbContext.threadBound.ensureMutable {
@@ -54,7 +54,7 @@ suspend fun <T> withStorage(
       }
     }.onFailure { x ->
       // Throwing exception only if we're in test mode
-      if (coroutineContext[FailFastMarker] != null)
+      if (coroutineContext.shouldFailFast)
         throw x
       else
         Storage.logger.error(x) { "couldn't restore state for $storageKey" }
