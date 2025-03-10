@@ -15,6 +15,9 @@ internal open class MarkerPool(
     list.add(CompositeMarker(-1, builder)) //no marker has id 0
   }
 
+  val size: Int
+    get() = list.size
+
   fun allocateCompositeMarker(): CompositeMarker {
     if (!freeStartMarkers.isEmpty()) {
       return list[freeStartMarkers.pop()] as CompositeMarker

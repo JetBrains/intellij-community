@@ -89,6 +89,8 @@
 *:com.intellij.platform.syntax.parser.OpaqueElementPolicy
 - a:getTextOfOpaqueElement(com.intellij.platform.syntax.SyntaxElementType):java.lang.String
 *:com.intellij.platform.syntax.parser.ProductionMarkerList
+- a:getCollapsedMarkerSize():I
+- a:getCollapsedMarkers():I[]
 - a:getMarker(I):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Production
 - a:getSize():I
 - a:isDoneMarker(I):Z

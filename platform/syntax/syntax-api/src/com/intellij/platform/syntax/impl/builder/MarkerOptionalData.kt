@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.impl.builder
 
-import com.intellij.platform.syntax.impl.fastutil.ints.Int2ObjectOpenHashMap
-import com.intellij.platform.syntax.impl.fastutil.ints.IntOpenHashSet
-import com.intellij.platform.syntax.impl.fastutil.ints.MutableIntMap
-import com.intellij.platform.syntax.impl.fastutil.ints.MutableIntSet
+import com.intellij.platform.syntax.impl.fastutil.ints.*
 import com.intellij.platform.syntax.impl.util.MutableBitSet
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
@@ -30,6 +27,12 @@ internal class MarkerOptionalData {
       myDebugAllocationPositions.remove(markerId)
     }
   }
+
+  val collapsedMarkerSize
+    get() = myCollapsed.size
+
+  val collapsedMarkerIds: IntArray
+    get() = myCollapsed.toIntArray()
 
   @ApiStatus.Internal
   fun getDoneError(markerId: Int): @Nls String? = myDoneErrors[markerId]

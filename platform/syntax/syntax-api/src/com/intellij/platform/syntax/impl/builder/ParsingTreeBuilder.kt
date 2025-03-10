@@ -378,6 +378,31 @@ internal class ParsingTreeBuilder(
 
       override val size: Int
         get() = myProduction.size
+
+      override val collapsedMarkerSize: Int
+        get() = myOptionalData.collapsedMarkerSize
+
+      override val collapsedMarkers: IntArray
+        get() {
+          if (collapsedMarkerSize == 0) return IntArray(0)
+
+          // collapsed marker ids are different from production marker ids!!!
+          // production marker ids are defined by [myProduction]
+          // marker ids are defined by [pool]
+          val markerId2productionId = IntArray(pool.size)
+          for (i in 0 until myProduction.size) {
+            myProduction.getStartMarkerAt(i)?.let { m ->
+              markerId2productionId[m.markerId] = i
+            }
+          }
+
+          // replacing marker ids with production marker ids
+          val collapsedMarkers = myOptionalData.collapsedMarkerIds
+          for (i in 0 until collapsedMarkers.size) {
+            collapsedMarkers[i] = markerId2productionId[collapsedMarkers[i]]
+          }
+          return collapsedMarkers
+        }
     }
 
     override val tokenSequence: TokenList

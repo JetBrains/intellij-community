@@ -146,9 +146,6 @@ internal class PsiSyntaxBuilderImpl(
     if (errorMessage != null) {
       nodeData.optionalData.setErrorMessage(markedId, errorMessage)
     }
-    if (productionMarker.isCollapsed()) {
-      nodeData.optionalData.markCollapsed(markedId)
-    }
     return CompositeNode(
       markerId = markedId,
       myType = tokenConverter.convertNotNull(productionMarker.getNodeType()),
@@ -261,11 +258,23 @@ internal class PsiSyntaxBuilderImpl(
       i++
     }
 
+    markCollapsedNodes(productionResult, nodeData)
+
     assertMarkersBalanced(curNode === rootMarker, curNode)
 
     checkTreeDepth(maxDepth, rootMarker.tokenType is IFileElementType, hasCollapsedChameleons)
 
     return rootMarker
+  }
+
+  private fun markCollapsedNodes(
+    productionResult: ProductionResult,
+    nodeData: NodeData,
+  ) {
+    val collapsedMarkers = productionResult.productionMarkers.collapsedMarkers
+    for (index in collapsedMarkers) {
+      nodeData.optionalData.markCollapsed(index)
+    }
   }
 
   private fun assertMarkersBalanced(condition: Boolean, marker: NodeBase?) {

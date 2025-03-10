@@ -65,4 +65,7 @@ interface ProductionMarkerList {
    * Number of markers in the list
    */
   val size: Int
+
+  val collapsedMarkers: IntArray
+  val collapsedMarkerSize: Int
 }
