@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.view.CharacterGrid
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -204,6 +205,8 @@ internal class TerminalCursorPainter private constructor(
   }
 
   private sealed class CursorRendererBase(private val editor: EditorEx) : CursorRenderer {
+    private val grid: CharacterGrid = requireNotNull((editor as? EditorImpl)?.characterGrid) { "The editor is not in the grid mode" }
+
     val editorCursorColor: Color
       get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CURSOR_DARK, CURSOR_LIGHT)
 
@@ -234,7 +237,7 @@ internal class TerminalCursorPainter private constructor(
         val point = editor.offsetToPoint2D(offset)
         val text = editor.document.immutableCharSequence
         val codePoint = if (offset in text.indices) text.codePointAt(offset) else 'W'.code
-        val cursorWidth = (editor as EditorImpl).view.getCodePointWidth(codePoint)
+        val cursorWidth = grid.codePointWidth(codePoint)
         val cursorHeight = editor.lineHeight
         val rect = Rectangle2D.Double(point.x, point.y, cursorWidth.toDouble(), cursorHeight.toDouble())
         g as Graphics2D

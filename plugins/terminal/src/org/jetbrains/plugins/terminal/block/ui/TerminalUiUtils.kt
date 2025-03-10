@@ -21,10 +21,10 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.editor.impl.view.DoubleWidthCharacterStrategy
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -56,8 +56,6 @@ import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.TerminalFontOptions
-import org.jetbrains.plugins.terminal.TerminalFontOptionsListener
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
@@ -119,8 +117,10 @@ object TerminalUiUtils {
 
     editor.applyFontSettings(settings)
 
-    editor.view.setDoubleWidthCharacterStrategy { codePoint ->
-      CharUtils.isDoubleWidthCharacter(codePoint, false)
+    val editorGrid = checkNotNull(editor.characterGrid) { "The editor did not switch into the grid mode" }
+
+    editorGrid.doubleWidthCharacterStrategy = DoubleWidthCharacterStrategy {
+      codePoint -> CharUtils.isDoubleWidthCharacter(codePoint, false)
     }
 
     if (installContextMenu) {
@@ -164,10 +164,6 @@ object TerminalUiUtils {
     val width = componentSize.width / charSize.width
     val height = componentSize.height / charSize.height
     return ensureTermMinimumSize(TermSize(width.toInt(), height.toInt()))
-  }
-
-  private fun ensureTermMinimumSize(size: TermSize): TermSize {
-    return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
   }
 
   @RequiresEdt
@@ -323,13 +319,16 @@ internal fun Editor.getCharSize(): Dimension2D {
 }
 
 fun Editor.calculateTerminalSize(): TermSize? {
-  val contentSize = scrollingModel.visibleArea.size
-  val charSize = getCharSize()
-
-  return if (contentSize.width > 0 && contentSize.height > 0) {
-    TerminalUiUtils.calculateTerminalSize(contentSize, charSize)
+  val grid = (this as? EditorImpl)?.characterGrid ?: return null
+  return if (grid.rows > 0 && grid.columns > 0) {
+    ensureTermMinimumSize(TermSize(grid.columns, grid.rows))
+  } else {
+    null
   }
-  else null
+}
+
+private fun ensureTermMinimumSize(size: TermSize): TermSize {
+  return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
 }
 
 private class Dimension2DDouble(private var width: Double, private var height: Double) : Dimension2D() {
