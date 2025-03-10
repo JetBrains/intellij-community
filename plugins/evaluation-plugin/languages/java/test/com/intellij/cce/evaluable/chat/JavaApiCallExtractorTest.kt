@@ -3,7 +3,6 @@ package com.intellij.cce.evaluable.chat
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.core.TypeProperty
-import com.intellij.cce.core.extractionOptions
 import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.java.chat.InEditorGeneratedCodeIntegrator
 import com.intellij.cce.java.chat.JavaApiCallExtractor
@@ -58,7 +57,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
 
     runBlocking {
       val extractor = JavaApiCallExtractor { project, _ -> code }
-      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties.extractionOptions())
+      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(listOf("MyClass#bar"), apiCalls)
     }
   }
@@ -84,7 +83,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
 
     runBlocking {
       val extractor = JavaApiCallExtractor { project, _ -> code }
-      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties.extractionOptions())
+      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(listOf("MyClass#bar", "MyClass#baz"), apiCalls)
     }
   }
@@ -103,7 +102,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
 
     runBlocking {
       val extractor = JavaApiCallExtractor { project, _ -> code }
-      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties.extractionOptions())
+      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertTrue(apiCalls.isEmpty())
     }
   }
@@ -131,7 +130,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
 
     runBlocking {
       val extractor = JavaApiCallExtractor(InEditorGeneratedCodeIntegrator())
-      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties.extractionOptions())
+      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(listOf("MyClass#foo"), apiCalls)
     }
   }
@@ -163,7 +162,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
 
     runBlocking {
       val extractor = JavaApiCallExtractor(InEditorGeneratedCodeIntegrator())
-      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties.extractionOptions())
+      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(listOf("MyClass#foo"), apiCalls)
     }
   }
@@ -182,7 +181,7 @@ class JavaApiCallExtractorTest : BasePlatformTestCase() {
 
     runBlocking {
       val extractor = JavaApiCallExtractor { project, _ -> code }
-      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties.extractionOptions())
+      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertTrue(apiCalls.isEmpty())
     }
   }
@@ -255,7 +254,7 @@ class SuperClass {
 
     runBlocking {
       val extractor = JavaApiCallExtractor { project, _ -> code }
-      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties.extractionOptions())
+      val apiCalls = extractor.extractApiCalls(code, project, tokenProperties)
       assertEquals(
         listOf("MySubClass#isTargetingSuccessful", "Velocity#getLength", "MySubClass#onTargetingFailOrLowVelocity"),
         apiCalls

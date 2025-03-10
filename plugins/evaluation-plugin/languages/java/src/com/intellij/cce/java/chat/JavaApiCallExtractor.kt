@@ -1,7 +1,8 @@
 package com.intellij.cce.java.chat
 
-import com.intellij.cce.core.ExtractionOptions
 import com.intellij.cce.core.Language
+import com.intellij.cce.core.TokenProperties
+import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.metric.ApiCallExtractor
 import com.intellij.cce.metric.ApiCallExtractorProvider
 import com.intellij.ide.actions.QualifiedNameProviderUtil
@@ -31,8 +32,8 @@ class InEditorGeneratedCodeIntegrator : GeneratedCodeIntegrator {
 }
 
 class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeIntegrator) : ApiCallExtractor {
-  override suspend fun extractApiCalls(code: String, project: Project, extractionOptions: ExtractionOptions): List<String> {
-    val methodName = extractionOptions.methodName ?: return emptyList()
+  override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
+    val methodName = tokenProperties.additionalProperty(METHOD_NAME_PROPERTY) ?: return emptyList()
     val psiFileWithGeneratedCode = edtWriteAction { createPsiFile(code, project, "dummy1.java") }
     val method = extractMethodFromGeneratedSnippet(project, psiFileWithGeneratedCode, methodName) ?: return emptyList()
 
