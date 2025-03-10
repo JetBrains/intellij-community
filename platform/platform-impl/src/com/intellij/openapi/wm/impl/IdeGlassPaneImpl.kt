@@ -136,9 +136,9 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  fun addFallbackBackgroundPainter(factory : FallbackBackgroundPainterFactory) {
+  fun addFallbackBackgroundPainter(fallbackBackgroundPainter : Painter) {
     installPainters()
-    IdeBackgroundUtil.addFallbackBackgroundPainter(this, factory)
+    IdeBackgroundUtil.addFallbackBackgroundPainter(this, fallbackBackgroundPainter)
   }
 
   internal fun installPainters() {
