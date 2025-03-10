@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.SystemProperties;
@@ -324,7 +323,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
               var lines = Files.readAllLines(desktopFile.get());
               fmApp = lines.stream()
                 .filter(line -> line.startsWith("Exec="))
-                .map(line -> line.substring(5).split(" ")[0])
+                .map(line -> getExecCommand(line.substring(5)))
                 .findFirst().orElse(null);
               fmName = lines.stream()
                 .filter(line -> line.startsWith("Name="))
@@ -342,8 +341,18 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
 
     private static String getXdgDataDirectories() {
-      return StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
-             StringUtil.defaultIfEmpty(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
+      return requireNonNullElse(System.getenv("XDG_DATA_HOME"), SystemProperties.getUserHome() + "/.local/share") + ':' +
+             requireNonNullElse(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
+    }
+
+    private static String getExecCommand(String value) {
+      if (value.startsWith("\"")) {
+        int p = value.lastIndexOf('\"');
+        if (p > 1) {
+          return value.substring(1, p);
+        }
+      }
+      return value.split(" ")[0];
     }
   }
 
