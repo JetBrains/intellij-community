@@ -664,14 +664,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout;
   }
 
-  public float getCodePointWidth(int codePoint) {
-    return getCodePointWidth(codePoint, Font.PLAIN);
-  }
-
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
-    var multiplier = myEditor.getSettings().getCharacterGridWidthMultiplier();
-    if (multiplier != null) {
-      return multiplier * (myDoubleWidthCharacterStrategy.isDoubleWidth(codePoint) ? getMaxCharWidth() * 2.0f : getMaxCharWidth());
+    var grid = myEditor.getCharacterGrid();
+    if (grid != null) {
+      return grid.codePointWidth(codePoint);
     }
     else {
       return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
@@ -779,19 +775,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return true;
   }
 
-  /**
-   * Sets the strategy to differentiate between single and double width characters.
-   * <p>
-   *   Only used when the {@link EditorSettings#setCharacterGridWidthMultiplier(Float) character grid mode}
-   *   is enabled.
-   *   If not set, then the character width will be guessed by its actual width in the font used.
-   *   Such heuristics generally works well for most regular characters,
-   *   but may fail for special characters sometimes used in fancy shell prompts, for example,
-   *   which is why an explicit strategy is needed.
-   * </p>
-   * @param doubleWidthCharacterStrategy the strategy to use
-   */
-  public void setDoubleWidthCharacterStrategy(@NotNull DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
+  @NotNull DoubleWidthCharacterStrategy getDoubleWidthCharacterStrategy() {
+    return myDoubleWidthCharacterStrategy;
+  }
+
+  void setDoubleWidthCharacterStrategy(@NotNull DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
     myDoubleWidthCharacterStrategy = doubleWidthCharacterStrategy;
   }
 
