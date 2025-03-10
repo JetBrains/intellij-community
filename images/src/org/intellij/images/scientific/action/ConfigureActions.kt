@@ -11,8 +11,9 @@ import org.intellij.images.scientific.BinarizationThresholdConfig
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.JTextField
+import javax.swing.JSlider
 
 class ConfigureActions : AnAction(
   ImagesBundle.message("image.color.mode.configure.actions"),
@@ -36,12 +37,7 @@ class ConfigureActions : AnAction(
   }
 
   private class ThresholdDialogWrapper(project: Project?, initialValue: Int) : DialogWrapper(project) {
-    private val inputField = JTextField(initialValue.toString()).apply {
-      preferredSize = Dimension(150, 10)
-      maximumSize = Dimension(150, 10)
-      minimumSize = Dimension(150, 10)
-    }
-
+    private var sliderValue: Int = initialValue.coerceIn(0, 255)
     var thresholdValue: Int? = null
 
     init {
@@ -50,24 +46,31 @@ class ConfigureActions : AnAction(
     }
 
     override fun createCenterPanel(): JComponent {
-      val panel = JPanel(BorderLayout())
-      panel.add(inputField, BorderLayout.CENTER)
-      return panel
+      val slider = JSlider(0, 255, sliderValue).apply {
+        majorTickSpacing = 50
+        minorTickSpacing = 5
+        paintTicks = true
+        paintLabels = true
+        value = sliderValue
+        addChangeListener { sliderValue = this.value }
+      }
+      val valueLabel = JLabel("$sliderValue").apply {
+        slider.addChangeListener { text = slider.value.toString() }
+      }
+      return JPanel(BorderLayout()).apply {
+        add(slider, BorderLayout.CENTER)
+        add(valueLabel, BorderLayout.SOUTH)
+        preferredSize = Dimension(300, 120)
+      }
     }
 
     override fun getPreferredFocusedComponent(): JComponent {
-      return inputField
+      return createCenterPanel()
     }
 
     override fun doOKAction() {
-      val value = inputField.text.toIntOrNull()
-      if (value != null && value in 0..255) {
-        thresholdValue = value
-        super.doOKAction()
-      }
-      else {
-        setErrorText(ImagesBundle.message("image.binarize.dialog.invalid"))
-      }
+      thresholdValue = sliderValue
+      super.doOKAction()
     }
 
     override fun getInitialSize(): Dimension {
