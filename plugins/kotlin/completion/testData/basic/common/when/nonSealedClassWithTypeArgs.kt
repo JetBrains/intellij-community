@@ -1,7 +1,7 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
 // IGNORE_K1
-class NON_SEALED
+open class NON_SEALED
 class AAAA<E, S>: NON_SEALED()
 object BBBB: NON_SEALED()
 class CCCC<E>: NON_SEALED()
