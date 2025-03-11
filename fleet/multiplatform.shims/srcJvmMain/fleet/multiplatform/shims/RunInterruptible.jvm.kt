@@ -5,4 +5,4 @@ import fleet.util.multiplatform.Actual
 import kotlin.coroutines.CoroutineContext
 
 @Actual("runInterruptibleImpl")
-suspend fun runInterruptibleJvm(context: CoroutineContext, block: () -> Any?) = kotlinx.coroutines.runInterruptible<Any?>(context, block)
+suspend fun runInterruptibleImplJvm(context: CoroutineContext, block: () -> Any?) = kotlinx.coroutines.runInterruptible<Any?>(context, block)

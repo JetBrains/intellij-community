@@ -5,4 +5,4 @@ import fleet.util.multiplatform.Actual
 import kotlin.coroutines.CoroutineContext
 
 @Actual("runInterruptibleImpl")
-suspend fun runInterruptibleWasm(context: CoroutineContext, block: () -> Any?) = block()
+suspend fun runInterruptibleImplWasmJs(context: CoroutineContext, block: () -> Any?) = block()
