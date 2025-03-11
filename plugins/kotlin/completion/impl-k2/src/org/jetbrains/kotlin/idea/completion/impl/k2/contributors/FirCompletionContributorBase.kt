@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
@@ -116,9 +117,10 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         typeText: String,
     ): LookupElement = withInsertHandler { context, item ->
         // Insert type cast if the receiver type does not match.
-        insertHandler?.handleInsert(context, item)
 
-        val explicitReceiverRange = receiver.textRange
+        val explicitReceiverRange = context.document
+            .createRangeMarker(receiver.textRange)
+        insertHandler?.handleInsert(context, item)
 
         val newReceiver = "(${receiver.text} as $typeText)"
         context.document.replaceString(explicitReceiverRange.startOffset, explicitReceiverRange.endOffset, newReceiver)
@@ -126,8 +128,10 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
         shortenReferencesInRange(
             file = context.file as KtFile,
-            selection = explicitReceiverRange.grown(newReceiver.length),
+            selection = explicitReceiverRange.textRange.grown(newReceiver.length),
         )
+        context.commitDocument()
+        context.doPostponedOperationsAndUnblockDocument()
     }
 
     // todo move to the corresponding assignment
