@@ -13,30 +13,36 @@ import com.intellij.openapi.observable.util.or
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.UV
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.util.ShowingMessageErrorSync
-import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -47,7 +53,11 @@ import kotlinx.coroutines.withContext
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
  */
-internal class PythonAddNewEnvironmentPanel(val projectPathFlows: ProjectPathFlows, onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null, private val errorSink: ErrorSink) : PySdkCreator {
+internal class PythonAddNewEnvironmentPanel(
+  val projectPathFlows: ProjectPathFlows,
+  onlyAllowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
+  private val errorSink: ErrorSink,
+) : PySdkCreator {
   private val propertyGraph = PropertyGraph()
   private val allowedInterpreterTypes = (onlyAllowedInterpreterTypes ?: PythonInterpreterSelectionMode.entries).also {
     assert(it.isNotEmpty()) {
@@ -65,6 +75,10 @@ internal class PythonAddNewEnvironmentPanel(val projectPathFlows: ProjectPathFlo
 
   private lateinit var pythonBaseVersionComboBox: PythonInterpreterComboBox
   private var initialized = false
+
+  // PY-79134: an anchor to display the promo notification on
+  // TODO: remove after promo ends
+  private lateinit var popupAnchor: Cell<*>
 
   private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
     val get = selectedMode.get()
@@ -93,6 +107,7 @@ internal class PythonAddNewEnvironmentPanel(val projectPathFlows: ProjectPathFlo
         row(message("sdk.create.interpreter.type")) {
           segmentedButton(allowedInterpreterTypes) { text = message(it.nameKey) }
             .bind(selectedMode)
+          popupAnchor = label("\u00A0") // nbsp character; empty label to act as an anchor
         }.topGap(TopGap.MEDIUM)
       }
 
@@ -147,6 +162,35 @@ internal class PythonAddNewEnvironmentPanel(val projectPathFlows: ProjectPathFlo
           updateVenvLocationHint()
           model.navigator.restoreLastState(allowedInterpreterTypes)
           initialized = true
+
+          val state = PythonAddNewEnvironmentState.getInstance()
+
+          if (state.isFirstVisit) {
+            JBPopupFactory.getInstance()
+              .createHtmlTextBalloonBuilder(
+                message("sdk.create.custom.uv.promo"),
+                null,
+                JBUI.CurrentTheme.NotificationWarning.foregroundColor(),
+                JBUI.CurrentTheme.NotificationWarning.backgroundColor(),
+                null,
+              )
+              .setBorderColor(JBUI.CurrentTheme.NotificationWarning.borderColor())
+              .setFadeoutTime(15_000)
+              .setClickHandler(
+                {
+                  selectedMode.set(CUSTOM)
+                  custom.newInterpreterManager.set(UV)
+                },
+                true
+              )
+              .createBalloon()
+              .show(
+                RelativePoint.getCenterOf(popupAnchor.component),
+                Balloon.Position.atRight
+              )
+
+            state.isFirstVisit = false
+          }
         }
       }
     }
