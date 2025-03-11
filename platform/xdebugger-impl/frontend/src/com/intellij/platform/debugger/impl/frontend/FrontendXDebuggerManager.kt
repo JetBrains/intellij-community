@@ -15,19 +15,22 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.util.*
 
 @Service(Service.Level.PROJECT)
 internal class FrontendXDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
-  private val sessions = Collections.synchronizedMap(LinkedHashMap<XDebugSessionId, FrontendXDebuggerSession>())
+  private val sessions = MutableStateFlow<List<FrontendXDebuggerSession>>(listOf())
   private val synchronousExecutor = Channel<suspend () -> Unit>(capacity = Integer.MAX_VALUE)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   val currentSession: StateFlow<FrontendXDebuggerSession?> =
     channelFlow {
-      XDebuggerManagerApi.getInstance().currentSession(project.projectId()).collectLatest { sessionId ->
+      XDebuggerManagerApi.getInstance().currentSession(project.projectId())
+        .combine(sessions) { currentSessionId, sessions ->
+          currentSessionId to sessions
+        }
+        .collectLatest { (currentSessionId, sessions) ->
         synchronousExecutor.trySend {
-          this@channelFlow.send(sessions[sessionId])
+          this@channelFlow.send(sessions.firstOrNull { it.id == currentSessionId })
         }
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
@@ -55,7 +58,15 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
 
         override fun processStopped(sessionId: XDebugSessionId) {
           synchronousExecutor.trySend {
-            sessions.remove(sessionId)?.closeScope()
+            sessions.update { sessions ->
+              val sessionToRemove = sessions.firstOrNull { it.id == sessionId }
+              if (sessionToRemove != null) {
+                sessions - sessionToRemove
+              }
+              else {
+                sessions
+              }
+            }
           }
         }
       })
@@ -76,8 +87,11 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
   }
 
   private suspend fun createDebuggerSession(sessionDto: XDebugSessionDto) {
-    val frontendSession = FrontendXDebuggerSession.create(project, cs, sessionDto)
-    val previousSession = sessions.put(sessionDto.id, frontendSession)
+    val newSession = FrontendXDebuggerSession.create(project, cs, sessionDto)
+    val previousSession = sessions.value.firstOrNull { it.id == sessionDto.id }
+    sessions.getAndUpdate {
+      it + newSession
+    }
     previousSession?.closeScope()
   }
 
