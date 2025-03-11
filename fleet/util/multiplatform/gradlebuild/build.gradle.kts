@@ -14,6 +14,5 @@ plugins {
 jpsModule {
   location {
     moduleName = "fleet.util.multiplatform"
-    isDefaultSrcFolderCommon = true
   }
 }
