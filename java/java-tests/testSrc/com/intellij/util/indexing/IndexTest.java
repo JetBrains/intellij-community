@@ -95,6 +95,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -969,7 +971,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(StubIndex.getElements(JavaStubIndexKeys.METHODS, "run", getProject(), projectScope, PsiMethod.class).isEmpty());
   }
 
-  public void test_text_todo_indexing_checks_for_cancellation() {
+  public void test_text_todo_indexing_checks_for_cancellation() throws ExecutionException, InterruptedException {
     TodoPattern pattern = new TodoPattern("(x+x+)+y", TodoAttributesUtil.createDefault(), true);
 
     TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns();
@@ -983,14 +985,15 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
       final CountDownLatch progressStarted = new CountDownLatch(1);
       final ProgressIndicatorBase progressIndicatorBase = new ProgressIndicatorBase();
       final AtomicBoolean canceled = new AtomicBoolean(false);
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {
           progressStarted.await();
           TimeoutUtil.sleep(1000);
           progressIndicatorBase.cancel();
           TimeoutUtil.sleep(500);
           assertTrue(canceled.get());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
           throw new AssertionError("Should not throw exceptions", e);
         }
       });
@@ -1004,6 +1007,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
           }
         }, progressIndicatorBase
       );
+      future.get();
     }
     finally {
       TodoConfiguration.getInstance().setTodoPatterns(oldPatterns);
