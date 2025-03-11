@@ -2,6 +2,8 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
+import com.intellij.notebooks.visualization.NotebookCellLines.CellType
+import com.intellij.notebooks.visualization.NotebookCellLines.Interval
 import com.intellij.notebooks.visualization.NotebookIntervalPointer
 import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.execution.ExecutionEvent
@@ -15,6 +17,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.util.*
+import java.awt.Dimension
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
@@ -26,24 +29,24 @@ class EditorCell(
   private val editor: EditorImpl,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
 
-  val source = AtomicProperty<String>(getSource())
+  val source: AtomicProperty<String> = AtomicProperty(getSource())
 
-  val type = interval.type
+  val type: CellType = interval.type
 
-  val interval get() = intervalPointer.get() ?: error("Invalid interval")
+  val interval: Interval get() = intervalPointer.get() ?: error("Invalid interval")
 
   val view: EditorCellView?
     get() = NotebookCellInlayManager.get(editor)!!.views[this]
 
-  var visible = AtomicBooleanProperty(true)
+  var visible: AtomicBooleanProperty = AtomicBooleanProperty(true)
 
-  val selected = AtomicBooleanProperty(false)
+  val selected: AtomicBooleanProperty = AtomicBooleanProperty(false)
 
-  val gutterAction = AtomicProperty<AnAction?>(null)
+  val gutterAction: AtomicProperty<AnAction?> = AtomicProperty(null)
 
-  val executionStatus = AtomicProperty<ExecutionStatus>(ExecutionStatus())
+  val executionStatus: AtomicProperty<ExecutionStatus> = AtomicProperty<ExecutionStatus>(ExecutionStatus())
 
-  val outputs = EditorCellOutputs(editor, this)
+  val outputs: EditorCellOutputs = EditorCellOutputs(editor, this)
 
   private fun getSource(): String {
     val document = editor.document
@@ -110,7 +113,7 @@ class EditorCell(
       .firstOrNull { it.getControllerClass() == type.java }
   }
 
-  fun updateOutputs() = editor.updateManager.update {
+  fun updateOutputs(): Unit = editor.updateManager.update {
     outputs.updateOutputs()
   }
 
@@ -148,7 +151,7 @@ class EditorCell(
   fun <T : EditorCellExtension> addExtension(cls: KClass<T>, extension: T) {
     var map = CELL_EXTENSION_CONTAINER_KEY.get(this)
     if (map == null) {
-      map = mutableMapOf<KClass<*>, EditorCellExtension>()
+      map = mutableMapOf()
       CELL_EXTENSION_CONTAINER_KEY.set(this, map)
     }
     map[cls] = extension
@@ -177,9 +180,9 @@ class EditorCell(
 
 class EditorCellOutputs(private val editor: EditorEx, private val cell: EditorCell) {
 
-  val scrollingEnabled = AtomicBooleanProperty(true)
+  val scrollingEnabled: AtomicBooleanProperty = AtomicBooleanProperty(true)
 
-  val outputs = AtomicProperty<List<EditorCellOutput>>(getOutputs())
+  val outputs: AtomicProperty<List<EditorCellOutput>> = AtomicProperty(getOutputs())
 
   fun updateOutputs() {
     val outputDataKeys = getOutputs()
@@ -202,6 +205,14 @@ class EditorCellOutputs(private val editor: EditorEx, private val cell: EditorCe
 
 class EditorCellOutput(dataKey: NotebookOutputDataKey) {
 
-  val dataKey = AtomicProperty<NotebookOutputDataKey>(dataKey)
+  val dataKey: AtomicProperty<NotebookOutputDataKey> = AtomicProperty(dataKey)
 
+  val size: AtomicProperty<EditorCellOutputSize> = AtomicProperty(EditorCellOutputSize())
 }
+
+data class EditorCellOutputSize(
+  val size: Dimension? = null,
+  val collapsed: Boolean = false,
+  val maximized: Boolean = false,
+  val resized: Boolean = false,
+)
