@@ -26,7 +26,6 @@ import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.OutlinedButton
-import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 
@@ -73,12 +72,9 @@ private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) 
             items = comboBoxItems,
             modifier = Modifier.width(170.dp).padding(end = 2.dp),
             maxPopupHeight = 150.dp,
-            onSelectedItemChange = { _, text ->
+            onItemSelected = { _, text ->
                 selected = text
                 onLoadMarkdown(if (selected == "Jewel readme") JewelReadme else MarkdownCatalog)
-            },
-            itemContent = { item, isSelected, isActive ->
-                SimpleListItem(text = item, isSelected = isSelected, isActive = isActive)
             },
         )
     }

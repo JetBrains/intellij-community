@@ -71,10 +71,12 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @see com.intellij.openapi.ui.ComboBox
  */
 @Composable
-public fun ListComboBox(
-    items: List<String>,
+public fun <T : Any> ListComboBox(
+    items: List<T>,
     selectedIndex: Int,
-    onItemSelected: (Int, String) -> Unit,
+    onItemSelected: (Int) -> Unit,
+    itemToLabel: (T) -> String,
+    itemKeys: (Int, T) -> Any,
     modifier: Modifier = Modifier,
     isEnabled: Boolean = true,
     outline: Outline = Outline.None,
@@ -83,21 +85,20 @@ public fun ListComboBox(
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
-    itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
-    itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
+    itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
 
-    var labelText by remember { mutableStateOf(items[selectedIndex]) }
+    var labelText by remember { mutableStateOf(itemToLabel(items[selectedIndex])) }
     var previewSelectedIndex by remember { mutableIntStateOf(selectedIndex) }
     val scope = rememberCoroutineScope()
 
     fun setSelectedItem(index: Int) {
         if (index >= 0 && index <= items.lastIndex) {
             listState.selectedKeys = setOf(itemKeys(index, items[index]))
-            labelText = items[index]
-            onItemSelected(index, items[index])
+            labelText = itemToLabel(items[index])
+            onItemSelected(index)
             scope.launch { listState.lazyListState.scrollToIndex(index) }
         } else {
             JewelLogger.getInstance("ListComboBox").trace("Ignoring item index $index as it's invalid")
@@ -367,7 +368,7 @@ public fun EditableListComboBox(
  * @param interactionSource Source of interactions for this combo box
  * @param style The visual styling configuration for the combo box
  * @param textStyle The typography style to be applied to the items
- * @param onSelectedItemChange Called when the selected item changes, with the new index and item
+ * @param onItemSelected Called when the selected item changes, with the new index and item
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
  * @see com.intellij.openapi.ui.ComboBox
@@ -383,7 +384,7 @@ public fun ListComboBox(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
-    onSelectedItemChange: (Int, String) -> Unit = { _, _ -> },
+    onItemSelected: (Int) -> Unit = {},
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
@@ -404,7 +405,7 @@ public fun ListComboBox(
         if (index >= 0 && index <= items.lastIndex) {
             listState.selectedKeys = setOf(itemKeys(index, items[index]))
             labelText = items[index]
-            onSelectedItemChange(index, items[index])
+            onItemSelected(index)
             scope.launch { listState.lazyListState.scrollToIndex(index) }
         } else {
             JewelLogger.getInstance("ListComboBox").trace("Ignoring item index $index as it's invalid")
@@ -688,11 +689,7 @@ private suspend fun LazyListState.scrollToIndex(itemIndex: Int) {
 }
 
 /** Returns the index of the selected item in the list, returning -1 if there is no selected item. */
-@Deprecated("Use selectedItemIndex(items, itemKeys) instead", level = DeprecationLevel.WARNING)
-public fun SelectableLazyListState.selectedItemIndex(): Int = selectedKeys.firstOrNull() as Int? ?: -1
-
-/** Returns the index of the selected item in the list, returning -1 if there is no selected item. */
-public fun SelectableLazyListState.selectedItemIndex(items: List<String>, itemKeys: (Int, String) -> Any): Int {
+public fun <T> SelectableLazyListState.selectedItemIndex(items: List<T>, itemKeys: (Int, T) -> Any): Int {
     if (selectedKeys.isEmpty()) return -1
 
     val selectedKey = selectedKeys.first()
@@ -705,16 +702,16 @@ public fun SelectableLazyListState.selectedItemIndex(items: List<String>, itemKe
 }
 
 @Composable
-private fun PopupContent(
-    items: List<String>,
+private fun <T : Any> PopupContent(
+    items: List<T>,
     previewSelectedItemIndex: Int,
     listState: SelectableLazyListState,
     popupMaxHeight: Dp,
     contentPadding: PaddingValues,
     onPreviewSelectedItemChange: (Int) -> Unit,
     onSelectedItemChange: (Int) -> Unit,
-    itemKeys: (Int, String) -> Any,
-    itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
+    itemKeys: (Int, T) -> Any,
+    itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     VerticallyScrollableContainer(
         scrollState = listState.lazyListState,
