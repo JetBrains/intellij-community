@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -116,7 +117,7 @@ open class TextEditorImpl @Internal constructor(
   companion object {
     @Internal
     fun getDocumentLanguage(editor: Editor): Language? {
-      val project = editor.project!!
+      val project = editor.project ?: return LanguageUtil.getFileTypeLanguage(editor.virtualFile.fileType)
       if (project.isDisposed) {
         logger<TextEditorImpl>().warn("Attempting to get a language for document on a disposed project: ${project.name}")
         return null
