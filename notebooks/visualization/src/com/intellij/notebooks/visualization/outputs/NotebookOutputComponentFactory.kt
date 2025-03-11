@@ -1,5 +1,6 @@
 package com.intellij.notebooks.visualization.outputs
 
+import com.intellij.notebooks.visualization.ui.EditorCellOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -41,14 +42,14 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
    *
    * [disposable] will be disposed when system destroys component. Default value is [component] itself if it implements [Disposable]
    */
-  data class CreatedComponent<C : JComponent> (
+  data class CreatedComponent<C : JComponent>(
     val component: C,
     val widthStretching: WidthStretching,
     val gutterPainter: GutterPainter?,
     val limitHeight: Boolean,
     val resizable: Boolean,
     val collapsedTextSupplier: () -> @Nls String,
-    val disposable: Disposable? = component as? Disposable
+    val disposable: Disposable? = component as? Disposable,
   )
 
   val componentClass: Class<C>
@@ -73,7 +74,11 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
   /**
    * May return `null` if the factory can't create any component for specific subtype of [NotebookOutputDataKey].
    */
-  fun createComponent(editor: EditorImpl, output: K): CreatedComponent<C>?
+  fun createComponent(editor: EditorImpl, output: K): CreatedComponent<C>? = null
+
+  fun createComponent(editor: EditorImpl, output: EditorCellOutput, outputDataKey: K): CreatedComponent<C>? {
+    return createComponent(editor, outputDataKey)
+  }
 
   companion object {
     val EP_NAME: ExtensionPointName<NotebookOutputComponentFactory<out JComponent, out NotebookOutputDataKey>> =

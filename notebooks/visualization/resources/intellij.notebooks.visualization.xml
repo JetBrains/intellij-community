@@ -33,22 +33,26 @@
   <actions resource-bundle="messages.VisualizationBundle">
     <group id="NotebookOutputCollapseActions" popup="true">
       <action id="NotebookOutputCollapseSingleInCellAction"
-              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseSingleInCellAction"/>
+              class="com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseSingleInCellAction"/>
       <action id="NotebookOutputCollapseAllInCellAction"
-              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInCellAction"/>
+              class="com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseAllInCellAction"/>
       <action id="NotebookOutputCollapseAllInSelectedCellsAction"
-              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInSelectedCellsAction"/>
+              class="com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseAllInSelectedCellsAction"/>
       <action id="NotebookOutputCollapseAllAction"
-              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllAction"/>
+              class="com.intellij.notebooks.visualization.outputs.action.NotebookOutputCollapseAllAction"/>
     </group>
 
     <action id="NotebookOutputSelectAllAction"
             class="com.intellij.notebooks.visualization.r.inlays.components.NotebookOutputSelectAllAction"
             use-shortcut-of="$SelectAll"/>
+
+    <action id="NotebookResetCellOutputSizeAction"
+            class="com.intellij.notebooks.visualization.outputs.action.NotebookResetCellOutputSizeAction"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <notificationGroup displayType="BALLOON" id="Notebook Table" bundle="messages.VisualizationBundle" key="inlay.output.table.notification.group.name"/>
+    <notificationGroup displayType="BALLOON" id="Notebook Table" bundle="messages.VisualizationBundle"
+                       key="inlay.output.table.notification.group.name"/>
 
     <editorFactoryDocumentListener implementation="com.intellij.notebooks.visualization.UndoableActionListener"
                                    order="last"/>
