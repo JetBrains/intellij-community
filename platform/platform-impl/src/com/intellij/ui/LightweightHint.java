@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
-import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -261,7 +261,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       .setBelongsToGlobalPopupStack(myBelongsToGlobalPopupStack)
       .setCancelCallback(() -> {
         //maybe readaction
-        WriteIntentReadAction.run((Runnable)this::onPopupCancel);
+        ReadAction.run(this::onPopupCancel);
         return true;
       })
       .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)

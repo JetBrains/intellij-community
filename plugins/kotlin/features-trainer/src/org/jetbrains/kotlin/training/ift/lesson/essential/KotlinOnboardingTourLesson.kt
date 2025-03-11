@@ -6,6 +6,7 @@ import com.intellij.java.ift.lesson.essential.OnboardingTourLessonBase
 import com.intellij.java.ift.lesson.essential.ideaOnboardingLessonId
 import com.intellij.openapi.ui.popup.Balloon
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.training.ift.KotlinLessonsBundle
 import training.dsl.*
@@ -18,8 +19,9 @@ class KotlinOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLesson
     private val samplePrintln = "println(\"AVERAGE of array \" + array.joinToString() + \" is \" + findAverage(array))"
     override val sample: LessonSample = parseLessonSample("""
     fun findAverage(values: IntArray): Double {
+        val si<caret id=3/>ze = values.size
         var result = 0.0
-        for (i in 0 un<caret id=3/>til values.size) {
+        for (i in 0 until values.size) {
             result += values[i]
         }
         <caret>return result<caret id=2/>
@@ -34,11 +36,11 @@ class KotlinOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLesson
     override val completionStepExpectedCompletion: String = "size"
 
     override fun LessonContext.contextActions() {
-        val quickFixMessage = KotlinBundle.message("replace.index.loop.with.collection.loop.quick.fix.text")
+        val quickFixMessage = KotlinBaseHighlightingBundle.message("safe.delete.text.0", "size")
         caret(sample.getPosition(3))
 
         task {
-            triggerOnEditorText("until", highlightBorder = true)
+            triggerOnEditorText("size", highlightBorder = true)
         }
 
         task("ShowIntentionActions") {
@@ -55,9 +57,8 @@ class KotlinOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLesson
         task {
             text(KotlinLessonsBundle.message("kotlin.onboarding.select.fix", strong(quickFixMessage)))
             stateCheck {
-                editor.document.text.contains("for (element in values)")
+                !editor.document.text.contains("size = values")
             }
-            restoreByUi(delayMillis = defaultRestoreDelay)
         }
 
         fun getIntentionMessage(): @Nls String {

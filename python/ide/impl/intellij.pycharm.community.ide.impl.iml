@@ -37,5 +37,6 @@
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
     <orderEntry type="module" module-name="intellij.python.community.impl.venv" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module" module-name="intellij.python.pyproject" />
   </component>
 </module>

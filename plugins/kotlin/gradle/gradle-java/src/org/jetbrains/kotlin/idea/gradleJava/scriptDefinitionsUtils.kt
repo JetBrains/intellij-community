@@ -5,6 +5,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.core.script.k2.NewScriptFileInfo
+import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
@@ -231,6 +233,11 @@ class GradleKotlinScriptDefinitionWrapper(
             ScriptCompilationConfiguration.ide.acceptedLocations.put(listOf(ScriptAcceptedLocation.Project))
             @Suppress("DEPRECATION_ERROR")
             ScriptCompilationConfiguration.fileNamePattern.put(legacyDefinition.scriptFilePattern.pattern)
+            ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply{
+                id = "gradle-kts"
+                title = ".gradle.kts"
+                templateName = "Kotlin Script Gradle"
+            })
         }
     }
 

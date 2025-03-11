@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.gradle.scripting.settings.StandaloneScriptsStorage
+import java.util.concurrent.ConcurrentHashMap
 
 class GradleBuildRootIndex(private val project: Project) : StandaloneScriptsUpdater {
     private val log = logger<GradleBuildRootIndex>()
@@ -39,11 +40,10 @@ class GradleBuildRootIndex(private val project: Project) : StandaloneScriptsUpda
 
     private val standaloneScriptRoots by lazy { StandaloneScriptRootsCache() }
 
-    private val byWorkingDir = HashMap<String, GradleBuildRoot>()
+    private val byWorkingDir = ConcurrentHashMap<String, GradleBuildRoot>()
     private val byProjectDir = HashMap<String, GradleBuildRoot>()
 
     val list: Collection<GradleBuildRoot>
-        @Synchronized
         get() = byWorkingDir.values
 
     @Synchronized

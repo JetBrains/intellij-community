@@ -8,6 +8,7 @@ DEFAULT_IMAGE_FORMAT = 'PNG'
 DEFAULT_ENCODING = 'utf-8'
 GRAYSCALE_MODE = 'L'
 RGB_MODE = 'RGB'
+RGBA_MODE = 'RGBA'
 
 
 def get_bytes(arr):
@@ -19,7 +20,7 @@ def get_bytes(arr):
         arr_to_convert = np.where(arr_to_convert == None, 0, arr_to_convert)
         arr_to_convert = np.nan_to_num(arr_to_convert, nan=0)
 
-        if not (np.issubdtype(arr_to_convert.dtype, np.floating) or np.issubdtype(arr_to_convert.dtype, np.integer)):
+        if np.iscomplexobj(arr_to_convert) or np.issubdtype(arr_to_convert.dtype, np.timedelta64):
             raise ValueError("Only non-complex numeric array types are supported.")
 
         if arr_to_convert.ndim == 1:
@@ -31,12 +32,20 @@ def get_bytes(arr):
         else:
             arr_to_convert = ((arr_to_convert - arr_min) / (arr_max - arr_min) * 255).astype(np.uint8)
 
-        mode = GRAYSCALE_MODE if arr_to_convert.ndim == 2 else RGB_MODE
+        arr_to_convert_ndim = arr_to_convert.ndim
+        if arr_to_convert_ndim == 2:
+            mode = GRAYSCALE_MODE
+        elif arr_to_convert_ndim == 3 and arr_to_convert.shape[2] == 4:
+            mode = RGBA_MODE
+        else:
+            mode = RGB_MODE
         bytes_buffer = io.BytesIO()
         image = Image.fromarray(arr_to_convert, mode=mode)
         image.save(bytes_buffer, format=DEFAULT_IMAGE_FORMAT)
         return base64.b64encode(bytes_buffer.getvalue()).decode(DEFAULT_ENCODING)
     except ImportError:
         return "Error: Pillow library is not installed."
+    except (TypeError, ValueError):
+        return "Error: Only non-complex numeric array types are supported."
     except Exception as e:
         return "Error: {}".format(e)

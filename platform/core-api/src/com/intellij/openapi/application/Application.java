@@ -12,9 +12,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.concurrent.Callable;
@@ -709,5 +707,10 @@ public interface Application extends ComponentManager {
   @ApiStatus.Obsolete
   default boolean isTopmostReadAccessAllowed() {
     return isReadAccessAllowed();
+  }
+
+  @ApiStatus.Internal
+  default @NonNls @Nullable String isLockingProhibited() {
+    return null;
   }
 }

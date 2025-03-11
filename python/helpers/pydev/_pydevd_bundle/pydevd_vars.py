@@ -549,6 +549,9 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
 
+    if rows == 0 and cols == 0:
+        return xml
+
     # there is no obvious rule for slicing (at least 5 choices)
     if len(array) == 1 and (rows > 1 or cols > 1):
         array = array[0]
@@ -605,6 +608,11 @@ def array_to_meta_xml(array, name, format):
     type = array.dtype.kind
     slice = name
     l = len(array.shape)
+
+    if l == 0:
+        rows, cols = 0, 0
+        bounds = (0, 0)
+        return array, slice_to_xml(name, rows, cols, format, "", bounds), rows, cols, format
 
     try:
         import numpy as np

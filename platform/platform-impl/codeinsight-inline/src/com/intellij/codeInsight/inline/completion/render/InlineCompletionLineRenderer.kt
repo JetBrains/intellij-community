@@ -55,7 +55,7 @@ open class InlineCompletionLineRenderer(
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
     val result = blocks.sumOf { block ->
-      val font = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(block.attributes.fontType))
+      val font = getFont(block.attributes, block.text)
       val fontMetrics = editor.contentComponent.getFontMetrics(font)
       fontMetrics.stringWidth(block.text)
     }

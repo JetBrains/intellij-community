@@ -27,7 +27,7 @@ class ToolboxIdeExitHandler : ToolboxServiceHandler<ToolboxIdeExitHandler.ExitPa
     onResult(JsonObject().apply {
       addProperty("status", "accepted")
     })
-    application.invokeLater({ LaterInvocator.forceLeaveAllModals() }, ModalityState.any())
+    application.invokeLater({ LaterInvocator.forceLeaveAllModals("Toolbox requested ${if (request.restart) "restart" else "exit"}") }, ModalityState.any())
     application.invokeLater({ application.exit(request.force, request.confirmed, request.restart) }, ModalityState.nonModal())
   }
 

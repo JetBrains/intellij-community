@@ -49,6 +49,7 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class QuickFixAction extends AnAction implements CustomComponentAction {
   private static final Logger LOG = Logger.getInstance(QuickFixAction.class);
@@ -175,14 +176,14 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
                                      Set<? super PsiElement> ignoredElements) {
     final String templatePresentationText = getTemplatePresentation().getText();
     assert templatePresentationText != null;
-    Ref<@Nls String> messageRef = Ref.create();
-    CommandProcessor.getInstance().executeCommand(project, () -> {
+    executeAndNotify(project, () -> {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       boolean startInWriteAction = startInWriteAction();
       PerformFixesTask performFixesTask = new PerformFixesTask(project, descriptors, ignoredElements, context);
       if (startInWriteAction) {
         ((ApplicationImpl)ApplicationManager.getApplication())
           .runWriteActionWithCancellableProgressInDispatchThread(templatePresentationText, project, null, performFixesTask::doRun);
+        return null;
       }
       else {
         final SequentialModalProgressTask progressTask =
@@ -190,9 +191,16 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
         progressTask.setMinIterationTime(200);
         progressTask.setTask(performFixesTask);
         ProgressManager.getInstance().run(progressTask);
-        messageRef.set(performFixesTask.getResultMessage(templatePresentationText));
+        return performFixesTask.getResultMessage(templatePresentationText);
       }
-    }, templatePresentationText, null);
+    });
+  }
+
+  void executeAndNotify(@NotNull Project project, @NotNull Supplier<@Nls String> command) {
+    final String templatePresentationText = getTemplatePresentation().getText();
+    assert templatePresentationText != null;
+    Ref<@Nls String> messageRef = Ref.create();
+    CommandProcessor.getInstance().executeCommand(project, () -> messageRef.set(command.get()), templatePresentationText, null);
     String message = messageRef.get();
     if (message != null) {
       BATCH_QUICK_FIX_MESSAGES.createNotification(HtmlChunk.text(message).toString(), NotificationType.WARNING)

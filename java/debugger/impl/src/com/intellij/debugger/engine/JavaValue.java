@@ -45,6 +45,7 @@ import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
 import com.sun.jdi.*;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +58,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.java.debugger.impl.shared.engine.XValueTypeKt.JAVA_VALUE_KIND;
 
@@ -464,7 +466,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public void computeSourcePosition(final @NotNull XNavigatable navigatable) {
-    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, navigatable, false);
+    AtomicBoolean computed = new AtomicBoolean(false);
+    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, false, xPos -> {
+      if (computed.compareAndSet(false, true)) {
+        navigatable.setSourcePosition(xPos);
+      }
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
@@ -473,7 +481,10 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     if (myValueDescriptor instanceof FieldDescriptor && myParent != null && !(myParent.myValueDescriptor instanceof ThisDescriptorImpl)) {
       return ThreeState.NO;
     }
-    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, callback::computed, true);
+    JavaValueUtilsKt.scheduleSourcePositionCompute(myEvaluationContext, myValueDescriptor, true, xPos -> {
+      callback.computed(xPos);
+      return Unit.INSTANCE;
+    });
     return ThreeState.YES;
   }
 

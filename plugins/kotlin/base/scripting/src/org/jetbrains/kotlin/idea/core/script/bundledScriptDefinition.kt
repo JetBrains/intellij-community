@@ -6,6 +6,8 @@ import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ex.PathUtilEx
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.core.script.k2.NewScriptFileInfo
+import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.io.File
@@ -46,6 +48,10 @@ val Project.defaultDefinition: ScriptDefinition
                 displayName("Default Kotlin Script")
                 hostConfiguration(defaultJvmScriptingHostConfiguration)
                 ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
+                ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply{
+                    id = "default-kts"
+                    title = ".kts"
+                })
             }
         )
 

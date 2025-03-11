@@ -41,6 +41,9 @@ interface FloatingToolbarProvider {
 
   fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {}
 
+  @ApiStatus.Internal
+  fun onHiddenByEsc(dataContext: DataContext) {}
+
   companion object {
 
     val EP_NAME: ExtensionPointName<FloatingToolbarProvider> = ExtensionPointName.create("com.intellij.editorFloatingToolbarProvider")

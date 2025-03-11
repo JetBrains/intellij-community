@@ -280,12 +280,14 @@ public final class FileManagerImpl implements FileManager {
 
   /**
    * @return associated psi file, it's it cached in {@link #myVFileToViewProviderMap}
-   * It's guaranteed to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
+   * It tries to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
    */
   @ApiStatus.Internal
   public @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
     FileViewProvider viewProvider = getRawCachedViewProvider(vFile, context);
-    return viewProvider == null ? null : viewProvider.getPsi(viewProvider.getBaseLanguage());
+    return viewProvider == null ? null :
+           viewProvider instanceof AbstractFileViewProvider ? ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage())
+                                                            : viewProvider.getPsi(viewProvider.getBaseLanguage());
   }
 
   private @NotNull List<FileViewProvider> getRawCachedViewProviders(@NotNull VirtualFile vFile) {

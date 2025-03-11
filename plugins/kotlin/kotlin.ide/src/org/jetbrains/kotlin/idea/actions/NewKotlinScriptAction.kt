@@ -10,9 +10,16 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
+import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import kotlin.collections.none
+import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
+import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
+import javax.swing.Icon
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ide
 
 internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware {
     override fun isAvailable(dataContext: DataContext): Boolean {
@@ -31,11 +38,31 @@ internal class NewKotlinScriptAction : AbstractNewKotlinFileAction(), DumbAware 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
         with(builder) {
             setTitle(KotlinBundle.message("action.new.script.dialog.title"))
-            addKind(KotlinFileTemplate.Script)
+
+            val scriptDefinitionProvider = ScriptDefinitionProvider.getInstance(project) as? K2ScriptDefinitionProvider
+            if (scriptDefinitionProvider != null) {
+                K2ScriptDefinitionProvider.getInstance(project).getAllDefinitions().mapNotNull {
+                    it.compilationConfiguration[ScriptCompilationConfiguration.ide.kotlinScriptTemplateInfo]
+                }.distinct().forEach {
+                    builder.addKind(it.title, it.icon, it.templateName)
+                }
+            } else {
+                builder
+                    .addKind(KotlinScriptFileTemplate.GradleKts)
+                    .addKind(KotlinScriptFileTemplate.MainKts)
+                    .addKind(KotlinScriptFileTemplate.Kts)
+            }
+
             setValidator(NewKotlinFileNameValidator)
         }
     }
 
     override fun getActionName(directory: PsiDirectory, newName: String, templateName: String): String =
         KotlinBundle.message("action.Kotlin.NewScript.text")
+}
+
+internal enum class KotlinScriptFileTemplate(@NlsContexts.ListItem override val title: String, override val icon: Icon, override val fileName: String): KotlinTemplate {
+    GradleKts(".gradle.kts", KotlinIcons.GRADLE_SCRIPT, "Kotlin Script Gradle"),
+    MainKts(".main.kts", KotlinIcons.SCRIPT, "Kotlin Script MainKts"),
+    Kts(".kts", KotlinIcons.SCRIPT, "Kotlin Script"),
 }

@@ -48,7 +48,13 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
     logger.info("install $specification: start")
-    installPackageCommand(specification, options).onFailure { return Result.failure(it) }
+
+    val result = installPackageCommand(specification, options)
+    result.onFailure {
+      logger.info("install $specification: error. Output: \n${it.stackTraceToString()}")
+      return Result.failure(it)
+    }
+
     logger.info("install $specification: finish")
     refreshPaths()
     return reloadPackages()

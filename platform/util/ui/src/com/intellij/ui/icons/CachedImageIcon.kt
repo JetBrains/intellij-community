@@ -65,7 +65,7 @@ open class CachedImageIcon private constructor(
   @Volatile
   @JvmField
   internal var loader: ImageDataLoader?,
-  private val localFilterSupplier: RgbImageFilterSupplier? = null,
+  @Internal val localFilterSupplier: RgbImageFilterSupplier? = null,
   private val colorPatcher: ColorPatcherStrategy = GlobalColorPatcherStrategy,
   private val toolTip: Supplier<String?>? = null,
   private val scaleContext: ScaleContext? = null,

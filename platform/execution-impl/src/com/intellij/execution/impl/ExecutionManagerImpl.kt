@@ -760,10 +760,10 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
               .finishOnUiThread(ModalityState.nonModal()) { canRun ->
                 inProgress.remove(inProgressEntry)
                 if (canRun) {
-
-                  executeConfiguration(environment, environment.runner, assignNewId, this.project,
-                                       environment.runnerAndConfigurationSettings)
-
+                  SlowOperations.knownIssue("IJPL-162789").use {
+                    executeConfiguration(environment, environment.runner, assignNewId, this.project,
+                                         environment.runnerAndConfigurationSettings)
+                  }
                   return@finishOnUiThread
                 }
 

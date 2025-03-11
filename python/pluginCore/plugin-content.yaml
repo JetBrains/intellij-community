@@ -10,7 +10,7 @@
     reason: <- intellij.python.community.impl
   - name: jetbrains.ml.models.python.imports.ranking.model
     files:
-    - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/lilac-coua/python-imports-ranking-model-lilac-coua.jar
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda/python-imports-ranking-model-coral-panda.jar
     reason: <- intellij.python.ml.features
   - name: jsr305
     files:
@@ -20,6 +20,11 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
     reason: withProjectLibrary
+  - name: tuweni-toml
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2/tuweni-toml-2.jar
+    - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
+    reason: <- intellij.python.community.impl
   modules:
   - name: intellij.python.community
   - name: intellij.python.community.core.impl
@@ -27,9 +32,6 @@
     libraries:
       ml-completion-prev-exprs-models:
       - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
-      tuweni-toml:
-      - name: $MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2/tuweni-toml-2.jar
-      - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
       completion-ranking-python-with-full-line:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
   - name: intellij.python.community.impl.poetry
@@ -43,6 +45,7 @@
   - name: intellij.python.psi.impl
   - name: intellij.python.pydev
   - name: intellij.python.sdk
+  - name: intellij.python.pyproject
   - name: intellij.python.community.plugin
   contentModules:
   - name: intellij.python.community.plugin.minor

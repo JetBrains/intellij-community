@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import kotlin.jvm.PurelyImplements;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -14,6 +15,7 @@ import java.util.function.Consumer;
  * The tradeoff is the following: This list is slower than {@link ArrayList} but occupies less memory in case of exactly 1 element.
  * Please use it only if your code contains many 1-element lists outside very hot loops.
  */
+@PurelyImplements("kotlin.collections.MutableList")
 public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   private int mySize;
   private Object myElem; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2

@@ -42,6 +42,10 @@ public class GradleDependencyReportTask extends DefaultTask {
     this.outputFile = outputFile;
   }
 
+  public GradleDependencyReportTask() {
+    notCompatibleWithConfigurationCache("IDEA-347310 GradleDependencyReportTask not compatible with configuration cache");
+  }
+
   @TaskAction
   public void generate() throws IOException {
     Collection<Configuration> configurations = getSelectedConfigurations();

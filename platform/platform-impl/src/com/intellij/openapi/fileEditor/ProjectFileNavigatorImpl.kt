@@ -22,6 +22,7 @@ internal class ProjectFileNavigatorImpl(
   private val cs: CoroutineScope,
 ) {
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): ProjectFileNavigatorImpl = project.service()
   }
 

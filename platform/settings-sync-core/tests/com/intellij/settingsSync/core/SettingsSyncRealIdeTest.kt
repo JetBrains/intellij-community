@@ -2,6 +2,7 @@ package com.intellij.settingsSync.core
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
@@ -58,6 +59,27 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
     assertServerSnapshot {
       fileState("keymaps/${keymap.name}.xml", String(keymap.writeScheme().toByteArray(), Charset.defaultCharset()))
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-175567"])
+  fun `non-scheme additionalExportDirectory changes are logged`() = timeoutRunBlockingAndStopBridge {
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+
+    val fileTemplate = FileTemplateManager.getDefaultInstance().addTemplate("my-mega-template", "php")
+    Disposer.register(disposable, Disposable {
+      FileTemplateManager.getDefaultInstance().removeTemplate(fileTemplate)
+    })
+    val phpCode = "<?php echo 'hello world' ?>"
+    fileTemplate.text= phpCode
+    FileTemplateManager.getDefaultInstance().saveAllTemplates()
+    executeAndWaitUntilPushed {
+      saveComponentStore()
+    }
+
+    assertServerSnapshot {
+      fileState("fileTemplates/my-mega-template.php", phpCode)
     }
   }
 

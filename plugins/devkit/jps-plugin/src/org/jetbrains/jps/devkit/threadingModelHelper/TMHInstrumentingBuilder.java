@@ -9,13 +9,16 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.devkit.DevKitJpsBundle;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
+import org.jetbrains.jps.incremental.JvmClassFileInstrumenter;
 import org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
@@ -23,12 +26,27 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-public final class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
+public final class TMHInstrumentingBuilder extends BaseInstrumentingBuilder implements JvmClassFileInstrumenter {
   private static final Logger LOG = Logger.getInstance(TMHInstrumentingBuilder.class);
   public static final String INSTRUMENT_ANNOTATIONS_PROPERTY = "tmh.instrument.annotations";
   static final String GENERATE_LINE_NUMBERS_PROPERTY = "tmh.generate.line.numbers";
 
   public TMHInstrumentingBuilder() {
+  }
+
+  @Override
+  public @NotNull String getId() {
+    return "devkit-threading-assertions";
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull ProjectDescriptor projectDescriptor, @NotNull JpsModule module) {
+    return SystemProperties.getBooleanProperty(INSTRUMENT_ANNOTATIONS_PROPERTY, false);
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 
   @Override

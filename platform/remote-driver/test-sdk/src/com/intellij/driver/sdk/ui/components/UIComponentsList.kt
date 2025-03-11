@@ -50,7 +50,7 @@ class UIComponentsList<T : UiComponent>(
   }
 
   fun list(): List<T> {
-    LOG.info("Requesting all ${type.simpleName}(s) by xpath = $xpath")
+    LOG.info("Requesting all ${type.simpleName}(s) by xpath = $xpath in ${parentSearchContext.contextAsString}")
 
     val components = parentSearchContext.findAll(xpath).mapIndexed { n, c ->
       val searchContext = object : SearchContext {

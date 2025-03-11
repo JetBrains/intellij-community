@@ -4,7 +4,7 @@ import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isO
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDraggableBar
+import com.intellij.notebooks.visualization.ui.cellsDnD.EditorCellDragAssistant
 import com.intellij.notebooks.visualization.ui.jupyterToolbars.EditorCellActionsToolbarManager
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -27,12 +27,15 @@ class EditorCellInput(
 
   val component: EditorCellViewComponent = componentFactory.createComponent(editor, cell).also { add(it) }
 
-  val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, ::getFoldingBounds) { toggleFolding() }
+  private val dragAssistant = when(Registry.`is`("jupyter.editor.dnd.cells")) {
+    true -> EditorCellDragAssistant(editor, this, ::fold, ::unfold).also { Disposer.register(this, it) }
+    false -> null
+  }
+
+  val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, dragAssistant, ::getFoldingBounds) { toggleFolding() }
     .also {
       Disposer.register(this, it)
     }
-
-  val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this, ::fold, ::unfold)
 
   val cellActionsToolbar: EditorCellActionsToolbarManager? =
     if (Registry.`is`("jupyter.per.cell.management.actions.toolbar") && editor.isOrdinaryNotebookEditor()) EditorCellActionsToolbarManager(editor, cell)
@@ -83,7 +86,6 @@ class EditorCellInput(
     super.dispose()
     Disposer.dispose(folding)
     cellActionsToolbar?.let { Disposer.dispose(it) }
-    Disposer.dispose(draggableBar)
   }
 
   fun update() {

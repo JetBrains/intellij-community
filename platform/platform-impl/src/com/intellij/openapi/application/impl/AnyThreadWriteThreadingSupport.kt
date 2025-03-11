@@ -3,17 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.core.rwmutex.*
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.LegacyProgressIndicatorProvider
-import com.intellij.openapi.application.LockAcquisitionListener
-import com.intellij.openapi.application.isLockStoredInContext
-import com.intellij.openapi.application.ThreadingSupport
-import com.intellij.openapi.application.ReadActionListener
-import com.intellij.openapi.application.SuspendingWriteActionListener
-import com.intellij.openapi.application.WriteActionListener
-import com.intellij.openapi.application.WriteIntentReadActionListener
-import com.intellij.openapi.application.reportInvalidActionChains
-import com.intellij.openapi.application.useBackgroundWriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Computable
@@ -130,7 +120,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   // We approximate "on stack" permits with "thread local" permits for shared main lock
   private val mySecondaryPermits = ThreadLocal.withInitial { ArrayList<Permit>() }
   private val myReadActionsInThread = ThreadLocal.withInitial { 0 }
-  private val myLockingProhibited: ThreadLocal<Boolean?> = ThreadLocal.withInitial { null }
+  private val myLockingProhibited: ThreadLocal<Pair<Boolean, String>?> = ThreadLocal.withInitial { null }
 
   // todo: reimplement with listeners in IJPL-177760
   private val myTopmostReadAction = ThreadLocal.withInitial { false }
@@ -183,6 +173,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     return myTopmostReadAction.get()
   }
 
+  override fun getLockingProhibitedAdvice(): String? {
+    return myLockingProhibited.get()?.second
+  }
+
   private fun getThreadState(): ThreadState {
     val ctxState = if (isLockStoredInContext) currentThreadContext()[LockStateContextElement]?.threadState else null
     val thrState = myState.get()
@@ -220,9 +214,19 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  // @Throws(E::class)
+  override fun <T, E : Throwable?> runPreventiveWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+    return runWriteIntentReadAction(computation, true)
+  }
+
   override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
-    handleLockAccess("write-intent lock")
+    return runWriteIntentReadAction(computation, false)
+  }
+
+  // @Throws(E::class)
+  fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>, isPreventive: Boolean): T {
+    if (!isPreventive) {
+      handleLockAccess("write-intent lock")
+    }
 
     val listener = myWriteIntentActionListener
     fireBeforeWriteIntentReadActionStart(listener, computation.javaClass)
@@ -394,11 +398,11 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     return permit
   }
 
-  private fun handleLockAccess(message: String) {
-    val softAssertOnLockProhibition = myLockingProhibited.get()
-    if (softAssertOnLockProhibition != null) {
-      val exception = ThreadingSupport.LockAccessDisallowed("Attempt to take $message was prevented")
-      if (softAssertOnLockProhibition) {
+  private fun handleLockAccess(culprit: String) {
+    val lockProhibition = myLockingProhibited.get()
+    if (lockProhibition != null) {
+      val exception = ThreadingSupport.LockAccessDisallowed("Attempt to take $culprit was prevented\n${lockProhibition.second}")
+      if (lockProhibition.first) {
         logger.error(exception)
       }
       else {
@@ -792,9 +796,9 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  override fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean) {
+  override fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean, advice: String) {
     val currentValue = myLockingProhibited.get()
-    myLockingProhibited.set(failSoftly)
+    myLockingProhibited.set(failSoftly to advice)
     try {
       action.run()
     }

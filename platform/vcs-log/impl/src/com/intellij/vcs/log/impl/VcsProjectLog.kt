@@ -375,6 +375,11 @@ class VcsProjectLog(private val project: Project, @ApiStatus.Internal val corout
       return projectLog.logManager
     }
 
+    @Deprecated("awaitLogIsReady is preferred",
+                ReplaceWith("awaitLogIsReady(project) != null",
+                            "com.intellij.vcs.log.impl.VcsProjectLog.Companion.awaitLogIsReady"))
+    suspend fun waitWhenLogIsReady(project: Project): Boolean = awaitLogIsReady(project) != null
+
     @ApiStatus.Internal
     @RequiresBackgroundThread
     fun ensureLogCreated(project: Project): Boolean {

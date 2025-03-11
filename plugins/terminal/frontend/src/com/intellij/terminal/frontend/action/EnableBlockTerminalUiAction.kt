@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.ExperimentalUI
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.feedback.showBlockTerminalFeedbackNotification
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace
@@ -37,7 +37,7 @@ internal class EnableBlockTerminalUiAction : DumbAwareToggleAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.project != null && ExperimentalUI.isNewUI()
+    e.presentation.isEnabledAndVisible = e.project != null && TerminalUtil.isGenOneTerminalOptionVisible()
     e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, AllIcons.General.Beta)
     e.presentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
   }

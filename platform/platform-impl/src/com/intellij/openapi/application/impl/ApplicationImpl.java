@@ -674,8 +674,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       stopServicePreloading();
 
       if (BitUtil.isSet(flags, SAVE)) {
-        TraceKt.use(tracer.spanBuilder("saveSettingsOnExit"),
-                    __ -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
+        try {
+          TraceKt.use(tracer.spanBuilder("saveSettingsOnExit"),
+                      __ -> SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this));
+        }
+        catch (Throwable e) {
+          logErrorDuringExit("Failed to save settings", e);
+        }
       }
 
       if (isInstantShutdownPossible()) {
@@ -1306,8 +1311,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
-  public void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly) {
-    getThreadingSupport().prohibitTakingLocksInsideAndRun(runnable, failSoftly);
+  public void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly, @NlsSafe String advice) {
+    getThreadingSupport().prohibitTakingLocksInsideAndRun(runnable, failSoftly, advice);
+  }
+
+  @Override
+  public String isLockingProhibited() {
+    return getThreadingSupport().getLockingProhibitedAdvice();
   }
 
   @Override

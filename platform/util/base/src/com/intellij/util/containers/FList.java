@@ -2,6 +2,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
+import kotlin.jvm.PurelyImplements;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;
@@ -11,6 +12,7 @@ import java.util.NoSuchElementException;
 /**
  * Immutable list in functional style
  */
+@PurelyImplements("kotlin.collections.MutableList")
 public final class FList<E> extends AbstractList<E> {
   private static final FList<?> EMPTY_LIST = new FList<>(null, null, 0);
   private final E myHead;
@@ -140,7 +142,7 @@ public final class FList<E> extends AbstractList<E> {
   public static <E> FList<E> singleton(@NotNull E elem) {
     return FList.<E>emptyList().prepend(elem);
   }
-  
+
   /**
    * Creates an FList object with the elements of the given sequence in the reversed order, i.e. the last element of {@code from} will be the result's {@link #getHead()}
    */

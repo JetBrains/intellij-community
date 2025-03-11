@@ -35,7 +35,13 @@ interface KotlinBundledFirCompilerPluginProvider {
      * This method can be executed quite frequently, so it should be reasonably fast
      * and avoid any heavy IO blocking (network access, for example).
      */
-    fun provideBundledPluginJar(project: Project, userSuppliedPluginJar: Path): Path?
+    fun provideBundledPluginJar(project: Project, userSuppliedPluginJar: Path): Path? =
+        provideBundledPluginJar(userSuppliedPluginJar)
+
+    @Deprecated("Will be removed; override 'provideBundledPluginJar(Project, Path)' instead.")
+    fun provideBundledPluginJar(userSuppliedPluginJar: Path): Path? {
+        throw AbstractMethodError("'provideBundledPluginJar(Project, Path)' must be implemented in ${this::class}")
+    }
 
     companion object {
         private val EP_NAME: ExtensionPointName<KotlinBundledFirCompilerPluginProvider> =

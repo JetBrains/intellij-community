@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -108,20 +109,32 @@ public final class ModalityStateEx extends ModalityState {
     );
   }
 
-  void cancelAllEntities() {
+  void cancelAllEntities(@NonNls String reason) {
     for (Object entity : myModalEntities) {
       // DialogWrapperDialog is not accessible here
       if (entity instanceof Dialog) {
-        ((Dialog)entity).setVisible(false);
-        if (entity instanceof Disposable) {
-          Disposer.dispose((Disposable)entity);
+        Dialog dialog = (Dialog)entity;
+        Logger.getInstance(ModalityStateEx.class).info("Closing the dialog " + dialog + ". Cause: " + reason);
+
+        dialog.setVisible(false);
+        if (dialog instanceof Disposable) { // see com.intellij.openapi.ui.impl.AbstractDialog
+          Disposer.dispose((Disposable)dialog);
         }
       }
       else if (entity instanceof ProgressIndicator) {
-        ((ProgressIndicator)entity).cancel();
+        ProgressIndicator indicator = (ProgressIndicator)entity;
+        if (!indicator.isCanceled()) {
+          Logger.getInstance(ModalityStateEx.class).info("Cancelling indicator " + indicator + ". Cause: " + reason);
+          indicator.cancel();
+        }
       }
       else if (entity instanceof JobProvider) {
-        ((JobProvider)entity).getJob().cancel(new CancellationException("force leave modal"));
+        JobProvider jobProvider = (JobProvider)entity;
+        Job job = jobProvider.getJob();
+        if (!job.isCancelled()) {
+          Logger.getInstance(ModalityStateEx.class).info("Cancelling job " + jobProvider + ". Cause: " + reason);
+          job.cancel(new CancellationException("force leave modal"));
+        }
       }
     }
   }

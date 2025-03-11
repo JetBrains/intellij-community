@@ -744,6 +744,7 @@
     <vcsSharedChecker implementation="git4idea.ignore.GitIgnoreInStoreDirSharedChecker"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig"/>
     <backgroundPostStartupActivity implementation="git4idea.repo.GitShallowRepositoryCheck"/>
+    <backgroundPostStartupActivity implementation="git4idea.commit.GitModalCommitSettingMigrator"/>
 
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>

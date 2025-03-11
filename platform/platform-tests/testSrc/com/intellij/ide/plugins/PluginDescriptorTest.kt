@@ -401,7 +401,7 @@ class PluginDescriptorTest {
   }
   
   @Test
-  fun testUntilBuildIsHonoredOnlyIfItTargets242AndEarlier() {
+  fun testUntilBuildIsHonoredOnlyIfItTargets243AndEarlier() {
     fun addDescriptor(build: String) = writeDescriptor("p$build", """
       <idea-plugin>
       <id>p$build</id>
@@ -409,15 +409,15 @@ class PluginDescriptorTest {
       <idea-version since-build="$build" until-build="$build.100"/>
       </idea-plugin>
     """.trimIndent())
-    addDescriptor("242")
     addDescriptor("243")
     addDescriptor("251")
+    addDescriptor("252")
     addDescriptor("261")
 
-    assertEnabledPluginsSetEquals(listOf("p242")) { buildNumber = "242.10" }
     assertEnabledPluginsSetEquals(listOf("p243")) { buildNumber = "243.10" }
-    assertEnabledPluginsSetEquals(listOf("p243", "p251")) { buildNumber = "251.200" }
-    assertEnabledPluginsSetEquals(listOf("p243", "p251", "p261")) { buildNumber = "261.200" }
+    assertEnabledPluginsSetEquals(listOf("p251")) { buildNumber = "251.10" }
+    assertEnabledPluginsSetEquals(listOf("p251", "p252")) { buildNumber = "252.200" }
+    assertEnabledPluginsSetEquals(listOf("p251", "p252", "p261")) { buildNumber = "261.200" }
   }
 
   @Test
@@ -436,15 +436,22 @@ class PluginDescriptorTest {
       <idea-version since-build="251" until-build="251.100"/>
       </idea-plugin>
     """.trimIndent())
+    writeDescriptor("p252", """
+      <idea-plugin>
+      <id>p252</id>
+      <version>1.0</version>
+      <idea-version since-build="252" until-build="252.100"/>
+      </idea-plugin>
+    """.trimIndent())
 
-    assertEnabledPluginsSetEquals(listOf("p243", "p251")) { buildNumber = "251.200" }
-    assertEnabledPluginsSetEquals(listOf("p251")) {
-      buildNumber = "251.200"
-      withBrokenPlugin(PluginId.getId("p243"), "1.0")
-    }
-    assertEnabledPluginsSetEquals(listOf("p243")) {
-      buildNumber = "251.200"
+    assertEnabledPluginsSetEquals(listOf("p251", "p252")) { buildNumber = "252.200" }
+    assertEnabledPluginsSetEquals(listOf("p252")) {
+      buildNumber = "252.200"
       withBrokenPlugin(PluginId.getId("p251"), "1.0")
+    }
+    assertEnabledPluginsSetEquals(listOf("p251")) {
+      buildNumber = "252.200"
+      withBrokenPlugin(PluginId.getId("p252"), "1.0")
     }
   }
 

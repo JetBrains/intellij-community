@@ -27,7 +27,6 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.paintIconWithSelection
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
 import com.intellij.util.IconUtil.computeFileIcon
-import com.intellij.util.IconUtil.scale
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -49,7 +48,7 @@ import kotlin.math.min
 import kotlin.math.roundToLong
 
 private val ICON_NULLABLE_FUNCTION = { key: FileIconKey ->
-  IconUtil.computeFileIcon(file = key.file, flags = key.flags, project = key.project)
+  computeFileIcon(file = key.file, flags = key.flags, project = key.project)
 }
 
 private val toolbarDecoratorIconsFolder: @NonNls String
@@ -650,7 +649,8 @@ class CropIcon internal constructor(val sourceIcon: Icon, val crop: Rectangle) :
   override fun hashCode(): Int = Objects.hash(sourceIcon, crop)
 }
 
-private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImageFilter() {
+@Internal
+class ColorFilter(val color: Color, val keepGray: Boolean) : RGBImageFilter() {
   private val base = Color.RGBtoHSB(color.red, color.green, color.blue, null)
 
   override fun filterRGB(x: Int, y: Int, rgba: Int): Int {

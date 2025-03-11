@@ -6,11 +6,13 @@ import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSug
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
@@ -19,6 +21,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import kotlin.random.Random
 
@@ -328,19 +332,29 @@ interface InlineCompletionEvent {
 }
 
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
-  return runReadAction {
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(caret.editor.document) ?: return@runReadAction null
-    // * [PsiUtilBase] takes into account injected [PsiFile] (like in Jupyter Notebooks)
-    // * However, it loads a file into the memory, which is expensive
-    // * Some tests forbid loading a file when tearing down
-    // * On tearing down, Lookup Cancellation happens, which causes the event
-    // * Existence of [treeElement] guarantees that it's in the memory
-    if (file.isLoadedInMemory()) {
-      PsiUtilBase.getPsiFileInEditor(caret, project)
-    }
-    else {
-      file
-    }
+  val psiFileFromContext = when (EDT.isCurrentThreadEdt()) {
+    true -> EditorUtil.getEditorDataContext(caret.editor).getData(CommonDataKeys.PSI_FILE)
+    else -> null
+  }
+
+  val file = psiFileFromContext
+             ?: PsiDocumentManager.getInstance(project).getCachedPsiFile(caret.editor.document)
+             ?: return null
+
+  PsiUtilCore.ensureValid(file)
+
+  /*
+   * [PsiUtilBase] takes into account injected [PsiFile] (like in Jupyter Notebooks)
+   * However, it loads a file into the memory, which is expensive
+   * Some tests forbid loading a file when tearing down
+   * On tearing down, Lookup Cancellation happens, which causes the event
+   * Existence of [treeElement] guarantees that it's in the memory
+   */
+  return if (file.isLoadedInMemory()) {
+    PsiUtilBase.getPsiFileAtOffset(file, caret.offset)
+  }
+  else {
+    file
   }
 }
 

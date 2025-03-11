@@ -1511,8 +1511,11 @@ public final class DiffUtil {
 
   @RequiresEdt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
-    if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles();
+    Project projectOrDefault = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+    return ReadAction.compute(() ->
+                                !ReadonlyStatusHandler.getInstance(projectOrDefault)
+                                  .ensureFilesWritable(Collections.singletonList(file))
+                                  .hasReadonlyFiles());
   }
 
   public static void putNonundoableOperation(@Nullable Project project, @NotNull Document document) {

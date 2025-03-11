@@ -8,23 +8,16 @@ import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellV
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
 import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.EDITOR_LAYER_CONTROLLER_KEY
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.event.*
-import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.use
 import com.intellij.ui.ComponentUtil
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.GraphicsEnvironment
-import java.awt.Point
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseEvent.MOUSE_PRESSED
@@ -44,6 +37,8 @@ class DecoratedEditor private constructor(
   /** Used to hold current cell under mouse, to update the folding state and "run" button state. */
   override var mouseOverCell: EditorCellView? = null
     private set
+
+  override val editorPositionKeeper: NotebookPositionKeeper = NotebookPositionKeeper(editorImpl)
 
   private val selectionModel = EditorCellSelectionModel(manager)
 
@@ -170,10 +165,10 @@ class DecoratedEditor private constructor(
     }
 
     override fun validateTree() {
-      keepScrollingPositionWhile(editor) {
+      editor.notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
         JupyterBoundsChangeHandler.get(editor).postponeUpdates()
         super.validateTree()
-        JupyterBoundsChangeHandler.get(editor).performPostponed()
+        JupyterBoundsChangeHandler.get(editor).schedulePerformPostponed()
       }
     }
 
@@ -313,20 +308,6 @@ class DecoratedEditor private constructor(
         decoratedEditor.editorImpl.scrollPane.viewport.view as EditorComponentWrapper
       )
       original.putUserData(EDITOR_LAYER_CONTROLLER_KEY, controller)
-    }
-  }
-}
-
-internal fun <T> keepScrollingPositionWhile(editor: Editor, task: () -> T): T {
-  return WriteIntentReadAction.compute<T, Nothing> {
-    EditorScrollingPositionKeeper(editor).use { keeper ->
-      if (editor.isDisposed) {
-        return@compute task()
-      }
-      keeper.savePosition()
-      val r = task()
-      keeper.restorePosition(false)
-      r
     }
   }
 }

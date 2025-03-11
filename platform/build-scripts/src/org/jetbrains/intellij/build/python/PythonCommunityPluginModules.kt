@@ -38,6 +38,7 @@ object PythonCommunityPluginModules {
     "intellij.python.sdk",
     "intellij.python.terminal",
     "intellij.python.ml.features",
+    "intellij.python.pyproject",
   )
 
   /**

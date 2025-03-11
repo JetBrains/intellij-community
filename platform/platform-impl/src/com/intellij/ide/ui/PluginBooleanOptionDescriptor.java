@@ -142,6 +142,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
 
       PluginManagerCore.INSTANCE.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, dependency ->
         PluginManagerCore.CORE_ID.equals(dependency.getPluginId()) ||
+        (PluginManagerCore.ULTIMATE_PLUGIN_ID.equals(dependency.getPluginId()) && PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) ||
         dependency.isEnabled() ||
         !result.add(dependency) ?
         FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process its dependencies */ :

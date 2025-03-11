@@ -640,6 +640,51 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     });
   }
 
+  public void testIncorrectOrderWithoutModuleImport() {
+
+    myFixture.addClass("package ccc; public class CCC {}");
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+    javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
+    javaSettings.setPreserveModuleImports(true);
+    doTest();
+  }
+
+  public void testIncorrectOrderWithoutModuleImportConfigWithModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package ccc; public class CCC {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
+  public void testIncorrectOrderWithoutModuleImportMixStaticAndNonStatic() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package ccc; public class CCC {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
   public void testImportModuleOverOtherImports() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
       myFixture.addClass("package aaa; public class AAA {}");

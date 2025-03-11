@@ -32,7 +32,6 @@ intellijPlatform {
   pluginConfiguration {
     ideaVersion {
       sinceBuild = "${context.getBomProperty("intellij.since.build")}"
-      untilBuild = "${context.getBomProperty("intellij.until.build")}"
     }
 
     changeNotes = """

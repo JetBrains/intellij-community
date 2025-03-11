@@ -10,6 +10,7 @@ import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsSafe;
@@ -24,6 +25,7 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
+import org.intellij.markdown.MarkdownParsingException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.markdown.utils.MarkdownToHtmlConverterKt.convertMarkdownToHtml;
 import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils.guessType;
 
 public class JsonSchemaDocumentationProvider implements DocumentationProvider {
@@ -184,20 +187,27 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (htmlDescription != null && hasNonTrustedProjects()) {
       htmlDescription = StringUtil.escapeXmlEntities(htmlDescription);
     }
-    final String description = schema.getDescription();
-    final String title = schema.getTitle();
+    String markdownDescriptionAsHtml = getMarkdownDescriptionAsHtml(schema);
+    String description = schema.getDescription();
+    String title = schema.getTitle();
+
+    String postProcessedDescription;
     if (preferShort && !StringUtil.isEmptyOrSpaces(title)) {
-      return plainTextPostProcess(title);
-    } else if (!StringUtil.isEmptyOrSpaces(htmlDescription)) {
-      String desc = htmlDescription;
-      if (!StringUtil.isEmptyOrSpaces(title)) desc = plainTextPostProcess(title) + "<br/>" + desc;
-      return desc;
-    } else if (!StringUtil.isEmptyOrSpaces(description)) {
-      String desc = plainTextPostProcess(description);
-      if (!StringUtil.isEmptyOrSpaces(title)) desc = plainTextPostProcess(title) + "<br/>" + desc;
-      return desc;
+      postProcessedDescription = null;
     }
-    return null;
+    else if (!StringUtil.isEmptyOrSpaces(htmlDescription)) {
+      postProcessedDescription = htmlDescription;
+    }
+    else if (!StringUtil.isEmptyOrSpaces(description)) {
+      postProcessedDescription = plainTextPostProcess(description);
+    }
+    else if (!StringUtil.isEmptyOrSpaces(markdownDescriptionAsHtml)) {
+      postProcessedDescription = markdownDescriptionAsHtml;
+    }
+    else {
+      return null;
+    }
+    return buildDocumentation(title, postProcessedDescription);
   }
 
   private static boolean hasNonTrustedProjects() {
@@ -211,6 +221,45 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
 
   private static @NotNull String plainTextPostProcess(@NotNull String text) {
     return StringUtil.escapeXmlEntities(text).replace("\\n", "<br/>");
+  }
+
+  private static @Nullable String buildDocumentation(@Nullable String title,
+                                                     @Nullable String postProcessedDescription) {
+    if (title == null) {
+      if (postProcessedDescription == null) {
+        return null;
+      }
+      else {
+        return postProcessedDescription;
+      }
+    }
+    else {
+      if (postProcessedDescription == null) {
+        return plainTextPostProcess(title);
+      }
+      else {
+        return plainTextPostProcess(title) + "<br/>" + postProcessedDescription;
+      }
+    }
+  }
+
+  private static @Nullable String getMarkdownDescriptionAsHtml(@NotNull JsonSchemaObject schema) {
+    String markdownDescription = getMarkdownDescription(schema);
+    if (markdownDescription != null) {
+      try {
+        return convertMarkdownToHtml(markdownDescription);
+      }
+      catch (MarkdownParsingException e) {
+        Logger.getInstance(JsonSchemaDocumentationProvider.class).error(e);
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable String getMarkdownDescription(@NotNull JsonSchemaObject schema) {
+    String rawValue = schema.readChildNodeValue("markdownDescription");
+    if (rawValue == null) return null;
+    return StringUtil.unquoteString(rawValue, '\"');
   }
 
   @Override

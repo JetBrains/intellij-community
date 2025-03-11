@@ -182,7 +182,7 @@ class PythonOnboardingTourLesson :
     }
     caret(sample.startOffset)
 
-    toggleBreakpointTask(sample, { logicalPosition }, breakpointXRange = { IntRange(13, it - 17) }, checkLine = false) {
+    toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
       text(PythonLessonsBundle.message("python.onboarding.balloon.click.here"),
            LearningBalloonConfig(Balloon.Position.below, width = 0, cornerToPointerDistance = 20))
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.1",

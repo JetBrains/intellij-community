@@ -14,6 +14,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
@@ -99,7 +101,7 @@ class PyAddNewUvPanel(
     val field = textField as? JBTextField ?: return@apply
     service<PythonSdkCoroutineService>().cs.launch {
       detectUvExecutable()?.let {
-          field.emptyText.text = "Auto-detected: ${it.absolutePathString()}"
+        field.emptyText.text = "Auto-detected: ${it.absolutePathString()}"
       }
       getUvExecutable()?.let {
         field.text = it.pathString
@@ -197,7 +199,7 @@ class PyAddNewUvPanel(
   private fun update() {
     service<PythonSdkCoroutineService>().cs.launch {
       selectedModule?.let {
-        installPackagesCheckBox.isEnabled = pyProjectToml(it) != null
+        installPackagesCheckBox.isEnabled = PyProjectToml.findFile(it) != null
       }
     }
   }

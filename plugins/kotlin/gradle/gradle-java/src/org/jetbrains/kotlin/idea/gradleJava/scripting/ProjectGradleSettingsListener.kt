@@ -73,9 +73,12 @@ class ProjectGradleSettingsListener(
         root: Imported,
         settings: GradleProjectSettings
     ) {
+        val models = root.data.models
+        if (models.isEmpty()) return
+
         val definitions = loadGradleDefinitions(settings.externalProjectPath, root.data.gradleHome, root.data.javaHome, project)
 
-        val gradleScripts = root.data.models.mapNotNull {
+        val gradleScripts = models.mapNotNull {
             val path = Paths.get(it.file)
             VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
                 GradleScriptModel(

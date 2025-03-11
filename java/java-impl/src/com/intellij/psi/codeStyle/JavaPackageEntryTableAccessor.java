@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,9 +17,11 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
   public static final char BLANK_LINE_CHAR = '|';
   public static final String STATIC_PREFIX = "$";
   public static final String MODULE_PREFIX = "@";
+  private final Field myField;
 
   public JavaPackageEntryTableAccessor(@NotNull Object object, @NotNull Field field) {
     super(object, field);
+    myField = field;
   }
 
   @Override
@@ -65,6 +68,11 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
           entryTable.addEntry(new PackageEntry(isStatic, parseStr, isWithSubpackages));
         }
       }
+    }
+    if ("imports_layout".equals(getPropertyName()) &&
+        JavaCodeStyleSettings.class.equals(myField.getDeclaringClass()) &&
+        !ContainerUtil.exists(entryTable.getEntries(), entry -> entry == PackageEntry.ALL_MODULE_IMPORTS)) {
+      entryTable.insertEntryAt(PackageEntry.ALL_MODULE_IMPORTS, 0);
     }
     return entryTable;
   }

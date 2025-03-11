@@ -89,7 +89,7 @@ def display_data_csv(table, start_index, end_index):
             data = data.to_csv(na_rep = "NaN", sep=CSV_FORMAT_SEPARATOR, float_format=format)
         except AttributeError:
             pass
-        print(__convert_to_df(data))
+        print(repr(__convert_to_df(data)))
     __compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
@@ -104,13 +104,16 @@ def get_column_descriptions(table):
 
 
 def get_value_occurrences_count(table):
+    import warnings
     df = __convert_to_df(table)
     bin_counts = []
 
-    for _, column_data in df.items():
-        column_visualisation_type, result = __analyze_column(column_data)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # Suppress all
+        for _, column_data in df.items():
+            column_visualisation_type, result = __analyze_column(column_data)
 
-        bin_counts.append(str({column_visualisation_type:result}))
+            bin_counts.append(str({column_visualisation_type:result}))
     return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
 
 
@@ -119,7 +122,7 @@ def __get_data_slice(table, start, end):
 
 
 def __compute_sliced_data(table, fun, start_index=None, end_index=None, format=None):
-    # type: (Union[pd.DataFrame, pd.Series], function, int, int) -> str
+    # type: (Union[pd.DataFrame, pd.Series], function, Union[None, int], Union[None, int], Union[None, str]) -> str
 
     max_cols, max_colwidth, max_rows = __get_tables_display_options()
 
@@ -128,7 +131,6 @@ def __compute_sliced_data(table, fun, start_index=None, end_index=None, format=N
     _jb_max_rows = pd.get_option('display.max_rows')
     if format is not None:
         _jb_float_options = pd.get_option('display.float_format')
-
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_rows', max_rows)
@@ -305,13 +307,10 @@ def __categorical_to_df(table):
     return pd.DataFrame(table)
 
 
-# In old versions of pandas max_colwidth accepted only Int-s
 def __get_tables_display_options():
     # type: () -> Tuple[None, Union[int, None], None]
-    import sys
-    if sys.version_info < (3, 0):
-        return None, MAX_COLWIDTH, None
     try:
+        # In pandas versions earlier than 1.0, max_colwidth must be set as an integer
         if int(pd.__version__.split('.')[0]) < 1:
             return None, MAX_COLWIDTH, None
     except ImportError:

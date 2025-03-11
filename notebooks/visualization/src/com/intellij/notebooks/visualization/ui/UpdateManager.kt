@@ -56,7 +56,7 @@ class UpdateManager(val editor: EditorImpl) : Disposable {
       updateCtx = newCtx
       try {
         if (keepScrollingPositon) {
-          keepScrollingPositionWhile(editor) {
+          editor.notebookEditor.editorPositionKeeper.keepScrollingPositionWhile {
             updateImpl(newCtx, block)
           }
         }

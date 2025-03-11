@@ -1376,7 +1376,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       PsiFile psiFileToSubmit = TextEditorBackgroundHighlighter.getCachedFileToHighlight(myProject, virtualFile, context);
       if (psiFileToSubmit == null || document == null) {
         String reason = document == null ? "queuePassesCreation: couldn't submit" +  virtualFile + " because document is null: fileEditor="+ fileEditor+" ("+ fileEditor.getClass()+")"
-                        : "queuePassesCreation: psiFile is null for "+virtualFile+"; PsiDocumentManager.getPsiFile()="+PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+                        : "queuePassesCreation: psiFile is null for "+virtualFile;
         if (PassExecutorService.LOG.isDebugEnabled()) {
           PassExecutorService.log(progress, null, reason);
         }

@@ -372,7 +372,7 @@ public final class ConfigImportHelper {
   }
 
   public static void writeOptionsForRestartIfNeeded(@NotNull Logger log) {
-    if (isFirstSession() && isConfigImported()) {
+    if (isFirstSession()) {
       writeOptionsForRestart(PathManager.getConfigDir(), log);
     }
   }

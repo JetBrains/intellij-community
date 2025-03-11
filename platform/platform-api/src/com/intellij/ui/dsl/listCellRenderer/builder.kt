@@ -19,6 +19,8 @@ internal annotation class LcrDslMarker
  * * Colored text has different color in selected state
  * * Supports IDE scaling and compact mode
  * * Provides accessibility details for rows: by default, it is concatenation of accessible names of all visible cells
+ * * Supports `Copy` feature for selected item(-s)
+ * * Supports `Search` feature in the settings dialog (can be used from search everywhere as well)
  *
  * Because of all described nuances, it is hard to write correct own render. So using Kotlin UI DSL is highly recommended
  */

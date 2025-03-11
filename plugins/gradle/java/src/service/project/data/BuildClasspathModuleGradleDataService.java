@@ -152,7 +152,7 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
                               @Nullable ProjectData projectData,
                               @NotNull Project project,
                               @NotNull IdeModelsProvider modelsProvider) {
-    if (!project.isDisposed()) {
+    if (!project.isDisposed() && !imported.isEmpty()) {
       project.getService(ProjectBuildClasspathManager.class).removeUnavailableClasspaths();
       GradleBuildClasspathManager.getInstance(project).reload();
     }

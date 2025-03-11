@@ -1052,6 +1052,11 @@ public final class TableResultView extends JBTableWithResizableCells
     private @Nullable ModelIndex<GridColumn> hoveredFilterLabelIdx = null;
     private @Nullable ModelIndex<GridColumn> hoveredSortLabelIdx = null;
 
+    @Override
+    public void setExpandableItemsEnabled(boolean enabled) {
+      super.setExpandableItemsEnabled(false); // we never want this
+    }
+
     private void onColumnHeaderMouseMoved(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
       var gridColumn = myResultPanel.getDataModel(DATA_WITH_MUTATIONS).getColumn(columnIdx);
       var isHierarchicalColumn = gridColumn instanceof HierarchicalGridColumn;

@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -344,16 +345,41 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-77168
   public void testReferenceFromUnderUnmatchedVersionCheck() {
-    doTestByText("""
-                   import sys
-                   from typing import overload
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      doTestByText("""
+                     import sys
+                     from typing import overload
+                     
+                     Alias = int
+                     if sys.version_info < (3, 9):
+                         @overload
+                         def f() -> Alias:
+                             ...
                    
-                   Alias = int
-                   if sys.version_info < (3, 12):
-                       @overload
-                       def f() -> Alias:
-                           ...
-                   """);
+                     
+                         import enum
+                         enum
+                     
+                     
+                         class MyClass:
+                             ...
+                     
+                         var1: MyClass
+                         var1
+                     
+                     
+                     if sys.version_info < (3, 7):
+                         var1
+                         var2: MyClass
+                     
+                     if sys.version_info >= (3, 11):
+                         <error descr="Unresolved reference 'f'">f</error>()
+                     
+                         <error descr="Unresolved reference 'enum'">enum</error>
+                     
+                         var3: <error descr="Unresolved reference 'MyClass'">MyClass</error>
+                     """);
+    });
   }
 
   public void testNewTypeCannotBeGeneric() {

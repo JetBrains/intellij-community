@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -25,6 +26,7 @@ public final class BuilderRegistry {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }
   private final Map<BuilderCategory, List<ModuleLevelBuilder>> moduleLevelBuilders = new HashMap<>();
+  private final List<JvmClassFileInstrumenter> myClassFileInstrumenters = new ArrayList<>();
   private final Object2LongMap<BuildTargetType<?>> expectedBuildTime = new Object2LongOpenHashMap<>();
   private final List<TargetBuilder<?,?>> targetBuilders = new ArrayList<>();
   private final FileFilter moduleBuilderFileFilter;
@@ -53,8 +55,13 @@ public final class BuilderRegistry {
           compilableFileExtensions = null;
         }
         moduleLevelBuilders.get(builder.getCategory()).add(builder);
+        if (builder instanceof JvmClassFileInstrumenter) {
+          myClassFileInstrumenters.add((JvmClassFileInstrumenter)builder);
+        }
       }
     }
+    Collections.sort(myClassFileInstrumenters, Comparator.comparing(JvmClassFileInstrumenter::getId));
+    
     if (compilableFileExtensions == null) {
       moduleBuilderFileFilter = FileFilters.EVERYTHING;
     }
@@ -89,6 +96,14 @@ public final class BuilderRegistry {
       count += getBuilders(category).size();
     }
     return count;
+  }
+
+  /**
+   * Returns the list of all available class-file instrumenters in the sorted order. 
+   */
+  @ApiStatus.Internal
+  public @NotNull List<JvmClassFileInstrumenter> getClassFileInstrumenters() {
+    return myClassFileInstrumenters;
   }
 
   public @NotNull @Unmodifiable List<BuildTask> getBeforeTasks(){

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "OVERRIDE_DEPRECATION", "LiftReturnOrAssignment")
 
 package com.intellij.ide
@@ -41,6 +41,7 @@ import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
+import com.intellij.util.PlatformUtils
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -203,6 +204,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
 
   override fun updateLastProjectPath() {
+    if (PlatformUtils.isJetBrainsClient()) {
+      LOG.info("Skipping last project path update for thin client")
+      return
+    }
     val openProjects = ProjectManagerEx.getOpenProjects()
     synchronized(stateLock) {
       for (info in state.additionalInfo.values) {

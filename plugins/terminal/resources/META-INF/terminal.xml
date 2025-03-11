@@ -23,7 +23,7 @@
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
     <registryKey key="terminal.new.ui" defaultValue="false"
                  description="Enable new terminal (Gen1)"/>
-    <registryKey key="terminal.new.ui.reworked" defaultValue="true"
+    <registryKey key="terminal.new.ui.reworked" defaultValue="false"
                  description="Replace classic terminal with reworked terminal (Gen2)"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
@@ -93,6 +93,8 @@
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
     <advancedSetting id="new.terminal.output.capacity.kb" default="1024" groupKey="group.advanced.settings.terminal"/>
+
+    <postStartupActivity implementation="org.jetbrains.plugins.terminal.block.GenOneTerminalOptionHidingActivity"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

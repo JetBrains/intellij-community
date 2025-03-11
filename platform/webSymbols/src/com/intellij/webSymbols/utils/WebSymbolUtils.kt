@@ -98,39 +98,42 @@ fun WebSymbol.withNavigationTarget(target: PsiElement): WebSymbol =
   }
 
 fun WebSymbol.unwrapMatchedSymbols(): Sequence<WebSymbol> =
-  Sequence {
-    object : Iterator<WebSymbol> {
-      private var next: WebSymbol? = null
-      val fifo = LinkedList<WebSymbol>()
+  if (this is WebSymbolMatch)
+    Sequence {
+      object : Iterator<WebSymbol> {
+        private var next: WebSymbol? = null
+        val fifo = LinkedList<WebSymbol>()
 
-      init {
-        fifo.addLast(this@unwrapMatchedSymbols)
-        advance()
-      }
+        init {
+          fifo.addLast(this@unwrapMatchedSymbols)
+          advance()
+        }
 
-      private fun advance() {
-        while (fifo.isNotEmpty()) {
-          val symbol = fifo.removeFirst()
-          if (symbol is WebSymbolMatch) {
-            symbol.nameSegments.forEach {
-              fifo.addAll(it.symbols)
+        private fun advance() {
+          while (fifo.isNotEmpty()) {
+            val symbol = fifo.removeFirst()
+            if (symbol is WebSymbolMatch) {
+              symbol.nameSegments.forEach {
+                fifo.addAll(it.symbols)
+              }
+            }
+            else {
+              next = symbol
+              return
             }
           }
-          else {
-            next = symbol
-            return
-          }
+          next = null
         }
-        next = null
+
+        override fun hasNext(): Boolean =
+          next != null
+
+        override fun next(): WebSymbol =
+          next!!.also { advance() }
       }
-
-      override fun hasNext(): Boolean =
-        next != null
-
-      override fun next(): WebSymbol =
-        next!!.also { advance() }
     }
-  }
+  else
+    sequenceOf(this)
 
 fun WebSymbolNameSegment.withSymbols(symbols: List<WebSymbol>): WebSymbolNameSegment =
   (this as WebSymbolNameSegmentImpl).withSymbols(symbols)

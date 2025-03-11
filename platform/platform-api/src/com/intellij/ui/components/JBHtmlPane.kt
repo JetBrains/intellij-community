@@ -192,6 +192,10 @@ open class JBHtmlPane : JEditorPane, Disposable {
       .build()
     updateDocumentationPaneDefaultCssRules(editorKit)
 
+    // The value might have changed already since the flow was created,
+    // so we need to update it manually just before we register the listener.
+    // For example, the background is changed when we set isEditable above.
+    mutableBackgroundFlow.value = background
     addPropertyChangeListener { evt: PropertyChangeEvent ->
       val propertyName = evt.propertyName
       if ("background" == propertyName || "UI" == propertyName) {

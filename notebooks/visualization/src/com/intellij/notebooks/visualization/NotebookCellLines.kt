@@ -4,7 +4,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
 import com.intellij.util.keyFMap.KeyFMap
@@ -43,7 +42,8 @@ interface NotebookCellLines {
 
     val firstContentLine: Int
       get() =
-        if (markers.hasTopLine) lines.first + 1
+        if (markers.hasTopLine)
+          lines.first + 1
         else lines.first
 
     val lastContentLine: Int
@@ -78,12 +78,19 @@ interface NotebookCellLines {
 
     fun getContentText(editor: Editor): String {
       val document = editor.document
-      return getContentText(document)
+      return getContentText(document).toString()
     }
 
-     fun getContentText(document: Document): @NlsSafe String {
-      val range = getContentRange(document)
-      return document.getText(range)
+    fun getContentText(document: Document): CharSequence {
+      val first = firstContentLine
+      val last = lastContentLine
+      val charsSequence = document.charsSequence
+      return if (first <= last) {
+        charsSequence.subSequence(document.getLineStartOffset(first), document.getLineEndOffset(last))
+      }
+      else {
+        ""
+      }
     }
 
     fun getTopMarker(document: Document): String? =

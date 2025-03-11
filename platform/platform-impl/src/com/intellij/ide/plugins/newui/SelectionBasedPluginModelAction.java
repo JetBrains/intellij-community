@@ -302,6 +302,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
   static final class OptionButtonController<C extends JComponent> implements ActionListener {
     public final JBOptionButton button = new OptionButton();
     public final JButton bundledButton = new JButton();
+    final JButton uninstallButton = new JButton();
 
     private final EnableDisableAction<C> myEnableAction;
     private final EnableDisableAction<C> myDisableAction;
@@ -332,6 +333,9 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
       bundledButton.setOpaque(false);
       bundledButton.addActionListener(this);
+
+      uninstallButton.setOpaque(false);
+      uninstallButton.setAction(myUninstallButton);
     }
 
     public void update() {

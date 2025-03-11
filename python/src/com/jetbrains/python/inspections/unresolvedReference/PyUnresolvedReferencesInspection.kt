@@ -35,6 +35,7 @@ import com.jetbrains.python.packaging.common.normalizePackageName
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl
 import com.jetbrains.python.psi.impl.PyImportElementImpl
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkUtil
@@ -46,22 +47,24 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
   @JvmField
   var ignoredIdentifiers: List<String> = ArrayList()
 
-  override fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession): Visitor =
+  override fun createVisitor(holder: ProblemsHolder, session: LocalInspectionToolSession): PyUnresolvedReferencesVisitor =
     Visitor(holder,
             ignoredIdentifiers,
             this,
-            PyInspectionVisitor.getContext(session))
+            PyInspectionVisitor.getContext(session),
+            PythonLanguageLevelPusher.getLanguageLevelForFile(session.file))
 
   override fun getOptionsPane(): OptPane = OptPane.pane(
     OptPane.stringList("ignoredIdentifiers",
                        PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label")))
 
-  class Visitor(
-    holder: ProblemsHolder?,
-    ignoredIdentifiers: List<String>?,
+  private class Visitor(
+    holder: ProblemsHolder,
+    ignoredIdentifiers: List<String>,
     inspection: PyInspection,
     context: TypeEvalContext,
-  ) : PyUnresolvedReferencesVisitor(holder, ignoredIdentifiers, inspection, context) {
+    languageLevel: LanguageLevel,
+  ) : PyUnresolvedReferencesVisitor(holder, ignoredIdentifiers, inspection, context, languageLevel) {
 
     public override fun getInstallPackageQuickFixes(
       node: PyElement,
@@ -102,7 +105,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       return packageCandidates.map { pkg: String -> InstallPackageQuickFix(pkg) }
     }
 
-    public override fun getInstallAllPackagesQuickFix(): InstallAllPackagesQuickFix? {
+    public override fun getInstallAllPackagesQuickFix(): InstallAllPackagesQuickFix {
       return InstallAllPackagesQuickFix(myUnresolvedRefs.map { it.refName }.distinct())
     }
 

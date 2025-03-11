@@ -205,6 +205,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return callableType;
     }
 
+    if (typeFromTargets == null && qualified) {
+      return getTypeFromDunderGetAttr(context);
+    }
+
     return typeFromTargets;
   }
 
@@ -234,6 +238,21 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return Ref.create(typeByControlFlow);
     }
 
+    return null;
+  }
+
+  private @Nullable PyType getTypeFromDunderGetAttr(@NotNull TypeEvalContext context) {
+    final PyExpression qualifier = getQualifier();
+    assert qualifier != null;
+
+    final PyType qType = context.getType(qualifier);
+    if (qType instanceof PyClassType classType) {
+      final ResolveResult getattr = ContainerUtil.getFirstItem(
+        classType.resolveMember(PyNames.GETATTR, qualifier, AccessDirection.READ, PyResolveContext.defaultContext(context)));
+      if (getattr != null && getattr.getElement() instanceof PyCallable method) {
+        return context.getReturnType(method);
+      }
+    }
     return null;
   }
 

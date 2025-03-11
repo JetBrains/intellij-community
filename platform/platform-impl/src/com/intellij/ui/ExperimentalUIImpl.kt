@@ -24,7 +24,6 @@ import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -165,16 +164,6 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
   override fun appClosing() {
     (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appClosing()
   }
-}
-
-// TODO: create new impl for RMD or remove
-@ApiStatus.Internal
-interface ExperimentalUIJetBrainsClientDelegate {
-  companion object {
-    fun getInstance() = service<ExperimentalUIJetBrainsClientDelegate>()
-  }
-
-  fun changeUi(isEnabled: Boolean, updateLocally: (Boolean) -> Unit)
 }
 
 private fun resetLafSettingsToDefault() {

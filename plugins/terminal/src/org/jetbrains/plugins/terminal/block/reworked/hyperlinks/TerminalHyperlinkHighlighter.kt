@@ -3,28 +3,43 @@ package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
 
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.execution.impl.ExpirableTokenProvider
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
+import com.intellij.util.SystemProperties
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import kotlin.math.max
+import kotlin.math.min
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 class TerminalHyperlinkHighlighter private constructor(
   project: Project,
   private val editor: Editor,
-  coroutineScope: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
 ) {
 
   private val filterWrapper: CompositeFilterWrapper = CompositeFilterWrapper(project, coroutineScope)
   private val tokenProvider: ExpirableTokenProvider = ExpirableTokenProvider()
+
+  // should be accessed in EDT
+  private var actualStartOffset: Int = INFINITE
+
+  // should be accessed in EDT
+  private var delayedHighlightingJob: Job? = null
 
   private val document: Document
     get() = editor.document
@@ -36,6 +51,17 @@ class TerminalHyperlinkHighlighter private constructor(
     filterWrapper.addFiltersUpdatedListener {
       rehighlightAll()
     }
+    document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        // There are only two possible types of document changes:
+        // 1. Deletion from the document top (trimming).
+        // 2. Replacement of the document bottom.
+        if (event.getOffset() == 0 && event.getNewLength() == 0) {
+          // This is a deletion from the document top.
+          actualStartOffset = max(0, actualStartOffset - event.getOldLength())
+        }
+      }
+    })
   }
 
   private fun rehighlightAll() {
@@ -46,9 +72,21 @@ class TerminalHyperlinkHighlighter private constructor(
 
   @RequiresEdt(generateAssertion = false)
   fun highlightHyperlinks(startOffset: Int) {
+    actualStartOffset = min(actualStartOffset, startOffset)
+    if (delayedHighlightingJob.isNotActive()) {
+      delayedHighlightingJob = coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        delay(DELAY)
+        doHyperlinkHighlighting()
+      }
+    }
+  }
+
+  private fun doHyperlinkHighlighting() {
     val filter = filterWrapper.getFilter() ?: return // if null, `rehighlightAll` will follow
     if (filter.isEmpty) return
     if (document.textLength == 0) return
+    val startOffset = actualStartOffset
+    actualStartOffset = INFINITE
     val startLine = document.getLineNumber(startOffset)
     val endLine = max(0, document.lineCount - 1)
 
@@ -72,6 +110,11 @@ class TerminalHyperlinkHighlighter private constructor(
   }
 
   @TestOnly
+  internal suspend fun awaitDelayedHighlightings() {
+    delayedHighlightingJob?.join()
+  }
+
+  @TestOnly
   internal fun getHyperlinkSupport(): EditorHyperlinkSupport = hyperlinkSupport
 
   companion object {
@@ -84,6 +127,18 @@ class TerminalHyperlinkHighlighter private constructor(
       })
       return hyperlinkHighlighter
     }
-  }
 
+    /**
+     * @see com.intellij.execution.impl.ConsoleViewImpl.DEFAULT_FLUSH_DELAY
+     */
+    private val DELAY: Duration = SystemProperties.getIntProperty("console.flush.delay.ms", 200).milliseconds
+
+    /**
+     * A value greater than possible document length.
+     * A document length cannot be greater than 2048 MB, because [Document.getTextLength] return type is `Int`.
+     */
+    private const val INFINITE: Int = Integer.MAX_VALUE
+
+    private fun Job?.isNotActive(): Boolean = this == null || !this.isActive
+  }
 }

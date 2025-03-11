@@ -61,7 +61,7 @@ class K2UserTrackerTest: LightJavaCodeInsightFixtureTestCase() {
         assertFalse(instance.state.userSawSurvey)
     }
 
-    fun `test show dialog if more than one day on K2`() {
+    fun `test do not show dialog if more than one day on K2 and still on K2`() {
         val instance = createInstance()
         instance.state.k2UserSince = Instant.now().epochSecond.minus(346000) // They've been on K2 for 4+ days 4 * 24 * 60 * 60 + 400
         instance.state.lastSavedPluginMode = PluginModes.K2.value
@@ -69,6 +69,6 @@ class K2UserTrackerTest: LightJavaCodeInsightFixtureTestCase() {
 
         assertFalse(instance.state.userSawSurvey)
 
-        assertTrue(instance.shouldShowK2FeedbackDialog(project))
+        assertFalse(instance.shouldShowK2FeedbackDialog(project))
     }
 }

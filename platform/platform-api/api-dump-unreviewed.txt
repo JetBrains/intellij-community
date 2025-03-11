@@ -11091,6 +11091,8 @@ a:com.intellij.util.ui.StatusText
 - appendText(java.lang.String):com.intellij.util.ui.StatusText
 - appendText(java.lang.String,com.intellij.ui.SimpleTextAttributes):com.intellij.util.ui.StatusText
 - appendText(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
+- appendText(Z,I,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
+- appendText(Z,I,javax.swing.Icon,java.lang.String,com.intellij.ui.SimpleTextAttributes,java.awt.event.ActionListener):com.intellij.util.ui.StatusText
 - attachTo(java.awt.Component):V
 - attachTo(java.awt.Component,java.awt.Component):V
 - clear():com.intellij.util.ui.StatusText

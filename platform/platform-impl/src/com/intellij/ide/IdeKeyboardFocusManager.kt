@@ -6,7 +6,7 @@ import com.intellij.ide.ui.ShowingContainer
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.debug
@@ -55,7 +55,7 @@ internal class IdeKeyboardFocusManager(internal val original: KeyboardFocusManag
       }
       else {
         //todo fix all clients and remove WIRA here, but for now it is like keyboard or mouse event
-        performActivity(e, false) { WriteIntentReadAction.run { result = dispatch() } }
+        performActivity(e, false) { AnyThreadWriteThreadingSupport.runPreventiveWriteIntentReadAction<Unit, Throwable> { result = dispatch() } }
       }
       return result
     }

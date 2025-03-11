@@ -6,6 +6,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.errorProcessing.failure
@@ -13,7 +14,6 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.uv.isUv
-import com.jetbrains.python.sdk.uv.pyProjectToml
 import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
@@ -36,7 +36,7 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
     }
 
     val existingWorkingDir = existingSdk?.associatedModulePath?.let { Path.of(it) }
-    val usePip = existingWorkingDir!= null && !existingSdk.isUv
+    val usePip = existingWorkingDir != null && !existingSdk.isUv
 
     return setupUvSdkUnderProgress(moduleOrProject, ProjectJdkTable.getInstance().allJdks.toList(), Path.of(selectedInterpreterPath), existingWorkingDir, usePip).asPythonResult()
   }
@@ -51,7 +51,8 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
     existingEnvironments.value = existingEnvs
   }
 
-  override suspend fun findModulePath(module: Module): Path? = pyProjectToml(module)?.toNioPathOrNull()?.parent
+  override suspend fun findModulePath(module: Module): Path? =
+    PyProjectToml.findFile(module)?.toNioPathOrNull()?.parent
 
   private fun extractModule(moduleOrProject: ModuleOrProject): Module? =
     when (moduleOrProject) {

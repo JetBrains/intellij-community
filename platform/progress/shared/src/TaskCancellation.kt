@@ -23,6 +23,8 @@ sealed interface TaskCancellation {
   companion object {
     /**
      * @return a cancellation instance, which means that the cancel button should not be displayed in the UI
+     *
+     * It does not indicate that the task is inside [kotlinx.coroutines.NonCancellable] section.
      */
     @Contract(pure = true)
     @JvmStatic

@@ -40,9 +40,13 @@ private fun getRoamableCategory(fileName: String, componentClasses: List<Class<P
     val category = ComponentCategorizer.getCategory(componentClass)
     if (category == SettingsCategory.OTHER) continue
 
-    val state = componentClass.getAnnotation(State::class.java)
+    val state = componentClass.getAnnotation(State::class.java) ?: continue
     val storage = state.storages.find { it.value == fileName }
-    if (storage == null || !storage.roamingType.isRoamable) {
+    if (storage == null) {
+      if (state.additionalExportDirectory != fileName && !fileName.startsWith(state.additionalExportDirectory + '/')) {
+        continue
+      }
+    } else if(!storage.roamingType.isRoamable) {
       continue
     }
 

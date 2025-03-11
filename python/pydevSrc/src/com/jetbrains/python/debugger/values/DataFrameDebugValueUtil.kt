@@ -43,15 +43,13 @@ private val COLUMN_NAMES_REGEX = Regex("'(.*?(?<!\\\\))'|\"(.*?(?<!\\\\))\"")
  * The [value] is produced by _get_df_variable_repr.
  */
 @ApiStatus.Internal
-fun getColumnData(value: @NlsSafe String): DataFrameDebugValue.InformationColumns? {
-  val columnData = getData(value) ?: run {
-    LOG.warn("Can't retrieve column data from ${value}")
-    return null
-  }
+@Throws(CannotRetrieveColumnDataException::class)
+fun getInformationColumns(value: @NlsSafe String): DataFrameDebugValue.InformationColumns? {
+  val columnsNames = getDataWithColumnsNames(value) ?: throw CannotRetrieveColumnDataException("Can't retrieve column data")
 
-  getMultiIndexData(columnData)?.let { return it }
+  getMultiIndexData(columnsNames)?.let { return it }
 
-  val columns = COLUMN_NAMES_REGEX.findAll(columnData).map { listOf(it.groups.filterNotNull().last().value) }.toList()
+  val columns = COLUMN_NAMES_REGEX.findAll(columnsNames).map { listOf(it.groups.filterNotNull().last().value) }.toList()
 
   return if (columns.isNotEmpty()) {
     DataFrameDebugValue.InformationColumns().apply {
@@ -64,7 +62,7 @@ fun getColumnData(value: @NlsSafe String): DataFrameDebugValue.InformationColumn
   }
 }
 
-private fun getData(value: String): String? {
+private fun getDataWithColumnsNames(value: String): String? {
   var escaped = false
   var inSingleQuotes = false
   var inDoubleQuotes = false
@@ -101,3 +99,5 @@ private fun getMultiIndexData(columnData: @NlsSafe String): DataFrameDebugValue.
     null
   }
 }
+
+class CannotRetrieveColumnDataException(message: String): Exception(message)

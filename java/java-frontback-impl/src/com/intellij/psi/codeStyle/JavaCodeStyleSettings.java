@@ -380,6 +380,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   private void initImportsByDefault() {
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false,"javax.swing", false));
+    initImportLayout();
+  }
+
+  private void initImportLayout() {
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
@@ -458,8 +462,31 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     myOldVersion = myVersion = CustomCodeStyleSettingsUtils.readVersion(parentElement.getChild(getTagName()));
     myIsInitialized = true;
     PackageEntry[] entries = IMPORT_LAYOUT_TABLE.getEntries();
-    if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_MODULE_IMPORTS)) {
-      IMPORT_LAYOUT_TABLE.setEntryAt(PackageEntry.ALL_MODULE_IMPORTS, 0);
+    //if it is broken, try to restore
+    if (entries.length == 0) {
+      initImportLayout();
+    }
+    else {
+      //if something is missed, restore it
+      if (LAYOUT_STATIC_IMPORTS_SEPARATELY && !ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY)) {
+        if (entries[0] == PackageEntry.ALL_MODULE_IMPORTS) {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, 1);
+        }
+        else {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, 0);
+        }
+      }
+      if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY)) {
+        if (entries[0] == PackageEntry.ALL_MODULE_IMPORTS) {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, 1);
+        }
+        else {
+          IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, 0);
+        }
+      }
+      if (!ContainerUtil.exists(entries, entry -> entry == PackageEntry.ALL_MODULE_IMPORTS)) {
+        IMPORT_LAYOUT_TABLE.insertEntryAt(PackageEntry.ALL_MODULE_IMPORTS, 0);
+      }
     }
   }
 

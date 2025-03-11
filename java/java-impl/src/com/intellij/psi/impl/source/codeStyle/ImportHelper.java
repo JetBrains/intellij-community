@@ -955,10 +955,10 @@ public final class ImportHelper {
       if (entry == PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY) {
         allOtherStaticIndex = i;
       }
-      if (entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY) {
+      if (!isModule && entry == PackageEntry.ALL_OTHER_IMPORTS_ENTRY) {
         allOtherIndex = i;
       }
-      if (entry.isBetterMatchForPackageThan(bestEntry, packageName, isStatic)) {
+      if (!isModule && entry.isBetterMatchForPackageThan(bestEntry, packageName, isStatic)) {
         bestEntry = entry;
         bestEntryIndex = i;
       }

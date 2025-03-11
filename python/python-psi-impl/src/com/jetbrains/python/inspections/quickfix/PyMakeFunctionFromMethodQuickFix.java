@@ -20,6 +20,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesVisitor;
 import com.jetbrains.python.inspections.unresolvedReference.SimplePyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -111,8 +112,9 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
       final PsiFile file = ObjectUtils.chooseNotNull(contextFile, usageFile);
       TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
 
-      final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(null,
-                                                                                                       new SimplePyUnresolvedReferencesInspection(), context);
+      final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(
+        null, new SimplePyUnresolvedReferencesInspection(), context, PythonLanguageLevelPusher.getLanguageLevelForFile(usageFile)
+      );
       usageFile.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyElement(@NotNull PyElement node) {

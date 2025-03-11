@@ -70,7 +70,7 @@ def display_data_csv(table, start_index, end_index):
             data = data.to_csv(na_rep = "NaN", sep=CSV_FORMAT_SEPARATOR, float_format=format)
         except AttributeError:
             pass
-        print(__convert_to_df(data))
+        print(repr(__convert_to_df(data)))
     __compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
@@ -122,14 +122,10 @@ def __define_format_function(format):
     return None
 
 
-# In old versions of pandas max_colwidth accepted only Int-s
 def __get_tables_display_options():
     # type: () -> Tuple[None, Union[int, None], None]
-    import sys
-    if sys.version_info < (3, 0):
-        return None, MAX_COLWIDTH_PYTHON_2, None
     try:
-        import pandas as pd
+        # In pandas versions earlier than 1.0, max_colwidth must be set as an integer
         if int(pd.__version__.split('.')[0]) < 1:
             return None, MAX_COLWIDTH_PYTHON_2, None
     except ImportError:

@@ -770,6 +770,7 @@
 - f:getScopes(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):java.util.List
 - f:getSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind,com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
 - f:isExclusiveFor(com.intellij.webSymbols.WebSymbolQualifiedKind):Z
+- p:requiresResolve():Z
 *:com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 - com.intellij.webSymbols.query.WebSymbolsQueryParams
 - *sf:Companion:com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams$Companion

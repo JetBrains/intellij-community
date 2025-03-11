@@ -56,6 +56,8 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     override val priority: WebSymbol.Priority
       get() = WebSymbol.Priority.HIGHEST
 
+    override fun requiresResolve(): Boolean = false
+
     override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (WebSymbolsScope) -> Unit) {
       val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
