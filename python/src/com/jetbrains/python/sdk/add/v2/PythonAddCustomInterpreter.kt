@@ -23,6 +23,7 @@ import com.jetbrains.python.sdk.add.v2.poetry.PoetryExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.uv.EnvironmentCreatorUv
 import com.jetbrains.python.sdk.add.v2.uv.UvExistingEnvironmentSelector
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterModel, val moduleOrProject: ModuleOrProject? = null, projectPathFlow: Flow<Path>? = null, private val errorSink: ErrorSink) {
@@ -31,7 +32,10 @@ class PythonAddCustomInterpreter(val model: PythonMutableTargetAddInterpreterMod
   private val selectionMethod = propertyGraph.property(PythonInterpreterSelectionMethod.CREATE_NEW)
   private val _createNew = propertyGraph.booleanProperty(selectionMethod, PythonInterpreterSelectionMethod.CREATE_NEW)
   private val _selectExisting = propertyGraph.booleanProperty(selectionMethod, PythonInterpreterSelectionMethod.SELECT_EXISTING)
-  private val newInterpreterManager = propertyGraph.property(VIRTUALENV)
+
+  @Internal
+  val newInterpreterManager = propertyGraph.property(VIRTUALENV)
+
   private val existingInterpreterManager = propertyGraph.property(PYTHON)
 
   private val newInterpreterCreators = mapOf(
