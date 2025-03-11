@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -47,6 +47,13 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     RendererAction(NodeRenderer nodeRenderer) {
       super(nodeRenderer.getName());
       myNodeRenderer = nodeRenderer;
+    }
+
+    @Override
+    public @NotNull Presentation createTemplatePresentation() {
+      Presentation presentation = super.createTemplatePresentation();
+      presentation.setKeepPopupOnPerform(KeepPopupOnPerform.Never);
+      return presentation;
     }
 
     @Override
