@@ -370,7 +370,6 @@ public fun EditableListComboBox(
  * @param onSelectedItemChange Called when the selected item changes, with the new index and item
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
- * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
 @Composable
@@ -388,7 +387,6 @@ public fun ListComboBox(
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
-    itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     var labelText by remember { mutableStateOf(items.firstOrNull().orEmpty()) }
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
@@ -493,7 +491,9 @@ public fun ListComboBox(
             },
             onSelectedItemChange = ::setSelectedItem,
             itemKeys = itemKeys,
-            itemContent = itemContent,
+            itemContent = { item, isSelected, isActive ->
+                SimpleListItem(text = item, isSelected = isSelected, isActive = isActive, iconContentDescription = item)
+            },
         )
     }
 }
@@ -526,7 +526,6 @@ public fun ListComboBox(
  * @param onSelectedItemChange Called when the selected item changes, with the new index and item
  * @param onPopupVisibleChange Called when the popup visibility changes
  * @param itemKeys Function to generate unique keys for items; defaults to using the item itself as the key
- * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
 @Composable
@@ -544,7 +543,6 @@ public fun EditableListComboBox(
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
-    itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     val textFieldState = rememberTextFieldState(items.firstOrNull().orEmpty())
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
@@ -649,7 +647,14 @@ public fun EditableListComboBox(
                 },
                 onSelectedItemChange = ::setSelectedItem,
                 itemKeys = itemKeys,
-                itemContent = itemContent,
+                itemContent = { item, isSelected, isActive ->
+                    SimpleListItem(
+                        text = item,
+                        isSelected = isSelected,
+                        isActive = isActive,
+                        iconContentDescription = item,
+                    )
+                },
             )
         },
     )

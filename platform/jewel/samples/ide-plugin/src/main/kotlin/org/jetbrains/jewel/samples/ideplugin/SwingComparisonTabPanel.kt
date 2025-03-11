@@ -53,7 +53,6 @@ import org.jetbrains.jewel.ui.component.EditableListComboBox
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.OutlinedButton
-import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 import org.jetbrains.jewel.ui.component.TextField
@@ -284,14 +283,6 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                                 items = comboBoxItems,
                                 modifier = Modifier.width(200.dp),
                                 onSelectedItemChange = { _, text -> selectedComboBox1 = text },
-                                itemContent = { item, isSelected, isActive ->
-                                    SimpleListItem(
-                                        text = item,
-                                        isSelected = isSelected,
-                                        isActive = isActive,
-                                        iconContentDescription = item,
-                                    )
-                                },
                             )
                         }
 
@@ -304,14 +295,6 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                                 modifier = Modifier.width(200.dp),
                                 isEnabled = false,
                                 onSelectedItemChange = { _, text -> selectedComboBox2 = text },
-                                itemContent = { item, isSelected, isActive ->
-                                    SimpleListItem(
-                                        text = item,
-                                        isSelected = isSelected,
-                                        isActive = isActive,
-                                        iconContentDescription = item,
-                                    )
-                                },
                             )
                         }
 
@@ -323,14 +306,6 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                                 modifier = Modifier.width(200.dp),
                                 maxPopupHeight = 150.dp,
                                 onSelectedItemChange = { _, text -> selectedComboBox3 = text },
-                                itemContent = { item, isSelected, isActive ->
-                                    SimpleListItem(
-                                        text = item,
-                                        isSelected = isSelected,
-                                        isActive = isActive,
-                                        iconContentDescription = item,
-                                    )
-                                },
                             )
                         }
 
@@ -342,14 +317,6 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                                 modifier = Modifier.width(200.dp),
                                 isEnabled = false,
                                 onSelectedItemChange = { _, text -> selectedComboBox4 = text },
-                                itemContent = { item, isSelected, isActive ->
-                                    SimpleListItem(
-                                        text = item,
-                                        isSelected = isSelected,
-                                        isActive = isActive,
-                                        iconContentDescription = item,
-                                    )
-                                },
                             )
                         }
                     }
