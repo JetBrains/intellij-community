@@ -446,10 +446,6 @@ internal class BazelBuildFileGenerator(
       }
       return
     }
-    if (!forTests && !module.isCommunity && module.module.name == "intellij.rider.plugins.renderdoc") {
-      resourceDependencies.add("//dotnet/Plugins/renderdoc-support:renderdoc_resources")
-      return
-    }
 
     load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
