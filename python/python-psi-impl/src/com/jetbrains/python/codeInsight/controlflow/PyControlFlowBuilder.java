@@ -39,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
@@ -359,11 +361,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (guard != null) {
       visitCondition(guard, trueNode, falseNode);
       addTypeAssertionNodes(guard, true);
+      myBuilder.addPendingEdge(clause, falseNode);
     }
     else {
       myBuilder.addEdge(myBuilder.prevInstruction, trueNode);
     }
-    myBuilder.addPendingEdge(clause, falseNode);
     myBuilder.prevInstruction = trueNode;
 
     clause.getStatementList().accept(this);
