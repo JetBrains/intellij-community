@@ -657,7 +657,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     fireItemSelected(item, completionChar);
   }
 
-  private void hideWithItemSelected(LookupElement lookupItem, char completionChar) {
+  @ApiStatus.Internal
+  public void hideWithItemSelected(LookupElement lookupItem, char completionChar) {
     fireBeforeItemSelected(lookupItem, completionChar);
     doHide(false, true);
     fireItemSelected(lookupItem, completionChar);

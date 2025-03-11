@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class TerminalInput(
+class TerminalInput(
   private val terminalSessionFuture: CompletableFuture<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
   coroutineScope: CoroutineScope,

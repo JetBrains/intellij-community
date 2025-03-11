@@ -30,6 +30,9 @@ object TerminalDataContextUtils {
   @ApiStatus.Internal
   val IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY: Key<Boolean> = Key.create("AlternateBufferModelEditor")
 
+  // Do not show a completion popup (if true)
+  val SUPPRESS_COMPLETION: Key<Boolean> = Key.create("SUPPRESS_TERMINAL_COMPLETION")
+
   val Editor.isPromptEditor: Boolean
     get() = getUserData(IS_PROMPT_EDITOR_KEY) == true
   val Editor.isOutputEditor: Boolean
@@ -42,6 +45,8 @@ object TerminalDataContextUtils {
     get() = getUserData(IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY) == true
   val Editor.isReworkedTerminalEditor: Boolean
     get() = isOutputModelEditor || isAlternateBufferModelEditor
+  val Editor.isSuppressCompletion: Boolean
+    get() = getUserData(SUPPRESS_COMPLETION) == true
   val Editor.terminalPromptModel: TerminalPromptModel?
     get() = getUserData(TerminalPromptModel.KEY)
 

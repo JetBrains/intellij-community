@@ -99,6 +99,15 @@ abstract class ClientLookupManagerBase(val session: ClientProjectSession) : Clie
     myActiveLookup = null
   }
 
+  @ApiStatus.Internal
+  fun putLookup(lookup: LookupImpl) {
+    Disposer.register(lookup) {
+      myActiveLookup = null
+      (LookupManagerImpl.getInstance(session.project) as LookupManagerImpl).fireActiveLookupChanged(lookup, null)
+    }
+    myActiveLookup = lookup
+  }
+
   protected abstract fun createLookup(editor: Editor, arranger: LookupArranger, session: ClientProjectSession): LookupImpl
 }
 

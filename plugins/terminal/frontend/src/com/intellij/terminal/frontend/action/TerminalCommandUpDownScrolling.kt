@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.action
+package com.intellij.terminal.frontend.action
 
 import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.LookupManager
@@ -12,7 +12,7 @@ import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 
-internal abstract class TerminalCommandUpDownScrolling(private val up: Boolean) : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal abstract class TerminalCommandUpDownScrolling(private val up: Boolean) : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     //Copy logic from LookupActionHandler#executeUpOrDown for up/down scrolling in the terminal popup
     val lookup = LookupManager.getActiveLookup(e.editor) as LookupImpl?

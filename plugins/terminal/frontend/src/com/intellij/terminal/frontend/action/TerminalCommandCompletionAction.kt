@@ -1,24 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.action
+package com.intellij.terminal.frontend.action
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase.calcSyncTimeOut
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase.markCaretAsProcessed
-import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments
-import com.intellij.codeInsight.completion.CompletionPhase.InsertedSingleItem
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.assertPhase
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.completionPhase
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.isPhase
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl.Companion.setCompletionPhase
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
+import com.intellij.codeInsight.lookup.LookupArranger.DefaultArranger
+import com.intellij.codeInsight.lookup.LookupFocusDegree
+import com.intellij.codeInsight.lookup.impl.ClientLookupManager
+import com.intellij.codeInsight.lookup.impl.ClientLookupManagerBase
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -26,30 +23,33 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils.withTimeout
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
-import com.intellij.openapi.project.DumbService.Companion.getInstance
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiUtilBase
+import com.intellij.terminal.frontend.TerminalInput
+import com.intellij.terminal.frontend.TerminalLookup
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 
 @ApiStatus.Internal
-class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemoteBehaviorSpecification.Disabled {
+class TerminalCommandCompletionAction : BaseCodeCompletionAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor!!
-    if (editor.getUserData(SUPPRESS_COMPLETION) != true) {
+    if (!editor.isSuppressCompletion) {
       if (e.editor?.isReworkedTerminalEditor == true) {
         invokeCompletionGen2Terminal(e, CompletionType.BASIC, 1)
-      } else {
+      }
+      else {
         invokeCompletion(e, CompletionType.BASIC, 1)
       }
     }
@@ -66,11 +66,8 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemote
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  companion object {
-    val SUPPRESS_COMPLETION: Key<Boolean> = Key.create("SUPPRESS_TERMINAL_COMPLETION")
-  }
-
   private fun invokeCompletionGen2Terminal(e: AnActionEvent, type: CompletionType, time: Int) {
+    val terminalInput = e.terminalInput
     val commonEditor = e.getData(CommonDataKeys.EDITOR)
     if (commonEditor == null) {
       TODO()
@@ -83,10 +80,20 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemote
     val inputEvent = e.inputEvent;
 
     CodeCompletionHandlerBase.clearCaretMarkers(commonEditor)
-    invokeCompletionGen2Terminal(project, commonEditor, time, inputEvent != null && inputEvent.modifiersEx != 0, commonEditor.getCaretModel().getPrimaryCaret(), type)
+    invokeCompletionGen2Terminal(project, commonEditor, time, inputEvent != null && inputEvent.modifiersEx != 0,
+                                 commonEditor.getCaretModel().getPrimaryCaret(), type, terminalInput)
   }
 
-  private fun invokeCompletionGen2Terminal(@NotNull project: Project, @NotNull editor: Editor, time: Int, hasModifiers: Boolean, @NotNull caret: Caret, completionType: CompletionType) {
+
+  private fun invokeCompletionGen2Terminal(
+    @NotNull project: Project,
+    @NotNull editor: Editor,
+    time: Int,
+    hasModifiers: Boolean,
+    @NotNull caret: Caret,
+    completionType: CompletionType,
+    terminalInput: TerminalInput?
+  ) {
     var time = time
     val invokedExplicitly = true
     // autopopup is false?
@@ -94,10 +101,10 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemote
     val synchronous = true
 
     val handler = CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup, synchronous)
-    markCaretAsProcessed(caret)
+    CodeCompletionHandlerBase.markCaretAsProcessed(caret)
 
     // invokedExplicitly == true
-    StatisticsUpdate.applyLastCompletionStatisticsUpdate()
+    StatisticsUpdate.Companion.applyLastCompletionStatisticsUpdate()
 
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode() && app.isWriteAccessAllowed()) {
@@ -117,7 +124,7 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemote
       return
     }
 
-    val phase = completionPhase
+    val phase = CompletionServiceImpl.Companion.completionPhase
     val repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor)
 
     val newTime = phase.newCompletionStarted(time, repeated)
@@ -125,10 +132,10 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemote
       time = newTime
     }
     val invocationCount = time
-    if (isPhase(InsertedSingleItem::class.java)) {
-      setCompletionPhase(CompletionPhase.NoCompletion)
+    if (CompletionServiceImpl.Companion.isPhase(CompletionPhase.InsertedSingleItem::class.java)) {
+      CompletionServiceImpl.Companion.setCompletionPhase(CompletionPhase.NoCompletion)
     }
-    assertPhase(CompletionPhase.NoCompletion.javaClass, CommittingDocuments::class.java)
+    CompletionServiceImpl.Companion.assertPhase(CompletionPhase.NoCompletion.javaClass, CompletionPhase.CommittingDocuments::class.java)
 
     if (invocationCount > 1) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION)
@@ -138,31 +145,55 @@ class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemote
     val initCmd = Runnable {
       WriteAction.run<RuntimeException> { EditorUtil.fillVirtualSpaceUntilCaret(editor) }
 
-      val psiFile =  PsiFileFactory.getInstance(project).createFileFromText(
+      val psiFile = PsiFileFactory.getInstance(project).createFileFromText(
         "command_output",
         PlainTextLanguage.INSTANCE,
         ""
       )
 
       var context: CompletionInitializationContextImpl? =
-        withTimeout<CompletionInitializationContextImpl?>(calcSyncTimeOut(startingTime).toLong(), Computable {
-          CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType, psiFile)
-        })
+        ProgressIndicatorUtils.withTimeout<CompletionInitializationContextImpl?>(
+          CodeCompletionHandlerBase.calcSyncTimeOut(startingTime).toLong(), Computable {
+            CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType,
+                                                                               psiFile)
+          })
       val hasValidContext = context != null
       if (!hasValidContext) {
         val psiFile = PsiUtilBase.getPsiFileInEditor(caret, project)
         context = CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount)
       }
+      // перепробуем
 
+      val mylookup = obtainLookup(editor, project, autopopup, terminalInput)
+      val clientLookupManager = ClientLookupManager.getInstance(project.currentSession) as? ClientLookupManagerBase
+      clientLookupManager?.putLookup(mylookup)
+
+      // вот тут я должна добавить свой lookUp
       handler.doComplete(context, hasModifiers, hasValidContext, startingTime)
     }
     try {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument())
     }
     catch (e: IndexNotReadyException) {
-      getInstance(project).showDumbModeNotificationForFunctionality(CodeInsightBundle.message("completion.not.available.during.indexing"),
-                                                                    DumbModeBlockedFunctionality.CodeCompletion)
+      DumbService.Companion.getInstance(project).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("completion.not.available.during.indexing"),
+        DumbModeBlockedFunctionality.CodeCompletion)
       throw e
     }
+  }
+
+  private fun obtainLookup(editor: Editor, project: Project, autopopup: Boolean, terminalInput: TerminalInput?): LookupImpl {
+    CompletionAssertions.checkEditorValid(editor)
+
+    val session = project.currentSession
+    val lookup = TerminalLookup(session, editor, DefaultArranger(), terminalInput) as LookupImpl
+
+    if (editor.isOneLineMode()) {
+      lookup.setCancelOnClickOutside(true)
+      lookup.setCancelOnOtherWindowOpen(true)
+    }
+    lookup.setLookupFocusDegree(if (autopopup) LookupFocusDegree.UNFOCUSED else LookupFocusDegree.FOCUSED)
+
+    return lookup
   }
 }

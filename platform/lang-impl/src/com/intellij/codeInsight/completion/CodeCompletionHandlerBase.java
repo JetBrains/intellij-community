@@ -259,6 +259,7 @@ public class CodeCompletionHandlerBase {
       lookup.setCancelOnOtherWindowOpen(true);
     }
     lookup.setLookupFocusDegree(autopopup ? LookupFocusDegree.UNFOCUSED : LookupFocusDegree.FOCUSED);
+    System.out.println("Lookup created isCompletion: " + lookup.isCompletion());
     return lookup;
   }
 
