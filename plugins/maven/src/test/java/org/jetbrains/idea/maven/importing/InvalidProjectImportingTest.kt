@@ -192,7 +192,10 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
     val root = rootProjects[0]
     val problems = if (isMaven4)
-      arrayOf("'artifactId' contains an expression but should be a constant.", "'artifactId' with value '\${undefined}' does not match a valid coordinate id pattern.")
+      arrayOf(
+        "'artifactId' with value '\${undefined}' does not match a valid coordinate id pattern.",
+        "'artifactId' contains an expression but should be a constant.",
+      )
     else
       arrayOf("'artifactId' with value '\${undefined}' does not match a valid id pattern.")
     assertProblems(root, *problems)
