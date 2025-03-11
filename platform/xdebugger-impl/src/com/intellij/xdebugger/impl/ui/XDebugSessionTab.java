@@ -354,12 +354,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private @Nullable Content createFramesContent(XDebugSessionProxy proxy) {
-    if (!(proxy instanceof XDebugSessionProxy.Monolith monolith)) {
-      LOG.error("Frames view is not supported in split mode");
-      return null;
-    }
-    XDebugSessionImpl session = (XDebugSessionImpl)monolith.getSession();
-    XFramesView framesView = new XFramesView(session);
+    XFramesView framesView = new XFramesView(proxy);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), null,

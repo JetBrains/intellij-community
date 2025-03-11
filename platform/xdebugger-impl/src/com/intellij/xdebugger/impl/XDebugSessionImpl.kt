@@ -107,12 +107,9 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val myDebuggerManager: XDebuggerManagerImpl = debuggerManager
   private val myExecutionPointManager: XDebuggerExecutionPointManager = debuggerManager.executionPointManager
   private var myBreakpointListenerDisposable: Disposable? = null
-  private val mySuspendContext = MutableStateFlow<XSuspendContext?>(null)
 
   @get:ApiStatus.Internal
   var currentSuspendCoroutineScope: CoroutineScope? = null
-    private set
-  var currentExecutionStack: XExecutionStack? = null
     private set
   private var myAlternativeSourceHandler: XAlternativeSourceHandler? = null
   private var myIsTopFrame = false
@@ -144,6 +141,15 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val mySessionId = XDebugSessionId(UID.random())
   private val entity: Deferred<XDebugSessionEntity> = storeXDebugSessionInDb(this.coroutineScope, this, mySessionId)
   private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager(this.coroutineScope, this.entity)
+  private val executionStackFlow = MutableStateFlow<XExecutionStack?>(null)
+  var currentExecutionStack: XExecutionStack?
+    get() = executionStackFlow.value
+    private set(value) {
+      executionStackFlow.value = value
+    }
+  private val suspendContextFlow = MutableStateFlow<XSuspendContext?>(null)
+  private val mySuspendContext: StateFlow<XSuspendContext?>
+    get() = suspendContextFlow
   private val sessionInitializedDeferred = CompletableDeferred<Unit>()
 
   @get:ApiStatus.Internal
@@ -273,6 +279,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return myPausedFlow
   }
 
+  @ApiStatus.Internal
+  fun getCurrentExecutionStackFlow(): Flow<XExecutionStack?> {
+    return executionStackFlow
+  }
 
   override fun isPaused(): Boolean {
     return myPaused.value
@@ -287,8 +297,18 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return myCurrentStackFrameManager.getCurrentStackFrame()
   }
 
+  @ApiStatus.Internal
+  fun getCurrentStackFrameFlow(): Flow<XStackFrame?> {
+    return myCurrentStackFrameManager.getCurrentStackFrameFlow().map { it.get() }
+  }
+
   override fun getSuspendContext(): XSuspendContext? {
     return mySuspendContext.value
+  }
+
+  @ApiStatus.Internal
+  fun getCurrentSuspendContextFlow(): Flow<XSuspendContext?> {
+    return mySuspendContext
   }
 
   override fun getCurrentPosition(): XSourcePosition? {
@@ -669,7 +689,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       currentSuspendCoroutineScope?.cancel()
     }
     currentSuspendCoroutineScope = null
-    mySuspendContext.value = null
+    suspendContextFlow.value = null
     this.currentExecutionStack = null
     myCurrentStackFrameManager.setCurrentStackFrame(null)
     myTopStackFrame = null
@@ -942,7 +962,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     }
 
     setBreakpointsDisabledTemporarily(false)
-    mySuspendContext.value = suspendContext
+    suspendContextFlow.value = suspendContext
     this.currentSuspendCoroutineScope = suspendContext.coroutineScope ?: provideSuspendScope(this)
     this.currentExecutionStack = suspendContext.activeExecutionStack
     val newCurrentStackFrame = if (this.currentExecutionStack != null) currentExecutionStack!!.getTopFrame() else null

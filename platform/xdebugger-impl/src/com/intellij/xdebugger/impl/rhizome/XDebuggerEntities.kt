@@ -6,15 +6,23 @@ import com.intellij.platform.project.ProjectEntity
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
-import com.intellij.xdebugger.frame.XFullValueEvaluator
-import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.rhizome.XValueEntity.Companion.XValueId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.jetbrains.rhizomedb.*
+import fleet.kernel.change
+import fleet.util.UID
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 
 private class XDebuggerEntityTypesProvider : EntityTypeProvider {
@@ -23,6 +31,9 @@ private class XDebuggerEntityTypesProvider : EntityTypeProvider {
       XDebugSessionEntity,
       XDebuggerEvaluatorEntity,
       XValueEntity,
+      XSuspendContextEntity,
+      XExecutionStackEntity,
+      XStackFrameEntity,
     )
   }
 }
@@ -137,3 +148,89 @@ data class XValueEntity(override val eid: EID) : Entity {
 // TODO[IJPL-160146]: Implement implement Color serialization
 @Serializable
 data class XValueMarkerDto(val text: String, @Transient val color: Color? = null, val tooltipText: String?)
+
+data class XSuspendContextEntity(override val eid: EID) : XDebuggerEntity<XSuspendContext> {
+
+  companion object : EntityType<XSuspendContextEntity>(
+    XSuspendContextEntity::class.java.name,
+    "com.intellij.xdebugger.impl.rhizome",
+    ::XSuspendContextEntity,
+    XDebuggerEntity
+  )
+}
+
+data class XExecutionStackEntity(override val eid: EID) : XDebuggerEntity<XExecutionStack> {
+
+  companion object : EntityType<XExecutionStackEntity>(
+    XExecutionStackEntity::class.java.name,
+    "com.intellij.xdebugger.impl.rhizome",
+    ::XExecutionStackEntity,
+    XDebuggerEntity
+  )
+}
+
+data class XStackFrameEntity(override val eid: EID) : XDebuggerEntity<XStackFrame> {
+
+  companion object : EntityType<XStackFrameEntity>(
+    XStackFrameEntity::class.java.name,
+    "com.intellij.xdebugger.impl.rhizome",
+    ::XStackFrameEntity,
+    XDebuggerEntity
+  )
+}
+
+@Suppress("UNCHECKED_CAST")
+interface XDebuggerEntity<T : Any> : Entity {
+  val id: UID
+    get() = this[IdAttr]
+
+  val obj: T
+    get() = this[ObjAttr] as T
+
+  companion object : Mixin<XDebuggerEntity<*>>(XDebuggerEntity::class.java.name, "com.intellij.xdebugger.impl.rhizome") {
+    val IdAttr: Attributes<XDebuggerEntity<*>>.Required<UID> = requiredTransient<UID>("id", Indexing.UNIQUE)
+    private val ObjAttr: Attributes<XDebuggerEntity<*>>.Required<Any> = requiredTransient<Any>("obj")
+
+    @ApiStatus.Internal
+    fun <T : Any, E : XDebuggerEntity<T>, ET : EntityType<E>> ET.new(changeScope: ChangeScope, obj: Any): E = with(changeScope) {
+      new {
+        it[IdAttr] = UID.random()
+        it[ObjAttr] = obj
+      }
+    }
+
+    @ApiStatus.Internal
+    inline fun <reified E : XDebuggerEntity<*>> debuggerEntity(id: UID): E? {
+      val entity = entity(IdAttr, id) ?: return null
+      return entity as E
+    }
+  }
+}
+
+@Suppress("UnusedFlow")
+@ApiStatus.Internal
+fun <T : Any, E : XDebuggerEntity<T>, ET : EntityType<E>> Flow<T?>.withIDs(createEntity: ChangeScope.(T) -> E): Flow<Pair<T, UID>?> {
+  val flow = this
+  return channelFlow {
+    flow.collectLatest { value ->
+      if (value == null) {
+        send(null)
+        return@collectLatest
+      }
+      val valueEntity = change {
+        createEntity(value)
+      }
+      try {
+        send(value to valueEntity.id)
+        awaitCancellation()
+      }
+      finally {
+        withContext(NonCancellable) {
+          change {
+            valueEntity.delete()
+          }
+        }
+      }
+    }
+  }
+}

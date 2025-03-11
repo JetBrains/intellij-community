@@ -47,6 +47,16 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun onTabInitialized(sessionId: XDebugSessionId, tabInfo: XDebuggerSessionTabInfoCallback)
 
+  suspend fun currentExecutionStack(sessionId: XDebugSessionId): Flow<XExecutionStackDto?>
+
+  suspend fun currentStackFrame(sessionId: XDebugSessionId): Flow<XStackFrameDto?>
+
+  suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean)
+
+  suspend fun currentSuspendContext(sessionId: XDebugSessionId): Flow<XSuspendContextDto?>
+
+  suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent>
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebugSessionApi {
@@ -143,4 +153,15 @@ data class XDebuggerSessionTabDto(
 data class XDebugSessionPausedInfo(
   val pausedByUser: Boolean,
   val topFrameIsAbsent: Boolean,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XSuspendContextId(val id: UID)
+
+@ApiStatus.Internal
+@Serializable
+data class XSuspendContextDto(
+  val id: XSuspendContextId,
+  val isStepping: Boolean,
 )

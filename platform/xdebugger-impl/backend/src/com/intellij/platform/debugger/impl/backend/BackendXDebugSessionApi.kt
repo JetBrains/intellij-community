@@ -4,20 +4,30 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.project.asProject
 import com.intellij.xdebugger.evaluation.EvaluationMode
+import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
-import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity
+import com.intellij.xdebugger.impl.rhizome.*
+import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.debuggerEntity
+import com.intellij.xdebugger.impl.rhizome.XDebuggerEntity.Companion.new
 import com.intellij.xdebugger.impl.rpc.*
 import com.jetbrains.rhizomedb.entity
+import fleet.kernel.change
 import fleet.kernel.rete.collect
 import fleet.kernel.rete.query
 import fleet.kernel.withEntities
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal class BackendXDebugSessionApi : XDebugSessionApi {
@@ -122,6 +132,106 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = entity(XDebugSessionEntity.SessionId, sessionId)?.session as? XDebugSessionImpl ?: return
     withContext(Dispatchers.EDT) {
       session.tabInitialized(tab)
+    }
+  }
+
+  override suspend fun currentSuspendContext(sessionId: XDebugSessionId): Flow<XSuspendContextDto?> {
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
+    val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
+    return channelFlow {
+      withEntities(sessionEntity) {
+        session.getCurrentSuspendContextFlow().withIDs { suspendContext ->
+          XSuspendContextEntity.new(this, suspendContext)
+        }.collect { contextAndId ->
+          if (contextAndId == null) {
+            send(null)
+            return@collect
+          }
+          val (suspendContext, id) = contextAndId
+          send(XSuspendContextDto(XSuspendContextId(id), suspendContext is XSteppingSuspendContext))
+        }
+      }
+    }
+  }
+
+  override suspend fun currentExecutionStack(sessionId: XDebugSessionId): Flow<XExecutionStackDto?> {
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
+    val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
+    return withEntities(sessionEntity) {
+      channelFlow {
+        session.getCurrentExecutionStackFlow().withIDs { executionStack ->
+          XExecutionStackEntity.new(this, executionStack)
+        }.collect { stackAndId ->
+          val (executionStack, id) = stackAndId ?: run {
+            send(null)
+            return@collect
+          }
+          send(XExecutionStackDto(XExecutionStackId(id), executionStack.displayName, executionStack.icon?.rpcId()))
+        }
+      }
+    }
+  }
+
+  override suspend fun currentStackFrame(sessionId: XDebugSessionId): Flow<XStackFrameDto?> {
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return emptyFlow()
+    val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
+    return channelFlow {
+      withEntities(sessionEntity) {
+        session.getCurrentStackFrameFlow().withIDs { stackFrame ->
+          XStackFrameEntity.new(this, stackFrame)
+        }.collect { frameAndId ->
+          if (frameAndId == null) {
+            send(null)
+            return@collect
+          }
+          val (_, id) = frameAndId
+          send(XStackFrameDto(XStackFrameId(id)))
+        }
+      }
+    }
+  }
+
+  override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean) {
+    val sessionEntity = entity(XDebugSessionEntity.SessionId, sessionId) ?: return
+    val executionStackEntity = debuggerEntity<XExecutionStackEntity>(executionStackId.id) ?: return
+    val stackFrameEntity = debuggerEntity<XStackFrameEntity>(frameId.id) ?: return
+    withEntities(sessionEntity, executionStackEntity, stackFrameEntity) {
+      sessionEntity.session.setCurrentStackFrame(executionStackEntity.obj, stackFrameEntity.obj, isTopFrame)
+    }
+  }
+
+  override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
+    val suspendContextEntity = debuggerEntity<XSuspendContextEntity>(suspendContextId.id) as? XSuspendContextEntity ?: return emptyFlow()
+    return channelFlow {
+      withEntities(suspendContextEntity) {
+        suspendContextEntity.obj.computeExecutionStacks(object : XSuspendContext.XExecutionStackContainer {
+          override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
+            this@channelFlow.launch {
+              // TODO[IJPL-177087] delete entities!!!
+              withEntities(suspendContextEntity) {
+                val stacks = executionStacks.map { stack ->
+                  val entity = change {
+                    XExecutionStackEntity.new(this, stack)
+                  }
+                  XExecutionStackDto(XExecutionStackId(entity.id), stack.displayName, stack.icon?.rpcId())
+                }
+                send(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
+                if (last) {
+                  this@channelFlow.close()
+                }
+              }
+            }
+          }
+
+          override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
+            this@channelFlow.launch {
+              send(XExecutionStacksEvent.ErrorOccurred(errorMessage))
+              this@channelFlow.close()
+            }
+          }
+        })
+      }
+      awaitClose()
     }
   }
 }

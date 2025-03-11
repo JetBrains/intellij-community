@@ -9,10 +9,13 @@ import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import fleet.kernel.change
 import fleet.kernel.withEntities
 import fleet.util.UID
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * This allows setting current session's [XStackFrame] and updates DB state, when [XStackFrame] is changed.
@@ -66,4 +69,6 @@ internal class XDebugSessionCurrentStackFrameManager(
   fun getCurrentStackFrame(): XStackFrame? {
     return currentStackFrame.value.get()
   }
+
+  fun getCurrentStackFrameFlow(): StateFlow<Ref<XStackFrame?>> = currentStackFrame
 }
