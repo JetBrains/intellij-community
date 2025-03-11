@@ -12,12 +12,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringHash;
+import com.intellij.psi.DummyBlockType;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
@@ -57,7 +55,7 @@ public class GeneratedParserUtilBase {
   private static final int VARIANTS_POOL_SIZE = 10000;
   private static final int FRAMES_POOL_SIZE = 500;
 
-  public static final IElementType DUMMY_BLOCK = new DummyBlockElementType();
+  public static final IElementType DUMMY_BLOCK = DummyBlockType.DUMMY_BLOCK;
 
   public interface Parser {
     boolean parse(PsiBuilder builder, int level);
@@ -1195,32 +1193,8 @@ public class GeneratedParserUtilBase {
     return totalCount != 0;
   }
 
-  private static class DummyBlockElementType extends IElementType implements ICompositeElementType {
-    DummyBlockElementType() {
-      super("DUMMY_BLOCK", Language.ANY);
-    }
 
-    @Override
-    public @NotNull ASTNode createCompositeNode() {
-      return new DummyBlock();
-    }
-  }
-
-  public static class DummyBlock extends CompositePsiElement {
-    DummyBlock() {
-      super(DUMMY_BLOCK);
-    }
-
-    @Override
-    public PsiReference @NotNull [] getReferences() {
-      return PsiReference.EMPTY_ARRAY;
-    }
-
-    @Override
-    public @NotNull Language getLanguage() {
-      return getParent().getLanguage();
-    }
-  }
+  public static class DummyBlock extends DummyBlockType.DummyBlock{}
 
   private static class MyList<E> extends ArrayList<E> {
     MyList(int initialCapacity) {
