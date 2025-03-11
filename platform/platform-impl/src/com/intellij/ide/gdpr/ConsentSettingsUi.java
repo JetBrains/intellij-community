@@ -109,7 +109,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     final boolean dataSharingEnabledByFreeLicense = ConsentOptions.getInstance().isUsageStatsConsent(consent)
                                                   && isAllowedByFreeLicense();
     if (addCheckBox) {
-      String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
+      String checkBoxText = StringUtil.capitalize(consent.getName());
       if (ConsentOptions.getInstance().isEAP()) {
         if (ConsentOptions.condUsageStatsConsent().test(consent)) {
           checkBoxText = IdeBundle.message("gdpr.checkbox.when.using.eap.versions", checkBoxText);
