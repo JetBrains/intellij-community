@@ -16,4 +16,8 @@ class ProjectViewToolWindowUi(data: ComponentData) : UiComponent(data) {
   val projectViewTree = tree(xQuery { byType("com.intellij.ide.projectView.impl.ProjectViewTree") })
 
   fun expandAll() = x("//div[@myicon='expandAll.svg']").click()
+
+  fun collapseAll() = x("//div[@myicon='collapseAll.svg']").click()
+
+  fun selectOpenedFile() = x("//div[@myicon='locate.svg']").click()
 }
