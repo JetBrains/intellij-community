@@ -14,8 +14,8 @@ import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Hook
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Parser
 import com.intellij.platform.syntax.util.BundleAdapter
 import com.intellij.platform.syntax.util.LimitedPool
-import com.intellij.platform.syntax.util.Logger
-import com.intellij.platform.syntax.util.NoopLogger
+import com.intellij.platform.syntax.Logger
+import com.intellij.platform.syntax.NoopLogger
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import kotlin.math.min
