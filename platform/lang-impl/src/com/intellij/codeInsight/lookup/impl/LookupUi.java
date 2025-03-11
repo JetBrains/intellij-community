@@ -97,15 +97,9 @@ final class LookupUi {
     menuAction.addSeparator();
     menuAction.add(new ShowCompletionSettingsAction());
 
-    ActionButton menuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-    myMenuButton = UiDataProvider.wrapComponent(menuButton, sink -> {
-      sink.set(CommonDataKeys.PROJECT, this.lookup.getProject());
-      sink.set(CommonDataKeys.EDITOR, this.lookup.getEditor());
-    });
-
-    AnAction hintAction = new HintAction();
-    hintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),
-                                  ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    myMenuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    HintAction hintAction = new HintAction();
+    hintButton = new ActionButton(hintAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     hintButton.setVisible(false);
 
     LookupLayeredPane layeredPane = new LookupLayeredPane();
@@ -386,7 +380,7 @@ final class LookupUi {
     }
   }
 
-  private final class LookupLayeredPane extends JBLayeredPane {
+  private final class LookupLayeredPane extends JBLayeredPane implements UiDataProvider {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private LookupLayeredPane() {
@@ -433,6 +427,12 @@ final class LookupUi {
           myList.setFixedCellWidth(myScrollPane.getViewport().getWidth());
         }
       });
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.PROJECT, lookup.getProject());
+      sink.set(CommonDataKeys.EDITOR, lookup.getEditor());
     }
   }
 
