@@ -148,7 +148,6 @@ f:com.intellij.analysis.problemsView.toolWindow.HighlightingPanel
 - f:selectHighlighter(com.intellij.openapi.editor.ex.RangeHighlighterEx):V
 - selectionChanged(com.intellij.openapi.fileEditor.FileEditorManagerEvent):V
 - selectionChangedTo(Z):V
-- f:setCurrentFile(kotlin.Pair):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - f:updateSelectedFile():org.jetbrains.concurrency.CancellablePromise
 f:com.intellij.analysis.problemsView.toolWindow.HighlightingPanel$Companion

@@ -38,24 +38,24 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
   }
 
-  public static void toggleCurrentFileProblems(@NotNull Project project, @Nullable VirtualFile file, @Nullable Document document) {
+  public static void toggleCurrentFileProblems(@NotNull Project project, @Nullable VirtualFile virtualFile, @Nullable Document document) {
     ToolWindow window = getToolWindow(project);
     if (window == null) return; // does not exist
     ContentManager contentManager = window.getContentManager();
     HighlightingPanel panel = getSelectedHighlightingPanel(contentManager.getSelectedContent());
     ToolWindowManagerImpl toolWindowManager = (ToolWindowManagerImpl) ToolWindowManager.getInstance(project);
-    if (file == null || document == null || panel == null || !panel.isShowing()) {
+    if (virtualFile == null || document == null || panel == null || !panel.isShowing()) {
       ProblemsViewToolWindowUtils.INSTANCE.selectContent(contentManager, HighlightingPanel.ID);
       window.setAvailable(true, null);
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);
     }
-    else if (file.equals(panel.getCurrentFile())) {
+    else if (virtualFile.equals(panel.getCurrentFile())) {
       if(!RedesignedInspectionsManager.isAvailable()) {
         toolWindowManager.hideToolWindow(window.getId(), false, true, false, ToolWindowEventSource.InspectionsWidget);
       }
     }
     else {
-      panel.setCurrentFile(new kotlin.Pair<>(file, document));
+      panel.setCurrentFile(virtualFile, document);
       toolWindowManager.activateToolWindow(window.getId(), null, true, ToolWindowEventSource.InspectionsWidget);
     }
   }
