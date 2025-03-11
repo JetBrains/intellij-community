@@ -401,7 +401,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
         myRunContentDescriptor = contentToReuse // This is a mock descriptor used in backend only
                                  ?: object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), JLabel(),
                                                                   sessionName, myIcon, null) {
-                                   override fun isHiddenContent(): Boolean = true
+                                   override fun isUiLess(): Boolean = true
                                  }
         myDebugProcess!!.sessionInitialized()
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.execution.ui
@@ -50,6 +50,8 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.KeyboardFocusManager
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 import javax.swing.Icon
 
@@ -59,6 +61,17 @@ private val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
 class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
   private val toolWindowIdZBuffer = ConcurrentLinkedDeque<String>()
+
+  /**
+   * List containing all the [RunContentDescriptor]s marked with [RunContentDescriptor.isUiLess].
+   * This [RunContentManager] will try firstly to delegate to them.
+   *
+   * This type of [RunContentDescriptor] is going to be used for backward compatibility during Remote Dev splitting,
+   * so frontend has its own [RunContentManager] and put uiLess descriptors to the backend,
+   * so some actions like [StopAction] will work on the backend.
+   */
+  private val uiLessContentDescriptors = CopyOnWriteArrayList<RunContentDescriptor>()
+  private val selectedUiLessContentDescriptor = AtomicReference<RunContentDescriptor>()
 
   init {
     val containerFactory = DockableGridContainerFactory()
@@ -229,10 +242,26 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       // here we have selected content
       return getRunContentDescriptorByContent(selectedContent)
     }
+
+    // if no ui content is selected, let's return selected ui less content
+    val selectedUiLessContent = selectedUiLessContentDescriptor.get()
+    if (selectedUiLessContent != null) {
+      return selectedUiLessContent
+    }
+
     return null
   }
 
   override fun removeRunContent(executor: Executor, descriptor: RunContentDescriptor): Boolean {
+    if (descriptor.isUiLess) {
+      selectedUiLessContentDescriptor.compareAndSet(descriptor, null)
+      val removed = uiLessContentDescriptors.remove(descriptor)
+      if (removed) {
+        syncPublisher.contentRemoved(descriptor, executor)
+      }
+      return removed
+    }
+
     val contentManager = getContentManagerForRunner(executor, descriptor)
     val content = getRunContentByDescriptor(contentManager, descriptor)
     return content != null && contentManager.removeContent(content, true)
@@ -243,6 +272,14 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun showRunContent(executor: Executor, descriptor: RunContentDescriptor, executionId: Long) {
+    if (descriptor.isUiLess) {
+      uiLessContentDescriptors.addIfAbsent(descriptor)
+      if (descriptor.isSelectContentWhenAdded) {
+        selectedUiLessContentDescriptor.set(descriptor)
+      }
+      return
+    }
+
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
@@ -470,10 +507,15 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         }
       }
     }
-    return descriptors
+    return descriptors + uiLessContentDescriptors
   }
 
   override fun selectRunContent(descriptor: RunContentDescriptor) {
+    if (descriptor.isUiLess) {
+      selectedUiLessContentDescriptor.set(descriptor)
+      return
+    }
+
     processToolWindowContentManagers { _, contentManager ->
       val content = getRunContentByDescriptor(contentManager, descriptor) ?: return@processToolWindowContentManagers
       contentManager.setSelectedContent(content)
@@ -502,6 +544,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getDescriptorBy(handler: ProcessHandler, runnerInfo: Executor): RunContentDescriptor? {
+    val uiLessContentDescriptor = uiLessContentDescriptors.find { it.processHandler == handler }
+    if (uiLessContentDescriptor != null) {
+      return uiLessContentDescriptor
+    }
+
     fun find(manager: ContentManager?): RunContentDescriptor? {
       if (manager == null) return null
       val contents = manager.contentsRecursively

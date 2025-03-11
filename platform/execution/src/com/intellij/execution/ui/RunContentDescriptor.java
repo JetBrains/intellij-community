@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -300,6 +300,14 @@ public class RunContentDescriptor implements Disposable {
    */
   @ApiStatus.Experimental
   public boolean isHiddenContent() {
+    return false;
+  }
+
+  /**
+   * return true if the content should not be shown in toolwindows, but still should be used by {@link RunContentManager}
+   */
+  @ApiStatus.Internal
+  public boolean isUiLess() {
     return false;
   }
 
