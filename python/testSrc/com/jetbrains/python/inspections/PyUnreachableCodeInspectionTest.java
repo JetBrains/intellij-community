@@ -37,6 +37,17 @@ def bar():
                    """);
   }
 
+  // TODO: Test pattern matching more when we have Never type
+  // PY-79770
+  public void testBasicPatternMatching() {
+    doTestByText("""
+def foo(param: int) -> int:
+    match param:
+        case _:
+            return 41
+                   """);
+  }
+
   // PY-51564
   public void testWithNotContext() {
     doTestByText("""

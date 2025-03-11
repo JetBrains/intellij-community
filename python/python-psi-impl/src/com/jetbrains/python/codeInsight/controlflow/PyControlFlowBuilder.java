@@ -351,7 +351,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     PyPattern pattern = clause.getPattern();
     if (pattern != null) {
       pattern.accept(this);
-      addTypeAssertionNodes(pattern, true);
     }
 
     TransparentInstruction trueNode = addTransparentInstruction();
@@ -394,6 +393,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     if (isRefutable) {
       myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
+      addTypeAssertionNodes(node, true);
     }
   }
 
@@ -426,6 +426,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     node.getClassNameReference().accept(this);
     myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
 
+    addTypeAssertionNodes(node, true);
     node.getArgumentList().acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
 
@@ -439,13 +440,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     node.getValue().accept(this);
     myBuilder.addPendingEdge(node.getParent(), myBuilder.prevInstruction);
 
+    addTypeAssertionNodes(node, true);
     myBuilder.addNode(new RefutablePatternInstruction(myBuilder, node, true));
   }
 
   @Override
   public void visitPyAsPattern(@NotNull PyAsPattern node) {
-    // AsPattern cannot fail by itself - it fails only if its child fails.
-    // So no need to create additional fail edge
+    // AsPattern can't fail by itself – it fails only if its child fails.
+    // So no need to create an additional fail edge
     myBuilder.startNode(node);
     node.acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
@@ -453,9 +455,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyGroupPattern(@NotNull PyGroupPattern node) {
-    // GroupPattern cannot fail by itself - it fails only if its child fails.
-    // So no need to create additional fail edge
-    // Also no need to dedicated node for GroupPattern itself
+    // GroupPattern can't fail by itself – it fails only if its child fails.
+    // So no need to create an additional fail edge 
+    // Also no need for a dedicated node for GroupPattern itself
     node.acceptChildren(this);
     myBuilder.updatePendingElementScope(node, node.getParent());
   }

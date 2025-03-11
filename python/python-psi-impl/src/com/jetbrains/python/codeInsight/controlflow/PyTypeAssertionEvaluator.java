@@ -168,7 +168,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyPattern(@NotNull PyPattern node) {
-    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyCaseClause.class);
+    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyCaseClause.class, PyGroupPattern.class, PyAsPattern.class, PyOrPattern.class);
     if (parent instanceof PyMatchStatement matchStatement) {
       pushAssertion(matchStatement.getSubject(), myPositive, context -> context.getType(node));
     }
