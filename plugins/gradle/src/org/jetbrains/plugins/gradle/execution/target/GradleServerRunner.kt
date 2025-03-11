@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.PlatformUtils
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.text.nullize
 import org.gradle.initialization.BuildEventConsumer
@@ -32,10 +31,8 @@ import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.tooling.internal.provider.action.BuildActionSerializer
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
-import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.io.ByteArrayInputStream
 import java.net.InetAddress
 import java.util.concurrent.Future
@@ -109,17 +106,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         }
       }
     }
-
-    val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true || PlatformUtils.isFleetBackend()) {
-      null
-    }
-    else {
-      connection.putUserData(targetPreparationKey, true)
-      GradleBundle.message("gradle.target.execution.running") + "\n"
-    }
-    processHandler.addProcessListener(
-      GradleServerProcessListener(appStartedMessage, targetProgressIndicator, resultHandler, gradleServerEventsListener)
-    )
+    val listener = GradleServerProcessListener(targetProgressIndicator, resultHandler, gradleServerEventsListener)
+    processHandler.addProcessListener(listener)
     processHandler.runProcessWithProgressIndicator(targetProgressIndicator.progressIndicator, -1, true)
   }
 
@@ -268,17 +256,18 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
           try {
             lock.wait(100)
           }
-          catch (ignore: InterruptedException) {
+          catch (_: InterruptedException) {
           }
         }
       }
     }
   }
 
-  private class GradleServerProcessListener(private val appStartedMessage: @Nls String?,
-                                            private val targetProgressIndicator: TargetProgressIndicator,
-                                            private val resultHandler: ResultHandler<Any?>,
-                                            private val gradleServerEventsListener: GradleServerEventsListener) : ProcessListener {
+  private class GradleServerProcessListener(
+    private val targetProgressIndicator: TargetProgressIndicator,
+    private val resultHandler: ResultHandler<Any?>,
+    private val gradleServerEventsListener: GradleServerEventsListener,
+  ) : ProcessListener {
     @Volatile
     private var connectionAddressReceived = false
 
@@ -295,10 +284,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         resultReceived = true
         resultHandler.onFailure(gradleConnectionException)
       }
-    }
-
-    override fun startNotified(event: ProcessEvent) {
-      appStartedMessage?.let { targetProgressIndicator.addText(it, ProcessOutputType.STDOUT) }
     }
 
     override fun processTerminated(event: ProcessEvent) {
@@ -340,7 +325,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
   companion object {
     private val log = logger<GradleServerRunner>()
-    private val targetPreparationKey = Key.create<Boolean>("target preparation key")
   }
 }
 
