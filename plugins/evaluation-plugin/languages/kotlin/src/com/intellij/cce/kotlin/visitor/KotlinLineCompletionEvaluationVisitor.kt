@@ -8,15 +8,17 @@ import com.intellij.cce.visitor.LineCompletionAllEvaluationVisitor
 import com.intellij.cce.visitor.LineCompletionEvaluationVisitor
 import com.intellij.cce.visitor.LineCompletionVisitorFactory
 import com.intellij.cce.visitor.LineCompletionVisitorHelper
-import com.intellij.ml.inline.completion.kotlin.KotlinStringLiteralSupporter
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+
 
 
 class KotlinLineCompletionVisitorFactory : LineCompletionVisitorFactory {
@@ -94,7 +96,6 @@ class KotlinLineCompletionVisitorFactory : LineCompletionVisitorFactory {
 
   class CommentsTokensVisitor(override val feature: String) : LineCompletionEvaluationVisitor, KtTreeVisitorVoid() {
     private val visitorHelper = LineCompletionVisitorHelper()
-    private val kotlinStringLiteralSupporter = KotlinStringLiteralSupporter()
 
     override val language: Language = Language.KOTLIN
 
@@ -105,8 +106,14 @@ class KotlinLineCompletionVisitorFactory : LineCompletionVisitorFactory {
       super.visitKtFile(file)
     }
 
+    private fun isCommentElement(element: PsiElement): Boolean = element is PsiComment
+
+    private fun isKDocComment(element: PsiElement): Boolean =
+      (element is LeafPsiElement && element.parentOfType<KDoc>(withSelf = true) != null) ||
+      element.elementType == KtTokens.BLOCK_COMMENT
+
     override fun visitElement(element: PsiElement) {
-      if ((kotlinStringLiteralSupporter.isCommentElement(element) || (kotlinStringLiteralSupporter.isDocComment(element) && element is LeafPsiElement))) {
+      if (isCommentElement(element) || isKDocComment(element)) {
         visitorHelper.addElement(element.node)
       }
 

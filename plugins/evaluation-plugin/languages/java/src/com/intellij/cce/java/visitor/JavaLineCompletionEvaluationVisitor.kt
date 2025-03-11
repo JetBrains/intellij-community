@@ -7,9 +7,11 @@ import com.intellij.cce.evaluable.golf.CompletionGolfMode
 import com.intellij.cce.visitor.LineCompletionEvaluationVisitor
 import com.intellij.cce.visitor.LineCompletionVisitorFactory
 import com.intellij.cce.visitor.LineCompletionVisitorHelper
-import com.intellij.ml.inline.completion.java.features.JavaStringLiteralSupporter
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
+import com.intellij.psi.javadoc.PsiDocComment
+import com.intellij.psi.util.parentOfType
 
 class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.JAVA
@@ -77,7 +79,6 @@ class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {
 
   class CommentsTokensVisitor(override val feature: String) : LineCompletionEvaluationVisitor, JavaRecursiveElementVisitor() {
     private val visitorHelper = LineCompletionVisitorHelper()
-    private val javaStringLiteralSupporter = JavaStringLiteralSupporter()
 
     override val language: Language = Language.JAVA
 
@@ -88,8 +89,17 @@ class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {
       super.visitJavaFile(file)
     }
 
+    private fun isCommentElement(element: PsiElement): Boolean {
+      return element is PsiComment;
+    }
+
+    private fun isDocComment(element: PsiElement): Boolean {
+      return element.node.elementType == JavaTokenType.C_STYLE_COMMENT ||
+             (element is LeafPsiElement && element.parentOfType<PsiDocComment>(withSelf = true) != null)
+    }
+
     override fun visitElement(element: PsiElement) {
-      if (javaStringLiteralSupporter.isCommentElement(element) || javaStringLiteralSupporter.isDocComment(element)) {
+      if (isCommentElement(element) || isDocComment(element)) {
         visitorHelper.addElement(element.node)
       }
       super.visitElement(element)

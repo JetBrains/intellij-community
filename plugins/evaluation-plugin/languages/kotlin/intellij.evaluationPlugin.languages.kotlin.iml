@@ -15,7 +15,5 @@
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.core" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="module" module-name="intellij.fullLine.kotlin" />
-    <orderEntry type="module" module-name="intellij.fullLine.core.completion" />
   </component>
 </module>
