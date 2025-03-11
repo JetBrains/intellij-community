@@ -4,6 +4,7 @@ import com.intellij.notebooks.ui.bind
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.SwingClientProperty
 import com.intellij.notebooks.visualization.context.NotebookDataContext
+import com.intellij.notebooks.visualization.context.NotebookDataContext.NOTEBOOK_CELL_OUTPUT_DATA_KEY
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
@@ -92,7 +93,7 @@ class EditorCellOutputsView(
     cell.outputs.outputs.afterChange(this) { keys ->
       updateView(keys)
     }
-    cell.outputs.scrollingEnabled.afterChange(this) {
+    cell.outputs.scrollingEnabled.bind(this) {
       innerComponent.scrollingEnabled = it
       innerComponent.revalidate()
     }
@@ -112,7 +113,7 @@ class EditorCellOutputsView(
   }
 
   fun updateView(newDataKeys: List<EditorCellOutput>): Unit = runInEdt {
-    updateData(newDataKeys.map { it.dataKey.get() })
+    updateData(newDataKeys)
     recreateInlayIfNecessary()
   }
 
@@ -139,27 +140,28 @@ class EditorCellOutputsView(
   }
 
   @RequiresEdt
-  private fun updateData(newDataKeys: Collection<NotebookOutputDataKey>): Boolean {
-    val newDataKeyIterator = newDataKeys.iterator()
+  private fun updateData(outputs: List<EditorCellOutput>): Boolean {
+    val newOutputsIterator = outputs.iterator()
     val oldComponentsWithFactories = getComponentsWithFactories().iterator()
     var isFilled = false
-    for ((idx, pair1) in newDataKeyIterator.zip(oldComponentsWithFactories).withIndex()) {
-      val (newDataKey, pair2) = pair1
+    for ((idx, pair1) in newOutputsIterator.zip(oldComponentsWithFactories).withIndex()) {
+      val (output, pair2) = pair1
       val (oldComponent: JComponent, oldFactory: NotebookOutputComponentFactory<*, *>) = pair2
+      val outputDataKey = output.dataKey.get()
       isFilled =
-        when (oldFactory.matchWithTypes(oldComponent, newDataKey)) {
+        when (oldFactory.matchWithTypes(oldComponent, outputDataKey)) {
           NotebookOutputComponentFactory.Match.NONE -> {
             removeOutput(idx)
-            val newComponent = createOutputGuessingFactory(newDataKey)
+            val newComponent = createOutputGuessingFactory(output)
             if (newComponent != null) {
-              addIntoInnerComponent(newComponent, idx)
+              addIntoInnerComponent(output, newComponent, idx)
               true
             }
             else false
           }
           NotebookOutputComponentFactory.Match.COMPATIBLE -> {
             @Suppress("UNCHECKED_CAST") (oldFactory as NotebookOutputComponentFactory<JComponent, NotebookOutputDataKey>)
-            oldFactory.updateComponent(editor, oldComponent, newDataKey)
+            oldFactory.updateComponent(editor, oldComponent, outputDataKey)
             oldComponent.parent.asSafely<CollapsingComponent>()?.updateStubIfCollapsed()
             true
           }
@@ -172,11 +174,11 @@ class EditorCellOutputsView(
       removeOutput(idx)
     }
 
-    for (outputDataKey in newDataKeyIterator) {
-      val newComponent = createOutputGuessingFactory(outputDataKey)
+    for (output in newOutputsIterator) {
+      val newComponent = createOutputGuessingFactory(output)
       if (newComponent != null) {
         isFilled = true
-        addIntoInnerComponent(newComponent)
+        addIntoInnerComponent(output, newComponent)
       }
     }
 
@@ -190,22 +192,25 @@ class EditorCellOutputsView(
     remove(outputComponent)
   }
 
-  private fun <K : NotebookOutputDataKey> createOutputGuessingFactory(outputDataKey: K): NotebookOutputComponentFactory.CreatedComponent<*>? =
-    NotebookOutputComponentFactoryGetter.instance.list.asSequence()
+  private fun createOutputGuessingFactory(output: EditorCellOutput): NotebookOutputComponentFactory.CreatedComponent<*>? {
+    val outputDataKey = output.dataKey.get()
+    return NotebookOutputComponentFactoryGetter.instance.list.asSequence()
       .filter { factory ->
         factory.outputDataKeyClass.isAssignableFrom(outputDataKey.javaClass)
       }
       .mapNotNull { factory ->
-        createOutput(@Suppress("UNCHECKED_CAST") (factory as NotebookOutputComponentFactory<*, K>), outputDataKey)
+        createOutput(@Suppress("UNCHECKED_CAST") (factory as NotebookOutputComponentFactory<*, NotebookOutputDataKey>), output, outputDataKey)
       }
       .firstOrNull()
+  }
 
   private fun <K : NotebookOutputDataKey> createOutput(
     factory: NotebookOutputComponentFactory<*, K>,
+    output: EditorCellOutput,
     outputDataKey: K,
   ): NotebookOutputComponentFactory.CreatedComponent<*>? {
     val result = try {
-      factory.createComponent(editor, outputDataKey)
+      factory.createComponent(editor, output, outputDataKey)
     }
     catch (t: Throwable) {
       thisLogger().error("${factory.javaClass.name} shouldn't throw exceptions at .createComponent()", t)
@@ -259,7 +264,7 @@ class EditorCellOutputsView(
   private fun computeInlayOffset(document: Document, lines: IntRange): Int =
     document.getLineEndOffset(lines.last)
 
-  private fun addIntoInnerComponent(newComponent: NotebookOutputComponentFactory.CreatedComponent<*>, pos: Int = -1) {
+  private fun addIntoInnerComponent(output: EditorCellOutput, newComponent: NotebookOutputComponentFactory.CreatedComponent<*>, pos: Int = -1) {
     lateinit var outputComponent: EditorCellOutputView
     val collapsingComponent = object : CollapsingComponent(
       editor,
@@ -268,11 +273,11 @@ class EditorCellOutputsView(
       newComponent.collapsedTextSupplier,
     ), UiDataProvider {
       override fun uiDataSnapshot(sink: DataSink) {
-        sink[NOTEBOOK_CELL_OUTPUT_DATA_KEY] = outputComponent
+        sink[NOTEBOOK_CELL_OUTPUT_DATA_KEY] = output
       }
     }
 
-    outputComponent = EditorCellOutputView(editor, collapsingComponent, newComponent.disposable)
+    outputComponent = EditorCellOutputView(editor, output, collapsingComponent, newComponent.disposable)
 
     innerComponent.add(
       collapsingComponent,
