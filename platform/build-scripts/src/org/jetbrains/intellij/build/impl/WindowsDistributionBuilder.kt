@@ -2,15 +2,19 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
+import com.intellij.platform.util.coroutines.mapConcurrent
 import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.createFrontendContextForLaunchers
@@ -20,14 +24,13 @@ import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.time.LocalDate
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.extension
-import kotlin.io.path.name
-import kotlin.io.path.readText
+import java.util.*
+import kotlin.io.path.*
 
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
@@ -338,29 +341,87 @@ internal class WindowsDistributionBuilder(
   }
 
   private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path, exePath: Path, arch: JvmArchitecture, tempDir: Path) = CompareDistributionsSemaphore.withPermit {
-    Span.current().addEvent("compare ${zipPath.fileName} vs. ${exePath.fileName}")
+    fun compareStreams(stream1: InputStream, stream2: InputStream): Boolean {
+      val b1 = ByteArray(DEFAULT_BUFFER_SIZE)
+      val b2 = ByteArray(DEFAULT_BUFFER_SIZE)
+      stream1.use { s1 ->
+        stream2.use { s2 ->
+          while (true) {
+            val l1 = s1.readNBytes(b1, 0, b1.size)
+            val l2 = s2.readNBytes(b2, 0, b2.size)
+            if (l1 != l2) return false
+            if (l1 <= 0) return true
+            if (!Arrays.equals(b1, 0, l1, b2, 0, l2)) return false
+          }
+        }
+      }
+    }
 
-    val tempZip = withContext(Dispatchers.IO) { Files.createTempDirectory(tempDir, "zip-${arch.dirName}") }
     val tempExe = withContext(Dispatchers.IO) { Files.createTempDirectory(tempDir, "exe-${arch.dirName}") }
     try {
       withContext(Dispatchers.IO) {
-        try {
-          runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe)
-          // deleting NSIS-related files that appear after manual unpacking of .exe installer and do not belong to its contents
-          @Suppress("SpellCheckingInspection")
-          NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
-          Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe.nsis"))
-          Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe"))
+        spanBuilder("compare zip and exe contents")
+          .setAttribute("zipPath", zipPath.toString())
+          .setAttribute("exePath", exePath.toString())
+          .use {
 
-          runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip)
+            runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe)
+            // deleting NSIS-related files that appear after manual unpacking of .exe installer and do not belong to its contents
+            @Suppress("SpellCheckingInspection")
+            NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
+            Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe.nsis"))
+            Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe"))
 
-          runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
-        }
-        finally {
-          withContext(Dispatchers.IO + NonCancellable) {
-            NioFiles.deleteRecursively(tempZip)
+            val extraInZip = ArrayList<String>()
+            val differ = ArrayList<String>()
+            ZipFile.Builder().setSeekableByteChannel(Files.newByteChannel(zipPath)).get().use { zipFile ->
+              zipFile.entries.asSequence()
+                .filter { !it.isDirectory }.toList()
+                .mapConcurrent(Runtime.getRuntime().availableProcessors().coerceAtLeast(4)) { entry ->
+                  val entryPath = Path.of(entry.name)
+                  val fileInExe = tempExe.resolve(entryPath)
+                  if (!fileInExe.exists()) {
+                    extraInZip.add(entryPath.toString())
+                  }
+                  else {
+                    if (fileInExe.fileSize() != entry.size) {
+                      differ.add(entryPath.toString())
+                    }
+                    else if (entry.size < 2 * FileUtilRt.MEGABYTE) {
+                      if (!fileInExe.readBytes().contentEquals(zipFile.getInputStream(entry).readAllBytes())) {
+                        differ.add(entryPath.toString())
+                      }
+                    }
+                    else if (!compareStreams(fileInExe.inputStream().buffered(FileUtilRt.MEGABYTE), zipFile.getInputStream(entry).buffered(FileUtilRt.MEGABYTE))) {
+                      differ.add(entryPath.toString())
+                    }
+                    FileUtil.delete(fileInExe)
+                  }
+                }
+            }
+
+            val extraInExe = Files.walk(tempExe)
+              .filter { Files.isRegularFile(it) }
+              .map { tempExe.relativize(it).toString() }
+              .toList()
+
+            if (extraInExe.isNotEmpty() || extraInZip.isNotEmpty() || differ.isNotEmpty()) {
+              error(buildString {
+                if (extraInZip.isNotEmpty()) {
+                  append("Files present only in ZIP:\n")
+                  extraInZip.forEach { append("  ").append(it).append('\n') }
+                }
+                if (extraInExe.isNotEmpty()) {
+                  append("Files present only in EXE:\n")
+                  extraInExe.forEach { append("  ").append(it).append('\n') }
+                }
+                if (differ.isNotEmpty()) {
+                  append("Files with different content:\n")
+                  differ.forEach { append("  ").append(it).append('\n') }
+                }
+              })
+            }
           }
-        }
       }
       if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
         RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
