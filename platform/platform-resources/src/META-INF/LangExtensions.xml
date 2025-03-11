@@ -1719,9 +1719,9 @@
     <registryKey defaultValue="2000"
                  description="Amount in milliseconds to wait for completion contributors till decide whether to insert the single item"
                  key="ide.completion.auto.insert.item.timeout"/>
-    <registryKey key="ide.completion.command.enabled" defaultValue="false"
+    <registryKey key="ide.completion.command.force.enabled" defaultValue="false"
                  description="Enable experimental support command completion" restartRequired="false"/>
-    <registryKey key="ide.completion.command.internal.enabled" defaultValue="false"
+    <registryKey key="ide.completion.command.enabled" defaultValue="true"
                  description="Enable experimental support command completion for internal mode" restartRequired="false"/>
 
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryPropertyEntityIndexableEntityProvider"/>

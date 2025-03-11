@@ -13,8 +13,13 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
     override val pluginMode = KotlinPluginMode.K2
 
+    override fun setUp() {
+        super.setUp()
+        Registry.get("ide.completion.command.enabled").setValue(false, getTestRootDisposable())
+    }
+
     fun testRedCompletion() {
-        Registry.get("ide.completion.command.enabled").setValue(true, getTestRootDisposable())
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
             "x.kt", """
             fun main() {
@@ -35,7 +40,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
 
 
     fun testFormat() {
-        Registry.get("ide.completion.command.enabled").setValue(true, getTestRootDisposable())
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
             "x.kt", """
             fun main() {
@@ -55,7 +60,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testComment() {
-        Registry.get("ide.completion.command.enabled").setValue(true, getTestRootDisposable())
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
             "x.kt", """
             fun main() {
@@ -75,7 +80,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testCommentPsiElement() {
-        Registry.get("ide.completion.command.enabled").setValue(true, getTestRootDisposable())
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
             "x.kt", """
             fun main() {
@@ -95,7 +100,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testDeletePsiElement() {
-        Registry.get("ide.completion.command.enabled").setValue(true, getTestRootDisposable())
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
             "x.kt", """
             fun main() {
@@ -111,7 +116,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testGenerate() {
-        Registry.get("ide.completion.command.enabled").setValue(true, getTestRootDisposable())
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
             "x.kt", """
             class A{
@@ -131,7 +136,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testCopyFqn() {
-        Registry.get("ide.completion.command.enabled").setValue(true, getTestRootDisposable())
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
             "x.kt", """
             class A.<caret>{
@@ -152,7 +157,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testGoToDeclaration() {
-        Registry.get("ide.completion.command.enabled").setValue(true, getTestRootDisposable())
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
         myFixture.configureByText(
             "x.kt", """
             fun main() {

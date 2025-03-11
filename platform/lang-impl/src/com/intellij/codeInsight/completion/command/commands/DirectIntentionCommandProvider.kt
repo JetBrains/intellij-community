@@ -44,6 +44,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.coroutines.CoroutineScope
@@ -306,7 +307,8 @@ internal class DirectIntentionCommandProvider : CommandProvider {
    * temporary workaround for fix with AI
    */
   private fun tryToAddAI(info: HighlightInfo, psiFile: PsiFile, editor: Editor, offset: Int): IntentionsInfo? {
-    val copyFile = psiFile.copy() as? PsiFile ?: return null
+    val copyFile = PsiFileFactory.getInstance(editor.project)
+      .createFileFromText(psiFile.getName(), psiFile.getLanguage(), psiFile.fileDocument.text, true, true, false, psiFile.virtualFile)
     val markup = DocumentMarkupModel.forDocument(copyFile.fileDocument, psiFile.project, true) as? MarkupModelEx ?: return null
     val textAttributesKey = if (info.forcedTextAttributesKey == null) info.type.getAttributesKey() else info.forcedTextAttributesKey
     val highlighter = markup.addRangeHighlighter(textAttributesKey, info.startOffset, info.endOffset, 5000, HighlighterTargetArea.EXACT_RANGE)
