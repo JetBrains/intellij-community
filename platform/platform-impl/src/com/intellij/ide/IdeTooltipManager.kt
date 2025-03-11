@@ -589,19 +589,6 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
     return tooltip
   }
 
-  // This will forcefully initiate showing a standard (non-custom) tooltip for the component.
-  // Can be used if, e.g., a tooltip content for the component isn't known at the time mouse enters the component bounds.
-  @Internal
-  fun show(component: JComponent, event: MouseEvent) {
-    val tooltipManager = helpTooltipManager
-    if (tooltipManager != null) {
-      tooltipManager.showTooltip(component, event)
-    }
-    else {
-      ToolTipManager.sharedInstance().mouseMoved(event)
-    }
-  }
-
   private fun doShow(tooltip: IdeTooltip, animationEnabled: Boolean) {
     val toCenterX: Boolean
     val toCenterY: Boolean
