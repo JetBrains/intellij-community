@@ -247,7 +247,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                     if (targetFile !is KtFile) throw IllegalStateException("Target file '${targetFile.name}' is not a Kotlin file")
 
                     for (nameToImport in fqNames) {
-                        addImportIfRequired(targetFile, nameToImport)
+                        addImportIfRequired(context, nameToImport)
                     }
                     context.commitDocument()
                     context.doPostponedOperationsAndUnblockDocument()

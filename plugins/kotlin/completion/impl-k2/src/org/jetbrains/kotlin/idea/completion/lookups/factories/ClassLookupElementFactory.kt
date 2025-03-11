@@ -60,7 +60,7 @@ private object ClassifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
                 shortenCommand = shortenCommand,
             )
         } else if (importingStrategy is ImportStrategy.AddImport) {
-            addImportIfRequired(targetFile, importingStrategy.nameToImport)
+            addImportIfRequired(context, importingStrategy.nameToImport)
         }
     }
 }
