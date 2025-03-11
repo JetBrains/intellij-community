@@ -4,10 +4,7 @@ package com.intellij.ide.gdpr;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.gdpr.ui.consents.ConsentForcedState;
-import com.intellij.ide.gdpr.ui.consents.ConsentUi;
-import com.intellij.ide.gdpr.ui.consents.DefaultConsentUi;
-import com.intellij.ide.gdpr.ui.consents.UsageStatisticsConsentUi;
+import com.intellij.ide.gdpr.ui.consents.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -177,6 +174,9 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   private static @NotNull ConsentUi getConsentUi(Consent consent) {
     if (ConsentOptions.condUsageStatsConsent().test(consent)) {
       return new UsageStatisticsConsentUi(consent);
+    }
+    if (ConsentOptions.condAiDataCollectionConsent().test(consent)) {
+      return new AiDataCollectionConsentUi(consent);
     }
     return new DefaultConsentUi(consent);
   }
