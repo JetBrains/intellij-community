@@ -149,6 +149,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -160,7 +161,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertRemoteRepositories;
@@ -1506,6 +1510,16 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
           .filter(node -> node != dependencyNode)
           .filter(node -> node.getDependency() != null)
           .map(node -> node.getDependency().toCoordinates())
+          .filter(distinctByKey(
+            coords ->
+              Arrays.asList(
+                coords.getGroupId(),
+                coords.getArtifactId(),
+                coords.getVersionConstraint().toString(),
+                coords.getClassifier(),
+                coords.getExtension(),
+                coords.getOptional()
+          )))
           .collect(Collectors.toList());
         ArtifactResolverResult resolvedChildren = artifactResolver.resolve(session, dependencyCoordinates);
 
@@ -1527,6 +1541,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return new MavenArtifactResolveResult(resolvedArtifacts, null);
   }
 
+  private static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+    Set<Object> seen = ConcurrentHashMap.newKeySet();
+    return t -> seen.add(keyExtractor.apply(t));
+  }
 
   @Override
   public ArrayList<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) {
