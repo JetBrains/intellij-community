@@ -2,24 +2,23 @@
 package com.intellij.platform.searchEverywhere.frontend.resultsProcessing
 
 import com.intellij.platform.searchEverywhere.*
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
 class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
   private val mutex = Mutex()
   private val items = mutableListOf<SeItemData>()
-  private val providerToCountDownLatch = HashMap<SeProviderId, SuspendableCountDownLatch>().apply {
-    this.putAll(providerIdsAndLimits.map { (providerId, limit) -> providerId to SuspendableCountDownLatch(limit) })
+
+  private val providerToSemaphore = HashMap<SeProviderId, Semaphore>().apply {
+    this.putAll(providerIdsAndLimits.map { (providerId, limit) -> providerId to Semaphore(limit) })
   }
 
   suspend fun add(newItem: SeItemData): SeResultEvent {
-    val newCountDownLatch = providerToCountDownLatch[newItem.providerId]
-    newCountDownLatch?.decrementOrAwait()
+    val providerSemaphore = providerToSemaphore[newItem.providerId]
+    providerSemaphore?.acquire()
 
     mutex.withLock {
       val event = calculateEventType(newItem)
@@ -31,10 +30,10 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
         is SeResultReplacedEvent -> {
           items.remove(event.oldItemData)
           items.add(event.newItemData)
-          providerToCountDownLatch[event.oldItemData.providerId]?.increment()
+          providerToSemaphore[event.oldItemData.providerId]?.release()
         }
         is SeResultSkippedEvent -> {
-          newCountDownLatch?.increment()
+          providerSemaphore?.release()
         }
       }
 
@@ -44,28 +43,5 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
 
   private fun calculateEventType(newItem: SeItemData): SeResultEvent {
     return SeResultAddedEvent(newItem) // TODO: Calculate properly
-  }
-}
-
-private class SuspendableCountDownLatch(initialCount: Int) {
-  private var count = initialCount
-  private val mutex = Mutex()
-
-  suspend fun increment() {
-    mutex.withLock {
-      count++
-    }
-  }
-
-  suspend fun decrementOrAwait() {
-    while (coroutineContext.isActive) {
-      mutex.withLock {
-        if (count > 0) {
-          count--
-          return
-        }
-      }
-      yield()
-    }
   }
 }
