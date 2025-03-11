@@ -1,9 +1,10 @@
 <idea-plugin package="com.intellij.configurationScript">
   <name>Configuration Script</name>
   <id>com.intellij.configurationScript</id>
+  <category>IDE Settings</category>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-  <p>Supports configuring the IDE using text files (YAML, JSON). Experimental.</p>
+    <p>Supports configuring the IDE using text files (YAML, JSON). Experimental.</p>
   ]]>
   </description>
   <vendor>JetBrains</vendor>

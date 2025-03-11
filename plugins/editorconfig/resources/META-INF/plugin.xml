@@ -2,20 +2,20 @@
 <idea-plugin>
   <id>org.editorconfig.editorconfigjetbrains</id>
   <name>EditorConfig</name>
-  <category>Other Tools</category>
+  <category>IDE Settings</category>
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-<p>Handles properties in <i>.editorconfig</i> files and applies them to all supported languages in all JetBrains IDEs.
+    <p>Handles properties in <i>.editorconfig</i> files and applies them to all supported languages in all JetBrains IDEs.
 
-<h2>Features</h2>
-<ul>
-  <li>Code assistance for all supported properties, standard and extended
-</ul>
-<h2>Getting started</h2>
-<p>For more information,
-check the documentation for <a href="https://editorconfig.org/">EditorConfig</a> files and your <a href="https://www.jetbrains.com/help/">IDE</a>.
-]]></description>
+    <h2>Features</h2>
+    <ul>
+      <li>Code assistance for all supported properties, standard and extended
+    </ul>
+    <h2>Getting started</h2>
+    <p>For more information,
+    check the documentation for <a href="https://editorconfig.org/">EditorConfig</a> files and your <a href="https://www.jetbrains.com/help/">IDE</a>.
+  ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
 
