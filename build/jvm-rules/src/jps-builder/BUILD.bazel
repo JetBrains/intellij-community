@@ -9,6 +9,7 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
+        "@lib//:kotlinx-collections-immutable",
         "@lib//:fastutil-min",
         "//zip:build-zip",
         "@lib//:opentelemetry",

@@ -81,7 +81,7 @@ internal object DiffCapableHashStrategy : Strategy<DiffCapable<*, *>> {
     return when {
       a == null -> b == null
       b == null -> false
-      else -> a.isSame(b)
+      else -> a === b || a.isSame(b)
     }
   }
 }

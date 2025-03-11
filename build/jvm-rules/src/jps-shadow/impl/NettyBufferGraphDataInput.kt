@@ -79,10 +79,6 @@ class NettyBufferGraphDataInput(private val buffer: ByteBuf) : GraphDataInput {
     return buffer.readUnsignedShortLE()
   }
 
-  override fun readChar(): Char {
-    return buffer.readChar()
-  }
-
   override fun readInt(): Int {
     return buffer.readIntLE()
   }
@@ -98,8 +94,6 @@ class NettyBufferGraphDataInput(private val buffer: ByteBuf) : GraphDataInput {
   override fun readDouble(): Double {
     return buffer.readDoubleLE()
   }
-
-  override fun readLine(): String = throw UnsupportedOperationException()
 
   override fun readUTF(): String {
     val lengthOrIndex = readUInt29(buffer)

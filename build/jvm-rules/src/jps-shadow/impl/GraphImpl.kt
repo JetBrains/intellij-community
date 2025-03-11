@@ -1,58 +1,66 @@
 package org.jetbrains.jps.dependency.impl
 
+import org.h2.mvstore.MVMap
 import org.jetbrains.jps.dependency.BackDependencyIndex
-import org.jetbrains.jps.dependency.Externalizer
+import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.Graph
-import org.jetbrains.jps.dependency.GraphDataInput
-import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.MapletFactory
 import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
+import org.jetbrains.jps.dependency.storage.AnyGraphElementDataType
+import org.jetbrains.jps.dependency.storage.EnumeratedStringDataType
+import org.jetbrains.jps.dependency.storage.EnumeratedStringDataTypeExternalizer
+import org.jetbrains.jps.dependency.storage.EnumeratedStringSetValueDataType
+import org.jetbrains.jps.dependency.storage.StringEnumerator
 import java.io.Closeable
+import kotlin.arrayOf
 
-internal val anyGraphElementExternalizer = object : Externalizer<Node<*, *>> {
-  override fun load(input: GraphDataInput): Node<*, *> {
-    return input.readGraphElement()
-  }
+interface MvStoreContainerFactory {
+  fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, Set<V>>): MultiMaplet<K, V>
 
-  override fun save(output: GraphDataOutput, value: Node<*, *>) {
-    output.writeGraphElement(value)
-  }
+  fun <K : Any, V : Any> openInMemoryMap(): MultiMaplet<K, V>
+
+  fun getStringEnumerator(): StringEnumerator
+
+  fun getElementInterner(): (ExternalizableGraphElement) -> ExternalizableGraphElement
 }
 
-internal val sourceExternalizer = Externalizer.forGraphElement<NodeSource> { PathSource(it) }
-internal val jvmNodeReferenceIdExternalizer = Externalizer.forGraphElement<ReferenceID> { JvmNodeReferenceID(it) }
-
 abstract class GraphImpl(
-  private val containerFactory: MapletFactory
+  private val containerFactory: MapletFactory,
+  extraIndex: BackDependencyIndex,
 ) : Graph {
   // nodeId -> nodes referencing the nodeId
   private val dependencyIndex: BackDependencyIndex
-  private val indices = ArrayList<BackDependencyIndex>()
-// myNodeToSourcesMap/mySourceToNodesMap are used by DependencyGraphImpl, cannot remove `my` prefix
+  private val indices: List<BackDependencyIndex>
   @JvmField
-  protected val myNodeToSourcesMap: MultiMaplet<ReferenceID, NodeSource>
+  protected val nodeToSourcesMap: MultiMaplet<ReferenceID, NodeSource>
   @JvmField
-  protected val mySourceToNodesMap: MultiMaplet<NodeSource, Node<*, *>>
+  protected val sourceToNodesMap: MultiMaplet<NodeSource, Node<*, *>>
 
   init {
     try {
-      dependencyIndex = NodeDependenciesIndex(containerFactory).also { addIndex(it) }
+      containerFactory as MvStoreContainerFactory
+      val indices = arrayOfNulls<BackDependencyIndex>(2)
+      dependencyIndex = NodeDependenciesIndex(containerFactory, false).also {
+        indices[0] = it
+      }
 
-      myNodeToSourcesMap = containerFactory.createSetMultiMaplet("node-sources-map", jvmNodeReferenceIdExternalizer, sourceExternalizer)
-      mySourceToNodesMap = containerFactory.createSetMultiMaplet("source-nodes-map", sourceExternalizer, anyGraphElementExternalizer)
+      indices[1] = extraIndex
+      @Suppress("UNCHECKED_CAST")
+      this.indices = indices.asList() as List<BackDependencyIndex>
+
+      @Suppress("UNCHECKED_CAST")
+      nodeToSourcesMap = createNodeIdToSourcesMap(containerFactory, containerFactory.getStringEnumerator())
+      @Suppress("UNCHECKED_CAST")
+      sourceToNodesMap = createSourceToNodesMap(containerFactory, containerFactory.getStringEnumerator())
     }
     catch (e: RuntimeException) {
       closeIgnoreErrors()
       throw e
     }
-  }
-
-  protected fun addIndex(index: BackDependencyIndex) {
-    indices.add(index)
   }
 
   final override fun getDependingNodes(id: ReferenceID): Iterable<ReferenceID> {
@@ -62,28 +70,23 @@ abstract class GraphImpl(
   final override fun getIndices(): List<BackDependencyIndex> = indices
 
   final override fun getIndex(name: String): BackDependencyIndex? {
-    for (index in indices) {
-      if (index.name == name) {
-        return index
-      }
-    }
-    return null
+    return indices.firstOrNull { it.name == name }
   }
 
   override fun getSources(id: ReferenceID): Iterable<NodeSource> {
-    return myNodeToSourcesMap.get(id)
+    return nodeToSourcesMap.get(id)
   }
 
   override fun getRegisteredNodes(): Iterable<ReferenceID> {
-    return myNodeToSourcesMap.keys
+    return nodeToSourcesMap.keys
   }
 
   override fun getSources(): Iterable<NodeSource> {
-    return mySourceToNodesMap.keys
+    return sourceToNodesMap.keys
   }
 
   override fun getNodes(source: NodeSource): Iterable<Node<*, *>> {
-    return mySourceToNodesMap.get(source)
+    return sourceToNodesMap.get(source)
   }
 
   protected fun closeIgnoreErrors() {
@@ -99,4 +102,46 @@ abstract class GraphImpl(
       containerFactory.close()
     }
   }
+}
+
+private fun createSourceToNodesMap(
+  containerFactory: MvStoreContainerFactory,
+  stringEnumerator: StringEnumerator,
+): MultiMaplet<NodeSource, Node<*, *>> {
+  val builder = MVMap.Builder<PathSource, Set<Node<*, *>>>()
+  builder.keyType(EnumeratedStringDataType(stringEnumerator, PathSourceEnumeratedStringDataTypeExternalizer))
+  builder.valueType(AnyGraphElementDataType(stringEnumerator, containerFactory.getElementInterner()))
+  @Suppress("UNCHECKED_CAST")
+  return containerFactory.openMap("source-to-nodes", builder) as MultiMaplet<NodeSource, Node<*, *>>
+}
+
+private fun createNodeIdToSourcesMap(
+  containerFactory: MvStoreContainerFactory,
+  stringEnumerator: StringEnumerator,
+): MultiMaplet<ReferenceID, NodeSource> {
+  val builder = MVMap.Builder<JvmNodeReferenceID, Set<PathSource>>()
+  builder.keyType(EnumeratedStringDataType(stringEnumerator, JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
+  builder.valueType(EnumeratedStringSetValueDataType(stringEnumerator, PathSourceEnumeratedStringDataTypeExternalizer))
+  @Suppress("UNCHECKED_CAST")
+  return containerFactory.openMap("node-id-to-sources", builder) as MultiMaplet<ReferenceID, NodeSource>
+}
+
+internal object JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer : EnumeratedStringDataTypeExternalizer<JvmNodeReferenceID> {
+  private val emptyIds = arrayOfNulls<JvmNodeReferenceID>(0)
+
+  override fun createStorage(size: Int) = if (size == 0) emptyIds else arrayOfNulls(size)
+
+  override fun create(id: String): JvmNodeReferenceID = JvmNodeReferenceID(id)
+
+  override fun getStringId(obj: JvmNodeReferenceID): String = obj.nodeName
+}
+
+internal object PathSourceEnumeratedStringDataTypeExternalizer : EnumeratedStringDataTypeExternalizer<PathSource> {
+  private val emptyPaths = arrayOfNulls<PathSource>(0)
+
+  override fun createStorage(size: Int) = if (size == 0) emptyPaths else arrayOfNulls(size)
+
+  override fun create(id: String): PathSource = PathSource(id)
+
+  override fun getStringId(obj: PathSource): String = obj.toString()
 }

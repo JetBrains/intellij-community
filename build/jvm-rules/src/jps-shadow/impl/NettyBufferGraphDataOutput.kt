@@ -31,10 +31,6 @@ class NettyBufferGraphDataOutput(private val buffer: ByteBuf) : GraphDataOutput 
     buffer.writeLongLE(v)
   }
 
-  override fun write(v: Int) {
-    buffer.writeByte(v)
-  }
-
   override fun write(v: ByteArray) {
     buffer.writeBytes(v)
   }

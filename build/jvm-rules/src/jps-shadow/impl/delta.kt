@@ -4,6 +4,7 @@ package org.jetbrains.jps.dependency.impl
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import org.h2.mvstore.MVMap
 import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.bazel.jvm.hashSet
@@ -16,6 +17,20 @@ import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.java.SubclassesIndex
 import java.util.function.Supplier
+
+private val memoryFactory = object : MvStoreContainerFactory {
+  override fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, Set<V>>): MultiMaplet<K, V> {
+    throw UnsupportedOperationException("Not used")
+  }
+
+  override fun <K : Any, V : Any> openInMemoryMap(): MultiMaplet<K, V> {
+    return MemoryMultiMaplet(null)
+  }
+
+  override fun getStringEnumerator() = throw UnsupportedOperationException("Not used")
+
+  override fun getElementInterner() = throw UnsupportedOperationException("Not used")
+}
 
 @Suppress("unused")
 class DeltaImpl(baseSources: Iterable<NodeSource>, deletedSources: Iterable<NodeSource>) : Graph, Delta {
@@ -30,8 +45,8 @@ class DeltaImpl(baseSources: Iterable<NodeSource>, deletedSources: Iterable<Node
   private val sourceToNodesMap = hashMap<NodeSource, MutableSet<Node<*, *>>>()
 
   init {
-    val subclassesIndex = SubclassesIndex(Containers.MEMORY_CONTAINER_FACTORY)
-    dependencyIndex = NodeDependenciesIndex(Containers.MEMORY_CONTAINER_FACTORY)
+    val subclassesIndex = SubclassesIndex(memoryFactory, true)
+    dependencyIndex = NodeDependenciesIndex(memoryFactory, true)
     indices = java.util.List.of(dependencyIndex, subclassesIndex)
   }
 
@@ -109,9 +124,8 @@ private fun toSet(baseSources: Iterable<NodeSource>): Set<NodeSource> {
   }
 }
 
-@Suppress("unused")
-internal class MemoryMultiMaplet<K : Any, V : Any, C : MutableCollection<V>>(
-  collectionFactory: Supplier<C>?,
+class MemoryMultiMaplet<K : Any, V : Any, C : MutableCollection<V>>(
+  @Suppress("unused") collectionFactory: Supplier<C>?,
 ) : MultiMaplet<K, V> {
   private val map = hashMap<K, MutableCollection<V>>()
 

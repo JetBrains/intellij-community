@@ -4,12 +4,6 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
 
-interface StringEnumerator {
-  fun enumerate(string: String): Int
-
-  fun valueOf(id: Int): String
-}
-
 object RW {
   @JvmStatic
   fun <T : Any> writeCollection(out: DataOutput, collection: Iterable<T>, writable: Writer<T>) {

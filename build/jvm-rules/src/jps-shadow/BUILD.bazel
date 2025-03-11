@@ -10,10 +10,12 @@ kt_jvm_library(
     deps = [
         "@lib//:kotlin-stdlib",
         "@lib//:fastutil-min",
+        "@lib//:kotlinx-collections-immutable",
         "@lib//:asm",
         "//src/worker-util",
         "@lib//:hash4j",
         "@lib//:netty-buffer",
+        "@lib//:mvstore",
         "//:jps",
         "//:kotlin-metadata",
     ],

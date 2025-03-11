@@ -2,6 +2,7 @@
 
 package org.jetbrains.jps.dependency
 
+import io.netty.buffer.Unpooled.buffer
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.bazel.jvm.emptyList
 import java.io.DataInput
@@ -21,6 +22,10 @@ interface GraphDataInput : DataInput {
   fun readStringList(): List<String> {
     return readList { readUTF() }
   }
+
+  override fun readLine(): String = throw UnsupportedOperationException()
+
+  override fun readChar(): Char = throw UnsupportedOperationException()
 }
 
 interface GraphDataOutput : DataOutput {
@@ -35,6 +40,10 @@ interface GraphDataOutput : DataOutput {
   override fun writeBytes(s: String) = throw UnsupportedOperationException("do not use")
 
   override fun writeChars(s: String) = throw UnsupportedOperationException("do not use")
+
+  override fun write(v: Int) {
+    writeInt(v)
+  }
 
   fun writeUsages(usages: Collection<Usage>) {
     val totalSize = usages.size

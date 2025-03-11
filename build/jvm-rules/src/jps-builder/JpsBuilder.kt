@@ -331,7 +331,7 @@ private suspend fun initAndBuild(
 ): Int {
   val isRebuild = compileScope.isRebuild
   val tracer = requestLog.tracer
-  val storageInitializer = StorageInitializer(dataDir)
+  val storageInitializer = StorageInitializer(dataDir, dataDir.resolve(dataDir.fileName.toString() + ".db"))
   var storageClosed = false
   val buildDataManager = tracer.spanBuilder("init storage")
     .setAttribute("isRebuild", isRebuild)

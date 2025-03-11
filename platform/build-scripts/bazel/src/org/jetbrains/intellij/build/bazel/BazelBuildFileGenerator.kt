@@ -355,6 +355,8 @@ internal class BazelBuildFileGenerator(
         // also a marker module like frontend-agnostic above
         module.name != "intellij.platform.monolith" &&
         module.name != "intellij.platform.backend" &&
+        // we have to create an empty production module if someone depends on such a module with only `provided` lib
+        // (it is necessary for JPS to trigger downloading of compiler plugin)
         module.name != "intellij.platform.compose.compilerPlugin"
       }) {
         option("name", moduleDescriptor.targetName)

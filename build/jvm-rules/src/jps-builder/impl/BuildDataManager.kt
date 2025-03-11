@@ -174,24 +174,19 @@ internal class BuildDataManager private constructor(
 }
 
 private class SynchronizedDependencyGraph(private val delegate: DependencyGraph) : DependencyGraph {
-  private val lock = ReentrantReadWriteLock()
-
+  @Synchronized
   override fun createDelta(sourcesToProcess: Iterable<NodeSource?>?, deletedSources: Iterable<NodeSource?>?, isSourceOnly: Boolean): Delta? {
-    lock.read {
-      return delegate.createDelta(sourcesToProcess, deletedSources, isSourceOnly)
-    }
+    return delegate.createDelta(sourcesToProcess, deletedSources, isSourceOnly)
   }
 
+  @Synchronized
   override fun differentiate(delta: Delta?, params: DifferentiateParameters?): DifferentiateResult? {
-    lock.read {
-      return delegate.differentiate(delta, params)
-    }
+    return delegate.differentiate(delta, params)
   }
 
+  @Synchronized
   override fun integrate(diffResult: DifferentiateResult) {
-    lock.write {
-      delegate.integrate(diffResult)
-    }
+    delegate.integrate(diffResult)
   }
 
   override fun getIndices(): Iterable<BackDependencyIndex?>? {
@@ -212,10 +207,9 @@ private class SynchronizedDependencyGraph(private val delegate: DependencyGraph)
 
   override fun getDependingNodes(id: ReferenceID) = delegate.getDependingNodes(id)
 
+  @Synchronized
   override fun close() {
-    lock.write {
-      delegate.close()
-    }
+    delegate.close()
   }
 }
 

@@ -20,7 +20,7 @@ import org.jetbrains.jps.incremental.storage.BuildTargetsState
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal class StorageInitializer(private val dataDir: Path) {
+internal class StorageInitializer(private val dataDir: Path, private val dbFile: Path) {
   private var wasCleared = false
 
   suspend fun createBuildDataManager(
@@ -40,7 +40,7 @@ internal class StorageInitializer(private val dataDir: Path) {
       try {
         val containerManager = withContext(Dispatchers.IO) {
           Files.createDirectories(dataDir)
-          BazelPersistentMapletFactory.open(dataDir.resolve("graph"))
+          BazelPersistentMapletFactory.open(rootDir = dataDir.resolve("graph"), dbFile = dbFile, span = span)
         }
 
         return executeOrCloseStorage(containerManager) {

@@ -4,6 +4,7 @@ package org.jetbrains.jps.dependency.impl
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import org.h2.mvstore.MVMap
 import org.jetbrains.jps.dependency.BackDependencyIndex
 import org.jetbrains.jps.dependency.Externalizer
 import org.jetbrains.jps.dependency.GraphDataInput
@@ -13,24 +14,27 @@ import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
+import org.jetbrains.jps.dependency.storage.EnumeratedStringDataType
+import org.jetbrains.jps.dependency.storage.EnumeratedStringSetValueDataType
 
 abstract class BackDependencyIndexImpl protected constructor(
   private val name: String,
-  mapletFactory: MapletFactory
+  mapletFactory: MvStoreContainerFactory,
+  isInMemory: Boolean,
 ) : BackDependencyIndex {
   private val map: MultiMaplet<ReferenceID, ReferenceID>
 
   init {
-    val ext = object : Externalizer<ReferenceID> {
-      override fun load(input: GraphDataInput): ReferenceID {
-        return JvmNodeReferenceID(input.readUTF())
-      }
-
-      override fun save(out: GraphDataOutput, value: ReferenceID) {
-        value.write(out)
-      }
+    if (isInMemory) {
+      map = mapletFactory.openInMemoryMap()
     }
-    map = mapletFactory.createSetMultiMaplet(name, ext, ext)
+    else {
+      val mapBuilder = MVMap.Builder<JvmNodeReferenceID, Set<JvmNodeReferenceID>>()
+        .keyType(EnumeratedStringDataType(mapletFactory.getStringEnumerator(), JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
+        .valueType(EnumeratedStringSetValueDataType(mapletFactory.getStringEnumerator(), JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
+      @Suppress("UNCHECKED_CAST")
+      map = mapletFactory.openMap(name, mapBuilder) as MultiMaplet<ReferenceID, ReferenceID>
+    }
   }
 
   /**
@@ -100,7 +104,10 @@ abstract class BackDependencyIndexImpl protected constructor(
   }
 }
 
-class NodeDependenciesIndex(mapletFactory: MapletFactory) : BackDependencyIndexImpl("node-backward-dependencies", mapletFactory) {
+class NodeDependenciesIndex(
+  mapletFactory: MvStoreContainerFactory,
+  isInMemory: Boolean,
+) : BackDependencyIndexImpl("node-backward-dependencies", mapletFactory, isInMemory) {
   override fun getIndexedDependencies(node: Node<*, *>): Sequence<ReferenceID> {
     val nodeId = node.referenceID
     return node.usages().filter { nodeId != it.elementOwner }.map { it.elementOwner }.distinct()
