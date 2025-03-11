@@ -167,7 +167,10 @@ class PluginVerifier(
     "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_HOVERED",
 
     "com.intellij.jupyter.core.jupyter.helper.OtherKt.toJupyterCellType",
-    "com.intellij.ml.inline.completion.impl.kit.SkipLocationReason"
+    "com.intellij.ml.inline.completion.impl.kit.SkipLocationReason",
+    //https://youtrack.jetbrains.com/issue/LLM-15389/Compatibility-issues-with-ServicesKt.serviceAsync
+    "com.intellij.openapi.components.ServicesKt.serviceAsync(com.intellij.openapi.components.ComponentManager, java.lang.Class, kotlin.coroutines.Continuation)"
 
-    )
+
+  )
 }
