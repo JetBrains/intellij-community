@@ -1837,6 +1837,8 @@
 
     <registryKey key="client.generator.inlay.action" defaultValue="false"
                  description="Enable open in client generator action"/>
+    <registryKey key="editor.show.indexing.as.analyzing" defaultValue="true"
+                 description="Replaces Indexing progress with Analyzing during dumb mode"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->

@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -421,8 +422,13 @@ open class TrafficLightRenderer private constructor(
         AllIcons.General.InspectionsOKEmpty
       }
       return if (isDumb) {
+        val indexingMessage = if (Registry.`is`("editor.show.indexing.as.analyzing"))
+          DaemonBundle.message("iw.status.analyzing")
+        else
+          message("heavyProcess.type.indexing")
+
         AnalyzerStatus(AllIcons.General.InspectionsPause, title, details, uiController)
-          .withTextStatus(message("heavyProcess.type.indexing"))
+          .withTextStatus(indexingMessage)
           .withState(InspectionsState.INDEXING)
           .withAnalyzingType(AnalyzingType.SUSPENDED)
       }
