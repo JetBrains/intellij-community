@@ -1041,6 +1041,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.projectWizard.NewProjectWizardCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ui.experimental.ExperimentalUiCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.net.ssl.CertificateWarningStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.AppIdleMemoryCleanerUsagesCollector"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.ide.projectWizard.NewProjectWizardCollector$GeneratorValidationRule"/>
 
