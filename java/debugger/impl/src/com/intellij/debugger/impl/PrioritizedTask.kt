@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.impl;
+package com.intellij.debugger.impl
 
 /**
  * @author Eugene Zhuravlev
  */
-public interface PrioritizedTask {
-  enum Priority {
+interface PrioritizedTask {
+  val priority: Priority
+
+  enum class Priority {
     HIGH, NORMAL, LOW, LOWEST
   }
-
-  Priority getPriority();
 }

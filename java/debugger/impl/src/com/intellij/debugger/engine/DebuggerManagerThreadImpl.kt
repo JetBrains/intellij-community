@@ -505,7 +505,7 @@ private fun executeOnDMT(
   val managerCommand = if (suspendContext != null) {
     object : SuspendContextCommandImpl(suspendContext) {
       override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) = action()
-      override fun getPriority() = priority
+      override val priority get() = priority
       override fun commandCancelled() {
         onCommandCancelled?.invoke()
       }

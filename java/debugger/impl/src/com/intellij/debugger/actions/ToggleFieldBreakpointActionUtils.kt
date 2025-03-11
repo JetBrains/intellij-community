@@ -17,7 +17,7 @@ internal fun getSourcePositionNow(
 ): SourcePosition? {
   var position : SourcePosition? = null
   managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debuggerContext) {
-    override fun getPriority() = PrioritizedTask.Priority.HIGH
+    override val priority get() = PrioritizedTask.Priority.HIGH
 
     override suspend fun threadActionSuspend(suspendContext: SuspendContextImpl) {
       position = getSourcePosition(descriptor, suspendContext.debugProcess.project, debuggerContext)

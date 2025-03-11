@@ -16,7 +16,7 @@ internal fun scheduleSourcePositionCompute(
   positionCallback: (XSourcePosition?) -> Unit,
 ) {
   evaluationContext.managerThread.schedule(object : SuspendContextCommandImpl(evaluationContext.suspendContext) {
-    override fun getPriority() = if (inline) PrioritizedTask.Priority.LOWEST else PrioritizedTask.Priority.NORMAL
+    override val priority get() = if (inline) PrioritizedTask.Priority.LOWEST else PrioritizedTask.Priority.NORMAL
 
     override fun commandCancelled() {
       positionCallback(null)
