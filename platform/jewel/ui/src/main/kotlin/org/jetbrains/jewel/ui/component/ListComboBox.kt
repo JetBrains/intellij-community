@@ -25,9 +25,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
-import kotlin.collections.indexOf
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
@@ -86,9 +84,9 @@ public fun ListComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
+    listState: SelectableLazyListState = rememberSelectableLazyListState(),
     itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    val listState = rememberSelectableLazyListState()
     listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
 
     var labelText by remember { mutableStateOf(items[selectedIndex]) }
@@ -242,9 +240,9 @@ public fun EditableListComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
+    listState: SelectableLazyListState = rememberSelectableLazyListState(),
     itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    val listState = rememberSelectableLazyListState()
     listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
 
     var previewSelectedIndex by remember { mutableIntStateOf(selectedIndex) }
@@ -375,11 +373,6 @@ public fun EditableListComboBox(
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
-@Deprecated(
-    message = "Use the stateless ListComboBox with selectedIndex and onItemSelected parameters instead",
-    level = DeprecationLevel.WARNING,
-)
-@ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun ListComboBox(
     items: List<String>,
@@ -394,9 +387,9 @@ public fun ListComboBox(
     onSelectedItemChange: (Int, String) -> Unit = { _, _ -> },
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
+    listState: SelectableLazyListState = rememberSelectableLazyListState(),
     itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    val listState = rememberSelectableLazyListState()
     var labelText by remember { mutableStateOf(items.firstOrNull().orEmpty()) }
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
@@ -536,11 +529,6 @@ public fun ListComboBox(
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
-@Deprecated(
-    "Use the stateless EditableListComboBox with selectedIndex and onItemSelected parameters instead",
-    level = DeprecationLevel.WARNING,
-)
-@ScheduledForRemoval(inVersion = "Before 1.0")
 @Composable
 public fun EditableListComboBox(
     items: List<String>,
@@ -555,9 +543,9 @@ public fun EditableListComboBox(
     onSelectedItemChange: (Int, String) -> Unit = { _, _ -> },
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
+    listState: SelectableLazyListState = rememberSelectableLazyListState(),
     itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    val listState = rememberSelectableLazyListState()
     val textFieldState = rememberTextFieldState(items.firstOrNull().orEmpty())
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
