@@ -17,7 +17,7 @@ class JavaLineCompletionVisitorFactory : LineCompletionVisitorFactory {
     when(featureName) {
         "text-completion" -> CommentsTokensVisitor(featureName)
         else -> when (mode) {
-        CompletionGolfMode.ALL -> throw UnsupportedOperationException("Completion Golf mode \"ALL\" is not supported for PHP completion.")
+          CompletionGolfMode.ALL -> throw UnsupportedOperationException("Completion Golf mode \"ALL\" is not supported for Java completion.")
         CompletionGolfMode.TOKENS -> TokensVisitor(featureName)
       }
     }

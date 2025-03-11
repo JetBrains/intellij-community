@@ -8,9 +8,11 @@ import com.intellij.cce.visitor.LineCompletionAllEvaluationVisitor
 import com.intellij.cce.visitor.LineCompletionEvaluationVisitor
 import com.intellij.cce.visitor.LineCompletionVisitorFactory
 import com.intellij.cce.visitor.LineCompletionVisitorHelper
+import com.intellij.ml.inline.completion.kotlin.KotlinStringLiteralSupporter
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.endOffset
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -19,12 +21,14 @@ import org.jetbrains.kotlin.psi.*
 
 class KotlinLineCompletionVisitorFactory : LineCompletionVisitorFactory {
   override val language: Language = Language.KOTLIN
-  override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor {
-    when (mode) {
-      CompletionGolfMode.ALL -> return AllVisitor(featureName)
-      CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)
+  override fun createVisitor(featureName: String, mode: CompletionGolfMode): LineCompletionEvaluationVisitor =
+    when (featureName) {
+      "text-completion" -> CommentsTokensVisitor(featureName)
+      else -> when (mode) {
+        CompletionGolfMode.ALL -> AllVisitor(featureName)
+        CompletionGolfMode.TOKENS -> TokensVisitor(featureName)
+      }
     }
-  }
 
   class AllVisitor(override val feature: String) : LineCompletionAllEvaluationVisitor, KtTreeVisitorVoid() {
     override val language: Language = Language.KOTLIN
@@ -86,5 +90,27 @@ class KotlinLineCompletionVisitorFactory : LineCompletionVisitorFactory {
     override fun visitImportList(importList: KtImportList) = Unit
 
     override fun visitPackageDirective(directive: KtPackageDirective) = Unit
+  }
+
+  class CommentsTokensVisitor(override val feature: String) : LineCompletionEvaluationVisitor, KtTreeVisitorVoid() {
+    private val visitorHelper = LineCompletionVisitorHelper()
+    private val kotlinStringLiteralSupporter = KotlinStringLiteralSupporter()
+
+    override val language: Language = Language.KOTLIN
+
+    override fun getFile(): CodeFragment = visitorHelper.getFile()
+
+    override fun visitKtFile(file: KtFile) {
+      visitorHelper.visitFile(file)
+      super.visitKtFile(file)
+    }
+
+    override fun visitElement(element: PsiElement) {
+      if ((kotlinStringLiteralSupporter.isCommentElement(element) || (kotlinStringLiteralSupporter.isDocComment(element) && element is LeafPsiElement))) {
+        visitorHelper.addElement(element.node)
+      }
+
+      super.visitElement(element)
+    }
   }
 }
