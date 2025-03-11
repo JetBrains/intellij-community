@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
@@ -19,16 +18,12 @@ class SeActionsProviderFactory: SeItemsProviderFactory {
   override val id: String
     get() = SeActionsAdaptedProvider.ID
 
-  override fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
-    // TODO: This is unacceptable here, rewrite ActionsContributor
-    return runBlockingCancellable {
-      withContext(Dispatchers.EDT) {
-        // TODO: Provide proper context
-        SeActionsAdaptedProvider(project, ActionSearchEverywhereContributor(project,
-                                                                            dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT),
-                                                                            dataContext.getData(CommonDataKeys.EDITOR),
-                                                                            dataContext))
-      }
+  override suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
+    return withContext(Dispatchers.EDT) {
+      SeActionsAdaptedProvider(project, ActionSearchEverywhereContributor(project,
+                                                                          dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT),
+                                                                          dataContext.getData(CommonDataKeys.EDITOR),
+                                                                          dataContext))
     }
   }
 }

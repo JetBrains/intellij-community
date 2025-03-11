@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class SeItemsProviderFactoryMockBetaLocal: SeItemsProviderFactory {
   override val id: String get() = ID
 
-  override fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider =
+  override suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider =
     SeItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 400, delayStep = 5)
 
   companion object {

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface SeItemsProviderFactory {
   val id: String
-  fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider
+  suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider
 
   companion object {
     @ApiStatus.Internal

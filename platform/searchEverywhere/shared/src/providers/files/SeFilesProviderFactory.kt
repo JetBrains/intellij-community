@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
@@ -20,13 +19,11 @@ class SeFilesProviderFactory : SeItemsProviderFactory {
   override val id: String
     get() = SeActionsAdaptedProvider.ID
 
-  override fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
-    val legacyContributor = runBlockingCancellable {
-      readAction {
-        val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
-        @Suppress("UNCHECKED_CAST")
-        FileSearchEverywhereContributorFactory().createContributor(actionEvent) as WeightedSearchEverywhereContributor<Any>
-      }
+  override suspend fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
+    val legacyContributor = readAction {
+      val actionEvent = AnActionEvent.createEvent(dataContext, null, "", ActionUiKind.NONE, null)
+      @Suppress("UNCHECKED_CAST")
+      FileSearchEverywhereContributorFactory().createContributor(actionEvent) as WeightedSearchEverywhereContributor<Any>
     }
 
     return SeFilesProvider(project, SeAsyncContributorWrapper(legacyContributor))
