@@ -50,10 +50,12 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     }
 
     forMaven4 {
-      assertProblems(projectsManager.findProject(projectPom)!!, "'dependencies.dependency.scope' for junit:junit:jar declares usage of deprecated 'system' scope ", "'dependencies.dependency.systemPath' for junit:junit:jar is missing.")
+      val expected = arrayOf(
+        "'dependencies.dependency.systemPath' for junit:junit:jar is missing.",
+        "'dependencies.dependency.scope' for junit:junit:jar declares usage of deprecated 'system' scope ",
+      )
+      assertProblems(projectsManager.findProject(projectPom)!!, *expected)
     }
-
-
   }
 
   @Test
