@@ -200,13 +200,11 @@ f:com.intellij.analysis.problemsView.toolWindow.ProblemsView
 - com.intellij.openapi.wm.ToolWindowFactory
 - sf:ID:java.lang.String
 - <init>():V
-- s:addPanel(com.intellij.openapi.project.Project,com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider):V
 - createToolWindowContent(com.intellij.openapi.project.Project,com.intellij.openapi.wm.ToolWindow):V
 - s:getDocument(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.Document
 - s:getSelectedPanel(com.intellij.openapi.project.Project):com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanel
 - s:getSelectedTab(com.intellij.openapi.project.Project):com.intellij.analysis.problemsView.toolWindow.ProblemsViewTab
 - s:getToolWindow(com.intellij.openapi.project.Project):com.intellij.openapi.wm.ToolWindow
-- s:removePanel(com.intellij.openapi.project.Project,java.lang.String):V
 - s:selectHighlighterIfVisible(com.intellij.openapi.project.Project,com.intellij.openapi.editor.ex.RangeHighlighterEx):V
 - s:toggleCurrentFileProblems(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):V
 c:com.intellij.analysis.problemsView.toolWindow.ProblemsViewIconUpdater
