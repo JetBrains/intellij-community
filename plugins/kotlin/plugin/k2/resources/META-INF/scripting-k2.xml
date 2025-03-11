@@ -6,6 +6,11 @@
 
   <extensionPoints>
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
+            interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinScriptLazyResolveProhibitionCondition"
             interface="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptLazyResolveProhibitionCondition"
             area="IDEA_PROJECT"
@@ -118,6 +123,10 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+     <scriptDefinitionsSource
+            id="BridgeScriptDefinitionsContributor"
+            implementation="org.jetbrains.kotlin.idea.core.script.BridgeScriptDefinitionsContributor"/>
+
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
 
     <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>

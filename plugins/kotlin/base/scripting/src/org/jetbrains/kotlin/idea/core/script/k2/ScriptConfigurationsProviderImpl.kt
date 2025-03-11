@@ -12,10 +12,12 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
+import org.jetbrains.kotlin.idea.core.script.BridgeScriptDefinitionsContributor
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.scriptConfigurationsSourceOfType
+import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -29,6 +31,11 @@ private class ScriptDependenciesData(
     val sources: Set<VirtualFile> = mutableSetOf(),
     val sdks: Set<Sdk> = mutableSetOf(),
 )
+
+//Temporary bridge between K1 and K2 ide scripting api; to be removed
+interface ScriptConfigurationSourceAware {
+    fun getScriptConfigurationSource(project: Project): ScriptConfigurationsSource<*>?
+}
 
 class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsProvider(project), ScriptDependencyAware {
     private val allDependencies = AtomicReference(ScriptDependenciesData())
@@ -59,8 +66,13 @@ class ScriptConfigurationsProviderImpl(project: Project) : ScriptConfigurationsP
 
             allScriptsSdks.addAll(sdks)
 
-            val definitions = source.getScriptDefinitionsSource()?.definitions
-            definitions?.forEach { sourceByDefinition.put(it.definitionId, source) }
+            source.getDefinitions()?.forEach { sourceByDefinition.put(it.definitionId, source) }
+        }
+
+        val definitionsFromProviders = project.scriptDefinitionsSourceOfType<BridgeScriptDefinitionsContributor>()?.definitions
+        val defaultScriptConfigurationSource = project.scriptConfigurationsSourceOfType<BundledScriptConfigurationsSource>()
+        if (defaultScriptConfigurationSource != null) {
+            definitionsFromProviders?.forEach { sourceByDefinition.put(it.definitionId, defaultScriptConfigurationSource) }
         }
 
         dependenciesSourceByDefinition.set(sourceByDefinition)

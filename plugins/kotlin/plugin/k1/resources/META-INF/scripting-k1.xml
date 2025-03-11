@@ -44,7 +44,7 @@
 
     <scriptDefinitionsSource
             id="BridgeScriptDefinitionsContributor"
-            implementation="org.jetbrains.kotlin.idea.script.BridgeScriptDefinitionsContributor"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.BridgeScriptDefinitionsContributor"/>
 
     <scriptDefinitionsSource
             id="ScriptTemplatesFromDependenciesProvider"

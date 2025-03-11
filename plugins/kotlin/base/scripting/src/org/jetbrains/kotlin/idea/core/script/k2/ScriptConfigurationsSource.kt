@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModu
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.util.concurrent.atomic.AtomicReference
@@ -38,7 +39,7 @@ data class ScriptConfigurationWithSdk(
 abstract class ScriptConfigurationsSource<T : BaseScriptModel>(open val project: Project) {
     val data: AtomicReference<Map<VirtualFile, ScriptConfigurationWithSdk>> = AtomicReference(emptyMap())
 
-    abstract fun getScriptDefinitionsSource(): ScriptDefinitionsSource?
+    abstract fun getDefinitions(): Sequence<ScriptDefinition>?
 
     open fun getConfigurationWithSdk(virtualFile: VirtualFile): ScriptConfigurationWithSdk? =
         data.get()[virtualFile]

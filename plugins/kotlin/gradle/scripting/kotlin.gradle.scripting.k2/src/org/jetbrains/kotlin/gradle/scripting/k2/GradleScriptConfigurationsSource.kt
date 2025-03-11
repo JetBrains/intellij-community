@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.core.script.ucache.relativeName
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -62,8 +63,8 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
         storage.replaceBySource(gradleEntitySourceFilter, storageWithGradleScriptModules)
     }
 
-    override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
-        project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()
+    override fun getDefinitions(): Sequence<ScriptDefinition>? =
+        project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.definitions
 
     override suspend fun updateConfigurations(scripts: Iterable<GradleScriptModel>) {
         val configurations = scripts.associate { it: GradleScriptModel ->

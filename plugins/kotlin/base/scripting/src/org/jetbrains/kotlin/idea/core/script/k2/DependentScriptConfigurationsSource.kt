@@ -109,8 +109,8 @@ class DependentScriptConfigurationsSource(override val project: Project, val cor
         }
     }
 
-    override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
-        project.scriptDefinitionsSourceOfType<MainKtsScriptDefinitionSource>()
+    override fun getDefinitions(): Sequence<ScriptDefinition>? =
+        project.scriptDefinitionsSourceOfType<MainKtsScriptDefinitionSource>()?.definitions
 
     override suspend fun updateConfigurations(scripts: Iterable<BaseScriptModel>) {
         val sdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()

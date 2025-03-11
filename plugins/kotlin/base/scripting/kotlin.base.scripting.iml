@@ -129,5 +129,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="kotlin.scripting" />
   </component>
 </module>

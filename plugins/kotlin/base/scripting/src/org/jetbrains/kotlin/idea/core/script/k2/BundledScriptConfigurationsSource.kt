@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.idea.core.script.ucache.relativeName
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
@@ -33,8 +34,8 @@ import kotlin.script.experimental.jvm.jvm
 open class BundledScriptConfigurationsSource(override val project: Project, val coroutineScope: CoroutineScope) :
     ScriptConfigurationsSource<BaseScriptModel>(project) {
 
-    override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
-        project.scriptDefinitionsSourceOfType<BundledScriptDefinitionSource>()
+    override fun getDefinitions(): Sequence<ScriptDefinition>? =
+        project.scriptDefinitionsSourceOfType<BundledScriptDefinitionSource>()?.definitions
 
     override fun getConfigurationWithSdk(virtualFile: VirtualFile): ScriptConfigurationWithSdk? {
         val current = data.get()[virtualFile]
@@ -49,7 +50,7 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
             project.waitForSmartMode()
 
             val definition = findScriptDefinition(project, VirtualFileScriptSource(virtualFile))
-            val suitableDefinitions = getScriptDefinitionsSource()?.definitions ?: return@launch
+            val suitableDefinitions = getDefinitions() ?: return@launch
             if (suitableDefinitions.none { it.definitionId == definition.definitionId }) return@launch
 
             updateDependenciesAndCreateModules(setOf(BaseScriptModel(virtualFile)))
