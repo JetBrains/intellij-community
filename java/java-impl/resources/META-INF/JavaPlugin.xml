@@ -1516,6 +1516,7 @@
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCopyFQNCompletionCommand" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToImplementationCommandCompletion" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaChangeSignatureCompletionCommand" />
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaCreateFromUsagesCommandProvider" order="last"/>
 
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 
@@ -2788,6 +2789,9 @@
     <registryKey key="java.completion.methods.use.tags"
                  defaultValue="true"
                  description="Use additional tags for methods for completion"/>
+    <registryKey key="java.command.completion.create.from.usages"
+                 defaultValue="false"
+                 description="Offer Create_from_usages lookup element"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

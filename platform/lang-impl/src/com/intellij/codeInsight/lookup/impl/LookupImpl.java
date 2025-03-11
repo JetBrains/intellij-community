@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
@@ -679,19 +680,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     hostEditor.getCaretModel().runForEachCaret(__ -> {
       EditorModificationUtilEx.deleteSelectedText(hostEditor);
       final int caretOffset = hostEditor.getCaretModel().getOffset();
-
-      int offset;
-      try {
-        offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
+      CommandCompletionLookupElement element = item.as(CommandCompletionLookupElement.class);
+      if (element == null || element.getUseLookupString()) {
+        int offset;
+        try {
+          offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
+        }
+        catch (AssertionError ae) {
+          String classes = StreamEx.iterate(
+              item, Objects::nonNull, i -> i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null)
+            .map(le -> le.getClass().getName()).joining(" -> ");
+          LOG.error("When completing " + item + " (" + classes + ")", ae);
+          return;
+        }
+        hostEditor.getCaretModel().moveToOffset(offset);
       }
-      catch (AssertionError ae) {
-        String classes = StreamEx.iterate(
-            item, Objects::nonNull, i -> i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null)
-          .map(le -> le.getClass().getName()).joining(" -> ");
-        LOG.error("When completing " + item + " (" + classes + ")", ae);
-        return;
-      }
-      hostEditor.getCaretModel().moveToOffset(offset);
       hostEditor.getSelectionModel().removeSelection();
     });
 

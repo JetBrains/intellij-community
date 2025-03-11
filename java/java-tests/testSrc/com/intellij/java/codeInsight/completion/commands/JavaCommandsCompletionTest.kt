@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.completion.commands
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
@@ -368,6 +369,35 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
         void foo() {
           if(2 == 1){}
         } 
+      }
+    """.trimIndent())
+  }
+
+  fun testCreateFromUsages() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    Registry.get("java.command.completion.create.from.usages").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class Test {
+      
+          public static void main(String[] args){
+              new Test()<caret>
+          }
+      }
+      """.trimIndent())
+    myFixture.type(".test")
+    val elements = myFixture.completeBasic()
+    TemplateManagerImpl.setTemplateTesting(myFixture.testRootDisposable)
+    selectItem(elements.first { element -> element.lookupString.contains("Create method from", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+      class Test {
+      
+          public static void main(String[] args){
+              new Test().test()
+          }
+      
+          private void test() {
+          }
       }
     """.trimIndent())
   }

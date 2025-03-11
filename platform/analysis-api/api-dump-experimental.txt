@@ -3,7 +3,6 @@
 - com.intellij.openapi.project.PossiblyDumbAware
 - <init>():V
 - a:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
-- supportsReadOnly():Z
 *:com.intellij.codeInsight.completion.command.CommandCompletionFactory
 - com.intellij.openapi.project.PossiblyDumbAware
 - commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
@@ -42,6 +41,7 @@
 - supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.CompletionCommand
 - <init>():V
+- customPrefixMatcher(java.lang.String):com.intellij.codeInsight.completion.PrefixMatcher
 - a:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - getAdditionalInfo():java.lang.String
 - getContext(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
@@ -50,6 +50,7 @@
 - a:getIcon():javax.swing.Icon
 - a:getName():java.lang.String
 - getPriority():java.lang.Integer
+- supportsReadOnly():Z
 *f:com.intellij.codeInsight.completion.command.HighlightInfoLookup
 - <init>(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey,I):V
 - f:component1():com.intellij.openapi.util.TextRange

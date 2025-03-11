@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.PossiblyDumbAware
@@ -72,6 +73,23 @@ abstract class CompletionCommand {
   override fun toString(): String {
     return "CompletionCommand(name='$name', class='${this::class.simpleName}')"
   }
+
+
+  /**
+   * Retrieves a custom prefix matcher for the completion command.
+   * Returns the PrefixMatcher instance used for matching completion prefixes, or null if none is available.
+   *
+   * @return the custom PrefixMatcher for completion command or null if not available.
+   */
+  open fun customPrefixMatcher(prefix: String): PrefixMatcher? = null
+
+  /**
+   * Indicates whether the implementation supports non-written files.
+   * (For example, a command can navigate to another file)
+   *
+   * @return true if non-written files are supported; false otherwise.
+   */
+  open fun supportsReadOnly(): Boolean = false
 }
 
 /**
@@ -94,14 +112,6 @@ abstract class ApplicableCompletionCommand : CompletionCommand(), PossiblyDumbAw
    */
   @RequiresReadLock
   abstract fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean
-
-  /**
-   * Indicates whether the implementation supports non-written files.
-   * (For example, a command can navigate to another file)
-   *
-   * @return true if non-written files are supported; false otherwise.
-   */
-  open fun supportsReadOnly(): Boolean = false
 }
 
 data class HighlightInfoLookup(

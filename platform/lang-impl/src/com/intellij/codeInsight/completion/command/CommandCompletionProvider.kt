@@ -107,9 +107,9 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     copyEditor.caretModel.moveToOffset(adjustedParameters.offset)
 
     val prefix = commandCompletionType.pattern
+    val sorter = createSorter(parameters)
     val withPrefixMatcher = resultSet.withPrefixMatcher(CamelHumpMatcher(prefix, false, true))
-      .withRelevanceSorter(createSorter(parameters))
-
+      .withRelevanceSorter(sorter)
 
     withPrefixMatcher.restartCompletionOnPrefixChange(
       StandardPatterns.string().with(object : PatternCondition<String>("add filter for command completion") {
@@ -130,39 +130,59 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                               parameters.offset,
                               originalFile,
                               isReadOnly) { commands ->
-      withPrefixMatcher.addAllElements(commands.map { command ->
-        val i18nName = command.i18nName.replace("_", "").replace("...", "").replace("…", "")
-        val additionalInfo = command.additionalInfo ?: ""
-        var tailText = if (command.name.equals(i18nName, ignoreCase = true)) "" else " $i18nName"
-        if (additionalInfo.isNotEmpty()) {
-          tailText += " ($additionalInfo)"
-        }
+      commands.forEach { command ->
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
-        val lookupString = command.name.trim().let {
-          if (it.length > 50) {
-            it.substring(0, 50) + "\u2026"
-          }
-          else {
-            it
-          }
+        val lookupElement = createLookupElement(command, adjustedParameters, commandCompletionFactory, prefix)
+        val customPrefixMatcher = command.customPrefixMatcher(prefix)
+        if (customPrefixMatcher!=null) {
+          val alwaysShowMatcher = resultSet.withPrefixMatcher(customPrefixMatcher)
+            .withRelevanceSorter(sorter)
+          alwaysShowMatcher.addElement(lookupElement)
         }
-        val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(lookupString)
-                                                                      .withLookupString(i18nName.trim())
-                                                                      .withLookupString(lookupString)
-                                                                      .withTypeText(tailText)
-                                                                      .withIcon(command.icon ?: Lightning)
-                                                                      .withInsertHandler(CommandInsertHandler(command))
-                                                                      .withBoldness(true),
-                                                                    adjustedParameters.hostAdjustedOffset,
-                                                                    commandCompletionFactory.suffix().toString() +
-                                                                    (commandCompletionFactory.filterSuffix() ?: ""),
-                                                                    command.icon ?: Lightning,
-                                                                    command.highlightInfo)
-        val priority = command.priority
-        PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - 100.0 } ?: -150.0)
-      })
+        else {
+          withPrefixMatcher.addElement(lookupElement)
+        }
+      }
       true
     }
+  }
+
+  private fun createLookupElement(
+    command: CompletionCommand,
+    adjustedParameters: AdjustedCompletionParameters,
+    commandCompletionFactory: CommandCompletionFactory,
+    prefix: String
+  ): LookupElement {
+    val i18nName = command.i18nName.replace("_", "").replace("...", "").replace("…", "")
+    val additionalInfo = command.additionalInfo ?: ""
+    var tailText = if (command.name.equals(i18nName, ignoreCase = true)) "" else " $i18nName"
+    if (additionalInfo.isNotEmpty()) {
+      tailText += " ($additionalInfo)"
+    }
+    val lookupString = command.name.trim().let {
+      if (it.length > 50) {
+        it.substring(0, 50) + "\u2026"
+      }
+      else {
+        it
+      }
+    }
+    val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(lookupString)
+                                                                  .withLookupString(i18nName.trim())
+                                                                  .withLookupString(lookupString)
+                                                                  .withPresentableText(lookupString)
+                                                                  .withTypeText(tailText)
+                                                                  .withIcon(command.icon ?: Lightning)
+                                                                  .withInsertHandler(CommandInsertHandler(command))
+                                                                  .withBoldness(true),
+                                                                adjustedParameters.hostAdjustedOffset,
+                                                                commandCompletionFactory.suffix().toString() +
+                                                                (commandCompletionFactory.filterSuffix() ?: ""),
+                                                                command.icon ?: Lightning,
+                                                                command.highlightInfo,
+                                                                command.customPrefixMatcher(prefix) == null)
+    val priority = command.priority
+    return PrioritizedLookupElement.withPriority(element, priority?.let { it.toDouble() - 100.0 } ?: -150.0)
   }
 
   private fun createSorter(completionParameters: CompletionParameters): CompletionSorter {
@@ -335,6 +355,7 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
       val currentSuffix = text[offset - shift]
       if (currentSuffixFiltered == suffix || currentSuffix == suffix[0]) {
         if (suffix.length == 2 && suffix.first() == suffix.last() &&
+            offset - shift - 1 >= 0 &&
             text.substring(offset - shift - 1, offset - shift + suffix.length - 1) == suffix
         ) {
           indexOf = shift + 1

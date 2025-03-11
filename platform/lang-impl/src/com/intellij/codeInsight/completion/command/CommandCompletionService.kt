@@ -221,7 +221,13 @@ private class CommandCompletionHighlightingListener(
       clear(lookup.editor)
       return
     }
-    update(lookup, element)
+
+    if (element.useLookupString) {
+      updatePromptHighlighting(lookup, element)
+    }
+    else {
+      clear(lookup.editor)
+    }
     updateHighlighting(lookup, element)
     super.uiRefreshed()
   }
@@ -255,7 +261,7 @@ private class CommandCompletionHighlightingListener(
     }
   }
 
-  private fun update(lookup: LookupImpl, item: CommandCompletionLookupElement) {
+  private fun updatePromptHighlighting(lookup: LookupImpl, item: CommandCompletionLookupElement) {
     val installed = ConcurrencyUtil.computeIfAbsent(lookup, INSTALLED_LISTENER_KEY) { AtomicBoolean(false) }
     val startOffset = lookup.lookupOriginalStart - findActualIndex(item.suffix, editor.document.immutableCharSequence,
                                                                    lookup.lookupOriginalStart)
@@ -288,9 +294,14 @@ private class CommandCompletionHighlightingListener(
       clear(lookup.editor)
       return
     }
-    update(lookup, element)
-    updateIcon(lookup, element)
+    if (element.useLookupString) {
+      updatePromptHighlighting(lookup, element)
+    }
+    else {
+      clear(lookup.editor)
+    }
     updateHighlighting(lookup, element)
+    updateIcon(lookup, element)
     super.currentItemChanged(event)
   }
 
@@ -306,10 +317,10 @@ private class CommandCompletionHighlightingListener(
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
     val endOffset = min(highlightInfo.range.endOffset, startOffset)
-    if (highlightInfo.range.startOffset <= endOffset) {
+    if (highlightInfo.range.startOffset <= endOffset && !element.useLookupString) {
       highlightManager.addRangeHighlight(editor, highlightInfo.range.startOffset, endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, rangeHighlighters)
     }
-    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true) {
+    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true || element.useLookupString) {
       for (info in lookup.items
         .mapNotNull { it?.`as`(CommandCompletionLookupElement::class.java) }
         .mapNotNull { it.highlighting }

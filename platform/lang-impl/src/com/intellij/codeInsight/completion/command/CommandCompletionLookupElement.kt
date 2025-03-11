@@ -27,6 +27,7 @@ internal class CommandCompletionLookupElement(
   val suffix: String,
   val icon: Icon?,
   val highlighting: HighlightInfoLookup?,
+  val useLookupString: Boolean = true,
 ) : LookupElementDecorator<LookupElement>(lookupElement) {
   override fun isWorthShowingInAutoPopup(): Boolean {
     return true
