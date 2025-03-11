@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.gdpr.ui.consents.ConsentForcedState;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -23,6 +24,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -104,18 +106,20 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
   private @NotNull JComponent createConsentElement(Consent consent, boolean addCheckBox) {
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
-    final boolean dataSharingDisabledExternally = ConsentOptions.getInstance().isUsageStatsConsent(consent)
-                                                  && StatisticsUploadAssistant.isCollectionForceDisabled();
-    final boolean dataSharingEnabledByFreeLicense = ConsentOptions.getInstance().isUsageStatsConsent(consent)
-                                                  && isAllowedByFreeLicense();
+    final ConsentForcedState forcedState = getForcedState(consent);
     if (addCheckBox) {
       String checkBoxText = getCheckBoxText(consent);
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
       ConsentStateSupplier stateSupplier;
-      if (dataSharingDisabledExternally || dataSharingEnabledByFreeLicense) {
+      if (forcedState instanceof ConsentForcedState.ExternallyDisabled) {
         stateSupplier = new ConsentStateSupplier(consent, () -> consent.isAccepted());
         cb.setEnabled(false);
-        cb.setSelected(!dataSharingDisabledExternally);
+        cb.setSelected(false);
+      }
+      else if (forcedState instanceof ConsentForcedState.AlwaysEnabled) {
+        stateSupplier = new ConsentStateSupplier(consent, () -> consent.isAccepted());
+        cb.setEnabled(false);
+        cb.setSelected(true);
       }
       else {
         stateSupplier = new ConsentStateSupplier(consent, () -> cb.isSelected());
@@ -159,9 +163,12 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     }
     pane.setOpaque(false);
 
-    if (dataSharingDisabledExternally) return wrapPanelWithWarning(pane, Objects.requireNonNullElse(StatisticsUploadAssistant.getConsentWarning(),
-                                                                                                    IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning")));
-    if (dataSharingEnabledByFreeLicense) return wrapPanelWithWarning(pane, IdeBundle.message("gdpr.usage.statistics.enabled.for.free.license.warning"));
+    if (forcedState instanceof ConsentForcedState.ExternallyDisabled externallyDisabledState) {
+      return wrapPanelWithWarning(pane, externallyDisabledState.getDescription());
+    }
+    if (forcedState instanceof ConsentForcedState.AlwaysEnabled alwaysEnabledState) {
+      return wrapPanelWithWarning(pane, alwaysEnabledState.getDescription());
+    }
     return pane;
   }
 
@@ -177,6 +184,19 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
 
   private static @NotNull @NlsSafe String getCheckBoxCommentText(Consent consent) {
     return consent.getText();
+  }
+
+  private static @Nullable ConsentForcedState getForcedState(Consent consent) {
+    if (ConsentOptions.getInstance().isUsageStatsConsent(consent)) {
+      if (StatisticsUploadAssistant.isCollectionForceDisabled()) {
+        return new ConsentForcedState.ExternallyDisabled(Objects.requireNonNullElse(StatisticsUploadAssistant.getConsentWarning(),
+                                                                                    IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning")));
+      }
+      if (isAllowedByFreeLicense()) {
+        return new ConsentForcedState.AlwaysEnabled(IdeBundle.message("gdpr.usage.statistics.enabled.for.free.license.warning"));
+      }
+    }
+    return null;
   }
 
   private static JPanel wrapPanelWithWarning(JPanel panel, @NlsContexts.DetailedDescription String warningText) {
