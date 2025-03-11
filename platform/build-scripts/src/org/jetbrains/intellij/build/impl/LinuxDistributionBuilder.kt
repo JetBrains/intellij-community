@@ -8,6 +8,8 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
@@ -42,6 +44,10 @@ class LinuxDistributionBuilder(
   init {
     val iconPng = (if (context.applicationInfo.isEAP) customizer.iconPngPathForEAP else null) ?: customizer.iconPngPath
     iconPngPath = if (iconPng.isNullOrEmpty()) null else Path.of(iconPng)
+  }
+
+  companion object {
+    private val BuildSnapSemaphore = Semaphore(Integer.getInteger("intellij.build.unix.snaps.concurrency", 1))
   }
 
   override val targetOs: OsFamily
@@ -203,7 +209,7 @@ class LinuxDistributionBuilder(
     return "${snapName}_${snapVersion}_${getSnapArchName(arch)}.snap"
   }
 
-  private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
+  private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) = BuildSnapSemaphore.withPermit {
     if (!context.options.buildUnixSnaps) {
       Span.current().addEvent("Linux .snap package build is disabled")
       return
