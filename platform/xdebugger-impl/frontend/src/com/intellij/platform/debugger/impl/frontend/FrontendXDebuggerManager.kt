@@ -60,6 +60,7 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
           synchronousExecutor.trySend {
             sessions.update { sessions ->
               val sessionToRemove = sessions.firstOrNull { it.id == sessionId }
+              sessionToRemove?.closeScope()
               if (sessionToRemove != null) {
                 sessions - sessionToRemove
               }
