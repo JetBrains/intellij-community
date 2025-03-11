@@ -40,6 +40,7 @@ import org.apache.maven.api.cli.mvn.MavenOptions;
 import org.apache.maven.api.services.ArtifactResolver;
 import org.apache.maven.api.services.ArtifactResolverResult;
 import org.apache.maven.api.services.Lookup;
+import org.apache.maven.api.services.model.ModelResolverException;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
@@ -477,6 +478,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       String message = getRootMessage(ex);
       MavenArtifact mavenArtifact = Maven40ModelConverter.convertArtifact(problemTransferArtifact, getLocalRepositoryFile());
       result.add(MavenProjectProblem.createRepositoryProblem(path, message, false, mavenArtifact));
+    }
+    else  if (ex instanceof ModelResolverException) {
+      myConsoleWrapper.error("Maven resolver problem", ex);
+      result.add(MavenProjectProblem.createStructureProblem(path, ex.getMessage(), false));
     }
     else {
       myConsoleWrapper.error("Maven server structure problem", ex);
