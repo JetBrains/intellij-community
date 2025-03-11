@@ -6,6 +6,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.rpc.BackendDocumentId
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -66,7 +67,46 @@ data class XDebugSessionDto(
   val sessionName: String,
   val sessionEvents: RpcFlow<XDebuggerSessionEvent>,
   val sessionDataDto: XDebugSessionDataDto,
-  val consoleViewData: XDebuggerConsoleViewData
+  val consoleViewData: XDebuggerConsoleViewData,
+  val processHandlerDto: XDebuggerProcessHandlerDto,
+)
+
+
+// TODO: should be moved to platform
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerProcessHandlerDto(
+  val detachIsDefault: Boolean,
+  val processHandlerEvents: RpcFlow<XDebuggerProcessHandlerEvent>
+)
+
+/**
+ * @see com.intellij.execution.process.ProcessListener
+ */
+@ApiStatus.Internal
+@Serializable
+sealed interface XDebuggerProcessHandlerEvent {
+  @Serializable
+  data class StartNotified(val eventData: XDebuggerProcessHandlerEventData) : XDebuggerProcessHandlerEvent
+
+  @Serializable
+  data class ProcessTerminated(val eventData: XDebuggerProcessHandlerEventData) : XDebuggerProcessHandlerEvent
+
+  @Serializable
+  data class ProcessWillTerminate(val eventData: XDebuggerProcessHandlerEventData, val willBeDestroyed: Boolean) : XDebuggerProcessHandlerEvent
+
+  @Serializable
+  data class OnTextAvailable(val eventData: XDebuggerProcessHandlerEventData, val key: String) : XDebuggerProcessHandlerEvent
+
+  @Serializable
+  data object ProcessNotStarted : XDebuggerProcessHandlerEvent
+}
+
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerProcessHandlerEventData(
+  val text: @NlsSafe String,
+  val exitCode: Int,
 )
 
 @ApiStatus.Internal

@@ -114,8 +114,7 @@ internal class FrontendXDebuggerSession private constructor(
     get() = emptyList() // TODO
   override val extraStopActions: List<AnAction>
     get() = emptyList() // TODO
-  override val processHandler: ProcessHandler?
-    get() = null // TODO
+  override val processHandler: ProcessHandler = FrontendXDebuggerSessionProcessHandler(project, id, sessionDto.processHandlerDto)
   override val coroutineScope: CoroutineScope = cs
   override val currentStateMessage: String
     get() = if (isStopped) XDebuggerBundle.message("debugger.state.message.disconnected") else XDebuggerBundle.message("debugger.state.message.connected") // TODO
