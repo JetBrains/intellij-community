@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
@@ -46,6 +47,18 @@ internal class FrontendXDebuggerSessionProcessHandler(
           }
         }
       }
+    }
+  }
+
+  override fun waitFor(): Boolean {
+    return runBlockingMaybeCancellable {
+      XDebugSessionProcessHandlerApi.getInstance().waitFor(sessionId, null).await()
+    }
+  }
+
+  override fun waitFor(timeoutInMilliseconds: Long): Boolean {
+    return runBlockingMaybeCancellable {
+      XDebugSessionProcessHandlerApi.getInstance().waitFor(sessionId, timeoutInMilliseconds).await()
     }
   }
 
