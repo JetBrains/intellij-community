@@ -22,18 +22,18 @@
       <action id="SwitcherPreviousProblem" use-shortcut-of="GotoPreviousError" class="com.intellij.platform.recentFiles.frontend.SwitcherPreviousProblemAction"/>
       <action id="DeleteRecentFiles" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
-      <action id="RecentFiles" class="com.intellij.platform.recentFiles.frontend.ShowRecentFilesAction">
-        <add-to-group group-id="ViewRecentActions"/>
-        <add-to-group group-id="EditorTabsEntryPoint" anchor="first"/>
-      </action>
-      <action id="RecentChangedFiles" class="com.intellij.platform.recentFiles.frontend.ShowRecentlyEditedFilesAction">
-        <add-to-group group-id="ViewRecentActions"/>
-      </action>
       <action id="SwitcherRecentEditedChangedToggleCheckBox"
               class="com.intellij.platform.recentFiles.frontend.SwitcherToggleOnlyEditedFilesAction">
         <add-to-group group-id="ViewRecentActions"/>
       </action>
       <action id="SwitcherIterateItems" class="com.intellij.platform.recentFiles.frontend.SwitcherIterateThroughItemsAction">
+        <add-to-group group-id="ViewRecentActions"/>
+      </action>
+      <action id="RecentFiles" class="com.intellij.platform.recentFiles.frontend.ShowRecentFilesAction">
+        <add-to-group group-id="ViewRecentActions"/>
+        <add-to-group group-id="EditorTabsEntryPoint" anchor="first"/>
+      </action>
+      <action id="RecentChangedFiles" class="com.intellij.platform.recentFiles.frontend.ShowRecentlyEditedFilesAction">
         <add-to-group group-id="ViewRecentActions"/>
       </action>
       <add-to-group group-id="Other.KeymapGroup"/>
