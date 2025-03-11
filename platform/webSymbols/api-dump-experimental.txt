@@ -817,6 +817,7 @@
 - a:createPointer():com.intellij.model.Pointer
 - a:getContext():com.intellij.webSymbols.context.WebSymbolsContext
 - getFramework():java.lang.String
+- a:getLocation():com.intellij.psi.PsiElement
 - a:getNamesProvider():com.intellij.webSymbols.query.WebSymbolNamesProvider
 - a:getResultsCustomizer():com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
 - a:hasExclusiveScopeFor(com.intellij.webSymbols.WebSymbolQualifiedKind,java.util.List):Z
@@ -860,6 +861,12 @@
 - a:allowResolve(Z):com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory$WebSymbolsQueryExecutorBuilder
 - a:create():com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 - a:setFramework(java.lang.String):com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory$WebSymbolsQueryExecutorBuilder
+*:com.intellij.webSymbols.query.WebSymbolsQueryExecutorListener
+- *sf:Companion:com.intellij.webSymbols.query.WebSymbolsQueryExecutorListener$Companion
+- a:afterQuery(com.intellij.webSymbols.query.WebSymbolsQueryParams):V
+- a:beforeQuery(com.intellij.webSymbols.query.WebSymbolsQueryParams):V
+*f:com.intellij.webSymbols.query.WebSymbolsQueryExecutorListener$Companion
+- f:getTOPIC():com.intellij.util.messages.Topic
 *:com.intellij.webSymbols.query.WebSymbolsQueryParams
 - getFramework():java.lang.String
 - a:getQueryExecutor():com.intellij.webSymbols.query.WebSymbolsQueryExecutor

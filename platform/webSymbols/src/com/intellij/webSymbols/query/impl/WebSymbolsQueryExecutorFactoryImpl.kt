@@ -63,7 +63,8 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
 
     scopeList.sortBy { (it.asSafely<WebSymbolsPrioritizedScope>()?.priority ?: WebSymbol.Priority.NORMAL).value }
 
-    return WebSymbolsQueryExecutorImpl(scopeList,
+    return WebSymbolsQueryExecutorImpl(location,
+                                       scopeList,
                                        createNamesProvider(project, originalLocation, context),
                                        WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
                                        context,
