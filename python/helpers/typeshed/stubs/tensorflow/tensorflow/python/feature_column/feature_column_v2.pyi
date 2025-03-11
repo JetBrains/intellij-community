@@ -1,39 +1,41 @@
 # The types here are all undocumented, but all feature columns are return types of the
 # public functions in tf.feature_column. As they are undocumented internals while some
 # common methods are included, they are incomplete and do not have getattr Incomplete fallback.
+
 from _typeshed import Incomplete
 from abc import ABC, ABCMeta, abstractmethod
 from collections.abc import Callable, Sequence
-from typing_extensions import Literal, Self, TypeAlias
+from typing import Literal
+from typing_extensions import Self, TypeAlias
 
 import tensorflow as tf
-from tensorflow import _ShapeLike
+from tensorflow._aliases import ShapeLike
 
 _Combiners: TypeAlias = Literal["mean", "sqrtn", "sum"]
 _ExampleSpec: TypeAlias = dict[str, tf.io.FixedLenFeature | tf.io.VarLenFeature]
 
-class FeatureColumn(ABC):
+class _FeatureColumn(ABC):
     @property
     @abstractmethod
     def name(self) -> str: ...
     @property
     @abstractmethod
     def parse_example_spec(self) -> _ExampleSpec: ...
-    def __lt__(self, other: FeatureColumn) -> bool: ...
-    def __gt__(self, other: FeatureColumn) -> bool: ...
+    def __lt__(self, other: _FeatureColumn) -> bool: ...
+    def __gt__(self, other: _FeatureColumn) -> bool: ...
     @property
     @abstractmethod
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
-class DenseColumn(FeatureColumn, metaclass=ABCMeta): ...
-class SequenceDenseColumn(FeatureColumn, metaclass=ABCMeta): ...
+class DenseColumn(_FeatureColumn, metaclass=ABCMeta): ...
+class SequenceDenseColumn(_FeatureColumn, metaclass=ABCMeta): ...
 
 # These classes are mostly subclasses of collections.namedtuple but we can't use
 # typing.NamedTuple because they use multiple inheritance with other non namedtuple classes.
 # _cls instead of cls is because collections.namedtuple uses _cls for __new__.
 class NumericColumn(DenseColumn):
     key: str
-    shape: _ShapeLike
+    shape: ShapeLike
     default_value: float
     dtype: tf.DType
     normalizer_fn: Callable[[tf.Tensor], tf.Tensor] | None
@@ -41,7 +43,7 @@ class NumericColumn(DenseColumn):
     def __new__(
         _cls,
         key: str,
-        shape: _ShapeLike,
+        shape: ShapeLike,
         default_value: float,
         dtype: tf.DType,
         normalizer_fn: Callable[[tf.Tensor], tf.Tensor] | None,
@@ -51,9 +53,9 @@ class NumericColumn(DenseColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
-class CategoricalColumn(FeatureColumn):
+class CategoricalColumn(_FeatureColumn):
     @property
     @abstractmethod
     def num_buckets(self) -> int: ...
@@ -70,13 +72,13 @@ class BucketizedColumn(DenseColumn, CategoricalColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class EmbeddingColumn(DenseColumn, SequenceDenseColumn):
     categorical_column: CategoricalColumn
     dimension: int
     combiner: _Combiners
-    initializer: Callable[[_ShapeLike], tf.Tensor] | None
+    initializer: Callable[[ShapeLike], tf.Tensor] | None
     ckpt_to_load_from: str | None
     tensor_name_in_ckpt: str | None
     max_norm: float | None
@@ -89,7 +91,7 @@ class EmbeddingColumn(DenseColumn, SequenceDenseColumn):
         categorical_column: CategoricalColumn,
         dimension: int,
         combiner: _Combiners,
-        initializer: Callable[[_ShapeLike], tf.Tensor] | None,
+        initializer: Callable[[ShapeLike], tf.Tensor] | None,
         ckpt_to_load_from: str | None,
         tensor_name_in_ckpt: str | None,
         max_norm: float | None,
@@ -101,13 +103,13 @@ class EmbeddingColumn(DenseColumn, SequenceDenseColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class SharedEmbeddingColumnCreator:
     def __init__(
         self,
         dimension: int,
-        initializer: Callable[[_ShapeLike], tf.Tensor] | None,
+        initializer: Callable[[ShapeLike], tf.Tensor] | None,
         ckpt_to_load_from: str | None,
         tensor_name_in_ckpt: str | None,
         num_buckets: int,
@@ -137,7 +139,7 @@ class SharedEmbeddingColumn(DenseColumn, SequenceDenseColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class CrossedColumn(CategoricalColumn):
     keys: tuple[str, ...]
@@ -152,7 +154,7 @@ class CrossedColumn(CategoricalColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class IdentityCategoricalColumn(CategoricalColumn):
     key: str
@@ -167,7 +169,7 @@ class IdentityCategoricalColumn(CategoricalColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class HashedCategoricalColumn(CategoricalColumn):
     key: str
@@ -182,7 +184,7 @@ class HashedCategoricalColumn(CategoricalColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class VocabularyFileCategoricalColumn(CategoricalColumn):
     key: str
@@ -210,7 +212,7 @@ class VocabularyFileCategoricalColumn(CategoricalColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class VocabularyListCategoricalColumn(CategoricalColumn):
     key: str
@@ -229,7 +231,7 @@ class VocabularyListCategoricalColumn(CategoricalColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class WeightedCategoricalColumn(CategoricalColumn):
     categorical_column: CategoricalColumn
@@ -244,7 +246,7 @@ class WeightedCategoricalColumn(CategoricalColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class IndicatorColumn(DenseColumn, SequenceDenseColumn):
     categorical_column: CategoricalColumn
@@ -255,7 +257,7 @@ class IndicatorColumn(DenseColumn, SequenceDenseColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...
 
 class SequenceCategoricalColumn(CategoricalColumn):
     categorical_column: CategoricalColumn
@@ -268,4 +270,4 @@ class SequenceCategoricalColumn(CategoricalColumn):
     @property
     def parse_example_spec(self) -> _ExampleSpec: ...
     @property
-    def parents(self) -> list[FeatureColumn | str]: ...
+    def parents(self) -> list[_FeatureColumn | str]: ...

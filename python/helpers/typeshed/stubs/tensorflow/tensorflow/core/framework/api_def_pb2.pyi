@@ -4,15 +4,17 @@ isort:skip_file
 Defines the text format for including per-op API definition and
 overrides for client language op code generators.
 """
+
 import builtins
 import collections.abc
+import sys
+import typing
+
 import google.protobuf.descriptor
 import google.protobuf.internal.containers
 import google.protobuf.internal.enum_type_wrapper
 import google.protobuf.message
-import sys
 import tensorflow.core.framework.attr_value_pb2
-import typing
 
 if sys.version_info >= (3, 10):
     import typing as typing_extensions
@@ -21,7 +23,7 @@ else:
 
 DESCRIPTOR: google.protobuf.descriptor.FileDescriptor
 
-@typing_extensions.final
+@typing.final
 class ApiDef(google.protobuf.message.Message):
     """Used to specify and override the default API & behavior in the
     generated code for client languages, from what you would get from
@@ -47,7 +49,7 @@ class ApiDef(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _VisibilityEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ApiDef._Visibility.ValueType], builtins.type):  # noqa: F821
+    class _VisibilityEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ApiDef._Visibility.ValueType], builtins.type):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         DEFAULT_VISIBILITY: ApiDef._Visibility.ValueType  # 0
         """Normally this is "VISIBLE" unless you are inheriting a
@@ -80,7 +82,7 @@ class ApiDef(google.protobuf.message.Message):
     is appropriate in the target language).
     """
 
-    @typing_extensions.final
+    @typing.final
     class Endpoint(google.protobuf.message.Message):
         """If you specify any endpoint, this will replace all of the
         inherited endpoints.  The first endpoint should be the
@@ -115,9 +117,9 @@ class ApiDef(google.protobuf.message.Message):
             deprecated: builtins.bool | None = ...,
             deprecation_version: builtins.int | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing_extensions.Literal["deprecated", b"deprecated", "deprecation_version", b"deprecation_version", "name", b"name"]) -> None: ...
+        def ClearField(self, field_name: typing.Literal["deprecated", b"deprecated", "deprecation_version", b"deprecation_version", "name", b"name"]) -> None: ...
 
-    @typing_extensions.final
+    @typing.final
     class Arg(google.protobuf.message.Message):
         DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -142,9 +144,9 @@ class ApiDef(google.protobuf.message.Message):
             rename_to: builtins.str | None = ...,
             description: builtins.str | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing_extensions.Literal["description", b"description", "name", b"name", "rename_to", b"rename_to"]) -> None: ...
+        def ClearField(self, field_name: typing.Literal["description", b"description", "name", b"name", "rename_to", b"rename_to"]) -> None: ...
 
-    @typing_extensions.final
+    @typing.final
     class Attr(google.protobuf.message.Message):
         """Description of the graph-construction-time configuration of this
         Op.  That is to say, this describes the attr fields that will
@@ -163,6 +165,10 @@ class ApiDef(google.protobuf.message.Message):
         is used in the GraphDef.  Note that these names in `backticks`
         will also be replaced in the summary & description fields.
         """
+        description: builtins.str
+        """Note: this will replace any inherited attr doc, there is no current
+        way of modifying attr descriptions as can be done with op descriptions.
+        """
         @property
         def default_value(self) -> tensorflow.core.framework.attr_value_pb2.AttrValue:
             """Specify a new default value to use for this attr.  This default
@@ -170,10 +176,7 @@ class ApiDef(google.protobuf.message.Message):
             default in the OpDef, which will be used when interpreting old
             GraphDefs.
             """
-        description: builtins.str
-        """Note: this will replace any inherited attr doc, there is no current
-        way of modifying attr descriptions as can be done with op descriptions.
-        """
+
         def __init__(
             self,
             *,
@@ -182,8 +185,8 @@ class ApiDef(google.protobuf.message.Message):
             default_value: tensorflow.core.framework.attr_value_pb2.AttrValue | None = ...,
             description: builtins.str | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing_extensions.Literal["default_value", b"default_value"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing_extensions.Literal["default_value", b"default_value", "description", b"description", "name", b"name", "rename_to", b"rename_to"]) -> None: ...
+        def HasField(self, field_name: typing.Literal["default_value", b"default_value"]) -> builtins.bool: ...
+        def ClearField(self, field_name: typing.Literal["default_value", b"default_value", "description", b"description", "name", b"name", "rename_to", b"rename_to"]) -> None: ...
 
     GRAPH_OP_NAME_FIELD_NUMBER: builtins.int
     DEPRECATION_MESSAGE_FIELD_NUMBER: builtins.int
@@ -211,6 +214,15 @@ class ApiDef(google.protobuf.message.Message):
     deprecated in versions before that.
     """
     visibility: global___ApiDef.Visibility.ValueType
+    summary: builtins.str
+    """One-line human-readable description of what the Op does."""
+    description: builtins.str
+    """Additional, longer human-readable description of what the Op does."""
+    description_prefix: builtins.str
+    """Modify an existing/inherited description by adding text to the beginning
+    or end.
+    """
+    description_suffix: builtins.str
     @property
     def endpoint(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ApiDef.Endpoint]: ...
     @property
@@ -223,17 +235,9 @@ class ApiDef(google.protobuf.message.Message):
         Length of arg_order should be either empty to keep current order
         or match size of in_arg.
         """
+
     @property
     def attr(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ApiDef.Attr]: ...
-    summary: builtins.str
-    """One-line human-readable description of what the Op does."""
-    description: builtins.str
-    """Additional, longer human-readable description of what the Op does."""
-    description_prefix: builtins.str
-    """Modify an existing/inherited description by adding text to the beginning
-    or end.
-    """
-    description_suffix: builtins.str
     def __init__(
         self,
         *,
@@ -251,11 +255,11 @@ class ApiDef(google.protobuf.message.Message):
         description_prefix: builtins.str | None = ...,
         description_suffix: builtins.str | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["arg_order", b"arg_order", "attr", b"attr", "deprecation_message", b"deprecation_message", "deprecation_version", b"deprecation_version", "description", b"description", "description_prefix", b"description_prefix", "description_suffix", b"description_suffix", "endpoint", b"endpoint", "graph_op_name", b"graph_op_name", "in_arg", b"in_arg", "out_arg", b"out_arg", "summary", b"summary", "visibility", b"visibility"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["arg_order", b"arg_order", "attr", b"attr", "deprecation_message", b"deprecation_message", "deprecation_version", b"deprecation_version", "description", b"description", "description_prefix", b"description_prefix", "description_suffix", b"description_suffix", "endpoint", b"endpoint", "graph_op_name", b"graph_op_name", "in_arg", b"in_arg", "out_arg", b"out_arg", "summary", b"summary", "visibility", b"visibility"]) -> None: ...
 
 global___ApiDef = ApiDef
 
-@typing_extensions.final
+@typing.final
 class ApiDefs(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -267,6 +271,6 @@ class ApiDefs(google.protobuf.message.Message):
         *,
         op: collections.abc.Iterable[global___ApiDef] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing_extensions.Literal["op", b"op"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["op", b"op"]) -> None: ...
 
 global___ApiDefs = ApiDefs
