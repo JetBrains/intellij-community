@@ -238,7 +238,7 @@ class MavenProject(val file: VirtualFile) {
     get() = myState.parentId
 
   val packaging: @NlsSafe String
-    get() = myState.packaging!!
+    get() = myState.packaging ?: ""
 
   val finalName: @NlsSafe String
     get() = myState.finalName!!
