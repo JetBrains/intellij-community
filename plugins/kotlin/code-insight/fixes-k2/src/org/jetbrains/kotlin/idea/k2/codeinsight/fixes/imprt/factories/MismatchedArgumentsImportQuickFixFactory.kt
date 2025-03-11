@@ -9,11 +9,14 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 
 internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, ImportPositionContext<*, *>>? {
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionContext<*, *>? {
         return when (diagnostic) {
             is KaFirDiagnostic.TooManyArguments,
             is KaFirDiagnostic.NoValueForParameter,
@@ -35,8 +38,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
                     else -> originalDiagnosticPsi.parentOfType<KtCallExpression>()?.calleeExpression
                 } ?: return null
 
-                val importPositionContext = ImportPositionContext.detect(adjustedDiagnosticPsi)
-                importPositionContext.position to importPositionContext
+                ImportPositionContext.detect(adjustedDiagnosticPsi)
             }
 
             else -> null
