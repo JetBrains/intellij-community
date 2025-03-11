@@ -111,7 +111,7 @@ private fun ListComboBoxes() {
                 selectedIndex = selectedIndex,
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
-                onItemSelected = { index, text -> selectedIndex = index },
+                onItemSelected = { index -> selectedIndex = index },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
                         text = item,
@@ -120,6 +120,8 @@ private fun ListComboBoxes() {
                         iconContentDescription = item,
                     )
                 },
+                itemToLabel = { item -> item },
+                itemKeys = { _, item -> item },
             )
         }
 
@@ -135,7 +137,9 @@ private fun ListComboBoxes() {
                 selectedIndex = selectedIndex,
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
-                onItemSelected = { index, text -> selectedIndex = index },
+                onItemSelected = { index -> selectedIndex = index },
+                itemToLabel = { item -> item },
+                itemKeys = { _, item -> item },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
                         text = item,
@@ -168,9 +172,9 @@ private fun ListComboBoxes() {
                 selectedIndex = selectedIndex,
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
-                onItemSelected = { index, text -> selectedIndex = index },
-                // Use index as the key to handle duplicates
+                onItemSelected = { index -> selectedIndex = index },
                 itemKeys = { index, _ -> index },
+                itemToLabel = { item -> item },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
                         text = item,

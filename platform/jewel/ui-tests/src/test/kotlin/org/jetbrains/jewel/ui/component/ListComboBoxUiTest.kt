@@ -38,6 +38,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.junit.Ignore
 import org.junit.Rule
@@ -93,10 +94,13 @@ class ListComboBoxUiTest {
                     modifier =
                         Modifier.Companion.size(20.dp).focusRequester(focusRequester).testTag("Pre-Box").focusable(true)
                 )
-                EditableComboBox(
-                    textFieldState = rememberTextFieldState("Item 1"),
+                EditableListComboBox(
+                    items = comboBoxItems,
+                    initialSelectedIndex = 0,
+                    onSelectedItemChange = { _: Int, _: String -> },
                     modifier = Modifier.Companion.width(140.dp).testTag("ComboBox"),
-                    popupContent = { /* ... */ },
+                    isEnabled = true,
+                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -398,20 +402,12 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = selectedIndex,
-                    onItemSelected = { index, _ -> selectedIndex = index },
+                    initialSelectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int, text: String -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     isEnabled = true,
-                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                    itemContent = { item, isSelected, isActive ->
-                        SimpleListItem(
-                            text = item,
-                            isSelected = isSelected,
-                            isActive = isActive,
-                            modifier = Modifier.testTag(item),
-                            iconContentDescription = item,
-                        )
-                    },
+                    itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
+                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -438,20 +434,12 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = selectedIndex,
-                    onItemSelected = { index, _ -> selectedIndex = index },
+                    initialSelectedIndex = selectedIndex,
+                    onSelectedItemChange = { index: Int, text: String -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     isEnabled = true,
-                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                    itemContent = { item, isSelected, isActive ->
-                        SimpleListItem(
-                            text = item,
-                            isSelected = isSelected,
-                            isActive = isActive,
-                            modifier = Modifier.testTag(item),
-                            iconContentDescription = item,
-                        )
-                    },
+                    itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
+                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -512,22 +500,14 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 ListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = 2, // Start with "Item 3" selected
-                    onItemSelected = { index, text ->
+                    initialSelectedIndex = 2,
+                    onItemSelected = { index ->
                         selectedIdx = index
-                        selectedText = text
+                        selectedText = comboBoxItems[index]
                     },
                     modifier = Modifier.testTag("ComboBox").width(200.dp),
-                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                    itemContent = { item, isSelected, isActive ->
-                        SimpleListItem(
-                            text = item,
-                            isSelected = isSelected,
-                            isActive = isActive,
-                            modifier = Modifier.testTag(item),
-                            iconContentDescription = item,
-                        )
-                    },
+                    itemKeys = { index: Int, item: String -> index },
+                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -547,19 +527,11 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 ListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = selectedIndex,
-                    onItemSelected = { index, _ -> selectedIndex = index },
+                    initialSelectedIndex = selectedIndex,
+                    onItemSelected = { index -> selectedIndex = index },
                     modifier = Modifier.testTag("ComboBox").width(200.dp),
-                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                    itemContent = { item, isSelected, isActive ->
-                        SimpleListItem(
-                            text = item,
-                            isSelected = isSelected,
-                            isActive = isActive,
-                            modifier = Modifier.testTag(item),
-                            iconContentDescription = item,
-                        )
-                    },
+                    itemKeys = { index: Int, item: String -> index },
+                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -573,24 +545,21 @@ class ListComboBoxUiTest {
 
     @Test
     fun `when editable ListComboBox text is edited then selectedIndex remains unchanged`() {
-        var selectedIdx = 1
+        var selectedIndex = 1
 
         composeRule.setContent {
-            val textState = rememberTextFieldState("Item 2")
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = selectedIdx,
-                    onItemSelected = { index, _ -> selectedIdx = index },
-                    textFieldState = textState,
-                    modifier = Modifier.testTag("ComboBox").width(200.dp),
-                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    selectedIndex = selectedIndex,
+                    onItemSelected = { index, text -> selectedIndex = index },
+                    modifier = Modifier.width(200.dp),
+                    maxPopupHeight = 150.dp,
                     itemContent = { item, isSelected, isActive ->
                         SimpleListItem(
                             text = item,
                             isSelected = isSelected,
                             isActive = isActive,
-                            modifier = Modifier.testTag(item),
                             iconContentDescription = item,
                         )
                     },
@@ -603,7 +572,7 @@ class ListComboBoxUiTest {
         textField.performTextClearance()
         textField.performTextInput("Custom text")
 
-        assert(selectedIdx == 1) { "Expected selectedIdx to remain 1, but was $selectedIdx" }
+        assert(selectedIndex == 1) { "Expected selectedIdx to remain 1, but was $selectedIndex" }
 
         chevronContainer.performClick()
         composeRule.onNodeWithTag("Item 2", useUnmergedTree = true).assertIsSelected()
@@ -623,16 +592,14 @@ class ListComboBoxUiTest {
                 EditableListComboBox(
                     items = comboBoxItems,
                     selectedIndex = selectedIndex,
-                    onItemSelected = { index, _ -> selectedIndex = index },
-                    textFieldState = textState, // Pass the explicitly managed text state
-                    modifier = Modifier.testTag("ComboBox").width(200.dp),
-                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
+                    onItemSelected = { index, text -> selectedIndex = index },
+                    modifier = Modifier.width(200.dp),
+                    maxPopupHeight = 150.dp,
                     itemContent = { item, isSelected, isActive ->
                         SimpleListItem(
                             text = item,
                             isSelected = isSelected,
                             isActive = isActive,
-                            modifier = Modifier.testTag(item),
                             iconContentDescription = item,
                         )
                     },
@@ -656,20 +623,12 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = 0,
-                    onItemSelected = { _, _ -> },
+                    initialSelectedIndex = 0,
+                    onSelectedItemChange = { _: Int, _: String -> },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     isEnabled = true,
-                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                    itemContent = { item, isSelected, isActive ->
-                        SimpleListItem(
-                            text = item,
-                            isSelected = isSelected,
-                            isActive = isActive,
-                            modifier = Modifier.testTag(item),
-                            iconContentDescription = item,
-                        )
-                    },
+                    itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
+                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -707,20 +666,12 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 ListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = 0,
-                    onItemSelected = { _, _ -> },
+                    initialSelectedIndex = 0,
+                    onItemSelected = {},
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     isEnabled = isEnabled,
-                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                    itemContent = { item, isSelected, isActive ->
-                        SimpleListItem(
-                            text = item,
-                            isSelected = isSelected,
-                            isActive = isActive,
-                            modifier = Modifier.testTag(item),
-                            iconContentDescription = item,
-                        )
-                    },
+                    itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
+                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
@@ -731,20 +682,12 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 EditableListComboBox(
                     items = comboBoxItems,
-                    selectedIndex = 0,
-                    onItemSelected = { _, _ -> },
+                    initialSelectedIndex = 0,
+                    onSelectedItemChange = { _: Int, _: String -> },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     isEnabled = isEnabled,
-                    itemKeys = { index, _ -> index }, // Explicitly use index as key for tests
-                    itemContent = { item, isSelected, isActive ->
-                        SimpleListItem(
-                            text = item,
-                            isSelected = isSelected,
-                            isActive = isActive,
-                            modifier = Modifier.testTag(item),
-                            iconContentDescription = item,
-                        )
-                    },
+                    itemKeys = { index: Int, item: String -> index }, // Explicitly use index as key for tests
+                    listState = rememberSelectableLazyListState(),
                 )
             }
         }
