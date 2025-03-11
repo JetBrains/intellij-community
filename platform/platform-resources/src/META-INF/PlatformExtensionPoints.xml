@@ -583,6 +583,9 @@
     <extensionPoint name="usageFilteringRuleCustomizer" interface="com.intellij.usages.rules.UsageFilteringRuleCustomizer" dynamic="true"/>
 
     <extensionPoint name="endUserAgreementUpdater" beanClass="com.intellij.ide.gdpr.EndUserAgreement$PluginAgreementUpdateDescriptor" dynamic="true"/>
+    <extensionPoint name="aiDataCollectionExternalSettings"
+                    interface="com.intellij.ide.gdpr.ui.consents.AiDataCollectionExternalSettings"
+                    dynamic="true"/>
 
     <extensionPoint name="cefDelegate" interface="com.intellij.ui.jcef.CefDelegate" dynamic="false"/>
 
