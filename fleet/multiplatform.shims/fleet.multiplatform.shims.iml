@@ -11,7 +11,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.10-0.2/expects-compiler-plugin-2.1.10-0.2.jar</args>
+              <args>$MAVEN_REPOSITORY$/jetbrains/fleet/expects-compiler-plugin/2.1.10-0.1/expects-compiler-plugin-2.1.10-0.1.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
