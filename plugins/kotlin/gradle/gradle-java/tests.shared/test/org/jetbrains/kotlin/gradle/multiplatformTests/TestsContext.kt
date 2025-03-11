@@ -44,14 +44,14 @@ class KotlinMppTestsContextImpl(
     override val testFeatures: List<TestFeature<*>>
 ) : KotlinMppTestsContext {
     override val testConfiguration: TestConfiguration = TestConfiguration()
-    internal val testProperties: KotlinTestProperties = KotlinTestProperties.construct(testConfiguration)
+    val testProperties: KotlinTestProperties = KotlinTestProperties.construct(testConfiguration)
 
     override lateinit var description: Description
     override lateinit var testProjectRoot: File
     override lateinit var testProject: Project
     override lateinit var gradleJdkPath: File
 
-    internal var mutableCodeInsightTestFixture: CodeInsightTestFixture? = null
+    var mutableCodeInsightTestFixture: CodeInsightTestFixture? = null
     override val codeInsightTestFixture: CodeInsightTestFixture get() = mutableCodeInsightTestFixture!!
 
     override val gradleVersion: GradleVersion
