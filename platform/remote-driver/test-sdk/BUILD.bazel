@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.driver.sdk` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "driver-sdk_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "driver-sdk",
@@ -18,6 +24,7 @@ jvm_library(
     "//platform/remote-driver/client:driver-client",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-  ]
+  ],
+  runtime_deps = [":driver-sdk_resources"]
 )
 ### auto-generated section `build intellij.driver.sdk` end

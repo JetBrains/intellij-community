@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.testFramework` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "testFramework_resources",
@@ -19,6 +19,11 @@ jvm_resources(
   strip_prefix = "testResources"
 )
 
+jvm_provided_library(
+  name = "junit4_provided",
+  lib = "//libraries/junit4"
+)
+
 jvm_library(
   name = "testFramework",
   module_name = "intellij.platform.testFramework",
@@ -31,7 +36,6 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/indexing-impl",
-    "@lib//:junit4",
     "//platform/usageView",
     "//platform/ide-core-impl",
     "//platform/refactoring",
@@ -65,10 +69,11 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/todo",
     "//platform/syntax/syntax-api:syntax",
+    ":junit4_provided",
   ],
   exports = [
     "//platform/execution-impl",
-    "@lib//:junit4",
+    "//libraries/junit4",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "@lib//:jet_check",
@@ -99,7 +104,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/indexing-impl",
-    "@lib//:junit4",
+    "//libraries/junit4",
     "//platform/usageView",
     "//platform/ide-core-impl",
     "//platform/refactoring",

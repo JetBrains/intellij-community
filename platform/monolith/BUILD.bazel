@@ -1,9 +1,20 @@
 ### auto-generated section `build intellij.platform.monolith` start
 load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "monolith_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 java_library(
   name = "monolith",
   visibility = ["//visibility:public"],
-  runtime_deps = ["//platform/backend"]
+  runtime_deps = [
+    ":monolith_resources",
+    "//platform/platform-frontend:frontend",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.platform.monolith` end

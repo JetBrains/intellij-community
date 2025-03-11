@@ -156,93 +156,93 @@ java_import(
 
 kt_jvm_import(
   name = "ai-grazie-nlp-langs",
-  jar = "@nlp-langs-jvm-0_4_16_http//file",
-  srcjar = "@nlp-langs-jvm-0_4_16-sources_http//file",
+  jar = "@nlp-langs-jvm-0_4_27_http//file",
+  srcjar = "@nlp-langs-jvm-0_4_27-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ai-grazie-spell-gec-engine-local",
   exports = [
-    ":gec-spell-engine-local-jvm-0_4_16_http_import",
-    ":utils-common-jvm-0_4_16_http_import",
-    ":model-gec-jvm-0_4_16_http_import",
-    ":model-text-jvm-0_4_16_http_import",
-    ":model-common-jvm-0_4_16_http_import",
-    ":nlp-langs-jvm-0_4_16_http_import",
-    ":nlp-common-jvm-0_4_16_http_import",
-    ":nlp-patterns-jvm-0_4_16_http_import",
-    ":nlp-similarity-jvm-0_4_16_http_import",
-    ":nlp-phonetics-jvm-0_4_16_http_import",
-    ":nlp-tokenizer-jvm-0_4_16_http_import",
+    ":gec-spell-engine-local-jvm-0_4_27_http_import",
+    ":utils-common-jvm-0_4_27_http_import",
+    ":model-gec-jvm-0_4_27_http_import",
+    ":model-text-jvm-0_4_27_http_import",
+    ":model-common-jvm-0_4_27_http_import",
+    ":nlp-langs-jvm-0_4_27_http_import",
+    ":nlp-common-jvm-0_4_27_http_import",
+    ":nlp-patterns-jvm-0_4_27_http_import",
+    ":nlp-similarity-jvm-0_4_27_http_import",
+    ":nlp-phonetics-jvm-0_4_27_http_import",
+    ":nlp-tokenizer-jvm-0_4_27_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "gec-spell-engine-local-jvm-0_4_16_http_import",
-  jar = "@gec-spell-engine-local-jvm-0_4_16_http//file",
-  srcjar = "@gec-spell-engine-local-jvm-0_4_16-sources_http//file"
+  name = "gec-spell-engine-local-jvm-0_4_27_http_import",
+  jar = "@gec-spell-engine-local-jvm-0_4_27_http//file",
+  srcjar = "@gec-spell-engine-local-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "utils-common-jvm-0_4_16_http_import",
-  jar = "@utils-common-jvm-0_4_16_http//file",
-  srcjar = "@utils-common-jvm-0_4_16-sources_http//file"
+  name = "utils-common-jvm-0_4_27_http_import",
+  jar = "@utils-common-jvm-0_4_27_http//file",
+  srcjar = "@utils-common-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "model-gec-jvm-0_4_16_http_import",
-  jar = "@model-gec-jvm-0_4_16_http//file",
-  srcjar = "@model-gec-jvm-0_4_16-sources_http//file"
+  name = "model-gec-jvm-0_4_27_http_import",
+  jar = "@model-gec-jvm-0_4_27_http//file",
+  srcjar = "@model-gec-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "model-text-jvm-0_4_16_http_import",
-  jar = "@model-text-jvm-0_4_16_http//file",
-  srcjar = "@model-text-jvm-0_4_16-sources_http//file"
+  name = "model-text-jvm-0_4_27_http_import",
+  jar = "@model-text-jvm-0_4_27_http//file",
+  srcjar = "@model-text-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "model-common-jvm-0_4_16_http_import",
-  jar = "@model-common-jvm-0_4_16_http//file",
-  srcjar = "@model-common-jvm-0_4_16-sources_http//file"
+  name = "model-common-jvm-0_4_27_http_import",
+  jar = "@model-common-jvm-0_4_27_http//file",
+  srcjar = "@model-common-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-langs-jvm-0_4_16_http_import",
-  jar = "@nlp-langs-jvm-0_4_16_http//file",
-  srcjar = "@nlp-langs-jvm-0_4_16-sources_http//file"
+  name = "nlp-langs-jvm-0_4_27_http_import",
+  jar = "@nlp-langs-jvm-0_4_27_http//file",
+  srcjar = "@nlp-langs-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-common-jvm-0_4_16_http_import",
-  jar = "@nlp-common-jvm-0_4_16_http//file",
-  srcjar = "@nlp-common-jvm-0_4_16-sources_http//file"
+  name = "nlp-common-jvm-0_4_27_http_import",
+  jar = "@nlp-common-jvm-0_4_27_http//file",
+  srcjar = "@nlp-common-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-patterns-jvm-0_4_16_http_import",
-  jar = "@nlp-patterns-jvm-0_4_16_http//file",
-  srcjar = "@nlp-patterns-jvm-0_4_16-sources_http//file"
+  name = "nlp-patterns-jvm-0_4_27_http_import",
+  jar = "@nlp-patterns-jvm-0_4_27_http//file",
+  srcjar = "@nlp-patterns-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-similarity-jvm-0_4_16_http_import",
-  jar = "@nlp-similarity-jvm-0_4_16_http//file",
-  srcjar = "@nlp-similarity-jvm-0_4_16-sources_http//file"
+  name = "nlp-similarity-jvm-0_4_27_http_import",
+  jar = "@nlp-similarity-jvm-0_4_27_http//file",
+  srcjar = "@nlp-similarity-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-phonetics-jvm-0_4_16_http_import",
-  jar = "@nlp-phonetics-jvm-0_4_16_http//file",
-  srcjar = "@nlp-phonetics-jvm-0_4_16-sources_http//file"
+  name = "nlp-phonetics-jvm-0_4_27_http_import",
+  jar = "@nlp-phonetics-jvm-0_4_27_http//file",
+  srcjar = "@nlp-phonetics-jvm-0_4_27-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-tokenizer-jvm-0_4_16_http_import",
-  jar = "@nlp-tokenizer-jvm-0_4_16_http//file",
-  srcjar = "@nlp-tokenizer-jvm-0_4_16-sources_http//file"
+  name = "nlp-tokenizer-jvm-0_4_27_http_import",
+  jar = "@nlp-tokenizer-jvm-0_4_27_http//file",
+  srcjar = "@nlp-tokenizer-jvm-0_4_27-sources_http//file"
 )
 
 java_library(
@@ -1397,15 +1397,15 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "expects-compiler-plugin",
-  jar = "@expects-compiler-plugin-2_1_10-0_1_http//file",
-  srcjar = "@expects-compiler-plugin-2_1_10-0_1-sources_http//file",
+  jar = "@expects-compiler-plugin-2_1_10-0_2_http//file",
+  srcjar = "@expects-compiler-plugin-2_1_10-0_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_import(
   name = "fastutil-min",
-  jars = ["@intellij-deps-fastutil-8_5_14-jb1_http//file"],
-  srcjar = "@intellij-deps-fastutil-8_5_14-jb1-sources_http//file",
+  jars = ["@intellij-deps-fastutil-8_5_15-jb1_http//file"],
+  srcjar = "@intellij-deps-fastutil-8_5_15-jb1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -1515,28 +1515,28 @@ java_import(
 java_library(
   name = "grazie-core-ai-grazie-nlp-detect",
   exports = [
-    ":nlp-detect-jvm-0_4_16_http_import",
-    ":utils-common-jvm-0_4_16_http_import",
-    ":nlp-common-jvm-0_4_16_http_import",
-    ":model-text-jvm-0_4_16_http_import",
-    ":model-common-jvm-0_4_16_http_import",
-    ":nlp-patterns-jvm-0_4_16_http_import",
-    ":nlp-tokenizer-jvm-0_4_16_http_import",
-    ":nlp-similarity-jvm-0_4_16_http_import",
-    ":nlp-langs-jvm-0_4_16_http_import",
+    ":nlp-detect-jvm-0_4_27_http_import",
+    ":utils-common-jvm-0_4_27_http_import",
+    ":nlp-common-jvm-0_4_27_http_import",
+    ":model-text-jvm-0_4_27_http_import",
+    ":model-common-jvm-0_4_27_http_import",
+    ":nlp-patterns-jvm-0_4_27_http_import",
+    ":nlp-tokenizer-jvm-0_4_27_http_import",
+    ":nlp-similarity-jvm-0_4_27_http_import",
+    ":nlp-langs-jvm-0_4_27_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "nlp-detect-jvm-0_4_16_http_import",
-  jar = "@nlp-detect-jvm-0_4_16_http//file",
-  srcjar = "@nlp-detect-jvm-0_4_16-sources_http//file"
+  name = "nlp-detect-jvm-0_4_27_http_import",
+  jar = "@nlp-detect-jvm-0_4_27_http//file",
+  srcjar = "@nlp-detect-jvm-0_4_27-sources_http//file"
 )
 
 java_import(
   name = "grazie-core-ai-grazie-utils-lucene-lt-compatibility",
-  jars = ["@utils-lucene-lt-compatibility-0_4_16_http//file"],
+  jars = ["@utils-lucene-lt-compatibility-0_4_27_http//file"],
   visibility = ["//visibility:public"]
 )
 
@@ -2513,15 +2513,15 @@ java_import(
 
 kt_jvm_import(
   name = "jediterm-core",
-  jar = "@jediterm-core-3_50_http//file",
-  srcjar = "@jediterm-core-3_50-sources_http//file",
+  jar = "@jediterm-core-3_51_http//file",
+  srcjar = "@jediterm-core-3_51-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "jediterm-ui",
-  jar = "@jediterm-ui-3_50_http//file",
-  srcjar = "@jediterm-ui-3_50-sources_http//file",
+  jar = "@jediterm-ui-3_51_http//file",
+  srcjar = "@jediterm-ui-3_51-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3337,8 +3337,8 @@ kt_jvm_import(
 java_library(
   name = "kotlin-base-scripting-amper-dependency-resolution",
   exports = [
-    ":dependency-resolution-jvm-0_6_0-dev-2519_http_import",
-    ":concurrency-jvm-0_6_0-dev-2519_http_import",
+    ":dependency-resolution-jvm-0_6_0-dev-2523_http_import",
+    ":concurrency-jvm-0_6_0-dev-2523_http_import",
     ":slf4j-api-2_0_16_http_import",
     ":serialization-jvm-0_86_2_http_import",
     ":core-jvm-0_86_2_http_import",
@@ -3349,15 +3349,15 @@ java_library(
 )
 
 kt_jvm_import(
-  name = "dependency-resolution-jvm-0_6_0-dev-2519_http_import",
-  jar = "@dependency-resolution-jvm-0_6_0-dev-2519_http//file",
-  srcjar = "@dependency-resolution-jvm-0_6_0-dev-2519-sources_http//file"
+  name = "dependency-resolution-jvm-0_6_0-dev-2523_http_import",
+  jar = "@dependency-resolution-jvm-0_6_0-dev-2523_http//file",
+  srcjar = "@dependency-resolution-jvm-0_6_0-dev-2523-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "concurrency-jvm-0_6_0-dev-2519_http_import",
-  jar = "@concurrency-jvm-0_6_0-dev-2519_http//file",
-  srcjar = "@concurrency-jvm-0_6_0-dev-2519-sources_http//file"
+  name = "concurrency-jvm-0_6_0-dev-2523_http_import",
+  jar = "@concurrency-jvm-0_6_0-dev-2523_http//file",
+  srcjar = "@concurrency-jvm-0_6_0-dev-2523-sources_http//file"
 )
 
 kt_jvm_import(
@@ -3533,15 +3533,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-allopen-compiler-plugin",
-  jar = "@allopen-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@allopen-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@allopen-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@allopen-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-analysis-api",
-  jar = "@analysis-api-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@analysis-api-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@analysis-api-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@analysis-api-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3554,8 +3554,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-fe10",
-  jar = "@analysis-api-fe10-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@analysis-api-fe10-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@analysis-api-fe10-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@analysis-api-fe10-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3568,8 +3568,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-impl-base",
-  jar = "@analysis-api-impl-base-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@analysis-api-impl-base-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@analysis-api-impl-base-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@analysis-api-impl-base-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3582,15 +3582,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-impl-base-tests",
-  jar = "@analysis-api-impl-base-tests-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@analysis-api-impl-base-tests-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@analysis-api-impl-base-tests-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@analysis-api-impl-base-tests-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-k2",
-  jar = "@analysis-api-k2-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@analysis-api-k2-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@analysis-api-k2-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@analysis-api-k2-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3603,15 +3603,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-k2-tests",
-  jar = "@analysis-api-k2-tests-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@analysis-api-k2-tests-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@analysis-api-k2-tests-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@analysis-api-k2-tests-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-analysis-api-platform-interface",
-  jar = "@analysis-api-platform-interface-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@analysis-api-platform-interface-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@analysis-api-platform-interface-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@analysis-api-platform-interface-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3624,8 +3624,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-android-extensions-compiler-plugin",
-  jar = "@android-extensions-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@android-extensions-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@android-extensions-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@android-extensions-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3638,15 +3638,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-assignment-compiler-plugin",
-  jar = "@assignment-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@assignment-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@assignment-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@assignment-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-compose-compiler-plugin",
-  jar = "@compose-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@compose-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@compose-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@compose-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3659,29 +3659,29 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-incremental-compilation-impl-tests",
-  jar = "@incremental-compilation-impl-tests-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@incremental-compilation-impl-tests-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@incremental-compilation-impl-tests-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@incremental-compilation-impl-tests-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-js-plain-objects-compiler-plugin",
-  jar = "@js-plain-objects-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@js-plain-objects-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@js-plain-objects-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@js-plain-objects-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-kotlin-build-common-tests",
-  jar = "@kotlin-build-common-tests-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-build-common-tests-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-build-common-tests-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-build-common-tests-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-cli",
-  jar = "@kotlin-compiler-cli-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-compiler-cli-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-compiler-cli-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-compiler-cli-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3694,8 +3694,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-common",
-  jar = "@kotlin-compiler-common-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-compiler-common-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-compiler-common-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-compiler-common-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3708,8 +3708,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-fe10",
-  jar = "@kotlin-compiler-fe10-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-compiler-fe10-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-compiler-fe10-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-compiler-fe10-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3722,8 +3722,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-fir",
-  jar = "@kotlin-compiler-fir-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-compiler-fir-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-compiler-fir-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-compiler-fir-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3736,8 +3736,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-ir",
-  jar = "@kotlin-compiler-ir-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-compiler-ir-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-compiler-ir-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-compiler-ir-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3750,8 +3750,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-compiler-tests",
-  jar = "@kotlin-compiler-tests-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-compiler-tests-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-compiler-tests-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-compiler-tests-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3771,8 +3771,8 @@ java_import(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-gradle-statistics",
-  jar = "@kotlin-gradle-statistics-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-gradle-statistics-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-gradle-statistics-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-gradle-statistics-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3785,15 +3785,15 @@ java_library(
 
 java_import(
   name = "kotlinc-kotlin-ide-dist",
-  jars = ["@kotlin-dist-for-ide-2_2_0-dev-7826_http//file"],
-  srcjar = "@kotlin-dist-for-ide-2_2_0-dev-7826-sources_http//file",
+  jars = ["@kotlin-dist-for-ide-2_2_0-dev-8822_http//file"],
+  srcjar = "@kotlin-dist-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-kotlin-jps-common",
-  jar = "@kotlin-jps-common-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-jps-common-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-jps-common-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-jps-common-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3820,8 +3820,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-jps-plugin-classpath-bootstrap-for-tests",
-  jar = "@kotlin-jps-plugin-classpath-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-jps-plugin-classpath-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-jps-plugin-classpath-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-jps-plugin-classpath-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3834,15 +3834,15 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-script-runtime",
-  jar = "@kotlin-script-runtime-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-script-runtime-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-script-runtime-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-script-runtime-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-kotlin-scripting-common",
-  jar = "@kotlin-scripting-common-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-scripting-common-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-scripting-common-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-scripting-common-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3855,8 +3855,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-scripting-compiler-impl",
-  jar = "@kotlin-scripting-compiler-impl-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-scripting-compiler-impl-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-scripting-compiler-impl-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-scripting-compiler-impl-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3869,15 +3869,15 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlin-scripting-dependencies",
-  jar = "@kotlin-scripting-dependencies-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-scripting-dependencies-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-scripting-dependencies-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-scripting-dependencies-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-kotlin-scripting-jvm",
-  jar = "@kotlin-scripting-jvm-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlin-scripting-jvm-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlin-scripting-jvm-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlin-scripting-jvm-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3890,8 +3890,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-kotlinx-serialization-compiler-plugin",
-  jar = "@kotlinx-serialization-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@kotlinx-serialization-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@kotlinx-serialization-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@kotlinx-serialization-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3904,8 +3904,8 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-lombok-compiler-plugin",
-  jar = "@lombok-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@lombok-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@lombok-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@lombok-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3918,22 +3918,22 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-low-level-api-fir",
-  jar = "@low-level-api-fir-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@low-level-api-fir-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@low-level-api-fir-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@low-level-api-fir-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-noarg-compiler-plugin",
-  jar = "@noarg-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@noarg-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@noarg-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@noarg-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-parcelize-compiler-plugin",
-  jar = "@parcelize-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@parcelize-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@parcelize-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@parcelize-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3946,22 +3946,22 @@ java_library(
 
 kt_jvm_import(
   name = "kotlinc-sam-with-receiver-compiler-plugin",
-  jar = "@sam-with-receiver-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@sam-with-receiver-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@sam-with-receiver-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@sam-with-receiver-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-scripting-compiler-plugin",
-  jar = "@scripting-compiler-plugin-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@scripting-compiler-plugin-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@scripting-compiler-plugin-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@scripting-compiler-plugin-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "kotlinc-symbol-light-classes",
-  jar = "@symbol-light-classes-for-ide-2_2_0-dev-7826_http//file",
-  srcjar = "@symbol-light-classes-for-ide-2_2_0-dev-7826-sources_http//file",
+  jar = "@symbol-light-classes-for-ide-2_2_0-dev-8822_http//file",
+  srcjar = "@symbol-light-classes-for-ide-2_2_0-dev-8822-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -6375,133 +6375,363 @@ java_library(
   visibility = ["//visibility:public"]
 )
 
+java_import(
+  name = "maven-server-m40-javax-inject-1",
+  jars = ["@javax_inject-1_http//file"],
+  srcjar = "@javax_inject-1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
-  name = "maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-2",
+  name = "maven-server-m40-javax-inject-1-provided",
+  exports = [":maven-server-m40-javax-inject-1"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-3",
   exports = [
-    ":maven-embedder-4_0_0-rc-2_http_import",
-    ":maven-api-cli-4_0_0-rc-2_http_import",
-    ":maven-api-annotations-4_0_0-rc-2_http_import",
-    ":maven-api-core-4_0_0-rc-2_http_import",
-    ":maven-api-di-4_0_0-rc-2_http_import",
-    ":maven-cli-4_0_0-rc-2_http_import",
-    ":plexus-classworlds-2_8_0_http_import",
-    ":maven-settings-4_0_0-rc-2_http_import",
-    ":maven-api-settings-4_0_0-rc-2_http_import",
-    ":maven-api-xml-4_0_0-rc-2_http_import",
-    ":maven-xml-4_0_0-rc-2_http_import",
-    ":plexus-xml-4_0_4_http_import",
-    ":maven-xml-impl-4_0_0-alpha-9_http_import",
+    ":maven-embedder-4_0_0-rc-3_http_import",
+    ":maven-api-annotations-4_0_0-rc-3_http_import",
+    ":maven-api-core-4_0_0-rc-3_http_import",
+    ":maven-api-di-4_0_0-rc-3_http_import",
+    ":maven-api-settings-4_0_0-rc-3_http_import",
+    ":maven-api-toolchain-4_0_0-rc-3_http_import",
+    ":maven-api-plugin-4_0_0-rc-3_http_import",
+    ":maven-api-cli-4_0_0-rc-3_http_import",
+    ":maven-api-model-4_0_0-rc-3_http_import",
+    ":maven-api-xml-4_0_0-rc-3_http_import",
+    ":maven-core-4_0_0-rc-3_http_import",
+    ":maven-api-metadata-4_0_0-rc-3_http_import",
+    ":maven-api-spi-4_0_0-rc-3_http_import",
+    ":maven-impl-4_0_0-rc-3_http_import",
+    ":maven-repository-metadata-4_0_0-rc-3_http_import",
+    ":maven-cli-4_0_0-rc-3_http_import",
+    ":maven-di-4_0_0-rc-3_http_import",
+    ":maven-jline-4_0_0-rc-3_http_import",
+    ":jline-reader-3_29_0_http_import",
+    ":jline-style-3_29_0_http_import",
+    ":jline-builtins-3_29_0_http_import",
+    ":jline-console-3_29_0_http_import",
+    ":jline-console-ui-3_29_0_http_import",
+    ":jline-terminal-3_29_0_http_import",
+    ":jline-native-3_29_0_http_import",
+    ":jline-terminal-jni-3_29_0_http_import",
+    ":maven-logging-4_0_0-rc-3_http_import",
+    ":maven-xml-4_0_0-rc-3_http_import",
     ":woodstox-core-7_1_0_http_import",
     ":stax2-api-4_2_2_http_import",
-    ":maven-settings-builder-4_0_0-rc-2_http_import",
-    ":maven-impl-4_0_0-rc-2_http_import",
-    ":maven-api-metadata-4_0_0-rc-2_http_import",
-    ":maven-toolchain-builder-4_0_0-rc-2_http_import",
-    ":maven-api-toolchain-4_0_0-rc-2_http_import",
-    ":maven-toolchain-model-4_0_0-rc-2_http_import",
-    ":maven-core-4_0_0-rc-2_http_import",
-    ":maven-di-4_0_0-rc-2_http_import",
-    ":maven-repository-metadata-4_0_0-rc-2_http_import",
-    ":maven-artifact-4_0_0-rc-2_http_import",
-    ":maven-api-spi-4_0_0-rc-2_http_import",
-    ":maven-resolver-spi-2_0_5_http_import",
-    ":gson-2_11_0_http_import",
-    ":maven-resolver-impl-2_0_5_http_import",
-    ":maven-resolver-named-locks-2_0_5_http_import",
-    ":maven-jline-4_0_0-rc-2_http_import",
-    ":jline-reader-3_28_0_http_import",
-    ":jline-style-3_28_0_http_import",
-    ":jline-builtins-3_28_0_http_import",
-    ":jline-console-ui-3_28_0_http_import",
-    ":jline-terminal-jni-3_28_0_http_import",
-    ":jline-native-3_28_0_http_import",
-    ":javax_inject-1_http_import",
-    ":javax_annotation-api-1_3_2_http_import",
-    ":maven-plugin-api-4_0_0-rc-2_http_import",
-    ":maven-api-plugin-4_0_0-rc-2_http_import",
-    ":org_eclipse_sisu_plexus-0_9_0_M3_http_import",
-    ":maven-model-4_0_0-rc-2_http_import",
-    ":maven-api-model-4_0_0-rc-2_http_import",
-    ":maven-model-builder-4_0_0-rc-2_http_import",
-    ":maven-builder-support-4_0_0-rc-2_http_import",
-    ":maven-logging-4_0_0-rc-2_http_import",
-    ":maven-resolver-api-2_0_5_http_import",
-    ":maven-resolver-util-2_0_5_http_import",
-    ":plexus-sec-dispatcher-4_0_3_http_import",
+    ":maven-artifact-4_0_0-rc-3_http_import",
+    ":maven-builder-support-4_0_0-rc-3_http_import",
+    ":maven-model-4_0_0-rc-3_http_import",
+    ":maven-support-4_0_0-rc-3_http_import",
+    ":maven-model-builder-4_0_0-rc-3_http_import",
     ":plexus-interpolation-1_27_http_import",
-    ":plexus-interactivity-api-1_3_http_import",
-    ":slf4j-api-2_0_16_http_import",
+    ":maven-plugin-api-4_0_0-rc-3_http_import",
+    ":org_eclipse_sisu_plexus-0_9_0_M3_http_import",
+    ":maven-settings-4_0_0-rc-3_http_import",
+    ":maven-settings-builder-4_0_0-rc-3_http_import",
+    ":maven-toolchain-builder-4_0_0-rc-3_http_import",
+    ":maven-toolchain-model-4_0_0-rc-3_http_import",
+    ":maven-resolver-api-2_0_7_http_import",
+    ":maven-resolver-spi-2_0_7_http_import",
+    ":gson-2_12_1_http_import",
+    ":maven-resolver-util-2_0_7_http_import",
+    ":maven-resolver-impl-2_0_7_http_import",
+    ":maven-resolver-named-locks-2_0_7_http_import",
+    ":plexus-utils-4_0_1_http_import",
+    ":plexus-xml-4_0_4_http_import",
+    ":maven-xml-impl-4_0_0-alpha-9_http_import",
+    ":plexus-classworlds-2_8_0_http_import",
+    ":plexus-sec-dispatcher-4_1_0_http_import",
+    ":slf4j-api-2_0_17_http_import",
     ":commons-cli-1_9_0_http_import",
-    ":jansi-core-3_28_0_http_import",
-    ":jline-terminal-3_28_0_http_import",
+    ":jansi-core-3_29_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "maven-embedder-4_0_0-rc-2_http_import",
-  jars = ["@maven-embedder-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-embedder-4_0_0-rc-2-sources_http//file"
+  name = "maven-embedder-4_0_0-rc-3_http_import",
+  jars = ["@maven-embedder-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-embedder-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "maven-api-cli-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-cli-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-cli-4_0_0-rc-2-sources_http//file"
+  name = "maven-api-annotations-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-annotations-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-annotations-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "maven-api-annotations-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-annotations-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-annotations-4_0_0-rc-2-sources_http//file"
+  name = "maven-api-core-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-core-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-core-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "maven-api-core-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-core-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-core-4_0_0-rc-2-sources_http//file"
+  name = "maven-api-di-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-di-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-di-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "maven-api-di-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-di-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-di-4_0_0-rc-2-sources_http//file"
+  name = "maven-api-settings-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-settings-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-settings-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "maven-cli-4_0_0-rc-2_http_import",
-  jars = ["@maven-cli-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-cli-4_0_0-rc-2-sources_http//file"
+  name = "maven-api-toolchain-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-toolchain-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-toolchain-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "plexus-classworlds-2_8_0_http_import",
-  jars = ["@plexus-classworlds-2_8_0_http//file"],
-  srcjar = "@plexus-classworlds-2_8_0-sources_http//file"
+  name = "maven-api-plugin-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-plugin-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-plugin-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "maven-settings-4_0_0-rc-2_http_import",
-  jars = ["@maven-settings-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-settings-4_0_0-rc-2-sources_http//file"
+  name = "maven-api-cli-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-cli-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-cli-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "maven-api-settings-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-settings-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-settings-4_0_0-rc-2-sources_http//file"
+  name = "maven-api-model-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-model-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-model-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "maven-api-xml-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-xml-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-xml-4_0_0-rc-2-sources_http//file"
+  name = "maven-api-xml-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-xml-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-xml-4_0_0-rc-3-sources_http//file"
 )
 
 java_import(
-  name = "maven-xml-4_0_0-rc-2_http_import",
-  jars = ["@maven-xml-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-xml-4_0_0-rc-2-sources_http//file"
+  name = "maven-core-4_0_0-rc-3_http_import",
+  jars = ["@maven-core-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-core-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-api-metadata-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-metadata-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-metadata-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-api-spi-4_0_0-rc-3_http_import",
+  jars = ["@maven-api-spi-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-api-spi-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-impl-4_0_0-rc-3_http_import",
+  jars = ["@maven-impl-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-impl-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-repository-metadata-4_0_0-rc-3_http_import",
+  jars = ["@maven-repository-metadata-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-repository-metadata-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-cli-4_0_0-rc-3_http_import",
+  jars = ["@maven-cli-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-cli-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-di-4_0_0-rc-3_http_import",
+  jars = ["@maven-di-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-di-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-jline-4_0_0-rc-3_http_import",
+  jars = ["@maven-jline-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-jline-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "jline-reader-3_29_0_http_import",
+  jars = ["@jline-reader-3_29_0_http//file"],
+  srcjar = "@jline-reader-3_29_0-sources_http//file"
+)
+
+java_import(
+  name = "jline-style-3_29_0_http_import",
+  jars = ["@jline-style-3_29_0_http//file"],
+  srcjar = "@jline-style-3_29_0-sources_http//file"
+)
+
+java_import(
+  name = "jline-builtins-3_29_0_http_import",
+  jars = ["@jline-builtins-3_29_0_http//file"],
+  srcjar = "@jline-builtins-3_29_0-sources_http//file"
+)
+
+java_import(
+  name = "jline-console-3_29_0_http_import",
+  jars = ["@jline-console-3_29_0_http//file"],
+  srcjar = "@jline-console-3_29_0-sources_http//file"
+)
+
+java_import(
+  name = "jline-console-ui-3_29_0_http_import",
+  jars = ["@jline-console-ui-3_29_0_http//file"],
+  srcjar = "@jline-console-ui-3_29_0-sources_http//file"
+)
+
+java_import(
+  name = "jline-terminal-3_29_0_http_import",
+  jars = ["@jline-terminal-3_29_0_http//file"],
+  srcjar = "@jline-terminal-3_29_0-sources_http//file"
+)
+
+java_import(
+  name = "jline-native-3_29_0_http_import",
+  jars = ["@jline-native-3_29_0_http//file"],
+  srcjar = "@jline-native-3_29_0-sources_http//file"
+)
+
+java_import(
+  name = "jline-terminal-jni-3_29_0_http_import",
+  jars = ["@jline-terminal-jni-3_29_0_http//file"],
+  srcjar = "@jline-terminal-jni-3_29_0-sources_http//file"
+)
+
+java_import(
+  name = "maven-logging-4_0_0-rc-3_http_import",
+  jars = ["@maven-logging-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-logging-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-xml-4_0_0-rc-3_http_import",
+  jars = ["@maven-xml-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-xml-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "woodstox-core-7_1_0_http_import",
+  jars = ["@woodstox-core-7_1_0_http//file"],
+  srcjar = "@woodstox-core-7_1_0-sources_http//file"
+)
+
+java_import(
+  name = "maven-artifact-4_0_0-rc-3_http_import",
+  jars = ["@maven-artifact-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-artifact-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-builder-support-4_0_0-rc-3_http_import",
+  jars = ["@maven-builder-support-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-builder-support-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-model-4_0_0-rc-3_http_import",
+  jars = ["@maven-model-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-model-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-support-4_0_0-rc-3_http_import",
+  jars = ["@maven-support-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-support-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-model-builder-4_0_0-rc-3_http_import",
+  jars = ["@maven-model-builder-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-model-builder-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-plugin-api-4_0_0-rc-3_http_import",
+  jars = ["@maven-plugin-api-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-plugin-api-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "org_eclipse_sisu_plexus-0_9_0_M3_http_import",
+  jars = ["@org_eclipse_sisu_plexus-0_9_0_M3_http//file"],
+  srcjar = "@org_eclipse_sisu_plexus-0_9_0_M3-sources_http//file"
+)
+
+java_import(
+  name = "maven-settings-4_0_0-rc-3_http_import",
+  jars = ["@maven-settings-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-settings-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-settings-builder-4_0_0-rc-3_http_import",
+  jars = ["@maven-settings-builder-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-settings-builder-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-toolchain-builder-4_0_0-rc-3_http_import",
+  jars = ["@maven-toolchain-builder-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-toolchain-builder-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-toolchain-model-4_0_0-rc-3_http_import",
+  jars = ["@maven-toolchain-model-4_0_0-rc-3_http//file"],
+  srcjar = "@maven-toolchain-model-4_0_0-rc-3-sources_http//file"
+)
+
+java_import(
+  name = "maven-resolver-api-2_0_7_http_import",
+  jars = ["@maven-resolver-api-2_0_7_http//file"],
+  srcjar = "@maven-resolver-api-2_0_7-sources_http//file"
+)
+
+java_import(
+  name = "maven-resolver-spi-2_0_7_http_import",
+  jars = ["@maven-resolver-spi-2_0_7_http//file"],
+  srcjar = "@maven-resolver-spi-2_0_7-sources_http//file"
+)
+
+java_import(
+  name = "gson-2_12_1_http_import",
+  jars = ["@gson-2_12_1_http//file"],
+  srcjar = "@gson-2_12_1-sources_http//file"
+)
+
+java_import(
+  name = "maven-resolver-util-2_0_7_http_import",
+  jars = ["@maven-resolver-util-2_0_7_http//file"],
+  srcjar = "@maven-resolver-util-2_0_7-sources_http//file"
+)
+
+java_import(
+  name = "maven-resolver-impl-2_0_7_http_import",
+  jars = ["@maven-resolver-impl-2_0_7_http//file"],
+  srcjar = "@maven-resolver-impl-2_0_7-sources_http//file"
+)
+
+java_import(
+  name = "maven-resolver-named-locks-2_0_7_http_import",
+  jars = ["@maven-resolver-named-locks-2_0_7_http//file"],
+  srcjar = "@maven-resolver-named-locks-2_0_7-sources_http//file"
+)
+
+java_import(
+  name = "plexus-utils-4_0_1_http_import",
+  jars = ["@plexus-utils-4_0_1_http//file"],
+  srcjar = "@plexus-utils-4_0_1-sources_http//file"
 )
 
 java_import(
@@ -6517,219 +6747,21 @@ java_import(
 )
 
 java_import(
-  name = "woodstox-core-7_1_0_http_import",
-  jars = ["@woodstox-core-7_1_0_http//file"],
-  srcjar = "@woodstox-core-7_1_0-sources_http//file"
+  name = "plexus-classworlds-2_8_0_http_import",
+  jars = ["@plexus-classworlds-2_8_0_http//file"],
+  srcjar = "@plexus-classworlds-2_8_0-sources_http//file"
 )
 
 java_import(
-  name = "maven-settings-builder-4_0_0-rc-2_http_import",
-  jars = ["@maven-settings-builder-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-settings-builder-4_0_0-rc-2-sources_http//file"
+  name = "plexus-sec-dispatcher-4_1_0_http_import",
+  jars = ["@plexus-sec-dispatcher-4_1_0_http//file"],
+  srcjar = "@plexus-sec-dispatcher-4_1_0-sources_http//file"
 )
 
 java_import(
-  name = "maven-impl-4_0_0-rc-2_http_import",
-  jars = ["@maven-impl-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-impl-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-api-metadata-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-metadata-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-metadata-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-toolchain-builder-4_0_0-rc-2_http_import",
-  jars = ["@maven-toolchain-builder-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-toolchain-builder-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-api-toolchain-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-toolchain-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-toolchain-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-toolchain-model-4_0_0-rc-2_http_import",
-  jars = ["@maven-toolchain-model-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-toolchain-model-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-core-4_0_0-rc-2_http_import",
-  jars = ["@maven-core-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-core-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-di-4_0_0-rc-2_http_import",
-  jars = ["@maven-di-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-di-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-repository-metadata-4_0_0-rc-2_http_import",
-  jars = ["@maven-repository-metadata-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-repository-metadata-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-artifact-4_0_0-rc-2_http_import",
-  jars = ["@maven-artifact-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-artifact-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-api-spi-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-spi-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-spi-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-resolver-spi-2_0_5_http_import",
-  jars = ["@maven-resolver-spi-2_0_5_http//file"],
-  srcjar = "@maven-resolver-spi-2_0_5-sources_http//file"
-)
-
-java_import(
-  name = "gson-2_11_0_http_import",
-  jars = ["@gson-2_11_0_http//file"],
-  srcjar = "@gson-2_11_0-sources_http//file"
-)
-
-java_import(
-  name = "maven-resolver-impl-2_0_5_http_import",
-  jars = ["@maven-resolver-impl-2_0_5_http//file"],
-  srcjar = "@maven-resolver-impl-2_0_5-sources_http//file"
-)
-
-java_import(
-  name = "maven-resolver-named-locks-2_0_5_http_import",
-  jars = ["@maven-resolver-named-locks-2_0_5_http//file"],
-  srcjar = "@maven-resolver-named-locks-2_0_5-sources_http//file"
-)
-
-java_import(
-  name = "maven-jline-4_0_0-rc-2_http_import",
-  jars = ["@maven-jline-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-jline-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "jline-reader-3_28_0_http_import",
-  jars = ["@jline-reader-3_28_0_http//file"],
-  srcjar = "@jline-reader-3_28_0-sources_http//file"
-)
-
-java_import(
-  name = "jline-style-3_28_0_http_import",
-  jars = ["@jline-style-3_28_0_http//file"],
-  srcjar = "@jline-style-3_28_0-sources_http//file"
-)
-
-java_import(
-  name = "jline-builtins-3_28_0_http_import",
-  jars = ["@jline-builtins-3_28_0_http//file"],
-  srcjar = "@jline-builtins-3_28_0-sources_http//file"
-)
-
-java_import(
-  name = "jline-console-ui-3_28_0_http_import",
-  jars = ["@jline-console-ui-3_28_0_http//file"],
-  srcjar = "@jline-console-ui-3_28_0-sources_http//file"
-)
-
-java_import(
-  name = "jline-terminal-jni-3_28_0_http_import",
-  jars = ["@jline-terminal-jni-3_28_0_http//file"],
-  srcjar = "@jline-terminal-jni-3_28_0-sources_http//file"
-)
-
-java_import(
-  name = "jline-native-3_28_0_http_import",
-  jars = ["@jline-native-3_28_0_http//file"],
-  srcjar = "@jline-native-3_28_0-sources_http//file"
-)
-
-java_import(
-  name = "javax_annotation-api-1_3_2_http_import",
-  jars = ["@javax_annotation-api-1_3_2_http//file"],
-  srcjar = "@javax_annotation-api-1_3_2-sources_http//file"
-)
-
-java_import(
-  name = "maven-plugin-api-4_0_0-rc-2_http_import",
-  jars = ["@maven-plugin-api-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-plugin-api-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-api-plugin-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-plugin-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-plugin-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "org_eclipse_sisu_plexus-0_9_0_M3_http_import",
-  jars = ["@org_eclipse_sisu_plexus-0_9_0_M3_http//file"],
-  srcjar = "@org_eclipse_sisu_plexus-0_9_0_M3-sources_http//file"
-)
-
-java_import(
-  name = "maven-model-4_0_0-rc-2_http_import",
-  jars = ["@maven-model-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-model-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-api-model-4_0_0-rc-2_http_import",
-  jars = ["@maven-api-model-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-api-model-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-model-builder-4_0_0-rc-2_http_import",
-  jars = ["@maven-model-builder-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-model-builder-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-builder-support-4_0_0-rc-2_http_import",
-  jars = ["@maven-builder-support-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-builder-support-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-logging-4_0_0-rc-2_http_import",
-  jars = ["@maven-logging-4_0_0-rc-2_http//file"],
-  srcjar = "@maven-logging-4_0_0-rc-2-sources_http//file"
-)
-
-java_import(
-  name = "maven-resolver-api-2_0_5_http_import",
-  jars = ["@maven-resolver-api-2_0_5_http//file"],
-  srcjar = "@maven-resolver-api-2_0_5-sources_http//file"
-)
-
-java_import(
-  name = "maven-resolver-util-2_0_5_http_import",
-  jars = ["@maven-resolver-util-2_0_5_http//file"],
-  srcjar = "@maven-resolver-util-2_0_5-sources_http//file"
-)
-
-java_import(
-  name = "plexus-sec-dispatcher-4_0_3_http_import",
-  jars = ["@plexus-sec-dispatcher-4_0_3_http//file"],
-  srcjar = "@plexus-sec-dispatcher-4_0_3-sources_http//file"
-)
-
-java_import(
-  name = "plexus-interactivity-api-1_3_http_import",
-  jars = ["@plexus-interactivity-api-1_3_http//file"],
-  srcjar = "@plexus-interactivity-api-1_3-sources_http//file"
+  name = "slf4j-api-2_0_17_http_import",
+  jars = ["@slf4j-api-2_0_17_http//file"],
+  srcjar = "@slf4j-api-2_0_17-sources_http//file"
 )
 
 java_import(
@@ -6739,20 +6771,14 @@ java_import(
 )
 
 java_import(
-  name = "jansi-core-3_28_0_http_import",
-  jars = ["@jansi-core-3_28_0_http//file"],
-  srcjar = "@jansi-core-3_28_0-sources_http//file"
-)
-
-java_import(
-  name = "jline-terminal-3_28_0_http_import",
-  jars = ["@jline-terminal-3_28_0_http//file"],
-  srcjar = "@jline-terminal-3_28_0-sources_http//file"
+  name = "jansi-core-3_29_0_http_import",
+  jars = ["@jansi-core-3_29_0_http//file"],
+  srcjar = "@jansi-core-3_29_0-sources_http//file"
 )
 
 java_library(
-  name = "maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-2-provided",
-  exports = [":maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-2"],
+  name = "maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-3-provided",
+  exports = [":maven-server-m40-org-apache-maven-maven-embedder-4-0-0-rc-3"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
@@ -9614,18 +9640,18 @@ kt_jvm_import(
 java_library(
   name = "search_everywhere_ml-ai-grazie-emb",
   exports = [
-    ":model-emb-jvm-0_4_16_http_import",
-    ":model-text-jvm-0_4_16_http_import",
-    ":model-common-jvm-0_4_16_http_import",
-    ":utils-common-jvm-0_4_16_http_import",
+    ":model-emb-jvm-0_4_27_http_import",
+    ":model-text-jvm-0_4_27_http_import",
+    ":model-common-jvm-0_4_27_http_import",
+    ":utils-common-jvm-0_4_27_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "model-emb-jvm-0_4_16_http_import",
-  jar = "@model-emb-jvm-0_4_16_http//file",
-  srcjar = "@model-emb-jvm-0_4_16-sources_http//file"
+  name = "model-emb-jvm-0_4_27_http_import",
+  jar = "@model-emb-jvm-0_4_27_http//file",
+  srcjar = "@model-emb-jvm-0_4_27-sources_http//file"
 )
 
 java_import(
@@ -9729,15 +9755,15 @@ java_import(
 java_library(
   name = "spellchecker-ai-grazie-nlp-detect",
   exports = [
-    ":nlp-detect-jvm-0_4_16_http_import",
-    ":utils-common-jvm-0_4_16_http_import",
-    ":nlp-common-jvm-0_4_16_http_import",
-    ":model-text-jvm-0_4_16_http_import",
-    ":model-common-jvm-0_4_16_http_import",
-    ":nlp-patterns-jvm-0_4_16_http_import",
-    ":nlp-tokenizer-jvm-0_4_16_http_import",
-    ":nlp-similarity-jvm-0_4_16_http_import",
-    ":nlp-langs-jvm-0_4_16_http_import",
+    ":nlp-detect-jvm-0_4_27_http_import",
+    ":utils-common-jvm-0_4_27_http_import",
+    ":nlp-common-jvm-0_4_27_http_import",
+    ":model-text-jvm-0_4_27_http_import",
+    ":model-common-jvm-0_4_27_http_import",
+    ":nlp-patterns-jvm-0_4_27_http_import",
+    ":nlp-tokenizer-jvm-0_4_27_http_import",
+    ":nlp-similarity-jvm-0_4_27_http_import",
+    ":nlp-langs-jvm-0_4_27_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -9751,7 +9777,7 @@ kt_jvm_import(
 
 java_import(
   name = "spellchecker-ai-grazie-utils-lucene-lt-compatibility",
-  jars = ["@utils-lucene-lt-compatibility-0_4_16_http//file"],
+  jars = ["@utils-lucene-lt-compatibility-0_4_27_http//file"],
   visibility = ["//visibility:public"]
 )
 
