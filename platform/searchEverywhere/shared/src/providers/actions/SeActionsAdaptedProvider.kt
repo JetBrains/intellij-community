@@ -2,7 +2,6 @@
 package com.intellij.platform.searchEverywhere.providers.actions
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
@@ -20,10 +19,8 @@ class SeActionsAdaptedProvider(val project: Project, private val legacyContribut
     val filter = SeActionsFilterData.from(params.filter)
 
     coroutineScope {
-      legacyContributor.fetchWeightedElements(this, inputQuery) { t ->
-        runBlockingCancellable {
-          collector.put(SeActionItem(t.item))
-        }
+      legacyContributor.fetchWeightedElements(this, inputQuery) {
+        collector.put(SeActionItem(it.item))
       }
     }
   }
