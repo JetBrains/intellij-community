@@ -30,8 +30,8 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.net.URL;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
@@ -109,12 +109,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     final boolean dataSharingEnabledByFreeLicense = ConsentOptions.getInstance().isUsageStatsConsent(consent)
                                                   && isAllowedByFreeLicense();
     if (addCheckBox) {
-      String checkBoxText = StringUtil.capitalize(consent.getName());
-      if (ConsentOptions.getInstance().isEAP()) {
-        if (ConsentOptions.condUsageStatsConsent().test(consent)) {
-          checkBoxText = IdeBundle.message("gdpr.checkbox.when.using.eap.versions", checkBoxText);
-        }
-      }
+      String checkBoxText = getCheckBoxText(consent);
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
       ConsentStateSupplier stateSupplier;
       if (dataSharingDisabledExternally || dataSharingEnabledByFreeLicense) {
@@ -127,7 +122,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       }
       //noinspection HardCodedStringLiteral
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
-                                                   +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
+                                                   + StringUtil.replace(getCheckBoxCommentText(consent), "\n", "</p>" + getParagraphTag()) + "</p>").createPanel();
       cb.setOpaque(false);
       consentMapping.add(stateSupplier);
     } else {
@@ -168,6 +163,20 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
                                                                                                     IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning")));
     if (dataSharingEnabledByFreeLicense) return wrapPanelWithWarning(pane, IdeBundle.message("gdpr.usage.statistics.enabled.for.free.license.warning"));
     return pane;
+  }
+
+  private static @NotNull @NlsSafe String getCheckBoxText(Consent consent) {
+    String checkBoxText = StringUtil.capitalize(consent.getName());
+    if (ConsentOptions.getInstance().isEAP()) {
+      if (ConsentOptions.condUsageStatsConsent().test(consent)) {
+        checkBoxText = IdeBundle.message("gdpr.checkbox.when.using.eap.versions", checkBoxText);
+      }
+    }
+    return checkBoxText;
+  }
+
+  private static @NotNull @NlsSafe String getCheckBoxCommentText(Consent consent) {
+    return consent.getText();
   }
 
   private static JPanel wrapPanelWithWarning(JPanel panel, @NlsContexts.DetailedDescription String warningText) {
