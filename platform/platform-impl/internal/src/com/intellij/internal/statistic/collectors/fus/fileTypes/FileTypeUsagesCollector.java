@@ -22,16 +22,18 @@ import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import static com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector.findSchema;
 import static java.util.Collections.emptySet;
 
 @ApiStatus.Internal
 public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  private final EventLogGroup GROUP = new EventLogGroup("file.types", 8);
+  private final EventLogGroup GROUP = new EventLogGroup("file.types", 9);
 
   private final RoundedIntEventField COUNT = EventFields.RoundedInt("count");
 
@@ -40,11 +42,16 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   public static final IntEventField PERCENT = EventFields.Int("percent");
   private final ObjectListEventField FILE_SCHEME_PERCENT = new ObjectListEventField("file_schema", SCHEMA, PERCENT);
 
+  public static final EventField<FileType> TYPE_BY_EXTENSION = EventFields.FileType;
+  public static final IntEventField TYPE_BY_EXTENSION_PERCENT = EventFields.Int("percent");
+  private final ObjectListEventField FILE_TYPE_BY_EXTENSION_PERCENT = new ObjectListEventField("original_file_type", TYPE_BY_EXTENSION, TYPE_BY_EXTENSION_PERCENT);
+
   private final VarargEventId FILE_IN_PROJECT = GROUP.registerVarargEvent(
     "file.in.project",
     EventFields.PluginInfoFromInstance,
     EventFields.FileType,
     COUNT,
+    FILE_TYPE_BY_EXTENSION_PERCENT,
     FILE_SCHEME_PERCENT
   );
 
@@ -60,12 +67,14 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     IProjectStore stateStore = ProjectKt.getStateStore(project);
     final ObjectIntMap<FileType> filesByTypeCount = new ObjectIntHashMap<>();
-    var schemaCounter = new FileTypeSchemaCounter();
+    var fileTypeMappingsCounter = new OriginalFileTypeCounter();
     projectFileIndex.iterateContent(
       file -> {
         FileType type = file.getFileType();
         filesByTypeCount.put(type, filesByTypeCount.getOrDefault(type, 0) + 1);
-        schemaCounter.recordFileTypeWithSchema(type, findSchema(project, file));
+        String fileExtension = file.getExtension();
+        var fileTypeByExtension = fileExtension == null ? null : FileTypeManager.getInstance().getFileTypeByExtension(fileExtension);
+        fileTypeMappingsCounter.recordOriginalFileType(type, fileTypeByExtension);
         return true;
       },
       //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
@@ -78,7 +87,7 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
       eventPairs.add(EventFields.PluginInfoFromInstance.with(fileType));
       eventPairs.add(EventFields.FileType.with(fileType));
       eventPairs.add(COUNT.with(filesByTypeCount.get(fileType)));
-      eventPairs.add(FILE_SCHEME_PERCENT.with(schemaCounter.getFileTypeSchemaUsagePercentage(fileType)));
+      eventPairs.add(FILE_TYPE_BY_EXTENSION_PERCENT.with(fileTypeMappingsCounter.getFileTypeSchemaUsagePercentage(fileType)));
       events.add(FILE_IN_PROJECT.metric(eventPairs));
     }
 
