@@ -17,11 +17,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.limitedParallelism
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -97,6 +99,10 @@ private class PoetryProjectTomlListener(val module: Module) : DocumentListener {
 internal class PoetryPyProjectTomlWatcher : EditorFactoryListener {
   private val changeListenerKey = Key.create<PoetryProjectTomlListener>("Poetry.PyProjectToml.change.listener")
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val queueDispatcher = Dispatchers.Default.limitedParallelism(1, "PoetryPyProjectTomlWatcher Queue Dispatcher")
+
+
   private fun Document.addPoetryListener(module: Module) = synchronized(changeListenerKey) {
     getUserData(changeListenerKey)?.let { return@addPoetryListener }
 
@@ -113,21 +119,27 @@ internal class PoetryPyProjectTomlWatcher : EditorFactoryListener {
     }
   }
 
-  override fun editorCreated(event: EditorFactoryEvent) {
-    val project = event.editor.project ?: return
-
+  private fun queuedLaunch(block: suspend () -> Unit) {
     service<PythonSdkCoroutineService>().cs.launch {
-      val editablePyProjectTomlFile = event.editor.document.virtualFile?.takeIf { it.name == PY_PROJECT_TOML } ?: return@launch
-      val module = getModule(editablePyProjectTomlFile, project) ?: return@launch
-      val poetryManagedTomlFile = module.takeIf { it.pythonSdk?.isPoetry == true }?.let { pyProjectToml(it) }
-
-      if (editablePyProjectTomlFile == poetryManagedTomlFile) {
-        event.editor.document.addPoetryListener(module)
+      withContext(queueDispatcher) {
+        block()
       }
     }
   }
 
-  override fun editorReleased(event: EditorFactoryEvent) {
+  override fun editorCreated(event: EditorFactoryEvent) = queuedLaunch {
+    val project = event.editor.project ?: return@queuedLaunch
+
+    val editablePyProjectTomlFile = event.editor.document.virtualFile?.takeIf { it.name == PY_PROJECT_TOML } ?: return@queuedLaunch
+    val module = getModule(editablePyProjectTomlFile, project) ?: return@queuedLaunch
+    val poetryManagedTomlFile = module.takeIf { it.pythonSdk?.isPoetry == true }?.let { pyProjectToml(it) }
+
+    if (editablePyProjectTomlFile == poetryManagedTomlFile) {
+      event.editor.document.addPoetryListener(module)
+    }
+  }
+
+  override fun editorReleased(event: EditorFactoryEvent) = queuedLaunch {
     event.editor.document.removePoetryListenerIfExists()
   }
 
