@@ -84,7 +84,6 @@ public final class ScratchFileActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      getTemplatePresentation().setText(myActionText.getValue());
 
       Project project = e.getProject();
       String place = e.getPlace();
