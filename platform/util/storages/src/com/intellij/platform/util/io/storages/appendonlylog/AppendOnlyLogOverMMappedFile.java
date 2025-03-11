@@ -1072,8 +1072,8 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
       if (insideQuestionableRecord || insideNeighbourRegion) {
         String bufferAsHex = recordSize > maxRecordSizeToDump ?
-                             IOUtil.toHexString(buffer.limit(buffer.position() + maxRecordSizeToDump)) + " ... " :
-                             IOUtil.toHexString(buffer);
+                             IOUtil.toHexString(buffer.limit(buffer.position() + maxRecordSizeToDump).slice()) + " ... " :
+                             IOUtil.toHexString(buffer.slice());
         sb.append(insideQuestionableRecord ? "*" : "")
           .append("[id: ").append(recordId).append(']')
           .append("[offset: ").append(recordOffset).append(']')

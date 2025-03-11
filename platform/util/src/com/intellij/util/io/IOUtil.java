@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -468,31 +468,47 @@ public final class IOUtil {
     return Arrays.toString(bytes);
   }
 
-  public static @NotNull String toHexString(final @NotNull ByteBuffer buffer) {
+  /**
+   * Formats buffer content into a string, as HEX.
+   * BEWARE: Method formats the _whole_ buffer, ignoring position/limit, it is intended for debug/error messages formatting
+   */
+  public static @NotNull String toHexString(@NotNull ByteBuffer buffer) {
     return toHexString(buffer, /*pageSize: */ -1);
   }
 
-  public static @NotNull String toHexString(final @NotNull ByteBuffer buffer,
-                                            final int pageSize) {
-    final byte[] bytes = new byte[buffer.capacity()];
-    final ByteBuffer slice = buffer.duplicate();
+  /**
+   * Formats buffer content into a string, formatting bytes as space-separated hexadecimal.
+   * BEWARE: Method formats the _whole_ buffer, ignoring position/limit, it is intended for debug/error messages formatting
+   *
+   * @param pageSize if >0 adds '\n' every pageSize bytes, does nothing if pageSize <=0
+   */
+  public static @NotNull String toHexString(@NotNull ByteBuffer buffer,
+                                            int pageSize) {
+    byte[] bytes = new byte[buffer.capacity()];
+    ByteBuffer slice = buffer.duplicate();
+    //don't care about byte-order since we access content byte-by-byte only
     slice.position(0)
       .limit(buffer.capacity());
     slice.get(bytes);
     return toHexString(bytes, pageSize);
   }
 
-  public static @NotNull String toHexString(final byte[] bytes) {
+  public static @NotNull String toHexString(byte[] bytes) {
     return toHexString(bytes, /*pageSize: */-1);
   }
 
-  public static @NotNull String toHexString(final byte[] bytes,
-                                            final int pageSize) {
-    final StringBuilder sb = new StringBuilder(bytes.length * 3);
+  /**
+   * Formats bytes into a string, as space-separated hexadecimals.
+   *
+   * @param pageSize if >0 adds '\n' every pageSize bytes, does nothing if pageSize <=0
+   */
+  public static @NotNull String toHexString(byte[] bytes,
+                                            int pageSize) {
+    StringBuilder sb = new StringBuilder(bytes.length * 3);
     for (int i = 0; i < bytes.length; i++) {
-      final byte b = bytes[i];
-      final int unsignedByte = Byte.toUnsignedInt(b);
-      if (unsignedByte < 16) {//Integer.toHexString format it single-digit, which ruins blocks alignment
+      byte b = bytes[i];
+      int unsignedByte = Byte.toUnsignedInt(b);
+      if (unsignedByte < 16) {//Integer.toHexString formats it as single-digit, which ruins blocks alignment
         sb.append("0");
       }
       sb.append(Integer.toHexString(unsignedByte));
