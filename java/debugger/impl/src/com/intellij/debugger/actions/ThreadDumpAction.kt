@@ -107,11 +107,16 @@ class ThreadDumpAction : DumbAwareAction() {
       return try {
         val providers = extendedProviders.extensionList.map { it.getProvider(context) }
 
+        fun getAllItems(suspendContext: SuspendContextImpl?) =
+          providers
+            .flatMap { it.getItems(suspendContext) }
+            .sortedWith(DumpItem.BY_INTEREST)
+
         if (providers.any { it.requiresEvaluation() }) {
           val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.seconds", 5).seconds
           try {
             suspendAllAndEvaluate(context, timeout) { suspendContext ->
-              providers.flatMap { it.getItems(suspendContext) }
+              getAllItems(suspendContext)
             }
           }
           catch (_: TimeoutCancellationException) {
@@ -120,7 +125,7 @@ class ThreadDumpAction : DumbAwareAction() {
           }
         }
         else {
-          providers.flatMap { it.getItems(null) }
+          getAllItems(null)
         }
       }
       catch (e: Throwable) {
