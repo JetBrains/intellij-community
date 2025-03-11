@@ -38,6 +38,8 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.time.Instant
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.div
+import kotlin.io.path.setPosixFilePermissions
+
 
 private const val STATE_FILE = ".state.json"
 
@@ -56,10 +58,12 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
   fun run(indicator: ProgressIndicator) {
     val localRemoteSourcesRoot = Files.createDirectories(sdk.remoteSourcesLocalPath)
 
-    // The directory needs to be readable to all users in case the helpers are run as another user
-    val localUploadDir = Files.createTempDirectory(
-      "remote_sync", PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-xr-x"))
-    )
+    val localUploadDir = Files.createTempDirectory("remote_sync")
+    if (Files.getFileStore(localUploadDir).supportsFileAttributeView("posix")) {
+      // The directory needs to be readable to all users in case the helpers are run as another user
+      localUploadDir.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+    }
+
     val uploadVolume = TargetEnvironment.UploadRoot(localRootPath = localUploadDir, targetRootPath = TargetPath.Temporary())
     targetEnvRequest.uploadVolumes += uploadVolume
 
