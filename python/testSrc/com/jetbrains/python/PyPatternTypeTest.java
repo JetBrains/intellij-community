@@ -399,6 +399,22 @@ match m:
                    """);
   }
 
+  // PY-79716
+  public void testMatchClassPatternShadowingCapture() {
+    doTestByText("""
+from typing import assert_type
+
+class C:
+    foo: str
+    bar: int
+
+def f(x):
+    match x:
+        case C(foo=x, bar=y):
+            assert_type(x, str)
+                   """);
+  }
+
   public void testMatchClassPatternCaptureSelf() {
     doTestByText("""
 from typing import assert_type
