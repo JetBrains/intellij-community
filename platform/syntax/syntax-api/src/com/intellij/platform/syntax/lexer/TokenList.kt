@@ -70,30 +70,26 @@ fun TokenList(
   tokenizedText: CharSequence,
 ): TokenList = TokenSequence(lexStarts, lexTypes, tokenCount, tokenizedText)
 
-fun tokenListLexer(tokenList: TokenList): Lexer {
-  return TokenListLexerImpl(tokenList)
-}
+fun tokenListLexer(tokenList: TokenList): Lexer =
+  TokenListLexerImpl(tokenList)
 
 /**
  * @return whether [.getTokenType](index) would return the given type
  */
-fun TokenList.hasType(index: Int, type: SyntaxElementType): Boolean {
-  return getTokenType(index) == type
-}
+fun TokenList.hasType(index: Int, type: SyntaxElementType): Boolean =
+  getTokenType(index) === type
 
 /**
  * @return whether [.getTokenType](index) would return any of the given types (null acceptable, indicating start or end of the text)
  */
-fun TokenList.hasType(index: Int, vararg types: SyntaxElementType?): Boolean {
-  return getTokenType(index) in types
-}
+fun TokenList.hasType(index: Int, vararg types: SyntaxElementType?): Boolean =
+  getTokenType(index) in types
 
 /**
  * @return whether [.getTokenType](index) would return a type in the given set
  */
-fun TokenList.hasType(index: Int, types: SyntaxElementTypeSet): Boolean {
-  return types.contains(getTokenType(index))
-}
+fun TokenList.hasType(index: Int, types: SyntaxElementTypeSet): Boolean =
+  getTokenType(index) in types
 
 /**
  * Moves back, potentially skipping tokens which represent a valid nesting sequence
@@ -106,15 +102,15 @@ fun TokenList.hasType(index: Int, types: SyntaxElementTypeSet): Boolean {
  */
 fun TokenList.backWithBraceMatching(index: Int, opening: SyntaxElementType, closing: SyntaxElementType): Int {
   var index = index
-  if (getTokenType(index) == closing) {
+  if (getTokenType(index) === closing) {
     var nesting = 1
     while (nesting > 0 && index > 0) {
       index--
       val type = getTokenType(index)
-      if (type == closing) {
+      if (type === closing) {
         nesting++
       }
-      else if (type == opening) {
+      else if (type === opening) {
         nesting--
       }
     }
