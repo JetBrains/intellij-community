@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.impl.content.SingleContentSupplier
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -90,7 +91,7 @@ open class XDebugSessionTabNewUI(
     toolbar.removeAll()
 
     val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
-    val headerActions = (headerGroup as CustomisedActionGroup).defaultChildrenOrStubs
+    val headerActions = (headerGroup as CustomisedActionGroup).defaultChildrenOrStubs.withReplacedFrontendActions()
     RunContentBuilder.addAvoidingDuplicates(toolbar, headerActions)
 
     val more = RunContentBuilder.createToolbarMoreActionGroup(toolbar)
@@ -123,6 +124,21 @@ open class XDebugSessionTabNewUI(
     more.add(gear, Constraints(Anchor.BEFORE, ""))
     more.add(CreateAction(), Constraints(Anchor.BEFORE, ""))
     toolbar.add(more, Constraints(Anchor.BEFORE, ""))
+  }
+
+  private fun Array<AnAction>.withReplacedFrontendActions(): Array<AnAction> {
+    if (!useFeProxy()) {
+      return this
+    }
+    return this.map { action ->
+      val id = ActionManager.getInstance().getId(action)
+      when (id) {
+        // create frontend based actions for stop and rerun
+        "Stop" -> ActionManager.getInstance().getAction("Stop.Debugger.Frontend")
+        "Rerun" -> ActionManager.getInstance().getAction("Rerun.Debugger.Frontend")
+        else -> action
+      }
+    }.toTypedArray()
   }
 
   open fun isSingleContent() = Registry.`is`("debugger.new.tool.window.layout.single.content", false)
