@@ -2,7 +2,7 @@
 package com.intellij.platform.syntax.psi.impl
 
 import com.intellij.analysis.AnalysisBundle
-import com.intellij.platform.syntax.util.BundleAdapter
+import com.intellij.platform.syntax.BundleAdapter
 
 object AnalysisBundleAdapted : BundleAdapter {
   override fun message(key: String, vararg params: Any?): String {

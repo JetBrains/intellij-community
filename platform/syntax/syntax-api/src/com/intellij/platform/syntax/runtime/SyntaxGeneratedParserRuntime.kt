@@ -12,8 +12,8 @@ import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Hook
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Parser
-import com.intellij.platform.syntax.util.BundleAdapter
-import com.intellij.platform.syntax.util.LimitedPool
+import com.intellij.platform.syntax.BundleAdapter
+import com.intellij.platform.syntax.LimitedPool
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.NoopLogger
 import org.jetbrains.annotations.Contract
@@ -158,7 +158,7 @@ final class SyntaxGeneratedParserRuntime(
     var altMode: Boolean = false
 
     internal val VARIANTS: LimitedPool<Variant> = LimitedPool<Variant>(VARIANTS_POOL_SIZE) { Variant() }
-    val FRAMES: LimitedPool<Frame> = LimitedPool<Frame>(FRAMES_POOL_SIZE) { Frame() }
+    internal val FRAMES: LimitedPool<Frame> = LimitedPool<Frame>(FRAMES_POOL_SIZE) { Frame() }
 
     fun getExpected(position: Int, expected: Boolean): String {
       val sb = StringBuilder()
