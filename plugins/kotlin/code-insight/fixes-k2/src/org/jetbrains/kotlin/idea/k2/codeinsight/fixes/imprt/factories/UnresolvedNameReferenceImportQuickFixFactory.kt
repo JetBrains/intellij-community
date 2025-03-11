@@ -11,18 +11,16 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import kotlin.collections.orEmpty
 
 internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, ImportPositionContext<*, *>>? {
+    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportPositionContext<*, *>? {
         return when (diagnostic) {
             is KaFirDiagnostic.UnresolvedImport,
             is KaFirDiagnostic.UnresolvedReference,
             is KaFirDiagnostic.UnresolvedReferenceWrongReceiver,
             is KaFirDiagnostic.InvisibleReference -> {
                 val diagnosticPsi = diagnostic.psi.operationReferenceForBinaryExpressionOrThis as? KtElement ?: return null
-                val importPositionContext = ImportPositionContext.detect(diagnosticPsi)
-                importPositionContext.position to importPositionContext
+                ImportPositionContext.detect(diagnosticPsi)
             }
 
             else -> null
