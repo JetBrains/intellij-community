@@ -32,6 +32,7 @@ public class GotoRelatedProviderTest extends LightPlatformCodeInsightTestCase {
       countDataContext.set(0);
       getEditor().getCaretModel().moveToOffset(i);
       DataContext context = SimpleDataContext.builder()
+        .add(CommonDataKeys.PROJECT, getProject())
         .add(CommonDataKeys.PSI_FILE, getFile())
         .add(CommonDataKeys.EDITOR, getEditor())
         .add(CommonDataKeys.PSI_ELEMENT, getFile().findElementAt(getEditor().getCaretModel().getOffset()))
