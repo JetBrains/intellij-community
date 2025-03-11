@@ -26,6 +26,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
 import java.nio.file.Files
@@ -42,7 +43,8 @@ import javax.swing.SwingUtilities
  * @see com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.createWelcomeTab
  * @see com.intellij.ide.ManageRecentProjectsAction
  */
-internal sealed interface RecentProjectTreeItem {
+@ApiStatus.Internal
+sealed interface RecentProjectTreeItem {
   fun displayName(): @NlsSafe String
 
   fun children(): List<RecentProjectTreeItem>
@@ -162,7 +164,8 @@ internal data class ProviderRecentProjectItem(
   }
 }
 
-internal data class CloneableProjectItem(
+@ApiStatus.Internal
+data class CloneableProjectItem(
   val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
@@ -180,7 +183,8 @@ internal class RootItem(private val collectors: List<() -> List<RecentProjectTre
   override fun children(): List<RecentProjectTreeItem> = collectors.flatMap { collector -> collector() }
 }
 
-internal object ProjectCollectors {
+@ApiStatus.Internal
+object ProjectCollectors {
   @JvmField
   val recentProjectsCollector: () -> List<RecentProjectTreeItem> = {
     RecentProjectListActionProvider.getInstance().collectProjects()

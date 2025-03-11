@@ -67,7 +67,8 @@ class CloneableProjectsService {
     }
   }
 
-  internal fun collectCloneableProjects(): Sequence<CloneableProjectItem> {
+  @ApiStatus.Internal
+  fun collectCloneableProjects(): Sequence<CloneableProjectItem> {
     val recentProjectManager by lazy { RecentProjectsManager.getInstance() as RecentProjectsManagerBase }
     return cloneableProjects.asSequence().map { cloneableProject ->
       val projectPath = cloneableProject.projectPath
