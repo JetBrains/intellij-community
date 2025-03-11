@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.HEAL
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.MAX_CHILDREN_TO_LOG
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.MAX_SINGLE_ERROR_LOGS_BEFORE_THROTTLE
 import com.intellij.openapi.vfs.newvfs.persistent.VFSHealthCheckerConstants.WRAP_HEALTH_CHECK_IN_READ_ACTION
-import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.SystemProperties.getIntProperty
@@ -150,13 +149,7 @@ private class VFSHealthCheckServiceStarter : ApplicationActivity {
       return
     }
     val checker = VFSHealthChecker(fsRecordsImpl, LOG)
-    val checkHealthReport = try {
-      checker.checkHealth(CHECK_ORPHAN_RECORDS)
-    }
-    catch (@Suppress("IncorrectCancellationExceptionHandling") _: AlreadyDisposedException) {
-      return //VFS is already closed
-      //TODO RC: do we need it to catch it now, as ADE extends PCE?
-    }
+    val checkHealthReport = checker.checkHealth(CHECK_ORPHAN_RECORDS)
 
     VfsUsageCollector.logVfsHealthCheck(
       fsRecordsImpl.creationTimestamp,
