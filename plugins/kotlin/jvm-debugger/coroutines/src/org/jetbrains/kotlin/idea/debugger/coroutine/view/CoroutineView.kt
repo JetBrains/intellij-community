@@ -397,6 +397,8 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
 private fun invokeInSuspendContext(
     suspendContext: SuspendContextImpl,
     command: (SuspendContextImpl) -> Unit
-): Unit = executeOnDMT(suspendContext, PrioritizedTask.Priority.NORMAL) {
-    command(suspendContext)
+) {
+    executeOnDMT(suspendContext, PrioritizedTask.Priority.NORMAL) {
+        command(suspendContext)
+    }
 }

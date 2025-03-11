@@ -417,17 +417,6 @@ fun <T> invokeCommandAsCompletableFuture(
   action: suspend () -> T,
 ): CompletableFuture<T> = invokeCommandAsCompletableFuture(suspendContext.managerThread, priority, suspendContext, action)
 
-/**
- * Executes [action] in debugger manager thread as a [DebuggerCommandImpl] thread and returns a future.
- */
-@ApiStatus.Internal
-@ApiStatus.Experimental
-fun <T> invokeCommandAsCompletableFuture(
-  managerThread: DebuggerManagerThreadImpl,
-  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
-  action: suspend () -> T,
-): CompletableFuture<T> = invokeCommandAsCompletableFuture(managerThread, priority, null, action)
-
 private fun <T> invokeCommandAsCompletableFuture(
   managerThread: DebuggerManagerThreadImpl,
   priority: PrioritizedTask.Priority,
@@ -444,25 +433,6 @@ private fun <T> invokeCommandAsCompletableFuture(
     }
   }
   return res
-}
-
-/**
- * This call launches the coroutine [action].
- *
- * **This method can only be called in debugger manager thread.** Use [executeOnDMT] if you are not.
- *
- * Starts a [SuspendContextCommandImpl] if was in a [SuspendContextCommandImpl], else starts a [DebuggerCommandImpl].
- *
- * Pass [onCommandCancelled] to be notified if the command is canceled.
- */
-@ApiStatus.Internal
-@ApiStatus.Experimental
-fun launchInDebuggerCommand(
-  onCommandCancelled: (() -> Unit)? = null,
-  action: suspend () -> Unit,
-) {
-  val (managerThread, priority, suspendContext) = findCurrentContext()
-  executeOnDMT(managerThread, priority, suspendContext, onCommandCancelled, action)
 }
 
 /**
