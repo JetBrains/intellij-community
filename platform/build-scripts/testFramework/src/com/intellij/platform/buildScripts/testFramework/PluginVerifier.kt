@@ -157,6 +157,7 @@ class PluginVerifier(
 
     // in 251 already.
     "com.intellij.ml.inline.completion.impl.postprocessing.enclosure.MLCompletionEnclosuresDefinition.<init>",
+    "com.intellij.fullLine.api",
 
     // https://youtrack.jetbrains.com/issue/LLM-15211/Inline-code-competion-fails-with-NoSuchMethodError-in-251
     "com.intellij.ml.llm.completion.cloud.inline.CloudInlineCompletionProvider.getSuggestionDebounced",
