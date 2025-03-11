@@ -14,4 +14,3 @@ abstract class KotlinClass : KotlinInterface {
 
     }
 }
-// IGNORE_K2

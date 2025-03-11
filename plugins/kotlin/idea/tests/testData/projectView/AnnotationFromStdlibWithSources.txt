@@ -65,6 +65,7 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/commonMain/kotlin/annotation
      ExposedCopyVisibility
      ExtensionFunctionType
      Function
+     IgnorableReturnValue
      InitializedLazyImpl
      kotlin.kotlin_builtins
      KotlinNothingValueException
@@ -74,6 +75,7 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/commonMain/kotlin/annotation
      Lazy
      LazyThreadSafetyMode
      Metadata
+     MustUseReturnValue
      NotImplementedError
      NoWhenBranchMatchedException
      OptIn

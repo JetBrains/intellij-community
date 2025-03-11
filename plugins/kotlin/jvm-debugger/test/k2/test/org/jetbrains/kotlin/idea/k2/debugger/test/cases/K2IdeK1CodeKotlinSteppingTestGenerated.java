@@ -285,6 +285,11 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/stepInto/interfaces.kt");
         }
 
+        @TestMetadata("interfacesJvmDefaultDisable.kt")
+        public void testInterfacesJvmDefaultDisable() throws Exception {
+            runTest("../testData/stepping/stepInto/interfacesJvmDefaultDisable.kt");
+        }
+
         @TestMetadata("localFun.kt")
         public void testLocalFun() throws Exception {
             runTest("../testData/stepping/stepInto/localFun.kt");

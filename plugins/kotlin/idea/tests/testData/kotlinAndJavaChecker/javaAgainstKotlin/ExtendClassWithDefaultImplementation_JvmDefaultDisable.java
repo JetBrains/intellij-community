@@ -1,6 +1,6 @@
 package test;
 
-public class ExtendClassWithDefaultImplementation_1_8 {
+public class ExtendClassWithDefaultImplementation_JvmDefaultDisable {
     public static class ExtendClass extends KotlinClass {
 
     }
