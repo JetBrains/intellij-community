@@ -586,7 +586,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       CodeInsightContext context = EditorContextManager.getEditorContext(editor, myProject);
       PsiFile psiFile = TextEditorBackgroundHighlighter.renewFile(myProject, document, context);
       FileASTNode fileNode = psiFile.getNode();
-      HighlightingSession session = queuePassesCreation(textEditor, virtualFile, passesToIgnore);
+      HighlightingSession session = queuePassesCreation(textEditor, virtualFile, passesToIgnore, new ConcurrentHashMap<>());
       if (session == null) {
         LOG.error("Can't create session for " + textEditor + " (" + textEditor.getClass() + ")," +
                   " fileEditor.getBackgroundHighlighter()=" + textEditor.getBackgroundHighlighter() +
@@ -1290,6 +1290,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     // have to store created indicators because myUpdateProgress removes canceled indicator immediately
     List<ProgressIndicator> createdIndicators = new ArrayList<>();
     List<String> result = new SmartList<>();
+    Map<Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses = new ConcurrentHashMap<>();
     try {
       for (FileEditor fileEditor : activeEditors) {
         if (fileEditor instanceof TextEditor textEditor && !textEditor.isEditorLoaded()) {
@@ -1303,7 +1304,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
         else {
           VirtualFile virtualFile = getVirtualFile(fileEditor);
-          HighlightingSession session = virtualFile == null || !virtualFile.isValid() ? null : queuePassesCreation(fileEditor, virtualFile, ArrayUtil.EMPTY_INT_ARRAY);
+          HighlightingSession session;
+          if (virtualFile == null || !virtualFile.isValid()) {
+            session = null;
+          }
+          else {
+            session = queuePassesCreation(fileEditor, virtualFile, ArrayUtil.EMPTY_INT_ARRAY, mainDocumentPasses);
+          }
           submitted |= session != null;
           if (session != null) {
             createdIndicators.add(session.getProgressIndicator());
@@ -1344,7 +1351,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    */
   private HighlightingSession queuePassesCreation(@NotNull FileEditor fileEditor,
                                                   @NotNull VirtualFile virtualFile,
-                                                  int @NotNull [] passesToIgnore) {
+                                                  int @NotNull [] passesToIgnore,
+                                                  @NotNull Map<Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundEditorHighlighter highlighter;
 
@@ -1403,7 +1411,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       TextRange compositeDocumentDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
       session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, context, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
       JobLauncher.getInstance().submitToJobThread(ThreadContext.captureThreadContext(Context.current().wrap(() ->
-            submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, highlighter, passesToIgnore, progress, session))),
+            submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, highlighter, passesToIgnore, progress, session, mainDocumentPasses))),
             // manifest exceptions in EDT to avoid storing them in the Future and abandoning
             task -> ApplicationManager.getApplication().invokeLater(() -> ConcurrencyUtil.manifestExceptionsIn(task)));
     }
@@ -1420,7 +1428,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                   @NotNull BackgroundEditorHighlighter backgroundEditorHighlighter,
                                   int @NotNull [] passesToIgnore,
                                   @NotNull DaemonProgressIndicator progress,
-                                  @NotNull HighlightingSessionImpl session) {
+                                  @NotNull HighlightingSessionImpl session,
+                                  @NotNull Map<Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
@@ -1449,6 +1458,20 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             HighlightingPass[] r = backgroundEditorHighlighter.createPassesForEditor();
             if (passesToIgnore.length != 0) {
               r = ContainerUtil.findAllAsArray(r, pass->!(pass instanceof TextEditorHighlightingPass te) || ArrayUtil.indexOf(passesToIgnore, te.getId()) == -1);
+            }
+            for (int i = 0; i < r.length; i++) {
+              HighlightingPass pass = r[i];
+              if (pass instanceof ProgressableTextEditorHighlightingPass progr) {
+                ProgressableTextEditorHighlightingPass created = mainDocumentPasses.putIfAbsent(Pair.create(document, progr.getClass()), progr);
+                if (created != null) {
+                  // When the document-bound pass was already created for this document,
+                  // do not create additional instances of it, but reuse the first created one for all other file editors.
+                  // Thus, we can distinguish whether we run the first copy of this pass (and should call collectInformation()), or
+                  // we are running a duplicate (in which case we should wait for the first copy to complete),
+                  // see ProgressableTextEditorHighlightingPass.waitMyJob()
+                  r[i] = created;
+                }
+              }
             }
             // wait for heavy processing to stop, re-schedule daemon but not too soon
             if (heavyProcessIsRunning()) {

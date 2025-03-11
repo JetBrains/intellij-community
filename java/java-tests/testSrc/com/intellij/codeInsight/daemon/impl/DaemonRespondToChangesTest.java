@@ -1158,7 +1158,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByText(PlainTextFileType.INSTANCE, "");
     Editor editor1 = getEditor();
     Editor editor2 = EditorFactory.getInstance().createEditor(editor1.getDocument(),getProject());
-    Disposer.register(getProject(), () -> EditorFactory.getInstance().releaseEditor(editor2));
+    Disposer.register(getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(editor2));
     TextEditor textEditor1 = new PsiAwareTextEditorProvider().getTextEditor(editor1);
     TextEditor textEditor2 = new PsiAwareTextEditorProvider().getTextEditor(editor2);
 
@@ -1169,6 +1169,73 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     assertEquals(collected, ContainerUtil.newHashSet(editor1, editor2));
     assertEquals(applied, ContainerUtil.newHashSet(editor1, editor2));
+  }
+
+  // checks that only one instance is running
+  public static class MySingletonAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
+    private static final AtomicBoolean wait = new AtomicBoolean();
+    private static final AtomicBoolean running = new AtomicBoolean();
+    private static final String SWEARING = "No swearing";
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (running.getAndSet(true)) {
+        throw new IllegalStateException("Already running");
+      }
+      if (element instanceof PsiComment && element.getText().equals("//XXX")) {
+        while (wait.get()) {
+          Thread.yield();
+        }
+        holder.newAnnotation(HighlightSeverity.ERROR, SWEARING).range(element).create();
+        iDidIt();
+      }
+      LOG.debug(getClass()+".annotate("+element+") = "+didIDoIt());
+      running.set(false);
+    }
+  }
+
+  public void testTwoEditorsForTheSameDocumentDoNotCompeteForMarkupModelAndHighlightingDoesNotBlinkAfterModificationInSomeEditor() {
+    Set<Editor> applied = ConcurrentCollectionFactory.createConcurrentSet();
+    Set<Editor> collected = ConcurrentCollectionFactory.createConcurrentSet();
+    registerFakePass(applied, collected);
+
+    @Language("JAVA")
+    String text = """
+    class X {
+      //XXX
+      void foo() {
+        blahblah(); <caret>
+      }
+    }
+    """;
+    text = text.replaceAll("blahblah\\(\\); <caret>\n", "blahblah(); <caret>\n"+"blahblah();\n".repeat(1000));
+    assertTrue(text.length()>1000);
+    configureByText(JavaFileType.INSTANCE, text);
+    assertTrue(highlightErrors().size()>1000);// unresolved references
+    Editor editor1 = getEditor();
+    Editor editor2 = EditorFactory.getInstance().createEditor(editor1.getDocument(),getProject());
+    Disposer.register(getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(editor2));
+    TextEditor textEditor1 = new PsiAwareTextEditorProvider().getTextEditor(editor1);
+    TextEditor textEditor2 = new PsiAwareTextEditorProvider().getTextEditor(editor2);
+    EditorTracker.getInstance(getProject()).setActiveEditors(List.of(editor1, editor2));
+
+    // check that 'MySingletonAnnotator' is run only once for two editors for the same document
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(JavaFileType.INSTANCE.getLanguage(), new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MySingletonAnnotator()}, ()-> {
+      for (int i=0; i<10; i++) {
+        MySingletonAnnotator.wait.set(true);
+        type("/");
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+          MySingletonAnnotator.wait.set(false);
+        }, 1000, TimeUnit.MILLISECONDS);
+        waitForDaemonToFinish(getProject(), editor1.getDocument());
+
+        // revert back
+        backspace();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        waitForDaemonToFinish(getProject(), editor1.getDocument());
+      }
+    });
   }
 
   public void testHighlightingInSplittedWindowFinishesEventually() throws Exception {
@@ -1184,7 +1251,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       configureByText(JavaFileType.INSTANCE, text);
       Editor editor1 = getEditor();
       Editor editor2 = EditorFactory.getInstance().createEditor(editor1.getDocument(),getProject());
-      Disposer.register(getProject(), () -> EditorFactory.getInstance().releaseEditor(editor2));
+      Disposer.register(getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(editor2));
       TextEditor textEditor1 = new PsiAwareTextEditorProvider().getTextEditor(editor1);
       TextEditor textEditor2 = new PsiAwareTextEditorProvider().getTextEditor(editor2);
       setActiveEditors(editor1, editor2);
@@ -1491,7 +1558,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     long start = System.currentTimeMillis();
     long deadline = start + 60_000;
     waitForDaemonToStart(project, document, 60_000);
+    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     while (daemonIsWorkingOrPending(project, document)) {
+      for (DaemonProgressIndicator indicator : codeAnalyzer.getUpdateProgress().values()) {
+        Throwable trace = indicator.getCancellationTrace();
+        if (trace != null && !(trace instanceof ProcessCanceledException)) {
+          ExceptionUtil.rethrow(trace);
+        }
+      }
       if (System.currentTimeMillis() > deadline) {
         DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole();
         fail("Too long waiting for daemon to finish ("+(System.currentTimeMillis()-start)+"ms already)");
