@@ -40,7 +40,7 @@ internal class FrontendXDebuggerSessionProcessHandler(
           }
           is XDebuggerProcessHandlerEvent.OnTextAvailable -> {
             // TODO: DONT create Key every time
-            notifyTextAvailable(event.eventData.text, Key.create<Any?>(event.key))
+            notifyTextAvailable(event.eventData.text ?: "", Key.create<Any?>(event.key))
           }
           XDebuggerProcessHandlerEvent.ProcessNotStarted -> {
             // TODO: handle this case

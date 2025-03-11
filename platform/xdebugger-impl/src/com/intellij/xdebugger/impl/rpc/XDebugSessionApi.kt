@@ -105,7 +105,7 @@ sealed interface XDebuggerProcessHandlerEvent {
 @ApiStatus.Internal
 @Serializable
 data class XDebuggerProcessHandlerEventData(
-  val text: @NlsSafe String,
+  val text: @NlsSafe String?,
   val exitCode: Int,
 )
 

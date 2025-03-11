@@ -105,13 +105,13 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       // send initial state
       when {
         isStartNotified -> {
-          trySend(XDebuggerProcessHandlerEvent.StartNotified(XDebuggerProcessHandlerEventData("Process Started", 0)))
+          trySend(XDebuggerProcessHandlerEvent.StartNotified(XDebuggerProcessHandlerEventData(null, 0)))
         }
         isProcessTerminating -> {
-          trySend(XDebuggerProcessHandlerEvent.StartNotified(XDebuggerProcessHandlerEventData("Process is Terminating", 0)))
+          trySend(XDebuggerProcessHandlerEvent.StartNotified(XDebuggerProcessHandlerEventData(null, 0)))
         }
         isProcessTerminated -> {
-          trySend(XDebuggerProcessHandlerEvent.StartNotified(XDebuggerProcessHandlerEventData("Process is Terminated", exitCode ?: 0)))
+          trySend(XDebuggerProcessHandlerEvent.StartNotified(XDebuggerProcessHandlerEventData(null, exitCode ?: 0)))
         }
       }
 
