@@ -777,12 +777,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           .sorted(Comparator.comparing(sdk -> !(sdk.getSdkType() instanceof JavaSdk))) // prefer regular jdks
           .filter(sdk -> versionMatch(sdk, version))
           .findFirst().ifPresent(sdk -> {
-            XDebuggerManagerImpl.getNotificationGroup().createNotification(
+            LOG.info(
               JavaDebuggerBundle.message("message.remote.jre.version.mismatch",
                                          versionString,
                                          runjre != null ? runjre.getVersionString() : "unknown",
                                          sdk.getName())
-              , MessageType.INFO).notify(project);
+            );
             getSession().setAlternativeJre(sdk);
           });
       }
