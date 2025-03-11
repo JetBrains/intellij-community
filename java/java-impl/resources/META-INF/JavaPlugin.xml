@@ -833,6 +833,7 @@
     <projectConfigurable id="jvm.logging" parentId="language" instance="com.intellij.ui.logging.JvmLoggingConfigurable"
                          bundle="messages.JavaBundle" key="jvm.logging.configurable.display.name"/>
     <jvm.exceptionFilter implementation="com.intellij.execution.filters.NavigateToExceptionClassFilter"/>
+    <jvm.exceptionFilter implementation="com.intellij.execution.filters.JavaExceptionFilter"/>
 
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
     <jdkUpdateCheckContributor implementation="com.intellij.execution.AlternativeSdkRootsProviderForJdkUpdate"/>
