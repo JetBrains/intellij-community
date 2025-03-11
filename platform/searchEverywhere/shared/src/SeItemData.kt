@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere
 
-import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
@@ -17,10 +16,8 @@ data class SeItemData(
   private val itemRef: DurableRef<SeItemEntity>
 ) {
 
-  suspend fun fetchItemIfExists(): SeItem? {
-    return withKernel {
-      itemRef.derefOrNull()?.findItemOrNull()
-    }
+  fun fetchItemIfExists(): SeItem? {
+    return itemRef.derefOrNull()?.findItemOrNull()
   }
 
   @ApiStatus.Internal

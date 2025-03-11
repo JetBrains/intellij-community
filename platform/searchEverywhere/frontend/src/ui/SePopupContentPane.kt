@@ -203,10 +203,8 @@ class SePopupContentPane(private val vm: SePopupVm): JPanel(), Disposable {
       val newShortcutSet: ShortcutSet = CustomShortcutSet(*newShortcuts.toTypedArray())
       DumbAwareAction.create { _: AnActionEvent? ->
         val indices: IntArray = resultList.selectedIndices
-        vm.coroutineScope.launch {
-          withContext(Dispatchers.EDT) {
-            elementsSelected(indices, modifiers)
-          }
+        vm.coroutineScope.launch(Dispatchers.EDT) {
+          elementsSelected(indices, modifiers)
         }
       }.registerCustomShortcutSet(newShortcutSet, this, this)
     }

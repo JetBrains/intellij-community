@@ -17,6 +17,6 @@ class SeItemEntityHolder(override val eid: EID) : Entity {
     SeItemEntityHolder(it)
   }) {
     internal val Item = requiredTransient<Any>("item")
-    internal val Entity = requiredRef<SeItemEntity>("itemEntity", RefFlags.CASCADE_DELETE_BY)
+    internal val ItemEntity = requiredRef<SeItemEntity>("itemEntity", RefFlags.CASCADE_DELETE_BY)
   }
 }
