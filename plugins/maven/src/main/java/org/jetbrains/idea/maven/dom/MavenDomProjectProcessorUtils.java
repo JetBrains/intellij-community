@@ -434,9 +434,9 @@ public final class MavenDomProjectProcessorUtils {
                                                 @NotNull Processor<? super T> processor,
                                                 @NotNull Project project,
                                                 Function<? super MavenDomProfile, ? extends T> domProfileFunction) {
-    MavenGeneralSettings settings = MavenProjectsManager.getInstance(project).getGeneralSettings();
+    MavenSettingsCache cache = MavenSettingsCache.getInstance(project);
 
-    for (VirtualFile each : settings.getEffectiveSettingsFiles()) {
+    for (VirtualFile each : cache.getEffectiveVirtualSettingsFiles()) {
       MavenDomSettingsModel settingsDom = MavenDomUtil.getMavenDomModel(project, each, MavenDomSettingsModel.class);
       if (settingsDom == null) continue;
 
@@ -527,7 +527,7 @@ public final class MavenDomProjectProcessorUtils {
       }
 
       VirtualFile projectFile = MavenDomUtil.getVirtualFile(projectDom);
-      return projectFile == null ? null : process(myManager.getGeneralSettings(), projectFile, parentDesc);
+      return projectFile == null ? null : process(projectFile, parentDesc);
     }
   }
 

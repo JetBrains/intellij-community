@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerEmbedder
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -39,9 +40,11 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
-class MavenCommandLineSetup(private val project: Project,
-                            private val name: @NlsSafe String,
-                            private val request: TargetEnvironmentRequest) {
+class MavenCommandLineSetup(
+  private val project: Project,
+  private val name: @NlsSafe String,
+  private val request: TargetEnvironmentRequest,
+) {
 
   val commandLine = TargetedCommandLineBuilder(request)
   val platform = request.targetPlatform.platform
@@ -171,11 +174,15 @@ class MavenCommandLineSetup(private val project: Project,
     if (generalSettings.userSettingsFile.isNotBlank()) {
       commandLine.addParameters("-s", generalSettings.userSettingsFile)
     }
-    generalSettings.localRepository.nullize(true)?.also { commandLine.addParameter("-Dmaven.repo.local=$it") }
+    if (generalSettings.localRepository.isNotBlank()) {
+      commandLine.addParameter("-Dmaven.repo.local=${MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()}")
+    }
   }
 
-  private fun setupTargetEnvironmentVariables(settings: MavenRunConfiguration.MavenSettings,
-                                              mavenOptsValues: MutableList<TargetValue<String>>) {
+  private fun setupTargetEnvironmentVariables(
+    settings: MavenRunConfiguration.MavenSettings,
+    mavenOptsValues: MutableList<TargetValue<String>>,
+  ) {
     val runnerSettings = mavenRunnerSettings(settings)
     runnerSettings.environmentProperties.forEach { (name, value) ->
       if (MAVEN_OPTS == name) {
@@ -197,9 +204,11 @@ class MavenCommandLineSetup(private val project: Project,
     return settings.myRunnerSettings ?: MavenRunner.getInstance(project).state
   }
 
-  private fun upload(uploadRoot: TargetEnvironment.UploadRoot,
-                     uploadPathString: String,
-                     uploadRelativePath: String): TargetValue<String> {
+  private fun upload(
+    uploadRoot: TargetEnvironment.UploadRoot,
+    uploadPathString: String,
+    uploadRelativePath: String,
+  ): TargetValue<String> {
     val result = DeferredTargetValue(uploadPathString)
     dependingOnEnvironmentPromise += environmentPromise.then { (environment, progress) ->
       val volume = environment.uploadVolumes.getValue(uploadRoot)

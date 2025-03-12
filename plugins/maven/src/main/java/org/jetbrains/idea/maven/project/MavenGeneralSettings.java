@@ -225,43 +225,12 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated(forRemoval = true)
-  public @Nullable Path getEffectiveUserSettingsIoFile() {
-    return MavenEelUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfig());
-  }
-
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated
-  public @Nullable Path getEffectiveGlobalSettingsIoFile() {
-    return MavenEelUtil.getGlobalSettings(myProject, staticOrBundled(getMavenHomeType()), getMavenConfig());
-  }
-
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated(forRemoval = true)
-  public @Nullable VirtualFile getEffectiveUserSettingsFile() {
-    Path file = getEffectiveUserSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().findFileByNioFile(file);
-  }
-
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated(forRemoval = true)
-  public List<VirtualFile> getEffectiveSettingsFiles() {
-    List<VirtualFile> result = new ArrayList<>(2);
-    VirtualFile file = getEffectiveUserSettingsFile();
-    if (file != null) result.add(file);
-    file = getEffectiveGlobalSettingsFile();
-    if (file != null) result.add(file);
-    return result;
-  }
-
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated(forRemoval = true)
-  public @Nullable VirtualFile getEffectiveGlobalSettingsFile() {
-    Path file = getEffectiveGlobalSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().findFileByNioFile(file);
-  }
-
+  /**
+   * Do not use this variable.
+   * Use MavenSettingsCache.getEffectiveUserLocalRepo instead
+   * @return local repository string. This string should not be used to create a file directly
+   */
+  @ApiStatus.Internal
   public @NotNull String getLocalRepository() {
     return overriddenLocalRepository;
   }
@@ -277,30 +246,6 @@ public class MavenGeneralSettings implements Cloneable {
       changed();
     }
   }
-
-  private Path doGetEffectiveRepositoryPath(Supplier<Path> producer) {
-    Path result = myEffectiveLocalRepositoryCache;
-    if (result != null) return result;
-
-    result = producer.get();
-    myEffectiveLocalRepositoryCache = result;
-    return result;
-  }
-
-  public Path getEffectiveRepositoryPathUnderModalProgress() {
-    return doGetEffectiveRepositoryPath(() -> {
-      return MavenEelUtil.getLocalRepoUnderModalProgress(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType),
-                                                         mavenSettingsFile, getMavenConfig());
-    });
-  }
-
-  public Path getEffectiveRepositoryPath() {
-    return doGetEffectiveRepositoryPath(() -> {
-      return MavenEelUtil.getLocalRepo(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType), mavenSettingsFile,
-                                       getMavenConfig());
-    });
-  }
-
 
   public boolean isPrintErrorStackTraces() {
     return printErrorStackTraces;

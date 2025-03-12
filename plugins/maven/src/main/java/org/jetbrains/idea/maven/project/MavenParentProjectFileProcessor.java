@@ -23,8 +23,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     myProject = project;
   }
 
-  public @Nullable RESULT_TYPE process(@NotNull MavenGeneralSettings generalSettings,
-                                       @NotNull VirtualFile projectFile,
+  public @Nullable RESULT_TYPE process(@NotNull VirtualFile projectFile,
                                        @Nullable MavenParentDesc parentDesc) {
     VirtualFile superPom = MavenUtil.getEffectiveSuperPomWithNoRespectToWrapper(myProject);
     if (superPom == null || projectFile.equals(superPom)) return null;
@@ -41,7 +40,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     }
 
     if (result == null && Strings.isEmpty(parentDesc.getParentRelativePath())) {
-      result = findInLocalRepository(generalSettings, parentDesc);
+      result = findInLocalRepository(parentDesc);
       if (result == null) {
         parentDesc = new MavenParentDesc(parentDesc.getParentId(), DEFAULT_RELATIVE_PATH);
       }
@@ -58,17 +57,16 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     }
 
     if (result == null) {
-      result = findInLocalRepository(generalSettings, parentDesc);
+      result = findInLocalRepository(parentDesc);
     }
 
     return result;
   }
 
-  private RESULT_TYPE findInLocalRepository(@NotNull MavenGeneralSettings generalSettings,
-                                            @NotNull MavenParentDesc parentDesc) {
+  private RESULT_TYPE findInLocalRepository(@NotNull MavenParentDesc parentDesc) {
     RESULT_TYPE result = null;
     VirtualFile parentFile;
-    Path parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveRepositoryPath(),
+    Path parentIoFile = MavenArtifactUtil.getArtifactFile(MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo(),
                                                           parentDesc.getParentId(), "pom");
     parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile);
     if (parentFile != null) {

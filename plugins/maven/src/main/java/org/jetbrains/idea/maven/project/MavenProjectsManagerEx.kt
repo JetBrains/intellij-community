@@ -107,6 +107,8 @@ interface MavenAsyncProjectsManager {
   fun projectFileExists(file: File): Boolean {
     return Files.exists(file.toPath())
   }
+
+  suspend fun onProjectStartup()
 }
 
 open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project, cs) {
@@ -331,6 +333,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   private suspend fun doUpdateAllMavenProjects(spec: MavenSyncSpec,
                                                modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    MavenSettingsCache.getInstance(myProject).reloadAsync()
     MavenDistributionsCache.getInstance(myProject).cleanCaches()
     tracer.spanBuilder("checkOrInstallMavenWrapper").useWithScope {
       checkOrInstallMavenWrapper(project)
@@ -503,7 +506,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                              projectsToResolve,
                              projectsTree,
                              getWorkspaceMap(),
-                             generalSettings.effectiveRepositoryPath,
+                             repositoryPath,
                              updateSnapshots,
                              mavenEmbedderWrappers,
                              reporter,
@@ -518,10 +521,20 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     return resolutionResult
   }
 
+  override suspend fun onProjectStartup() {
+    if (!isNormalProject) return
+    if (!wasMavenized()) return
+
+    MavenSettingsCache.getInstance(myProject).reloadAsync()
+    initOnProjectStartup()
+  }
+
   protected open fun getWorkspaceMap(): MavenWorkspaceMap = projectsTree.workspaceMap
 
-  protected suspend fun readMavenProjectsActivity(parentActivity: StructuredIdeActivity,
-                                                  read: suspend () -> MavenProjectsTreeUpdateResult): MavenProjectsTreeUpdateResult {
+  protected suspend fun readMavenProjectsActivity(
+    parentActivity: StructuredIdeActivity,
+    read: suspend () -> MavenProjectsTreeUpdateResult,
+  ): MavenProjectsTreeUpdateResult {
     return withBackgroundProgressTraced(myProject, "readMavenProject", MavenProjectBundle.message("maven.reading"), false) {
       runMavenImportActivity(project, parentActivity, MavenImportStats.ReadingTask) {
         project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pomReadingStarted()
@@ -739,8 +752,6 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
 class MavenProjectsManagerProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project): Unit = project.trackActivity(MavenActivityKey) {
-    blockingContext {
-      MavenProjectsManager.getInstance(project).onProjectStartup()
-    }
+    MavenProjectsManager.getInstance(project).onProjectStartup()
   }
 }

@@ -327,7 +327,7 @@ abstract class MavenTestCaseLegacy : UsefulTestCase() {
     }
 
   protected val repositoryFile: Path
-    get() = mavenGeneralSettings.effectiveRepositoryPath
+    get() = MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()
 
   protected val projectPath: String
     get() = myProjectRoot!!.path

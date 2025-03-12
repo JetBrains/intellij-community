@@ -160,6 +160,7 @@ class MavenProjectAsyncBuilder {
 
     generalSettings.updateFromMavenConfig(files)
     updateMavenSettingsFromEnvironment(project, generalSettings, importingSettings)
+    MavenSettingsCache.getInstance(project).reloadAsync()
 
     val manager = MavenProjectsManager.getInstance(project)
 

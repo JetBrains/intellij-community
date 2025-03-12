@@ -48,6 +48,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.utils.MavenEelUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -168,7 +169,7 @@ public final class MavenExternalParameters {
     EncodingManager encodingManager = EncodingProjectManager.getInstance(project);
     params.setCharset(encodingManager.getDefaultCharset());
 
-    addMavenParameters(params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters);
+    addMavenParameters(project, params.getProgramParametersList(), mavenHome, coreSettings, runnerSettings, parameters);
     MavenUtil.addEventListener(mavenVersion, params);
 
     return params;
@@ -377,12 +378,13 @@ public final class MavenExternalParameters {
     parametersList.addProperty(MavenConstants.HOME_PROPERTY, mavenHome);
   }
 
-  private static void addMavenParameters(ParametersList parametersList,
+  private static void addMavenParameters(@NotNull Project project,
+                                         ParametersList parametersList,
                                          String mavenHome,
                                          MavenGeneralSettings coreSettings,
                                          MavenRunnerSettings runnerSettings,
                                          MavenRunnerParameters parameters) {
-    encodeCoreAndRunnerSettings(coreSettings, mavenHome, parametersList);
+    encodeCoreAndRunnerSettings(project, coreSettings, mavenHome, parametersList);
 
     if (runnerSettings.isSkipTests()) {
       parametersList.addProperty("skipTests", "true");
@@ -509,7 +511,7 @@ public final class MavenExternalParameters {
     return classpathEntries;
   }
 
-  private static void encodeCoreAndRunnerSettings(MavenGeneralSettings coreSettings, String mavenHome,
+  private static void encodeCoreAndRunnerSettings(@NotNull Project project, MavenGeneralSettings coreSettings, String mavenHome,
                                                   ParametersList cmdList) {
     if (coreSettings.isWorkOffline()) {
       cmdList.add("--offline");

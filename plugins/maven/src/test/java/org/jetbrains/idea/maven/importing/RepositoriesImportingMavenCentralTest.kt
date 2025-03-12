@@ -12,7 +12,10 @@ class RepositoriesImportingMavenCentralTest : MavenMultiVersionImportingTestCase
 
   override fun setUp() {
     super.setUp()
-    updateSettingsXml("")
+    runBlocking {
+      updateSettingsXml("")
+    }
+
   }
 
   @Test

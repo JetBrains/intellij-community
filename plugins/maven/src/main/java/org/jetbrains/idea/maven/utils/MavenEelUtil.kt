@@ -166,10 +166,6 @@ object MavenEelUtil  {
     ) ?: resolveM2Dir().resolve(REPOSITORY_DIR)
   }
 
-  @JvmStatic
-  fun <T> resolveUsingEelBlocking(project: Project?, ordinary: () -> T, eel: suspend (EelApi) -> T?): T {
-    return runBlockingMaybeCancellable { resolveUsingEel(project, ordinary, eel) }
-  }
 
   /**
    * USE ONLY IN SETTINGS PREVIEW
@@ -311,10 +307,10 @@ object MavenEelUtil  {
   }
 
   @JvmStatic
-  fun getGlobalSettings(project: Project?, mavenHome: StaticResolvedMavenHomeType, mavenConfig: MavenConfig?): Path? {
+  suspend fun getGlobalSettingsAsync(project: Project?, mavenHome: StaticResolvedMavenHomeType, mavenConfig: MavenConfig?): Path? {
     val filePath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS)
     if (filePath != null) return Path.of(filePath)
-    return resolveUsingEelBlocking(project,
+    return resolveUsingEel(project,
                                    { resolveGlobalSettingsFile(mavenHome) },
                                    { resolveGlobalSettingsFile(mavenHome) })
   }

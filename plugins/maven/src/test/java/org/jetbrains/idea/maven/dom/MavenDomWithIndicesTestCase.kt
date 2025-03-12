@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
 import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener
 import org.jetbrains.idea.reposearch.DependencySearchService
@@ -50,6 +51,9 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
                       <artifactId>project</artifactId>
                       <version>1</version>
                       """.trimIndent())
+    }
+    else {
+      MavenSettingsCache.getInstance(project).reloadAsync();
     }
     ApplicationManager.getApplication().invokeAndWait { myIndicesFixture!!.setUpAfterImport() }
   }

@@ -34,7 +34,6 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
-import com.intellij.util.text.nullize
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter
 import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor
 import org.jetbrains.idea.maven.execution.*
@@ -219,7 +218,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     if (generalSettings.userSettingsFile.isNotBlank()) {
       args.addAll("-s", generalSettings.userSettingsFile)
     }
-    generalSettings.localRepository.nullize(true)?.also { args.addProperty("-Dmaven.repo.local=$it") }
+    if (generalSettings.localRepository.isNotBlank()) {
+      args.addProperty("-Dmaven.repo.local=${MavenSettingsCache.getInstance(myConfiguration.project).getEffectiveUserLocalRepo()}")
+    }
   }
 
   private fun addIdeaParameters(args: ParametersList, eel: EelApi) {

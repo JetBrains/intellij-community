@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.junit.Test
 import java.io.IOException
 import java.nio.file.Path
@@ -41,7 +42,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     val repoPath = Path.of(temp, "tmpRepo")
     repoPath.createDirectories()
     val repo = repoPath.toRealPath().toCanonicalPath()
-    assertEquals(repo, mavenGeneralSettings.effectiveRepositoryPath.toCanonicalPath())
+    assertEquals(repo, MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo().toCanonicalPath())
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -226,7 +227,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       ${repo1.toString()}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo1, mavenGeneralSettings.effectiveRepositoryPath)
+    assertEquals(repo1, MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo())
     val repo2 = Path.of(dir.toString(), "localRepo2")
     waitForImportWithinTimeout {
       updateSettingsXml("""
@@ -234,7 +235,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       ${repo2.toString()}</localRepository>
                       """.trimIndent())
     }
-    assertEquals(repo2, mavenGeneralSettings.effectiveRepositoryPath)
+    assertEquals(repo2, MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo())
   }
 
   @Test

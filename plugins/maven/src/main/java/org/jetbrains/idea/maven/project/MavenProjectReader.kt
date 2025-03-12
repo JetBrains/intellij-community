@@ -18,6 +18,9 @@ import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticV
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
+import org.jetbrains.idea.maven.project.MavenSettingsCache
+import org.jetbrains.idea.maven.server.MavenRemoteObjectWrapper
+import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
@@ -314,7 +317,7 @@ class MavenProjectReader(
   }
 
   private suspend fun findInLocalRepository(parentDesc: MavenParentDesc, recursionGuard: MutableSet<VirtualFile>): Pair<VirtualFile, RawModelReadResult>? {
-    val parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.effectiveRepositoryPath, parentDesc.parentId, "pom")
+    val parentIoFile = MavenArtifactUtil.getArtifactFile(MavenSettingsCache.getInstance(myProject).getEffectiveUserLocalRepo(), parentDesc.parentId, "pom")
     val parentFile = LocalFileSystem.getInstance().findFileByNioFile(parentIoFile)
     if (parentFile != null) {
       return doProcessParent(parentFile, recursionGuard)
@@ -378,7 +381,7 @@ class MavenProjectReader(
       val settingsProblems = LinkedHashSet<MavenProjectProblem>()
       val settingsAlwaysOnProfiles: MutableSet<String> = HashSet()
 
-      for (each in generalSettings.effectiveSettingsFiles) {
+      for (each in MavenSettingsCache.getInstance(myProject).getEffectiveVirtualSettingsFiles()) {
         collectProfilesFromSettingsXml(each,
                                        projectFile,
                                        "settings",
