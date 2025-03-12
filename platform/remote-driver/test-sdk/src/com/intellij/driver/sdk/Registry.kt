@@ -8,19 +8,19 @@ fun Driver.getAllRegistryValues(): List<RegistryValue> {
   return utility(Registry::class).getAll()
 }
 
-fun Driver.getRegistryValue(key: String): RegistryValue {
+fun Driver.getRegistry(key: String): RegistryValue {
   return utility(Registry::class).get(key)
 }
 
 fun Driver.setRegistry(key: String, value: String) {
-  getRegistryValue(key).setValue(value)
+  getRegistry(key).setValue(value)
 }
 
-fun Driver.setRegistryValue(key: String, value: Int) {
+fun Driver.setRegistry(key: String, value: Int) {
   utility(Registry::class).get(key).setValue(value)
 }
 
-fun Driver.setRegistryValue(key: String, value: Boolean) {
+fun Driver.setRegistry(key: String, value: Boolean) {
   utility(Registry::class).get(key).setValue(value)
 }
 
