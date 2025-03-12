@@ -53,6 +53,12 @@ internal sealed class ImportPositionContext<out TPosition : KtElement, out TRece
     class Delegate(position: KtExpression, receiver: KtExpression?) :
         ImportPositionContext<KtExpression, KtExpression?>(position, receiver)
 
+    /**
+     * Important: this position is not detected by [detect] function.
+     */
+    class Destructuring(destructuredExpression: KtExpression) :
+        ImportPositionContext<KtExpression, KtExpression>(destructuredExpression, destructuredExpression)
+
     class Annotation(position: KtSimpleNameExpression, receiver: KtExpression?) :
         ImportPositionContext<KtSimpleNameExpression, KtExpression?>(position, receiver)
 

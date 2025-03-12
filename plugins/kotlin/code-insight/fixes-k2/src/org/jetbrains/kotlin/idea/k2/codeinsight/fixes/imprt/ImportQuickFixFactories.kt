@@ -51,6 +51,9 @@ object ImportQuickFixFactories {
 
     val noSetMethodFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NoSetMethod> =
         ImportQuickFixProvider.upcast()
+
+    val componentFunctionMissingFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ComponentFunctionMissing> =
+        ImportQuickFixProvider.upcast()
 }
 
 /**
@@ -64,4 +67,4 @@ object ImportQuickFixFactories {
  */
 @Suppress("UNCHECKED_CAST")
 private fun <BASE : KaDiagnosticWithPsi<*>, DERIVED : BASE> KotlinQuickFixFactory.IntentionBased<BASE>.upcast(): KotlinQuickFixFactory.IntentionBased<DERIVED> =
-    this as KotlinQuickFixFactory.IntentionBased<DERIVED> 
+    this as KotlinQuickFixFactory.IntentionBased<DERIVED>
