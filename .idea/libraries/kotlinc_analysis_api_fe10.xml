@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-api-fe10" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-fe10-for-ide:2.2.0-ij251-32">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-fe10-for-ide:2.2.0-ij251-35">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.0-ij251-32/analysis-api-fe10-for-ide-2.2.0-ij251-32.jar">
-          <sha256sum>af37c77b44ea0734e55bca2e6971a35273d42c39ef4ef09e640e10d937abaad9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.0-ij251-35/analysis-api-fe10-for-ide-2.2.0-ij251-35.jar">
+          <sha256sum>382746f54672c6cab207eedbc810b8e1b92350bfe4832e18634c83a38deb6f4a</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.0-ij251-32/analysis-api-fe10-for-ide-2.2.0-ij251-32.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.0-ij251-35/analysis-api-fe10-for-ide-2.2.0-ij251-35.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.0-ij251-32/analysis-api-fe10-for-ide-2.2.0-ij251-32-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-fe10-for-ide/2.2.0-ij251-35/analysis-api-fe10-for-ide-2.2.0-ij251-35-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
