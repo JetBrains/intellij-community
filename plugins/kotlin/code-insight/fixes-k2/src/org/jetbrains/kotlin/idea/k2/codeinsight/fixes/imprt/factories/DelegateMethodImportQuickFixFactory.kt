@@ -5,8 +5,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.AbstractImportCandidatesProvider
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.DelegateMethodImportCandidatesProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.CallableImportCandidatesProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportPositionContext
 import org.jetbrains.kotlin.name.Name
@@ -54,13 +53,7 @@ internal object DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFact
         indexProvider: KtSymbolFromIndexProvider
     ): List<ImportCandidate> {
         if (importPositionContext !is ImportPositionContext.Delegate) return emptyList()
-        val providers = getCandidateProvidersForDelegatedProperty(importPositionContext)
-        return providers.flatMap { it.collectCandidates(unresolvedName, indexProvider) }.toList()
-    }
-
-    private fun getCandidateProvidersForDelegatedProperty(
-        importPositionContext: ImportPositionContext.Delegate,
-    ): Sequence<AbstractImportCandidatesProvider> {
-        return sequenceOf(DelegateMethodImportCandidatesProvider(importPositionContext))
+        val providers = CallableImportCandidatesProvider(importPositionContext)
+        return providers.collectCandidates(unresolvedName, indexProvider)
     }
 }
