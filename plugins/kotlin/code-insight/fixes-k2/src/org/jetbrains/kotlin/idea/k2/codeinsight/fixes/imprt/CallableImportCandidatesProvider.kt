@@ -23,11 +23,15 @@ internal class CallableImportCandidatesProvider(
 
     private fun acceptsKotlinCallableAtPosition(kotlinCallable: KtCallableDeclaration): Boolean =
         when (importPositionContext) {
-            is ImportPositionContext.InfixCall -> kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD)
+            is ImportPositionContext.InfixCall -> {
+                kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD) && kotlinCallable.isExtensionDeclaration()
+            }
 
             is ImportPositionContext.OperatorCall,
             is ImportPositionContext.Delegate,
-            is ImportPositionContext.Destructuring -> kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)
+            is ImportPositionContext.Destructuring -> {
+                kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD) && kotlinCallable.isExtensionDeclaration()
+            }
 
             else -> true
         }
@@ -46,11 +50,17 @@ internal class CallableImportCandidatesProvider(
 
     private fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean =
         when (importPositionContext) {
-            is ImportPositionContext.InfixCall -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
+            is ImportPositionContext.InfixCall -> {
+                val functionSymbol = kotlinCallable.symbol as? KaNamedFunctionSymbol
+                functionSymbol?.isInfix == true && functionSymbol.isExtension
+            }
 
             is ImportPositionContext.OperatorCall,
             is ImportPositionContext.Delegate,
-            is ImportPositionContext.Destructuring -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isOperator == true
+            is ImportPositionContext.Destructuring -> {
+                val functionSymbol = kotlinCallable.symbol as? KaNamedFunctionSymbol
+                functionSymbol?.isOperator == true && functionSymbol.isExtension
+            }
 
             else -> true
         }
