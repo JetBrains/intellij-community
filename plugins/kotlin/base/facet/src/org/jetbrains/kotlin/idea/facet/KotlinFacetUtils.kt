@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.isKotlinNative
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import kotlin.reflect.KProperty1
@@ -84,29 +83,22 @@ fun IKotlinFacetSettings.initializeIfNeeded(
 
     if (shouldInferAPILevel) {
         apiLevel = when {
-            useProjectSettings -> {
-                LanguageVersion.fromVersionString(commonArguments.apiVersion) ?: languageLevel
-            }
-            /*
-            The below 'getLibraryVersion' call tries to figure out apiVersion by inspecting the stdlib available in dependencies.
-            This is not supported for K/N (07.2023), we therefore just fallback to the compiler version
-             */
-            targetPlatform?.idePlatformKind?.isKotlinNative == true && compilerVersion != null -> {
-                languageLevel?.coerceAtMostVersion(compilerVersion)
-            }
-
-            else -> run apiLevel@{
-                val maximumValue = getKotlinStdlibVersionOrNull(
-                    module,
-                    rootModel,
-                    this.targetPlatform?.idePlatformKind,
-                    coerceRuntimeLibraryVersionToReleased = compilerVersion == null
-                ) ?: compilerVersion ?: getDefaultVersion()
-                languageLevel?.coerceAtMostVersion(maximumValue)
-            }
+            useProjectSettings -> LanguageVersion.fromVersionString(commonArguments.apiVersion) ?: languageLevel
+            else -> languageLevel?.coerceAtMostVersion(getMaximumValueForApiLevel(module, rootModel, compilerVersion))
         }
     }
 }
+
+private fun IKotlinFacetSettings.getMaximumValueForApiLevel(
+    module: Module,
+    rootModel: ModuleRootModel?,
+    compilerVersion: IdeKotlinVersion?
+) = compilerVersion ?: getKotlinStdlibVersionOrNull(
+    module,
+    rootModel,
+    targetPlatform?.idePlatformKind,
+    coerceRuntimeLibraryVersionToReleased = true
+) ?: getDefaultVersion(explicitVersion = null, coerceRuntimeLibraryVersionToReleased = true)
 
 private fun getDefaultTargetPlatform(module: Module, rootModel: ModuleRootModel?): TargetPlatform {
     val platformKind = IdePlatformKind.ALL_KINDS.firstOrNull {
