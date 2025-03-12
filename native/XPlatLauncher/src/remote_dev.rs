@@ -494,13 +494,6 @@ fn parse_bool_env_var_optional(var_name: &str) -> Result<Option<bool>> {
     })
 }
 
-#[cfg(target_os = "macos")]
-fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
-    // GTW-6786 fix macOS host crashing on start
-    Some(vec![("AWT_FORCE_HEADFUL", "true")])
-}
-
-#[cfg(not(target_os = "macos"))]
 fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
     None
 }
