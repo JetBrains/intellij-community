@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -220,6 +221,10 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_EXPLORER_POPUP = "UnitTests.ExplorerPopup";
   public static final String RIDER_UNIT_TESTS_PROGRESSBAR_POPUP = "UnitTests.ProgressBarPopup";
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
+
+  // Marker to avoid executing editor action on backend for patch engine
+  @ApiStatus.Internal
+  public static final Key<Boolean> EXECUTE_EDITOR_ACTION_ON_FRONTEND = Key.create("EXECUTE_EDITOR_ACTION_ON_FRONTEND");
 
   public static final String IMPORT_SETTINGS_DIALOG = "Import.Settings.Dialog";
 
