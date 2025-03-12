@@ -3,6 +3,7 @@ package com.intellij.platform.syntax.util.parser
 
 import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
@@ -47,7 +48,7 @@ object SyntaxBuilderUtil {
    * @param expectedTypes expected token types.
    * @return true if token matches, false otherwise.
    */
-  fun SyntaxTreeBuilder.expect(expectedTypes: Set<SyntaxElementType>): Boolean {
+  fun SyntaxTreeBuilder.expect(expectedTypes: SyntaxElementTypeSet): Boolean {
     if (tokenType in expectedTypes) {
       advanceLexer()
       return true
