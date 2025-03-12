@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
-@InternalIgnoreDependencyViolation
 class ConfigureKotlinInProjectAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {

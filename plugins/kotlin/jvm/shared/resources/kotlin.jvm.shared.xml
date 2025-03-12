@@ -98,7 +98,6 @@
     <!--suppress KotlinObjectExtensionRegistration -->
     <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
 
-    <quickFixContributor implementation="org.jetbrains.kotlin.idea.jvm.k1.quickfix.JvmQuickFixRegistrar"/>
     <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.jvm.shared.facet.KotlinLibraryValidatorCreator"/>
   </extensions>
 
