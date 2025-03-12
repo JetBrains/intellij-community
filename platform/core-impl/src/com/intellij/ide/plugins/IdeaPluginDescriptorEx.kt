@@ -4,5 +4,5 @@ package com.intellij.ide.plugins
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface IdeaPluginDescriptorEx : IdeaPluginDescriptor {
+interface IdeaPluginDescriptorEx : IdeaPluginDescriptorImplPublic {
 }

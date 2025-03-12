@@ -233,8 +233,8 @@ public class PluginManagerTest {
     var text = new StringBuilder();
     for (var descriptor : loadPluginResult.pluginSet.getEnabledModules()) {
       text.append(descriptor.isEnabled() ? "+ " : "  ").append(descriptor.getPluginId().getIdString());
-      if (descriptor.moduleName != null) {
-        text.append(" | ").append(descriptor.moduleName);
+      if (descriptor.getModuleName() != null) {
+        text.append(" | ").append(descriptor.getModuleName());
       }
       text.append('\n');
     }

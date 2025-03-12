@@ -47,7 +47,7 @@ class IdeaPluginDescriptorImpl(
   private val path: Path,
   private val isBundled: Boolean,
   id: PluginId?,
-  @JvmField val moduleName: String?,
+  override val moduleName: String?,
   @JvmField val moduleLoadingRule: ModuleLoadingRule? = null,
   @JvmField val useCoreClassLoader: Boolean = false,
   @JvmField var isDependentOnCoreClassLoader: Boolean = true,
