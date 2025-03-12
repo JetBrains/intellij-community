@@ -24,7 +24,10 @@ internal class CallableImportCandidatesProvider(
     private fun acceptsKotlinCallableAtPosition(kotlinCallable: KtCallableDeclaration): Boolean =
         when (importPositionContext) {
             is ImportPositionContext.InfixCall -> kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD)
-            is ImportPositionContext.OperatorCall -> kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)
+
+            is ImportPositionContext.OperatorCall,
+            is ImportPositionContext.Destructuring -> kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)
+
             else -> true
         }
 
@@ -34,14 +37,18 @@ internal class CallableImportCandidatesProvider(
     private fun acceptsJavaCallableAtPosition(): Boolean =
         when (importPositionContext) {
             is ImportPositionContext.InfixCall,
-            is ImportPositionContext.OperatorCall -> false
+            is ImportPositionContext.OperatorCall,
+            is ImportPositionContext.Destructuring -> false
             else -> true
         }
 
     private fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean =
         when (importPositionContext) {
             is ImportPositionContext.InfixCall -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
-            is ImportPositionContext.OperatorCall -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isOperator == true
+
+            is ImportPositionContext.OperatorCall,
+            is ImportPositionContext.Destructuring -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isOperator == true
+
             else -> true
         }
 
