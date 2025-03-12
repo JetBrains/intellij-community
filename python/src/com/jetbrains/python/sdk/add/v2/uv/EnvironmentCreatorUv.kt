@@ -6,10 +6,11 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.text.nullize
-import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.uv.impl.setUvExecutable
-import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
+import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
+import com.jetbrains.python.venvReader.tryResolvePath
 import java.nio.file.Path
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyError
@@ -32,14 +33,14 @@ internal class EnvironmentCreatorUv(model: PythonMutableTargetAddInterpreterMode
     setUvExecutable(savingPath)
   }
 
-  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
-    if (module == null) {
-      // FIXME: should not happen, proper error
-      return kotlin.Result.failure<Sdk>(Exception("module is null")).asPythonResult()
+  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
+    val workingDir = module?.basePath?.let { tryResolvePath(it) } ?: project.basePath?.let { tryResolvePath(it) }
+    if (workingDir == null) {
+      return kotlin.Result.failure<Sdk>(Exception("working dir is not specified for uv environment setup")).asPythonResult()
     }
 
     val python = homePath?.let { Path.of(it) }
-    return setupUvSdkUnderProgress(ModuleOrProject.ModuleAndProject(module), baseSdks, python).asPythonResult()
+    return setupNewUvSdkAndEnvUnderProgress(project, workingDir, baseSdks, python).asPythonResult()
   }
 
   override suspend fun detectExecutable() {

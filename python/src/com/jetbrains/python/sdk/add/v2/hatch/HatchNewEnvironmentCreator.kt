@@ -58,8 +58,8 @@ internal class HatchNewEnvironmentCreator(
     HatchConfiguration.persistPathForTarget(hatchExecutablePath = savingPath)
   }
 
-  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
-    project ?: return Result.failure(HatchUIError.ProjectIsNotSelected())
+  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
+    // FIXME: should work with the project only
     module ?: return Result.failure(HatchUIError.ModuleIsNotSelected())
     val selectedEnv = hatchEnvironmentProperty.get() ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 

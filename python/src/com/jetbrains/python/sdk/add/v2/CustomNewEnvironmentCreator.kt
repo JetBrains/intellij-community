@@ -160,7 +160,7 @@ internal abstract class CustomNewEnvironmentCreator(private val name: String, mo
    */
   internal abstract fun savePathToExecutableToProperties(path: Path?)
 
-  protected abstract suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError>
+  protected abstract suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError>
 
   internal abstract suspend fun detectExecutable()
 }
