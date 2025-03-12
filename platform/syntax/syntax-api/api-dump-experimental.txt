@@ -11,6 +11,33 @@
 - f:getName():java.lang.String
 *f:com.intellij.platform.syntax.SyntaxElementType
 - <init>(java.lang.String):V
+- equals(java.lang.Object):Z
+- f:getIndex():I
+- hashCode():I
+*f:com.intellij.platform.syntax.SyntaxElementTypeSet
+- java.util.Set
+- kotlin.jvm.internal.markers.KMappedMarker
+- add(com.intellij.platform.syntax.SyntaxElementType):Z
+- addAll(java.util.Collection):Z
+- clear():V
+- contains(com.intellij.platform.syntax.SyntaxElementType):Z
+- f:contains(java.lang.Object):Z
+- containsAll(java.util.Collection):Z
+- getSize():I
+- isEmpty():Z
+- iterator():java.util.Iterator
+- f:plus(com.intellij.platform.syntax.SyntaxElementType):com.intellij.platform.syntax.SyntaxElementTypeSet
+- f:plus(java.lang.Iterable):com.intellij.platform.syntax.SyntaxElementTypeSet
+- remove(java.lang.Object):Z
+- removeAll(java.util.Collection):Z
+- retainAll(java.util.Collection):Z
+- f:size():I
+- toArray():java.lang.Object[]
+- toArray(java.lang.Object[]):java.lang.Object[]
+*f:com.intellij.platform.syntax.SyntaxElementTypeSetKt
+- *sf:asSyntaxElementTypeSet(java.util.Collection):com.intellij.platform.syntax.SyntaxElementTypeSet
+- *sf:emptySyntaxElementTypeSet():com.intellij.platform.syntax.SyntaxElementTypeSet
+- *sf:syntaxElementTypeSetOf(com.intellij.platform.syntax.SyntaxElementType[]):com.intellij.platform.syntax.SyntaxElementTypeSet
 *f:com.intellij.platform.syntax.element.SyntaxTokenTypes
 - sf:INSTANCE:com.intellij.platform.syntax.element.SyntaxTokenTypes
 - sf:getBAD_CHARACTER():com.intellij.platform.syntax.SyntaxElementType
@@ -50,11 +77,11 @@
 - a:getTokenizedText():java.lang.CharSequence
 *f:com.intellij.platform.syntax.lexer.TokenListKt
 - sf:TokenList(I[],com.intellij.platform.syntax.SyntaxElementType[],I,java.lang.CharSequence):com.intellij.platform.syntax.lexer.TokenList
-- sf:backWhile(com.intellij.platform.syntax.lexer.TokenList,I,java.util.Set):I
+- sf:backWhile(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementTypeSet):I
 - sf:backWithBraceMatching(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):I
-- sf:forwardWhile(com.intellij.platform.syntax.lexer.TokenList,I,java.util.Set):I
+- sf:forwardWhile(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementTypeSet):I
 - sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementType):Z
-- sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,java.util.Set):Z
+- sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementTypeSet):Z
 - sf:hasType(com.intellij.platform.syntax.lexer.TokenList,I,com.intellij.platform.syntax.SyntaxElementType[]):Z
 - sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider):com.intellij.platform.syntax.lexer.TokenList
 - bs:performLexing$default(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.CancellationProvider,I,java.lang.Object):com.intellij.platform.syntax.lexer.TokenList
@@ -74,7 +101,7 @@
 - a:remap(com.intellij.platform.syntax.SyntaxElementType,I,I,java.lang.CharSequence):com.intellij.platform.syntax.SyntaxElementType
 *:com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 - a:advanceLexer():V
-- a:enforceCommentTokens(java.util.Set):V
+- a:enforceCommentTokens(com.intellij.platform.syntax.SyntaxElementTypeSet):V
 - a:eof():Z
 - a:error(java.lang.String):V
 - a:getCurrentOffset():I

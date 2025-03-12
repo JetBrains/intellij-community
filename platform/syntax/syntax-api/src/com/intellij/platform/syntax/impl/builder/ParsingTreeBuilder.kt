@@ -5,6 +5,7 @@ import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.Logger.Attachment
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.impl.fastutil.ints.isEmpty
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
@@ -20,8 +21,8 @@ import kotlin.math.max
 internal class ParsingTreeBuilder(
   val lexer: Lexer,
   override val text: CharSequence,
-  val myWhitespaces: Set<SyntaxElementType>,
-  private var myComments: Set<SyntaxElementType>,
+  val myWhitespaces: SyntaxElementTypeSet,
+  private var myComments: SyntaxElementTypeSet,
   val startOffset: Int,
   private var myWhitespaceSkippedCallback: WhitespaceSkippedCallback?,
   cachedLexemes: TokenList?,
@@ -135,7 +136,7 @@ internal class ParsingTreeBuilder(
     myWhitespaceSkippedCallback = callback
   }
 
-  override fun enforceCommentTokens(tokens: Set<SyntaxElementType>) {
+  override fun enforceCommentTokens(tokens: SyntaxElementTypeSet) {
     myComments = tokens
   }
 

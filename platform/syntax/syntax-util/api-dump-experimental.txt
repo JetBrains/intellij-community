@@ -25,7 +25,7 @@
 - start(java.lang.CharSequence,I,I):V
 *c:com.intellij.platform.syntax.util.lexer.MergingLexerAdapter
 - com.intellij.platform.syntax.util.lexer.MergingLexerAdapterBase
-- <init>(com.intellij.platform.syntax.lexer.Lexer,java.util.Set):V
+- <init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.SyntaxElementTypeSet):V
 - merge(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.lexer.Lexer):com.intellij.platform.syntax.SyntaxElementType
 *a:com.intellij.platform.syntax.util.lexer.MergingLexerAdapterBase
 - com.intellij.platform.syntax.util.lexer.DelegateLexer

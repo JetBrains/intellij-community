@@ -2,6 +2,7 @@
 package com.intellij.platform.syntax.parser
 
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.TokenList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -156,7 +157,7 @@ interface SyntaxTreeBuilder {
    */
   fun setDebugMode(dbgMode: Boolean)
 
-  fun enforceCommentTokens(tokens: Set<SyntaxElementType>)
+  fun enforceCommentTokens(tokens: SyntaxElementTypeSet)
 
   /**
    * @return latest left done node for context dependent parsing.

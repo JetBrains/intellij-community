@@ -2,13 +2,14 @@
 package com.intellij.platform.syntax.util.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.Lexer
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 open class MergingLexerAdapter(
   original: Lexer,
-  private val tokenSet: Set<SyntaxElementType>,
+  private val tokenSet: SyntaxElementTypeSet,
 ) : MergingLexerAdapterBase(original) {
   override fun merge(tokenType: SyntaxElementType, lexer: Lexer): SyntaxElementType {
     if (!tokenSet.contains(tokenType)) {

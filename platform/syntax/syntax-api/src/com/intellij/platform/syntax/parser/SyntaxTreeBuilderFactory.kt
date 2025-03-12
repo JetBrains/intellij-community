@@ -1,14 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.parser
 
-import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.*
 import com.intellij.platform.syntax.impl.builder.ParsingTreeBuilder
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.TokenList
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory.Builder
-import com.intellij.platform.syntax.CancellationProvider
-import com.intellij.platform.syntax.Logger
-import com.intellij.platform.syntax.NoopLogger
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -143,8 +140,8 @@ private class BuilderImpl(
     val builder = ParsingTreeBuilder(
       lexer = lexer,
       text = text,
-      myWhitespaces = whitespaces,
-      myComments = comments,
+      myWhitespaces = whitespaces.asSyntaxElementTypeSet(),
+      myComments = comments.asSyntaxElementTypeSet(),
       startOffset = startOffset,
       myWhitespaceSkippedCallback = whitespaceSkippedCallback,
       cachedLexemes = cachedLexemes,

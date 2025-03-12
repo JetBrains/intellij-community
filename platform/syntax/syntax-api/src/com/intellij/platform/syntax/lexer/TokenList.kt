@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.platform.syntax.lexer
 
 import com.intellij.platform.syntax.CancellationProvider
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -90,7 +91,7 @@ fun TokenList.hasType(index: Int, vararg types: SyntaxElementType?): Boolean {
 /**
  * @return whether [.getTokenType](index) would return a type in the given set
  */
-fun TokenList.hasType(index: Int, types: Set<SyntaxElementType>): Boolean {
+fun TokenList.hasType(index: Int, types: SyntaxElementTypeSet): Boolean {
   return types.contains(getTokenType(index))
 }
 
@@ -125,7 +126,7 @@ fun TokenList.backWithBraceMatching(index: Int, opening: SyntaxElementType, clos
  * Moves back from `index` while tokens belong to the given set
  * @return the largest `prev <= index` whose token type doesn't belong to `toSkip`
  */
-fun TokenList.backWhile(index: Int, toSkip: Set<SyntaxElementType>): Int {
+fun TokenList.backWhile(index: Int, toSkip: SyntaxElementTypeSet): Int {
   var index = index
   while (hasType(index, toSkip)) {
     index--
@@ -137,7 +138,7 @@ fun TokenList.backWhile(index: Int, toSkip: Set<SyntaxElementType>): Int {
  * Moves forward from `index` while tokens belong to the given set
  * @return the smallest `next >= index` whose token type doesn't belong to `toSkip`
  */
-fun TokenList.forwardWhile(index: Int, toSkip: Set<SyntaxElementType>): Int {
+fun TokenList.forwardWhile(index: Int, toSkip: SyntaxElementTypeSet): Int {
   var index = index
   while (hasType(index, toSkip)) {
     index++
