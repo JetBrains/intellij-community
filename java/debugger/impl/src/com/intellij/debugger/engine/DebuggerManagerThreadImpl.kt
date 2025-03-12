@@ -7,7 +7,10 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand
-import com.intellij.debugger.impl.*
+import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.InvokeAndWaitThread
+import com.intellij.debugger.impl.InvokeThread
+import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.statistics.StatisticsStorage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -21,18 +24,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.jdi.VMDisconnectedException
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureNanoTime
 
@@ -45,7 +49,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
   @Volatile
   private var myDisposed = false
 
-  private val myDebuggerThreadDispatcher = DebuggerThreadDispatcher(this)
+  internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
   private val myDebugProcess = WeakReference(debugProcess)
 
   /**
@@ -196,7 +200,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
       }
       else {
         val commandTimeNs = measureNanoTime {
-          managerCommand.invokeCommand(myDebuggerThreadDispatcher, coroutineScope)
+          managerCommand.invokeCommand(debuggerThreadDispatcher, coroutineScope)
         }
         myDebugProcess.get()?.let { debugProcess ->
           val commandTimeMs = TimeUnit.NANOSECONDS.toMillis(commandTimeNs)
@@ -395,49 +399,34 @@ private fun findCurrentContext(): Triple<DebuggerManagerThreadImpl, PrioritizedT
 /**
  * Executes [action] in debugger manager thread and returns a future.
  * **This method can only be called in debugger manager thread.**
- * Use [invokeCommandAsCompletableFuture] with managerThread param if you are not.
- *
- * Starts a [SuspendContextCommandImpl] if was in a [SuspendContextCommandImpl], else starts a [DebuggerCommandImpl].
+ * Use [invokeCommandAsCompletableFuture] with [SuspendContextImpl] param if you are not.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-fun <T> invokeCommandAsCompletableFuture(action: suspend () -> T): CompletableFuture<T> {
+fun <T> invokeCommandAsCompletableFuture(block: suspend CoroutineScope.() -> T): CompletableFuture<T> {
   val (managerThread, priority, suspendContext) = findCurrentContext()
-  return invokeCommandAsCompletableFuture(managerThread, priority, suspendContext, action)
+  val scope = suspendContext?.coroutineScope ?: managerThread.coroutineScope
+  var context = Dispatchers.Debugger(managerThread) + priority
+  if (suspendContext != null) {
+    context += suspendContext
+  }
+  return scope.future(context, block = block)
 }
 
 /**
- * Executes [action] in debugger manager thread as a [SuspendContextCommandImpl] and returns a future.
+ * Executes [block] in debugger manager thread as a [SuspendContextCommandImpl] and returns a future.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 fun <T> invokeCommandAsCompletableFuture(
   suspendContext: SuspendContextImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
-  action: suspend () -> T,
-): CompletableFuture<T> = invokeCommandAsCompletableFuture(suspendContext.managerThread, priority, suspendContext, action)
-
-private fun <T> invokeCommandAsCompletableFuture(
-  managerThread: DebuggerManagerThreadImpl,
-  priority: PrioritizedTask.Priority,
-  suspendContext: SuspendContextImpl?,
-  action: suspend () -> T,
-): CompletableFuture<T> {
-  val res = DebuggerCompletableFuture<T>()
-  executeOnDMT(managerThread, priority, suspendContext, { res.cancel(false) }) {
-    try {
-      res.complete(action())
-    }
-    catch (e: Exception) {
-      res.completeExceptionally(e)
-    }
-  }
-  return res
-}
+  block: suspend CoroutineScope.() -> T,
+): CompletableFuture<T> =
+  suspendContext.coroutineScope.future(Dispatchers.Debugger(suspendContext.managerThread) + suspendContext + priority, block = block)
 
 /**
- * Runs [action] in debugger manager thread as a [SuspendContextCommandImpl].
- * Pass [onCommandCancelled] to be notified if the command is canceled.
+ * Runs [block] in debugger manager thread as a [SuspendContextCommandImpl].
  *
  * This is similar to [DebuggerManagerThreadImpl.schedule] call.
  */
@@ -446,13 +435,14 @@ private fun <T> invokeCommandAsCompletableFuture(
 fun executeOnDMT(
   suspendContext: SuspendContextImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
-  onCommandCancelled: (() -> Unit)? = null,
-  action: suspend () -> Unit,
-): Unit = executeOnDMT(suspendContext.managerThread, priority, suspendContext, onCommandCancelled, action)
+  block: suspend CoroutineScope.() -> Unit,
+): Job = suspendContext.coroutineScope.launch(
+  Dispatchers.Debugger(suspendContext.managerThread) + suspendContext + priority,
+  block = block
+)
 
 /**
- * Runs [action] in debugger manager thread as a [DebuggerCommandImpl].
- * Pass [onCommandCancelled] to be notified if the command is canceled.
+ * Runs [block] in debugger manager thread as a [DebuggerCommandImpl].
  *
  * This is similar to [DebuggerManagerThreadImpl.schedule] call.
  */
@@ -461,36 +451,8 @@ fun executeOnDMT(
 fun executeOnDMT(
   managerThread: DebuggerManagerThreadImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
-  onCommandCancelled: (() -> Unit)? = null,
-  action: suspend () -> Unit,
-): Unit = executeOnDMT(managerThread, priority, null, onCommandCancelled, action)
-
-private fun executeOnDMT(
-  managerThread: DebuggerManagerThreadImpl,
-  priority: PrioritizedTask.Priority,
-  suspendContext: SuspendContextImpl? = null,
-  onCommandCancelled: (() -> Unit)? = null,
-  action: suspend () -> Unit,
-) {
-  val managerCommand = if (suspendContext != null) {
-    object : SuspendContextCommandImpl(suspendContext) {
-      override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) = action()
-      override val priority get() = priority
-      override fun commandCancelled() {
-        onCommandCancelled?.invoke()
-      }
-    }
-  }
-  else {
-    object : DebuggerCommandImpl(priority) {
-      override suspend fun actionSuspend() = action()
-      override fun commandCancelled() {
-        onCommandCancelled?.invoke()
-      }
-    }
-  }
-  managerThread.schedule(managerCommand)
-}
+  block: suspend CoroutineScope.() -> Unit,
+): Job = managerThread.coroutineScope.launch(Dispatchers.Debugger(managerThread) + priority, block = block)
 
 /**
  * Runs [block] in debugger manager thread as a [SuspendContextCommandImpl].
@@ -504,8 +466,12 @@ private fun executeOnDMT(
 suspend fun <T> withDebugContext(
   suspendContext: SuspendContextImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
-  block: suspend () -> T,
-): T = withDebugContext(suspendContext.managerThread, priority, suspendContext, block)
+  block: suspend CoroutineScope.() -> T,
+): T = coroutineScope {
+  // Ensure the job is canceled when suspend context is resumed
+  attachAsChildTo(suspendContext.coroutineScope)
+  withContext(Dispatchers.Debugger(suspendContext.managerThread) + suspendContext + priority, block = block)
+}
 
 /**
  * Runs [block] in debugger manager thread as a [DebuggerCommandImpl].
@@ -519,34 +485,5 @@ suspend fun <T> withDebugContext(
 suspend fun <T> withDebugContext(
   managerThread: DebuggerManagerThreadImpl,
   priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
-  block: suspend () -> T,
-): T = withDebugContext(managerThread, priority, null, block)
-
-private suspend fun <T> withDebugContext(
-  managerThread: DebuggerManagerThreadImpl,
-  priority: PrioritizedTask.Priority,
-  suspendContext: SuspendContextImpl?,
-  block: suspend () -> T,
-): T = if (managerThread === InvokeThread.currentThread()) {
-  block()
-}
-else suspendCancellableCoroutine { continuation ->
-  executeOnDMT(managerThread, priority, suspendContext,
-               onCommandCancelled = { continuation.cancel() }
-  ) {
-    val result = try {
-      Result.success(block())
-    }
-    catch (e: Throwable) {
-      when {
-        e is VMDisconnectedException || (e is CompletionException && e.cause is VMDisconnectedException) -> {
-          continuation.cancel()
-          throw e
-        }
-        else -> Result.failure(e)
-      }
-    }
-    continuation.resumeWith(result)
-  }
-}
-
+  block: suspend CoroutineScope.() -> T,
+): T = withContext(Dispatchers.Debugger(managerThread) + priority, block = block)

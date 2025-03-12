@@ -35,6 +35,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Supplier
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.CoroutineContext
 
 abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   private val myDebugProcess: DebugProcessImpl,
@@ -43,7 +44,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   @JvmField protected var myVotesToVote: Int,
   private var myEventSet: EventSet?,
   private val myDebugId: Long,
-) : XSuspendContext(), SuspendContext, Disposable {
+) : XSuspendContext(), SuspendContext, Disposable, CoroutineContext.Element {
 
   // Save the VM related to this suspend context, as a VM may be changed due to reattach
   @Suppress("UsagesOfObsoleteApi")
@@ -510,6 +511,11 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
       myDebugProcess.logError(supplier.get())
     }
   }
+
+  override val key: CoroutineContext.Key<*>
+    get() = Key
+
+  object Key : CoroutineContext.Key<SuspendContextImpl>
 
   companion object {
     private val LOG = Logger.getInstance(SuspendContextImpl::class.java)

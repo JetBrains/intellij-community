@@ -14,20 +14,18 @@ abstract class DebuggerCommandImpl(override val priority: PrioritizedTask.Priori
   : DebuggerTaskImpl(), CoroutineContext.Element {
 
   /**
-   * [Job] tied to this command execution.
+   * Cancellation action that can cancel this command.
    *
-   * The job is saved to have a possibility to cancel all the work started within the command when
-   * [notifyCancelled] is called.
+   * It is used to cancel all the work started within the command when [notifyCancelled] is called.
+   * Another important use-case is cancellation of tasks scheduled from [com.intellij.debugger.engine.DebuggerThreadDispatcher]:
+   * the dispatcher must guarantee to call the passed action, but we could not do so because the context is already resumed.
+   * In this case, we cancel the [Job] first, and then call the passed action.
+   *
    * For example, a command can start a computation in [kotlinx.coroutines.Dispatchers.Default].
    * When the program is resumed, the job will be canceled.
    */
   @Volatile
-  private var commandJob: Job? = null
-    set(value) {
-      val old = field
-      if (value != null && old != null && !old.isCompleted) error("Command job is already set")
-      field = value
-    }
+  private var cancellationAction: Runnable? = null
 
   private val continuation = AtomicReference<Runnable>(null)
   private var myThread: DebuggerManagerThreadImpl? = null
@@ -87,10 +85,13 @@ abstract class DebuggerCommandImpl(override val priority: PrioritizedTask.Priori
 
   @ApiStatus.Internal
   fun cancelCommandScope() {
-    commandJob?.cancel()
+    cancellationAction?.run()
   }
 
   internal fun resetContinuation(runnable: Runnable?): Runnable? = continuation.getAndSet(runnable)
+  internal fun setCancellationAction(cancelAction: Runnable) {
+    cancellationAction = cancelAction
+  }
 
   @ApiStatus.Internal
   protected fun executeContinuation() {
@@ -103,8 +104,9 @@ abstract class DebuggerCommandImpl(override val priority: PrioritizedTask.Priori
       // executed synchronously until the first suspend, resume is handled by dispatcher
       val job = parentScope.async(this + dispatcher, start = CoroutineStart.UNDISPATCHED) {
         runSuspend()
-      }.also {
-        commandJob = it
+      }
+      if (!job.isCompleted) {
+        setCancellationAction { job.cancel() }
       }
       onSuspendOrFinish()
       handleCompletionException(job, exception)
