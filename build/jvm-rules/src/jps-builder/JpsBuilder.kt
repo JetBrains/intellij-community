@@ -164,7 +164,7 @@ suspend fun buildUsingJps(
     javaFileCount = args.optionalSingle(JvmBuilderFlags.JAVA_COUNT)?.toInt() ?: -1,
   )
 
-  val isIncrementalCompilation = args.boolFlag(JvmBuilderFlags.INCREMENTAL) || forceIncremental
+  val isIncrementalCompilation = !args.boolFlag(JvmBuilderFlags.NON_INCREMENTAL) || forceIncremental
   if (isDebugEnabled) {
     parentSpan.setAttribute("isIncrementalCompilation", isIncrementalCompilation)
     parentSpan.setAttribute("outJar", outJar.toString())

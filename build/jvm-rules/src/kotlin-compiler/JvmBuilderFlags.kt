@@ -24,7 +24,7 @@ fun parseArgs(args: Array<String>): ArgMap<JvmBuilderFlags> {
 }
 
 enum class JvmBuilderFlags {
-  INCREMENTAL,
+  NON_INCREMENTAL,
   JAVA_COUNT,
   TARGET_LABEL,
   // classpath

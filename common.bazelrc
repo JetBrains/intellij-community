@@ -8,7 +8,7 @@
 
 common --@rules_jvm//:default-kotlinc-opts=@community//:k17
 common --@rules_jvm//:worker-impl=@rules_jvm//src/misc:worker-jvm
-common --@rules_jvm//:koltin_inc_threshold=80 --@rules_jvm//:java_inc_threshold=200
+common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0
 
 # configure resources
 common --local_resources=memory=HOST_RAM*.77 --local_resources=cpu=HOST_CPUS*2

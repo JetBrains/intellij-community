@@ -607,8 +607,8 @@ def _run_jps_builder(
         args.add_all("--add-export", javac_opts.add_exports)
 
     isIncremental = (kotlin_inc_threshold != -1 and len(srcs.kt) >= kotlin_inc_threshold) or (java_inc_threshold != -1 and len(srcs.java) >= java_inc_threshold)
-    if isIncremental:
-        args.add("--incremental")
+    if not isIncremental:
+        args.add("--non-incremental")
 
     javaCount = len(srcs.java)
     args.add("--java-count", javaCount)
@@ -626,7 +626,7 @@ def _run_jps_builder(
             "supports-multiplex-sandboxing": "1",
         },
         arguments = [args],
-        progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, ", incremental" if isIncremental else ""),
+        progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, "" if isIncremental else ", non-incremental"),
     )
 
     return struct(
