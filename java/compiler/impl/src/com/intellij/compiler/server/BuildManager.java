@@ -1458,7 +1458,7 @@ public final class BuildManager implements Disposable {
     if (jnaBootLibraryPath != null && wslPath == null) {
       //noinspection SpellCheckingInspection
       try {
-        cmdLine.addParameter("-Djna.boot.library.path=" + cmdLine.copyPathToHostIfRequired(Path.of(jnaBootLibraryPath)));
+        cmdLine.addParameter("-Djna.boot.library.path=" + cmdLine.copyPathToTargetIfRequired(Path.of(jnaBootLibraryPath)));
       }
       catch (FileSystemException err) {
         LOG.warn("Can't copy JNA", err);
@@ -1514,7 +1514,8 @@ public final class BuildManager implements Disposable {
       Path externalProjectConfig = ProjectUtil.getExternalConfigurationDir(project);
       if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
         try {
-          String pathToExternalStorage = cmdLine.copyPathToHostIfRequired(externalProjectConfig);
+          String pathToExternalStorage = cmdLine.copyPathToTargetIfRequired(externalProjectConfig)
+            .toString();
           cmdLine.addParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=' + pathToExternalStorage);
         }
         catch (NoSuchFileException ignored) {
