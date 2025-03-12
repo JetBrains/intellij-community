@@ -13,6 +13,7 @@
   <content>
     <module name="intellij.performanceTesting.remoteDriver"/>
     <module name="intellij.performanceTesting.vcs"/>
+    <module name="intellij.performanceTesting.frontend"/>
   </content>
 
   <dependencies>
