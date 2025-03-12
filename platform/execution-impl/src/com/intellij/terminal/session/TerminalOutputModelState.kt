@@ -8,6 +8,7 @@ data class TerminalOutputModelState(
   val text: String,
   val trimmedLinesCount: Int,
   val trimmedCharsCount: Int,
+  val firstLineTrimmedCharsCount: Int,
   val cursorOffset: Int,
   val highlightings: List<StyleRange>,
 )
