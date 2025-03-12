@@ -150,9 +150,8 @@ internal class NodeData(
       }
       val start = getLexemeStart(curToken)
       val end = getLexemeStart(curToken + 1)
-      if (start < end || getLexemeType(
-          curToken) is ILeafElementType
-      ) { // Empty token. Most probably a parser directive like indent/dedent in Python
+      if (start < end || getLexemeType(curToken) is ILeafElementType) {
+        // Empty token. Most probably a parser directive like indent/dedent in Python
         val type = getLexemeType(curToken)
         val leaf = createLeaf(type, start, end)
         curNode.rawAddChildrenWithoutNotifications(leaf)
