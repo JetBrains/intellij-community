@@ -1048,6 +1048,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       sessionData.isBreakpointsMuted = false
     }
     myDebuggerManager.removeSession(this)
+    XDebugSessionProxyKeeper.getInstance(project).removeProxy(this)
     myDispatcher.getMulticaster().sessionStopped()
     myDispatcher.getListeners().clear()
 

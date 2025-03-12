@@ -6,12 +6,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class XDebugSessionProxyKeeper {
-  private val proxyMap = WeakHashMap<XDebugSession, XDebugSessionProxy>()
+  private val proxyMap = mutableMapOf<XDebugSession, XDebugSessionProxy>()
 
   fun getOrCreateProxy(session: XDebugSession): XDebugSessionProxy {
     return proxyMap.getOrPut(session) { XDebugSessionProxy.Monolith(session) }
