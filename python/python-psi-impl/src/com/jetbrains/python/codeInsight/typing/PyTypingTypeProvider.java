@@ -226,6 +226,7 @@ public static final String CONTEXT_MANAGER = "contextlib.AbstractContextManager"
     .add(NOT_REQUIRED, NOT_REQUIRED_EXT)
     .add(READONLY, READONLY_EXT)
     .add(SELF, SELF_EXT)
+    .add(LITERALSTRING, LITERALSTRING_EXT)
     .build();
 
   // Type hints in PSI stubs, type comments and "escaped" string annotations are represented as PyExpressionCodeFragments
