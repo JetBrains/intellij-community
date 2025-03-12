@@ -33,7 +33,7 @@ class DebuggerConnection(
     val project: Project,
     val configuration: RunConfigurationBase<*>?,
     val params: JavaParameters?,
-    shouldAttachCoroutineAgent: Boolean,
+    modifyArgs: Boolean = true,
     // Used externally on the Android Studio side
     @Suppress("MemberVisibilityCanBePrivate")
     val alwaysShowPanel: Boolean = false
@@ -47,7 +47,7 @@ class DebuggerConnection(
     private var isDisposed = false
 
     init {
-        if (params is JavaParameters && shouldAttachCoroutineAgent) {
+        if (params is JavaParameters && modifyArgs) {
             // gradle related logic in KotlinGradleCoroutineDebugProjectResolver
             coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(project, params, configuration)
         } else {

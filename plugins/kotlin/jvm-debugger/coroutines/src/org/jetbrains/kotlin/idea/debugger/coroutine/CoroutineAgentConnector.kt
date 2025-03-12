@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
+import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
@@ -38,7 +40,7 @@ internal object CoroutineAgentConnector {
 
     private fun findKotlinxCoroutinesCoreJar(project: Project, configuration: RunConfigurationBase<*>?): KotlinxCoroutinesSearchResult {
         val matchResult = project
-            .getJarVirtualFiles(kotlinxCoroutinesPackageName)
+            .getJarVirtualFiles(configuration, kotlinxCoroutinesPackageName)
             .asSequence()
             .mapNotNull { kotlinxCoroutinesCoreJarRegex.matchEntire(it) }
             .firstOrNull()
@@ -53,13 +55,20 @@ internal object CoroutineAgentConnector {
     }
 
     private fun Project.getJarVirtualFiles(
+        configuration: RunConfigurationBase<*>?,
         packageName: String
     ): List<String> {
+        if (configuration !is ModuleBasedConfiguration<*, *>) return emptyList()
+
+        val scope = configuration.configurationModule.module?.getModuleRuntimeScope(
+            configuration is JavaTestConfigurationWithDiscoverySupport
+        ) ?: return emptyList()
+
         val kotlinxCoroutinesPackage =
             runReadActionInSmartMode { JavaPsiFacade.getInstance(this).findPackage(packageName) } ?:
             return emptyList()
 
-        return kotlinxCoroutinesPackage.getDirectories().mapNotNull {
+        return kotlinxCoroutinesPackage.getDirectories(scope).mapNotNull {
             it.virtualFile.path.getParentJarPath()
         }
     }
