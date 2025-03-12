@@ -195,16 +195,20 @@ private fun initRemoteDev(args: List<String>) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
-  if (args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND) {
+  val isSplitMode = args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND
+  if (isSplitMode) {
     System.setProperty("idea.initially.ask.config", "never")
   }
 
   // avoid an icon jumping in dock for the backend process
   if (SystemInfoRt.isMac) {
-    // this makes sure that the following call doesn't create an icon in Dock
-    System.setProperty("apple.awt.BackgroundOnly", "true")
-    // this tells the OS that app initialization is finished
-    Toolkit.getDefaultToolkit()
+    val shouldInitDefaultToolkit = isSplitMode || isInAquaSession()
+    if (System.getProperty("REMOTE_DEV_INIT_MAC_DEFAULT_TOOLKIT", shouldInitDefaultToolkit.toString()).toBoolean()) {
+      // this makes sure that the following call doesn't create an icon in Dock
+      System.setProperty("apple.awt.BackgroundOnly", "true")
+      // this tells the OS that app initialization is finished
+      Toolkit.getDefaultToolkit()
+    }
   }
   initRemoteDevGraphicsEnvironment()
   initLux()
@@ -221,6 +225,24 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
   field.isAccessible = true
   val handle = lookup.unreflectSetter(field)
   handle.invoke(value)
+}
+
+private fun isInAquaSession(): Boolean {
+  if (!SystemInfoRt.isMac) return false
+
+  if (System.getenv("AWT_FORCE_HEADFUL") != null) {
+    return false // the value is forcefully set, assume the worst case
+  }
+
+  try {
+    val aClass = ClassLoader.getPlatformClassLoader().loadClass("sun.awt.PlatformGraphicsInfo")
+    val handle = MethodHandles.lookup().findStatic(aClass, "isInAquaSession", MethodType.methodType(Boolean::class.javaPrimitiveType))
+    return handle.invoke() as Boolean
+  }
+  catch (e: Throwable) {
+    e.printStackTrace()
+    return false
+  }
 }
 
 private fun initLux() {
