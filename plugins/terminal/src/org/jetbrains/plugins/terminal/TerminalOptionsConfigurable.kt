@@ -50,7 +50,6 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
     val osSpecificOptions = TerminalOsSpecificOptions.getInstance()
     val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
     val blockTerminalOptions = BlockTerminalOptions.getInstance()
-    var fontPreferences = TerminalFontOptions.getInstance().getSettings()
 
     return panel {
       lateinit var terminalEngineComboBox: ComboBox<TerminalEngine>
@@ -125,35 +124,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
       }
 
-      group(message("settings.terminal.application.settings")) {
-        row(message("settings.shell.path")) {
-          cell(textFieldWithHistoryWithBrowseButton(
-            project,
-            FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
-            historyProvider = {
-              // Use shells detector directly because this code is executed on backend.
-              // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
-              TerminalShellsDetector.detectShells().map { shellInfo ->
-                val filteredOptions = shellInfo.options.filter {
-                  // Do not show login and interactive options in the UI.
-                  // They anyway will be substituted implicitly in the shell starting logic.
-                  // So, there is no need to specify them in the settings.
-                  it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
-                }
-                val shellCommand = (listOf(shellInfo.path) + filteredOptions)
-                ParametersListUtil.join(shellCommand)
-              }
-            },
-          )).setupDefaultValue({ childComponent.textEditor }, projectOptionsProvider.defaultShellPath())
-            .bindText(projectOptionsProvider::shellPath)
-            .align(AlignX.FILL)
-        }
-        row(message("settings.tab.name")) {
-          textField()
-            .bindText(optionsProvider::tabName)
-            .align(AlignX.FILL)
-        }
-
+      group(message("settings.terminal.font.settings")) {
+        var fontPreferences = TerminalFontOptions.getInstance().getSettings()
         row(message("settings.font.name")) {
           cell(fontComboBox())
             .bind(
@@ -192,6 +164,36 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
         onApply {
           TerminalFontOptions.getInstance().setSettings(fontPreferences)
+        }
+      }
+
+      group(message("settings.terminal.application.settings")) {
+        row(message("settings.shell.path")) {
+          cell(textFieldWithHistoryWithBrowseButton(
+            project,
+            FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
+            historyProvider = {
+              // Use shells detector directly because this code is executed on backend.
+              // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
+              TerminalShellsDetector.detectShells().map { shellInfo ->
+                val filteredOptions = shellInfo.options.filter {
+                  // Do not show login and interactive options in the UI.
+                  // They anyway will be substituted implicitly in the shell starting logic.
+                  // So, there is no need to specify them in the settings.
+                  it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+                }
+                val shellCommand = (listOf(shellInfo.path) + filteredOptions)
+                ParametersListUtil.join(shellCommand)
+              }
+            },
+          )).setupDefaultValue({ childComponent.textEditor }, projectOptionsProvider.defaultShellPath())
+            .bindText(projectOptionsProvider::shellPath)
+            .align(AlignX.FILL)
+        }
+        row(message("settings.tab.name")) {
+          textField()
+            .bindText(optionsProvider::tabName)
+            .align(AlignX.FILL)
         }
 
         row {
