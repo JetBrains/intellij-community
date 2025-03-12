@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine
 
 import com.intellij.Patches
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerDiagnosticsUtil.needAnonymizedReports
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -83,12 +82,6 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   protected var myIsGoingToResume: Boolean = false
 
   private val myPostponedCommands = ConcurrentLinkedQueue<SuspendContextCommandImpl>()
-
-  /**
-   * These commands are started but can be switched to another dispatcher, so they are not present in DMT.
-   * However, they should be canceled on context resume, so they are tracked via this set.
-   */
-  private val myUnfinishedCommands: MutableSet<SuspendContextCommandImpl> = ConcurrentCollectionFactory.createConcurrentSet<SuspendContextCommandImpl>()
 
   @JvmField
   @Volatile
@@ -402,14 +395,6 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
     }
   }
 
-  internal fun addUnfinishedCommand(command: SuspendContextCommandImpl) {
-    myUnfinishedCommands.add(command)
-  }
-
-  internal fun removeUnfinishedCommand(command: SuspendContextCommandImpl) {
-    myUnfinishedCommands.remove(command)
-  }
-
   fun postponeCommand(command: SuspendContextCommandImpl) {
     if (!isResumed) {
       // Important! when postponing increment the holds counter, so that the action is not released too early.
@@ -427,19 +412,6 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
     while (postponed != null) {
       postponed.notifyCancelled()
       postponed = pollPostponedCommand()
-    }
-    val currentCommand = DebuggerManagerThreadImpl.getCurrentCommand()
-    val it = myUnfinishedCommands.iterator()
-    while (it.hasNext()) {
-      val command = it.next()
-      if (currentCommand !== command) {
-        command.cancelCommandScope()
-        it.remove()
-      }
-      else {
-        command.cancelCommandScopeOnSuspend()
-        // do not remove itself
-      }
     }
   }
 

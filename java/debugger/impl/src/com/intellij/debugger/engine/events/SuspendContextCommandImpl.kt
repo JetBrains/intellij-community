@@ -4,7 +4,6 @@ package com.intellij.debugger.engine.events
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.annotations.ApiStatus
 
 private val LOG = Logger.getInstance(SuspendContextCommandImpl::class.java)
 
@@ -12,16 +11,10 @@ private val LOG = Logger.getInstance(SuspendContextCommandImpl::class.java)
  * Performs contextAction when evaluation is available in suspend context
  */
 abstract class SuspendContextCommandImpl protected constructor(open val suspendContext: SuspendContextImpl?) : DebuggerCommandImpl() {
-  private var mySuspendContextSetInProgress = false
-  private var shouldCancelCommandScopeOnSuspend = false
-
   @Throws(Exception::class)
   open fun contextAction(suspendContext: SuspendContextImpl): Unit = throw AbstractMethodError()
 
-  @ApiStatus.Experimental
-  open suspend fun contextActionSuspend(suspendContext: SuspendContextImpl): Unit = contextAction(suspendContext)
-
-  final override suspend fun actionSuspend() {
+  final override fun action() {
     if (LOG.isDebugEnabled) {
       LOG.debug("trying $this")
     }
@@ -35,32 +28,12 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
       return
     }
 
-    try {
-      suspendContext.addUnfinishedCommand(this)
-      invokeWithChecks {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("Executing suspend-context-command: $this")
-        }
-        contextActionSuspend(suspendContext)
+    invokeWithChecks {
+      if (LOG.isDebugEnabled) {
+        LOG.debug("Executing suspend-context-command: $this")
       }
+      contextAction(suspendContext)
     }
-    finally {
-      suspendContext.removeUnfinishedCommand(this)
-    }
-  }
-
-  /**
-   * When [SuspendContextImpl] is resumed, the command scope of the unfinished commands should be canceled.
-   * However, cancellation of the scope for the current command can affect its execution,
-   * so the cancellation of the current command is postponed upon its suspension.
-   */
-  @ApiStatus.Internal
-  fun cancelCommandScopeOnSuspend() {
-    shouldCancelCommandScopeOnSuspend = true
-  }
-
-  final override fun invokeContinuation(): Unit = invokeWithChecks {
-    executeContinuation()
   }
 
   private inline fun invokeWithChecks(operation: () -> Unit) {
@@ -79,12 +52,10 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
         LOG.error("Suspend context is already in progress", ThreadDumper.dumpThreadsToString())
       }
       suspendContext.myInProgress = true
-      mySuspendContextSetInProgress = true
       operation()
     }
     finally {
       suspendContext.myInProgress = false
-      mySuspendContextSetInProgress = false
       if (suspendContext.isResumed) {
         suspendContext.cancelAllPostponed()
       }
@@ -94,17 +65,6 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
           suspendContext.managerThread.pushBack(postponed)
         }
       }
-    }
-  }
-
-  final override fun onSuspendOrFinish() {
-    if (mySuspendContextSetInProgress) {
-      mySuspendContextSetInProgress = false
-      suspendContext?.myInProgress = false
-    }
-    if (shouldCancelCommandScopeOnSuspend) {
-      shouldCancelCommandScopeOnSuspend = false
-      cancelCommandScope()
     }
   }
 }

@@ -14,33 +14,41 @@ import kotlin.coroutines.CoroutineContext
 
 internal class DebuggerThreadDispatcher(private val managerThread: DebuggerManagerThreadImpl) : CoroutineDispatcher() {
   override fun dispatch(context: CoroutineContext, block: Runnable) {
-    val debuggerCommand = getOrCreateDebuggerCommand(context)
-    val value = debuggerCommand.resetContinuation(block)
-    check(value == null) { "Continuation is already set $value" }
+    val debuggerCommand = createCommand(context, block)
     managerThread.schedule(debuggerCommand)
   }
 
-  private fun getOrCreateDebuggerCommand(context: CoroutineContext): DebuggerCommandImpl {
-    val existingCommand = context[DebuggerCommandImpl.KEY]
-    if (existingCommand != null) return existingCommand
-
+  private fun createCommand(context: CoroutineContext, block: Runnable): DebuggerCommandImpl {
     val suspendContext = context[SuspendContextImpl.Key]
     val debugContext = context[DebugContextElement.Key]?.context
     val priority = context[PrioritizedTask.Priority] ?: PrioritizedTask.Priority.LOW
+
+    fun cancelCommand() {
+      context.cancel()
+      // TODO
+      // Another important use-case is cancellation of tasks scheduled from [com.intellij.debugger.engine.DebuggerThreadDispatcher]:
+      // the dispatcher must guarantee to call the passed action, but we could not do so because the context is already resumed.
+      // In this case, we cancel the [Job] first, and then call the passed action.
+      // For example, a command can start a computation in [kotlinx.coroutines.Dispatchers.Default].
+      // When the program is resumed, the job will be canceled.
+      block.run()
+    }
+
     return when {
       suspendContext != null -> object : SuspendContextCommandImpl(suspendContext) {
         override val priority get() = priority
-        override fun contextAction(suspendContext: SuspendContextImpl) = error("Should not be called")
+        override fun contextAction(suspendContext: SuspendContextImpl) = block.run()
+        override fun commandCancelled() = cancelCommand()
       }
       debugContext != null -> object : DebuggerContextCommandImpl(debugContext) {
         override val priority get() = priority
-        override fun threadAction(suspendContext: SuspendContextImpl) = error("Should not be called")
+        override fun threadAction(suspendContext: SuspendContextImpl) = block.run()
+        override fun commandCancelled() = cancelCommand()
       }
       else -> object : DebuggerCommandImpl(priority) {
-        override fun action() = error("Should not be called")
+        override fun action() = block.run()
+        override fun commandCancelled() = cancelCommand()
       }
-    }.apply {
-      setCancellationAction { context.cancel() }
     }
   }
 }

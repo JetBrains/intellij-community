@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.sun.jdi.ObjectCollectedException
 import com.sun.jdi.ThreadReference
 import com.sun.jdi.request.EventRequest
-import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -41,7 +40,7 @@ abstract class DebuggerContextCommandImpl @JvmOverloads protected constructor(
   private val thread: ThreadReferenceProxyImpl?
     get() = customThread ?: debuggerContext.threadProxy
 
-  final override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) {
+  final override fun contextAction(suspendContext: SuspendContextImpl) {
     val suspendManager = suspendContext.debugProcess.suspendManager
     val thread = this.thread
 
@@ -63,7 +62,7 @@ abstract class DebuggerContextCommandImpl @JvmOverloads protected constructor(
         LOG.debug("Context thread " + suspendContext.getThread())
         LOG.debug("Debug thread $thread")
       }
-      threadActionSuspend(suspendContext)
+      threadAction(suspendContext)
     }
     else {
       // no suspend context currently available
@@ -77,10 +76,7 @@ abstract class DebuggerContextCommandImpl @JvmOverloads protected constructor(
     }
   }
 
-  open fun threadAction(suspendContext: SuspendContextImpl): Unit = throw AbstractMethodError()
-
-  @ApiStatus.Experimental
-  open suspend fun threadActionSuspend(suspendContext: SuspendContextImpl): Unit = threadAction(suspendContext)
+  abstract fun threadAction(suspendContext: SuspendContextImpl)
 
   companion object {
     private val LOG = Logger.getInstance(DebuggerContextCommandImpl::class.java)

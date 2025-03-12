@@ -338,10 +338,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     if (request.invokesN == RATHER_LATER_INVOKES_N) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         DebuggerManagerThreadImpl managerThread = request.myDebugProcess.getManagerThread();
-        var commands = managerThread.getUnfinishedCommands();
-        while (!commands.isEmpty()) {
-          TimeoutUtil.sleep(1);
-        }
         AtomicInteger counter = managerThread.getDispatchedCommandsCounter$intellij_java_debugger_impl();
         while (counter.get() != 0) {
           TimeoutUtil.sleep(1);

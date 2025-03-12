@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.events.asContextElement
@@ -51,12 +50,6 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
   internal val debuggerThreadDispatcher = DebuggerThreadDispatcher(this)
   private val myDebugProcess = WeakReference(debugProcess)
   internal val dispatchedCommandsCounter = AtomicInteger(0)
-
-  /**
-   * This set is used for testing purposes as it is the only way to check that there are any (possibly async) debugger commands.
-   */
-  @ApiStatus.Internal
-  val unfinishedCommands: MutableSet<DebuggerCommandImpl> = ConcurrentCollectionFactory.createConcurrentSet<DebuggerCommandImpl>()
 
   @ApiStatus.Internal
   var coroutineScope: CoroutineScope = createScope()
@@ -200,7 +193,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
       }
       else {
         val commandTimeNs = measureNanoTime {
-          managerCommand.invokeCommand(debuggerThreadDispatcher, coroutineScope)
+          managerCommand.invokeCommand()
         }
         myDebugProcess.get()?.let { debugProcess ->
           val commandTimeMs = TimeUnit.NANOSECONDS.toMillis(commandTimeNs)
@@ -302,23 +295,10 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
 
   /**
    * Indicates whether the debugger manager thread is currently idle.
-   * This is determined by checking if there are no pending events
-   * and no unfinished commands (other than the current one).
+   * This is determined by checking if there are no pending events.
    */
   @ApiStatus.Internal
-  fun isIdle(): Boolean {
-    if (!myEvents.isEmpty) {
-      return false
-    }
-    if (dispatchedCommandsCounter.get() > 0) return false
-    val currentCommand = getCurrentCommand()
-    if (currentCommand != null) {
-      return unfinishedCommands.singleOrNull() == currentCommand
-    }
-    else {
-      return unfinishedCommands.isEmpty()
-    }
-  }
+  fun isIdle(): Boolean = myEvents.isEmpty && dispatchedCommandsCounter.get() == 0
 
   fun hasAsyncCommands(): Boolean {
     return myEvents.hasAsyncCommands()
