@@ -1,5 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("FunctionName")
+@file:ApiStatus.Experimental
 
 package com.intellij.platform.syntax.runtime
 
@@ -42,14 +43,22 @@ private const val VARIANTS_POOL_SIZE = 10000
 private const val FRAMES_POOL_SIZE = 500
 
 // here's the new section API for compact parsers & less IntelliJ platform API exposure
+@ApiStatus.Experimental
 @JvmField val _NONE_: Int = 0x0
+@ApiStatus.Experimental
 @JvmField val _COLLAPSE_: Int = 0x1
+@ApiStatus.Experimental
 @JvmField val _LEFT_: Int = 0x2
+@ApiStatus.Experimental
 @JvmField val _LEFT_INNER_: Int = 0x4
+@ApiStatus.Experimental
 @JvmField val _AND_: Int = 0x8
+@ApiStatus.Experimental
 @JvmField val _NOT_: Int = 0x10
+@ApiStatus.Experimental
 @JvmField val _UPPER_: Int = 0x20
 
+@ApiStatus.Experimental
 @JvmField val TOKEN_ADVANCER: Parser = object : Parser {
   override fun parse(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean {
     if (stateHolder.builder.eof()) return false
@@ -58,10 +67,12 @@ private const val FRAMES_POOL_SIZE = 500
   }
 }
 
+@ApiStatus.Experimental
 @JvmField val TRUE_CONDITION: Parser = object : Parser {
   override fun parse(stateHolder: SyntaxGeneratedParserRuntime, level: Int): Boolean = true
 }
 
+@ApiStatus.Experimental
 @JvmField val LEFT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<WhitespacesAndCommentsBinder?> {
   override fun run(stateHolder: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
     marker?.setCustomEdgeTokenBinders(param, null)
@@ -69,6 +80,7 @@ private const val FRAMES_POOL_SIZE = 500
   }
 }
 
+@ApiStatus.Experimental
 @JvmField val RIGHT_BINDER: Hook<WhitespacesAndCommentsBinder?> = object : Hook<WhitespacesAndCommentsBinder?> {
 
   override fun run(stateHolder: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: WhitespacesAndCommentsBinder?): SyntaxTreeBuilder.Marker? {
@@ -77,6 +89,7 @@ private const val FRAMES_POOL_SIZE = 500
   }
 }
 
+@ApiStatus.Experimental
 @JvmField val WS_BINDERS: Hook<Array<WhitespacesAndCommentsBinder?>> = object : Hook<Array<WhitespacesAndCommentsBinder?>> {
   override fun run(stateHolder: SyntaxGeneratedParserRuntime, marker: SyntaxTreeBuilder.Marker?, param: Array<WhitespacesAndCommentsBinder?>?): SyntaxTreeBuilder.Marker? {
     marker?.setCustomEdgeTokenBinders(param!![0], param[1])
@@ -84,13 +97,14 @@ private const val FRAMES_POOL_SIZE = 500
   }
 }
 
+@ApiStatus.Experimental
 @JvmField val DUMMY_BLOCK: SyntaxElementType = SyntaxElementType("DUMMY_BLOCK")
 
 @ApiStatus.Experimental
 final class SyntaxGeneratedParserRuntime(
   private val maxRecursionDepth: Int,
   private val syntaxBuilder: SyntaxTreeBuilder,
-  private val isCaseSensitive: Boolean = true,
+  private val isCaseSensitive: Boolean,
   private val braces: Collection<BracePair>?,
 ) {
 
@@ -146,16 +160,16 @@ final class SyntaxGeneratedParserRuntime(
     internal val variants: MyList<Variant> = MyList<Variant>(INITIAL_VARIANTS_SIZE)
     internal val unexpected: MyList<Variant> = MyList<Variant>(INITIAL_VARIANTS_SIZE / 10)
 
-    var predicateCount: Int = 0
-    var level: Int = 0
-    var predicateSign: Boolean = true
-    var suppressErrors: Boolean = false
+    internal var predicateCount: Int = 0
+    internal var level: Int = 0
+    internal var predicateSign: Boolean = true
+    internal var suppressErrors: Boolean = false
     internal var hooks: Hooks<*>? = null
 
-    var extendsSets: Array<Set<SyntaxElementType>>? = null
-    var braces: Array<BracePair>? = null
-    var tokenAdvancer: Parser = TOKEN_ADVANCER
-    var altMode: Boolean = false
+    internal var extendsSets: Array<Set<SyntaxElementType>>? = null
+    internal var braces: Array<BracePair>? = null
+    internal var tokenAdvancer: Parser = TOKEN_ADVANCER
+    internal var altMode: Boolean = false
 
     internal val VARIANTS: LimitedPool<Variant> = LimitedPool<Variant>(VARIANTS_POOL_SIZE) { Variant() }
     internal val FRAMES: LimitedPool<Frame> = LimitedPool<Frame>(FRAMES_POOL_SIZE) { Frame() }
@@ -302,26 +316,30 @@ final class SyntaxGeneratedParserRuntime(
   }
 
   data class BracePair(
-    val myLeftBrace: SyntaxElementType? = null,
-    val myRightBrace: SyntaxElementType? = null,
-    private val myStructural: Boolean = false,
+    val myLeftBrace: SyntaxElementType?,
+    val myRightBrace: SyntaxElementType?,
+    private val myStructural: Boolean,
   )
 }
 
+@ApiStatus.Experimental
 fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementType?> {
   return tokenTypes.toSet()
 }
 
   //private val MAX_RECURSION_LEVEL = StringUtil.parseInt(System.getProperty("grammar.kit.gpub.max.level"), 1000)
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.eof(level: Int): Boolean {
     return builder.eof()
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.current_position_(): Int {
     return builder.rawTokenIndex()
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.recursion_guard_(level: Int, funcName: String): Boolean {
     if (level > MAX_RECURSION_LEVEL) {
       builder.mark().error(bundle.message("parsing.error.maximum.recursion.level.reached.in", MAX_RECURSION_LEVEL, funcName))
@@ -330,6 +348,7 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return true
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.empty_element_parsed_guard_(funcName: String, pos: Int): Boolean {
     if (pos == current_position_()) {
       // sometimes this is a correct situation, therefore no explicit marker
@@ -339,6 +358,7 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return true
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.invalid_left_marker_guard_(marker: SyntaxTreeBuilder.Marker?, funcName: String?): Boolean {
     //builder.error("Invalid left marker encountered in " + funcName_ +" at offset " + builder.getCurrentOffset());
     val goodMarker = marker != null // && ((LighterASTNode)marker).getTokenType() != TokenType.ERROR_ELEMENT;
@@ -346,6 +366,7 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return errorState.currentFrame != null
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.leftMarkerIs(type: SyntaxElementType?): Boolean {
     val lastDoneMarker = builder.lastDoneMarker
     return lastDoneMarker?.getNodeType() === type
@@ -372,22 +393,27 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return pinned || result
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.consumeTokens(pin: Int, vararg token: SyntaxElementType?): Boolean {
     return consumeTokens(false, pin, *token)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.consumeTokensSmart(pin: Int, vararg token: SyntaxElementType?): Boolean {
     return consumeTokens(true, pin, *token)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.parseTokens(pin: Int, vararg tokens: SyntaxElementType?): Boolean {
     return parseTokens(false, pin, *tokens)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.parseTokensSmart(pin: Int, vararg tokens: SyntaxElementType?): Boolean {
     return parseTokens(true, pin, *tokens)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.parseTokens(smart: Boolean, pin: Int, vararg tokens: SyntaxElementType?): Boolean {
     val marker: SyntaxTreeBuilder.Marker = builder.mark()
     val result: Boolean = consumeTokens(smart, pin, *tokens)
@@ -400,20 +426,24 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return result
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.consumeTokenSmart(token: SyntaxElementType): Boolean {
     return consumeTokenFast(token)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.consumeTokenSmart(token: String): Boolean {
     return consumeTokenFast(token)
   }
 
+@ApiStatus.Experimental
   @Contract(mutates = "param1")
   fun SyntaxGeneratedParserRuntime.consumeToken(token: SyntaxElementType): Boolean {
     addVariantSmart(token, true)
     return consumeTokenFast(token)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.consumeTokenFast(token: SyntaxElementType): Boolean {
     if (nextTokenIsFast(token)) {
       builder.advanceLexer()
@@ -422,6 +452,7 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return false
   }
 
+@ApiStatus.Experimental
   @JvmOverloads
   fun SyntaxGeneratedParserRuntime.consumeToken(text: String, caseSensitive: Boolean = isLanguageCaseSensitive): Boolean {
     addVariantSmart(text, true)
@@ -433,6 +464,7 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return false
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.consumeTokenFast(text: String): Boolean {
     var count: Int = nextTokenIsFast(text, isLanguageCaseSensitive)
     if (count > 0) {
@@ -442,15 +474,18 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return false
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.consumeToken(tokens: Set<SyntaxElementType>): Boolean {
     addVariantSmart(tokens, true)
     return consumeTokenFast(tokens)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.consumeTokenSmart(tokens: Set<SyntaxElementType>): Boolean {
     return consumeTokenFast(tokens)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.consumeTokenFast(tokens: Set<SyntaxElementType>): Boolean {
     if (nextTokenIsFast(tokens)) {
       builder.advanceLexer()
@@ -459,32 +494,39 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return false
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIsFast(token: SyntaxElementType?): Boolean {
     return builder.tokenType === token
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIsFast(vararg tokens: SyntaxElementType): Boolean {
     val tokenType: SyntaxElementType? = builder.tokenType
     return tokens.indexOf(tokenType) >= 0
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIsFast(tokens: Set<SyntaxElementType>): Boolean {
     return tokens.contains(builder.tokenType)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIsSmart(token: SyntaxElementType?): Boolean {
     return nextTokenIsFast(token)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIsSmart(vararg tokens: SyntaxElementType): Boolean {
     return nextTokenIsFast(*tokens)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIs(frameName: String?, vararg tokens: SyntaxElementType): Boolean {
     val track = !errorState.suppressErrors && errorState.predicateCount < 2 && errorState.predicateSign
     return if (!track) nextTokenIsFast(*tokens) else nextTokenIsSlow(frameName, *tokens)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIsSlow(frameName: String?, vararg tokens: SyntaxElementType): Boolean {
     val tokenType: SyntaxElementType? = builder.tokenType
     if (!frameName.isNullOrEmpty()) {
@@ -499,20 +541,24 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return tokens.indexOf(tokenType) != -1
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIs(token: SyntaxElementType): Boolean {
     if (!addVariantSmart(token, false)) return true
     return nextTokenIsFast(token)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIs(tokenText: String): Boolean {
     if (!addVariantSmart(tokenText, false)) return true
     return nextTokenIsFast(tokenText, isLanguageCaseSensitive) > 0
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIsFast(tokenText: String): Boolean {
     return nextTokenIsFast(tokenText, isLanguageCaseSensitive) > 0
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.nextTokenIsFast(tokenText: String, caseSensitive: Boolean): Int {
     val sequence: CharSequence = builder.text
     val offset: Int = builder.currentOffset
@@ -541,6 +587,7 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return true
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.addVariant(text: String) {
     addVariant(errorState, text)
   }
@@ -575,12 +622,14 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
   }
 
   // simple enter/exit methods pair that doesn't require frame object
+  @ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.enter_section_(): SyntaxTreeBuilder.Marker {
     reportFrameError(errorState)
     errorState.level++
     return builder.mark()
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.exit_section_(
     marker: SyntaxTreeBuilder.Marker?,
     elementType: SyntaxElementType?,
@@ -592,12 +641,15 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
   }
 
   // complex enter/exit methods pair with frame object
+  @ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int, frameName: String?): SyntaxTreeBuilder.Marker {
     return enter_section_(level, modifiers, null, frameName)
   }
 
+@ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = enter_section_(level, modifiers, null, null)
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int, elementType: SyntaxElementType?, frameName: String?): SyntaxTreeBuilder.Marker {
     reportFrameError(errorState)
     val marker: SyntaxTreeBuilder.Marker = builder.mark()
@@ -627,6 +679,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
     }
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.exit_section_(
     level: Int,
     marker: SyntaxTreeBuilder.Marker?,
@@ -637,6 +690,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
     exit_section_(level, marker, null, result, pinned, eatMore)
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.exit_section_(
     level: Int,
     marker: SyntaxTreeBuilder.Marker?,
@@ -664,10 +718,12 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
     errorState.level--
   }
 
+@ApiStatus.Experimental
   fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<T?>?, param: T?) {
     errorState.hooks = SyntaxGeneratedParserRuntime.Hooks.Companion.concat<T?>(hook, param, errorState.level, errorState.hooks)
   }
 
+@ApiStatus.Experimental
   @SafeVarargs
   fun <T> SyntaxGeneratedParserRuntime.register_hook_(hook: Hook<Array<T?>?>?, vararg param: T?) {
     errorState.hooks = SyntaxGeneratedParserRuntime.Hooks.Companion.concat<Array<T?>?>(hook, arrayOf(param.asIterable()) as Array<T?>, errorState.level, errorState.hooks)
@@ -902,11 +958,13 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
     }
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.report_error_(result: Boolean): Boolean {
     if (!result) report_error_(errorState, false)
     return result
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.report_error_(state: SyntaxGeneratedParserRuntime.ErrorState, advance: Boolean) {
     val frame: SyntaxGeneratedParserRuntime.Frame? = state.currentFrame
     if (frame == null) {
@@ -1015,6 +1073,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
     }
   }
 
+@ApiStatus.Experimental
   fun SyntaxGeneratedParserRuntime.parseAsTree(
     state: SyntaxGeneratedParserRuntime.ErrorState, level: Int,
     chunkType: SyntaxElementType, checkBraces: Boolean,
@@ -1100,6 +1159,7 @@ fun SyntaxGeneratedParserRuntime.enter_section_(level: Int, modifiers: Int) = en
     return totalCount != 0
   }
 
+@ApiStatus.Experimental
 fun SyntaxGeneratedParserRuntime.isWhitespaceOrComment(type: SyntaxElementType?): Boolean {
   return type != null && builder.isWhitespaceOrComment(type)
 }

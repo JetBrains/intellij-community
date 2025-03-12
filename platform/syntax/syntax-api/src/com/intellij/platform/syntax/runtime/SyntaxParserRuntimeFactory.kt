@@ -2,7 +2,9 @@
 package com.intellij.platform.syntax.runtime
 
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 interface SyntaxParserRuntimeFactory {
   fun buildParserUtils(builder: SyntaxTreeBuilder): SyntaxGeneratedParserRuntime
 }
