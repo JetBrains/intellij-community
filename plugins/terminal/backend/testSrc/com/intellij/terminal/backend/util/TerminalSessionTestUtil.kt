@@ -3,7 +3,6 @@ package com.intellij.terminal.backend.util
 import com.google.common.base.Ascii
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.backend.startTerminalSession
 import com.intellij.terminal.session.TerminalOutputEvent
@@ -15,8 +14,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -27,7 +27,7 @@ internal object TerminalSessionTestUtil {
     coroutineScope: CoroutineScope,
     size: TermSize = TermSize(80, 24),
   ): TerminalSession {
-    Registry.get(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY).setValue(true, coroutineScope.asDisposable())
+    TerminalTestUtil.setTerminalEngineForTest(TerminalEngine.REWORKED, coroutineScope.asDisposable())
 
     val options = ShellStartupOptions.Builder()
       .shellCommand(listOf(shellPath))

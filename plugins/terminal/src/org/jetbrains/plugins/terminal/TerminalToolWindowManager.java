@@ -83,8 +83,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY;
-
 @Service(Service.Level.PROJECT)
 public final class TerminalToolWindowManager implements Disposable {
   private static final Key<TerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
@@ -703,8 +701,7 @@ public final class TerminalToolWindowManager implements Disposable {
     if (provider != null &&
         ExperimentalUI.isNewUI() &&
         terminalRunner == myTerminalRunner &&
-        terminalRunner.isGenTwoTerminalEnabled() &&
-        !Registry.is(BLOCK_TERMINAL_REGISTRY)) {
+        terminalRunner.isGenTwoTerminalEnabled()) {
       widget = provider.createTerminalWidget(myProject, parentDisposable);
 
       Disposer.register(widget, new Disposable() {

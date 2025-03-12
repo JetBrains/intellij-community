@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -30,9 +29,7 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     ActionGroup toolWindowActions = (ActionGroup)ActionManager.getInstance().getAction("Terminal.ToolWindowActions");
     toolWindow.setAdditionalGearActions(toolWindowActions);
 
-    if (ExperimentalUI.isNewUI() &&
-        Registry.is(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY) &&
-        !Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)) {
+    if (ExperimentalUI.isNewUI() && TerminalOptionsProvider.getInstance().getTerminalEngine() == TerminalEngine.REWORKED) {
       // Restore from backend if Reworked Terminal (Gen2) is enabled.
       terminalToolWindowManager.restoreTabsFromBackend();
     }

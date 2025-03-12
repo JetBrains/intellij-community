@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.plugins.terminal.TerminalEngine
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.TerminalUtil
 
@@ -17,12 +18,12 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return TerminalEngine.getValue() == engine
+    return TerminalOptionsProvider.instance.terminalEngine == engine
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
-      TerminalEngine.setValue(engine)
+      TerminalOptionsProvider.instance.terminalEngine = engine
 
       TerminalToolWindowManager.getInstance(e.project!!).createNewSession()
     }
@@ -38,7 +39,7 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
                                           // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                                           // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                                           // show this option as well to avoid strange behavior when nothing is selected in the popup.
-                                          TerminalEngine.getValue() == TerminalEngine.NEW_TERMINAL)
+                                          TerminalOptionsProvider.instance.terminalEngine == TerminalEngine.NEW_TERMINAL)
     e.presentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
 
     if (engine == TerminalEngine.REWORKED) {

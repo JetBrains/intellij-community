@@ -96,10 +96,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     var shellIntegration = options.getShellIntegration();
-    var usingGenTwoTerminal = isGenTwoTerminalEnabled() && !isGenOneTerminalEnabled();
     boolean isBlockTerminal =
       (isGenOneTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null);
-    if (usingGenTwoTerminal) {
+
+    if (isGenTwoTerminalEnabled()) {
       ReworkedTerminalUsageCollector.logLocalShellStarted(myProject, command);
     }
     else {
