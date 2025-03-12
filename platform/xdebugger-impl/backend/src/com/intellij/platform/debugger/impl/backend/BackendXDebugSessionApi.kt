@@ -184,8 +184,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
             send(null)
             return@collect
           }
-          val (_, id) = frameAndId
-          send(XStackFrameDto(XStackFrameId(id)))
+          val (frame, id) = frameAndId
+          send(XStackFrameDto(XStackFrameId(id), frame.sourcePosition?.toRpc()))
         }
       }
     }

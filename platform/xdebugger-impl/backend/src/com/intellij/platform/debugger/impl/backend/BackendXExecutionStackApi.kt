@@ -41,7 +41,7 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
                   val entity = change {
                     XStackFrameEntity.new(this, frame)
                   }
-                  XStackFrameDto(XStackFrameId(entity.id))
+                  XStackFrameDto(XStackFrameId(entity.id), frame.sourcePosition?.toRpc())
                 }
                 send(XStackFramesEvent.XNewStackFrames(stacks, last))
                 if (last) {

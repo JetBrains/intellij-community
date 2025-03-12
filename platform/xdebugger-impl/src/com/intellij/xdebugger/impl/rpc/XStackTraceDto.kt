@@ -49,4 +49,5 @@ data class XStackFrameId(val id: UID)
 @Serializable
 data class XStackFrameDto(
   val stackFrameId: XStackFrameId,
+  val sourcePosition: XSourcePositionDto?,
 )
