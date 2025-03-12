@@ -52,8 +52,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
         @Override
         public void visitIncludedRoot(@NotNull WorkspaceFileSet fileSet,
-                                      @NotNull EntityPointer<? extends @NotNull WorkspaceEntity> entityPointer,
-                                      boolean recursive) {
+                                      @NotNull EntityPointer<? extends @NotNull WorkspaceEntity> entityPointer) {
           visitedCount++;
           if (visitedCount % 100 == 0) {
             ProgressManager.checkCanceled();
@@ -87,7 +86,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   private boolean hasRecursiveRootFromModuleContent(@NotNull WorkspaceFileSetWithCustomData<?> fileSet) {
-    if (fileSet instanceof WorkspaceFileSetImpl && !((WorkspaceFileSetImpl)fileSet).getRecursive()) {
+    if (!fileSet.getRecursive()) {
       return false;
     }
     return isInContent(fileSet);

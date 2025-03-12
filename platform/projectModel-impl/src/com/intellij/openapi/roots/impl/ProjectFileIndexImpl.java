@@ -51,7 +51,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     Pair<List<VirtualFile>, List<VirtualFile>> rootsPair = ReadAction.compute(() -> {
       Set<VirtualFile> allRecursiveRoots = new LinkedHashSet<>();
       List<VirtualFile> allNonRecursiveRoots = new ArrayList<>();
-      myWorkspaceFileIndex.visitFileSets((fileSet, entityPointer, recursive) -> {
+      myWorkspaceFileIndex.visitFileSets((fileSet, entityPointer) -> {
         ProgressManager.checkCanceled();
         if (fileSet.getKind().isContent()) {
           VirtualFile root = fileSet.getRoot();

@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkType
@@ -65,16 +66,18 @@ class IndexingIteratorsProviderImpl(
     val iterators = ArrayList<IndexableFilesIterator>()
     val libraryOrigins = HashSet<LibraryOrigin>()
 
-    index.visitFileSets { fileSet, entityPointer, recursive ->
+    index.visitFileSets { fileSet, entityPointer ->
       fileSet as WorkspaceFileSetWithCustomData<*>
       val root = fileSet.root
       val customData = fileSet.data
       if (customData is ModuleRelatedRootData) {
-        iterators.add(ModuleFilesIteratorImpl(customData.module, root, recursive, true))
+        if (!isNestedRootOfModuleContent(root, customData.module, index)) {
+          iterators.add(ModuleFilesIteratorImpl(customData.module, root, fileSet.recursive, true))
+        }
       }
       else if (fileSet.kind.isContent) {
         val rootHolder: IndexingRootHolder
-        if (recursive) {
+        if (fileSet.recursive) {
           rootHolder = IndexingRootHolder.fromFile(root)
         }
         else {
@@ -84,36 +87,39 @@ class IndexingIteratorsProviderImpl(
       }
       else {
         val entity = entityPointer.resolve(storage)
-        if (entity is LibraryEntity && moduleDependencyIndex.hasDependencyOn(entity.symbolicId)) {
-          val libraryBridge = storage.libraryMap.getDataByEntity(entity)
-          if (libraryBridge != null) {
-            val sourceLibraryRoot = SmartList<VirtualFile>()
-            val libraryRoot = SmartList<VirtualFile>()
-
-            if (fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE) {
-              sourceLibraryRoot.add(root)
-            }
-            else {
-              libraryRoot.add(root)
-            }
-            val iterator =
-              LibraryIndexableFilesIteratorImpl.createIterator(libraryBridge, libraryRoot, sourceLibraryRoot)
-            if (iterator != null && libraryOrigins.add(iterator.origin)) {
-              iterators.add(iterator)
+        if (entity is LibraryEntity) {
+          if (moduleDependencyIndex.hasDependencyOn(entity.symbolicId)) {
+            val libraryBridge = storage.libraryMap.getDataByEntity(entity)
+            if (libraryBridge != null) {
+              val sourceLibraryRoot = SmartList<VirtualFile>()
+              val libraryRoot = SmartList<VirtualFile>()
+              if (fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE) {
+                sourceLibraryRoot.add(root)
+              }
+              else {
+                libraryRoot.add(root)
+              }
+              val iterator =
+                LibraryIndexableFilesIteratorImpl.createIterator(libraryBridge, libraryRoot, sourceLibraryRoot)
+              if (iterator != null && libraryOrigins.add(iterator.origin)) {
+                iterators.add(iterator)
+              }
             }
           }
         }
-        else if (entity is SdkEntity && moduleDependencyIndex.hasDependencyOn(entity.symbolicId)) {
-          val sdkType = SdkType.findByName(entity.type)
-          iterators.add(SdkIndexableFilesIteratorImpl.createIterator(
-            entity.name,
-            sdkType,
-            entity.homePath?.url,
-            listOf(root)))
+        else if (entity is SdkEntity) {
+          if (moduleDependencyIndex.hasDependencyOn(entity.symbolicId)) {
+            val sdkType = SdkType.findByName(entity.type)
+            iterators.add(SdkIndexableFilesIteratorImpl.createIterator(
+              entity.name,
+              sdkType,
+              entity.homePath?.url,
+              listOf(root)))
+          }
         }
         else if (fileSet.kind == WorkspaceFileKind.CUSTOM) {
           val rootHolder: IndexingRootHolder
-          if (recursive) {
+          if (fileSet.recursive) {
             rootHolder = IndexingRootHolder.fromFile(root)
           }
           else {
@@ -125,7 +131,7 @@ class IndexingIteratorsProviderImpl(
           val virtualFileUrl = root.toVirtualFileUrl(virtualFileUrlManager)
           val holder = MutableIndexingUrlSourceRootHolder()
           if (fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE) {
-            if (recursive) {
+            if (fileSet.recursive) {
               holder.sourceRoots.add(virtualFileUrl)
             }
             else {
@@ -133,7 +139,7 @@ class IndexingIteratorsProviderImpl(
             }
           }
           else {
-            if (recursive) {
+            if (fileSet.recursive) {
               holder.roots.add(virtualFileUrl)
             }
             else {
@@ -165,5 +171,33 @@ class IndexingIteratorsProviderImpl(
       }
     }
     return iterators
+  }
+
+  private fun isNestedRootOfModuleContent(root: VirtualFile, module: Module, workspaceFileIndexImpl: WorkspaceFileIndexImpl): Boolean {
+    val parent = root.getParent()
+    if (parent == null) {
+      return false
+    }
+    val fileInfo = workspaceFileIndexImpl.getFileInfo(
+      parent,
+      honorExclusion = false,
+      includeContentSets = true,
+      includeExternalSets = false,
+      includeExternalSourceSets = false,
+      includeCustomKindSets = false
+    )
+    return fileInfo.findFileSet { fileSet -> hasRecursiveRootFromModuleContent(fileSet, module) } != null
+  }
+
+  private fun hasRecursiveRootFromModuleContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Module): Boolean {
+    if (!fileSet.recursive) {
+      return false
+    }
+    return isInContent(fileSet, module)
+  }
+
+  private fun isInContent(fileSet: WorkspaceFileSetWithCustomData<*>, module: Module): Boolean {
+    val data = fileSet.data
+    return data is ModuleRelatedRootData && module == data.module
   }
 }
