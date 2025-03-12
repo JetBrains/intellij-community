@@ -224,7 +224,10 @@ private fun setStaticField(clazz: Class<out Any>, fieldName: String, value: Any)
 }
 
 private fun initLux() {
+  // See also 'AWT_FORCE_HEADFUL'
+  setStaticField(java.awt.GraphicsEnvironment::class.java, "headless", false) // ensure cached value is overridden
   System.setProperty("java.awt.headless", false.toString())
+
   System.setProperty("swing.volatileImageBufferEnabled", false.toString())
   System.setProperty("keymap.current.os.only", false.toString())
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
