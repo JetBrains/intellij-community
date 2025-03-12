@@ -1,5 +1,10 @@
 <idea-plugin>
     <dependencies>
       <plugin id="com.intellij.platform.experimental.backend"/>
+      <module name="intellij.platform.kernel.backend"/>
     </dependencies>
+    <extensions defaultExtensionNs="com.intellij">
+      <platform.rpc.backend.remoteApiProvider
+        implementation="org.intellij.plugins.markdown.backend.providers.LinkOpenerApiProvider"/>
+    </extensions>
 </idea-plugin>
