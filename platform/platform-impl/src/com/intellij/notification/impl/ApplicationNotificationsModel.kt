@@ -114,12 +114,6 @@ object ApplicationNotificationsModel {
     ApplicationManager.getApplication().messageBus.syncPublisher(STATE_CHANGED).stateChanged()
   }
 
-  fun setStatusMessage(project: Project, notification: Notification?) {
-    synchronized(dataGuard) {
-      projectToModel[project]?.setStatusMessage(project, notification)
-    }
-  }
-
   @JvmStatic
   fun getStatusMessage(project: Project): StatusMessage? {
     synchronized(dataGuard) {
@@ -271,7 +265,11 @@ private class ProjectNotificationsModel {
     }
     else {
       return Runnable {
+        if (!NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
+          return@Runnable
+        }
         listener!!.add(notification)
+        setStatusMessage(project, notification)
         ApplicationNotificationsModel.fireStateChanged()
       }
     }
@@ -309,6 +307,8 @@ private class ProjectNotificationsModel {
     else {
       Runnable {
         listener!!.remove(notification)
+        val newStatus = listener!!.getNotifications().findLast { it.isImportant || it.isImportantSuggestion }
+        setStatusMessage(project, newStatus)
         ApplicationNotificationsModel.fireStateChanged()
       }
     }
@@ -324,6 +324,7 @@ private class ProjectNotificationsModel {
     else {
       return notifications to Runnable {
         listener!!.expireAll()
+        setStatusMessage(project, null)
         ApplicationNotificationsModel.fireStateChanged()
       }
     }
@@ -343,6 +344,7 @@ private class ProjectNotificationsModel {
       return Runnable {
         project.closeAllBalloons()
         listener!!.clearTimeline()
+        setStatusMessage(project, null)
         ApplicationNotificationsModel.fireStateChanged()
       }
     }
@@ -357,7 +359,9 @@ private class ProjectNotificationsModel {
     else {
       return Runnable {
         project.closeAllBalloons()
-        listener!!.clearAll()
+        listener!!.
+        clearAll()
+        setStatusMessage(project, null)
         ApplicationNotificationsModel.fireStateChanged()
       }
     }
@@ -383,7 +387,7 @@ private class ProjectNotificationsModel {
     return statusMessage
   }
 
-  fun setStatusMessage(project: Project, notification: Notification?) {
+  private fun setStatusMessage(project: Project, notification: Notification?) {
     if ((statusMessage == null && notification == null) || (statusMessage != null && statusMessage!!.notification === notification)) {
       return
     }

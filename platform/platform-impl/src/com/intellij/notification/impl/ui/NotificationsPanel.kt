@@ -223,9 +223,6 @@ internal class NotificationsPanel(private val project: Project, parentDisposable
   }
 
   override fun add(notification: Notification) {
-    if (!NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
-      return
-    }
     if (notification.isSuggestionType) {
       suggestions.add(notification, singleSelectionHandler)
     }
@@ -237,8 +234,6 @@ internal class NotificationsPanel(private val project: Project, parentDisposable
 
     searchController.update()
     autoProportionController.update()
-
-    ApplicationNotificationsModel.setStatusMessage(project, notification)
   }
 
   override fun getNotifications(): ArrayList<Notification> = ArrayList(myNotifications)
@@ -262,8 +257,6 @@ internal class NotificationsPanel(private val project: Project, parentDisposable
 
     searchController.update()
     autoProportionController.update()
-
-    ApplicationNotificationsModel.setStatusMessage(project, myNotifications.findLast { it.isImportant || it.isImportantSuggestion })
   }
 
   override fun expireAll() {
@@ -275,8 +268,6 @@ internal class NotificationsPanel(private val project: Project, parentDisposable
     myNotifications.clear()
 
     searchController.update()
-
-    ApplicationNotificationsModel.setStatusMessage(project, null)
 
     for (n in notifications) {
       n.expire()
@@ -290,8 +281,6 @@ internal class NotificationsPanel(private val project: Project, parentDisposable
 
     searchController.update()
     autoProportionController.update()
-
-    ApplicationNotificationsModel.setStatusMessage(project, null)
   }
 
   override fun clearAll() {
@@ -302,8 +291,6 @@ internal class NotificationsPanel(private val project: Project, parentDisposable
 
     searchController.update()
     autoProportionController.update()
-
-    ApplicationNotificationsModel.setStatusMessage(project, null)
   }
 
   fun updateComponents() {
