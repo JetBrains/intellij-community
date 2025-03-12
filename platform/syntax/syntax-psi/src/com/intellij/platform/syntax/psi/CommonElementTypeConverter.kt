@@ -4,8 +4,12 @@ package com.intellij.platform.syntax.psi
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.psi.TokenType
 
-internal class CommonElementTypeConverter : ElementTypeConverterBase(mapOf(
+internal class CommonElementTypeConverterFactory : ElementTypeConverterFactory {
+  override fun getElementTypeConverter(): ElementTypeConverter = CommonElementTypeConverter
+}
+
+private val CommonElementTypeConverter: ElementTypeConverter = elementTypeConverterOf(
   SyntaxTokenTypes.ERROR_ELEMENT to TokenType.ERROR_ELEMENT,
   SyntaxTokenTypes.WHITE_SPACE to TokenType.WHITE_SPACE,
   SyntaxTokenTypes.BAD_CHARACTER to TokenType.BAD_CHARACTER,
-))
+)

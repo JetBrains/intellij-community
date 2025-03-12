@@ -1,13 +1,18 @@
 *:com.intellij.platform.syntax.psi.ElementTypeConverter
 - a:convert(com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
 - a:convert(com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
-*a:com.intellij.platform.syntax.psi.ElementTypeConverterBase
-- com.intellij.platform.syntax.psi.ElementTypeConverter
-- <init>(java.util.Map):V
-- f:convert(com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
-- f:convert(com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
+- a:convert(com.intellij.platform.syntax.SyntaxElementType[]):com.intellij.psi.tree.IElementType[]
+*:com.intellij.platform.syntax.psi.ElementTypeConverterFactory
+- a:getElementTypeConverter():com.intellij.platform.syntax.psi.ElementTypeConverter
 *f:com.intellij.platform.syntax.psi.ElementTypeConverterKt
 - sf:asTokenSet(java.util.Set,com.intellij.platform.syntax.psi.ElementTypeConverter):com.intellij.psi.tree.TokenSet
+- sf:compositeElementTypeConverter(java.util.List):com.intellij.platform.syntax.psi.ElementTypeConverter
+- sf:convertNotNull(com.intellij.platform.syntax.psi.ElementTypeConverter,com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
+- sf:convertNotNull(com.intellij.platform.syntax.psi.ElementTypeConverter,com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
+- sf:elementTypeConverterOf(kotlin.Pair[]):com.intellij.platform.syntax.psi.ElementTypeConverter
+*f:com.intellij.platform.syntax.psi.ElementTypeConverters
+- sf:INSTANCE:com.intellij.platform.syntax.psi.ElementTypeConverters
+- f:getConverter(com.intellij.lang.Language):com.intellij.platform.syntax.psi.ElementTypeConverter
 *:com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
 - a:getCommentTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
 - a:getLexer():com.intellij.platform.syntax.lexer.Lexer

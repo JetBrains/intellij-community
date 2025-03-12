@@ -1,7 +1,7 @@
 <idea-plugin package="com.intellij.platform.syntax.psi">
   <extensionPoints>
     <extensionPoint name="syntax.elementTypeConverter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.ElementTypeConverter"/>
+      <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.ElementTypeConverterFactory"/>
     </extensionPoint>
     <extensionPoint name="syntax.syntaxDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.LanguageSyntaxDefinition"/>
@@ -9,6 +9,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <syntax.elementTypeConverter language="any" implementationClass="com.intellij.platform.syntax.psi.CommonElementTypeConverter"/>
+    <syntax.elementTypeConverter language="any" implementationClass="com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory"/>
   </extensions>
 </idea-plugin>
