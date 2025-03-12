@@ -72,7 +72,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private int myTabSize; // guarded by myLock
   private int myTopOverhang; //guarded by myLock
   private int myBottomOverhang; //guarded by myLock
-  private @NotNull DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy = new DefaultDoubleWidthCharacterStrategy();
 
   private final Object myLock = new Object();
 
@@ -775,14 +774,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return true;
   }
 
-  @NotNull DoubleWidthCharacterStrategy getDoubleWidthCharacterStrategy() {
-    return myDoubleWidthCharacterStrategy;
-  }
-
-  void setDoubleWidthCharacterStrategy(@NotNull DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
-    myDoubleWidthCharacterStrategy = doubleWidthCharacterStrategy;
-  }
-
   private void checkFontRenderContext(FontRenderContext context) {
     boolean contextUpdated = false;
     synchronized (myLock) {
@@ -824,13 +815,5 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     // And it has different values for component graphics (ON/OFF) and component's font metrics (DEFAULT), causing
     // unnecessary layout cache resets.
     return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
-  }
-
-  private class DefaultDoubleWidthCharacterStrategy implements DoubleWidthCharacterStrategy {
-    @Override
-    public boolean isDoubleWidth(int codePoint) {
-      int width = Math.round(myCharWidthCache.getCodePointWidth(codePoint, Font.PLAIN) / getMaxCharWidth());
-      return Math.min(2, Math.max(1, width)) == 2;
-    }
   }
 }
