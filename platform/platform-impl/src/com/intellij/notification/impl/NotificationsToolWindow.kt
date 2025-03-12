@@ -10,7 +10,6 @@ import com.intellij.ide.IdeCoreBundle
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.idea.ActionsBundle
-import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.notification.impl.widget.IdeNotificationArea
@@ -19,6 +18,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
@@ -53,6 +53,9 @@ import com.intellij.util.SingleEdtTaskScheduler
 import com.intellij.util.UtilBundle
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -78,6 +81,24 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     internal const val CLEAR_ACTION_ID: String = "ClearAllNotifications"
   }
 
+  override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
+    fun updateIcon() {
+      val notifications = ApplicationNotificationsModel.getStateNotifications(toolWindow.project)
+      val icon = IdeNotificationArea.getActionCenterNotificationIcon(notifications)
+      toolWindow.setIcon(icon)
+    }
+
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().getMessageBus()
+        .connect(this)
+        .subscribe(ApplicationNotificationsModel.STATE_CHANGED, ApplicationNotificationsModel.StateEventListener {
+          updateIcon()
+        })
+      updateIcon()
+      awaitCancellation()
+    }
+  }
+
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.setContentUiType(ToolWindowContentUiType.TABBED, null)
     NotificationContent(project, toolWindow)
@@ -96,12 +117,13 @@ object NotificationsStateWatcher {
 @JvmRecord
 data class StatusMessage(val notification: Notification, val text: @NlsContexts.StatusBarText String, val stamp: Long)
 
-internal class NotificationContent(val project: Project,
-                                   private val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener {
+internal class NotificationContent(
+  val project: Project,
+  private val toolWindow: ToolWindow,
+) : Disposable, ToolWindowManagerListener {
   private val myMainPanel = JBPanelWithEmptyText(BorderLayout())
 
   private val myNotifications = ArrayList<Notification>()
-  private val myIconNotifications = ArrayList<Notification>()
 
   private val suggestions: NotificationGroupComponent
   private val timeline: NotificationGroupComponent
@@ -139,9 +161,9 @@ internal class NotificationContent(val project: Project,
 
     autoProportionController = AutoProportionController(splitter, suggestions, timeline)
 
-    suggestions.setRemoveCallback(Consumer(::remove))
-    timeline.setRemoveCallback(Consumer(::remove))
-    timeline.setClearCallback(::clear)
+    suggestions.setRemoveCallback(Consumer(ApplicationNotificationsModel::remove))
+    timeline.setRemoveCallback(Consumer(ApplicationNotificationsModel::remove))
+    timeline.setClearCallback { ApplicationNotificationsModel.clearTimeline(project) }
 
     Disposer.register(toolWindow.disposable, this)
 
@@ -164,10 +186,7 @@ internal class NotificationContent(val project: Project,
       timeline.updateLaf()
     })
 
-    val newNotifications = ApplicationNotificationsModel.registerAndGetInitNotifications(this)
-    for (notification in newNotifications) {
-      add(notification)
-    }
+    ApplicationNotificationsModel.register(this)
   }
 
   private fun createSearchComponent(): SearchTextField {
@@ -283,79 +302,82 @@ internal class NotificationContent(val project: Project,
     else {
       timeline.add(notification, singleSelectionHandler)
     }
+
     myNotifications.add(notification)
-    myIconNotifications.add(notification)
+
     searchController.update()
     autoProportionController.update()
-    setStatusMessage(notification)
-    updateIcon()
-  }
 
-  fun getStateNotifications(): ArrayList<Notification> = ArrayList(myIconNotifications)
+    ApplicationNotificationsModel.setStatusMessage(project, notification)
+  }
 
   fun getNotifications(): ArrayList<Notification> = ArrayList(myNotifications)
 
   fun isEmpty(): Boolean = suggestions.isEmpty() && timeline.isEmpty()
 
-  fun expire(notification: Notification?) {
-    if (notification == null) {
-      val notifications = ArrayList(myNotifications)
-
-      myNotifications.clear()
-      myIconNotifications.clear()
-      suggestions.expireAll()
-      timeline.expireAll()
-      searchController.update()
-      setStatusMessage(null)
-      updateIcon()
-
-      for (n in notifications) {
-        n.expire()
-      }
-    }
-    else {
-      remove(notification)
-    }
+  fun clearUnreadStates() {
+    suggestions.clearNewState()
+    timeline.clearNewState()
   }
 
-  private fun remove(notification: Notification) {
+  fun remove(notification: Notification) {
     if (notification.isSuggestionType) {
       suggestions.remove(notification)
     }
     else {
       timeline.remove(notification)
     }
+
     myNotifications.remove(notification)
-    myIconNotifications.remove(notification)
+
     searchController.update()
     autoProportionController.update()
-    setStatusMessage()
-    updateIcon()
+
+    ApplicationNotificationsModel.setStatusMessage(project, myNotifications.findLast { it.isImportant || it.isImportantSuggestion })
   }
 
-  private fun clear(notifications: List<Notification>) {
-    val notificationSet = notifications.toSet()
-    myNotifications.removeAll(notificationSet)
-    myIconNotifications.removeAll(notificationSet)
+  fun expireAll() {
+    val notifications = ArrayList(myNotifications)
+
+    suggestions.expireAll()
+    timeline.expireAll()
+
+    myNotifications.clear()
+
+    searchController.update()
+
+    ApplicationNotificationsModel.setStatusMessage(project, null)
+
+    for (n in notifications) {
+      n.expire()
+    }
+  }
+
+  fun clearTimeline() {
+    project.closeAllBalloons()
+
+    val notifications = timeline.clear().toSet()
+
+    myNotifications.removeAll(notifications)
+
     searchController.update()
     autoProportionController.update()
-    setStatusMessage()
-    updateIcon()
+
+    ApplicationNotificationsModel.setStatusMessage(project, null)
   }
 
   fun clearAll() {
     project.closeAllBalloons()
 
-    myNotifications.clear()
-    myIconNotifications.clear()
-
     suggestions.clear()
     timeline.clear()
 
-    searchController.update()
+    myNotifications.clear()
 
-    setStatusMessage(null)
-    updateIcon()
+    searchController.update()
+    autoProportionController.update()
+
+    ApplicationNotificationsModel.setStatusMessage(project, null)
   }
 
   override fun stateChanged(toolWindowManager: ToolWindowManager) {
@@ -369,25 +391,9 @@ internal class NotificationContent(val project: Project,
         timeline.updateComponents()
       }
       else {
-        suggestions.clearNewState()
-        timeline.clearNewState()
-        myIconNotifications.clear()
-        updateIcon()
+        ApplicationNotificationsModel.markAllRead(project)
       }
     }
-  }
-
-  private fun updateIcon() {
-    toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(myIconNotifications))
-    ActionCenter.fireModelChanged()
-  }
-
-  private fun setStatusMessage() {
-    setStatusMessage(myNotifications.findLast { it.isImportant || it.isImportantSuggestion })
-  }
-
-  private fun setStatusMessage(notification: Notification?) {
-    ApplicationNotificationsModel.setStatusMessage(project, notification)
   }
 
   override fun dispose() {
@@ -576,7 +582,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   private val myTimeComponents = ArrayList<JLabel>()
   private val myTimeAlarm = Alarm(myProject)
 
-  private lateinit var myClearCallback: (List<Notification>) -> Unit
+  private lateinit var myClearCallback: () -> Unit
   private lateinit var myRemoveCallback: Consumer<Notification>
 
   init {
@@ -602,7 +608,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
       panel.add(myTitle, BorderLayout.WEST)
 
       val clearAll = LinkLabel(IdeBundle.message("notifications.toolwindow.timeline.clear.all"), null) { _: LinkLabel<Unit>, _: Unit? ->
-        clearAll()
+        myClearCallback.invoke()
       }
       clearAll.mediumFontFunction()
       clearAll.border = JBUI.Borders.emptyRight(20)
@@ -686,22 +692,8 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     updateContent()
   }
 
-  fun setClearCallback(callback: (List<Notification>) -> Unit) {
+  fun setClearCallback(callback: () -> Unit) {
     myClearCallback = callback
-  }
-
-  private fun clearAll() {
-    myProject.closeAllBalloons()
-
-    val notifications = ArrayList<Notification>()
-    iterateComponents {
-      val notification = it.myNotificationWrapper.notification
-      if (notification != null) {
-        notifications.add(notification)
-      }
-    }
-    clear()
-    myClearCallback.invoke(notifications)
   }
 
   fun expireAll() {
@@ -718,10 +710,18 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     }
   }
 
-  fun clear() {
-    iterateComponents { it.removeFromParent() }
+  fun clear(): List<Notification> {
+    val notifications = mutableListOf<Notification>()
+    iterateComponents {
+      val notification = it.myNotificationWrapper.notification
+      if (notification != null) {
+        notifications.add(notification)
+      }
+      it.removeFromParent()
+    }
     myList.removeAll()
     updateContent()
+    return notifications.toList()
   }
 
   fun clearNewState() {
@@ -808,10 +808,12 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   override fun isNull(): Boolean = !isVisible
 }
 
-private class NotificationComponent(val project: Project,
-                                    notification: Notification,
-                                    timeComponents: ArrayList<JLabel>,
-                                    val singleSelectionHandler: SingleTextSelectionHandler) :
+private class NotificationComponent(
+  val project: Project,
+  notification: Notification,
+  timeComponents: ArrayList<JLabel>,
+  val singleSelectionHandler: SingleTextSelectionHandler,
+) :
   JBPanel<NotificationComponent>() {
 
   companion object {
@@ -1094,10 +1096,10 @@ private class NotificationComponent(val project: Project,
         eastPanel.isOpaque = false
         eastPanel.add(buttonWrapper, BorderLayout.WEST)
         eastPanel.add(timeWrapper, BorderLayout.EAST)
-        titlePanel!!.add(eastPanel, BorderLayout.EAST)
+        titlePanel?.add(eastPanel, BorderLayout.EAST)
       }
       else {
-        titlePanel!!.add(timeComponent, BorderLayout.EAST)
+        titlePanel?.add(timeComponent, BorderLayout.EAST)
         myMoreButton = null
       }
     }

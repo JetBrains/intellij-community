@@ -102,7 +102,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   @Override
   public void expire(@NotNull Notification notification) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      ApplicationNotificationsModel.expire(notification);
+      ApplicationNotificationsModel.remove(notification);
     });
   }
 

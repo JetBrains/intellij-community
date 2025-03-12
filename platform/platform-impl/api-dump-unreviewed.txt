@@ -5589,8 +5589,6 @@ f:com.intellij.notification.ActionCenter
 - sf:getToolwindowName():java.lang.String
 - sf:showLog(com.intellij.openapi.project.Project):V
 - sf:toggleLog(com.intellij.openapi.project.Project):V
-com.intellij.notification.ActionCenter$EventListener
-- a:modelChanged():V
 f:com.intellij.notification.EventLog
 - <init>():V
 - s:getEventLog(com.intellij.openapi.project.Project):com.intellij.openapi.wm.ToolWindow

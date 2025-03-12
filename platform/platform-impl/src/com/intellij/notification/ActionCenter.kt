@@ -4,27 +4,15 @@ package com.intellij.notification
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.impl.ApplicationNotificationsModel
 import com.intellij.notification.impl.NotificationsToolWindowFactory
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 object ActionCenter {
   @Internal
   const val EVENT_REQUESTOR: String = "Internal notification event requestor"
-
-  @JvmField
-  @Internal
-  val MODEL_CHANGED: Topic<EventListener> = Topic.create("NOTIFICATION_MODEL_CHANGED",
-                                                         EventListener::class.java, Topic.BroadcastDirection.NONE)
-
-  @Internal
-  fun fireModelChanged() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(MODEL_CHANGED).modelChanged()
-  }
 
   @JvmStatic
   fun getNotifications(project: Project?): List<Notification> {
@@ -67,9 +55,5 @@ object ActionCenter {
 
   private fun getToolWindow(project: Project): ToolWindow? {
     return ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-  }
-
-  interface EventListener {
-    fun modelChanged()
   }
 }

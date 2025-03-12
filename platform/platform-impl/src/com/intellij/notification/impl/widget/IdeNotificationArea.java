@@ -70,7 +70,8 @@ public final class IdeNotificationArea implements CustomStatusBarWidget, IconLik
       }.installOn(myComponent.get(), true);
 
       Application app = ApplicationManager.getApplication();
-      app.getMessageBus().connect(this).subscribe(ActionCenter.MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
+      app.getMessageBus().connect(this).subscribe(ApplicationNotificationsModel.STATE_CHANGED,
+                                                  () -> app.invokeLater(() -> updateStatus(project)));
       updateStatus(project);
     }
   }

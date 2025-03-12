@@ -4,11 +4,11 @@ package com.intellij.notification.impl
 import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.ui.NotificationsUtil
-import com.intellij.notification.impl.widget.IdeNotificationArea
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -18,6 +18,12 @@ object ApplicationNotificationsModel {
   private val notifications = ArrayList<Notification>()
   private val projectToModel = HashMap<Project, ProjectNotificationModel>()
   private val dataGuard = Object()
+
+  @JvmField
+  @Topic.AppLevel
+  val STATE_CHANGED: Topic<StateEventListener> = Topic.create("NOTIFICATION_MODEL_CHANGED",
+                                                              StateEventListener::class.java,
+                                                              Topic.BroadcastDirection.NONE)
 
   @JvmStatic
   fun addNotification(project: Project?, notification: Notification) {
@@ -87,8 +93,22 @@ object ApplicationNotificationsModel {
   @JvmStatic
   fun getStateNotifications(project: Project): List<Notification> {
     return synchronized(dataGuard) {
-      projectToModel[project]?.getStateNotifications().orEmpty()
+      projectToModel[project]?.getUnreadNotifications() ?: notifications
     }
+  }
+
+  fun markAllRead(project: Project) {
+    val callback = synchronized(dataGuard) {
+      projectToModel[project]?.markAllRead()
+    } ?: return
+
+    UIUtil.invokeLaterIfNeeded {
+      callback.run()
+    }
+  }
+
+  fun fireStateChanged() {
+    ApplicationManager.getApplication().messageBus.syncPublisher(STATE_CHANGED).stateChanged()
   }
 
   fun setStatusMessage(project: Project, notification: Notification?) {
@@ -109,13 +129,13 @@ object ApplicationNotificationsModel {
   }
 
   @JvmStatic
-  fun expire(notification: Notification) {
+  fun remove(notification: Notification) {
     val callback = synchronized(dataGuard) {
       notifications.remove(notification)
 
       val callbacks = mutableListOf<Runnable>()
       for ((project, model) in projectToModel) {
-        val callback = model.expire(project, notification)
+        val callback = model.remove(project, notification)
         callbacks.add(callback)
       }
 
@@ -140,6 +160,19 @@ object ApplicationNotificationsModel {
       else {
         null
       }
+    } ?: return
+
+    UIUtil.invokeLaterIfNeeded {
+      callback.run()
+    }
+  }
+
+  fun clearTimeline(project: Project) {
+    val callback = synchronized(dataGuard) {
+      notifications.removeAll {
+        !it.isSuggestionType
+      }
+      projectToModel[project]?.clearTimeline(project)
     } ?: return
 
     UIUtil.invokeLaterIfNeeded {
@@ -174,8 +207,8 @@ object ApplicationNotificationsModel {
     callback.run()
   }
 
-  internal fun registerAndGetInitNotifications(content: NotificationContent): List<Notification> {
-    synchronized(dataGuard) {
+  internal fun register(content: NotificationContent) {
+    val (model, initNotifications) = synchronized(dataGuard) {
       val initNotifications = notifications.toMutableList()
       notifications.clear()
 
@@ -183,7 +216,10 @@ object ApplicationNotificationsModel {
       model.registerAndGetInitNotifications(content).also {
         initNotifications.addAll(it)
       }
-      return initNotifications.toList()
+      model to initNotifications
+    }
+    for (notification in initNotifications) {
+      model.addNotification(content.project, notification, emptyList()).run()
     }
   }
 
@@ -201,10 +237,15 @@ object ApplicationNotificationsModel {
     }
     return ProjectNotificationModel()
   }
+
+  fun interface StateEventListener {
+    fun stateChanged()
+  }
 }
 
 private class ProjectNotificationModel {
-  private val myNotifications = ArrayList<Notification>()
+  private val myNotifications = mutableListOf<Notification>()
+  private val unreadNotifications = mutableListOf<Notification>()
   private var myContent: NotificationContent? = null
   private var myStatusMessage: StatusMessage? = null
 
@@ -216,25 +257,24 @@ private class ProjectNotificationModel {
   }
 
   fun addNotification(project: Project, notification: Notification, appNotifications: List<Notification>): Runnable {
+    unreadNotifications.add(notification)
     if (myContent == null) {
       myNotifications.add(notification)
 
       val notifications = ArrayList(appNotifications)
       notifications.addAll(myNotifications)
 
-      return Runnable { updateToolWindow(project, notification, notifications, false) }
+      return Runnable { updateToolWindow(project, notification, false) }
     }
     else {
-      return Runnable { myContent!!.add(notification) }
+      return Runnable {
+        myContent!!.add(notification)
+        ApplicationNotificationsModel.fireStateChanged()
+      }
     }
   }
 
-  fun getStateNotifications(): List<Notification> {
-    if (myContent == null) {
-      return emptyList()
-    }
-    return myContent!!.getStateNotifications()
-  }
+  fun getUnreadNotifications(): List<Notification> = unreadNotifications.toList()
 
   fun isEmptyContent(): Boolean {
     return myContent == null || myContent!!.isEmpty()
@@ -249,55 +289,89 @@ private class ProjectNotificationModel {
     return myContent!!.getNotifications()
   }
 
-  fun expire(project: Project, notification: Notification): Runnable {
+  fun markAllRead(): Runnable {
+    unreadNotifications.clear()
+    return Runnable {
+      myContent?.clearUnreadStates()
+      ApplicationNotificationsModel.fireStateChanged()
+    }
+  }
+
+  fun remove(project: Project, notification: Notification): Runnable {
     myNotifications.remove(notification)
+    unreadNotifications.remove(notification)
     return if (myContent == null) {
-      Runnable { updateToolWindow(project, null, myNotifications, false) }
+      Runnable { updateToolWindow(project, null, false) }
     }
     else {
-      Runnable { myContent!!.expire(notification) }
+      Runnable {
+        myContent!!.remove(notification)
+        ApplicationNotificationsModel.fireStateChanged()
+      }
     }
   }
 
   fun expireAll(project: Project): Pair<List<Notification>, Runnable> {
     val notifications = myNotifications.toList()
     myNotifications.clear()
+    unreadNotifications.clear()
     if (myContent == null) {
-      return notifications to Runnable { updateToolWindow(project, null, emptyList(), false) }
+      return notifications to Runnable { updateToolWindow(project, null, false) }
     }
     else {
-      return notifications to Runnable { myContent!!.expire(null) }
+      return notifications to Runnable {
+        myContent!!.expireAll()
+        ApplicationNotificationsModel.fireStateChanged()
+      }
+    }
+  }
+
+  fun clearTimeline(project: Project): Runnable {
+    myNotifications.removeAll {
+      !it.isSuggestionType
+    }
+    unreadNotifications.removeAll {
+      !it.isSuggestionType
+    }
+    if (myContent == null) {
+      return Runnable { updateToolWindow(project, null, true) }
+    }
+    else {
+      return Runnable {
+        myContent!!.clearTimeline()
+        ApplicationNotificationsModel.fireStateChanged()
+      }
     }
   }
 
   fun clearAll(project: Project): Runnable {
     myNotifications.clear()
+    unreadNotifications.clear()
     if (myContent == null) {
-      return Runnable { updateToolWindow(project, null, emptyList(), true) }
+      return Runnable { updateToolWindow(project, null, true) }
     }
     else {
-      return Runnable { myContent!!.clearAll() }
+      return Runnable {
+        myContent!!.clearAll()
+        ApplicationNotificationsModel.fireStateChanged()
+      }
     }
   }
 
   private fun updateToolWindow(
     project: Project,
     stateNotification: Notification?,
-    notifications: List<Notification>,
     closeBalloons: Boolean,
   ) {
     if (project.isDisposed) {
       return
     }
 
-    setStatusMessage(project, stateNotification)
-
     if (closeBalloons) {
       project.closeAllBalloons()
     }
-
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-    toolWindow?.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications))
+    setStatusMessage(project, stateNotification)
+    ApplicationNotificationsModel.fireStateChanged()
   }
 
   fun getStatusMessage(): StatusMessage? {
