@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
+import com.intellij.ide.DataContextId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import fleet.kernel.DurableRef
-import fleet.util.openmap.SerializedValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -15,10 +15,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class SeItemDataFrontendProvider(private val projectId: ProjectId,
                                  override val id: SeProviderId,
                                  private val sessionRef: DurableRef<SeSessionEntity>,
-                                 private val serializedDataContext: SerializedValue?): SeItemDataProvider {
+                                 private val dataContextId: DataContextId?): SeItemDataProvider {
   override fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
-      SeRemoteApi.getInstance().getItems(projectId, sessionRef, id, params, serializedDataContext).collectLatest {
+      SeRemoteApi.getInstance().getItems(projectId, sessionRef, id, params, dataContextId).collect {
         send(it)
       }
     }

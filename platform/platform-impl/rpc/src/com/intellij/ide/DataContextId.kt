@@ -1,0 +1,43 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide
+
+import com.intellij.ide.rpc.deserializeFromRpc
+import com.intellij.ide.rpc.serializeToRpc
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.diagnostic.fileLogger
+import fleet.util.openmap.SerializedValue
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import org.jetbrains.annotations.ApiStatus
+
+private val LOG = fileLogger()
+
+/**
+ * Converts an [DataContext] instance into a [DataContextId] which can be used in RPC calls and stored in Rhizome.
+ */
+@ApiStatus.Internal
+fun DataContext.rpcId(): DataContextId {
+  val context = this
+  val serializedContext = serializeToRpc(context)
+
+  return DataContextId(serializedContext, context)
+}
+
+/**
+ * Retrieves the [DataContext] associated with the given [DataContextId].
+ */
+@ApiStatus.Internal
+fun DataContextId.dataContext(): DataContext? {
+  if (localContext != null) {
+    return localContext
+  }
+
+  return deserializeFromRpc<DataContext>(serializedValue)
+}
+
+@ApiStatus.Internal
+@Serializable
+class DataContextId internal constructor(
+  @Serializable @JvmField internal val serializedValue: SerializedValue? = null,
+  @Transient @JvmField internal val localContext: DataContext? = null,
+)

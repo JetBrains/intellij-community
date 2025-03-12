@@ -37,5 +37,6 @@
     <orderEntry type="module" module-name="fleet.util.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

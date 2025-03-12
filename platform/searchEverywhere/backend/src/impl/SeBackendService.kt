@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.backend.impl
 
-import com.intellij.ide.rpc.deserializeFromRpc
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.ide.DataContextId
+import com.intellij.ide.dataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -14,7 +14,6 @@ import com.jetbrains.rhizomedb.entities
 import com.jetbrains.rhizomedb.exists
 import fleet.kernel.DurableRef
 import fleet.kernel.change
-import fleet.util.openmap.SerializedValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -28,26 +27,26 @@ class SeBackendService(val project: Project) {
   suspend fun getItems(sessionRef: DurableRef<SeSessionEntity>,
                        providerId: SeProviderId,
                        params: SeParams,
-                       serializedDataContext: SerializedValue?
+                       dataContextId: DataContextId?
   ): Flow<SeItemData> {
-    val provider = getProviders(sessionRef, serializedDataContext)[providerId]
+    val provider = getProviders(sessionRef, dataContextId)[providerId]
 
     return provider?.getItems(params) ?: emptyFlow()
   }
 
   private suspend fun getProviders(sessionRef: DurableRef<SeSessionEntity>,
-                                   serializedDataContext: SerializedValue?): Map<SeProviderId, SeItemDataProvider> {
+                                   dataContextId: DataContextId?): Map<SeProviderId, SeItemDataProvider> {
 
     val session = sessionRef.derefOrNull() ?: return emptyMap()
     var existingHolderEntities = entities(Session, session)
 
     if (existingHolderEntities.isEmpty()) {
-      if (serializedDataContext == null) {
+      if (dataContextId == null) {
         throw IllegalStateException("Cannot create providers on the backend: no serialized data context")
       }
 
       val dataContext = withContext(Dispatchers.EDT) {
-        deserializeFromRpc(serializedDataContext, DataContext::class)
+        dataContextId.dataContext()
       } ?: throw IllegalStateException("Cannot create providers on the backend: couldn't deserialize data context")
 
       // We may create providers several times, but only one set of providers will be saved as a property to a session entity
