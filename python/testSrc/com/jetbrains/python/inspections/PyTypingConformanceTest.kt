@@ -45,6 +45,7 @@ private val inspections
     PyTypeCheckerInspection(),
     PyTypeHintsInspection(),
     PyUnresolvedReferencesInspection(),
+    PyCallingNonCallableInspection(),
   )
 
 private val IGNORED_INSPECTIONS = listOf(
