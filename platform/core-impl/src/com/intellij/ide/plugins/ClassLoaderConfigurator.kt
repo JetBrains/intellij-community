@@ -213,7 +213,7 @@ class ClassLoaderConfigurator(
     }
 
     var libDirectories = Collections.emptyList<Path>()
-    val libDir = module.path.resolve("lib")
+    val libDir = module.pluginPath.resolve("lib")
     if (Files.exists(libDir)) {
       libDirectories = Collections.singletonList(libDir)
     }
