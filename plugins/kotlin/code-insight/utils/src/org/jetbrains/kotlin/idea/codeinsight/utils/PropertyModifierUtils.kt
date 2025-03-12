@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.openapi.fileTypes.LanguageFileType
@@ -12,11 +12,16 @@ import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 
-const val JVM_FIELD_CLASS_ID = "kotlin/jvm/JvmField"
-const val JVM_STATIC_CLASS_ID = "kotlin/jvm/JvmStatic"
+const val JVM_FIELD_CLASS_ID: String = "kotlin/jvm/JvmField"
+const val JVM_STATIC_CLASS_ID: String = "kotlin/jvm/JvmStatic"
 
 fun KtProperty.getJvmAnnotations(): List<KtAnnotationEntry> {
     return listOfNotNull(
