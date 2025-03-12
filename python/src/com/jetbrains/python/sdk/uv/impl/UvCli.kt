@@ -14,6 +14,7 @@ import com.jetbrains.python.sdk.runExecutable
 import com.jetbrains.python.sdk.uv.UvCli
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
@@ -55,8 +56,8 @@ private class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?) : Uv
   }
 
   override suspend fun runUv(workingDir: Path, vararg args: String): Result<String> {
-    with(dispatcher) {
-      return runUv(uv, workingDir, *args)
+    return withContext(dispatcher) {
+      runUv(uv, workingDir, *args)
     }
   }
 }
