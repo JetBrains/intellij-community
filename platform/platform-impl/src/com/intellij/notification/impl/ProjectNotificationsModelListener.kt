@@ -6,6 +6,7 @@ import com.intellij.notification.Notification
 // not REALLY a listener, but should be made into one eventually
 internal interface ProjectNotificationsModelListener {
   fun add(notification: Notification)
+  fun add(notifications: List<Notification>)
 
   fun getNotifications(): List<Notification>
   fun isEmpty(): Boolean

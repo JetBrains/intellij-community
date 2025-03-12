@@ -185,19 +185,16 @@ object ApplicationNotificationsModel {
   }
 
   internal fun register(project: Project, listener: ProjectNotificationsModelListener) {
-    val (model, initNotifications) = synchronized(dataGuard) {
+    val callback = synchronized(dataGuard) {
       val initNotifications = notifications.toMutableList()
       notifications.clear()
 
-      val model = projectToModel.getOrPut(project) { newProjectModel(project) }
-      model.registerAndGetInitNotifications(listener).also {
-        initNotifications.addAll(it)
-      }
-      model to initNotifications
+      projectToModel.getOrPut(project) {
+        newProjectModel(project)
+      }.register(project, listener, initNotifications)
     }
-    for (notification in initNotifications) {
-      model.addNotification(project, notification).run()
-    }
+
+    callback.inProject(project).invokeLaterIfNeeded()
   }
 
   internal fun unregister(project: Project) {
@@ -226,11 +223,24 @@ private class ProjectNotificationsModel {
   private var listener: ProjectNotificationsModelListener? = null
   private var statusMessage: StatusMessage? = null
 
-  fun registerAndGetInitNotifications(newListener: ProjectNotificationsModelListener): List<Notification> {
-    val initNotifications = myNotifications.toList()
+  fun register(
+    project: Project,
+    newListener: ProjectNotificationsModelListener,
+    appInitNotifications: List<Notification>,
+  ): Runnable {
+    val initNotifications = sequence {
+      yieldAll(appInitNotifications)
+      yieldAll(myNotifications)
+    }.filter {
+      NotificationsConfigurationImpl.getSettings(it.groupId).isShouldLog
+    }.toList()
     myNotifications.clear()
     listener = newListener
-    return initNotifications
+    return Runnable {
+      newListener.add(initNotifications)
+      setStatusMessage(project, initNotifications.last())
+      ApplicationNotificationsModel.fireStateChanged()
+    }
   }
 
   fun addNotification(project: Project, notification: Notification): Runnable {

@@ -236,6 +236,21 @@ internal class NotificationsPanel(private val project: Project, parentDisposable
     autoProportionController.update()
   }
 
+  override fun add(notifications: List<Notification>) {
+    notifications.forEach {
+      if (it.isSuggestionType) {
+        suggestions.add(it, singleSelectionHandler)
+      }
+      else {
+        timeline.add(it, singleSelectionHandler)
+      }
+      myNotifications.add(it)
+    }
+
+    searchController.update()
+    autoProportionController.update()
+  }
+
   override fun getNotifications(): ArrayList<Notification> = ArrayList(myNotifications)
 
   override fun isEmpty(): Boolean = suggestions.isEmpty() && timeline.isEmpty()
