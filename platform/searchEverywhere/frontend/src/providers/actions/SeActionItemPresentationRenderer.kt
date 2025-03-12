@@ -44,6 +44,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
     val commonData = presentation.commonData
     val pattern = patternProvider()
     val selected = selected
+    val hasFocus = cellHasFocus
     selectionColor = UIUtil.getListBackground(selected, selected)
 
     var groupForeground: Color =
@@ -81,7 +82,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
         text(name) {
           font = listFont
-          foreground = groupForeground
+          foreground = GotoActionModel.defaultActionForeground(selected, hasFocus, presentation.isEnabled)
 
           // TODO: Should we handle HTML? (see: appendWithColoredMatches(nameComponent, presentation.text, pattern, fg, selected))
           speedSearchRange(name, pattern, selected)?.let {
@@ -121,7 +122,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
         text(presentation.text) {
           font = listFont
-          foreground = groupForeground
+          foreground = UIUtil.getListForeground(selected, hasFocus)
 
           // TODO: Should we handle HTML? (see: appendWithColoredMatches(nameComponent, presentation.text, pattern, fg, selected))
           speedSearchRange(presentation.text, pattern, selected)?.let {
@@ -269,7 +270,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
   private fun speedSearchRange(
     name: @NlsActions.ActionText String,
     pattern: @NlsSafe String,
-    selected: Boolean
+    selected: Boolean,
   ): List<TextRange>? {
     if (!selected) return null
 
