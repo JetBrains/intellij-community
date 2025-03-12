@@ -92,10 +92,18 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this,param1&quot;"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name='java.io.ByteArrayInputStream long skip(long)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
     </annotation>
   </item>
   <item name='java.io.ByteArrayInputStream void close()'>
@@ -575,6 +583,10 @@
       <val name="mutates" val="&quot;this,io&quot;"/>
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name="java.io.InputStream int read()">
     <annotation name='org.jetbrains.annotations.Range'>
@@ -612,6 +624,10 @@
   <item name='java.io.InputStream int readNBytes(byte[], int, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this,io,param1&quot;"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
     </annotation>
   </item>
   <item name="java.io.InputStream long skip(long)">
@@ -1084,6 +1100,10 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this,io&quot;"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name='java.io.Reader long transferTo(java.io.Writer)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -1124,6 +1144,10 @@
   <item name='java.io.StringReader long skip(long)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
     </annotation>
   </item>
   <item name='java.io.StringReader void close()'>
