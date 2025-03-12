@@ -19,6 +19,8 @@ interface XDebugSessionProcessHandlerApi : RemoteApi<Unit> {
   suspend fun destroyProcess(sessionId: XDebugSessionId)
 
   suspend fun detachProcess(sessionId: XDebugSessionId)
+  
+  suspend fun killProcess(sessionId: XDebugSessionId)
 
   companion object {
     @JvmStatic

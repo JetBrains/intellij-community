@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.execution.KillableProcess
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
@@ -123,7 +124,14 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       }
     }.buffer(Channel.UNLIMITED)
 
-    return XDebuggerProcessHandlerDto(detachIsDefault(), flow.toRpc())
+    val killableProcessInfo = if (this is KillableProcess) {
+      KillableProcessInfo(canKillProcess = canKillProcess())
+    }
+    else {
+      null
+    }
+
+    return XDebuggerProcessHandlerDto(detachIsDefault(), flow.toRpc(), killableProcessInfo)
   }
 
   private fun ProcessEvent.toRpc(): XDebuggerProcessHandlerEventData {

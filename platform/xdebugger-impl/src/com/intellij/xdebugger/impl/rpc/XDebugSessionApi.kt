@@ -75,9 +75,17 @@ data class XDebugSessionDto(
 // TODO: should be moved to platform
 @ApiStatus.Internal
 @Serializable
+data class KillableProcessInfo(
+  val canKillProcess: Boolean = true
+)
+
+// TODO: should be moved to platform
+@ApiStatus.Internal
+@Serializable
 data class XDebuggerProcessHandlerDto(
   val detachIsDefault: Boolean,
-  val processHandlerEvents: RpcFlow<XDebuggerProcessHandlerEvent>
+  val processHandlerEvents: RpcFlow<XDebuggerProcessHandlerEvent>,
+  val killableProcessInfo: KillableProcessInfo? = null
 )
 
 /**
