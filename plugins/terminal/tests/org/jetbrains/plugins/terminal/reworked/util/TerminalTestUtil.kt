@@ -22,11 +22,11 @@ object TerminalTestUtil {
     return TerminalOutputModelImpl(document, maxLength)
   }
 
-  suspend fun TerminalOutputModel.update(absoluteLineIndex: Int, text: String, styles: List<StyleRange> = emptyList()) {
+  suspend fun TerminalOutputModel.update(absoluteLineIndex: Long, text: String, styles: List<StyleRange> = emptyList()) {
     updateOutputModel { updateContent(absoluteLineIndex, text, styles) }
   }
 
-  suspend fun TerminalOutputModel.updateCursor(absoluteLineIndex: Int, column: Int) {
+  suspend fun TerminalOutputModel.updateCursor(absoluteLineIndex: Long, column: Int) {
     updateOutputModel { updateCursorPosition(absoluteLineIndex, column) }
   }
 

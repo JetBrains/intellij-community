@@ -29,12 +29,12 @@ interface TerminalOutputModel {
   /**
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
-  fun updateContent(absoluteLineIndex: Int, text: String, styles: List<StyleRange>)
+  fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>)
 
   /**
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
-  fun updateCursorPosition(absoluteLineIndex: Int, columnIndex: Int)
+  fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int)
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 

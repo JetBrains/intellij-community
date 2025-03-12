@@ -34,17 +34,17 @@ class TerminalOutputModelImpl(
   private val dispatcher = EventDispatcher.create(TerminalOutputModelListener::class.java)
 
   @VisibleForTesting
-  var trimmedLinesCount: Int = 0
+  var trimmedLinesCount: Long = 0
 
   @VisibleForTesting
-  var trimmedCharsCount: Int = 0
+  var trimmedCharsCount: Long = 0
 
   @VisibleForTesting
   var firstLineTrimmedCharsCount: Int = 0
 
   private var contentUpdateInProgress: Boolean = false
 
-  override fun updateContent(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
+  override fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>) {
     changeDocumentContent {
       // If absolute line index is far in the past - in the already trimmed part of the output,
       // then it means that the terminal was cleared, and we should reset to the initial state.
@@ -54,13 +54,13 @@ class TerminalOutputModelImpl(
         firstLineTrimmedCharsCount = 0
       }
 
-      val documentLineIndex = absoluteLineIndex - trimmedLinesCount
+      val documentLineIndex = (absoluteLineIndex - trimmedLinesCount).toInt()
       doUpdateContent(documentLineIndex, text, styles)
     }
   }
 
-  override fun updateCursorPosition(absoluteLineIndex: Int, columnIndex: Int) {
-    val documentLineIndex = absoluteLineIndex - trimmedLinesCount
+  override fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int) {
+    val documentLineIndex = (absoluteLineIndex - trimmedLinesCount).toInt()
     val lineStartOffset = document.getLineStartOffset(documentLineIndex)
     val lineEndOffset = document.getLineEndOffset(documentLineIndex)
     val trimmedCharsInLine = if (documentLineIndex == 0) firstLineTrimmedCharsCount else 0
@@ -213,7 +213,11 @@ class TerminalOutputModelImpl(
       }
 
       val documentRelativeHighlightings = styleRanges.map {
-        HighlightingInfo(it.startOffset - trimmedCharsCount, it.endOffset - trimmedCharsCount, TextStyleAdapter(it.style, colorPalette))
+        HighlightingInfo(
+          startOffset = (it.startOffset - trimmedCharsCount).toInt(),
+          endOffset = (it.endOffset - trimmedCharsCount).toInt(),
+          textAttributesProvider = TextStyleAdapter(it.style, colorPalette),
+        )
       }
       val snapshot = TerminalOutputHighlightingsSnapshot(document, documentRelativeHighlightings)
       highlightingsSnapshot = snapshot
