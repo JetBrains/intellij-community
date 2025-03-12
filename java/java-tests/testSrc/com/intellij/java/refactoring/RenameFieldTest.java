@@ -5,12 +5,15 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.*;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -110,6 +113,25 @@ public class RenameFieldTest extends LightRefactoringTestCase {
 
   public void testRecordOverloads() {
     doTest("baz", "java");
+  }
+
+  public void testRecordNonPhysicalAccessor() {
+    String testName = getTestName(false);
+    configureByFile("/refactoring/renameField/before" + testName + ".java");
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+
+    assertNotNull(element);
+    try {
+      new MemberInplaceRenameHandler().doRename(element, getEditor(), null);
+      type("hello");
+    }
+    finally {
+      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+      assertNotNull(state);
+      state.gotoEnd(false);
+    }
+    checkResultByFile("/refactoring/renameField/after" + testName + ".java");
   }
 
   public void testFieldOnlyInImplicitClass() {
