@@ -26,17 +26,17 @@ abstract class AbstractGotoActionTest : KotlinLightCodeInsightFixtureTestCase() 
             val parts = KotlinTestUtils.loadBeforeAfterText(testPath)
 
             myFixture.configureByText(KotlinFileType.INSTANCE, parts[0])
-            myFixture.performEditorAction(actionName)
+            performAction()
 
             val fileEditorManager = FileEditorManager.getInstance(myFixture.project) as FileEditorManagerEx
             val currentEditor = fileEditorManager.selectedTextEditor ?: editor
 
             if (currentEditor == editor) {
                 val text = myFixture.getDocument(myFixture.file).text
-                val afterText = StringBuilder(text).insert(editor.caretModel.offset, "<caret>").toString()
+                val afterText = StringBuilder(text).insert(editor.caretModel.offset, "<caret>").toString().trim()
 
                 try {
-                    Assert.assertEquals(parts[1], afterText)
+                    Assert.assertEquals(parts[1].trim(), afterText)
                 } catch (e: ComparisonFailure) {
                     throw FileComparisonFailedError(
                         e.message,
@@ -60,6 +60,10 @@ abstract class AbstractGotoActionTest : KotlinLightCodeInsightFixtureTestCase() 
                 Assert.assertEquals(parts[1], withCaret)
             }
         }
+    }
+
+    protected open fun performAction() {
+        myFixture.performEditorAction(actionName)
     }
 
     override fun getProjectDescriptor() = getProjectDescriptorFromTestName()
