@@ -52,7 +52,6 @@ import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.popup.PopupUpdateProcessorBase
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.FilteringListModel
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingTextTrimmer
@@ -373,9 +372,7 @@ object Switcher : BaseSwitcherAction(null) {
         .setCancelKeyEnabled(false)
         .createPopup()
       Disposer.register(popup, this)
-      if (pinned) {
-        popup.setMinimumSize(JBDimension(if (windows.isEmpty()) 300 else 500, 200))
-      }
+      popup.setMinimumSize(JBUI.DialogSizes.medium())
       isFocusCycleRoot = true
       if (ScreenReader.isActive()) {
         val list = mutableListOf<Component>(files, toolWindows)
