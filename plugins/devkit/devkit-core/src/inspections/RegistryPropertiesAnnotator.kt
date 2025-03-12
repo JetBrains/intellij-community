@@ -54,7 +54,9 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
     "java", "javac", "uast", "junit4", "dsm",
     "js", "javascript", "typescript", "nodejs", "eslint", "jest",
     "ruby", "rubymine",
-    "groovy", "grails", "python", "php", "kotlin"
+    "groovy", "grails", "python", "php",
+    "kotlin", "spring", "jupyter", "dataspell", "javafx",
+    "maven", "gradle", "android", "eclipse"
   )
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
@@ -71,8 +73,13 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
     }
 
     val groupName = propertyName.substringBefore('.').lowercase(Locale.getDefault())
+
     if (PLUGIN_GROUP_NAMES.contains(groupName) ||
-        propertyName.startsWith("editor.config.")) {
+        propertyName.startsWith("editor.config.") ||
+        propertyName.startsWith("debugger.kotlin.") ||
+        propertyName.startsWith("debugger.enable.kotlin.") ||
+        propertyName.startsWith("ide.java.")) {
+
       holder.newAnnotation(HighlightSeverity.ERROR, DevKitBundle.message("registry.properties.annotator.plugin.keys.use.ep"))
         .withFix(ShowEPDeclarationIntention(propertyName)).create()
     }
