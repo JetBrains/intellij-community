@@ -4,9 +4,11 @@
 - name: lib/modules/intellij.vcs.git.frontend.jar
   contentModules:
   - name: intellij.vcs.git.frontend
+- name: lib/vcs-git-frontend.jar
+  contentModules:
+  - name: intellij.vcs.git.shared
 - name: lib/vcs-git.jar
   modules:
   - name: intellij.vcs.git
   contentModules:
   - name: intellij.vcs.git.coverage
-  - name: intellij.vcs.git.shared

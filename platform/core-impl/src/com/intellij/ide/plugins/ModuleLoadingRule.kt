@@ -18,8 +18,7 @@ enum class ModuleLoadingRule(val required: Boolean) {
   REQUIRED(required = true),
 
   /**
-   * The same as [REQUIRED], but *.class files from the module will be put to the main plugin JAR, and classes from the module content descriptor will be loaded by the main plugin
-   * classloader.
+   * The same as [REQUIRED], but classes from the module content descriptor will be loaded by the main plugin classloader.
    * Use this option only for existing modules which are highly coupled with other required modules, where using a separate classloader breaks behavior or compatibility with other
    * plugins. 
    * For new modules, use [REQUIRED] instead.

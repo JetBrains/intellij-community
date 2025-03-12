@@ -83,7 +83,7 @@ internal suspend fun computeModuleSourcesByContent(
       item = ModuleItem(
         moduleName = moduleName,
         // relative path with `/` is always packed by dev-mode, so, we don't need to fix resolving for now and can improve it later
-        relativeOutputFile = if (useSeparateJar) "modules/$moduleName.jar" else layout.getMainJarName(),
+        relativeOutputFile = if (useSeparateJar) "modules/$moduleName.jar" else layout.getDefaultJarName(moduleName, frontendModuleFilter),
         reason = "<- ${layout.mainModule} (plugin content)",
       ),
       layout = layout,
