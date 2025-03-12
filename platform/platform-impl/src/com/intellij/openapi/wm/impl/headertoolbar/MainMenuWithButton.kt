@@ -20,10 +20,10 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.width
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.*
 import javax.swing.event.ChangeEvent
 import kotlin.math.roundToInt
