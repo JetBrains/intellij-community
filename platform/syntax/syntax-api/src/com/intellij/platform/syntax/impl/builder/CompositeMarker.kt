@@ -42,7 +42,7 @@ internal class CompositeMarker(
   override fun getEndTokenIndex(): Int = endIndex
 
   override fun getErrorMessage(): String? =
-    if (getNodeType() == SyntaxTokenTypes.ERROR_ELEMENT) builder.myOptionalData.getDoneError(markerId) else null
+    if (getNodeType() === SyntaxTokenTypes.ERROR_ELEMENT) builder.myOptionalData.getDoneError(markerId) else null
 
   override fun getNodeType(): SyntaxElementType =
     type
