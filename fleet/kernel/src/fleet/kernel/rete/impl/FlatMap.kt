@@ -5,14 +5,9 @@ import com.jetbrains.rhizomedb.DbContext
 import com.jetbrains.rhizomedb.Q
 import com.jetbrains.rhizomedb.ReadTrackingContext
 import com.jetbrains.rhizomedb.withReadTrackingContext
-import fleet.kernel.rete.*
-import fleet.util.logging.logger
 import fleet.fastutil.longs.LongOpenHashSet
 import fleet.fastutil.longs.LongSet
-
-private object FlatMap {
-  val logger = logger<FlatMap>()
-}
+import fleet.kernel.rete.*
 
 internal fun <T, U> QueryScope.flatMap(producer: Producer<T>, f: (Match<T>) -> Set<U>): Producer<U> {
   data class MatchInfo(

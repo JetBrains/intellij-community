@@ -12,7 +12,7 @@ class UncaughtCoroutineExceptionHandler : AbstractCoroutineContextElement(Corout
   }
 
   companion object {
-    private val logger by lazy { KLoggers.logger() }
+    private val logger = KLoggers.logger(UncaughtCoroutineExceptionHandler::class)
   }
 }
 
