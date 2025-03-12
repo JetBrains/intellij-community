@@ -2,26 +2,17 @@
 package com.intellij.debugger.actions
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SourcePositionProvider.Companion.getSourcePosition
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.impl.DebuggerContextImpl
-import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 
 internal fun getSourcePositionNow(
-  managerThread: DebuggerManagerThreadImpl,
   debuggerContext: DebuggerContextImpl,
   descriptor: NodeDescriptorImpl,
-): SourcePosition? {
-  var position : SourcePosition? = null
-  managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debuggerContext) {
-    override val priority get() = PrioritizedTask.Priority.HIGH
-
-    override suspend fun threadActionSuspend(suspendContext: SuspendContextImpl) {
-      position = getSourcePosition(descriptor, suspendContext.debugProcess.project, debuggerContext)
-    }
-  })
-  return position
+): SourcePosition? = runBlockingMaybeCancellable {
+  withDebugContext(debuggerContext) {
+    getSourcePosition(descriptor, debuggerContext.project, debuggerContext)
+  }
 }

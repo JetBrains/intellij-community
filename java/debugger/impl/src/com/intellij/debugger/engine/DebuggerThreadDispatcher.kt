@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
+import com.intellij.debugger.engine.events.DebugContextElement
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.PrioritizedTask
 import kotlinx.coroutines.CoroutineDispatcher
@@ -23,16 +25,19 @@ internal class DebuggerThreadDispatcher(private val managerThread: DebuggerManag
     if (existingCommand != null) return existingCommand
 
     val suspendContext = context[SuspendContextImpl.Key]
+    val debugContext = context[DebugContextElement.Key]?.context
     val priority = context[PrioritizedTask.Priority] ?: PrioritizedTask.Priority.LOW
-    return if (suspendContext == null) {
-      object : DebuggerCommandImpl(priority) {
-        override fun action() = error("Should not be called")
-      }
-    }
-    else {
-      object : SuspendContextCommandImpl(suspendContext) {
+    return when {
+      suspendContext != null -> object : SuspendContextCommandImpl(suspendContext) {
         override val priority get() = priority
         override fun contextAction(suspendContext: SuspendContextImpl) = error("Should not be called")
+      }
+      debugContext != null -> object : DebuggerContextCommandImpl(debugContext) {
+        override val priority get() = priority
+        override fun threadAction(suspendContext: SuspendContextImpl) = error("Should not be called")
+      }
+      else -> object : DebuggerCommandImpl(priority) {
+        override fun action() = error("Should not be called")
       }
     }.apply {
       setCancellationAction { context.cancel() }

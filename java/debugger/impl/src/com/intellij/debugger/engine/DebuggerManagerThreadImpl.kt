@@ -4,13 +4,11 @@ package com.intellij.debugger.engine
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.events.asContextElement
 import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand
-import com.intellij.debugger.impl.DebuggerUtilsAsync
-import com.intellij.debugger.impl.InvokeAndWaitThread
-import com.intellij.debugger.impl.InvokeThread
-import com.intellij.debugger.impl.PrioritizedTask
+import com.intellij.debugger.impl.*
 import com.intellij.debugger.statistics.StatisticsStorage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -467,6 +465,26 @@ fun executeOnDMT(
   managerThread.coroutineScope.launch(Dispatchers.Debugger(managerThread) + priority, block = block)
 }
 
+
+/**
+ * Runs [block] in debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
+ *
+ * This is similar to [DebuggerManagerThreadImpl.schedule] call.
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
+fun executeOnDMT(
+  debuggerContext: DebuggerContextImpl,
+  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
+  block: suspend CoroutineScope.() -> Unit,
+): Job {
+  val managerThread = debuggerContext.managerThread!!
+  val contextElement = debuggerContext.asContextElement()
+  return withJobCommandTracking(managerThread) {
+    managerThread.coroutineScope.launch(Dispatchers.Debugger(managerThread) + contextElement + priority, block = block)
+  }
+}
+
 /**
  * Runs [block] in debugger manager thread as a [SuspendContextCommandImpl].
  *
@@ -504,6 +522,27 @@ suspend fun <T> withDebugContext(
   block: suspend CoroutineScope.() -> T,
 ): T = withCommandTracking(managerThread) {
   withContext(Dispatchers.Debugger(managerThread) + priority, block = block)
+}
+
+/**
+ * Runs [block] in debugger manager thread as a [com.intellij.debugger.engine.events.DebuggerContextCommandImpl].
+ *
+ * The coroutine is canceled if the corresponding command is canceled.
+ *
+ * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
+ */
+@ApiStatus.Internal
+@ApiStatus.Experimental
+suspend fun <T> withDebugContext(
+  debuggerContext: DebuggerContextImpl,
+  priority: PrioritizedTask.Priority = PrioritizedTask.Priority.LOW,
+  block: suspend CoroutineScope.() -> T,
+): T {
+  val managerThread = debuggerContext.managerThread!!
+  val contextElement = debuggerContext.asContextElement()
+  return withCommandTracking(managerThread) {
+    withContext(Dispatchers.Debugger(managerThread) + contextElement + priority, block = block)
+  }
 }
 
 private inline fun <T> withFutureCommandTracking(managerThread: DebuggerManagerThreadImpl, block: () -> CompletableFuture<T>): CompletableFuture<T> {
