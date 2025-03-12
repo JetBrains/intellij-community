@@ -1,7 +1,7 @@
 package org.intellij.plugins.markdown.frontend.preview.accessor.impl
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
@@ -20,6 +20,9 @@ import com.intellij.platform.project.projectId
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.isLocalHost
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.service.MarkdownFrontendService
@@ -30,13 +33,17 @@ import org.intellij.plugins.markdown.util.MarkdownDisposable
 import java.net.URI
 import java.net.URISyntaxException
 
-internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
+internal class MarkdownLinkOpenerImpl
+(
+  private val coroutineScope: CoroutineScope
+)
+  : MarkdownLinkOpener {
   override fun openLink(project: Project?, link: String) {
     val uri = createUri(link) ?: return
     if (tryOpenInEditor(project, uri)) {
       return
     }
-    invokeLater {
+    coroutineScope.launch {
       openExternalLink(project, uri)
     }
   }
@@ -111,6 +118,57 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
     }
   }
 
+  private fun tryOpenInEditor(project: Project?, uri: URI): Boolean {
+    if (uri.scheme != "file") {
+      return false
+    }
+    return runReadAction {
+      actuallyOpenInEditor(project, uri)
+    }
+  }
+
+  private fun actuallyOpenInEditor(project: Project?, uri: URI): Boolean {
+    val service = MarkdownFrontendService.getInstance()
+    @Suppress("NAME_SHADOWING")
+    val project = project ?: service.guessProjectForUri(uri) ?: return false
+    val anchor = uri.fragment
+    if (anchor == null){
+      coroutineScope.launch(Dispatchers.EDT) {
+        service.openFile(project.projectId(), uri)
+      }
+      return true
+    }
+    val headers = service.collectHeaders(project.projectId(), uri)
+    if (headers == null) {
+      coroutineScope.launch {
+        DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+          message = MarkdownBundle.message("markdown.dumb.mode.navigation.is.not.available.notification.text"),
+          functionality = DumbModeBlockedFunctionality.ActionWithoutId
+        )
+      }
+      // Return true to prevent external navigation from happening
+      return true
+    }
+    if (headers.size == 1) {
+      coroutineScope.launch(Dispatchers.EDT) {
+        service.navigateToHeader(project.projectId(), headers.first())
+      }
+      return true
+    }
+    val point = obtainHeadersPopupPosition(project)
+    if (point == null) {
+      logger.warn("Failed to obtain screen point for showing popup")
+      return false
+    }
+    coroutineScope.launch {
+      when {
+        headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
+        headers.size > 1 ->  showHeadersPopup(project, headers, point)
+      }
+    }
+    return true
+  }
+
   companion object {
     private val logger = logger<MarkdownLinkOpenerImpl>()
 
@@ -131,57 +189,6 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
              hostName.startsWith("127.") ||
              hostName.endsWith(":1") ||
              isLocalHost(hostName, false, false)
-    }
-
-    private fun tryOpenInEditor(project: Project?, uri: URI): Boolean {
-      if (uri.scheme != "file") {
-        return false
-      }
-      return runReadAction {
-        actuallyOpenInEditor(project, uri)
-      }
-    }
-
-    private fun actuallyOpenInEditor(project: Project?, uri: URI): Boolean {
-      val service = MarkdownFrontendService.getInstance()
-      @Suppress("NAME_SHADOWING")
-      val project = project ?: service.guessProjectForUri(uri) ?: return false
-      val anchor = uri.fragment
-      if (anchor == null){
-        invokeLater {
-          service.openFile(project.projectId(), uri)
-        }
-        return true
-      }
-      val headers = service.collectHeaders(project.projectId(), uri)
-      if (headers == null) {
-        invokeLater {
-          DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
-            message = MarkdownBundle.message("markdown.dumb.mode.navigation.is.not.available.notification.text"),
-            functionality = DumbModeBlockedFunctionality.ActionWithoutId
-          )
-        }
-        // Return true to prevent external navigation from happening
-        return true
-      }
-      if (headers.size == 1) {
-        invokeLater {
-          service.navigateToHeader(project.projectId(), headers.first())
-        }
-        return true
-      }
-      val point = obtainHeadersPopupPosition(project)
-      if (point == null) {
-        logger.warn("Failed to obtain screen point for showing popup")
-        return false
-      }
-      invokeLater {
-        when {
-          headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
-          headers.size > 1 ->  showHeadersPopup(project, headers, point)
-        }
-      }
-      return true
     }
 
     private fun obtainHeadersPopupPosition(project: Project?): RelativePoint? {
