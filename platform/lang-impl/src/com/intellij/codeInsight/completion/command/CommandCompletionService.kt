@@ -317,19 +317,9 @@ private class CommandCompletionHighlightingListener(
     val highlightInfo = element.highlighting ?: return
     val rangeHighlighters = mutableListOf<RangeHighlighter>()
     val endOffset = min(highlightInfo.range.endOffset, startOffset)
-    if (highlightInfo.range.startOffset <= endOffset && !element.useLookupString) {
+    if (highlightInfo.range.startOffset <= min(highlightInfo.range.endOffset, startOffset)) {
       highlightManager.addRangeHighlight(editor, highlightInfo.range.startOffset, endOffset, EditorColors.SEARCH_RESULT_ATTRIBUTES, false, rangeHighlighters)
-    }
-    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) == true || element.useLookupString) {
-      for (info in lookup.items
-        .mapNotNull { it?.`as`(CommandCompletionLookupElement::class.java) }
-        .mapNotNull { it.highlighting }
-        .sortedByDescending { it.priority }) {
-        val endOffset = min(info.range.endOffset, startOffset)
-        if (info.range.startOffset <= min(info.range.endOffset, startOffset)) {
-          highlightManager.addRangeHighlight(editor, info.range.startOffset, endOffset, info.attributesKey, false, rangeHighlighters)
-        }
-      }
+      highlightManager.addRangeHighlight(editor, highlightInfo.range.startOffset, endOffset, highlightInfo.attributesKey, false, rangeHighlighters)
     }
     if (rangeHighlighters.isNotEmpty()) {
       lookup.putUserData(LOOKUP_HIGHLIGHTING, rangeHighlighters)
