@@ -66,7 +66,7 @@ internal class EnvironmentCreatorPoetry(model: PythonMutableTargetAddInterpreter
     PropertiesComponent.getInstance().poetryPath = savingPath
   }
 
-  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
+  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> {
     module?.let { service<PoetryConfigService>().setInProjectEnv(it) }
     return setupPoetrySdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages).asPythonResult()
   }
