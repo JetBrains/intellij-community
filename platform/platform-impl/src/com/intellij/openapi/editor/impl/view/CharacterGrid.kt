@@ -218,7 +218,7 @@ private class CharacterGridIteratorImpl(
       val bmp = Character.isBmpCodePoint(char)
       cellStartOffset = newOffset
       cellEndOffset = if (bmp) {
-        if (char == '\r'.code && newOffset + 1 < textLength && substring.codePointAt(newOffset - startOffset + 1) == '\n'.code) {
+        if (char == '\r'.code && newOffset + 1 < textLength && substring[newOffset - startOffset + 1] == '\n') {
           newOffset + 2 // the \r\n case
         }
         else {
