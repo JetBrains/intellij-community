@@ -11,11 +11,11 @@
 - name: lib/frontend-split/java-frontend.jar
   modules:
   - name: intellij.java.frontend
-- name: lib/java-frontback.jar
-  modules:
-  - name: intellij.java.frontback.impl
+- name: lib/java-impl-frontend.jar
+  contentModules:
   - name: intellij.java.frontback.psi
   - name: intellij.java.frontback.psi.impl
+  - name: intellij.java.frontback.impl
   - name: intellij.java.debugger.impl.shared
 - name: lib/java-impl.jar
   projectLibraries:
