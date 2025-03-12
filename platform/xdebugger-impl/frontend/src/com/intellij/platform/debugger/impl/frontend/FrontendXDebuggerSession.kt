@@ -179,7 +179,11 @@ internal class FrontendXDebuggerSession private constructor(
           is XDebuggerSessionEvent.SessionResumed -> eventsDispatcher.multicaster.sessionResumed()
           is XDebuggerSessionEvent.SessionStopped -> eventsDispatcher.multicaster.sessionStopped()
           is XDebuggerSessionEvent.SettingsChanged -> eventsDispatcher.multicaster.settingsChanged()
-          is XDebuggerSessionEvent.StackFrameChanged -> eventsDispatcher.multicaster.stackFrameChanged()
+          is XDebuggerSessionEvent.StackFrameChanged -> {
+            withContext(Dispatchers.EDT) {
+              eventsDispatcher.multicaster.stackFrameChanged()
+            }
+          }
         }
       }
     }
