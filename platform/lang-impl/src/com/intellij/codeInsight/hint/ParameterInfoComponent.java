@@ -74,7 +74,7 @@ public final class ParameterInfoComponent extends JPanel {
   private static final Border EMPTY_BORDER = JBUI.Borders.empty(2, 10);
   private static final Border BOTTOM_BORDER = new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), EMPTY_BORDER);
 
-  private int myWidthLimit = 500;
+  private int myWidthLimit;
   private static final int myMaxWrappableLengthLimit = 1000;
   private final int myMaxVisibleRows = Registry.intValue("parameter.info.max.visible.rows");
 
@@ -111,27 +111,40 @@ public final class ParameterInfoComponent extends JPanel {
     this(parameterInfoControllerData, editor, false, false);
   }
 
+  @ApiStatus.Internal
+  public static int getWidthLimit(Editor editor) {
+    // disable splitting by width to avoid depending on the platform's font in tests
+    if (ApplicationManager.getApplication().isUnitTestMode())
+      return Integer.MAX_VALUE;
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()
+        && !isForeignClientOnServer()) { //don't access ui for the foreign cwm clientIds
+      JComponent editorComponent = editor.getComponent();
+      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+      return (layeredPane.getWidth() * 4) / 5;
+    }
+    return 1000;
+  }
+
+  @ApiStatus.Internal
+  public static Font getBoldFont(@NotNull Editor editor) {
+    return Registry.is("parameter.info.editor.font")
+           ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
+           : StartupUiUtil.getLabelFont().deriveFont(Font.BOLD);
+  }
+
   ParameterInfoComponent(ParameterInfoControllerData parameterInfoControllerData, Editor editor,
                          boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
     myParameterInfoControllerData = parameterInfoControllerData;
     myEditor = editor;
     myRequestFocus = requestFocus;
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()
-        && !ApplicationManager.getApplication().isHeadlessEnvironment()
-        && !isForeignClientOnServer()) { //don't access ui for the foreign cwm clientIds
-      JComponent editorComponent = editor.getComponent();
-      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-      myWidthLimit = layeredPane.getWidth();
-    }
+    myWidthLimit = getWidthLimit(editor);
 
     NORMAL_FONT = editor != null && Registry.is("parameter.info.editor.font")
                   ? editor.getColorsScheme().getFont(EditorFontType.PLAIN)
                   : StartupUiUtil.getLabelFont();
-    BOLD_FONT = editor != null && Registry.is("parameter.info.editor.font")
-                ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
-                : NORMAL_FONT.deriveFont(Font.BOLD);
+    BOLD_FONT = getBoldFont(editor);
 
     if (mySimpleDesignMode) {
       setOpaque(false);
@@ -163,6 +176,9 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
+    // Set a maximum size to avoid unnecessary vertical scroll bar
+    // in case of raw HTML contents exceeding width limit
+    pane.getViewport().setMaximumSize(new Dimension(myWidthLimit, 1000));
     pane.setOpaque(!mySimpleDesignMode);
     pane.getViewport().setOpaque(!mySimpleDesignMode);
     add(pane, BorderLayout.CENTER);
@@ -535,10 +551,7 @@ public final class ParameterInfoComponent extends JPanel {
       StringBuilder buf = new StringBuilder(text.length());
       configureColor(background);
 
-      String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT),
-                                        // disable splitting by width, to avoid depending on platform's font in tests
-                                        ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : myWidthLimit,
-                                        ',');
+      String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT), myWidthLimit, ',');
 
       int lineOffset = 0;
 
