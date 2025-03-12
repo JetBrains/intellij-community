@@ -125,15 +125,15 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }
 
       group(message("settings.terminal.font.settings")) {
-        var fontPreferences = TerminalFontOptions.getInstance().getSettings()
+        var fontSettings = TerminalFontOptions.getInstance().getSettings()
         row(message("settings.font.name")) {
           cell(fontComboBox())
             .bind(
               componentGet = { comboBox -> comboBox.fontName },
               componentSet = {comboBox, value -> comboBox.fontName = value },
               MutableProperty(
-                getter = { fontPreferences.fontFamily },
-                setter = { fontPreferences = fontPreferences.copy(fontFamily = it) },
+                getter = { fontSettings.fontFamily },
+                setter = { fontSettings = fontSettings.copy(fontFamily = it) },
               ).toNullableProperty()
             )
         }
@@ -143,27 +143,27 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             .label(message("settings.font.size"))
             .columns(4)
             .bindText(
-              getter = { fontPreferences.fontSize.fontSizeToString() },
-              setter = { fontPreferences = fontPreferences.copy(fontSize = it.parseFontSize()) },
+              getter = { fontSettings.fontSize.fontSizeToString() },
+              setter = { fontSettings = fontSettings.copy(fontSize = it.parseFontSize()) },
             )
           textField()
             .label(message("settings.line.height"))
             .columns(4)
             .bindText(
-              getter = { fontPreferences.lineSpacing.spacingToString() },
-              setter = { fontPreferences = fontPreferences.copy(lineSpacing = it.parseSpacing()) },
+              getter = { fontSettings.lineSpacing.spacingToString() },
+              setter = { fontSettings = fontSettings.copy(lineSpacing = it.parseSpacing()) },
             )
           textField()
             .label(message("settings.column.width"))
             .columns(4)
             .bindText(
-              getter = { fontPreferences.columnSpacing.spacingToString() },
-              setter = { fontPreferences = fontPreferences.copy(columnSpacing = it.parseSpacing()) },
+              getter = { fontSettings.columnSpacing.spacingToString() },
+              setter = { fontSettings = fontSettings.copy(columnSpacing = it.parseSpacing()) },
             )
         }
 
         onApply {
-          TerminalFontOptions.getInstance().setSettings(fontPreferences)
+          TerminalFontOptions.getInstance().setSettings(fontSettings)
         }
       }
 

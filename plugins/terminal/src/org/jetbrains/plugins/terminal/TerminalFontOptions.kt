@@ -48,17 +48,17 @@ class TerminalFontOptions : AppFontOptions<PersistentTerminalFontPreferences>() 
     )
   }
 
-  fun setSettings(preferences: TerminalFontSettings) {
+  fun setSettings(settings: TerminalFontSettings) {
     val newPreferences = FontPreferencesImpl()
     // start with the console preferences as the default
     AppConsoleFontOptions.getInstance().fontPreferences.copyTo(newPreferences)
     // then overwrite the subset that the terminal settings provide
     newPreferences.clearFonts()
-    newPreferences.addFontFamily(preferences.fontFamily)
-    newPreferences.setFontSize(preferences.fontFamily, preferences.fontSize)
-    newPreferences.lineSpacing = preferences.lineSpacing
+    newPreferences.addFontFamily(settings.fontFamily)
+    newPreferences.setFontSize(settings.fontFamily, settings.fontSize)
+    newPreferences.lineSpacing = settings.lineSpacing
     // then apply the settings that aren't a part of FontPreferences
-    columnSpacing = preferences.columnSpacing
+    columnSpacing = settings.columnSpacing
     // apply the FontPreferences part, the last line because it invokes incModificationCount()
     update(newPreferences)
     fireListeners()
