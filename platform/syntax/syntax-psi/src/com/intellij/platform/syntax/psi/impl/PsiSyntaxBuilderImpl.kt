@@ -64,8 +64,8 @@ internal class PsiSyntaxBuilderImpl(
     .withStartOffset(startOffset)
     .withCachedLexemes(cachedLexemes)
     .withDebugMode(false)
-    .withLanguage(this@PsiSyntaxBuilderImpl.file?.getLanguage()?.toString())
-    .withCancellationProvider({ ProgressManager.checkCanceled() })
+    .withLanguage(this.file?.getLanguage()?.toString())
+    .withCancellationProvider { ProgressManager.checkCanceled() }
     .withWhitespaceOrCommentBindingPolicy(whitespaceOrCommentBindingPolicy)
     .withOpaquePolicy(opaquePolicy)
     .build()
@@ -88,7 +88,7 @@ internal class PsiSyntaxBuilderImpl(
 
   override fun getTreeBuilt(): ASTNode {
     val rootMarker = prepareLightTree()
-    val file = this@PsiSyntaxBuilderImpl.file
+    val file = this.file
     val possiblyTooDeep = file != null && BlockSupport.isTooDeep(file.getOriginalFile())
 
     if (originalTree != null && !possiblyTooDeep) {
@@ -128,7 +128,7 @@ internal class PsiSyntaxBuilderImpl(
     val diffLog = DiffLog()
     val builder = ConvertFromTokensToASTBuilder(newRoot, diffLog)
     val treeStructure = MyTreeStructure(newRoot, null)
-    val customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(this@PsiSyntaxBuilderImpl.file!!)
+    val customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(this.file!!)
     val data = getUserData(CUSTOM_COMPARATOR)
     val comparator = MyComparator(treeStructure, customLanguageASTComparators, data)
     val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
@@ -176,9 +176,15 @@ internal class PsiSyntaxBuilderImpl(
   private fun prepareLightTree(): CompositeNode {
     // todo cache the tree here
     val productionResult = prepareProduction(builder)
-    this@PsiSyntaxBuilderImpl.productionResult = productionResult
-    val productions = productionResult.productionMarkers
+    this.productionResult = productionResult
 
+    return buildTreeFromProduction(productionResult)
+  }
+
+  private fun buildTreeFromProduction(
+    productionResult: ProductionResult,
+  ): CompositeNode {
+    val productions = productionResult.productionMarkers
     val tokenCount = productionResult.tokenSequence.tokenCount
     val starts = IntArray(tokenCount + 1) // todo invent a better way to do this. we use +1 item, to store the end offset of the last token, basically it contains text.length
     productionResult.copyTokenStartsToArray(starts, 0, 0, tokenCount + 1)
@@ -186,7 +192,8 @@ internal class PsiSyntaxBuilderImpl(
     @Suppress("UNCHECKED_CAST")
     val originalLexTypes = arrayOfNulls<SyntaxElementType>(tokenCount) as Array<SyntaxElementType>
     productionResult.copyTokenTypesToArray(originalLexTypes, 0, 0, tokenCount)
-    val lexTypes = originalLexTypes.convert(tokenConverter)
+    @Suppress("UNCHECKED_CAST")
+    val lexTypes = tokenConverter.convert(originalLexTypes) as Array<IElementType>
 
     val compositeOptionalData = CompositeOptionalData()
 
@@ -199,10 +206,10 @@ internal class PsiSyntaxBuilderImpl(
       lexemeCount = tokenCount,
       lexTypes = originalLexTypes,
       convertedLexTypes = lexTypes,
-      charTable = this@PsiSyntaxBuilderImpl.charTable,
+      charTable = this.charTable,
       astFactory = parserDefinition as? ASTFactory,
-      textArray = this@PsiSyntaxBuilderImpl.textArray,
-      file = this@PsiSyntaxBuilderImpl.file,
+      textArray = this.textArray,
+      file = this.file,
     )
     val rootProductionMarker = productions.getMarker(0)
     val rootMarker = createMarker(rootProductionMarker, null, nodeData, 0)
@@ -222,7 +229,8 @@ internal class PsiSyntaxBuilderImpl(
 
       if (isDone) {
         // done marker, id < 0
-        assertMarkersBalanced(productionResult.productionMarkers.getMarker(i) == curProduction, null)
+        assertMarkersBalanced(productionResult.productionMarkers.getMarker(i) === curProduction, null)
+
         val pair = nodes.removeLast()
         curNode = pair.first
         curProduction = pair.second
@@ -291,13 +299,12 @@ internal class PsiSyntaxBuilderImpl(
     else
       "<none>"
 
-    val language = if (this@PsiSyntaxBuilderImpl.file != null) this@PsiSyntaxBuilderImpl.file!!.getLanguage().toString() + ", " else ""
+    val language = if (this.file != null) this.file!!.getLanguage().toString() + ", " else ""
     LOG.error("$UNBALANCED_MESSAGE\nlanguage: $language\ncontext: '$context'\nmarker id: ${marker?.toString() ?: "n/a"}")
   }
 
   private fun checkTreeDepth(maxDepth: Int, isFileRoot: Boolean, hasCollapsedChameleons: Boolean) {
-    if (this@PsiSyntaxBuilderImpl.file == null) return
-    val file = this@PsiSyntaxBuilderImpl.file!!.getOriginalFile()
+    val file = file?.originalFile ?: return
     val flag = file.getUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED)
     if (maxDepth > BlockSupport.INCREMENTAL_REPARSE_DEPTH_LIMIT) {
       if (flag != true) {
@@ -345,13 +352,6 @@ internal fun extractCachedLexemes(parentCachingNode: ASTNode): TokenList? {
   parentElement.putUserData(LAZY_PARSEABLE_TOKENS, null)
   return parentElement.getUserData(LAZY_PARSEABLE_TOKENS)
 }
-
-private fun isCollapsedChameleon(marker: CompositeNode): Boolean {
-  return marker.tokenType is ILazyParseableElementTypeBase && marker.myFirstChild == null && marker.textLength > 0
-}
-
-private fun Array<SyntaxElementType>.convert(tokenConverter: ElementTypeConverter): Array<IElementType> =
-  map { tokenConverter.convertNotNull(it) }.toTypedArray()
 
 internal fun shouldReuseCollapsedTokens(collapsed: IElementType?): Boolean {
   return collapsed is ILazyParseableElementTypeBase && collapsed.reuseCollapsedTokens()
