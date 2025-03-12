@@ -14,10 +14,7 @@ import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.model.MavenModel
-import org.jetbrains.idea.maven.model.MavenProfile
-import org.jetbrains.idea.maven.model.MavenResource
+import org.jetbrains.idea.maven.model.*
 import org.junit.Assume
 import org.junit.Test
 import java.io.File
@@ -599,6 +596,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
   @Test
   fun testExpandingProperties() = runBlocking {
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>module</artifactId>
+                       <version>1</version>
                        <properties>
                          <prop1>value1</prop1>
                          <prop2>value2</prop2>
@@ -885,7 +885,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                        </properties>
                        """.trimIndent())
 
-    createModulePom("module",
+    val module = createModulePom("module",
                     """
                       <groupId>test</groupId>
                       <artifactId>module</artifactId>
@@ -899,6 +899,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     val subModule = createModulePom("module/subModule",
                                     """
+                                              <groupId>test</groupId>
+                                              <artifactId>subModule</artifactId>
+                                              <version>1</version>
                                               <parent>
                                                 <groupId>test</groupId>
                                                 <artifactId>module</artifactId>
@@ -907,13 +910,14 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                               <name>${'$'}{prop}</name>
                                               """.trimIndent())
 
-    val p = readProject(subModule)
+    importProjectsAsync(projectPom, module, subModule)
+    val p = projectsTree.projects.first { it.mavenId.artifactId == "subModule" }
     assertEquals("value", p.name)
   }
 
   @Test
   fun testExpandingPropertiesFromParentInSpecifiedLocation() = runBlocking {
-    createModulePom("parent",
+    val parent = createModulePom("parent",
                     """
                       <groupId>test</groupId>
                       <artifactId>parent</artifactId>
@@ -925,6 +929,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     val module = createModulePom("module",
                                  """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
                                            <parent>
                                              <groupId>test</groupId>
                                              <artifactId>parent</artifactId>
@@ -934,13 +941,14 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            <name>${'$'}{prop}</name>
                                            """.trimIndent())
 
-    val p = readProject(module)
+    importProjectsAsync(parent, module)
+    val p = projectsTree.projects.first { it.mavenId.artifactId == "module" }
     assertEquals("value", p.name)
   }
 
   @Test
   fun testExpandingPropertiesFromParentInSpecifiedLocationWithoutFile() = runBlocking {
-    createModulePom("parent",
+    val parent = createModulePom("parent",
                     """
                       <groupId>test</groupId>
                       <artifactId>parent</artifactId>
@@ -952,6 +960,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     val module = createModulePom("module",
                                  """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
                                            <parent>
                                              <groupId>test</groupId>
                                              <artifactId>parent</artifactId>
@@ -960,8 +971,8 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            </parent>
                                            <name>${'$'}{prop}</name>
                                            """.trimIndent())
-
-    val p = readProject(module)
+    importProjectsAsync(parent, module)
+    val p = projectsTree.projects.first { it.mavenId.artifactId == "module" }
     assertEquals("value", p.name)
   }
 
@@ -981,6 +992,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                         """.trimIndent()))
 
     createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
                        <parent>
                          <groupId>org.test</groupId>
                          <artifactId>parent</artifactId>
@@ -1008,6 +1022,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     val module = createModulePom("module",
                                  """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
                                            <parent>
                                              <groupId>test</groupId>
                                              <artifactId>parent</artifactId>
@@ -1016,7 +1033,8 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            <name>${'$'}{prop}</name>
                                            """.trimIndent())
 
-    val p = readProject(module, { coordinates -> if (MavenId("test", "parent", "1") == coordinates) parent else null }).mavenModel
+    importProjectsAsync(parent, module)
+    val p = projectsTree.projects.first { it.mavenId.artifactId == "module" }
     assertEquals("value", p.name)
   }
 
@@ -1118,6 +1136,9 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     val module = createModulePom("module",
                                  """
+                                           <groupId>test</groupId>
+                                           <artifactId>module</artifactId>
+                                           <version>1</version>
                                            <parent>
                                              <groupId>test</groupId>
                                              <artifactId>parent</artifactId>
@@ -1125,8 +1146,10 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            </parent>
                                            """.trimIndent())
 
-    val p = readProject(module, "one")
-    PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.parent, "subDir/custom"), p.build.directory)
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("one"))
+    importProjectsAsync(projectPom, module)
+    val p = projectsTree.projects.first { it.mavenId.artifactId == "module" }
+    PlatformTestUtil.assertPathsEqual(pathFromBasedir(module.parent, "subDir/custom"), p.buildDirectory)
   }
 
   @Test
@@ -1170,8 +1193,10 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
                                            </parent>
                                            """.trimIndent())
 
-    val p = readProject(module, "one")
-    assertEquals("module-2", p.build.finalName)
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("one"))
+    importProjectsAsync(projectPom, module)
+    val p = projectsTree.projects.first { it.mavenId.artifactId == "module" }
+    assertEquals("module-2", p.finalName)
   }
 
   @Test
