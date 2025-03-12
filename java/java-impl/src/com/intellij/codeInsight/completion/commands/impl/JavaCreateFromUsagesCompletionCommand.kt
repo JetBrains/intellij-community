@@ -24,7 +24,7 @@ import javax.swing.Icon
 
 internal class JavaCreateFromUsagesCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
-    if(!`is`("java.command.completion.create.from.usages")) return emptyList()
+    if (!`is`("java.command.completion.create.from.usages")) return emptyList()
     val editor = context.editor
     if (InjectedLanguageEditorUtil.getTopLevelEditor(editor) != editor) return emptyList()
     if (context.isReadOnly) return emptyList()
@@ -58,12 +58,17 @@ internal class JavaCreateFromUsagesCompletionCommand(val psiClass: PsiClass) : C
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val fileDocument = psiFile.fileDocument
     var currentOffset = offset
+    val previousElement = if (currentOffset >= 0) psiFile.findElementAt(currentOffset - 1) else null
     WriteAction.run<RuntimeException> {
+      val addSemicolon = previousElement?.parentOfType<PsiExpressionStatement>() != null
       if (fileDocument.charsSequence[currentOffset - 1] == '.') {
         fileDocument.insertString(currentOffset, "method")
         currentOffset = currentOffset + 6
       }
       fileDocument.insertString(currentOffset, "()")
+      if (addSemicolon) {
+        fileDocument.insertString(currentOffset + 2, ";")
+      }
       PsiDocumentManager.getInstance(psiFile.project).commitDocument(fileDocument)
     }
     val psiElement = psiFile.findElementAt(currentOffset) ?: return

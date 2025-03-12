@@ -393,7 +393,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       class Test {
       
           public static void main(String[] args){
-              new Test().test()
+              new Test().test();
           }
       
           private void test() {
