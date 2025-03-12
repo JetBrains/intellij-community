@@ -5135,6 +5135,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/dontChangeFunctionReturnTypeToErrorType.kt");
             }
 
+            @TestMetadata("functionLiteral.kt")
+            public void testFunctionLiteral() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/functionLiteral.kt");
+            }
+
             @TestMetadata("inIf.kt")
             public void testInIf() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/inIf.kt");
