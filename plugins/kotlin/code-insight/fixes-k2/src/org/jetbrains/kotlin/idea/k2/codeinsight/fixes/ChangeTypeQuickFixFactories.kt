@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInspection.util.IntentionName
@@ -147,13 +147,15 @@ object ChangeTypeQuickFixFactories {
             val expectedType = diagnostic.expectedType
 
             buildList {
-                add(
-                    UpdateTypeQuickFix(
-                        declaration,
-                        if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION,
-                        createTypeInfo(element.returnType(getActualType(actualType)))
+                if (element !is KtFunctionLiteral) {
+                    add(
+                        UpdateTypeQuickFix(
+                            declaration,
+                            if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION,
+                            createTypeInfo(element.returnType(getActualType(actualType)))
+                        )
                     )
-                )
+                }
                 addAll(
                     registerExpressionTypeFixes(diagnosticsPsi, expectedType, actualType)
                 )
