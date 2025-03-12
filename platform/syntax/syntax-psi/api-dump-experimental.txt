@@ -1,3 +1,8 @@
+*f:com.intellij.platform.syntax.psi.CompositeElementTypeConverter
+- com.intellij.platform.syntax.psi.ElementTypeConverter
+- <init>(com.intellij.lang.Language):V
+- convert(com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
+- convert(com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
 *:com.intellij.platform.syntax.psi.ElementTypeConverter
 - a:convert(com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
 - a:convert(com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType

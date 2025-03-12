@@ -17,6 +17,7 @@ import com.intellij.platform.syntax.NoopLogger
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import com.intellij.platform.syntax.i18n.ResourceBundle;
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
 
@@ -85,6 +86,7 @@ private const val FRAMES_POOL_SIZE = 500
 
 @JvmField val DUMMY_BLOCK: SyntaxElementType = SyntaxElementType("DUMMY_BLOCK")
 
+@ApiStatus.Experimental
 final class SyntaxGeneratedParserRuntime(
   private val maxRecursionDepth: Int,
   private val syntaxBuilder: SyntaxTreeBuilder,

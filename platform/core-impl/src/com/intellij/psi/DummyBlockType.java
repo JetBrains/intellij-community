@@ -6,8 +6,10 @@ import com.intellij.lang.Language;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Experimental
 public final class DummyBlockType {
   public static final IElementType DUMMY_BLOCK = new DummyBlockElementType();
 

@@ -8,8 +8,10 @@ import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import com.intellij.platform.syntax.lexer.FlexLexer
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.LexerPosition
+import org.jetbrains.annotations.ApiStatus
 
 //A copy from com.intellij.lexer.FlexAdapter. Similarly to the FlexLexer class, it is necessary to return SyntaxElementType instead of IElementType
+@ApiStatus.Experimental
 open class SyntaxFlexAdapter(val flex: FlexLexer) : Lexer {
   private var myTokenType: SyntaxElementType? = null
   private var myText: CharSequence? = null

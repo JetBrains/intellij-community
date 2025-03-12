@@ -48,6 +48,14 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - com.intellij.openapi.fileEditor.FileDocumentManager
 - *s:isTrackable(com.intellij.openapi.vfs.VirtualFile):Z
+*f:com.intellij.psi.DummyBlockType
+- sf:DUMMY_BLOCK:com.intellij.psi.tree.IElementType
+- <init>():V
+*c:com.intellij.psi.DummyBlockType$DummyBlock
+- com.intellij.psi.impl.source.tree.CompositePsiElement
+- <init>():V
+- getLanguage():com.intellij.lang.Language
+- getReferences():com.intellij.psi.PsiReference[]
 com.intellij.psi.impl.PsiFileEx
 - com.intellij.psi.PsiFile
 - *s:isBatchReferenceProcessingEnabled(com.intellij.psi.PsiFile):Z

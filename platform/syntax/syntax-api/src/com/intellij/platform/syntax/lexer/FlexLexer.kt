@@ -2,10 +2,12 @@
 package com.intellij.platform.syntax.lexer
 
 import com.intellij.platform.syntax.SyntaxElementType
+import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.Throws
 
 // A copy of com.intellij.lexer.FlexLexer.Because original advance() method returns IElementTYpe, 
 // we had to replace it with a new one that returns SyntaxElementType
+@ApiStatus.Experimental
 interface FlexLexer {
   fun yybegin(state: Int)
   fun yystate(): Int
