@@ -2,6 +2,7 @@
 package com.intellij.debugger.actions
 
 import com.intellij.debugger.DebuggerManagerEx
+import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.MethodInvokeUtils.getMethodHandlesImplLookup
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -18,8 +19,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.rt.debugger.VirtualThreadDumper
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
@@ -40,6 +43,7 @@ import kotlin.String
 import kotlin.Throwable
 import kotlin.checkNotNull
 import kotlin.let
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.to
 
@@ -107,13 +111,15 @@ class ThreadDumpAction : DumbAwareAction() {
       return try {
         val providers = extendedProviders.extensionList.map { it.getProvider(context) }
 
-        fun getAllItems(suspendContext: SuspendContextImpl?) =
-          providers
-            .flatMap { it.getItems(suspendContext) }
-            .sortedWith(DumpItem.BY_INTEREST)
+        suspend fun getAllItems(suspendContext: SuspendContextImpl?) =
+          withBackgroundProgress(context.project, JavaDebuggerBundle.message("thread.dump.extended.progress")) {
+            providers
+              .flatMap { it.getItems(suspendContext) }
+              .sortedWith(DumpItem.BY_INTEREST)
+          }
 
         if (providers.any { it.requiresEvaluation() }) {
-          val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.seconds", 5).seconds
+          val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.ms", 500).milliseconds
           try {
             suspendAllAndEvaluate(context, timeout) { suspendContext ->
               getAllItems(suspendContext)
@@ -233,6 +239,8 @@ private fun buildThreadStates(
   val nameToThreadMap = mutableMapOf<String, ThreadState>()
   val waitingMap = mutableMapOf<String, String>() // key 'waits_for' value
   for ((threadReference, rawStackTrace) in allThreads) {
+    ProgressManager.checkCanceled()
+
     val buffer = StringBuilder()
     val threadStatus = threadReference.status()
     if (threadStatus == ThreadReference.THREAD_STATUS_ZOMBIE) {
@@ -367,6 +375,7 @@ private fun buildThreadStates(
 
   // detect simple deadlocks
   for (thread in result) {
+    ProgressManager.checkCanceled()
     for (awaitingThread in thread.awaitingThreads) {
       if (awaitingThread.isAwaitedBy(thread)) {
         thread.addDeadlockedThread(awaitingThread)
@@ -381,6 +390,8 @@ private fun buildThreadStates(
 
 private fun getPlatformThreadsWithStackTraces(vmProxy: VirtualMachineProxyImpl): Sequence<Pair<ThreadReference, String>> {
   return vmProxy.virtualMachine.allThreads().asSequence().map { threadReference ->
+    ProgressManager.checkCanceled()
+
     val frames =
       try {
         threadReference.frames()
@@ -450,6 +461,7 @@ private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
       }
       val packedThreadsAndStackTraces = (evaluated as ArrayReference?)?.values ?: emptyList()
 
+      ProgressManager.checkCanceled()
       return buildList {
         var i = 0
         while (i < packedThreadsAndStackTraces.size) {

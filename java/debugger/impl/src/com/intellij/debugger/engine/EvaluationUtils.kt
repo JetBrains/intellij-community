@@ -23,7 +23,7 @@ import kotlin.time.Duration
 internal suspend fun <R> suspendAllAndEvaluate(
   context: DebuggerContextImpl,
   timeToSuspend: Duration,
-  action: (SuspendContextImpl) -> R
+  action: suspend (SuspendContextImpl) -> R
 ): R {
   val process = context.debugProcess!!
   val suspendContext = context.suspendContext
@@ -60,7 +60,7 @@ private suspend fun <R> tryToBreakOnAnyMethodAndEvaluate(
   context: DebuggerContextImpl,
   process: DebugProcessImpl,
   timeToSuspend: Duration,
-  action: (SuspendContextImpl) -> R
+  action: suspend (SuspendContextImpl) -> R
 ): R {
   val evaluatableContextResult = Channel<SuspendContextImpl>(capacity = 1)
 
@@ -103,7 +103,7 @@ private suspend fun <R> tryToResumeThenBreakOnAnyMethodAndEvaluate(
   process: DebugProcessImpl,
   pauseSuspendContext: SuspendContextImpl,
   timeToSuspend: Duration,
-  action: (SuspendContextImpl) -> R
+  action: suspend (SuspendContextImpl) -> R
 ): R {
   val evaluatableContextResult = Channel<SuspendContextImpl>(capacity = 1)
 
