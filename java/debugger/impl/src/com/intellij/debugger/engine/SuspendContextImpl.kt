@@ -17,6 +17,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -204,9 +205,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
 
       cancelAllPostponed()
       if (callResume) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Resuming $this")
-        }
+        LOG.debug { "Resuming context $this" }
         resumeImpl()
       }
     }
@@ -231,8 +230,9 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
     get() = myEventSet
     set(eventSet) {
       assertCanBeUsed()
-      assertInLog(myEventSet == null) { "Event set in ${this}should be empty" }
+      assertInLog(myEventSet == null) { "Event set in ${this} should be empty" }
       myEventSet = eventSet
+      LOG.debug { "Installed set into $this" }
     }
 
   override fun getDebugProcess(): DebugProcessImpl = myDebugProcess
