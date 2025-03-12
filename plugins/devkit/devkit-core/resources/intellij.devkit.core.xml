@@ -670,6 +670,8 @@
 
     <properties.extendedUseScopeProvider implementation="org.jetbrains.idea.devkit.references.BundleExtendedUseScopeProvider"/>
     <properties.spellcheckerMnemonicsTokenizer implementation="org.jetbrains.idea.devkit.spellchecker.DevKitMnemonicsTokenizer"/>
+
+    <useScopeEnlarger implementation="org.jetbrains.idea.devkit.references.DomTargetUseScopeEnlarger"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
