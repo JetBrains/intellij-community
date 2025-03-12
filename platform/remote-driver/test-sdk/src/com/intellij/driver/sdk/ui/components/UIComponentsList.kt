@@ -55,7 +55,7 @@ class UIComponentsList<T : UiComponent>(
     val components = parentSearchContext.findAll(xpath).mapIndexed { n, c ->
       type.getConstructor(
         ComponentData::class.java
-      ).newInstance(ComponentData(xpath + "[${n + 1}]", driver, searchService, robotProvider, parentSearchContext, c))
+      ).newInstance(ComponentData("($xpath)[${n + 1}]", driver, searchService, robotProvider, parentSearchContext, c))
     }
     LOG.info("Returning ${components.size} ${type.simpleName}(s) by xpath = $xpath" +
              "\n${printableString(components.joinToString(", ") { it.toString() })}")
