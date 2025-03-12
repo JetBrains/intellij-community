@@ -100,7 +100,8 @@ internal class JavaDiagnosticSink(
         BuildMessage.Kind.WARNING
       }
 
-      Diagnostic.Kind.NOTE -> BuildMessage.Kind.INFO
+      // do not print warnings about x-lint
+      Diagnostic.Kind.NOTE -> return
       Diagnostic.Kind.OTHER -> if (diagnostic is JpsInfoDiagnostic) BuildMessage.Kind.JPS_INFO else BuildMessage.Kind.OTHER
       else -> BuildMessage.Kind.OTHER
     }

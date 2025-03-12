@@ -48,6 +48,7 @@ internal class NonIncrementalKotlinBuilder(
       context = context,
       span = span,
       kotlinTarget = null,
+      skipWarns = target.module.container.getChild(BazelConfigurationHolder.KIND)!!.kotlinArgs.let { it.suppressWarnings && !it.allWarningsAsErrors },
     )
     val builder = Services.Builder()
     builder.register(CompilationCanceledStatus::class.java, object : CompilationCanceledStatus {

@@ -20,13 +20,19 @@ internal class MessageCollectorAdapter(
   private val context: BazelCompileContext,
   private val span: Span,
   private val kotlinTarget: KotlinModuleBuildTarget<*>?,
+  private val skipWarns: Boolean,
 ) : MessageCollector {
   private var hasErrors = false
   @JvmField
   val filesWithErrors = linkedSet<Path>()
 
   override fun report(severity: CompilerMessageSeverity, @Nls message: String, location: CompilerMessageSourceLocation?) {
-    if (severity.isError) {
+    if (severity == CompilerMessageSeverity.WARNING) {
+      if (skipWarns) {
+        return
+      }
+    }
+    else if (severity.isError) {
       hasErrors = true
     }
 

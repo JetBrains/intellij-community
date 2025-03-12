@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.build.isModuleMappingFile
 import org.jetbrains.kotlin.build.report.ICReporter
 import org.jetbrains.kotlin.build.report.ICReporter.ReportSeverity
 import org.jetbrains.kotlin.build.report.ICReporterBase
+import org.jetbrains.kotlin.builtins.StandardNames.FqNames.target
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -222,7 +223,6 @@ internal class IncrementalKotlinBuilder(
         representativeTarget = kotlinTarget,
         context = context,
         dirtyFilesHolder = dirtyFilesHolder,
-        messageCollector = MessageCollectorAdapter(context, span, kotlinTarget),
         outputConsumer = outputConsumer,
         fsOperations = fsOperations,
         kotlinContext = kotlinContext,
@@ -245,19 +245,25 @@ internal class IncrementalKotlinBuilder(
     representativeTarget: KotlinModuleBuildTarget<*>,
     context: BazelCompileContext,
     dirtyFilesHolder: BazelDirtyFileHolder,
-    messageCollector: MessageCollectorAdapter,
     outputConsumer: BazelTargetBuildOutputConsumer,
     fsOperations: BazelKotlinFsOperationsHelper,
     kotlinContext: KotlinCompileContext,
     outputSink: OutputSink,
     span: Span,
   ): ExitCode {
+    val target = chunk.targets.single()
+
+    val messageCollector = MessageCollectorAdapter(
+      context = context,
+      span = span,
+      kotlinTarget = representativeTarget,
+      skipWarns = target.module.container.getChild(BazelConfigurationHolder.KIND)!!.kotlinArgs.let { it.suppressWarnings && !it.allWarningsAsErrors }
+    )
+
     val kotlinChunk = kotlinContext.getChunk(chunk)!!
     if (!kotlinChunk.isEnabled) {
       return ModuleLevelBuilder.ExitCode.NOTHING_DONE
     }
-
-    val target = chunk.targets.single()
 
     val isChunkRebuilding = isRebuild || kotlinContext.rebuildAfterCacheVersionChanged.get(target) == true
 
