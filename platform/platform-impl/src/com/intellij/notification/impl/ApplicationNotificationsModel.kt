@@ -12,7 +12,6 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.BalloonLayoutImpl
 import com.intellij.util.messages.Topic
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -30,42 +29,38 @@ object ApplicationNotificationsModel {
 
   @JvmStatic
   fun addNotification(project: Project?, notification: Notification) {
-    val callback = synchronized(dataGuard) {
-      if (project == null) {
-        addApplicationNotification(notification)
-      }
-      else {
-        addProjectNotification(project, notification)
-      }
-    } ?: return
-
-    UIUtil.invokeLaterIfNeeded {
-      callback.run()
-    }
-  }
-
-  private fun addApplicationNotification(notification: Notification): Runnable? {
-    if (projectToModel.isEmpty()) {
-      notifications.add(notification)
-      return null
+    if (project == null) {
+      addApplicationNotification(notification)
     }
     else {
-      val callbacks = mutableListOf<Runnable>()
-      for ((project, model) in projectToModel.entries) {
-        val callback = model.addNotification(project, notification)
-        callbacks.add(callback)
-      }
-      return Runnable {
-        for (callback in callbacks) {
-          callback.run()
-        }
-      }
+      addProjectNotification(project, notification)
     }
   }
 
-  private fun addProjectNotification(project: Project, notification: Notification): Runnable {
-    val model = projectToModel.getOrPut(project) { newProjectModel(project) }
-    return model.addNotification(project, notification)
+  private fun addApplicationNotification(notification: Notification) {
+    if (projectToModel.isEmpty()) {
+      synchronized(dataGuard) {
+        notifications.add(notification)
+      }
+    }
+    else {
+      val callbacks = mutableListOf<ProjectCallback>()
+      synchronized(dataGuard) {
+        for ((project, model) in projectToModel.entries) {
+          val callback = model.addNotification(project, notification)
+          callbacks.add(callback.inProject(project))
+        }
+      }
+      callbacks.forEach(ProjectCallback::invokeLaterIfNeeded)
+    }
+  }
+
+  private fun addProjectNotification(project: Project, notification: Notification) {
+    val callback = synchronized(dataGuard) {
+      val model = projectToModel.getOrPut(project) { newProjectModel(project) }
+      model.addNotification(project, notification)
+    }
+    callback.inProject(project).invokeLaterIfNeeded()
   }
 
   @JvmStatic
@@ -105,9 +100,7 @@ object ApplicationNotificationsModel {
       projectToModel[project]?.markAllRead()
     } ?: return
 
-    UIUtil.invokeLaterIfNeeded {
-      callback.run()
-    }
+    callback.inProject(project).invokeLaterIfNeeded()
   }
 
   fun fireStateChanged() {
@@ -127,41 +120,31 @@ object ApplicationNotificationsModel {
 
   @JvmStatic
   fun remove(notification: Notification) {
-    val callback = synchronized(dataGuard) {
+    val callbacks = synchronized(dataGuard) {
       notifications.remove(notification)
 
-      val callbacks = mutableListOf<Runnable>()
+      val callbacks = mutableListOf<ProjectCallback>()
       for ((project, model) in projectToModel) {
         val callback = model.remove(project, notification)
-        callbacks.add(callback)
+        callbacks.add(callback.inProject(project))
       }
-
-      Runnable {
-        for (callback in callbacks) {
-          callback.run()
-        }
-      }
+      callbacks
     }
-
-    UIUtil.invokeLaterIfNeeded {
-      callback.run()
-    }
+    callbacks.forEach(ProjectCallback::invokeLaterIfNeeded)
   }
 
   fun clearAll(project: Project?) {
+    if (project == null) {
+      synchronized(dataGuard) {
+        notifications.clear()
+      }
+      return
+    }
     val callback = synchronized(dataGuard) {
       notifications.clear()
-      if (project != null) {
-        projectToModel[project]?.clearAll(project)
-      }
-      else {
-        null
-      }
+      projectToModel[project]?.clearAll(project)
     } ?: return
-
-    UIUtil.invokeLaterIfNeeded {
-      callback.run()
-    }
+    callback.inProject(project).invokeLaterIfNeeded()
   }
 
   fun clearTimeline(project: Project) {
@@ -171,10 +154,7 @@ object ApplicationNotificationsModel {
       }
       projectToModel[project]?.clearTimeline(project)
     } ?: return
-
-    UIUtil.invokeLaterIfNeeded {
-      callback.run()
-    }
+    callback.inProject(project).invokeLaterIfNeeded()
   }
 
   fun expireAll() {
@@ -182,19 +162,15 @@ object ApplicationNotificationsModel {
       val allNotifications = notifications.toMutableList()
       notifications.clear()
 
-      val callbacks = mutableListOf<Runnable>()
+      val callbacks = mutableListOf<ProjectCallback>()
       for ((project, model) in projectToModel) {
         val (projectNotifications, callback) = model.expireAll(project)
         allNotifications.addAll(projectNotifications)
-        callbacks.add(callback)
+        callbacks.add(callback.inProject(project))
       }
 
       Runnable {
-        UIUtil.invokeLaterIfNeeded {
-          for (callback in callbacks) {
-            callback.run()
-          }
-        }
+        callbacks.forEach(ProjectCallback::invokeLaterIfNeeded)
 
         for (notification in allNotifications) {
           notification.expire()
@@ -372,10 +348,6 @@ private class ProjectNotificationsModel {
     stateNotification: Notification?,
     closeBalloons: Boolean,
   ) {
-    if (project.isDisposed) {
-      return
-    }
-
     if (closeBalloons) {
       project.closeAllBalloons()
     }
@@ -409,4 +381,18 @@ private fun Project.closeAllBalloons() {
   val ideFrame = WindowManager.getInstance().getIdeFrame(this)
   val balloonLayout = ideFrame!!.balloonLayout as BalloonLayoutImpl
   balloonLayout.closeAll()
+}
+
+private fun Runnable.inProject(project: Project): ProjectCallback = ProjectCallback(project, this)
+
+private class ProjectCallback(private val project: Project, private val runnable: Runnable) {
+  fun invokeLaterIfNeeded() {
+    val app = ApplicationManager.getApplication()
+    if (app.isDispatchThread) {
+      runnable.run()
+    }
+    else {
+      app.invokeLater(runnable::run, project.disposed)
+    }
+  }
 }
