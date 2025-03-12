@@ -55,6 +55,7 @@
 
     <group id="Terminal.ToolWindowActions">
       <reference ref="Terminal.Engine"/>
+      <action id="Terminal.Settings" class="org.jetbrains.plugins.terminal.action.TerminalSettingsAction" />
     </group>
 
     <group id="Terminal.OutputContextMenu">

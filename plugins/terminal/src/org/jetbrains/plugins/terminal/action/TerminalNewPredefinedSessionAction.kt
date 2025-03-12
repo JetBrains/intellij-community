@@ -2,13 +2,9 @@
 package org.jetbrains.plugins.terminal.action
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ConfigurableWithId
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -21,7 +17,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.DetectedShellInfo
-import org.jetbrains.plugins.terminal.TERMINAL_CONFIGURABLE_ID
 import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalShellsDetectorApi
@@ -29,7 +24,6 @@ import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Point
 import java.awt.event.MouseEvent
-import java.util.function.Predicate
 import javax.swing.Icon
 
 class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
@@ -111,18 +105,6 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
     val shellCommand = listOf(shellPath) + shellOptions
     val icon = if (shellPath.endsWith("wsl.exe")) AllIcons.RunConfigurations.Wsl else null
     return OpenShellAction(presentableName, shellCommand, icon)
-  }
-
-  private class TerminalSettingsAction : DumbAwareAction(IdeBundle.message("action.text.settings"), null, AllIcons.General.Settings) {
-    override fun actionPerformed(e: AnActionEvent) {
-      val project = e.project ?: return
-
-      // Match the Terminal configurable by ID.
-      // Can't use matching by configurable class name because actual configurable can be wrapped in case of Remote Dev.
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, Predicate { configurable: Configurable ->
-        configurable is ConfigurableWithId && configurable.getId() == TERMINAL_CONFIGURABLE_ID
-      }, null)
-    }
   }
 
   private class OpenShellAction(
