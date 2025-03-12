@@ -2420,7 +2420,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {
       return null;
     }
-    if (e.getX() > getWhitespaceSeparatorOffset()) {
+    int offset = ExperimentalUI.isNewUI() ? getWidth() : getWhitespaceSeparatorOffset();
+    if (e.getX() > offset) {
       return null;
     }
     ActiveGutterRenderer[] gutterRenderer = {null};
