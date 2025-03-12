@@ -6,6 +6,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.plugins.gradle.execution.build.GradleBaseApplicationEnvironmentProvider
@@ -19,7 +20,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 class KotlinGradleAppEnvProvider : GradleBaseApplicationEnvironmentProvider<KotlinRunConfiguration>() {
 
     override fun isApplicable(task: ExecuteRunConfigurationTask): Boolean {
-        return task.runProfile is KotlinRunConfiguration
+        val enabled = Registry.`is`("kotlin.gradle-run.enabled", false)
+        return enabled && task.runProfile is KotlinRunConfiguration
     }
 
     override fun generateInitScript(params: GradleInitScriptParameters): String? {
