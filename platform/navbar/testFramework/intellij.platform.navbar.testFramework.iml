@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.navbar.backend" />
     <orderEntry type="module" module-name="intellij.platform.navbar.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>
