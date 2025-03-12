@@ -177,7 +177,7 @@ internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo 
 @ApiStatus.Experimental
 @ApiStatus.Internal
 fun interface WorkspaceFileSetVisitor {
-  fun visitIncludedRoot(fileSet: WorkspaceFileSet, entityPointer: EntityPointer<WorkspaceEntity>, recursive: Boolean)
+  fun visitIncludedRoot(fileSet: WorkspaceFileSet, entityPointer: EntityPointer<WorkspaceEntity>)
 }
 
 @ApiStatus.Internal

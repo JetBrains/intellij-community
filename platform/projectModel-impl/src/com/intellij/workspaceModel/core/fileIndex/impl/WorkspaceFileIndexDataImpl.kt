@@ -183,7 +183,7 @@ internal class WorkspaceFileIndexDataImpl(
       val action = { storedFileSet: StoredFileSet ->
         when (storedFileSet) {
           is WorkspaceFileSetImpl -> {
-            visitor.visitIncludedRoot(storedFileSet, storedFileSet.entityPointer, storedFileSet.recursive)
+            visitor.visitIncludedRoot(storedFileSet, storedFileSet.entityPointer)
           }
           is ExcludedFileSet -> Unit
         }
