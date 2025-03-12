@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.Nls
@@ -65,9 +66,11 @@ internal class JavaCreateFromUsagesCompletionCommand(val psiClass: PsiClass) : C
         fileDocument.insertString(currentOffset, "method")
         currentOffset = currentOffset + 6
       }
-      fileDocument.insertString(currentOffset, "()")
-      if (addSemicolon) {
-        fileDocument.insertString(currentOffset + 2, ";")
+      if (previousElement == null || PsiTreeUtil.nextLeaf(previousElement) !is PsiJavaToken) {
+        fileDocument.insertString(currentOffset, "()")
+        if (addSemicolon) {
+          fileDocument.insertString(currentOffset + 2, ";")
+        }
       }
       PsiDocumentManager.getInstance(psiFile.project).commitDocument(fileDocument)
     }
