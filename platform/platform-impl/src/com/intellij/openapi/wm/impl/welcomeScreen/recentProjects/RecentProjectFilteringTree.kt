@@ -119,6 +119,7 @@ internal class RecentProjectFilteringTree(
 
   override fun getText(item: RecentProjectTreeItem?): String = when (item) {
     is RecentProjectItem -> item.searchName()
+    is ProviderRecentProjectItem -> item.searchName()
     else -> item?.displayName().orEmpty()
   }
 

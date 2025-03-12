@@ -152,6 +152,10 @@ internal data class ProviderRecentProjectItem(
   fun openProject() {
     recentProject.openProject()
   }
+
+  fun searchName(): String {
+    return "${recentProject.projectPath.orEmpty()} ${recentProject.displayName}"
+  }
 }
 
 internal data class CloneableProjectItem(
