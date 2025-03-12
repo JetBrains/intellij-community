@@ -47,7 +47,9 @@ private open class FrontendXDebuggerSessionProcessHandler(
       processHandlerDto.processHandlerEvents.toFlow().collect { event ->
         when (event) {
           is XDebuggerProcessHandlerEvent.StartNotified -> {
-            startNotify()
+            if (!isStartNotified) {
+              startNotify()
+            }
           }
           is XDebuggerProcessHandlerEvent.ProcessTerminated -> {
             destroyProcess()
