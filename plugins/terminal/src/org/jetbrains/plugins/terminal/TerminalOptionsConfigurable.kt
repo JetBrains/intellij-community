@@ -60,7 +60,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                            // Normally, New Terminal can't be enabled if 'getGenOneTerminalVisibilityValue' is false.
                            // But if it is enabled for some reason (for example, the corresponding registry key was switched manually),
                            // show this option as well to avoid the errors.
-                           || TerminalEngine.getValue() == TerminalEngine.NEW_TERMINAL) {
+                           || optionsProvider.terminalEngine == TerminalEngine.NEW_TERMINAL) {
             listOf(TerminalEngine.REWORKED, TerminalEngine.CLASSIC, TerminalEngine.NEW_TERMINAL)
           }
           else listOf(TerminalEngine.REWORKED, TerminalEngine.CLASSIC)
@@ -74,10 +74,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
           terminalEngineComboBox = comboBox(values, renderer)
             .label(message("settings.terminal.engine"))
-            .bindItem(
-              getter = { TerminalEngine.getValue() },
-              setter = { it?.let { TerminalEngine.setValue(it) } }
-            ).component
+            .bindItem(optionsProvider::terminalEngine.toNullableProperty())
+            .component
         }
         indent {
           buttonsGroup(title = message("settings.prompt.style")) {

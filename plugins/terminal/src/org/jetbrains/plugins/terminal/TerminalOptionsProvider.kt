@@ -5,8 +5,10 @@ import com.intellij.ide.util.RunOnceUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions
@@ -31,6 +33,21 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       state.cursorShape = previousCursorShape
     }
 
+    RunOnceUtil.runOnceForApp("TerminalOptionsProvider.terminalEngine.migration") {
+      // The initial state of the terminal engine value should be composed out of registry values
+      // used previously to determine what terminal to use.
+      val isReworkedValue = Registry.`is`(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY)
+      val isNewTerminalValue = Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
+
+      // Order of conditions is important!
+      // New Terminal registry prevails, even if reworked registry is enabled.
+      state.terminalEngine = when {
+        isNewTerminalValue -> TerminalEngine.NEW_TERMINAL
+        isReworkedValue -> TerminalEngine.REWORKED
+        else -> TerminalEngine.CLASSIC
+      }
+    }
+
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
     // So, notify the listeners on every `loadState` to not miss the change.
     fireSettingsChanged()
@@ -41,6 +58,9 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   class State {
+    @ApiStatus.Internal
+    var terminalEngine: TerminalEngine = TerminalEngine.CLASSIC
+
     var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
@@ -75,6 +95,17 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   // Nice property delegation (var shellPath: String? by state::myShellPath) cannot be used on `var` properties (KTIJ-19450)
+
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var terminalEngine: TerminalEngine
+    get() = state.terminalEngine
+    set(value) {
+      if (state.terminalEngine != value) {
+        state.terminalEngine = value
+        fireSettingsChanged()
+      }
+    }
 
   @Deprecated("Use TerminalLocalOptions#shellPath instead", ReplaceWith("TerminalLocalOptions.getInstance().shellPath"))
   var shellPath: String?
