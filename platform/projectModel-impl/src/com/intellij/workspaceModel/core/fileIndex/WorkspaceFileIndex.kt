@@ -151,4 +151,5 @@ interface WorkspaceFileSetData
  */
 interface WorkspaceFileSetWithCustomData<D : WorkspaceFileSetData> : WorkspaceFileSet {
   val data: D
+  val recursive: Boolean
 }
