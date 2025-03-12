@@ -28,7 +28,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   private val eel: EelApi = exePath.getEelDescriptor().upgradeBlocking()
-  private val commandLine = GeneralCommandLine().withExePath(exePath.asEelPath().toString())
+  private val commandLine = GeneralCommandLine().withExePath(exePath.toString())
 
   private val workingDirectory: Path = getSystemSubfolder(BuildManager.SYSTEM_ROOT)
   private val cacheDirectory: Path = getSystemSubfolder("jps-${ApplicationInfo.getInstance().getBuild()}")
