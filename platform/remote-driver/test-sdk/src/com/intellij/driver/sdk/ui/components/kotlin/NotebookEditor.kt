@@ -29,6 +29,8 @@ fun Finder.notebookEditor(@Language("xpath") xpath: String? = null, action: Note
 class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComponent(data) {
   private val addCellBelow
     get() = x("//div[@myicon='add.svg']")
+  private val runAndSelectNext
+    get() = x("//div[@myicon='runAndSelect.svg']")
   private val runAllCells
     get() = x("//div[@myicon='runAll.svg']")
 
@@ -49,6 +51,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   }
 
   fun runAllCells(): Unit = runAllCells.click()
+
+  fun runCell(): Unit = runAndSelectNext.click()
 
   fun runAllCellsAndWaitExecuted(timeout: Duration = 30.seconds): Unit = run {
     runAllCells()
