@@ -1,10 +1,9 @@
 package org.jetbrains.jps.dependency.java
 
-import org.jetbrains.jps.dependency.MapletFactory
 import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.impl.BackDependencyIndexImpl
-import org.jetbrains.jps.dependency.impl.MvStoreContainerFactory
+import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
 
 internal class SubclassesIndex(
   cFactory: MvStoreContainerFactory,

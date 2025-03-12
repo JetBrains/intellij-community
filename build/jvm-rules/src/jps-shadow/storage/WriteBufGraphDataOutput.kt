@@ -7,8 +7,6 @@ import org.jetbrains.jps.dependency.GraphDataInput
 import org.jetbrains.jps.dependency.GraphDataOutput
 import org.jetbrains.jps.dependency.impl.doReadGraphElement
 import org.jetbrains.jps.dependency.impl.doReadGraphElementCollection
-import org.jetbrains.jps.dependency.impl.doWriteGraphElement
-import org.jetbrains.jps.dependency.impl.doWriteGraphElementCollection
 import java.nio.ByteBuffer
 
 internal class WriteBufGraphDataOutput(
@@ -94,9 +92,7 @@ internal class WriteBufGraphDataInput(
     }
   }
 
-  override fun readRawLong(): Long {
-    return buffer.getLong()
-  }
+  override fun readRawLong(): Long = buffer.getLong()
 
   override fun readFully(b: ByteArray) {
     buffer.get(b)
@@ -111,41 +107,25 @@ internal class WriteBufGraphDataInput(
     return n
   }
 
-  override fun readBoolean(): Boolean {
-    return buffer.get() == 1.toByte()
-  }
+  override fun readBoolean(): Boolean = buffer.get() == 1.toByte()
 
-  override fun readByte(): Byte {
-    return buffer.get()
-  }
+  override fun readByte(): Byte = buffer.get()
 
-  override fun readUnsignedByte(): Int {
-    return buffer.get().toInt() and 0xFF
-  }
+  override fun readUnsignedByte(): Int = buffer.get().toInt() and 0xFF
 
-  override fun readShort(): Short {
-    return buffer.getShort()
-  }
+  override fun readShort(): Short = buffer.getShort()
 
-  override fun readUnsignedShort(): Int {
-    return buffer.getShort().toInt() and 0xFFFF
-  }
+  override fun readUnsignedShort(): Int = buffer.getShort().toInt() and 0xFFFF
 
-  override fun readInt(): Int {
-    return DataUtils.readVarInt(buffer)
-  }
+  override fun readChar(): Char = buffer.getChar()
 
-  override fun readLong(): Long {
-    return DataUtils.readVarLong(buffer)
-  }
+  override fun readInt(): Int = DataUtils.readVarInt(buffer)
 
-  override fun readFloat(): Float {
-    return buffer.getFloat()
-  }
+  override fun readLong(): Long = DataUtils.readVarLong(buffer)
 
-  override fun readDouble(): Double {
-    return buffer.getDouble()
-  }
+  override fun readFloat(): Float = buffer.getFloat()
+
+  override fun readDouble(): Double = buffer.getDouble()
 
   override fun readUTF(): String {
     return stringEnumerator.valueOf(DataUtils.readVarInt(buffer))

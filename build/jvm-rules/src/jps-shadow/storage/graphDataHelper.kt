@@ -1,12 +1,27 @@
 @file:Suppress("SSBasedInspection")
 
-package org.jetbrains.jps.dependency.impl
+package org.jetbrains.jps.dependency.storage
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import kotlinx.collections.immutable.PersistentSet
+import org.h2.mvstore.MVMap
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.FactoredExternalizableGraphElement
 import org.jetbrains.jps.dependency.GraphDataOutput
+import org.jetbrains.jps.dependency.MultiMaplet
+import java.io.Closeable
+import kotlin.collections.iterator
 import kotlin.jvm.javaClass
+
+interface MvStoreContainerFactory {
+  fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, PersistentSet<V>>): MultiMaplet<K, V>
+
+  fun <K : Any, V : Any> openInMemoryMap(): MultiMaplet<K, V>
+
+  fun getStringEnumerator(): StringEnumerator
+
+  fun getElementInterner(): (ExternalizableGraphElement) -> ExternalizableGraphElement
+}
 
 internal fun <T : ExternalizableGraphElement> doWriteGraphElement(output: GraphDataOutput, element: T) {
   ClassRegistry.writeClassId(element.javaClass, output)

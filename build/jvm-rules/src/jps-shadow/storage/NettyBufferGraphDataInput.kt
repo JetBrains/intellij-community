@@ -1,11 +1,14 @@
 @file:Suppress("ReplaceGetOrSet")
 
-package org.jetbrains.jps.dependency.impl
+package org.jetbrains.jps.dependency.storage
 
 import io.netty.buffer.ByteBuf
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.GraphDataInput
+import org.jetbrains.jps.dependency.impl.doReadGraphElement
+import org.jetbrains.jps.dependency.impl.doReadGraphElementCollection
 
+@Suppress("SpellCheckingInspection")
 internal val predefinedStrings = ArrayList<String>(listOf(
   "",
   "<init>",
@@ -42,9 +45,7 @@ class NettyBufferGraphDataInput(private val buffer: ByteBuf) : GraphDataInput {
     return doReadGraphElementCollection(this, result) { it }
   }
 
-  override fun readRawLong(): Long {
-    return buffer.readLongLE()
-  }
+  override fun readRawLong(): Long = buffer.readLongLE()
 
   override fun readFully(b: ByteArray) {
     buffer.readBytes(b)
@@ -59,41 +60,25 @@ class NettyBufferGraphDataInput(private val buffer: ByteBuf) : GraphDataInput {
     return n
   }
 
-  override fun readBoolean(): Boolean {
-    return buffer.readBoolean()
-  }
+  override fun readBoolean(): Boolean = buffer.readBoolean()
 
-  override fun readByte(): Byte {
-    return buffer.readByte()
-  }
+  override fun readByte(): Byte = buffer.readByte()
 
-  override fun readUnsignedByte(): Int {
-    return buffer.readUnsignedByte().toInt()
-  }
+  override fun readUnsignedByte(): Int = buffer.readUnsignedByte().toInt()
 
-  override fun readShort(): Short {
-    return buffer.readShortLE()
-  }
+  override fun readShort(): Short = buffer.readShortLE()
 
-  override fun readUnsignedShort(): Int {
-    return buffer.readUnsignedShortLE()
-  }
+  override fun readUnsignedShort(): Int = buffer.readUnsignedShortLE()
 
-  override fun readInt(): Int {
-    return buffer.readIntLE()
-  }
+  override fun readChar(): Char = buffer.readChar()
 
-  override fun readLong(): Long {
-    return buffer.readLongLE()
-  }
+  override fun readInt(): Int = buffer.readIntLE()
 
-  override fun readFloat(): Float {
-    return buffer.readFloatLE()
-  }
+  override fun readLong(): Long = buffer.readLongLE()
 
-  override fun readDouble(): Double {
-    return buffer.readDoubleLE()
-  }
+  override fun readFloat(): Float = buffer.readFloatLE()
+
+  override fun readDouble(): Double = buffer.readDoubleLE()
 
   override fun readUTF(): String {
     val lengthOrIndex = readUInt29(buffer)

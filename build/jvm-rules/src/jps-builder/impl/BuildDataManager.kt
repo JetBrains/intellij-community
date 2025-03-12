@@ -24,11 +24,8 @@ import org.jetbrains.jps.dependency.impl.PathSourceMapper
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
-import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Consumer
 import java.util.function.Function
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 private val processConstantsIncrementally = !System.getProperty("compiler.process.constants.non.incremental", "false").toBoolean()
 
@@ -38,6 +35,7 @@ internal class BuildDataManager private constructor(
   val relativizer: PathRelativizerService,
   private val dataManager: BuildDataProvider,
   depGraph: DependencyGraph,
+  private val containerFactory: BazelPersistentMapletFactory,
 ) {
   @JvmField val depGraph: DependencyGraph = SynchronizedDependencyGraph(depGraph)
   private val depGraphPathMapper: NodeSourcePathMapper
@@ -67,6 +65,7 @@ internal class BuildDataManager private constructor(
         dataManager = dataManager,
         relativizer = relativizer,
         depGraph = depGraph,
+        containerFactory = containerFactory,
       )
     }
   }
@@ -146,20 +145,27 @@ internal class BuildDataManager private constructor(
 
   @Suppress("unused")
   fun flush(memoryCachesOnly: Boolean) {
-    if (!memoryCachesOnly) {
-      dataManager.commit()
-    }
   }
 
   fun close() {
     runAllCatching(sequence {
-      yield { dataManager.close() }
-
+      // we do not call dataManager.close() - it is empty for BazelBuildDataProvider
       for (storage in targetToStorages.values) {
         yield { storage.close() }
       }
 
-      yield { depGraph.close() }
+      yield { containerFactory.close() }
+    })
+  }
+
+  fun forceClose() {
+    runAllCatching(sequence {
+      // we do not call dataManager.close() - it is empty for BazelBuildDataProvider
+      yield { containerFactory.forceClose() }
+
+      for (storage in targetToStorages.values) {
+        yield { storage.close() }
+      }
     })
   }
 

@@ -5,6 +5,20 @@ import org.h2.mvstore.WriteBuffer
 import org.h2.mvstore.type.DataType
 import java.nio.ByteBuffer
 
+interface EnumeratedStringDataTypeExternalizer<T : Any> {
+  fun createStorage(size: Int): Array<T?>
+
+  fun create(id: String): T
+
+  fun getStringId(obj: T): String
+}
+
+interface StringEnumerator {
+  fun enumerate(string: String): Int
+
+  fun valueOf(id: Int): String
+}
+
 class EnumeratedStringDataType<T : Any>(
   private val stringEnumerator: StringEnumerator,
   private val externalizer: EnumeratedStringDataTypeExternalizer<T>,

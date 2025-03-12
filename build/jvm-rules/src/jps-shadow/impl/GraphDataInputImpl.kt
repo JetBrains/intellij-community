@@ -2,6 +2,7 @@ package org.jetbrains.jps.dependency.impl
 
 import org.jetbrains.jps.dependency.ExternalizableGraphElement
 import org.jetbrains.jps.dependency.GraphDataInput
+import org.jetbrains.jps.dependency.storage.ClassRegistry
 
 internal inline fun <T : ExternalizableGraphElement> doReadGraphElement(
   input: GraphDataInput,

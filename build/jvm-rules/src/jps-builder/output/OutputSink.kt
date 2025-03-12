@@ -17,7 +17,7 @@ import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.use
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
-import org.jetbrains.jps.dependency.impl.NettyBufferGraphDataOutput
+import org.jetbrains.jps.dependency.storage.NettyBufferGraphDataOutput
 import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.build.GeneratedFile

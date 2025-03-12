@@ -4,18 +4,16 @@ package org.jetbrains.jps.dependency.impl
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
 import org.jetbrains.jps.dependency.BackDependencyIndex
-import org.jetbrains.jps.dependency.Externalizer
-import org.jetbrains.jps.dependency.GraphDataInput
-import org.jetbrains.jps.dependency.GraphDataOutput
-import org.jetbrains.jps.dependency.MapletFactory
 import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
 import org.jetbrains.jps.dependency.storage.EnumeratedStringDataType
 import org.jetbrains.jps.dependency.storage.EnumeratedStringSetValueDataType
+import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
 
 abstract class BackDependencyIndexImpl protected constructor(
   private val name: String,
@@ -29,7 +27,7 @@ abstract class BackDependencyIndexImpl protected constructor(
       map = mapletFactory.openInMemoryMap()
     }
     else {
-      val mapBuilder = MVMap.Builder<JvmNodeReferenceID, Set<JvmNodeReferenceID>>()
+      val mapBuilder = MVMap.Builder<JvmNodeReferenceID, PersistentSet<JvmNodeReferenceID>>()
         .keyType(EnumeratedStringDataType(mapletFactory.getStringEnumerator(), JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
         .valueType(EnumeratedStringSetValueDataType(mapletFactory.getStringEnumerator(), JvmNodeReferenceIdEnumeratedStringDataTypeExternalizer))
       @Suppress("UNCHECKED_CAST")

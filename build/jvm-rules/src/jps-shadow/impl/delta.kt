@@ -4,6 +4,10 @@ package org.jetbrains.jps.dependency.impl
 
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentHashSetOf
+import kotlinx.collections.immutable.plus
+import kotlinx.collections.immutable.toPersistentHashSet
 import org.h2.mvstore.MVMap
 import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.bazel.jvm.hashMap
@@ -16,10 +20,11 @@ import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.ReferenceID
 import org.jetbrains.jps.dependency.java.SubclassesIndex
+import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
 import java.util.function.Supplier
 
 private val memoryFactory = object : MvStoreContainerFactory {
-  override fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, Set<V>>): MultiMaplet<K, V> {
+  override fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, PersistentSet<V>>): MultiMaplet<K, V> {
     throw UnsupportedOperationException("Not used")
   }
 
@@ -42,7 +47,8 @@ class DeltaImpl(baseSources: Iterable<NodeSource>, deletedSources: Iterable<Node
   private val indices: List<BackDependencyIndex>
 
   private val nodeToSourcesMap = hashMap<ReferenceID, MutableSet<NodeSource>>()
-  private val sourceToNodesMap = hashMap<NodeSource, MutableSet<Node<*, *>>>()
+  @JvmField
+  internal val sourceToNodesMap = hashMap<NodeSource, MutableSet<Node<*, *>>>()
 
   init {
     val subclassesIndex = SubclassesIndex(memoryFactory, true)
@@ -127,36 +133,22 @@ private fun toSet(baseSources: Iterable<NodeSource>): Set<NodeSource> {
 class MemoryMultiMaplet<K : Any, V : Any, C : MutableCollection<V>>(
   @Suppress("unused") collectionFactory: Supplier<C>?,
 ) : MultiMaplet<K, V> {
-  private val map = hashMap<K, MutableCollection<V>>()
+  private val map = hashMap<K, PersistentSet<V>>()
 
   override fun containsKey(key: K): Boolean {
     return map.containsKey(key)
   }
 
   override fun get(key: K): Iterable<V> {
-    return map.get(key) ?: emptySet()
+    return map.get(key) ?: persistentHashSetOf()
   }
 
   override fun put(key: K, values: Iterable<V>) {
-    val data: MutableCollection<V> = when (values) {
-      is Collection<*> -> {
-        if (values.isEmpty()) {
-          map.remove(key)
-          return
-        }
-        else {
-          ObjectOpenHashSet(values as Collection<V>)
-        }
-      }
-
-      else -> ObjectOpenHashSet(values.iterator())
-    }
-
-    if (data.isEmpty()) {
+    if (values.none()) {
       map.remove(key)
     }
     else {
-      map.put(key, data)
+      map.put(key, values.toPersistentHashSet())
     }
   }
 
@@ -172,11 +164,11 @@ class MemoryMultiMaplet<K : Any, V : Any, C : MutableCollection<V>>(
   }
 
   override fun appendValues(key: K, values: Iterable<V>) {
-    map.computeIfAbsent(key) { ObjectOpenHashSet() }.addAll(values)
+    map.merge(key, values.toPersistentHashSet()) { oldSet, newValues -> oldSet.plus(newValues) }
   }
 
   override fun appendValue(key: K, value: V) {
-    map.computeIfAbsent(key) { ObjectOpenHashSet() }.add(value)
+    map.merge(key, persistentHashSetOf(value)) { oldSet, newValues -> oldSet.plus(newValues) }
   }
 
   override fun removeValue(key: K, value: V) {

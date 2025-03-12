@@ -1,11 +1,13 @@
-@file:Suppress("SSBasedInspection")
+@file:Suppress("SSBasedInspection", "ReplaceGetOrSet")
 
 package org.jetbrains.jps.dependency.java
 
 import it.unimi.dsi.fastutil.Hash.Strategy
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import jdk.internal.org.jline.utils.Colors.s
+import kotlinx.collections.immutable.PersistentSet
+import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.jps.dependency.diff.DiffCapable
 import org.jetbrains.jps.dependency.diff.Difference
 import org.jetbrains.jps.dependency.diff.Difference.Specifier
@@ -14,11 +16,13 @@ private object EmptyDiff : Specifier<Any, Difference> {
   override fun unchanged(): Boolean = true
 }
 
+@Suppress("UNCHECKED_CAST")
+internal fun <T, D : Difference> emptyDiff(): Specifier<T, D> = EmptyDiff as Specifier<T, D>
+
 internal fun <T : DiffCapable<T, D>, D : Difference> deepDiff(past: Collection<T>?, now: Collection<T>?): Specifier<T, D> {
   if (past.isNullOrEmpty()) {
     if (now.isNullOrEmpty()) {
-      @Suppress("UNCHECKED_CAST")
-      return EmptyDiff as Specifier<T, D>
+      return emptyDiff()
     }
     else {
       return object : Specifier<T, D> {
@@ -35,13 +39,65 @@ internal fun <T : DiffCapable<T, D>, D : Difference> deepDiff(past: Collection<T
       override fun unchanged(): Boolean = false
     }
   }
+  return deepDiffForSets(toSet(past), toSet(now))
+}
 
-  val pS = toSet(past)
-  val nS = toSet(now)
+private const val SET_THRESHOLD = 4
 
-  val added = now.asSequence().filter { !pS.contains(it) }.asIterable()
-  val removed = past.asSequence().filter { !nS.contains(it) }.asIterable()
+private fun <D : Difference, T : DiffCapable<T, D>> toSet(collection: Collection<T>): Collection<T> {
+  return if (collection.size < SET_THRESHOLD || collection is Set<*>) collection else collection.toCollection(ObjectOpenHashSet(collection.size))
+}
 
+internal fun <D : Difference, T : DiffCapable<T, D>> deepDiffForSets(
+  past: Collection<T>,
+  now: Collection<T>,
+): Specifier<T, D> {
+  val pastSameSet = past.toCollection(ObjectOpenCustomHashSet(past.size, DiffCapableHashStrategy))
+  val nowSameSet = now.toCollection(ObjectOpenCustomHashSet(now.size, DiffCapableHashStrategy))
+
+  val added = computeCustomCollectionDiff(nowSameSet, pastSameSet)
+  val removed = computeCustomCollectionDiff(pastSameSet, nowSameSet)
+  return object : Specifier<T, D> {
+    private var changed: List<Difference.Change<T, D>>? = null
+
+    override fun added() = added
+
+    override fun removed() = removed
+
+    override fun changed(): List<Difference.Change<T, D>> {
+      var changed = changed
+      if (changed == null) {
+        changed = computeChanged(pastSameSet, nowSameSet)
+        this.changed = changed
+      }
+      return changed
+    }
+
+    override fun unchanged(): Boolean {
+      return added.isEmpty() && removed.isEmpty() && changed().isEmpty()
+    }
+  }
+}
+
+private fun <T> computeCollectionDiff(a: Collection<T>, b: Collection<T>): Collection<T> {
+  return when {
+    a is PersistentSet<T> -> a.removeAll(b)
+    a.size < SET_THRESHOLD -> a.filterTo(ArrayList()) { !b.contains(it) }
+    else -> a.filterTo(ObjectOpenHashSet()) { !b.contains(it) }
+  }
+}
+
+private fun <T> computeCustomCollectionDiff(a: ObjectOpenCustomHashSet<T>, b: ObjectOpenCustomHashSet<T>): Collection<T> {
+  return when {
+    a.size < SET_THRESHOLD -> a.filterTo(ArrayList()) { !b.contains(it) }
+    else -> a.filterTo(ObjectOpenHashSet()) { !b.contains(it) }
+  }
+}
+
+private fun <T : DiffCapable<T, D>, D : Difference> computeChanged(
+  now: ObjectOpenCustomHashSet<T>,
+  past: ObjectOpenCustomHashSet<T>,
+): List<Difference.Change<T, D>> {
   val nowMap = Object2ObjectOpenCustomHashMap<T, T>(DiffCapableHashStrategy)
   for (s in now) {
     if (past.contains(s)) {
@@ -49,29 +105,15 @@ internal fun <T : DiffCapable<T, D>, D : Difference> deepDiff(past: Collection<T
     }
   }
 
-  val changed by lazy(LazyThreadSafetyMode.NONE) {
-    val changed = ArrayList<Difference.Change<T, D>>()
-    for (before in past) {
-      val after = nowMap.get(before) ?: continue
-      val diff = after.difference(before)!!
-      if (!diff.unchanged()) {
-        changed.add(Difference.Change.create(before, after, diff))
-      }
+  val changed = ArrayList<Difference.Change<T, D>>()
+  for (before in past) {
+    val after = nowMap.get(before) ?: continue
+    val diff = after.difference(before)
+    if (!diff.unchanged()) {
+      changed.add(Difference.Change.create(before, after, diff))
     }
-    changed
   }
-
-  return object : Specifier<T, D> {
-    override fun added(): Iterable<T> = added
-
-    override fun removed(): Iterable<T> = removed
-
-    override fun changed(): Iterable<Difference.Change<T, D>> = changed
-  }
-}
-
-private fun <D : Difference, T : DiffCapable<T, D>> toSet(past: Collection<T>): Collection<T> {
-  return if (past.size < 4 || past is Set<*>) past else past.toCollection(ObjectOpenHashSet(past.size))
+  return changed
 }
 
 internal object DiffCapableHashStrategy : Strategy<DiffCapable<*, *>> {
@@ -93,38 +135,41 @@ internal fun <T> diff(past: Collection<T>?, now: Collection<T>?): Specifier<T, D
       return EmptyDiff as Specifier<T, Difference>
     }
     return object : Specifier<T, Difference> {
-      override fun added() = now.asIterable()
+      override fun added() = now
 
       override fun unchanged() = false
     }
   }
   else if (now.isNullOrEmpty()) {
     return object : Specifier<T, Difference> {
-      override fun removed() = past.asIterable()
+      override fun removed() = past
 
       override fun unchanged() = false
     }
   }
 
-  val pastSet = past.toCollection(ObjectOpenHashSet())
-  val nowSet = now.toCollection(ObjectOpenHashSet())
+  return diffForSets(past = past, now = now)
+}
 
-  val added = nowSet.asSequence().filter { !pastSet.contains(it) }.asIterable()
-  val removed = pastSet.asSequence().filter { !nowSet.contains(it) }.asIterable()
-
+internal fun <T> diffForSets(past: Collection<T>, now: Collection<T>): Specifier<T, Difference> {
+  val added = computeCollectionDiff(now, past)
+  val removed = computeCollectionDiff(past, now)
   return object : Specifier<T, Difference> {
     private var isUnchanged: Boolean? = null
+
     override fun added() = added
 
-    override fun removed(): Iterable<T> = removed
+    override fun removed() = removed
 
     override fun unchanged(): Boolean {
       var isUnchanged = isUnchanged
       if (isUnchanged == null) {
-        isUnchanged = pastSet == nowSet
+        isUnchanged = past == now
         this.isUnchanged = isUnchanged
       }
       return isUnchanged
     }
+
+    override fun changed(): Iterable<Difference.Change<T, Difference>> = emptySet()
   }
 }

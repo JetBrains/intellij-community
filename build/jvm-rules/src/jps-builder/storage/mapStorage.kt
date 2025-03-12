@@ -3,16 +3,16 @@
 
 package org.jetbrains.bazel.jvm.jps.storage
 
+import com.dynatrace.hash4j.hashing.HashValue128
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.io.EnumeratorStringDescriptor
-import com.intellij.util.io.PersistentBTreeEnumerator
-import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.Unmappable
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
+import kotlinx.collections.immutable.PersistentSet
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
 import org.jetbrains.bazel.jvm.slowEqualsAwareHashStrategy
@@ -23,10 +23,9 @@ import org.jetbrains.jps.dependency.MapletFactory
 import org.jetbrains.jps.dependency.MultiMaplet
 import org.jetbrains.jps.dependency.Usage
 import org.jetbrains.jps.dependency.impl.MemoryMultiMaplet
-import org.jetbrains.jps.dependency.impl.MvStoreContainerFactory
+import org.jetbrains.jps.dependency.storage.MvStoreContainerFactory
 import org.jetbrains.jps.dependency.storage.StringEnumerator
 import org.jetbrains.jps.incremental.RebuildRequestedException
-import org.jetbrains.jps.incremental.storage.runAllCatching
 import java.io.Closeable
 import java.io.IOException
 import java.lang.AutoCloseable
@@ -64,33 +63,35 @@ private fun tryOpenMvStore(dbFile: Path, span: Span): MVStore {
 }
 
 internal class BazelPersistentMapletFactory private constructor(
-  stringEnumeratorImpl: PersistentBTreeEnumerator<String>,
   private val store: MVStore,
+  stringHashToIndexMap: MVMap<HashValue128, Int>,
+  indexToStringMap: MVMap<Int, String>,
 ) : MapletFactory, Closeable, MvStoreContainerFactory {
   companion object {
-    internal fun open(rootDir: Path, dbFile: Path, span: Span): BazelPersistentMapletFactory {
-      val stringEnumerator = PersistentBTreeEnumerator(
-        /* file = */ rootDir.resolve("strings"),
-        /* dataDescriptor = */ EnumeratorStringDescriptor.INSTANCE,
-        /* initialSize = */ 4096,
-        /* lockContext = */ StorageLockContext()
-      )
+    internal fun open(dbFile: Path, span: Span): BazelPersistentMapletFactory {
+      val store = tryOpenMvStore(dbFile = dbFile, span = span)
+      val storageCloser = AutoCloseable(store::closeImmediately)
 
-      val store = executeOrCloseStorage(stringEnumerator) {
-        tryOpenMvStore(dbFile = dbFile, span = span)
+      val valueType = MVMap.Builder<HashValue128, Int>()
+        .keyType(HashValue128KeyDataType)
+        .valueType(IntDataType)
+      val stringHashToIndexMap = executeOrCloseStorage(storageCloser) {
+        store.openMap("string-hash-to-index", valueType)
+      }
+      val indexToStringMap = executeOrCloseStorage(storageCloser) {
+        store.openMap("string-index-to-string", MVMap.Builder<Int, String>()
+          .keyType(IntDataType)
+          .valueType(ModernStringDataType)
+        )
       }
 
-      executeOrCloseStorage(stringEnumerator) {
-        executeOrCloseStorage(AutoCloseable(store::closeImmediately)) {
-          return BazelPersistentMapletFactory(stringEnumerator, store)
-        }
+      executeOrCloseStorage(storageCloser) {
+        return BazelPersistentMapletFactory(store, stringHashToIndexMap, indexToStringMap)
       }
     }
   }
 
-  override fun getStringEnumerator(): StringEnumerator {
-    return stringEnumerator
-  }
+  override fun getStringEnumerator(): StringEnumerator = stringEnumerator
 
   private val usageInterner = ConcurrentHashMap<Usage, Usage>()
 
@@ -105,10 +106,28 @@ internal class BazelPersistentMapletFactory private constructor(
 
   override fun getElementInterner(): (ExternalizableGraphElement) -> ExternalizableGraphElement = usageInternerFunction
 
-  private val stringEnumerator = CachingStringEnumerator(stringEnumeratorImpl)
+  private val stringEnumerator = CachingStringEnumerator(object : StringEnumerator {
+    override fun enumerate(string: String): Int {
+      val hash = Hashing.xxh3_128().hashBytesTo128Bits(string.toByteArray())
+      stringHashToIndexMap.get(hash)?.let { return it }
 
-  override fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, Set<V>>): MultiMaplet<K, V> {
-    val map: MVMap<K, Set<V>> = try {
+      synchronized(indexToStringMap) {
+        val newId = (indexToStringMap.lastKey() ?: 0) + 1
+        val old = indexToStringMap.put(newId, string)
+        require(old == null) { "Duplicate index $newId for string $string, old=$old" }
+        stringHashToIndexMap.put(hash, newId)
+        return newId
+      }
+    }
+
+    @Synchronized
+    override fun valueOf(id: Int): String {
+      return indexToStringMap.get(id) ?: invalidIdError(id)
+    }
+  })
+
+  override fun <K : Any, V : Any> openMap(mapName: String, mapBuilder: MVMap.Builder<K, PersistentSet<V>>): MultiMaplet<K, V> {
+    val map: MVMap<K, PersistentSet<V>> = try {
       store.openMap(mapName, mapBuilder)
     }
     catch (e: Throwable) {
@@ -138,11 +157,14 @@ internal class BazelPersistentMapletFactory private constructor(
   }
 
   override fun close() {
-    // on close mv map, we may write to stringEnumerator, so, first flush mv map
-    runAllCatching(sequence {
-      yield { store.close(500) }
-      yield { stringEnumerator.close() }
-    })
+    // during save, we enumerate strings, so, we cannot save as a part of close,
+    // as in this case string enumerator maps maybe not saved (as being closed)
+    store.commit()
+    store.close()
+  }
+
+  fun forceClose() {
+    store.closeImmediately()
   }
 }
 
@@ -173,7 +195,7 @@ internal inline fun <Out, In : AutoCloseable> executeOrCloseStorage(storageToClo
 }
 
 private class CachingStringEnumerator(
-  private val enumerator: PersistentBTreeEnumerator<String>,
+  private val enumerator: StringEnumerator,
 ) : StringEnumerator, ToIntFunction<String>, IntFunction<String> {
   // synchronized - we access data mostly in a single-threaded manner (cache per target)
   private val idToStringCache = Int2ObjectOpenHashMap<String>()
@@ -184,7 +206,7 @@ private class CachingStringEnumerator(
   }
 
   override fun apply(value: Int): String {
-    return enumerator.valueOf(value) ?: invalidIdError(value)
+    return enumerator.valueOf(value)
   }
 
   @Synchronized
@@ -195,13 +217,5 @@ private class CachingStringEnumerator(
   @Synchronized
   override fun valueOf(id: Int): String {
     return idToStringCache.computeIfAbsent(id, this)
-  }
-
-  @Synchronized
-  fun close() {
-    enumerator.close()
-    // help GC
-    idToStringCache.clear()
-    stringToIdCache.clear()
   }
 }

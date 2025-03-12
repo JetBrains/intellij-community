@@ -24,8 +24,6 @@ interface GraphDataInput : DataInput {
   }
 
   override fun readLine(): String = throw UnsupportedOperationException()
-
-  override fun readChar(): Char = throw UnsupportedOperationException()
 }
 
 interface GraphDataOutput : DataOutput {

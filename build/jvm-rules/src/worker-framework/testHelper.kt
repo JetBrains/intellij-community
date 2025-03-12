@@ -20,7 +20,7 @@ enum class TestModules(@JvmField val sourcePaths: List<String>, private val para
   XML_DOM(listOf("platform/util/xmlDom/src"), "platform/util/xmlDom/xmlDom.jar-0.params"),
   PLATFORM_IMPL(listOf("platform/platform-impl/src"), "platform/platform-impl/ide-impl.jar-0.params"),
   LANG_IMPL(listOf("platform/lang-impl/src", "platform/lang-impl/gen"), "platform/lang-impl/lang-impl.jar-0.params"),
-  PLATFORM_BOOTSTRAP(listOf("platform/platform-impl/bootstrap/src"), "platform/platform-impl/bootstrap/ide-bootstrap-kt.jar-0.params"),
+  PLATFORM_BOOTSTRAP(listOf("platform/platform-impl/bootstrap/src"), "platform/platform-impl/bootstrap/ide-bootstrap.jar-0.params"),
   JEWEL(listOf("platform/jewel/foundation/src/main/kotlin"), "platform/jewel/foundation/foundation.jar-0.params"),
   ;
 

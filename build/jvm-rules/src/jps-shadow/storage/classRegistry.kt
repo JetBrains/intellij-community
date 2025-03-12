@@ -1,6 +1,6 @@
 @file:Suppress("SSBasedInspection", "ReplaceGetOrSet")
 
-package org.jetbrains.jps.dependency.impl
+package org.jetbrains.jps.dependency.storage
 
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -30,7 +30,7 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import kotlin.jvm.java
 
-internal val lookup = MethodHandles.lookup()
+private val lookup = MethodHandles.lookup()
 
 internal data class ClassInfo(
   @JvmField val aClass: Class<*>,

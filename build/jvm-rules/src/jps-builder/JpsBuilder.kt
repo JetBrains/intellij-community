@@ -432,7 +432,7 @@ private suspend fun initAndBuild(
       catch (e: Throwable) {
         // in case of error during packaging - clear build
         try {
-          buildDataManager.close()
+          buildDataManager.forceClose()
           storageClosed = true
         }
         finally {
@@ -446,7 +446,7 @@ private suspend fun initAndBuild(
   }
   finally {
     if (!storageClosed) {
-      buildDataManager.close()
+      buildDataManager.forceClose()
     }
   }
 }

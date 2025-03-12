@@ -31,7 +31,7 @@ import org.jetbrains.jps.dependency.Node
 import org.jetbrains.jps.dependency.NodeSource
 import org.jetbrains.jps.dependency.impl.DeltaImpl
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder
-import org.jetbrains.jps.dependency.impl.NettyBufferGraphDataInput
+import org.jetbrains.jps.dependency.storage.NettyBufferGraphDataInput
 import org.jetbrains.jps.dependency.impl.PathSource
 import org.jetbrains.jps.dependency.java.JvmClass
 import org.jetbrains.jps.incremental.RebuildRequestedException

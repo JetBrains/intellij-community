@@ -142,21 +142,41 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
   @Suppress("unused")
   fun getRetentionPolicy(): RetentionPolicy? = retentionPolicy
 
-  override fun difference(past: JvmClass): Diff = Diff(past)
+  override fun difference(past: JvmClass): Diff {
+    // we call updateMappingsOnRoundCompletion after compilation, and check delta again,
+    // so, is it possible that nodesBefore is equal to nodesAfter
+    if (past === this) {
+      return Diff(
+        past = past,
+        interfacesDiff = lazyOf(emptyDiff()),
+        methodsDiff = lazyOf(emptyDiff()),
+        fieldsDiff = lazyOf(emptyDiff()),
+        annotationTargetsDiff = lazyOf(emptyDiff())
+      )
+    }
+    return Diff(
+      past = past,
+      interfacesDiff = lazy(LazyThreadSafetyMode.NONE) { diff(past.interfaces, interfaces) },
+      methodsDiff = lazy(LazyThreadSafetyMode.NONE) { deepDiff(past.methods, methods) },
+      fieldsDiff = lazy(LazyThreadSafetyMode.NONE) { deepDiff(past.fields, fields) },
+      annotationTargetsDiff = lazy(LazyThreadSafetyMode.NONE) { diff(past.annotationTargets, annotationTargets) }
+    )
+  }
 
-  inner class Diff(past: JvmClass) : JVMClassNode<JvmClass, Diff>.Diff(past) {
-    private val interfacesDiff by lazy(LazyThreadSafetyMode.NONE) { diff(myPast.interfaces, interfaces) }
-    private val methodsDiff by lazy(LazyThreadSafetyMode.NONE) { deepDiff(myPast.methods, methods) }
-    private val fieldsDiff by lazy(LazyThreadSafetyMode.NONE) { deepDiff(myPast.fields, fields) }
-    private val annotationTargetsDiff by lazy(LazyThreadSafetyMode.NONE) { diff(myPast.annotationTargets, annotationTargets) }
-
+  inner class Diff internal constructor(
+    past: JvmClass,
+    private val interfacesDiff: Lazy<Difference.Specifier<String, Difference>>,
+    private val methodsDiff: Lazy<Difference.Specifier<JvmMethod, JvmMethod.Diff>>,
+    private val fieldsDiff: Lazy<Difference.Specifier<JvmField, JvmField.Diff>>,
+    private val annotationTargetsDiff: Lazy<Difference.Specifier<ElemType, Difference>>,
+  ) : JVMClassNode<JvmClass, Diff>.Diff(past) {
     override fun unchanged(): Boolean {
       return super.unchanged() &&
         !superClassChanged() &&
         !outerClassChanged() &&
-        interfacesDiff.unchanged() &&
-        methodsDiff.unchanged() &&
-        fieldsDiff.unchanged() &&
+        interfacesDiff.value.unchanged() &&
+        methodsDiff.value.unchanged() &&
+        fieldsDiff.value.unchanged() &&
         !retentionPolicyChanged() &&
         annotationTargets().unchanged()
     }
@@ -177,25 +197,25 @@ class JvmClass : JVMClassNode<JvmClass, JvmClass.Diff> {
 
     fun outerClassChanged(): Boolean = myPast.outerFqName != outerFqName
 
-    fun interfaces(): Difference.Specifier<String, *> = interfacesDiff
+    fun interfaces(): Difference.Specifier<String, *> = interfacesDiff.value
 
     @Suppress("unused")
-    fun methods(): Difference.Specifier<JvmMethod, JvmMethod.Diff> = methodsDiff
+    fun methods(): Difference.Specifier<JvmMethod, JvmMethod.Diff> = methodsDiff.value
 
     @Suppress("unused")
-    fun fields(): Difference.Specifier<JvmField, JvmField.Diff> = fieldsDiff
+    fun fields(): Difference.Specifier<JvmField, JvmField.Diff> = fieldsDiff.value
 
     fun retentionPolicyChanged(): Boolean = myPast.retentionPolicy != retentionPolicy
 
-    fun annotationTargets(): Difference.Specifier<ElemType, *> = annotationTargetsDiff
+    fun annotationTargets(): Difference.Specifier<ElemType, *> = annotationTargetsDiff.value
 
     @Suppress("unused")
     fun targetAttributeCategoryMightChange(): Boolean {
       val targetsDiff = annotationTargetsDiff
-      if (!targetsDiff.unchanged()) {
+      if (!targetsDiff.value.unchanged()) {
         for (elementType in arrayOf(ElemType.TYPE_USE, ElemType.RECORD_COMPONENT)) {
-          if (targetsDiff.added().contains(elementType) ||
-            targetsDiff.removed().contains(elementType) ||
+          if (targetsDiff.value.added().contains(elementType) ||
+            targetsDiff.value.removed().contains(elementType) ||
             myPast.annotationTargets.contains(elementType)) {
             return true
           }
