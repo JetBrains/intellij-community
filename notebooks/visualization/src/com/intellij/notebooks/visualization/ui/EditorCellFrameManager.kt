@@ -4,7 +4,6 @@ package com.intellij.notebooks.visualization.ui
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookMarkdownCellLeftBorderRenderer
 import com.intellij.notebooks.visualization.NotebookCellLines
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.getLayerController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -28,11 +27,10 @@ class EditorCellFrameManager(
   private var isHovered = false
 
   init {
-    JupyterBoundsChangeHandler.get(editor).subscribe(this) {
-      if (cellType == NotebookCellLines.CellType.CODE || isSelected) redrawBorders(currentColor)
-    }
     if (cellType == NotebookCellLines.CellType.CODE) redrawBorders(editor.notebookAppearance.cellFrameHoveredColor.get())
   }
+
+  fun redrawBorders(): Unit = redrawBorders(currentColor)
 
   fun updateCellFrameShow(selected: Boolean, hovered: Boolean) {
     isSelected = selected
@@ -83,7 +81,6 @@ class EditorCellFrameManager(
     val endOffset = editor.document.getLineEndOffset(view.cell.interval.lines.last)
     addLeftBorderHighlighter(startOffset, endOffset)
   }
-
 
   private fun redrawRightBorder(layerController: EditorLayerController?) {
     layerController ?: return
