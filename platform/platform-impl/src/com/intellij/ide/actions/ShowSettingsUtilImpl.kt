@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.search.SearchUtil
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -60,14 +61,15 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     }
 
     private fun showInternal(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?, filter: String?) {
-      val currentOrDefaultProject = currentOrDefaultProject(project)
-      val isActualProject = currentOrDefaultProject != ProjectManager.getInstance().defaultProject
-      if (useNonModalSettingsWindow() && isActualProject) {
-        runWithModalProgressBlocking(currentOrDefaultProject, IdeBundle.message("settings.modal.opening.message")) {
-          val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(toSelect) {
+      if (project != null &&
+          project != ProjectManager.getInstance().defaultProject &&
+          useNonModalSettingsWindow() &&
+          ModalityState.current() == ModalityState.nonModal()) {
+        runWithModalProgressBlocking(project, IdeBundle.message("settings.modal.opening.message")) {
+          val settingsFile = SettingsVirtualFileHolder.getInstance(project).getOrCreate(toSelect) {
             createDialogWrapper(project, groups, toSelect, filter, false) as SettingsDialog
           }
-          val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
+          val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx;
           val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true, requestFocus = true)
           fileEditorManager.openFile(settingsFile, options);
         }
