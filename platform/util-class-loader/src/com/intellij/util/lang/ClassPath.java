@@ -393,6 +393,9 @@ public final class ClassPath {
     else if (!fileAttributes.isRegularFile()) {
       return null;
     }
+    else if (!file.toString().endsWith("jar")) {
+      return null;
+    }
 
     ResourceFile zipFile = resourceFileFactory.apply(file);
     JarLoader loader = new JarLoader(file, this, zipFile);
