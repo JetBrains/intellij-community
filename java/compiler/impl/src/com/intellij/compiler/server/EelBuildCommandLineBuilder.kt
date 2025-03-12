@@ -49,7 +49,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   override fun addClasspathParameter(classpathInHost: List<String>, classpathInTarget: List<String>) {
     val mappedClasspath = classpathInHost.mapNotNull { hostLocation ->
       runCatching {
-        copyPathToHostIfRequired(Path.of(hostLocation))
+        copyPathToTargetIfRequired(Path.of(hostLocation))
       }.onFailure { error -> logger.warn("Can't map classpath parameter: $hostLocation", error) }.getOrNull()
     }.joinToString(eel.platform.pathSeparator)
     require(classpathInTarget.isEmpty()) {
@@ -77,11 +77,6 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
       EelPathUtils.transferLocalContentToRemotePathIfNeeded(path, remotePath)
     }
     return remotePath
-  }
-
-  @Throws(java.nio.file.FileSystemException::class)
-  override fun copyPathToHostIfRequired(path: Path): String {
-    return copyPathToTargetIfRequired(path).asEelPath().toString()
   }
 
   override fun getYjpAgentPath(yourKitProfilerService: YourKitProfilerService?): String? {
