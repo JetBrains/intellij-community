@@ -18,10 +18,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.isImported
 import org.jetbrains.kotlin.idea.codeInsight.K2StatisticsInfoProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.ArrayAccessorImportQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.DelegateMethodImportQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.MismatchedArgumentsImportQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.UnresolvedNameReferenceImportQuickFixFactory
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.*
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
@@ -49,6 +46,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             MismatchedArgumentsImportQuickFixFactory,
             DelegateMethodImportQuickFixFactory,
             ArrayAccessorImportQuickFixFactory,
+            ComponentFunctionImportQuickFixFactory,
         )
 
         return factories.flatMap { it.run { createQuickFixes(diagnostics) } }

@@ -273,7 +273,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     /**
-     * Note: For the auto-import fixes, see [importOnTheFlyList] and [KotlinFirUnresolvedReferenceQuickFixProvider]. 
+     * Note: For the auto-import fixes, see [importOnTheFlyList] and [KotlinFirUnresolvedReferenceQuickFixProvider].
      */
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KaFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
@@ -289,6 +289,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerFactory(ImportQuickFixFactories.noGetMethodFactory)
         registerFactory(ImportQuickFixFactories.noSetMethodFactory)
+
+        registerFactory(ImportQuickFixFactories.componentFunctionMissingFactory)
 
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionMissingFactory)
         registerFactory(ImportQuickFixFactories.delegateSpecialFunctionNoneApplicableFactory)
