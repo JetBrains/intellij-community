@@ -18,7 +18,6 @@ object ScriptDebuggerUrls {
   @JvmStatic
   fun newLocalFileUrl(path: String): Url {
     val uriPath = toUriPath(path)
-    if (uriPath.isNotEmpty() && uriPath[0] != '/') throw URISyntaxException(path, "Must be absolute")
     return Urls.newUrl(URLUtil.FILE_PROTOCOL, "", uriPath)
   }
 
