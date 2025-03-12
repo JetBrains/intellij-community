@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.debug;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.debug.tests;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.intellij.idea.TestFor;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.debug.tasks.PyDebuggerTask;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -123,6 +125,35 @@ public class PythonDebugConsoleTest extends PyEnvTestCase {
         waitForOutput("[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]");
 
         resume();
+      }
+    });
+  }
+
+  @Test
+  public void testDebugConsolePytest() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_debug_console_pytest.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 4);
+      }
+
+      @Override
+      protected boolean usePytestRunner() {
+        return true;
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("a").hasValue("1");
+        consoleExec("print('a = %s' % a)");
+        waitForOutput("a = 1");
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("pytest");
       }
     });
   }

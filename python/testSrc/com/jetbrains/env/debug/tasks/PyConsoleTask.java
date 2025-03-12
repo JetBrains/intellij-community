@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.debug;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.debug.tasks;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -43,7 +43,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
-import static com.jetbrains.env.debug.PyBaseDebuggerTask.convertToList;
+import static com.jetbrains.env.debug.tasks.PyBaseDebuggerTask.convertToList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PyConsoleTask extends PyExecutionFixtureTestTask {

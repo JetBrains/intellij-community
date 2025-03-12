@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.debug;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.debug.tests;
 
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.frame.XValue;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.debug.tasks.PyDebuggerTask;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.assertj.core.api.SoftAssertions;
 import org.jetbrains.annotations.NotNull;

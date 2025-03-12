@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.debug;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.debug.tasks;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
@@ -108,7 +108,7 @@ public class PyUnitTestDebuggingTask extends PyCustomConfigDebuggerTask {
     return myScriptName + "." + myTargetName;
   }
 
-  static class PythonExceptionData {
+  public static class PythonExceptionData {
 
     private final @NotNull String myExceptionClass;
     private final @NotNull String myErrorMessage;

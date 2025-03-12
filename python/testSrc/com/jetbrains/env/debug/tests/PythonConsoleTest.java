@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.debug;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.debug.tests;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.execution.console.ConsoleHistoryController;
@@ -16,6 +16,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.debug.tasks.PyConsoleTask;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PyConsoleOptionsConfigurable;
 import com.jetbrains.python.console.PythonConsoleView;
@@ -34,8 +35,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
-import static com.jetbrains.env.debug.PyBaseDebuggerTask.findCompletionVariantByName;
-import static com.jetbrains.env.debug.PyBaseDebuggerTask.findDebugValueByName;
+import static com.jetbrains.env.debug.tasks.PyBaseDebuggerTask.findCompletionVariantByName;
+import static com.jetbrains.env.debug.tasks.PyBaseDebuggerTask.findDebugValueByName;
 import static com.jetbrains.python.PyParameterInfoTest.checkParameters;
 import static org.junit.Assert.*;
 

@@ -14,7 +14,7 @@ except:
     xrange = range
 
 
-PYTHON_NAMES = ['python', 'jython', 'pypy']
+PYTHON_NAMES = ['python', 'jython', 'pypy', "python3"]
 
 #===============================================================================
 # Things that are dependent on having the pydevd debugger

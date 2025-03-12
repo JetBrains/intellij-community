@@ -1,16 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.env.debug;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.env.debug.tests;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.debug.tasks.PyDebuggerTask;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.run.PythonRunConfiguration;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +25,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
 
 public class PythonDebuggerSteppingTest extends PyEnvTestCase {
 
@@ -45,17 +52,27 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       super.runTestOn(sdk.getHomePath(), sdk);
     }
 
-    void assertSmartStepIntoVariants(@NotNull String @NotNull ... expectedFunctionNames) {
-      getSmartStepIntoVariantsAsync().onSuccess(variants -> {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          String[] arr = new String[variants.size()];
-          for(int i = 0; i < arr.length; i++) {
-            PySmartStepIntoVariant v = (PySmartStepIntoVariant) variants.get(i);
-            arr[i] = v.getFunctionName();
-          }
+    @Override
+    protected AbstractPythonRunConfiguration createRunConfiguration(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
+      PythonRunConfiguration runConfiguration = (PythonRunConfiguration)super.createRunConfiguration(sdkHome, existingSdk);
+      runConfiguration.getEnvs().put("PYDEVD_USE_CYTHON", "NO");
+      return runConfiguration;
+    }
 
-          Assert.assertArrayEquals(expectedFunctionNames, arr);
-        });
+    @Override
+    public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+      return level.compareTo(LanguageLevel.PYTHON27) > 0;
+    }
+
+    void assertSmartStepIntoVariants(@NotNull String @NotNull ... expectedFunctionNames) {
+      var variants = getSmartStepIntoVariants();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        String[] arr = new String[variants.size()];
+        for(int i = 0; i < arr.length; i++) {
+          PySmartStepIntoVariant v = (PySmartStepIntoVariant) variants.get(i);
+          arr[i] = v.getFunctionName();
+        }
+        Assert.assertArrayEquals(expectedFunctionNames, arr);
       });
     }
 
@@ -96,6 +113,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         eval("t").hasValue("1");
         resume();
       }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
+      }
     });
   }
 
@@ -119,6 +141,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         stepOver();
         waitForPause();
         eval("z").hasValue("1");
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
       }
     });
   }
@@ -166,6 +193,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         eval("y").hasValue("4");
       }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
+      }
     });
   }
 
@@ -193,11 +225,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         eval("a.z").hasValue("1");
         resume();
         waitForTerminate();
-      }
-
-      @Override
-      public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("-python3.9", "-python3.10", "-python3.11", "-python3.12");
       }
     });
   }
@@ -432,9 +459,14 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         stepInto();
         waitForPause();
-        toggleBreakpoint(11);
+        removeBreakpoint(getScriptName(), 11);
         resume();
         waitForTerminate();
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) < 0;
       }
     });
   }
@@ -464,13 +496,12 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_decorator2.py") {
       @Override
       public void before() {
-        toggleBreakpoints(15, 26);
+        toggleBreakpoints(15);
       }
 
       @Override
       public void testing() throws Exception {
         waitForPause();
-        toggleBreakpoint(26);
         assertSmartStepIntoVariants("foo", "foo", "generate_power");
         stepOver();
         waitForPause();
@@ -479,7 +510,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         eval("exponent").hasValue("5");
         resume();
-        if (TestEnv.LINUX.isThisOs()) {
+        if (TestEnv.LINUX.isThisOs() || TestEnv.MAC.isThisOs()) {
           waitForPause();
           resume();
         }
@@ -487,13 +518,8 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       }
 
       @Override
-      public @NotNull Set<String> getTags() {
-        return ImmutableSet.<String>builder().addAll(super.getTags())
-          .add("-python2.7")
-          .add("-django")
-          .add("-python3.11") // PY-57113
-          .add("-python3.12")
-          .build();
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) < 0;
       }
     });
   }
@@ -535,7 +561,7 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
     runPythonTest(new PySmartStepIntoDebuggerTask( "test_smart_step_into_native_function.py") {
       @Override
       public void before() {
-        toggleBreakpoint(9);
+        toggleBreakpoint(12);
       }
 
       @Override
@@ -545,20 +571,38 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         stepInto();
         waitForPause();
+        waitForOutput("Called");
         stepInto();
         waitForPause();
+        stepInto();
+        waitForPause();
+        waitForOutput("Reversed");
+        stepInto();
+        waitForPause();
+        stepInto();
+        waitForPause();
+        waitForOutput("Appended");
         stepInto();
         waitForPause();
         assertSmartStepIntoVariants("f", "f");
-        smartStepInto("f", 2);
+        smartStepInto("f", 1);
         waitForPause();
         resume();
         waitForPause();
+        waitForOutput("Called");
+        waitForOutput("Reversed");
+        waitForOutput("Appended");
         assertSmartStepIntoVariants("f", "f", "f");
         resume();
         waitForTerminate();
       }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) < 0;
+      }
     });
+
   }
 
   @Test
@@ -658,17 +702,12 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
-        toggleBreakpoint(25);
-        assertSmartStepIntoVariants("A", "return_my_lucking_link", "return_my_lucking_payload", "dumps", "do_stuff");
+        removeBreakpoint(getScriptName(), 20);
+        assertSmartStepIntoVariants("A", "return_my_lucking_link", "return_my_lucking_payload", "do_stuff");
         resume();
         waitForPause();
         resume();
         waitForTerminate();
-      }
-
-      @Override
-      public @NotNull Set<String> getTags() {
-        return ImmutableSet.<String>builder().addAll(super.getTags()).add("python3").build();
       }
     });
   }
@@ -860,14 +899,9 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         smartStepInto("make_class", 0);
         waitForPause();
         eval("x").hasValue("100");
+        removeBreakpoint(getScriptName(), 14);
+
         resume();
-        if (TestEnv.LINUX.isThisOs()) {
-          // Python interpreter acts a but different on Linux.
-          waitForPause();
-          resume();
-          waitForPause();
-          resume();
-        }
         waitForTerminate();
       }
 
@@ -963,6 +997,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         eval("z").hasValue("2");
       }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
+      }
     });
   }
 
@@ -989,10 +1028,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
   @Test
   public void testStepOverYieldFrom() {
     runPythonTest(new PySmartStepIntoDebuggerTask("test_step_over_yield.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
 
       @Override
       public void before() {
@@ -1013,15 +1048,10 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         eval("sum").hasValue("6");
         resume();
       }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.<String>builder().addAll(super.getTags()).add("-python2.7").build();
-      }
     });
   }
 
+  // interesting for Python 3.12
   @Test
   public void testStepOverAwait() {
     runPythonTest(new PyDebuggerTask("/debug/stepping", "test_step_over_await.py") {
@@ -1044,8 +1074,8 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
       }
 
       @Override
-      public @NotNull Set<String> getTags() {
-        return Set.of("-python2.7");
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0 && level.compareTo(LanguageLevel.PYTHON311) < 0;
       }
     });
   }
@@ -1068,6 +1098,11 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         eval("instream").hasValue("'a b c'");  // ensure we're still in the library scope after performing a step over
         resume();
         waitForTerminate();
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
       }
     });
   }
@@ -1103,6 +1138,61 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         stepInto();
         waitForPause();
         eval("stopped_in_user_file").hasValue("True");
+      }
+    });
+  }
+
+  @Test
+  public void testSeveralReturnSignal() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_several_return_signal.py") {
+      @Override
+      public AbstractPythonRunConfiguration createRunConfiguration(@NotNull String sdkHome, Sdk existingSdk) {
+        var runConfiguration = (PythonRunConfiguration) super.createRunConfiguration(sdkHome, existingSdk);
+        runConfiguration.getEnvs().replace("PYDEVD_USE_CYTHON", "NO");
+        return runConfiguration;
+      }
+
+      @Override
+      public void before() {
+        toggleBreakpoints(6);
+      }
+
+      private void stepIntoFunAndReturn() throws InterruptedException {
+        stepOver();
+        waitForPause();
+        stepInto();
+        waitForPause();
+        // check STEP_INTO_CMD
+        assertEquals(1, XDebuggerManager.getInstance(getProject()).getCurrentSession().getCurrentPosition().getLine());
+        stepOver();
+        waitForPause();
+      }
+
+      @Override
+      public void testing() throws InterruptedException {
+        waitForPause();
+        stepIntoFunAndReturn();
+
+        var session = XDebuggerManager.getInstance(getProject()).getCurrentSession();
+
+        // check PY_RETURN signal
+        assertEquals(7, session.getCurrentPosition().getLine());
+
+        resume();
+        waitForPause();
+        removeBreakpoint(getScriptName(), 6);
+        stepIntoFunAndReturn();
+
+        // check PY_RETURN signal
+        assertEquals(7, session.getCurrentPosition().getLine());
+        resume();
+
+        waitForTerminate();
+      }
+
+      @Override
+      public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+        return level.compareTo(LanguageLevel.PYTHON27) > 0;
       }
     });
   }
