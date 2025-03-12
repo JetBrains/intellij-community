@@ -227,11 +227,12 @@ public fun <T : Any> ListComboBox(
  * @see com.intellij.openapi.ui.ComboBox
  */
 @Composable
-public fun EditableListComboBox(
-    items: List<String>,
+public fun <T : Any> EditableListComboBox(
+    items: List<T>,
     selectedIndex: Int,
-    onItemSelected: (Int, String) -> Unit,
-    textFieldState: TextFieldState = rememberTextFieldState(items[selectedIndex]),
+    onItemSelected: (Int) -> Unit,
+    itemToLabel: (T) -> String,
+    textFieldState: TextFieldState = rememberTextFieldState(itemToLabel(items[selectedIndex])),
     modifier: Modifier = Modifier,
     isEnabled: Boolean = true,
     outline: Outline = Outline.None,
@@ -240,9 +241,9 @@ public fun EditableListComboBox(
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
-    itemKeys: (Int, String) -> Any = { _, item -> item },
+    itemKeys: (Int, T) -> Any,
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
-    itemContent: @Composable (text: String, isSelected: Boolean, isActive: Boolean) -> Unit,
+    itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
 
@@ -256,14 +257,14 @@ public fun EditableListComboBox(
             // potentially nested call to edit, which is not supported.
             // This is because setting the selected keys on the SLC will eventually
             // cause a call to this very function via SLC's onSelectedIndexesChange.
-            textFieldState.edit { replace(0, length, items[index]) }
+            textFieldState.edit { replace(0, length, itemToLabel(items[index])) }
 
             if (listState.selectedKeys.size != 1 || !listState.selectedKeys.contains(itemKeys(index, items[index]))) {
                 // This guard condition should also help avoid issues caused by side effects
                 // of setting new selected keys, as per the comment above.
                 listState.selectedKeys = setOf(itemKeys(index, items[index]))
             }
-            onItemSelected(index, items[index])
+            onItemSelected(index)
             scope.launch { listState.lazyListState.scrollToIndex(index) }
         } else {
             JewelLogger.getInstance("EditableListComboBox").trace("Ignoring item index $index as it's invalid")
@@ -311,7 +312,8 @@ public fun EditableListComboBox(
             setSelectedItem((currentSelectedIndex - 1).coerceAtLeast(0))
         },
         onEnterPress = {
-            val indexOfSelected = items.indexOf(textFieldState.text)
+            val item = items.firstOrNull { itemToLabel(it) == textFieldState.text }
+            val indexOfSelected = items.indexOf(item)
             setSelectedItem(indexOfSelected)
         },
         popupManager =
@@ -389,7 +391,7 @@ public fun ListComboBox(
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
 ) {
-    var labelText by remember { mutableStateOf(items.firstOrNull().orEmpty()) }
+    var labelText by remember { mutableStateOf(items[initialSelectedIndex]) }
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
@@ -545,7 +547,7 @@ public fun EditableListComboBox(
     itemKeys: (Int, String) -> Any = { _, item -> item },
     listState: SelectableLazyListState = rememberSelectableLazyListState(),
 ) {
-    val textFieldState = rememberTextFieldState(items.firstOrNull().orEmpty())
+    val textFieldState = rememberTextFieldState(items[initialSelectedIndex])
     var previewSelectedIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 

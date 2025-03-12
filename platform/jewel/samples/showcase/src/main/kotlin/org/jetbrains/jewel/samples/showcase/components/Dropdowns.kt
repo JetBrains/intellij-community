@@ -86,9 +86,11 @@ private fun ListComboBoxes() {
             EditableListComboBox(
                 items = comboBoxItems,
                 selectedIndex = selectedIndex,
-                onItemSelected = { index, text -> selectedIndex = index },
+                onItemSelected = { index -> selectedIndex = index },
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
+                itemToLabel = { item -> item },
+                itemKeys = { _, item -> item },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
                         text = item,
@@ -201,7 +203,8 @@ private fun ListComboBoxes() {
                 selectedIndex = selectedIndex,
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
-                onItemSelected = { index, text -> selectedIndex = index },
+                itemToLabel = { item -> item },
+                onItemSelected = { index -> selectedIndex = index },
                 // Create a fancy key with both index and item value
                 itemKeys = { index, item -> "$item-$index" },
                 itemContent = { item, isSelected, isActive ->

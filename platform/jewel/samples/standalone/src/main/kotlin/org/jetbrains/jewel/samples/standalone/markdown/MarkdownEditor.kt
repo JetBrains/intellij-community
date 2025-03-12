@@ -72,8 +72,8 @@ private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) 
             items = comboBoxItems,
             modifier = Modifier.width(170.dp).padding(end = 2.dp),
             maxPopupHeight = 150.dp,
-            onItemSelected = { _, text ->
-                selected = text
+            onItemSelected = { index ->
+                selected = comboBoxItems[index]
                 onLoadMarkdown(if (selected == "Jewel readme") JewelReadme else MarkdownCatalog)
             },
         )
