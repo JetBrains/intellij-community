@@ -52,11 +52,7 @@ private object VFSHealthCheckerConstants {
                                                    !ApplicationManager.getApplication().isUnitTestMode)
 
   val HEALTH_CHECKING_PERIOD_MS = getIntProperty("vfs.health-check.checking-period-ms",
-                                                 if (ApplicationManager.getApplication().isEAP)
-                                                   1.hours.inWholeMilliseconds.toInt()
-                                                 else
-                                                   12.hours.inWholeMilliseconds.toInt()
-  )
+                                                 12.hours.inWholeMilliseconds.toInt())
 
   /** 10min in most cases enough for the initial storm of requests to VFS (scanning/indexing/etc)
    *  to finish, so VFS _likely_ +/- settles down after that. */
