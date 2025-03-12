@@ -176,6 +176,41 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `cursor is on a partially trimmed line`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel(maxLength = 10)
+
+    model.update(0, """
+      abcdef
+      ghijkl
+    """.trimIndent(), emptyList())
+    model.updateCursor(0, 4)
+
+    assertEquals("""
+      def
+      ghijkl
+    """.trimIndent(), model.document.text)
+    // three characters were trimmed, so the new cursor offset is 1
+    assertEquals(1, model.cursorOffsetState.value)
+
+    // now check that this specific state can be copied correctly
+
+    val state = model.dumpState()
+    val newModel = TerminalTestUtil.createOutputModel(maxLength = 10)
+    newModel.restore(state)
+
+    assertEquals("""
+      def
+      ghijkl
+    """.trimIndent(), newModel.document.text)
+    assertEquals(1, newModel.cursorOffsetState.value)
+
+    // ...and modified correctly
+
+    newModel.updateCursor(0, 5)
+    assertEquals(2, newModel.cursorOffsetState.value)
+  }
+
+  @Test
   fun `update editor content from the start when some lines were trimmed already (clear)`() = runBlocking(Dispatchers.EDT) {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
 
@@ -264,6 +299,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       text = line,
       trimmedLinesCount = 9,
       trimmedCharsCount = 90,
+      firstLineTrimmedCharsCount = 10,
       cursorOffset = 3,
       highlightings = listOf(styleRange(90, 95), styleRange(95, 100))
     )
@@ -274,6 +310,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     assertEquals(3, model.cursorOffsetState.value)
     assertEquals(9, model.trimmedLinesCount)
     assertEquals(90, model.trimmedCharsCount)
+    assertEquals(10, model.firstLineTrimmedCharsCount)
 
     val expectedHighlightings = listOf(highlighting(0, 5), highlighting(5, 10))
     val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)

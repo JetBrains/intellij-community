@@ -39,6 +39,9 @@ class TerminalOutputModelImpl(
   @VisibleForTesting
   var trimmedCharsCount: Int = 0
 
+  @VisibleForTesting
+  var firstLineTrimmedCharsCount: Int = 0
+
   private var contentUpdateInProgress: Boolean = false
 
   override fun updateContent(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
@@ -48,6 +51,7 @@ class TerminalOutputModelImpl(
       if (absoluteLineIndex < trimmedLinesCount) {
         trimmedLinesCount = 0
         trimmedCharsCount = 0
+        firstLineTrimmedCharsCount = 0
       }
 
       val documentLineIndex = absoluteLineIndex - trimmedLinesCount
@@ -59,11 +63,15 @@ class TerminalOutputModelImpl(
     val documentLineIndex = absoluteLineIndex - trimmedLinesCount
     val lineStartOffset = document.getLineStartOffset(documentLineIndex)
     val lineEndOffset = document.getLineEndOffset(documentLineIndex)
+    val trimmedCharsInLine = if (documentLineIndex == 0) firstLineTrimmedCharsCount else 0
+    // columnIndex comes from the backend model, which doesn't know about trimming,
+    // so for the first line the index may be off, we need to apply correction
+    val trimmedColumnIndex = columnIndex - trimmedCharsInLine
     val lineLength = lineEndOffset - lineStartOffset
 
     // Add spaces to the line if the cursor position is out of line bounds
-    if (columnIndex > lineLength) {
-      val spacesToAdd = columnIndex - lineLength
+    if (trimmedColumnIndex > lineLength) {
+      val spacesToAdd = trimmedColumnIndex - lineLength
       val spaces = " ".repeat(spacesToAdd)
       changeDocumentContent {
         document.insertString(lineEndOffset, spaces)
@@ -72,7 +80,7 @@ class TerminalOutputModelImpl(
       }
     }
 
-    mutableCursorOffsetState.value = lineStartOffset + columnIndex
+    mutableCursorOffsetState.value = lineStartOffset + trimmedColumnIndex
   }
 
   /** Returns offset from which document was updated */
@@ -114,12 +122,15 @@ class TerminalOutputModelImpl(
 
     val lineCountBefore = document.lineCount
     val removeUntilOffset = textLength - maxLength
+    val futureFirstLineNumber = document.getLineNumber(removeUntilOffset)
+    val futureFirstLineStart = document.getLineStartOffset(futureFirstLineNumber)
     document.deleteString(0, removeUntilOffset)
 
     highlightingsModel.removeBefore(removeUntilOffset)
 
     trimmedCharsCount += removeUntilOffset
     trimmedLinesCount += lineCountBefore - document.lineCount
+    firstLineTrimmedCharsCount = removeUntilOffset - futureFirstLineStart
 
     return removeUntilOffset
   }
@@ -161,6 +172,7 @@ class TerminalOutputModelImpl(
       text = document.text,
       trimmedLinesCount = trimmedLinesCount,
       trimmedCharsCount = trimmedCharsCount,
+      firstLineTrimmedCharsCount = firstLineTrimmedCharsCount,
       cursorOffset = cursorOffsetState.value,
       highlightings = highlightingsModel.dumpState()
     )
@@ -170,6 +182,7 @@ class TerminalOutputModelImpl(
     changeDocumentContent {
       trimmedLinesCount = state.trimmedLinesCount
       trimmedCharsCount = state.trimmedCharsCount
+      firstLineTrimmedCharsCount = state.firstLineTrimmedCharsCount
       document.setText(state.text)
       highlightingsModel.restoreFromState(state.highlightings)
       mutableCursorOffsetState.value = state.cursorOffset
