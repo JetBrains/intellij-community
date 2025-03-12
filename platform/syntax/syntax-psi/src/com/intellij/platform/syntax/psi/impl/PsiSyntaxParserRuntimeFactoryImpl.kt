@@ -13,10 +13,8 @@ class PsiSyntaxParserRuntimeFactoryImpl(private val language: Language) : Syntax
     val languageInformer = LanguageSyntaxDefinitions.INSTANCE.forLanguage(language)
     return SyntaxGeneratedParserRuntime(
       syntaxBuilder = builder,
-      lexer = languageInformer.getLexer(),
       isCaseSensitive = language.isCaseSensitive,
       braces = languageInformer.getPairedBraces(),
-      bundleAdapter = AnalysisBundleAdapted,
       maxRecursionDepth = 1000,
     )
   }

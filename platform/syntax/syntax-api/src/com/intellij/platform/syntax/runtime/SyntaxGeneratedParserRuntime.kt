@@ -6,18 +6,17 @@ package com.intellij.platform.syntax.runtime
 import com.intellij.openapi.util.text.StringHash
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.element.SyntaxTokenTypes
-import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Hook
 import com.intellij.platform.syntax.runtime.SyntaxGeneratedParserRuntime.Parser
-import com.intellij.platform.syntax.BundleAdapter
 import com.intellij.platform.syntax.LimitedPool
 import com.intellij.platform.syntax.Logger
 import com.intellij.platform.syntax.NoopLogger
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
+import com.intellij.platform.syntax.i18n.ResourceBundle;
 import kotlin.math.min
 
 
@@ -89,20 +88,19 @@ private const val FRAMES_POOL_SIZE = 500
 final class SyntaxGeneratedParserRuntime(
   private val maxRecursionDepth: Int,
   private val syntaxBuilder: SyntaxTreeBuilder,
-  protected val bundleAdapter: BundleAdapter,
-  protected val lexer: Lexer,
-  protected val isCaseSensitive: Boolean = true,
-  protected val braces: Collection<BracePair>?,
+  private val isCaseSensitive: Boolean = true,
+  private val braces: Collection<BracePair>?,
 ) {
+
+  internal val bundle get() = ResourceBundle("com.intellij.analysis.AnalysisBundle", "messages.AnalysisBundle", this)
   private val error: ErrorState = ErrorState(bundle)
   internal val LOG: Logger = NoopLogger
-  internal var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit = { _, _ -> }
 
+  internal var parser: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit = { _, _ -> }
   internal val MAX_RECURSION_LEVEL: Int get() = maxRecursionDepth
   public val builder: SyntaxTreeBuilder get() = syntaxBuilder
   internal val isLanguageCaseSensitive get() = isCaseSensitive
   internal val errorState get() = error
-  internal val bundle get() = bundleAdapter
 
   fun init(parse: (SyntaxElementType, SyntaxGeneratedParserRuntime) -> Unit, extendsSets: Array<Set<SyntaxElementType>>? = null) {
     parser = parse
@@ -141,7 +139,7 @@ final class SyntaxGeneratedParserRuntime(
     }
   }
 
-  class ErrorState(val bundle: BundleAdapter) {
+  class ErrorState(val bundle: ResourceBundle) {
     internal var currentFrame: Frame? = null
     internal val variants: MyList<Variant> = MyList<Variant>(INITIAL_VARIANTS_SIZE)
     internal val unexpected: MyList<Variant> = MyList<Variant>(INITIAL_VARIANTS_SIZE / 10)
@@ -322,7 +320,7 @@ fun create_token_set_(vararg tokenTypes: SyntaxElementType?): Set<SyntaxElementT
     return builder.rawTokenIndex()
   }
 
-  fun SyntaxGeneratedParserRuntime.recursion_guard_(level: Int, funcName: String?): Boolean {
+  fun SyntaxGeneratedParserRuntime.recursion_guard_(level: Int, funcName: String): Boolean {
     if (level > MAX_RECURSION_LEVEL) {
       builder.mark().error(bundle.message("parsing.error.maximum.recursion.level.reached.in", MAX_RECURSION_LEVEL, funcName))
       return false
