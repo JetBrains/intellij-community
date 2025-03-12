@@ -463,6 +463,10 @@ internal class RecentProjectFilteringTree(
                            tooltip = null,
                            projectIcon = projectIcon,
                            isProjectValid = isProjectValid)
+
+        buttonViewModel.prepareActionsButton(projectActions, rowHovered, AllIcons.Ide.Notification.Gear,
+                                             AllIcons.Ide.Notification.GearHover)
+
         return this
       }
 

@@ -153,6 +153,10 @@ internal data class ProviderRecentProjectItem(
     recentProject.openProject()
   }
 
+  fun removeFromRecent() {
+    recentProject.removeFromRecent()
+  }
+
   fun searchName(): String {
     return "${recentProject.projectPath.orEmpty()} ${recentProject.displayName}"
   }
