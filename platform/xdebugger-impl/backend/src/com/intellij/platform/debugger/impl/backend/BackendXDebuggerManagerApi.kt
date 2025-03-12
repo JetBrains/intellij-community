@@ -39,6 +39,16 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   }
 
   private suspend fun createSessionDto(currentSession: XDebugSessionImpl, debugProcess: XDebugProcess): XDebugSessionDto {
+    // TODO: !!!really strong HACK to let consoleView to be initialized.
+    //  It should be Deferred in this case
+    //  or processStarted of DebugProcess listener should.
+    //  We can introduce new event like SessionStarted which will be called only when session is initialized,
+    //  but for some reasons [RunWidgetTest] fails with that
+    repeat(20) {
+      if (currentSession.consoleView == null) {
+        delay(20)
+      }
+    }
     val editorsProvider = debugProcess.editorsProvider
     val fileTypeId = editorsProvider.fileType.name
     val initialSessionState = XDebugSessionState(
@@ -97,12 +107,10 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val project = projectId.findProject()
     return channelFlow {
       project.messageBus.connect(this).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
-        override fun sessionInitialized(session: XDebugSession) {
-          if (session !is XDebugSessionImpl) {
-            return
-          }
+        override fun processStarted(debugProcess: XDebugProcess) {
+          val session = debugProcess.session as? XDebugSessionImpl ?: return
           launch {
-            val sessionDto = createSessionDto(session, session.debugProcess)
+            val sessionDto = createSessionDto(session, debugProcess)
             send(XDebuggerManagerSessionEvent.ProcessStarted(sessionDto.id, sessionDto))
           }
         }
