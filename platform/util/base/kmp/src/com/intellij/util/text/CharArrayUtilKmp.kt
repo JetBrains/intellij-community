@@ -235,6 +235,19 @@ object CharArrayUtilKmp {
     }
     return true
   }
+
+  @JvmStatic
+  fun CharSequence.regionMatches(offset: Int, s: CharSequence): Boolean {
+    if (offset < 0 || offset + s.length > length) return false
+    return (0..<s.length).all { i -> this[offset + i] == s[i] }
+  }
+
+  @JvmStatic
+  fun CharSequence.regionMatches(start: Int, end: Int, s: CharSequence): Boolean {
+    val len = s.length
+    if (start < 0 || start + len > end) return false
+    return (0..<len).all { i -> this[start + i] == s[i] }
+  }
 }
 
 /**

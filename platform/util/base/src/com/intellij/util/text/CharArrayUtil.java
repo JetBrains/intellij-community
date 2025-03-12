@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
@@ -187,14 +187,7 @@ public final class CharArrayUtil {
   }
 
   public static boolean regionMatches(@NotNull CharSequence buffer, int start, int end, @NotNull CharSequence s) {
-    int len = s.length();
-    if (start + len > end) return false;
-    if (start < 0) return false;
-
-    for (int i = 0; i < len; i++) {
-      if (buffer.charAt(start + i) != s.charAt(i)) return false;
-    }
-    return true;
+    return CharArrayUtilKmp.regionMatches(buffer, start, end, s);
   }
 
   private static void assertRegionIndicesInRange(int s1Length, int start1, int end1,
@@ -227,12 +220,7 @@ public final class CharArrayUtil {
   }
 
   public static boolean regionMatches(@NotNull CharSequence buffer, int offset, @NotNull CharSequence s) {
-    if (offset + s.length() > buffer.length()) return false;
-    if (offset < 0) return false;
-    for (int i = 0; i < s.length(); i++) {
-      if (buffer.charAt(offset + i) != s.charAt(i)) return false;
-    }
-    return true;
+    return CharArrayUtilKmp.regionMatches(buffer, offset, s);
   }
 
   public static boolean equals(char @NotNull [] buffer1, int start1, int end1, char @NotNull [] buffer2, int start2, int end2) {

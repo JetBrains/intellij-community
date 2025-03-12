@@ -19,6 +19,8 @@
 - sf:getChars(java.lang.CharSequence,C[],I,I):V
 - sf:getChars(java.lang.CharSequence,C[],I,I,I):V
 - bs:getChars$default(java.lang.CharSequence,C[],I,I,I,I,java.lang.Object):V
+- sf:regionMatches(java.lang.CharSequence,I,I,java.lang.CharSequence):Z
+- sf:regionMatches(java.lang.CharSequence,I,java.lang.CharSequence):Z
 - sf:regionMatches(C[],I,I,java.lang.CharSequence):Z
 - sf:shiftBackward(java.lang.CharSequence,I,I,java.lang.String):I
 - sf:shiftBackward(java.lang.CharSequence,I,java.lang.String):I
