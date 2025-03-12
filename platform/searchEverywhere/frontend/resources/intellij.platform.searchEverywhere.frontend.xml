@@ -10,6 +10,12 @@
             internal="true"/>
   </actions>
 
+  <extensionPoints>
+    <extensionPoint name="searchEverywhere.tabProvider"
+                    interface="com.intellij.platform.searchEverywhere.frontend.SeTabProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsTabProvider"/>
     <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.files.SeFilesTabProvider"/>
