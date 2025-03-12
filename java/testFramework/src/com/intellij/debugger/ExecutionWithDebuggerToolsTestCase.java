@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Runs the IDE with the debugger.
@@ -336,11 +337,16 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private void pumpDebuggerThread(InvokeRatherLaterRequest request) {
     if (request.invokesN == RATHER_LATER_INVOKES_N) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        var commands = request.myDebugProcess.getManagerThread().getUnfinishedCommands();
+        DebuggerManagerThreadImpl managerThread = request.myDebugProcess.getManagerThread();
+        var commands = managerThread.getUnfinishedCommands();
         while (!commands.isEmpty()) {
           TimeoutUtil.sleep(1);
         }
-        request.myDebugProcess.getManagerThread().schedule(request.myDebuggerCommand);
+        AtomicInteger counter = managerThread.getDispatchedCommandsCounter$intellij_java_debugger_impl();
+        while (counter.get() != 0) {
+          TimeoutUtil.sleep(1);
+        }
+        managerThread.schedule(request.myDebuggerCommand);
       });
     }
     else {
