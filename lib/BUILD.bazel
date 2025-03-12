@@ -30,7 +30,7 @@ kt_compiler_plugin(
 
 kt_jvm_import(
   name = "rhizomedb-compiler-plugin-lib",
-  jar = "@rhizomedb-compiler-plugin-2_1_10-0_1_http//file",
+  jar = "@rhizomedb-compiler-plugin-2_1_20-RC2-0_3_http//file",
 )
 
 kt_compiler_plugin(
