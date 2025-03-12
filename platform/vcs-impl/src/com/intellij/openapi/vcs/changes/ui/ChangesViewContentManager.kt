@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -313,6 +314,8 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     fun isToolWindowTabVertical(project: Project, tabName: String): Boolean {
       val toolWindow = getToolWindowFor(project, tabName)
       return toolWindow != null && !toolWindow.anchor.isHorizontal
+             && toolWindow.type != ToolWindowType.FLOATING
+             && toolWindow.type != ToolWindowType.WINDOWED
     }
 
     @JvmStatic
