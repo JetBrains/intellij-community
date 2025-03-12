@@ -166,6 +166,9 @@ class PluginVerifier(
     "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_DEFAULT",
     "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_FOCUSED",
     "com.intellij.openapi.editor.DefaultLanguageHighlighterColors.AI_INLAY_BUTTON_HOVERED",
+    
+    // https://youtrack.jetbrains.com/issue/LLM-15466/Compatibility-issues-with-DatabaseSchemaSelectionTree.init
+    "com.intellij.ml.llm.sql.chat.context.UtilsKt.createSchemaContextPopupComponent",
 
     "com.intellij.jupyter.core.jupyter.helper.OtherKt.toJupyterCellType",
     "com.intellij.ml.inline.completion.impl.kit.SkipLocationReason",
