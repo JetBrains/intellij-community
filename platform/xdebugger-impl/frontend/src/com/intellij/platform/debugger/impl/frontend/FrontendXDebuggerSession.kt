@@ -245,10 +245,7 @@ internal class FrontendXDebuggerSession private constructor(
       scope: CoroutineScope,
       sessionDto: XDebugSessionDto,
     ): FrontendXDebuggerSession {
-      val consoleView = sessionDto.consoleViewData.consoleView()
-      if (consoleView == null) {
-        LOG.warn("consoleView is null for session[${sessionDto.sessionName}] with id [${sessionDto.id}]")
-      }
+      val consoleView = sessionDto.consoleViewData?.consoleView()
       return FrontendXDebuggerSession(project, scope, sessionDto, consoleView)
     }
   }

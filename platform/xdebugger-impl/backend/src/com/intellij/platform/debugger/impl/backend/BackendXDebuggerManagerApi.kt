@@ -17,6 +17,7 @@ import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.*
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.Dispatchers
@@ -47,16 +48,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   }
 
   private suspend fun createSessionDto(currentSession: XDebugSessionImpl, debugProcess: XDebugProcess): XDebugSessionDto {
-    // TODO: !!!really strong HACK to let consoleView to be initialized.
-    //  It should be Deferred in this case
-    //  or processStarted of DebugProcess listener should.
-    //  We can introduce new event like SessionStarted which will be called only when session is initialized,
-    //  but for some reasons [RunWidgetTest] fails with that
-    repeat(20) {
-      if (currentSession.consoleView == null) {
-        delay(20)
-      }
-    }
+    currentSession.sessionInitializedDeferred().await()
     val editorsProvider = debugProcess.editorsProvider
     val fileTypeId = editorsProvider.fileType.name
     val initialSessionState = XDebugSessionState(
@@ -65,6 +57,12 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     val sessionDataDto = XDebugSessionDataDto(
       currentSession.sessionData.configurationName,
     )
+
+    val consoleView = if (useFeProxy()) {
+      currentSession.consoleView!!.toRpc(debugProcess)
+    } else {
+      null
+    }
     return XDebugSessionDto(
       currentSession.id(),
       XDebuggerEditorsProviderDto(fileTypeId, editorsProvider),
@@ -72,7 +70,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       currentSession.sessionName,
       createSessionEvents(currentSession).toRpc(),
       sessionDataDto,
-      currentSession.consoleView!!.toRpc(debugProcess),
+      consoleView,
       currentSession.debugProcess.processHandler.toDto(),
     )
   }

@@ -70,6 +70,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import fleet.kernel.withEntities
 import fleet.util.UID
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.cancel
@@ -143,6 +144,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   private val mySessionId = XDebugSessionId(UID.random())
   private val entity: Deferred<XDebugSessionEntity> = storeXDebugSessionInDb(this.coroutineScope, this, mySessionId)
   private val myCurrentStackFrameManager: XDebugSessionCurrentStackFrameManager = XDebugSessionCurrentStackFrameManager(this.coroutineScope, this.entity)
+  private val sessionInitializedDeferred = CompletableDeferred<Unit>()
 
   @get:ApiStatus.Internal
   val isSuspendedState: StateFlow<Boolean> = combine(myPaused, mySuspendContext) { paused, suspendContext ->
@@ -276,6 +278,11 @@ class XDebugSessionImpl @JvmOverloads constructor(
     return myPaused.value
   }
 
+  @ApiStatus.Internal
+  fun sessionInitializedDeferred(): Deferred<Unit> {
+    return sessionInitializedDeferred
+  }
+
   override fun getCurrentStackFrame(): XStackFrame? {
     return myCurrentStackFrameManager.getCurrentStackFrame()
   }
@@ -341,6 +348,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     if (!myShowToolWindowOnSuspendOnly) {
       initSessionTab(contentToReuse, false)
     }
+    sessionInitializedDeferred.complete(Unit)
   }
 
   fun reset() {
