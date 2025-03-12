@@ -99,14 +99,18 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
+  /**
+   * @param isDirectory directory flag is specified explicitly, as {@link FilePath#isDirectory()} can be unreliable
+   */
   public void setIcon(@NotNull FilePath filePath, boolean isDirectory) {
-    if (isDirectory) {
-      setIcon(PlatformIcons.FOLDER_ICON);
-      return;
-    }
     Icon icon = FilePathIconProvider.EP_NAME.computeSafeIfAny(provider -> provider.getIcon(filePath, myProject));
     if (icon != null) {
       setIcon(icon);
+      return;
+    }
+
+    if (isDirectory) {
+      setIcon(PlatformIcons.FOLDER_ICON);
       return;
     }
     setIcon(VcsUtil.getIcon(myProject, filePath));
