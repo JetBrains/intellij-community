@@ -43,7 +43,8 @@ class EditorCellOutputView internal constructor(
   private fun saveSize() {
     val size = if (component.hasBeenManuallyResized) {
       component.customSize
-    } else {
+    }
+    else {
       component.calculateInnerSize()
     }
     output.size.set(EditorCellOutputSize(size, collapsed, component.maximized, component.hasBeenManuallyResized))
@@ -56,7 +57,8 @@ class EditorCellOutputView internal constructor(
       if (size.resized) {
         component.customSize = size.size
         component.initialSize = null
-      } else {
+      }
+      else {
         component.customSize = null
         component.initialSize = size.size
       }

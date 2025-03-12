@@ -7,6 +7,7 @@ import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
 import com.intellij.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
 import com.intellij.notebooks.visualization.ui.EditorLayerController.Companion.EDITOR_LAYER_CONTROLLER_KEY
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Caret
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.removeUserData
 import com.intellij.ui.ComponentUtil
 import java.awt.*
 import java.awt.event.InputEvent
@@ -32,7 +34,7 @@ import kotlin.math.min
 class DecoratedEditor private constructor(
   private val editorImpl: EditorImpl,
   private val manager: NotebookCellInlayManager,
-) : NotebookEditor {
+) : NotebookEditor, Disposable {
 
   /** Used to hold current cell under mouse, to update the folding state and "run" button state. */
   override var mouseOverCell: EditorCellView? = null
@@ -70,6 +72,10 @@ class DecoratedEditor private constructor(
     updateSelectionByCarets()
 
     notebookEditorKey.set(editorImpl, this)
+  }
+
+  override fun dispose() {
+    mouseOverCell = null
   }
 
   private fun wrapEditorComponent(editor: EditorImpl) {
@@ -308,6 +314,11 @@ class DecoratedEditor private constructor(
         decoratedEditor.editorImpl.scrollPane.viewport.view as EditorComponentWrapper
       )
       original.putUserData(EDITOR_LAYER_CONTROLLER_KEY, controller)
+
+      Disposer.register(original.disposable, decoratedEditor)
+      Disposer.register(original.disposable) {
+        original.removeUserData(EDITOR_LAYER_CONTROLLER_KEY)
+      }
     }
   }
 }

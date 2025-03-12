@@ -80,6 +80,7 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
       }
     }
     EDITOR_NOTEBOOK_KEY.set(editor, null)
+    clear()
   }
 
   fun clear() {
