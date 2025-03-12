@@ -14,7 +14,8 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
-import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
+import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnvUnderProgress
+import com.jetbrains.python.venvReader.tryResolvePath
 
 class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   companion object {
@@ -51,7 +52,12 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override fun supportsHeadlessModel(): Boolean = true
 
   private suspend fun createUv(module: Module): Result<Sdk> {
-    val sdk = setupUvSdkUnderProgress(ModuleOrProject.ModuleAndProject(module), ProjectJdkTable.getInstance().allJdks.toList(), null)
+    val workingDir = tryResolvePath(module.basePath)
+    if (workingDir == null) {
+      return Result.failure(IllegalStateException("Can't determine working dir for the module"))
+    }
+
+    val sdk = setupNewUvSdkAndEnvUnderProgress(module.project, workingDir, ProjectJdkTable.getInstance().allJdks.toList(), null)
     sdk.onSuccess {
       SdkConfigurationUtil.addSdk(it)
     }

@@ -26,7 +26,7 @@ internal class EnvironmentCreatorPip(model: PythonMutableTargetAddInterpreterMod
     PropertiesComponent.getInstance().pipEnvPath = savingPath
   }
 
-  override suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> =
+  override suspend fun setupEnvSdk(project: Project, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk, PyError> =
     setupPipEnvSdkUnderProgress(project, module, baseSdks, projectPath, homePath, installPackages).asPythonResult()
 
   override suspend fun detectExecutable() {
