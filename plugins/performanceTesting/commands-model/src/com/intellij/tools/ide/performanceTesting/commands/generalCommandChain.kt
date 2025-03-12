@@ -1286,3 +1286,11 @@ fun <T : CommandChain> T.inlineJavaMethod(): T = apply {
 fun <T : CommandChain> T.moveClassToPackage(targetPackage: String): T = apply {
   addCommand("${CMD_PREFIX}moveClassToPackage $targetPackage")
 }
+
+fun <T : CommandChain> T.openProblemViewPanel(): T = apply {
+  addCommand("${CMD_PREFIX}openProblemViewPanel")
+}
+
+fun <T : CommandChain> T.assertProblemViewCount(expectedProblemCount: Int): T = apply {
+  addCommand("${CMD_PREFIX}assertProblemsViewCount $expectedProblemCount")
+}

@@ -128,7 +128,9 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(HandleSpanCommand.PREFIX, HandleSpanCommand::new),
       Map.entry(MeasureVfsMassUpdateCommand.PREFIX, MeasureVfsMassUpdateCommand::new),
       Map.entry(WaitForVfsRefreshSelectedEditorCommand.PREFIX, WaitForVfsRefreshSelectedEditorCommand::new),
-      Map.entry(CloseLookupCommand.PREFIX, CloseLookupCommand::new)
+      Map.entry(CloseLookupCommand.PREFIX, CloseLookupCommand::new),
+      Map.entry(OpenProblemViewPanelCommand.PREFIX, OpenProblemViewPanelCommand::new),
+      Map.entry(AssertProblemsViewCountCommand.PREFIX, AssertProblemsViewCountCommand::new)
     );
   }
 }
