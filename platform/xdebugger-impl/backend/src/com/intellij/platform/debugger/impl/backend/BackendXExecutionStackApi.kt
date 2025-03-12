@@ -29,19 +29,26 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
   }
 
   override suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent> {
-    val entity = debuggerEntity<XExecutionStackEntity>(executionStackId.id) ?: return emptyFlow()
+    val executionStackEntity = debuggerEntity<XExecutionStackEntity>(executionStackId.id) ?: return emptyFlow()
     return channelFlow {
-      withEntities(entity) {
-        val executionStack = entity.obj
+      withEntities(executionStackEntity) {
+        val executionStack = executionStackEntity.obj
         executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {
           override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
             this@channelFlow.launch {
-              withEntities(entity) {
-                val stacks = stackFrames.map { frame ->
-                  val entity = change {
+              withEntities(executionStackEntity) {
+                val frameEntities = stackFrames.map { frame ->
+                  change {
                     XStackFrameEntity.new(this, frame)
                   }
-                  XStackFrameDto(XStackFrameId(entity.id), frame.sourcePosition?.toRpc())
+                }
+                change {
+                  executionStackEntity.update {
+                    it[XExecutionStackEntity.StackFrames] = executionStackEntity.frames + frameEntities
+                  }
+                }
+                val stacks = frameEntities.map { frame ->
+                  XStackFrameDto(XStackFrameId(frame.id), frame.obj.sourcePosition?.toRpc())
                 }
                 send(XStackFramesEvent.XNewStackFrames(stacks, last))
                 if (last) {

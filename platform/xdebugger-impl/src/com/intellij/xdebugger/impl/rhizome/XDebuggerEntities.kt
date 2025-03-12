@@ -150,23 +150,29 @@ data class XValueEntity(override val eid: EID) : Entity {
 data class XValueMarkerDto(val text: String, @Transient val color: Color? = null, val tooltipText: String?)
 
 data class XSuspendContextEntity(override val eid: EID) : XDebuggerEntity<XSuspendContext> {
+  val executionStacks: Set<XExecutionStackEntity> by ExecutionStacks
 
   companion object : EntityType<XSuspendContextEntity>(
     XSuspendContextEntity::class.java.name,
     "com.intellij.xdebugger.impl.rhizome",
     ::XSuspendContextEntity,
     XDebuggerEntity
-  )
+  ) {
+    val ExecutionStacks: Many<XExecutionStackEntity> = manyRef<XExecutionStackEntity>("executionStacks", RefFlags.CASCADE_DELETE)
+  }
 }
 
 data class XExecutionStackEntity(override val eid: EID) : XDebuggerEntity<XExecutionStack> {
+  val frames: Set<XStackFrameEntity> by StackFrames
 
   companion object : EntityType<XExecutionStackEntity>(
     XExecutionStackEntity::class.java.name,
     "com.intellij.xdebugger.impl.rhizome",
     ::XExecutionStackEntity,
     XDebuggerEntity
-  )
+  ) {
+    val StackFrames: Many<XStackFrameEntity> = manyRef<XStackFrameEntity>("stackFrames", RefFlags.CASCADE_DELETE)
+  }
 }
 
 data class XStackFrameEntity(override val eid: EID) : XDebuggerEntity<XStackFrame> {
@@ -207,9 +213,10 @@ interface XDebuggerEntity<T : Any> : Entity {
   }
 }
 
+// TODO documentation; it's important to highlight that the entities only live until the next value was collected (or the flow was closed)
 @Suppress("UnusedFlow")
 @ApiStatus.Internal
-fun <T : Any, E : XDebuggerEntity<T>, ET : EntityType<E>> Flow<T?>.withIDs(createEntity: ChangeScope.(T) -> E): Flow<Pair<T, UID>?> {
+fun <T : Any, E : XDebuggerEntity<T>, ET : EntityType<E>> Flow<T?>.asEntityFlow(createEntity: ChangeScope.(T) -> E): Flow<Pair<T, UID>?> {
   val flow = this
   return channelFlow {
     flow.collectLatest { value ->

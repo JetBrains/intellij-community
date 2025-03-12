@@ -140,7 +140,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
     return channelFlow {
       withEntities(sessionEntity) {
-        session.getCurrentSuspendContextFlow().withIDs { suspendContext ->
+        session.getCurrentSuspendContextFlow().asEntityFlow { suspendContext ->
           XSuspendContextEntity.new(this, suspendContext)
         }.collect { contextAndId ->
           if (contextAndId == null) {
@@ -159,7 +159,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
     return withEntities(sessionEntity) {
       channelFlow {
-        session.getCurrentExecutionStackFlow().withIDs { executionStack ->
+        session.getCurrentExecutionStackFlow().asEntityFlow { executionStack ->
           XExecutionStackEntity.new(this, executionStack)
         }.collect { stackAndId ->
           val (executionStack, id) = stackAndId ?: run {
@@ -177,7 +177,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val session = sessionEntity.session as? XDebugSessionImpl ?: return emptyFlow()
     return channelFlow {
       withEntities(sessionEntity) {
-        session.getCurrentStackFrameFlow().withIDs { stackFrame ->
+        session.getCurrentStackFrameFlow().asEntityFlow { stackFrame ->
           XStackFrameEntity.new(this, stackFrame)
         }.collect { frameAndId ->
           if (frameAndId == null) {
@@ -211,11 +211,20 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
             this@channelFlow.launch {
               // TODO[IJPL-177087] delete entities!!!
               withEntities(suspendContextEntity) {
-                val stacks = executionStacks.map { stack ->
-                  val entity = change {
+                val stackEntities = executionStacks.map { stack ->
+                  change {
                     XExecutionStackEntity.new(this, stack)
                   }
-                  XExecutionStackDto(XExecutionStackId(entity.id), stack.displayName, stack.icon?.rpcId())
+                }
+                change {
+                  suspendContextEntity.update {
+                    it[XSuspendContextEntity.ExecutionStacks] = suspendContextEntity.executionStacks + stackEntities
+                  }
+                }
+                val stacks = stackEntities.map { stack ->
+                  withEntities(stack) {
+                    XExecutionStackDto(XExecutionStackId(stack.id), stack.obj.displayName, stack.obj.icon?.rpcId())
+                  }
                 }
                 send(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
                 if (last) {
