@@ -1,3 +1,6 @@
+- name: lib/modules/intellij.performanceTesting.frontend.jar
+  contentModules:
+  - name: intellij.performanceTesting.frontend
 - name: lib/performanceTesting.jar
   projectLibraries:
   - name: assertJ

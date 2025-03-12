@@ -92,7 +92,6 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ConditionalMemoryDumpCommand.PREFIX, ConditionalMemoryDumpCommand::new),
       Map.entry(AcceptDecompileNotice.PREFIX, AcceptDecompileNotice::new),
       Map.entry(InstallCustomJBR.PREFIX, InstallCustomJBR::new),
-      Map.entry(ShowRecentFilesCommand.PREFIX, ShowRecentFilesCommand::new),
       Map.entry(ShowEvaluateExpressionCommand.PREFIX, ShowEvaluateExpressionCommand::new),
       Map.entry(EvaluateExpressionCompletionCommand.PREFIX, EvaluateExpressionCompletionCommand::new),
       Map.entry(CollectFilesNotMarkedAsIndex.PREFIX, CollectFilesNotMarkedAsIndex::new),

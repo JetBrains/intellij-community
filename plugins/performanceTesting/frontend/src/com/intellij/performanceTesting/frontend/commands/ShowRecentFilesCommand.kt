@@ -1,10 +1,11 @@
-package com.jetbrains.performancePlugin.commands
+package com.intellij.performanceTesting.frontend.commands
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.recentFiles.frontend.Switcher
 import com.intellij.platform.recentFiles.frontend.createAndShowNewSwitcherSuspend
+import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NonNls
 /**
  * Usage: %showRecentFiles <seconds to wait before close>
  */
-class ShowRecentFilesCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class ShowRecentFilesCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
     const val NAME: @NonNls String = "showRecentFiles"
@@ -23,12 +24,16 @@ class ShowRecentFilesCommand(text: String, line: Int) : PerformanceCommandCorout
   override suspend fun doExecute(context: PlaybackContext) {
     val secondsToWaitBeforeClose = extractCommandArgument(PREFIX).runCatching { this.toInt() }.getOrDefault(5)
     withContext(Dispatchers.EDT) {
-      val switcher = Switcher.SWITCHER_KEY.get(context.project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
-                     ?: createAndShowNewSwitcherSuspend(false, null, IdeBundle.message("title.popup.recent.files"), context.project)
-      delay(secondsToWaitBeforeClose * 1000L)
-      if (switcher is Switcher.SwitcherPanel) {
-        switcher.cancel()
+      val alreadyOpenedSwitcher = Switcher.SWITCHER_KEY.get(context.project)
+      if (alreadyOpenedSwitcher != null) {
+        alreadyOpenedSwitcher.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
       }
+      else {
+        createAndShowNewSwitcherSuspend(false, null, IdeBundle.message("title.popup.recent.files"), context.project)
+      }
+      delay(secondsToWaitBeforeClose * 1000L)
+
+      Switcher.SWITCHER_KEY.get(context.project)?.cancel()
     }
   }
 
