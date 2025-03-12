@@ -3,6 +3,7 @@ package com.intellij.notification.impl
 
 import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
+import com.intellij.notification.impl.ApplicationNotificationsModel.STATE_CHANGED
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -101,10 +102,6 @@ object ApplicationNotificationsModel {
     } ?: return
 
     callback.inProject(project).invokeLaterIfNeeded()
-  }
-
-  fun fireStateChanged() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(STATE_CHANGED).stateChanged()
   }
 
   @JvmStatic
@@ -239,25 +236,20 @@ private class ProjectNotificationsModel {
     return Runnable {
       newListener.add(initNotifications)
       setStatusMessage(project, initNotifications.last())
-      ApplicationNotificationsModel.fireStateChanged()
+      fireStateChanged()
     }
   }
 
   fun addNotification(project: Project, notification: Notification): Runnable {
+    myNotifications.add(notification)
     unreadNotifications.add(notification)
-    if (listener == null) {
-      myNotifications.add(notification)
-      return Runnable { updateToolWindow(project, notification, false) }
-    }
-    else {
-      return Runnable {
-        if (!NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
-          return@Runnable
-        }
-        listener!!.add(notification)
-        setStatusMessage(project, notification)
-        ApplicationNotificationsModel.fireStateChanged()
+    val listener = listener
+    return Runnable {
+      if (listener != null && NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
+        listener.add(notification)
       }
+      setStatusMessage(project, notification)
+      fireStateChanged()
     }
   }
 
@@ -278,25 +270,23 @@ private class ProjectNotificationsModel {
 
   fun markAllRead(): Runnable {
     unreadNotifications.clear()
+    val listener = listener
     return Runnable {
       listener?.clearUnreadStates()
-      ApplicationNotificationsModel.fireStateChanged()
+      fireStateChanged()
     }
   }
 
   fun remove(project: Project, notification: Notification): Runnable {
     myNotifications.remove(notification)
     unreadNotifications.remove(notification)
-    return if (listener == null) {
-      Runnable { updateToolWindow(project, null, false) }
-    }
-    else {
-      Runnable {
-        listener!!.remove(notification)
-        val newStatus = listener!!.getNotifications().findLast { it.isImportant || it.isImportantSuggestion }
-        setStatusMessage(project, newStatus)
-        ApplicationNotificationsModel.fireStateChanged()
-      }
+    val listener = listener
+    return Runnable {
+      listener?.remove(notification)
+      val leftOverNotifications = listener?.getNotifications().orEmpty()
+      val newStatus = leftOverNotifications.findLast { it.isImportant || it.isImportantSuggestion }
+      setStatusMessage(project, newStatus)
+      fireStateChanged()
     }
   }
 
@@ -304,15 +294,11 @@ private class ProjectNotificationsModel {
     val notifications = myNotifications.toList()
     myNotifications.clear()
     unreadNotifications.clear()
-    if (listener == null) {
-      return notifications to Runnable { updateToolWindow(project, null, false) }
-    }
-    else {
-      return notifications to Runnable {
-        listener!!.expireAll()
-        setStatusMessage(project, null)
-        ApplicationNotificationsModel.fireStateChanged()
-      }
+    val listener = listener
+    return notifications to Runnable {
+      listener?.expireAll()
+      setStatusMessage(project, null)
+      fireStateChanged()
     }
   }
 
@@ -323,46 +309,25 @@ private class ProjectNotificationsModel {
     unreadNotifications.removeAll {
       !it.isSuggestionType
     }
-    if (listener == null) {
-      return Runnable { updateToolWindow(project, null, true) }
-    }
-    else {
-      return Runnable {
-        project.closeAllBalloons()
-        listener!!.clearTimeline()
-        setStatusMessage(project, null)
-        ApplicationNotificationsModel.fireStateChanged()
-      }
+    val listener = listener
+    return Runnable {
+      project.closeAllBalloons()
+      listener?.clearTimeline()
+      setStatusMessage(project, null)
+      fireStateChanged()
     }
   }
 
   fun clearAll(project: Project): Runnable {
     myNotifications.clear()
     unreadNotifications.clear()
-    if (listener == null) {
-      return Runnable { updateToolWindow(project, null, true) }
-    }
-    else {
-      return Runnable {
-        project.closeAllBalloons()
-        listener!!.
-        clearAll()
-        setStatusMessage(project, null)
-        ApplicationNotificationsModel.fireStateChanged()
-      }
-    }
-  }
-
-  private fun updateToolWindow(
-    project: Project,
-    stateNotification: Notification?,
-    closeBalloons: Boolean,
-  ) {
-    if (closeBalloons) {
+    val listener = listener
+    return Runnable {
       project.closeAllBalloons()
+      listener?.clearAll()
+      setStatusMessage(project, null)
+      fireStateChanged()
     }
-    setStatusMessage(project, stateNotification)
-    ApplicationNotificationsModel.fireStateChanged()
   }
 
   fun getStatusMessage(): StatusMessage? {
@@ -380,6 +345,11 @@ private class ProjectNotificationsModel {
       StatusMessage(notification, NotificationsUtil.buildStatusMessage(notification), notification.timestamp)
     }
     StatusBar.Info.set("", project, ActionCenter.EVENT_REQUESTOR)
+  }
+
+  // fired when [unreadNotifications] list changes
+  private fun fireStateChanged() {
+    ApplicationManager.getApplication().messageBus.syncPublisher(STATE_CHANGED).stateChanged()
   }
 }
 
