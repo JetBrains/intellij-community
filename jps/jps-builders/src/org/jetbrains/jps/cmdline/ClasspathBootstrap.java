@@ -11,12 +11,14 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.HashMapZipFile;
+import com.intellij.util.lang.JavaVersion;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import kotlin.metadata.jvm.JvmMetadataUtil;
@@ -172,6 +174,8 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, JpsModel.class);  // intellij.platform.jps.model
     addToClassPath(cp, JpsModelImpl.class);  // intellij.platform.jps.model.impl
     addToClassPath(cp, JpsProjectLoader.class);  // intellij.platform.jps.model.serialization
+    addToClassPath(cp, JavaVersion.class); // intellij.platform.util.kmp
+    addToClassPath(cp, Strings.class); // intellij.platform.base.kmp
     addToClassPath(cp, AlienFormFileException.class);  // intellij.java.guiForms.compiler
     addToClassPath(cp, GridConstraints.class);  // intellij.java.guiForms.rt
     addToClassPath(cp, CellConstraints.class);  // jGoodies-forms
